@@ -78,16 +78,6 @@ export class BillingController {
     return this.billingService.syncPurchase(purchaseId, tenantId);
   }
 
-  @Post('tokens/purchase/:purchaseId/confirm')
-  @ApiOperation({ summary: 'Confirm token purchase' })
-  @ApiResponse({ status: 201, description: 'Token purchase confirmed' })
-  @ApiResponse({ status: 401, description: 'Unauthorized' })
-  @ApiResponse({ status: 404, description: 'Purchase not found' })
-  async confirmTokenPurchase(@Param('purchaseId') purchaseId: string) {
-    await this.billingService.confirmTokenPurchase(purchaseId);
-    return { message: 'Token purchase confirmed' };
-  }
-
   @Get('tokens/balance')
   @ApiOperation({ summary: 'Get token balance' })
   @ApiResponse({ status: 200, description: 'Token balance retrieved successfully' })

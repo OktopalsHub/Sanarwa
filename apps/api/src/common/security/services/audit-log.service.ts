@@ -426,7 +426,7 @@ export class AuditLogService {
 
       const dailyActivity = Object.entries(dailyActivityMap)
         .map(([date, count]) => ({ date, count }))
-        .sort((a, b) => a.date.localeCompare(b.date));
+        .toSorted((a, b) => a.date.localeCompare(b.date));
 
       return {
         totalActions,

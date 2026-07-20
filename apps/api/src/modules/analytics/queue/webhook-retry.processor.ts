@@ -53,7 +53,7 @@ export class WebhookRetryProcessor {
         this.logger.error(
           `Webhook failed after ${maxRetries} attempts for ${webhookUrl}: ${errorMessage}`,
         );
-        throw new Error(`Webhook delivery failed after ${maxRetries} attempts: ${errorMessage}`);
+        throw new Error(`Webhook delivery failed after ${maxRetries} attempts: ${errorMessage}`, { cause: error });
       }
 
       // For non-final attempts, throw to trigger retry with backoff

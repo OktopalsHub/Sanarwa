@@ -52,7 +52,7 @@ export class SMSRoutingService {
     // Sort rules by priority (lower number = higher priority)
     const sortedRules = rules
       .filter((rule) => rule.isActive)
-      .sort((a, b) => a.priority - b.priority);
+      .toSorted((a, b) => a.priority - b.priority);
 
     this.routingRules.set(countryCode.toUpperCase(), sortedRules);
     this.logger.log(

@@ -220,7 +220,7 @@ export class SessionSecurityService {
       }
     }
 
-    return userSessions.sort(
+    return userSessions.toSorted(
       (a, b) => b.lastAccessedAt.getTime() - a.lastAccessedAt.getTime(),
     );
   }
@@ -407,7 +407,7 @@ export class SessionSecurityService {
     if (userSessions.length >= this.maxSessionsPerUser) {
       // Remove oldest sessions
       const sessionsToRemove = userSessions
-        .sort((a, b) => a.lastAccessedAt.getTime() - b.lastAccessedAt.getTime())
+        .toSorted((a, b) => a.lastAccessedAt.getTime() - b.lastAccessedAt.getTime())
         .slice(0, userSessions.length - this.maxSessionsPerUser + 1);
 
       for (const session of sessionsToRemove) {

@@ -123,7 +123,7 @@ export class NotificationRealtimeService {
   ): Promise<NotificationCenterItem[]> {
     try {
       // Sort by creation time to maintain order
-      return notifications.sort((a, b) => {
+      return notifications.toSorted((a, b) => {
         const timeA = new Date(a.createdAt).getTime();
         const timeB = new Date(b.createdAt).getTime();
         return timeA - timeB;

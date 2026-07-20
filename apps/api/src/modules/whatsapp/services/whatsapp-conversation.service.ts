@@ -120,7 +120,7 @@ export class WhatsAppConversationService {
     const messages = this.messages.get(conversationId) || [];
 
     return messages
-      .sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime())
+      .toSorted((a, b) => b.timestamp.getTime() - a.timestamp.getTime())
       .slice(offset, offset + limit);
   }
 
@@ -217,7 +217,7 @@ export class WhatsAppConversationService {
   ): Promise<WhatsAppConversation[]> {
     return Array.from(this.conversations.values())
       .filter(c => c.tenantId === tenantId)
-      .sort((a, b) => b.lastMessageAt.getTime() - a.lastMessageAt.getTime())
+      .toSorted((a, b) => b.lastMessageAt.getTime() - a.lastMessageAt.getTime())
       .slice(0, limit);
   }
 

@@ -278,7 +278,7 @@ export class ProviderHealthMonitor implements IProviderHealthMonitor {
     const results = await this.checkChannelHealth(channel);
 
     // Sort by health status and success rate
-    return results.sort((a, b) => {
+    return results.toSorted((a, b) => {
       // Healthy providers first
       if (a.isHealthy && !b.isHealthy) return -1;
       if (!a.isHealthy && b.isHealthy) return 1;

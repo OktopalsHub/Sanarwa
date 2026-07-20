@@ -128,7 +128,7 @@ export class EncryptionService {
       return result;
     } catch (error) {
       this.logger.error(`Encryption failed: ${error.message}`);
-      throw new Error(`Encryption failed: ${error.message}`);
+      throw new Error(`Encryption failed: ${error.message}`, { cause: error });
     }
   }
 
@@ -177,7 +177,7 @@ export class EncryptionService {
       return decrypted;
     } catch (error) {
       this.logger.error(`Decryption failed: ${error.message}`);
-      throw new Error(`Decryption failed: ${error.message}`);
+      throw new Error(`Decryption failed: ${error.message}`, { cause: error });
     }
   }
 
@@ -204,7 +204,7 @@ export class EncryptionService {
             `Failed to encrypt provider config field '${key}': ${error.message}`,
           );
           throw new Error(
-            `Provider config encryption failed for field '${key}'`,
+            `Provider config encryption failed for field '${key}'`, { cause: error },
           );
         }
       } else {
@@ -239,7 +239,7 @@ export class EncryptionService {
             `Failed to decrypt provider config field '${key}': ${error.message}`,
           );
           throw new Error(
-            `Provider config decryption failed for field '${key}'`,
+            `Provider config decryption failed for field '${key}'`, { cause: error },
           );
         }
       } else {
@@ -309,7 +309,7 @@ export class EncryptionService {
       this.logger.log(`Added new encryption key version: ${newKeyVersion}`);
     } catch (error) {
       this.logger.error(`Key rotation failed: ${error.message}`);
-      throw new Error(`Key rotation failed: ${error.message}`);
+      throw new Error(`Key rotation failed: ${error.message}`, { cause: error });
     }
   }
 

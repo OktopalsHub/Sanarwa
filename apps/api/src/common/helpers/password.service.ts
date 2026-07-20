@@ -15,7 +15,7 @@ export class PasswordService {
         parallelism: 1,
       });
     } catch (error) {
-      throw new Error(`Failed to hash password: ${error.message}`);
+      throw new Error(`Failed to hash password: ${error.message}`, { cause: error });
     }
   }
 
@@ -26,7 +26,7 @@ export class PasswordService {
     try {
       return await argon2.verify(hash, password);
     } catch (error) {
-      throw new Error(`Failed to verify password: ${error.message}`);
+      throw new Error(`Failed to verify password: ${error.message}`, { cause: error });
     }
   }
 
@@ -86,7 +86,7 @@ export class PasswordService {
     }
 
     // Contains special character
-    if (!/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password)) {
+    if (!/[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/.test(password)) {
       errors.push('Password must contain at least one special character');
     } else {
       score += 1;

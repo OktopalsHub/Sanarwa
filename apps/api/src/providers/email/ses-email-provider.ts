@@ -135,7 +135,7 @@ export class SESEmailProvider extends BaseProvider implements IEmailProvider {
         },
       };
     } catch (error) {
-      throw new Error(`SES health check failed: ${error.message}`);
+      throw new Error(`SES health check failed: ${error.message}`, { cause: error });
     }
   }
 

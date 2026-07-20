@@ -187,7 +187,7 @@ export class AsiaSMSProvider extends BaseProvider implements ISMSProvider {
         },
       };
     } catch (error) {
-      throw new Error(`Asia SMS health check failed: ${error.message}`);
+      throw new Error(`Asia SMS health check failed: ${error.message}`, { cause: error });
     }
   }
 

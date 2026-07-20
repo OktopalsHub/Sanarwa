@@ -51,7 +51,7 @@ export class SMSRoutingService {
       // Filter supported providers and sort by cost (ascending)
       const supportedProviders = availableProviders
         .filter(p => p.supported)
-        .sort((a, b) => a.cost - b.cost);
+        .toSorted((a, b) => a.cost - b.cost);
 
       if (supportedProviders.length === 0) {
         this.logger.warn(`No SMS provider supports country: ${countryCode}, using default provider`);

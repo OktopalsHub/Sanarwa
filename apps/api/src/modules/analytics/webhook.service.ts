@@ -346,7 +346,7 @@ export class WebhookService {
           this.logger.error(
             `Webhook failed after ${maxRetries} attempts for ${config.url}: ${errorMessage}`,
           );
-          throw new Error(`Webhook delivery failed: ${errorMessage}`);
+          throw new Error(`Webhook delivery failed: ${errorMessage}`, { cause: error });
         }
 
         // Exponential backoff delay

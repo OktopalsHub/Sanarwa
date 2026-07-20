@@ -88,7 +88,7 @@ export class PolarService {
       return response.data;
     } catch (error) {
       this.logger.error('Failed to create Polar customer:', error);
-      throw new Error('Failed to create customer');
+      throw new Error('Failed to create customer', { cause: error });
     }
   }
 
@@ -98,7 +98,7 @@ export class PolarService {
       return response.data;
     } catch (error) {
       this.logger.error('Failed to get Polar customer:', error);
-      throw new Error('Failed to get customer');
+      throw new Error('Failed to get customer', { cause: error });
     }
   }
 
@@ -108,7 +108,7 @@ export class PolarService {
       return response.data;
     } catch (error) {
       this.logger.error('Failed to update Polar customer:', error);
-      throw new Error('Failed to update customer');
+      throw new Error('Failed to update customer', { cause: error });
     }
   }
 
@@ -123,7 +123,7 @@ export class PolarService {
       return response.data;
     } catch (error) {
       this.logger.error('Failed to create Polar subscription:', error);
-      throw new Error('Failed to create subscription');
+      throw new Error('Failed to create subscription', { cause: error });
     }
   }
 
@@ -133,7 +133,7 @@ export class PolarService {
       return response.data;
     } catch (error) {
       this.logger.error('Failed to get Polar subscription:', error);
-      throw new Error('Failed to get subscription');
+      throw new Error('Failed to get subscription', { cause: error });
     }
   }
 
@@ -143,7 +143,7 @@ export class PolarService {
       return response.data;
     } catch (error) {
       this.logger.error('Failed to update Polar subscription:', error);
-      throw new Error('Failed to update subscription');
+      throw new Error('Failed to update subscription', { cause: error });
     }
   }
 
@@ -155,7 +155,7 @@ export class PolarService {
       return response.data;
     } catch (error) {
       this.logger.error('Failed to cancel Polar subscription:', error);
-      throw new Error('Failed to cancel subscription');
+      throw new Error('Failed to cancel subscription', { cause: error });
     }
   }
 
@@ -165,7 +165,7 @@ export class PolarService {
       return response.data.data || response.data;
     } catch (error) {
       this.logger.error('Failed to get Polar products:', error);
-      throw new Error('Failed to get products');
+      throw new Error('Failed to get products', { cause: error });
     }
   }
 
@@ -180,7 +180,7 @@ export class PolarService {
       return response.data;
     } catch (error) {
       this.logger.error('Failed to create Polar payment intent:', error);
-      throw new Error('Failed to create payment intent');
+      throw new Error('Failed to create payment intent', { cause: error });
     }
   }
 
@@ -190,7 +190,7 @@ export class PolarService {
       return response.data;
     } catch (error) {
       this.logger.error('Failed to confirm Polar payment intent:', error);
-      throw new Error('Failed to confirm payment intent');
+      throw new Error('Failed to confirm payment intent', { cause: error });
     }
   }
 
@@ -200,7 +200,7 @@ export class PolarService {
       return response.data;
     } catch (error) {
       this.logger.error('Failed to get Polar payment intent:', error);
-      throw new Error('Failed to get payment intent');
+      throw new Error('Failed to get payment intent', { cause: error });
     }
   }
 
@@ -243,7 +243,7 @@ export class PolarService {
       return { checkoutUrl: payload.url, checkoutId: payload.id };
     } catch (error) {
       this.logger.error('Failed to create Polar checkout:', error);
-      throw new Error('Failed to create Polar checkout');
+      throw new Error('Failed to create Polar checkout', { cause: error });
     }
   }
 
@@ -265,7 +265,7 @@ export class PolarService {
       return 'pending';
     } catch (error) {
       this.logger.error('Failed to verify Polar checkout:', error);
-      throw new Error('Failed to verify Polar checkout');
+      throw new Error('Failed to verify Polar checkout', { cause: error });
     }
   }
 
@@ -350,7 +350,7 @@ export class PolarService {
       return { checkoutUrl: payload.url, checkoutId: payload.id };
     } catch (error) {
       this.logger.error('Failed to create Polar payment method setup checkout:', error);
-      throw new Error('Failed to create Polar payment method setup checkout');
+      throw new Error('Failed to create Polar payment method setup checkout', { cause: error });
     }
   }
 

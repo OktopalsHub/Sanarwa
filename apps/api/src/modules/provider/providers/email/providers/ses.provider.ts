@@ -41,7 +41,7 @@ export class SESProvider extends BaseEmailProvider {
       this.logger.log('SES provider initialized successfully');
     } catch (error) {
       this.logger.error('Failed to initialize SES provider', error);
-      throw new Error(`SES initialization failed: ${error.message}`);
+      throw new Error(`SES initialization failed: ${error.message}`, { cause: error });
     }
   }
 

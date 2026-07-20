@@ -392,7 +392,7 @@ export class PerformanceMetricsService {
       });
     }
 
-    return providerMetrics.sort(
+    return providerMetrics.toSorted(
       (a, b) => b.metrics.throughput - a.metrics.throughput,
     );
   }
@@ -499,7 +499,7 @@ export class PerformanceMetricsService {
       trends.push({ timestamp, value });
     }
 
-    return trends.sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
+    return trends.toSorted((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
   }
 
   /**
@@ -637,7 +637,7 @@ export class PerformanceMetricsService {
 
         return true;
       })
-      .sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
+      .toSorted((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
 
     return filteredMetrics[0]?.value;
   }
@@ -650,7 +650,7 @@ export class PerformanceMetricsService {
   private calculatePercentile(values: number[], percentile: number): number {
     if (values.length === 0) return 0;
 
-    const sorted = [...values].sort((a, b) => a - b);
+    const sorted = [...values].toSorted((a, b) => a - b);
     const index = Math.ceil((percentile / 100) * sorted.length) - 1;
     return sorted[Math.max(0, index)];
   }

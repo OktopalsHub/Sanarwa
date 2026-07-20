@@ -371,7 +371,7 @@ export class TenantService {
       .map((slug) => slug.replace(`${baseSlug}-`, '')) // Remove base part
       .map((num) => parseInt(num, 10)) // Convert to integer
       .filter((num) => !isNaN(num)) // Filter out NaN values
-      .sort((a, b) => a - b); // Sort numerically
+      .toSorted((a, b) => a - b); // Sort numerically
 
     // Determine the next available number
     const nextNumber = numbers.length ? numbers[numbers.length - 1] + 1 : 1;

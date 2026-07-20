@@ -79,7 +79,7 @@ export class WebhookValidatorService {
       let data = url;
       
       // Add body parameters in sorted order
-      const keys = Object.keys(body).sort();
+      const keys = Object.keys(body).toSorted();
       for (const key of keys) {
         data += key + body[key];
       }

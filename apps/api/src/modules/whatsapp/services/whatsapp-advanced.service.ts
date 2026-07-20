@@ -239,7 +239,7 @@ export class WhatsAppAdvancedService {
     try {
       const conversations = Array.from(this.conversationCache.values())
         .filter(c => c.status !== 'closed')
-        .sort((a, b) => b.lastMessageTime.getTime() - a.lastMessageTime.getTime())
+        .toSorted((a, b) => b.lastMessageTime.getTime() - a.lastMessageTime.getTime())
         .slice(0, limit);
 
       return conversations;

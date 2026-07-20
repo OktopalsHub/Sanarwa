@@ -39,7 +39,7 @@ export class ResendProvider extends BaseEmailProvider {
       this.logger.log('Resend provider initialized successfully');
     } catch (error) {
       this.logger.error('Failed to initialize Resend provider', error);
-      throw new Error(`Resend initialization failed: ${error.message}`);
+      throw new Error(`Resend initialization failed: ${error.message}`, { cause: error });
     }
   }
 

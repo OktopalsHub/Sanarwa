@@ -211,15 +211,19 @@ export class NombaService {
     const token = await this.getAccessToken();
     const baseUrl = this.getBaseUrl();
 
-    const response = await fetch(`${baseUrl}${path}`, {
+    const init: RequestInit = {
       method,
       headers: {
         Authorization: `Bearer ${token}`,
         'Content-Type': 'application/json',
         accountId: this.getParentAccountId(),
       },
-      body: body ? JSON.stringify(body) : undefined,
-    });
+    };
+    if (method !== 'GET' && body !== undefined) {
+      init.body = JSON.stringify(body);
+    }
+
+    const response = await fetch(`${baseUrl}${path}`, init);
 
     const payload = (await response.json().catch(() => ({}))) as T & {
       description?: string;

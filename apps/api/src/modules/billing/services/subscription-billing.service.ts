@@ -480,31 +480,58 @@ export class SubscriptionBillingService {
 
   async confirmTokenPurchase(purchaseId: string): Promise<void> {
     try {
-      const purchase = await this.tokenPurchaseRepository.findOne({
-        where: { id: purchaseId },
-      });
+      // Atomically claim PENDING → COMPLETED so concurrent webhook/sync cannot double-credit.
+      const claim = await this.tokenPurchaseRepository
+        .createQueryBuilder()
+        .update(TokenPurchase)
+        .set({
+          status: TokenPurchaseStatus.COMPLETED,
+          completedAt: () => 'CURRENT_TIMESTAMP',
+        })
+        .where('id = :id AND status = :pending', {
+          id: purchaseId,
+          pending: TokenPurchaseStatus.PENDING,
+        })
+        .returning(['id', 'tenant_id', 'token_amount'])
+        .execute();
 
-      if (!purchase) {
-        throw new NotFoundException('Purchase not found');
-      }
-
-      if (purchase.status !== TokenPurchaseStatus.PENDING) {
+      if (!claim.affected) {
+        const existing = await this.tokenPurchaseRepository.findOne({
+          where: { id: purchaseId },
+        });
+        if (!existing) {
+          throw new NotFoundException('Purchase not found');
+        }
         return;
       }
 
-      await this.tokenManagementService.addTokens(
-        purchase.tenantId,
-        purchase.tokenAmount,
-        TokenTransactionType.PURCHASE,
-        `Token purchase: ${purchase.tokenAmount} tokens`,
-        { purchaseId: purchase.id },
-      );
+      const claimed = claim.raw[0] as {
+        id: string;
+        tenant_id: string;
+        token_amount: number;
+      };
 
-      purchase.status = TokenPurchaseStatus.COMPLETED;
-      purchase.completedAt = new Date();
-      await this.tokenPurchaseRepository.save(purchase);
+      try {
+        await this.tokenManagementService.addTokens(
+          claimed.tenant_id,
+          Number(claimed.token_amount),
+          TokenTransactionType.PURCHASE,
+          `Token purchase: ${claimed.token_amount} tokens`,
+          { purchaseId: claimed.id },
+        );
+      } catch (error) {
+        // Release claim so a later sync/webhook retry can credit tokens.
+        await this.tokenPurchaseRepository.update(
+          { id: purchaseId, status: TokenPurchaseStatus.COMPLETED },
+          {
+            status: TokenPurchaseStatus.PENDING,
+            completedAt: () => 'NULL',
+          },
+        );
+        throw error;
+      }
 
-      this.logger.log(`Token purchase completed: ${purchase.id}`);
+      this.logger.log(`Token purchase completed: ${claimed.id}`);
     } catch (error) {
       this.logger.error('Failed to confirm token purchase:', error);
       throw error;

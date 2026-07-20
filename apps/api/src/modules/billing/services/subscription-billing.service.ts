@@ -911,7 +911,7 @@ export class SubscriptionBillingService {
     }
 
     if (input.provider === PaymentProvider.POLAR) {
-      const productId = this.polarService.getTokenProductId();
+      const productId = this.polarService.getProductId();
       if (!productId) {
         throw new Error('polar_product_not_configured');
       }

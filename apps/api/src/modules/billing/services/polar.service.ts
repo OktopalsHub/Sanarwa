@@ -270,11 +270,11 @@ export class PolarService {
   }
 
   isConfigured(): boolean {
-    return Boolean(this.apiKey && this.configService.get<string>('POLAR_TOKEN_PRODUCT_ID'));
+    return Boolean(this.apiKey && this.getProductId());
   }
 
-  getTokenProductId(): string | undefined {
-    return this.configService.get<string>('POLAR_TOKEN_PRODUCT_ID')?.trim() || undefined;
+  getProductId(): string | undefined {
+    return this.configService.get<string>('POLAR_PRODUCT_ID')?.trim() || undefined;
   }
 
   getWebOrigin(): string {
@@ -294,16 +294,14 @@ export class PolarService {
     return `${this.getWebOrigin()}/${tenantSlug}/billing?setup=success&setup_reference=${encodeURIComponent(setupReference)}`;
   }
 
-  getCardVaultProductId(): string | undefined {
-    return (
-      this.configService.get<string>('POLAR_CARD_VAULT_PRODUCT_ID')?.trim() ||
-      this.configService.get<string>('POLAR_TOKEN_PRODUCT_ID')?.trim() ||
-      undefined
-    );
+  getCardSetupAmountCents(): number {
+    const raw = this.configService.get<string>('POLAR_CARD_SETUP_AMOUNT_CENTS');
+    const parsed = raw ? Number(raw) : NaN;
+    return Number.isFinite(parsed) && parsed > 0 ? Math.round(parsed) : 100;
   }
 
   isCardVaultConfigured(): boolean {
-    return Boolean(this.apiKey && this.getCardVaultProductId());
+    return this.isConfigured();
   }
 
   async createPaymentMethodSetupCheckout(data: {
@@ -312,16 +310,29 @@ export class PolarService {
     successUrl: string;
     metadata?: Record<string, unknown>;
     externalCustomerId?: string;
+    amountMinor?: number;
   }): Promise<{ checkoutUrl: string; checkoutId: string }> {
     if (!this.apiKey) {
       throw new Error('polar_not_configured');
     }
+
+    const amountMinor = data.amountMinor ?? this.getCardSetupAmountCents();
 
     const requestBody: Record<string, unknown> = {
       products: [data.productId],
       customer_email: data.email,
       success_url: data.successUrl,
       metadata: data.metadata,
+      // Same product as packs; ad-hoc price for the vault setup charge
+      prices: {
+        [data.productId]: [
+          {
+            amount_type: 'fixed',
+            price_amount: amountMinor,
+            price_currency: 'usd',
+          },
+        ],
+      },
     };
 
     if (data.externalCustomerId) {

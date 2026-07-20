@@ -90,8 +90,9 @@ export class NombaService {
   }
 
   getCardSetupAmount(): number {
-    const configured = this.configService.get<number>('NOMBA_CARD_SETUP_AMOUNT');
-    return configured && configured > 0 ? configured : 100;
+    const raw = this.configService.get<string | number>('NOMBA_CARD_SETUP_AMOUNT');
+    const parsed = raw === undefined || raw === null || raw === '' ? NaN : Number(raw);
+    return Number.isFinite(parsed) && parsed > 0 ? parsed : 100;
   }
 
   async createCheckoutOrder(input: {

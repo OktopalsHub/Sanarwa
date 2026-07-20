@@ -159,36 +159,15 @@ export class BachsService {
     return 'pending';
   }
 
-  /**
-   * Currency-specific CUSTOM-priced Bachs product (`prod_...`).
-   * Pass pack/setup amounts via `product_cart[].amount` + `billing_currency`.
-   * Legacy single-product env names still work as fallbacks.
-   */
   getProductId(currency: BillingCurrency): string | undefined {
     const normalized = currency.toUpperCase() as BillingCurrency;
     if (normalized === 'USD') {
-      return (
-        this.configService.get<string>('BACHS_PRODUCT_ID_USD')?.trim() ||
-        this.configService.get<string>('BACHS_CHECKOUT_PRODUCT_ID_USD')?.trim() ||
-        this.configService.get<string>('BACHS_PRODUCT_ID')?.trim() ||
-        this.configService.get<string>('BACHS_CHECKOUT_PRODUCT_ID')?.trim() ||
-        undefined
-      );
+      return this.configService.get<string>('BACHS_PRODUCT_ID_USD')?.trim() || undefined;
     }
     if (normalized === 'NGN') {
-      return (
-        this.configService.get<string>('BACHS_PRODUCT_ID_NGN')?.trim() ||
-        this.configService.get<string>('BACHS_CHECKOUT_PRODUCT_ID_NGN')?.trim() ||
-        this.configService.get<string>('BACHS_PRODUCT_ID')?.trim() ||
-        this.configService.get<string>('BACHS_CHECKOUT_PRODUCT_ID')?.trim() ||
-        undefined
-      );
+      return this.configService.get<string>('BACHS_PRODUCT_ID_NGN')?.trim() || undefined;
     }
-    return (
-      this.configService.get<string>('BACHS_PRODUCT_ID')?.trim() ||
-      this.configService.get<string>('BACHS_CHECKOUT_PRODUCT_ID')?.trim() ||
-      undefined
-    );
+    return undefined;
   }
 
   getWebhookSecret(): string {

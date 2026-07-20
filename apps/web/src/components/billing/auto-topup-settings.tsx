@@ -134,7 +134,7 @@ export function AutoTopupSettings() {
           <div>
             <p className="font-medium">Enable auto top-up</p>
             <p className="text-sm text-muted-foreground">
-              Requires a saved card through Nomba (NGN) or Polar (USD).
+              Requires a saved card (Nomba for NGN, Bachs or Polar for USD).
             </p>
           </div>
           <Switch checked={enabled} onCheckedChange={setEnabled} disabled={isLoading} />

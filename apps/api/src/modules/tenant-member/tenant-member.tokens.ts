@@ -1,0 +1,1 @@
+export const TENANT_MEMBER_REPO = Symbol('TENANT_MEMBER_REPO');

@@ -1,0 +1,17 @@
+{
+  "name": "Sanarwa",
+  "short_name": "Sanarwa",
+  "description": "Multi-channel communication API for developers",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#F4F6FA",
+  "theme_color": "#3B6EF5",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}

@@ -1,0 +1,16 @@
+{
+  "name": "@sanarwa/config",
+  "version": "0.1.0",
+  "private": true,
+  "exports": {
+    "./tsconfig/base": "./tsconfig.base.json",
+    "./tsconfig/react": "./tsconfig.react.json",
+    "./tsconfig/node": "./tsconfig.node.json"
+  },
+  "scripts": {
+    "build": "echo config package",
+    "lint": "echo lint skipped",
+    "test": "echo no tests",
+    "type-check": "echo ok"
+  }
+}

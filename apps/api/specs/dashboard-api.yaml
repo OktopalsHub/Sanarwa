@@ -1,0 +1,5610 @@
+openapi: 3.0.3
+info:
+  title: Sanarwa Dashboard API
+  description: |
+    Internal dashboard API for managing tenants, users, authentication, and platform administration.
+    This API is used by the dashboard interface for tenant onboarding, user management, and platform configuration.
+  version: 1.0.0
+  contact:
+    name: API Support
+    email: support@sanarwa.com
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: https://dashboard-api.sanarwa.com/v1
+    description: Production dashboard server
+  - url: http://localhost:9000
+    description: Development dashboard server
+
+security:
+  - BearerAuth: []
+  - ApiKeyAuth: []
+
+tags:
+  - name: Authentication
+    description: User authentication and authorization
+  - name: OAuth Authentication
+    description: OAuth-based authentication with third-party providers
+  - name: Users
+    description: User profile and account management
+  - name: API Keys
+    description: Manage API keys for project access
+  - name: Tenant Management
+    description: Manage tenant accounts and settings
+  - name: Tenant Members
+    description: Manage tenant members and roles
+  - name: Invitations
+    description: Send and manage invitations
+  - name: Projects
+    description: Manage projects within tenants
+  - name: Brands
+    description: Manage brand configurations and white-labeling
+  - name: Templates
+    description: Manage notification templates
+  - name: Provider Configurations
+    description: Manage notification provider configurations
+  - name: Messaging
+    description: Send and manage messages and notifications
+  - name: Analytics
+    description: Analytics, reporting, and delivery tracking
+
+  - name: Configuration Management
+    description: System and tenant configuration management
+  - name: Health & Monitoring
+    description: System health checks and performance monitoring
+  - name: Security & Audit
+    description: Security events and audit log management
+  - name: BYOP Management
+    description: Bring Your Own Provider configuration and management
+  - name: Dead Letter Queue Management
+    description: Failed message monitoring and retry management
+  - name: In-App Notifications Management
+    description: In-app notification system management
+  - name: Performance Monitoring
+    description: System performance monitoring and alerting
+  - name: Application
+    description: Root application endpoints and health checks
+
+paths:
+  # Tenant Management
+  /tenants:
+    post:
+      tags:
+        - Tenant Management
+      summary: Create a new tenant
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateTenantRequest"
+      responses:
+        "201":
+          description: Tenant created successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Tenant"
+
+    get:
+      tags:
+        - Tenant Management
+      summary: Get tenants with pagination and filtering
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/Page"
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/Search"
+        - $ref: "#/components/parameters/SortBy"
+        - $ref: "#/components/parameters/SortOrder"
+        - name: status
+          in: query
+          description: Filter by tenant status
+          schema:
+            $ref: "#/components/schemas/TenantStatus"
+      responses:
+        "200":
+          description: Tenants retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PaginatedTenants"
+
+  /tenants/{tenantId}:
+    parameters:
+      - $ref: "#/components/parameters/TenantId"
+    get:
+      tags:
+        - Tenant Management
+      summary: Get tenant by ID
+      security:
+        - BearerAuth: []
+
+      responses:
+        "200":
+          description: Tenant retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Tenant"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+    patch:
+      tags:
+        - Tenant Management
+      summary: Update tenant
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateTenantRequest"
+      responses:
+        "200":
+          description: Tenant updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Tenant"
+
+    delete:
+      tags:
+        - Tenant Management
+      summary: Delete tenant
+      security:
+        - BearerAuth: []
+      responses:
+        "204":
+          description: Tenant deleted successfully
+
+  /tenants/{tenantId}/suspend:
+    post:
+      tags:
+        - Tenant Management
+      summary: Suspend tenant
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/TenantId"
+      responses:
+        "200":
+          description: Tenant suspended successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Tenant"
+
+  /tenants/{tenantId}/activate:
+    post:
+      tags:
+        - Tenant Management
+      summary: Activate tenant
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/TenantId"
+      responses:
+        "200":
+          description: Tenant activated successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Tenant"
+
+  /tenants/me:
+    get:
+      tags:
+        - Tenant Management
+      summary: Get all tenants that the current user belongs to
+      description: |
+        Get a paginated list of all tenants that the current user is a member of.
+        This endpoint returns tenant membership information including the user's role in each tenant.
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/Page"
+        - $ref: "#/components/parameters/Limit"
+        - name: search
+          in: query
+          description: Search by tenant name or subdomain
+          schema:
+            type: string
+            example: "acme"
+        - name: role
+          in: query
+          description: Filter by user role in tenant
+          schema:
+            $ref: "#/components/schemas/TenantMemberRole"
+        - name: sortBy
+          in: query
+          description: Sort field
+          schema:
+            type: string
+            enum: [createdAt, role, tenantName]
+            default: createdAt
+        - name: sortOrder
+          in: query
+          description: Sort order
+          schema:
+            type: string
+            enum: [ASC, DESC]
+            default: DESC
+      responses:
+        "200":
+          description: User tenants retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PaginatedUserTenants"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  # Authentication Endpoints
+  /auth/register:
+    post:
+      tags:
+        - Authentication
+      summary: Register a new user
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RegisterRequest"
+      responses:
+        "201":
+          description: User registered successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "409":
+          description: User already exists
+
+  /auth/login:
+    post:
+      tags:
+        - Authentication
+      summary: Login user
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginRequest"
+      responses:
+        "200":
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /auth/refresh:
+    post:
+      tags:
+        - Authentication
+      summary: Refresh access token
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RefreshTokenRequest"
+      responses:
+        "200":
+          description: Token refreshed successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /auth/logout:
+    post:
+      tags:
+        - Authentication
+      summary: Logout user
+      security:
+        - BearerAuth: []
+      responses:
+        "200":
+          description: Logout successful
+
+  /auth/profile:
+    get:
+      tags:
+        - Authentication
+      summary: Get current user profile
+      security:
+        - BearerAuth: []
+      responses:
+        "200":
+          description: User profile retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserProfile"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /auth/change-password:
+    put:
+      tags:
+        - Authentication
+      summary: Change user password
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ChangePasswordRequest"
+      responses:
+        "204":
+          description: Password changed successfully
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /auth/forgot-password:
+    post:
+      tags:
+        - Authentication
+      summary: Request password reset
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ForgotPasswordRequest"
+      responses:
+        "204":
+          description: Password reset email sent
+        "400":
+          $ref: "#/components/responses/BadRequest"
+
+  /auth/reset-password:
+    post:
+      tags:
+        - Authentication
+      summary: Reset password with token
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ResetPasswordRequest"
+      responses:
+        "204":
+          description: Password reset successfully
+        "400":
+          $ref: "#/components/responses/BadRequest"
+
+  # OAuth Authentication Endpoints
+  /auth/oauth/{provider}:
+    get:
+      tags:
+        - OAuth Authentication
+      summary: Initiate OAuth login with the specified provider
+      security: []
+      parameters:
+        - $ref: "#/components/parameters/OAuthProvider"
+      responses:
+        "302":
+          description: Redirect to OAuth provider authorization URL
+        "400":
+          $ref: "#/components/responses/BadRequest"
+
+  /auth/oauth/{provider}/callback:
+    get:
+      tags:
+        - OAuth Authentication
+      summary: OAuth callback URL - handles the OAuth provider response
+      security: []
+      parameters:
+        - $ref: "#/components/parameters/OAuthProvider"
+        - name: code
+          in: query
+          required: false
+          description: Authorization code from OAuth provider
+          schema:
+            type: string
+        - name: error
+          in: query
+          required: false
+          description: Error from OAuth provider
+          schema:
+            type: string
+      responses:
+        "302":
+          description: Redirect to frontend with authentication tokens or error
+        "400":
+          $ref: "#/components/responses/BadRequest"
+
+  # Tenant Members
+  /tenants/{tenantId}/members:
+    # post:
+    #   tags:
+    #     - Tenant Members
+    #   summary: Add a member to the tenant
+    #   security:
+    #     - BearerAuth: []
+    #   parameters:
+    #     - $ref: "#/components/parameters/TenantId"
+    #   requestBody:
+    #     required: true
+    #     content:
+    #       application/json:
+    #         schema:
+    #           $ref: "#/components/schemas/CreateTenantMemberRequest"
+    #   responses:
+    #     "201":
+    #       description: Member added successfully
+    #       content:
+    #         application/json:
+    #           schema:
+    #             $ref: "#/components/schemas/TenantMember"
+
+    get:
+      tags:
+        - Tenant Members
+      summary: Get tenant members with pagination and filtering
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/TenantId"
+        - $ref: "#/components/parameters/Page"
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/Search"
+        - $ref: "#/components/parameters/SortBy"
+        - $ref: "#/components/parameters/SortOrder"
+        - $ref: "#/components/parameters/TenantMemberRoleQuery"
+      responses:
+        "200":
+          description: Members retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PaginatedTenantMembers"
+
+  /tenants/{tenantId}/members/{memberId}:
+    get:
+      tags:
+        - Tenant Members
+      summary: Get a specific tenant member
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/TenantId"
+        - $ref: "#/components/parameters/MemberId"
+      responses:
+        "200":
+          description: Member retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TenantMember"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+    patch:
+      tags:
+        - Tenant Members
+      summary: Update a tenant member
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/TenantId"
+        - $ref: "#/components/parameters/MemberId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateTenantMemberRequest"
+      responses:
+        "200":
+          description: Member updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TenantMember"
+
+    delete:
+      tags:
+        - Tenant Members
+      summary: Remove a tenant member
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/TenantId"
+        - $ref: "#/components/parameters/MemberId"
+      responses:
+        "204":
+          description: Member removed successfully
+
+  # Tenant Invitations
+  /tenants/{tenantId}/invites:
+    post:
+      tags:
+        - Invitations
+      summary: Send an invitation
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/TenantId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateInviteRequest"
+      responses:
+        "201":
+          description: Invitation sent successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Invite"
+
+    get:
+      tags:
+        - Invitations
+      summary: Get tenant invitations with pagination and filtering
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/TenantId"
+        - $ref: "#/components/parameters/Page"
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/Search"
+        - $ref: "#/components/parameters/SortBy"
+        - $ref: "#/components/parameters/SortOrder"
+        - name: status
+          in: query
+          description: Filter by invitation status
+          schema:
+            $ref: "#/components/schemas/InviteStatus"
+      responses:
+        "200":
+          description: Invitations retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PaginatedInvites"
+
+  /tenants/{tenantId}/invites/{inviteId}:
+    delete:
+      tags:
+        - Invitations
+      summary: Cancel an invitation
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/TenantId"
+        - $ref: "#/components/parameters/InviteId"
+      responses:
+        "204":
+          description: Invitation cancelled successfully
+
+  # Public Invitation Endpoints
+  /invites/accept:
+    post:
+      tags:
+        - Invitations
+      summary: Accept an invitation
+      description: |
+        Accept a tenant invitation. Supports two authentication flows:
+        1. **Email/Password**: Include a password to create a local account
+        2. **OAuth**: Omit password to complete setup via OAuth providers (Google, GitHub)
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AcceptInviteRequest"
+            examples:
+              email_password:
+                summary: Accept with email/password
+                value:
+                  token: "abc123def456"
+                  firstName: "John"
+                  lastName: "Doe"
+                  password: "securePassword123"
+              oauth_flow:
+                summary: Accept for OAuth completion
+                value:
+                  token: "abc123def456"
+                  firstName: "John"
+                  lastName: "Doe"
+      responses:
+        "200":
+          description: Invitation accepted successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AcceptInviteResponse"
+
+  /invites/{token}:
+    get:
+      tags:
+        - Invitations
+      summary: Get invitation details by token
+      security: []
+      parameters:
+        - name: token
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Invitation details retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Invite"
+
+  /invites/{token}/decline:
+    post:
+      tags:
+        - Invitations
+      summary: Decline an invitation
+      security: []
+      parameters:
+        - name: token
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "204":
+          description: Invitation declined successfully
+
+  # Projects
+  /tenants/{tenantId}/projects:
+    post:
+      tags:
+        - Projects
+      summary: Create a new project
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/TenantId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateProjectRequest"
+      responses:
+        "201":
+          description: Project created successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Project"
+
+    get:
+      tags:
+        - Projects
+      summary: Get tenant projects with pagination and filtering
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/TenantId"
+        - $ref: "#/components/parameters/Page"
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/Search"
+        - $ref: "#/components/parameters/SortBy"
+        - $ref: "#/components/parameters/SortOrder"
+      responses:
+        "200":
+          description: Projects retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PaginatedProjects"
+
+  /tenants/{tenantId}/projects/{projectId}:
+    get:
+      tags:
+        - Projects
+      summary: Get a specific project
+      parameters:
+        - $ref: "#/components/parameters/TenantId"
+        - $ref: "#/components/parameters/ProjectId"
+      responses:
+        "200":
+          description: Project retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Project"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+    put:
+      tags:
+        - Projects
+      summary: Update a project
+      parameters:
+        - $ref: "#/components/parameters/TenantId"
+        - $ref: "#/components/parameters/ProjectId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateProjectRequest"
+      responses:
+        "200":
+          description: Project updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Project"
+
+    delete:
+      tags:
+        - Projects
+      summary: Delete a project
+      parameters:
+        - $ref: "#/components/parameters/TenantId"
+        - $ref: "#/components/parameters/ProjectId"
+      responses:
+        "200":
+          description: Project deleted successfully
+
+  # Brands
+  /tenants/{tenantId}/brands:
+    post:
+      tags:
+        - Brands
+      summary: Create a new brand
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/TenantId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateBrandRequest"
+      responses:
+        "201":
+          description: Brand created successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Brand"
+
+    get:
+      tags:
+        - Brands
+      summary: Get tenant brands with pagination and filtering
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/TenantId"
+        - $ref: "#/components/parameters/Page"
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/Search"
+        - $ref: "#/components/parameters/SortBy"
+        - $ref: "#/components/parameters/SortOrder"
+      responses:
+        "200":
+          description: Brands retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PaginatedBrands"
+
+  /tenants/{tenantId}/brands/{brandId}:
+    get:
+      tags:
+        - Brands
+      summary: Get a specific brand
+      parameters:
+        - $ref: "#/components/parameters/TenantId"
+        - $ref: "#/components/parameters/BrandId"
+      responses:
+        "200":
+          description: Brand retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Brand"
+
+    patch:
+      tags:
+        - Brands
+      summary: Update a brand
+      parameters:
+        - $ref: "#/components/parameters/TenantId"
+        - $ref: "#/components/parameters/BrandId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateBrandRequest"
+      responses:
+        "200":
+          description: Brand updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Brand"
+
+    delete:
+      tags:
+        - Brands
+      summary: Delete a brand
+      parameters:
+        - $ref: "#/components/parameters/TenantId"
+        - $ref: "#/components/parameters/BrandId"
+      responses:
+        "204":
+          description: Brand deleted successfully
+
+  /tenants/{tenantId}/brands/{brandId}/domain-verification-instructions:
+    get:
+      tags:
+        - Brands
+      summary: Get domain verification instructions
+      description: |
+        Get DNS setup instructions for domain verification. This endpoint provides the verification token
+        and DNS record details needed to verify domain ownership.
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/TenantId"
+        - $ref: "#/components/parameters/BrandId"
+        - name: domain
+          in: query
+          description: Domain to verify (optional if already set in brand)
+          schema:
+            type: string
+            format: hostname
+            example: "mycompany.com"
+      responses:
+        "200":
+          description: Domain verification instructions retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DomainVerificationInstructions"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /tenants/{tenantId}/brands/{brandId}/verify-domain:
+    post:
+      tags:
+        - Brands
+      summary: Verify domain ownership
+      description: |
+        Perform actual DNS verification for domain ownership. This endpoint performs real DNS lookups
+        to verify that the required TXT record has been added to the domain's DNS configuration.
+
+        **Prerequisites:**
+        - `defaultFromEmail` must be set
+        - `defaultFromName` must be set
+        - Email domain must match the domain being verified
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/TenantId"
+        - $ref: "#/components/parameters/BrandId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                domain:
+                  type: string
+                  format: hostname
+                  description: Domain to verify
+                  example: "mycompany.com"
+              required:
+                - domain
+      responses:
+        "200":
+          description: Domain verified successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Brand"
+        "400":
+          description: Domain verification failed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DomainVerificationError"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /tenants/{tenantId}/brands/{brandId}/verify-dkim:
+    post:
+      tags:
+        - Brands
+      summary: Verify DKIM configuration
+      description: |
+        Perform actual DNS verification for DKIM configuration. This endpoint performs real DNS lookups
+        to verify that the DKIM DNS record has been properly configured.
+
+        **Prerequisites:**
+        - Domain must be verified first
+        - `defaultFromEmail` must be set and match the domain
+        - `defaultFromName` must be set
+        - DKIM DNS record must be configured
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/TenantId"
+        - $ref: "#/components/parameters/BrandId"
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                selector:
+                  type: string
+                  description: DKIM selector
+                  default: "default"
+                  example: "default"
+      responses:
+        "200":
+          description: DKIM verified successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Brand"
+        "400":
+          description: DKIM verification failed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DKIMVerificationError"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /tenants/{tenantId}/brands/{brandId}/verify-dmarc:
+    post:
+      tags:
+        - Brands
+      summary: Verify DMARC configuration
+      description: |
+        Perform actual DNS verification for DMARC configuration. This endpoint performs real DNS lookups
+        to verify that the DMARC DNS record has been properly configured.
+
+        **Prerequisites:**
+        - Domain must be verified first
+        - `defaultFromEmail` must be set and match the domain
+        - `defaultFromName` must be set
+        - DMARC DNS record must be configured
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/TenantId"
+        - $ref: "#/components/parameters/BrandId"
+      responses:
+        "200":
+          description: DMARC verified successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Brand"
+        "400":
+          description: DMARC verification failed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DMARCVerificationError"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  # Templates
+  /tenants/{tenantId}/templates:
+    post:
+      tags:
+        - Templates
+      summary: Create a new template
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/TenantId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateTemplateRequest"
+      responses:
+        "201":
+          description: Template created successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Template"
+
+    get:
+      tags:
+        - Templates
+      summary: Get tenant templates with pagination and filtering
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/TenantId"
+        - $ref: "#/components/parameters/Page"
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/Search"
+        - $ref: "#/components/parameters/SortBy"
+        - $ref: "#/components/parameters/SortOrder"
+        - name: status
+          in: query
+          description: Filter by template status
+          schema:
+            $ref: "#/components/schemas/TemplateStatus"
+        - name: channel
+          in: query
+          description: Filter by notification channel
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Templates retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PaginatedTemplates"
+
+  /tenants/{tenantId}/templates/{templateId}:
+    parameters:
+      - $ref: "#/components/parameters/TenantId"
+      - $ref: "#/components/parameters/TemplateId"
+    get:
+      tags:
+        - Templates
+      summary: Get a specific template
+      responses:
+        "200":
+          description: Template retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Template"
+
+    patch:
+      tags:
+        - Templates
+      summary: Update a template
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateTemplateRequest"
+      responses:
+        "200":
+          description: Template updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Template"
+
+    delete:
+      tags:
+        - Templates
+      summary: Delete a template
+      responses:
+        "204":
+          description: Template deleted successfully
+
+  /tenants/{tenantId}/templates/{templateId}/versions:
+    parameters:
+      - $ref: "#/components/parameters/TenantId"
+      - $ref: "#/components/parameters/TemplateId"
+    post:
+      tags:
+        - Templates
+      summary: Create a new version of a template
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateTemplateRequest"
+      responses:
+        "201":
+          description: Template version created successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Template"
+
+    get:
+      tags:
+        - Templates
+      summary: Get template versions
+      security:
+        - BearerAuth: []
+      responses:
+        "200":
+          description: Template versions retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Template"
+
+  /tenants/{tenantId}/templates/render:
+    post:
+      tags:
+        - Templates
+      summary: Render a template with data
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/TenantId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RenderTemplateRequest"
+      responses:
+        "200":
+          description: Template rendered successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RenderedTemplate"
+
+  /tenants/{tenantId}/templates/{templateId}/activate:
+    post:
+      tags:
+        - Templates
+      summary: Activate a template version
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/TenantId"
+        - $ref: "#/components/parameters/TemplateId"
+      responses:
+        "200":
+          description: Template version activated successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Template"
+
+  /tenants/{tenantId}/templates/{templateId}/archive:
+    post:
+      tags:
+        - Templates
+      summary: Archive a template
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/TenantId"
+        - $ref: "#/components/parameters/TemplateId"
+      responses:
+        "200":
+          description: Template archived successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Template"
+
+  /tenants/{tenantId}/templates/{templateId}/duplicate:
+    post:
+      tags:
+        - Templates
+      summary: Duplicate a template
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/TenantId"
+        - $ref: "#/components/parameters/TemplateId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  example: "Copy of Email Template"
+              required:
+                - name
+      responses:
+        "201":
+          description: Template duplicated successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Template"
+
+  /tenants/{tenantId}/templates/{templateId}/validate:
+    post:
+      tags:
+        - Templates
+      summary: Validate template syntax and structure
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/TenantId"
+        - $ref: "#/components/parameters/TemplateId"
+      responses:
+        "200":
+          description: Template validation result
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  valid:
+                    type: boolean
+                  errors:
+                    type: array
+                    items:
+                      type: string
+                  warnings:
+                    type: array
+                    items:
+                      type: string
+
+  /tenants/{tenantId}/templates/{templateId}/validate-data:
+    post:
+      tags:
+        - Templates
+      summary: Validate template with sample data
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/TenantId"
+        - $ref: "#/components/parameters/TemplateId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                data:
+                  type: object
+                  additionalProperties: true
+              required:
+                - data
+      responses:
+        "200":
+          description: Template data validation result
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  valid:
+                    type: boolean
+                  missingVariables:
+                    type: array
+                    items:
+                      type: string
+                  renderedContent:
+                    type: string
+
+  /tenants/{tenantId}/templates/channel/{channel}:
+    get:
+      tags:
+        - Templates
+      summary: Get templates by channel
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/TenantId"
+        - name: channel
+          in: path
+          required: true
+          schema:
+            type: string
+            enum: [email, sms, push, in_app, webhook]
+      responses:
+        "200":
+          description: Templates retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Template"
+
+  /tenants/{tenantId}/templates/channel/{channel}/default:
+    get:
+      tags:
+        - Templates
+      summary: Get default template for channel
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/TenantId"
+        - name: channel
+          in: path
+          required: true
+          schema:
+            type: string
+            enum: [email, sms, push, in_app, webhook]
+      responses:
+        "200":
+          description: Default template retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Template"
+
+  # API Keys Management
+  /api-keys:
+    post:
+      tags:
+        - API Keys
+      summary: Create a new API key
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateApiKeyRequest"
+      responses:
+        "201":
+          description: API key created successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiKeyResponse"
+
+    get:
+      tags:
+        - API Keys
+      summary: Get project API keys
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: projectId
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: List of API keys
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ApiKeyResponse"
+
+  /api-keys/{id}:
+    get:
+      tags:
+        - API Keys
+      summary: Get an API key by ID
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: API key details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiKeyResponse"
+
+    put:
+      tags:
+        - API Keys
+      summary: Update an API key
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateApiKeyRequest"
+      responses:
+        "200":
+          description: API key updated successfully
+
+    delete:
+      tags:
+        - API Keys
+      summary: Revoke an API key
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: API key revoked successfully
+
+  # User Management
+  /users:
+    get:
+      tags:
+        - Users
+      summary: Get users with pagination and filtering
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/Page"
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/Search"
+        - $ref: "#/components/parameters/SortBy"
+        - $ref: "#/components/parameters/SortOrder"
+        - name: role
+          in: query
+          description: Filter by user role
+          schema:
+            $ref: "#/components/schemas/UserRole"
+        - name: status
+          in: query
+          description: Filter by user status
+          schema:
+            $ref: "#/components/schemas/UserStatus"
+        - name: authProvider
+          in: query
+          description: Filter by authentication provider
+          schema:
+            $ref: "#/components/schemas/AuthProvider"
+      responses:
+        "200":
+          description: Users retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PaginatedUsers"
+
+  /users/profile:
+    get:
+      tags:
+        - Users
+      summary: Get current user profile
+      security:
+        - BearerAuth: []
+      responses:
+        "200":
+          description: User profile retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserResponse"
+
+    put:
+      tags:
+        - Users
+      summary: Update current user profile
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateUserRequest"
+      responses:
+        "200":
+          description: User profile updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserResponse"
+
+  /users/{id}:
+    get:
+      tags:
+        - Users
+      summary: Get user by ID
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: User ID
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: User retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserResponse"
+
+  # Provider Configurations
+  /tenants/{tenantId}/provider-configs:
+    parameters:
+      - $ref: "#/components/parameters/TenantId"
+    post:
+      tags:
+        - Provider Configurations
+      summary: Create a new provider configuration
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateProviderConfigRequest"
+      responses:
+        "201":
+          description: Provider configuration created successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProviderConfig"
+
+    get:
+      tags:
+        - Provider Configurations
+      summary: Get all provider configurations for a tenant with pagination and filtering
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/Page"
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/ChannelQuery"
+        - $ref: "#/components/parameters/ProviderType"
+        - $ref: "#/components/parameters/IsActiveQuery"
+      responses:
+        "200":
+          description: Provider configurations retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PaginatedProviderConfigs"
+
+  /tenants/{tenantId}/provider-configs/{configId}:
+    parameters:
+      - $ref: "#/components/parameters/TenantId"
+      - $ref: "#/components/parameters/ConfigId"
+    get:
+      tags:
+        - Provider Configurations
+      summary: Get a specific provider configuration
+      responses:
+        "200":
+          description: Provider configuration retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProviderConfig"
+
+    patch:
+      tags:
+        - Provider Configurations
+      summary: Update a provider configuration
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateProviderConfigRequest"
+      responses:
+        "200":
+          description: Provider configuration updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProviderConfig"
+
+    delete:
+      tags:
+        - Provider Configurations
+      summary: Delete a provider configuration
+      responses:
+        "204":
+          description: Provider configuration deleted successfully
+
+  /tenants/{tenantId}/provider-configs/project/{projectId}:
+    get:
+      tags:
+        - Provider Configurations
+      summary: Get provider configurations for a specific project
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/TenantId"
+        - name: projectId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - $ref: "#/components/parameters/Page"
+        - $ref: "#/components/parameters/Limit"
+      responses:
+        "200":
+          description: Provider configurations retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PaginatedProviderConfigs"
+
+  /tenants/{tenantId}/provider-configs/{configId}/test:
+    post:
+      tags:
+        - Provider Configurations
+      summary: Test a provider configuration
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/TenantId"
+        - $ref: "#/components/parameters/ConfigId"
+      responses:
+        "200":
+          description: Provider configuration test result
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  responseTime:
+                    type: number
+                  details:
+                    type: object
+
+  /tenants/{tenantId}/provider-configs/{configId}/activate:
+    post:
+      tags:
+        - Provider Configurations
+      summary: Activate a provider configuration
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/TenantId"
+        - $ref: "#/components/parameters/ConfigId"
+      responses:
+        "200":
+          description: Provider configuration activated successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProviderConfig"
+
+  /tenants/{tenantId}/provider-configs/{configId}/deactivate:
+    post:
+      tags:
+        - Provider Configurations
+      summary: Deactivate a provider configuration
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/TenantId"
+        - $ref: "#/components/parameters/ConfigId"
+      responses:
+        "200":
+          description: Provider configuration deactivated successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProviderConfig"
+
+  /tenants/{tenantId}/provider-configs/{configId}/health:
+    get:
+      tags:
+        - Provider Configurations
+      summary: Check provider health status
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/TenantId"
+        - $ref: "#/components/parameters/ConfigId"
+      responses:
+        "200":
+          description: Provider health status retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  healthy:
+                    type: boolean
+                  status:
+                    type: string
+                  lastChecked:
+                    type: string
+                    format: date-time
+                  responseTime:
+                    type: number
+                  errorMessage:
+                    type: string
+
+  # BYOP (Bring Your Own Provider) Endpoints
+  /tenants/{tenantId}/byop/templates:
+    get:
+      tags:
+        - BYOP
+      summary: Get available provider templates
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/TenantId"
+        - name: channel
+          in: query
+          description: Filter by notification channel
+          schema:
+            $ref: "#/components/schemas/NotificationChannel"
+        - name: search
+          in: query
+          description: Search templates by name or description
+          schema:
+            type: string
+        - name: popular
+          in: query
+          description: Filter popular templates only
+          schema:
+            type: boolean
+      responses:
+        "200":
+          description: Provider templates retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ProviderTemplate"
+
+  /tenants/{tenantId}/byop/templates/{templateId}:
+    get:
+      tags:
+        - BYOP
+      summary: Get a specific provider template
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/TenantId"
+        - name: templateId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Provider template retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProviderTemplate"
+
+  /tenants/{tenantId}/byop/templates/{templateId}/validate:
+    post:
+      tags:
+        - BYOP
+      summary: Validate configuration against template
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/TenantId"
+        - name: templateId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: true
+      responses:
+        "200":
+          description: Configuration validation result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ValidationResult"
+
+  /tenants/{tenantId}/byop/recommendations:
+    post:
+      tags:
+        - BYOP
+      summary: Get provider recommendations based on requirements
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/TenantId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProviderRequirements"
+      responses:
+        "200":
+          description: Provider recommendations retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ProviderTemplate"
+
+  /tenants/{tenantId}/byop/analytics/costs:
+    get:
+      tags:
+        - BYOP
+      summary: Get cost analytics and trends
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/TenantId"
+        - name: channel
+          in: query
+          schema:
+            $ref: "#/components/schemas/NotificationChannel"
+        - name: startDate
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: endDate
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: granularity
+          in: query
+          schema:
+            type: string
+            enum: [hour, day, week, month]
+            default: day
+      responses:
+        "200":
+          description: Cost analytics retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CostAnalytics"
+
+  /tenants/{tenantId}/byop/analytics/comparison:
+    get:
+      tags:
+        - BYOP
+      summary: Compare costs between providers
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/TenantId"
+        - name: channel
+          in: query
+          required: true
+          schema:
+            $ref: "#/components/schemas/NotificationChannel"
+        - name: startDate
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: endDate
+          in: query
+          schema:
+            type: string
+            format: date
+      responses:
+        "200":
+          description: Provider cost comparison retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProviderComparison"
+
+  /tenants/{tenantId}/byop/analytics/alerts:
+    get:
+      tags:
+        - BYOP
+      summary: Check for cost alerts
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/TenantId"
+        - name: dailyLimit
+          in: query
+          schema:
+            type: number
+        - name: monthlyLimit
+          in: query
+          schema:
+            type: number
+        - name: spikeThreshold
+          in: query
+          schema:
+            type: number
+      responses:
+        "200":
+          description: Cost alerts retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/CostAlert"
+
+  /tenants/{tenantId}/byop/analytics/optimization:
+    get:
+      tags:
+        - BYOP
+      summary: Get cost optimization recommendations
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/TenantId"
+        - name: channel
+          in: query
+          schema:
+            $ref: "#/components/schemas/NotificationChannel"
+      responses:
+        "200":
+          description: Cost optimization recommendations retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CostOptimization"
+
+  /tenants/{tenantId}/byop/calculate-cost:
+    post:
+      tags:
+        - BYOP
+      summary: Calculate estimated costs for given usage
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/TenantId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CostCalculationRequest"
+      responses:
+        "200":
+          description: Cost calculation completed successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CostCalculationResult"
+
+  /tenants/{tenantId}/byop/health/overview:
+    get:
+      tags:
+        - BYOP
+      summary: Get BYOP system health overview
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/TenantId"
+      responses:
+        "200":
+          description: BYOP health overview retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BYOPHealthOverview"
+
+  /tenants/{tenantId}/byop/setup-guide/{channel}:
+    get:
+      tags:
+        - BYOP
+      summary: Get setup guide for a specific channel
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/TenantId"
+        - name: channel
+          in: path
+          required: true
+          schema:
+            $ref: "#/components/schemas/NotificationChannel"
+      responses:
+        "200":
+          description: Setup guide retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SetupGuide"
+
+  /tenants/{tenantId}/byop/bulk-setup:
+    post:
+      tags:
+        - BYOP
+      summary: Set up multiple providers at once
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/TenantId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BulkSetupRequest"
+      responses:
+        "201":
+          description: Bulk setup completed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BulkSetupResponse"
+
+  # Messaging Endpoints
+  /messaging/send:
+    post:
+      tags:
+        - Messaging
+      summary: Send a single message
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SendMessageRequest"
+      responses:
+        "201":
+          description: Message sent successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MessageResponse"
+
+  /messaging/send-bulk:
+    post:
+      tags:
+        - Messaging
+      summary: Send multiple messages in bulk
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BulkMessageRequest"
+      responses:
+        "201":
+          description: Bulk messages sent successfully
+
+  /messaging/{messageId}/status:
+    get:
+      tags:
+        - Messaging
+      summary: Get message status
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: messageId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Message status retrieved
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MessageStatus"
+
+  /messaging/{messageId}/cancel:
+    post:
+      tags:
+        - Messaging
+      summary: Cancel a pending message
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: messageId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Message cancelled successfully
+
+  /messaging/messages:
+    get:
+      tags:
+        - Messaging
+      summary: Get tenant messages with pagination
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/Page"
+        - $ref: "#/components/parameters/Limit"
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [pending, processing, sent, delivered, failed, cancelled]
+      responses:
+        "200":
+          description: Messages retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PaginatedMessages"
+
+  /messaging/{messageId}/deliveries:
+    get:
+      tags:
+        - Messaging
+      summary: Get message delivery reports
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: messageId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Delivery reports retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/MessageDelivery"
+        "404":
+          $ref: "#/components/responses/NotFound"
+  /analytics/delivery-rates:
+    get:
+      tags:
+        - Analytics
+      summary: Get delivery rate analytics
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: tenantId
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: startDate
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: endDate
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: channel
+          in: query
+          schema:
+            type: string
+            enum: [email, sms, push, whatsapp, voice]
+      responses:
+        "200":
+          description: Delivery rate analytics retrieved
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DeliveryRateAnalytics"
+
+  /analytics/delivery-stats:
+    get:
+      tags:
+        - Analytics
+      summary: Get delivery statistics
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: tenantId
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: startDate
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: endDate
+          in: query
+          schema:
+            type: string
+            format: date
+      responses:
+        "200":
+          description: Delivery statistics retrieved
+
+  /analytics/provider-performance:
+    get:
+      tags:
+        - Analytics
+      summary: Get provider performance metrics
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: tenantId
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: providerId
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Provider performance metrics retrieved
+
+
+  # Configuration Management Endpoints
+  /configurations:
+    post:
+      tags:
+        - Configuration Management
+      summary: Create a new configuration
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateConfigurationRequest"
+      responses:
+        "201":
+          description: Configuration created successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Configuration"
+
+    get:
+      tags:
+        - Configuration Management
+      summary: Get configurations with pagination
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/Page"
+        - $ref: "#/components/parameters/Limit"
+        - name: scope
+          in: query
+          schema:
+            type: string
+            enum: [global, tenant, environment]
+        - name: configType
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Configurations retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PaginatedConfigurations"
+
+  /configurations/{configId}:
+    get:
+      tags:
+        - Configuration Management
+      summary: Get a specific configuration
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: configId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Configuration retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Configuration"
+
+    patch:
+      tags:
+        - Configuration Management
+      summary: Update a configuration
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: configId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateConfigurationRequest"
+      responses:
+        "200":
+          description: Configuration updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Configuration"
+
+    delete:
+      tags:
+        - Configuration Management
+      summary: Delete a configuration
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: configId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "204":
+          description: Configuration deleted successfully
+
+  # Health & Monitoring Endpoints
+  /health:
+    get:
+      tags:
+        - Health & Monitoring
+      summary: Get system health status
+      security: []
+      responses:
+        "200":
+          description: System health status
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthStatus"
+
+  /metrics:
+    get:
+      tags:
+        - Health & Monitoring
+      summary: Get system metrics
+      security:
+        - BearerAuth: []
+      responses:
+        "200":
+          description: System metrics retrieved
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SystemMetrics"
+
+  /performance:
+    get:
+      tags:
+        - Health & Monitoring
+      summary: Get performance metrics
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: tenantId
+          in: query
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Performance metrics retrieved
+
+  # Provider Configuration Endpoints
+  # Security & Advanced Audit Endpoints
+  /security/events:
+    get:
+      tags:
+        - Security & Audit
+      summary: Get security events
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/Page"
+        - $ref: "#/components/parameters/Limit"
+        - name: eventType
+          in: query
+          schema:
+            type: string
+        - name: severity
+          in: query
+          schema:
+            type: string
+            enum: [low, medium, high, critical]
+        - name: startDate
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: endDate
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: resolved
+          in: query
+          schema:
+            type: boolean
+      responses:
+        "200":
+          description: Security events retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PaginatedSecurityEvents"
+
+  /security/events/{eventId}/resolve:
+    post:
+      tags:
+        - Security & Audit
+      summary: Resolve security event
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: eventId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - resolution
+              properties:
+                resolution:
+                  type: string
+      responses:
+        "200":
+          description: Security event resolved successfully
+
+  /security/events/stats:
+    get:
+      tags:
+        - Security & Audit
+      summary: Get security event statistics
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: startDate
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: endDate
+          in: query
+          schema:
+            type: string
+            format: date
+      responses:
+        "200":
+          description: Security event statistics retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SecurityEventStats"
+
+  /security/sessions:
+    get:
+      tags:
+        - Security & Audit
+      summary: Get active sessions
+      security:
+        - BearerAuth: []
+      responses:
+        "200":
+          description: Active sessions retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/UserSession"
+
+  /security/sessions/{sessionId}/invalidate:
+    post:
+      tags:
+        - Security & Audit
+      summary: Invalidate session
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: sessionId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Session invalidated successfully
+
+  /security/sessions/invalidate-all:
+    post:
+      tags:
+        - Security & Audit
+      summary: Invalidate all sessions
+      security:
+        - BearerAuth: []
+      responses:
+        "200":
+          description: All sessions invalidated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  invalidatedCount:
+                    type: integer
+
+  /audit/logs/export:
+    get:
+      tags:
+        - Security & Audit
+      summary: Export audit logs
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: format
+          in: query
+          schema:
+            type: string
+            enum: [json, csv]
+            default: json
+        - name: startDate
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: endDate
+          in: query
+          schema:
+            type: string
+            format: date
+      responses:
+        "200":
+          description: Audit logs exported successfully
+
+  /audit/logs/stats:
+    get:
+      tags:
+        - Security & Audit
+      summary: Get audit log statistics
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: startDate
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: endDate
+          in: query
+          schema:
+            type: string
+            format: date
+      responses:
+        "200":
+          description: Audit log statistics retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuditLogStats"
+
+  /audit/trail/{resourceType}/{resourceId}:
+    get:
+      tags:
+        - Security & Audit
+      summary: Get audit trail for resource
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: resourceType
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: resourceId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Audit trail retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/AuditLog"
+
+  /audit/users/{userId}/activity:
+    get:
+      tags:
+        - Security & Audit
+      summary: Get user activity summary
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: days
+          in: query
+          schema:
+            type: integer
+            default: 30
+      responses:
+        "200":
+          description: User activity summary retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserActivitySummary"
+
+  # Advanced Performance Endpoints
+  /performance/report:
+    get:
+      tags:
+        - Health & Monitoring
+      summary: Generate comprehensive performance report
+      security:
+        - BearerAuth: []
+      responses:
+        "200":
+          description: Performance report generated successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PerformanceReport"
+
+  /performance/trends:
+    get:
+      tags:
+        - Health & Monitoring
+      summary: Get performance trends over time
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: hours
+          in: query
+          schema:
+            type: integer
+            default: 24
+      responses:
+        "200":
+          description: Performance trends retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PerformanceTrends"
+
+  /performance/optimize:
+    post:
+      tags:
+        - Health & Monitoring
+      summary: Trigger comprehensive performance optimization
+      security:
+        - BearerAuth: []
+      responses:
+        "200":
+          description: Performance optimization completed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OptimizationResult"
+
+  /performance/database/metrics:
+    get:
+      tags:
+        - Health & Monitoring
+      summary: Get database performance metrics
+      security:
+        - BearerAuth: []
+      responses:
+        "200":
+          description: Database metrics retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DatabaseMetrics"
+
+  /performance/database/slow-queries:
+    get:
+      tags:
+        - Health & Monitoring
+      summary: Get slow query analysis
+      security:
+        - BearerAuth: []
+      responses:
+        "200":
+          description: Slow queries analyzed successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SlowQueryAnalysis"
+
+  /performance/cache/stats:
+    get:
+      tags:
+        - Health & Monitoring
+      summary: Get cache performance statistics
+      security:
+        - BearerAuth: []
+      responses:
+        "200":
+          description: Cache statistics retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CacheStats"
+
+  /performance/cache/clear:
+    post:
+      tags:
+        - Health & Monitoring
+      summary: Clear all cache
+      security:
+        - BearerAuth: []
+      responses:
+        "200":
+          description: Cache cleared successfully
+
+  /performance/memory/stats:
+    get:
+      tags:
+        - Health & Monitoring
+      summary: Get memory usage statistics
+      security:
+        - BearerAuth: []
+      responses:
+        "200":
+          description: Memory statistics retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MemoryStats"
+
+  /performance/memory/optimize:
+    post:
+      tags:
+        - Health & Monitoring
+      summary: Optimize memory usage
+      security:
+        - BearerAuth: []
+      responses:
+        "200":
+          description: Memory optimization completed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MemoryOptimizationResult"
+
+  # BYOP (Bring Your Own Provider) Endpoints
+  /tenants/{tenantId}/byop/providers:
+    get:
+      tags:
+        - BYOP Management
+      summary: Get available BYOP provider templates
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/TenantId"
+      responses:
+        "200":
+          description: BYOP providers retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BYOPProvidersList"
+
+    post:
+      tags:
+        - BYOP Management
+      summary: Create custom provider configuration
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/TenantId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateBYOPProviderRequest"
+      responses:
+        "201":
+          description: BYOP provider created successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BYOPProvider"
+
+  /tenants/{tenantId}/byop/providers/{providerId}:
+    get:
+      tags:
+        - BYOP Management
+      summary: Get specific BYOP provider
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/TenantId"
+        - name: providerId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: BYOP provider retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BYOPProvider"
+
+    put:
+      tags:
+        - BYOP Management
+      summary: Update BYOP provider configuration
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/TenantId"
+        - name: providerId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateBYOPProviderRequest"
+      responses:
+        "200":
+          description: BYOP provider updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BYOPProvider"
+
+    delete:
+      tags:
+        - BYOP Management
+      summary: Delete BYOP provider
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/TenantId"
+        - name: providerId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "204":
+          description: BYOP provider deleted successfully
+
+  # Dead Letter Queue Management
+  /messaging/dead-letter:
+    get:
+      tags:
+        - Dead Letter Queue Management
+      summary: Get failed messages for dashboard monitoring
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/Page"
+        - $ref: "#/components/parameters/Limit"
+        - name: tenantId
+          in: query
+          description: Filter by tenant ID
+          schema:
+            type: string
+        - name: channel
+          in: query
+          description: Filter by channel type
+          schema:
+            type: string
+            enum: [email, sms, push, whatsapp]
+        - name: startDate
+          in: query
+          description: Filter messages from this date
+          schema:
+            type: string
+            format: date-time
+        - name: endDate
+          in: query
+          description: Filter messages until this date
+          schema:
+            type: string
+            format: date-time
+      responses:
+        "200":
+          description: Failed messages retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PaginatedDeadLetterMessages"
+
+  /messaging/dead-letter/{messageId}:
+    get:
+      tags:
+        - Dead Letter Queue Management
+      summary: Get specific failed message details
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: messageId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Failed message details retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DeadLetterMessage"
+
+    delete:
+      tags:
+        - Dead Letter Queue Management
+      summary: Permanently delete failed message
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: messageId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "204":
+          description: Failed message deleted successfully
+
+  /messaging/dead-letter/{messageId}/retry:
+    post:
+      tags:
+        - Dead Letter Queue Management
+      summary: Retry failed message from dashboard
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: messageId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Message retry initiated successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RetryMessageResponse"
+
+  /messaging/dead-letter/bulk-retry:
+    post:
+      tags:
+        - Dead Letter Queue Management
+      summary: Bulk retry failed messages
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BulkRetryRequest"
+      responses:
+        "200":
+          description: Bulk retry initiated successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BulkRetryResponse"
+
+  /messaging/dead-letter/bulk-delete:
+    post:
+      tags:
+        - Dead Letter Queue Management
+      summary: Bulk delete failed messages
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BulkDeleteRequest"
+      responses:
+        "200":
+          description: Bulk delete completed successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BulkDeleteResponse"
+
+  # In-App Notifications Management
+  /notifications/management:
+    get:
+      tags:
+        - In-App Notifications Management
+      summary: Get in-app notifications for dashboard management
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/Page"
+        - $ref: "#/components/parameters/Limit"
+        - name: tenantId
+          in: query
+          description: Filter by tenant ID
+          schema:
+            type: string
+        - name: userId
+          in: query
+          description: Filter by user ID
+          schema:
+            type: string
+        - name: read
+          in: query
+          description: Filter by read status
+          schema:
+            type: boolean
+        - name: startDate
+          in: query
+          description: Filter notifications from this date
+          schema:
+            type: string
+            format: date-time
+        - name: endDate
+          in: query
+          description: Filter notifications until this date
+          schema:
+            type: string
+            format: date-time
+      responses:
+        "200":
+          description: In-app notifications retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PaginatedInAppNotifications"
+
+  /notifications/management/{notificationId}:
+    get:
+      tags:
+        - In-App Notifications Management
+      summary: Get specific in-app notification details
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: notificationId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: In-app notification details retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InAppNotificationManagement"
+
+    delete:
+      tags:
+        - In-App Notifications Management
+      summary: Delete in-app notification
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: notificationId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "204":
+          description: Notification deleted successfully
+
+  /notifications/management/bulk-delete:
+    post:
+      tags:
+        - In-App Notifications Management
+      summary: Bulk delete in-app notifications
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BulkDeleteNotificationsRequest"
+      responses:
+        "200":
+          description: Bulk delete completed successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BulkDeleteResponse"
+
+  /notifications/management/mark-all-read:
+    post:
+      tags:
+        - In-App Notifications Management
+      summary: Mark all notifications as read for a user
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - userId
+              properties:
+                userId:
+                  type: string
+                tenantId:
+                  type: string
+      responses:
+        "200":
+          description: All notifications marked as read successfully
+
+  # Performance Monitoring Dashboard
+  /performance/dashboard:
+    get:
+      tags:
+        - Performance Monitoring
+      summary: Get performance metrics for dashboard
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: timeRange
+          in: query
+          description: Time range for metrics
+          schema:
+            type: string
+            enum: [1h, 6h, 24h, 7d, 30d]
+            default: 24h
+        - name: tenantId
+          in: query
+          description: Filter by tenant ID
+          schema:
+            type: string
+        - name: metrics
+          in: query
+          description: Specific metrics to retrieve
+          schema:
+            type: array
+            items:
+              type: string
+              enum: [responseTime, throughput, errorRate, uptime, memoryUsage]
+      responses:
+        "200":
+          description: Performance metrics retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DashboardPerformanceMetrics"
+
+  /performance/alerts:
+    get:
+      tags:
+        - Performance Monitoring
+      summary: Get performance alerts
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/Page"
+        - $ref: "#/components/parameters/Limit"
+        - name: severity
+          in: query
+          description: Filter by alert severity
+          schema:
+            type: string
+            enum: [low, medium, high, critical]
+        - name: status
+          in: query
+          description: Filter by alert status
+          schema:
+            type: string
+            enum: [active, resolved]
+        - name: type
+          in: query
+          description: Filter by alert type
+          schema:
+            type: string
+            enum:
+              [
+                high_response_time,
+                low_throughput,
+                high_error_rate,
+                memory_usage,
+                disk_usage,
+              ]
+      responses:
+        "200":
+          description: Performance alerts retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PaginatedPerformanceAlerts"
+
+  /performance/alerts/{alertId}/resolve:
+    post:
+      tags:
+        - Performance Monitoring
+      summary: Resolve performance alert
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: alertId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Alert resolved successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PerformanceAlert"
+
+  # Root Application Endpoints
+  /:
+    get:
+      tags:
+        - Application
+      summary: Application root endpoint - health check and basic info
+      security: []
+      responses:
+        "200":
+          description: Application information and health status
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApplicationInfo"
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
+
+  parameters:
+    # QUERY PARAMETERS
+    Page:
+      name: page
+      in: query
+      description: Page number for pagination
+      schema:
+        type: integer
+        minimum: 1
+        default: 1
+    Limit:
+      name: limit
+      in: query
+      description: Number of items per page
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 20
+    Search:
+      name: search
+      in: query
+      description: Search term for filtering results
+      schema:
+        type: string
+    SortBy:
+      name: sortBy
+      in: query
+      description: Field to sort by
+      schema:
+        type: string
+        default: createdAt
+    SortOrder:
+      name: sortOrder
+      in: query
+      description: Sort order
+      schema:
+        type: string
+        enum: [ASC, DESC]
+        default: DESC
+    TenantMemberRoleQuery:
+      name: role
+      in: query
+      description: Filter by member role
+      schema:
+        $ref: "#/components/schemas/TenantMemberRole"
+    ChannelQuery:
+      name: channel
+      in: query
+      description: Filter by notification channel
+      schema:
+        type: string
+    ProviderType:
+      name: providerType
+      in: query
+      description: Filter by provider type
+      schema:
+        type: string
+    IsActiveQuery:
+      name: isActive
+      in: query
+      description: Filter by active status
+      schema:
+        type: boolean
+    OAuthProvider:
+      name: provider
+      in: path
+      required: true
+      description: OAuth provider name
+      schema:
+        type: string
+        enum: [google, github, microsoft]
+
+    # PATH PARAMETERS
+    TenantId:
+      name: tenantId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    MemberId:
+      name: memberId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    UserId:
+      name: userId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    ConfigId:
+      name: configId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    TemplateId:
+      name: templateId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    ProjectId:
+      name: projectId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    BrandId:
+      name: brandId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    InviteId:
+      name: inviteId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+
+  schemas:
+    # Basic Types
+    TenantStatus:
+      type: string
+      enum: [active, inactive, suspended]
+
+    UserRole:
+      type: string
+      enum: [super_admin, admin, developer, basic]
+      description: User role in the system
+
+    UserStatus:
+      type: string
+      enum: [active, inactive, suspended]
+      description: User account status
+
+    AuthProvider:
+      type: string
+      enum: [local, google, github]
+      description: Authentication provider used by the user
+
+    # Pagination Base Schema
+    PaginationMeta:
+      type: object
+      properties:
+        name:
+          type: string
+          description: Name of the paginated resource
+          example: "items"
+        size:
+          type: integer
+          description: Number of records in current page
+          example: 10
+        pageCount:
+          type: integer
+          description: Total number of pages
+          example: 5
+        limit:
+          type: integer
+          description: Number of items per page
+          example: 10
+        page:
+          type: integer
+          description: Current page number
+          example: 1
+        previousPage:
+          type: integer
+          nullable: true
+          description: Previous page number (null if first page)
+          example: null
+        nextPage:
+          type: integer
+          nullable: true
+          description: Next page number (null if last page)
+          example: 2
+        totalItems:
+          type: integer
+          description: Total number of items
+          example: 50
+
+    # Authentication Models
+    RegisterRequest:
+      type: object
+      required:
+        - email
+        - password
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          minLength: 8
+
+    LoginRequest:
+      type: object
+      required:
+        - email
+        - password
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+
+    RefreshTokenRequest:
+      type: object
+      required:
+        - refreshToken
+      properties:
+        refreshToken:
+          type: string
+
+    AuthResponse:
+      type: object
+      properties:
+        accessToken:
+          type: string
+        refreshToken:
+          type: string
+        user:
+          $ref: "#/components/schemas/User"
+
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        email:
+          type: string
+          format: email
+        firstName:
+          type: string
+        lastName:
+          type: string
+        isActive:
+          type: boolean
+        role:
+          type: string
+
+    UserResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: User unique identifier
+          example: "123e4567-e89b-12d3-a456-426614174000"
+        email:
+          type: string
+          format: email
+          description: User email address
+          example: "user@example.com"
+        firstName:
+          type: string
+          description: User first name
+          example: "John"
+        lastName:
+          type: string
+          description: User last name
+          example: "Doe"
+        fullName:
+          type: string
+          description: User full name (computed)
+          example: "John Doe"
+        role:
+          $ref: "#/components/schemas/UserRole"
+        isActive:
+          type: boolean
+          description: Whether the user account is active
+          example: true
+        avatar:
+          type: string
+          description: User avatar URL
+          example: "https://example.com/avatar.jpg"
+        authProvider:
+          $ref: "#/components/schemas/AuthProvider"
+        createdAt:
+          type: string
+          format: date-time
+          description: User creation timestamp
+          example: "2024-01-01T00:00:00.000Z"
+        updatedAt:
+          type: string
+          format: date-time
+          description: User last update timestamp
+          example: "2024-01-01T00:00:00.000Z"
+
+    UserProfile:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        email:
+          type: string
+          format: email
+        firstName:
+          type: string
+        lastName:
+          type: string
+        fullName:
+          type: string
+        status:
+          type: string
+        authProvider:
+          type: string
+        avatar:
+          type: string
+        role:
+          type: string
+
+    ChangePasswordRequest:
+      type: object
+      required:
+        - currentPassword
+        - newPassword
+      properties:
+        currentPassword:
+          type: string
+        newPassword:
+          type: string
+          minLength: 8
+
+    ForgotPasswordRequest:
+      type: object
+      required:
+        - email
+      properties:
+        email:
+          type: string
+          format: email
+
+    ResetPasswordRequest:
+      type: object
+      required:
+        - token
+        - newPassword
+      properties:
+        token:
+          type: string
+        newPassword:
+          type: string
+          minLength: 8
+
+    # Tenant Models
+    CreateTenantRequest:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+
+    UpdateTenantRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+
+    Tenant:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        email:
+          type: string
+          format: email
+        description:
+          type: string
+        status:
+          $ref: "#/components/schemas/TenantStatus"
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    # Tenant Member Models
+    UpdateTenantMemberRequest:
+      type: object
+      properties:
+        role:
+          $ref: "#/components/schemas/MemberRole"
+        isActive:
+          type: boolean
+
+    TenantMember:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        user:
+          $ref: "#/components/schemas/User"
+        tenant:
+          $ref: "#/components/schemas/Tenant"
+        role:
+          $ref: "#/components/schemas/MemberRole"
+        isActive:
+          type: boolean
+        joinedAt:
+          type: string
+          format: date-time
+
+    MemberRole:
+      type: string
+      enum: [owner, admin, member, viewer]
+
+    TenantMemberResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Tenant member unique identifier
+        role:
+          $ref: "#/components/schemas/MemberRole"
+        status:
+          type: string
+          enum: [active, inactive, pending]
+          description: Member status
+        createdAt:
+          type: string
+          format: date-time
+          description: Member creation timestamp
+        user:
+          type: object
+          properties:
+            id:
+              type: string
+              format: uuid
+              description: User unique identifier
+            email:
+              type: string
+              format: email
+              description: User email address
+            firstName:
+              type: string
+              description: User first name
+            lastName:
+              type: string
+              description: User last name
+            fullName:
+              type: string
+              description: User full name (computed)
+            avatar:
+              type: string
+              format: uri
+              description: User avatar URL
+        tenant:
+          type: object
+          properties:
+            id:
+              type: string
+              format: uuid
+              description: Tenant unique identifier
+            name:
+              type: string
+              description: Tenant name
+            subdomain:
+              type: string
+              description: Tenant subdomain
+            status:
+              type: string
+              description: Tenant status
+            createdAt:
+              type: string
+              format: date-time
+              description: Tenant creation timestamp
+
+    # Invitation Models
+    CreateInviteRequest:
+      type: object
+      required:
+        - email
+        - role
+      properties:
+        email:
+          type: string
+          format: email
+        role:
+          $ref: "#/components/schemas/MemberRole"
+        message:
+          type: string
+
+    Invite:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        email:
+          type: string
+          format: email
+        role:
+          $ref: "#/components/schemas/MemberRole"
+        status:
+          $ref: "#/components/schemas/InviteStatus"
+        message:
+          type: string
+        invitedBy:
+          $ref: "#/components/schemas/User"
+        tenant:
+          $ref: "#/components/schemas/Tenant"
+        expiresAt:
+          type: string
+          format: date-time
+        createdAt:
+          type: string
+          format: date-time
+
+    InviteStatus:
+      type: string
+      enum: [pending, accepted, declined, expired]
+
+    AcceptInviteRequest:
+      type: object
+      required:
+        - token
+        - firstName
+        - lastName
+      properties:
+        token:
+          type: string
+          description: The invitation token
+        firstName:
+          type: string
+          description: User's first name
+        lastName:
+          type: string
+          description: User's last name
+        password:
+          type: string
+          minLength: 8
+          description: Optional password for email/password authentication. If not provided, user must complete setup via OAuth.
+
+    AcceptInviteResponse:
+      type: object
+      properties:
+        message:
+          type: string
+          example: "Invitation accepted successfully"
+        user:
+          type: object
+          properties:
+            id:
+              type: string
+              format: uuid
+            email:
+              type: string
+              format: email
+            firstName:
+              type: string
+            lastName:
+              type: string
+            fullName:
+              type: string
+        tenant:
+          type: object
+          properties:
+            id:
+              type: string
+              format: uuid
+            name:
+              type: string
+        membership:
+          type: object
+          properties:
+            role:
+              type: string
+            joinedAt:
+              type: string
+              format: date-time
+
+    # Project Models
+    CreateProjectRequest:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+
+    UpdateProjectRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+
+    Project:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        description:
+          type: string
+        tenantId:
+          type: string
+          format: uuid
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    # Brand Models
+    CreateBrandRequest:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          maxLength: 255
+          description: Brand name
+          example: "My Company"
+        description:
+          type: string
+          maxLength: 500
+          description: Brand description
+          example: "Our primary brand for customer communications"
+        domain:
+          type: string
+          maxLength: 255
+          description: Domain for email authentication
+          example: "mycompany.com"
+        logo:
+          type: string
+          format: uri
+          description: URL to brand logo
+          example: "https://cdn.mycompany.com/logo.png"
+        primaryColor:
+          type: string
+          pattern: "^#[0-9A-Fa-f]{6}$"
+          description: Primary brand color (hex format)
+          example: "#007bff"
+        secondaryColor:
+          type: string
+          pattern: "^#[0-9A-Fa-f]{6}$"
+          description: Secondary brand color (hex format)
+          example: "#6c757d"
+        defaultFromEmail:
+          type: string
+          format: email
+          maxLength: 255
+          description: Default sender email address
+          example: "noreply@mycompany.com"
+        defaultFromName:
+          type: string
+          maxLength: 255
+          description: Default sender name
+          example: "My Company"
+        replyToEmail:
+          type: string
+          format: email
+          maxLength: 255
+          description: Reply-to email address
+          example: "support@mycompany.com"
+        whiteLabelConfig:
+          $ref: "#/components/schemas/WhiteLabelConfig"
+        emailSettings:
+          $ref: "#/components/schemas/EmailSettings"
+        smsSettings:
+          $ref: "#/components/schemas/SmsSettings"
+        socialLinks:
+          $ref: "#/components/schemas/SocialLinks"
+        metadata:
+          type: object
+          additionalProperties: true
+          description: Custom metadata for the brand
+
+    UpdateBrandRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          maxLength: 255
+          description: Brand name
+        description:
+          type: string
+          maxLength: 500
+          description: Brand description
+        domain:
+          type: string
+          maxLength: 255
+          description: Domain for email authentication
+        logo:
+          type: string
+          format: uri
+          description: URL to brand logo
+        primaryColor:
+          type: string
+          pattern: "^#[0-9A-Fa-f]{6}$"
+          description: Primary brand color (hex format)
+        secondaryColor:
+          type: string
+          pattern: "^#[0-9A-Fa-f]{6}$"
+          description: Secondary brand color (hex format)
+        defaultFromEmail:
+          type: string
+          format: email
+          maxLength: 255
+          description: Default sender email address
+        defaultFromName:
+          type: string
+          maxLength: 255
+          description: Default sender name
+        replyToEmail:
+          type: string
+          format: email
+          maxLength: 255
+          description: Reply-to email address
+        status:
+          $ref: "#/components/schemas/BrandStatus"
+        whiteLabelConfig:
+          $ref: "#/components/schemas/WhiteLabelConfig"
+        emailSettings:
+          $ref: "#/components/schemas/EmailSettings"
+        smsSettings:
+          $ref: "#/components/schemas/SmsSettings"
+        socialLinks:
+          $ref: "#/components/schemas/SocialLinks"
+        metadata:
+          type: object
+          additionalProperties: true
+          description: Custom metadata for the brand
+
+    Brand:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Brand unique identifier
+        name:
+          type: string
+          description: Brand name
+        description:
+          type: string
+          description: Brand description
+        domain:
+          type: string
+          description: Domain for email authentication
+        status:
+          $ref: "#/components/schemas/BrandStatus"
+        logo:
+          type: string
+          format: uri
+          description: URL to brand logo
+        primaryColor:
+          type: string
+          description: Primary brand color (hex format)
+        secondaryColor:
+          type: string
+          description: Secondary brand color (hex format)
+        defaultFromEmail:
+          type: string
+          format: email
+          description: Default sender email address
+        defaultFromName:
+          type: string
+          description: Default sender name
+        replyToEmail:
+          type: string
+          format: email
+          description: Reply-to email address
+        whiteLabelConfig:
+          $ref: "#/components/schemas/WhiteLabelConfig"
+        emailSettings:
+          $ref: "#/components/schemas/EmailSettings"
+        smsSettings:
+          $ref: "#/components/schemas/SmsSettings"
+        socialLinks:
+          $ref: "#/components/schemas/SocialLinks"
+        metadata:
+          type: object
+          additionalProperties: true
+          description: Custom metadata for the brand
+        tenantId:
+          type: string
+          format: uuid
+          description: Tenant ID this brand belongs to
+        createdBy:
+          type: string
+          format: uuid
+          description: ID of the tenant member who created this brand
+        createdAt:
+          type: string
+          format: date-time
+          description: Brand creation timestamp
+        updatedAt:
+          type: string
+          format: date-time
+          description: Brand last update timestamp
+
+    BrandStatus:
+      type: string
+      enum:
+        - active
+        - inactive
+        - pending_verification
+      description: Brand status
+      example: "active"
+
+    WhiteLabelConfig:
+      type: object
+      properties:
+        domains:
+          type: object
+          properties:
+            primary:
+              type: string
+              description: Primary domain
+              example: "mycompany.com"
+            tracking:
+              type: string
+              description: Tracking domain
+              example: "track.mycompany.com"
+            unsubscribe:
+              type: string
+              description: Unsubscribe domain
+              example: "unsubscribe.mycompany.com"
+            verified:
+              type: boolean
+              description: Domain verification status
+            verifiedAt:
+              type: string
+              format: date-time
+              description: Domain verification timestamp
+            verificationToken:
+              type: string
+              description: DNS verification token
+            lastVerificationAttempt:
+              type: string
+              format: date-time
+              description: Last verification attempt timestamp
+            verificationError:
+              type: string
+              description: Last verification error message
+        dkim:
+          type: object
+          properties:
+            selector:
+              type: string
+              description: DKIM selector
+              example: "default"
+            privateKey:
+              type: string
+              description: DKIM private key
+            publicKey:
+              type: string
+              description: DKIM public key
+            verified:
+              type: boolean
+              description: DKIM verification status
+            verifiedAt:
+              type: string
+              format: date-time
+              description: DKIM verification timestamp
+            lastVerificationAttempt:
+              type: string
+              format: date-time
+              description: Last verification attempt timestamp
+            verificationError:
+              type: string
+              description: Last verification error message
+        dmarc:
+          type: object
+          properties:
+            policy:
+              type: string
+              enum: [none, quarantine, reject]
+              description: DMARC policy
+              example: "quarantine"
+            percentage:
+              type: integer
+              minimum: 0
+              maximum: 100
+              description: Policy application percentage
+              example: 100
+            reportEmail:
+              type: string
+              format: email
+              description: DMARC report email
+              example: "dmarc@mycompany.com"
+            verified:
+              type: boolean
+              description: DMARC verification status
+            verifiedAt:
+              type: string
+              format: date-time
+              description: DMARC verification timestamp
+            lastVerificationAttempt:
+              type: string
+              format: date-time
+              description: Last verification attempt timestamp
+            verificationError:
+              type: string
+              description: Last verification error message
+        senderId:
+          type: object
+          properties:
+            domain:
+              type: string
+              description: Sender ID domain
+            verified:
+              type: boolean
+              description: Sender ID verification status
+        ssl:
+          type: object
+          properties:
+            certificate:
+              type: string
+              description: SSL certificate
+            privateKey:
+              type: string
+              description: SSL private key
+            verified:
+              type: boolean
+              description: SSL verification status
+
+    EmailSettings:
+      type: object
+      properties:
+        signature:
+          type: string
+          description: Email signature
+          example: "Best regards,\nThe My Company Team"
+        footerText:
+          type: string
+          description: Footer text
+          example: "© 2024 My Company. All rights reserved."
+        unsubscribeText:
+          type: string
+          description: Unsubscribe text
+          example: "Click here to unsubscribe from future emails"
+        trackingEnabled:
+          type: boolean
+          description: Email tracking enabled
+          example: true
+
+    SmsSettings:
+      type: object
+      properties:
+        defaultSenderId:
+          type: string
+          description: Default SMS sender ID
+          example: "MyCompany"
+        optOutKeywords:
+          type: array
+          items:
+            type: string
+          description: SMS opt-out keywords
+          example: ["STOP", "UNSUBSCRIBE", "QUIT"]
+        optInKeywords:
+          type: array
+          items:
+            type: string
+          description: SMS opt-in keywords
+          example: ["START", "SUBSCRIBE", "JOIN"]
+
+    SocialLinks:
+      type: object
+      properties:
+        website:
+          type: string
+          format: uri
+          description: Website URL
+          example: "https://mycompany.com"
+        facebook:
+          type: string
+          format: uri
+          description: Facebook URL
+          example: "https://facebook.com/mycompany"
+        twitter:
+          type: string
+          format: uri
+          description: Twitter URL
+          example: "https://twitter.com/mycompany"
+        linkedin:
+          type: string
+          format: uri
+          description: LinkedIn URL
+          example: "https://linkedin.com/company/mycompany"
+        instagram:
+          type: string
+          format: uri
+          description: Instagram URL
+          example: "https://instagram.com/mycompany"
+
+    DomainVerificationInstructions:
+      type: object
+      properties:
+        domain:
+          type: string
+          description: Domain to be verified
+          example: "mycompany.com"
+        verificationToken:
+          type: string
+          description: Verification token to add to DNS
+          example: "notifi-verify=abc123def456..."
+        instructions:
+          type: object
+          properties:
+            recordType:
+              type: string
+              description: DNS record type
+              example: "TXT"
+            name:
+              type: string
+              description: DNS record name
+              example: "_verification.mycompany.com"
+            value:
+              type: string
+              description: DNS record value
+              example: "notifi-verify=abc123def456..."
+        domainHealth:
+          type: object
+          properties:
+            hasMX:
+              type: boolean
+              description: Domain has MX records
+            hasA:
+              type: boolean
+              description: Domain has A records
+            hasAAAA:
+              type: boolean
+              description: Domain has AAAA records
+
+    DomainVerificationError:
+      type: object
+      properties:
+        statusCode:
+          type: integer
+          example: 400
+        message:
+          type: string
+          description: Detailed error message with DNS setup instructions
+          example: "Domain verification failed. Please add the following TXT record to your DNS:\nName: _verification.mycompany.com\nValue: notifi-verify=abc123def456...\nError: ENOTFOUND"
+        error:
+          type: string
+          example: "Bad Request"
+
+    DKIMVerificationError:
+      type: object
+      properties:
+        statusCode:
+          type: integer
+          example: 400
+        message:
+          type: string
+          description: Detailed error message with DKIM setup instructions
+          example: "DKIM verification failed for selector \"default\". Please ensure you have added the DKIM DNS record:\nName: default._domainkey.mycompany.com\nError: No valid DKIM record found for selector default"
+        error:
+          type: string
+          example: "Bad Request"
+
+    DMARCVerificationError:
+      type: object
+      properties:
+        statusCode:
+          type: integer
+          example: 400
+        message:
+          type: string
+          description: Detailed error message with DMARC setup instructions
+          example: "DMARC verification failed. Please ensure you have added the DMARC DNS record:\nName: _dmarc.mycompany.com\nValue: v=DMARC1; p=quarantine; rua=mailto:dmarc@mycompany.com\nError: No valid DMARC record found"
+        error:
+          type: string
+          example: "Bad Request"
+
+    # Template Models
+    CreateTemplateRequest:
+      type: object
+      required:
+        - name
+        - channel
+        - content
+      properties:
+        name:
+          type: string
+        channel:
+          type: string
+        content:
+          type: object
+        description:
+          type: string
+
+    UpdateTemplateRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        content:
+          type: object
+        description:
+          type: string
+
+    Template:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        channel:
+          type: string
+        content:
+          type: object
+        description:
+          type: string
+        status:
+          $ref: "#/components/schemas/TemplateStatus"
+        tenantId:
+          type: string
+          format: uuid
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    TemplateStatus:
+      type: string
+      enum: [active, inactive, draft]
+
+    RenderTemplateRequest:
+      type: object
+      required:
+        - templateId
+        - data
+      properties:
+        templateId:
+          type: string
+          format: uuid
+        data:
+          type: object
+        channel:
+          type: string
+
+    RenderedTemplate:
+      type: object
+      properties:
+        subject:
+          type: string
+        content:
+          type: string
+        html:
+          type: string
+        text:
+          type: string
+
+    ValidationResult:
+      type: object
+      properties:
+        isValid:
+          type: boolean
+        errors:
+          type: array
+          items:
+            type: string
+        warnings:
+          type: array
+          items:
+            type: string
+
+    # Provider Configuration Models
+    CreateProviderConfigRequest:
+      type: object
+      required:
+        - name
+        - providerType
+        - channel
+        - config
+      properties:
+        name:
+          type: string
+        providerType:
+          type: string
+        channel:
+          type: string
+        config:
+          type: object
+        isActive:
+          type: boolean
+          default: true
+
+    UpdateProviderConfigRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        config:
+          type: object
+        isActive:
+          type: boolean
+
+    ProviderConfig:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        providerType:
+          type: string
+        channel:
+          type: string
+        config:
+          type: object
+        isActive:
+          type: boolean
+        tenantId:
+          type: string
+          format: uuid
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        lastUsedAt:
+          type: string
+          format: date-time
+
+    # User Management Models
+    UpdateUserRequest:
+      type: object
+      properties:
+        firstName:
+          type: string
+          description: User first name
+          example: "John"
+          minLength: 1
+          maxLength: 50
+        lastName:
+          type: string
+          description: User last name
+          example: "Doe"
+          minLength: 1
+          maxLength: 50
+        avatar:
+          type: string
+          format: uri
+          description: User avatar URL
+          example: "https://example.com/avatar.jpg"
+
+    # Add missing enum types
+    TenantMemberRole:
+      type: string
+      enum: [owner, admin, member]
+      description: Tenant member role
+      example: "member"
+
+    # Pagination Models
+    PaginatedTenants:
+      type: object
+      properties:
+        name:
+          type: string
+          description: Name of the paginated resource
+          example: "tenants"
+        size:
+          type: integer
+          description: Number of records in current page
+          example: 10
+        pageCount:
+          type: integer
+          description: Total number of pages
+          example: 5
+        limit:
+          type: integer
+          description: Number of items per page
+          example: 10
+        page:
+          type: integer
+          description: Current page number
+          example: 1
+        previousPage:
+          type: integer
+          nullable: true
+          description: Previous page number (null if first page)
+          example: null
+        nextPage:
+          type: integer
+          nullable: true
+          description: Next page number (null if last page)
+          example: 2
+        totalItems:
+          type: integer
+          description: Total number of items
+          example: 50
+        records:
+          type: array
+          items:
+            $ref: "#/components/schemas/Tenant"
+
+    PaginatedUserTenants:
+      type: object
+      properties:
+        name:
+          type: string
+          description: Name of the paginated resource
+          example: "User Tenants"
+        size:
+          type: integer
+          description: Number of records in current page
+          example: 5
+        pageCount:
+          type: integer
+          description: Total number of pages
+          example: 1
+        limit:
+          type: integer
+          description: Number of items per page
+          example: 10
+        page:
+          type: integer
+          description: Current page number
+          example: 1
+        previousPage:
+          type: integer
+          nullable: true
+          description: Previous page number (null if first page)
+          example: null
+        nextPage:
+          type: integer
+          nullable: true
+          description: Next page number (null if last page)
+          example: null
+        totalItems:
+          type: integer
+          description: Total number of items
+          example: 5
+        records:
+          type: array
+          items:
+            $ref: "#/components/schemas/TenantMemberResponse"
+
+    PaginatedUsers:
+      type: object
+      properties:
+        name:
+          type: string
+          description: Name of the paginated resource
+          example: "users"
+        size:
+          type: integer
+          description: Number of records in current page
+          example: 10
+        pageCount:
+          type: integer
+          description: Total number of pages
+          example: 5
+        limit:
+          type: integer
+          description: Number of items per page
+          example: 10
+        page:
+          type: integer
+          description: Current page number
+          example: 1
+        previousPage:
+          type: integer
+          nullable: true
+          description: Previous page number (null if first page)
+          example: null
+        nextPage:
+          type: integer
+          nullable: true
+          description: Next page number (null if last page)
+          example: 2
+        totalItems:
+          type: integer
+          description: Total number of items
+          example: 50
+        records:
+          type: array
+          items:
+            $ref: "#/components/schemas/UserResponse"
+
+    PaginatedTenantMembers:
+      type: object
+      properties:
+        name:
+          type: string
+          description: Name of the paginated resource
+          example: "tenant-members"
+        size:
+          type: integer
+          description: Number of records in current page
+          example: 10
+        pageCount:
+          type: integer
+          description: Total number of pages
+          example: 5
+        limit:
+          type: integer
+          description: Number of items per page
+          example: 10
+        page:
+          type: integer
+          description: Current page number
+          example: 1
+        previousPage:
+          type: integer
+          nullable: true
+          description: Previous page number (null if first page)
+          example: null
+        nextPage:
+          type: integer
+          nullable: true
+          description: Next page number (null if last page)
+          example: 2
+        totalItems:
+          type: integer
+          description: Total number of items
+          example: 50
+        records:
+          type: array
+          items:
+            $ref: "#/components/schemas/TenantMember"
+
+    PaginatedInvites:
+      type: object
+      properties:
+        name:
+          type: string
+          description: Name of the paginated resource
+          example: "invites"
+        size:
+          type: integer
+          description: Number of records in current page
+          example: 10
+        pageCount:
+          type: integer
+          description: Total number of pages
+          example: 5
+        limit:
+          type: integer
+          description: Number of items per page
+          example: 10
+        page:
+          type: integer
+          description: Current page number
+          example: 1
+        previousPage:
+          type: integer
+          nullable: true
+          description: Previous page number (null if first page)
+          example: null
+        nextPage:
+          type: integer
+          nullable: true
+          description: Next page number (null if last page)
+          example: 2
+        totalItems:
+          type: integer
+          description: Total number of items
+          example: 50
+        records:
+          type: array
+          items:
+            $ref: "#/components/schemas/Invite"
+
+    PaginatedProjects:
+      type: object
+      properties:
+        name:
+          type: string
+          description: Name of the paginated resource
+          example: "projects"
+        size:
+          type: integer
+          description: Number of records in current page
+          example: 10
+        pageCount:
+          type: integer
+          description: Total number of pages
+          example: 5
+        limit:
+          type: integer
+          description: Number of items per page
+          example: 10
+        page:
+          type: integer
+          description: Current page number
+          example: 1
+        previousPage:
+          type: integer
+          nullable: true
+          description: Previous page number (null if first page)
+          example: null
+        nextPage:
+          type: integer
+          nullable: true
+          description: Next page number (null if last page)
+          example: 2
+        totalItems:
+          type: integer
+          description: Total number of items
+          example: 50
+        records:
+          type: array
+          items:
+            $ref: "#/components/schemas/Project"
+
+    PaginatedTemplates:
+      type: object
+      properties:
+        name:
+          type: string
+          description: Name of the paginated resource
+          example: "templates"
+        size:
+          type: integer
+          description: Number of records in current page
+          example: 10
+        pageCount:
+          type: integer
+          description: Total number of pages
+          example: 5
+        limit:
+          type: integer
+          description: Number of items per page
+          example: 10
+        page:
+          type: integer
+          description: Current page number
+          example: 1
+        previousPage:
+          type: integer
+          nullable: true
+          description: Previous page number (null if first page)
+          example: null
+        nextPage:
+          type: integer
+          nullable: true
+          description: Next page number (null if last page)
+          example: 2
+        totalItems:
+          type: integer
+          description: Total number of items
+          example: 50
+        records:
+          type: array
+          items:
+            $ref: "#/components/schemas/Template"
+
+    PaginatedBrands:
+      type: object
+      properties:
+        name:
+          type: string
+          description: Name of the paginated resource
+          example: "brands"
+        size:
+          type: integer
+          description: Number of records in current page
+          example: 10
+        pageCount:
+          type: integer
+          description: Total number of pages
+          example: 5
+        limit:
+          type: integer
+          description: Number of items per page
+          example: 10
+        page:
+          type: integer
+          description: Current page number
+          example: 1
+        previousPage:
+          type: integer
+          nullable: true
+          description: Previous page number (null if first page)
+          example: null
+        nextPage:
+          type: integer
+          nullable: true
+          description: Next page number (null if last page)
+          example: 2
+        totalItems:
+          type: integer
+          description: Total number of items
+          example: 50
+        records:
+          type: array
+          items:
+            $ref: "#/components/schemas/Brand"
+
+    PaginatedProviderConfigs:
+      type: object
+      properties:
+        name:
+          type: string
+          description: Name of the paginated resource
+          example: "provider-configs"
+        size:
+          type: integer
+          description: Number of records in current page
+          example: 10
+        pageCount:
+          type: integer
+          description: Total number of pages
+          example: 5
+        limit:
+          type: integer
+          description: Number of items per page
+          example: 10
+        page:
+          type: integer
+          description: Current page number
+          example: 1
+        previousPage:
+          type: integer
+          nullable: true
+          description: Previous page number (null if first page)
+          example: null
+        nextPage:
+          type: integer
+          nullable: true
+          description: Next page number (null if last page)
+          example: 2
+        totalItems:
+          type: integer
+          description: Total number of items
+          example: 50
+        records:
+          type: array
+          items:
+            $ref: "#/components/schemas/ProviderConfig"
+
+    # Error Models
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+        message:
+          type: string
+        statusCode:
+          type: integer
+
+  responses:
+    BadRequest:
+      description: Bad request
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+          example:
+            error: Bad Request
+            message: Invalid request parameters
+            statusCode: 400
+
+    Unauthorized:
+      description: Unauthorized
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+          example:
+            error: Unauthorized
+            message: Authentication required
+            statusCode: 401
+
+    Forbidden:
+      description: Forbidden
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+          example:
+            error: Forbidden
+            message: Insufficient permissions
+            statusCode: 403
+
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+          example:
+            error: Not Found
+            message: Resource not found
+            statusCode: 404
+          type: boolean
+        expiresAt:
+          type: string
+          format: date-time
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    # Messaging Models
+    MessageDelivery:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        messageId:
+          type: string
+          format: uuid
+        channel:
+          type: string
+          enum: [email, sms, push, whatsapp, in_app]
+        providerId:
+          type: string
+        providerMessageId:
+          type: string
+        recipient:
+          type: string
+        status:
+          type: string
+          enum: [pending, sent, delivered, failed, bounced]
+        sentAt:
+          type: string
+          format: date-time
+        deliveredAt:
+          type: string
+          format: date-time
+        failedAt:
+          type: string
+          format: date-time
+        errorMessage:
+          type: string
+        retryCount:
+          type: integer
+        providerResponse:
+          type: object
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    MessageResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [pending, processing, sent, delivered, failed, cancelled]
+        createdAt:
+          type: string
+          format: date-time
+        scheduledAt:
+          type: string
+          format: date-time
+        estimatedDelivery:
+          type: string
+          format: date-time
+        channels:
+          type: array
+          items:
+            type: string
+        recipientCount:
+          type: integer
+
+    MessageStatus:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [pending, processing, sent, delivered, failed, cancelled]
+        deliveries:
+          type: array
+          items:
+            $ref: "#/components/schemas/MessageDelivery"
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    PaginatedMessages:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/MessageResponse"
+        total:
+          type: integer
+        page:
+          type: integer
+        limit:
+          type: integer
+        totalPages:
+          type: integer
+
+    # BYOP Schemas
+    BYOPProvidersList:
+      type: object
+      properties:
+        providers:
+          type: array
+          items:
+            $ref: "#/components/schemas/BYOPProvider"
+
+    BYOPProvider:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        channel:
+          type: string
+          enum: [email, sms, push, whatsapp]
+        configSchema:
+          type: object
+        isActive:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    CreateBYOPProviderRequest:
+      type: object
+      required:
+        - name
+        - channel
+        - configSchema
+      properties:
+        name:
+          type: string
+        channel:
+          type: string
+          enum: [email, sms, push, whatsapp]
+        configSchema:
+          type: object
+        description:
+          type: string
+
+    UpdateBYOPProviderRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        configSchema:
+          type: object
+        description:
+          type: string
+        isActive:
+          type: boolean
+
+    # Dead Letter Queue Schemas
+    PaginatedDeadLetterMessages:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/DeadLetterMessage"
+        total:
+          type: integer
+        page:
+          type: integer
+        limit:
+          type: integer
+        totalPages:
+          type: integer
+
+    DeadLetterMessage:
+      type: object
+      properties:
+        id:
+          type: string
+        originalMessage:
+          type: object
+        error:
+          type: string
+        failedAt:
+          type: string
+          format: date-time
+        retryCount:
+          type: integer
+        tenantId:
+          type: string
+        channel:
+          type: string
+        projectId:
+          type: string
+
+    RetryMessageResponse:
+      type: object
+      properties:
+        messageId:
+          type: string
+        status:
+          type: string
+          enum: [queued, processing, success, failed]
+        retryAttempt:
+          type: integer
+
+    BulkRetryRequest:
+      type: object
+      required:
+        - messageIds
+      properties:
+        messageIds:
+          type: array
+          items:
+            type: string
+
+    BulkRetryResponse:
+      type: object
+      properties:
+        totalRequested:
+          type: integer
+        successfulRetries:
+          type: integer
+        failedRetries:
+          type: integer
+        results:
+          type: array
+          items:
+            $ref: "#/components/schemas/RetryMessageResponse"
+
+    BulkDeleteRequest:
+      type: object
+      required:
+        - messageIds
+      properties:
+        messageIds:
+          type: array
+          items:
+            type: string
+
+    BulkDeleteResponse:
+      type: object
+      properties:
+        totalRequested:
+          type: integer
+        successfulDeletes:
+          type: integer
+        failedDeletes:
+          type: integer
+
+    # In-App Notifications Schemas
+    PaginatedInAppNotifications:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/InAppNotificationManagement"
+        total:
+          type: integer
+        page:
+          type: integer
+        limit:
+          type: integer
+        totalPages:
+          type: integer
+
+    InAppNotificationManagement:
+      type: object
+      properties:
+        id:
+          type: string
+        userId:
+          type: string
+        tenantId:
+          type: string
+        title:
+          type: string
+        content:
+          type: string
+        read:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+        readAt:
+          type: string
+          format: date-time
+
+    BulkDeleteNotificationsRequest:
+      type: object
+      required:
+        - notificationIds
+      properties:
+        notificationIds:
+          type: array
+          items:
+            type: string
+
+    # Performance Monitoring Schemas
+    DashboardPerformanceMetrics:
+      type: object
+      properties:
+        responseTime:
+          type: object
+          properties:
+            average:
+              type: number
+            p95:
+              type: number
+            p99:
+              type: number
+        throughput:
+          type: object
+          properties:
+            requestsPerSecond:
+              type: number
+            messagesPerMinute:
+              type: number
+        errorRate:
+          type: object
+          properties:
+            percentage:
+              type: number
+            totalErrors:
+              type: integer
+        uptime:
+          type: object
+          properties:
+            percentage:
+              type: number
+            downtimeMinutes:
+              type: number
+        memoryUsage:
+          type: object
+          properties:
+            used:
+              type: number
+            total:
+              type: number
+            percentage:
+              type: number
+
+    PaginatedPerformanceAlerts:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/PerformanceAlert"
+        total:
+          type: integer
+        page:
+          type: integer
+        limit:
+          type: integer
+        totalPages:
+          type: integer
+
+    PerformanceAlert:
+      type: object
+      properties:
+        id:
+          type: string
+        type:
+          type: string
+          enum:
+            [
+              high_response_time,
+              low_throughput,
+              high_error_rate,
+              memory_usage,
+              disk_usage,
+            ]
+        severity:
+          type: string
+          enum: [low, medium, high, critical]
+        message:
+          type: string
+        value:
+          type: number
+        threshold:
+          type: number
+        createdAt:
+          type: string
+          format: date-time
+        resolvedAt:
+          type: string
+          format: date-time
+        isResolved:
+          type: boolean
+
+    # Application Info Schema
+    ApplicationInfo:
+      type: object
+      properties:
+        name:
+          type: string
+          example: "Notification Platform"
+        version:
+          type: string
+          example: "1.0.0"
+        status:
+          type: string
+          enum: [healthy, degraded, unhealthy]
+        uptime:
+          type: number
+          description: Uptime in seconds
+        environment:
+          type: string
+          enum: [development, staging, production]
+        timestamp:
+          type: string
+          format: date-time
+
+    # API Key Schemas
+    CreateApiKeyRequest:
+      type: object
+      required:
+        - name
+        - projectId
+      properties:
+        name:
+          type: string
+          maxLength: 255
+        description:
+          type: string
+        projectId:
+          type: string
+          format: uuid
+        permissions:
+          type: array
+          items:
+            type: string
+        expiresAt:
+          type: string
+          format: date-time
+
+    UpdateApiKeyRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          maxLength: 255
+        description:
+          type: string
+        permissions:
+          type: array
+          items:
+            type: string
+        isActive:
+          type: boolean
+
+    ApiKeyResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        description:
+          type: string
+        key:
+          type: string
+          description: Only returned when creating a new key
+        keyPreview:
+          type: string
+          description: Masked version of the key
+        projectId:
+          type: string
+          format: uuid
+        permissions:
+          type: array
+          items:
+            type: string
+        isActive:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+        expiresAt:
+          type: string
+          format: date-time
+
+    # Error Schema
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+        message:
+          type: string
+        statusCode:
+          type: integer
+        details:
+          type: object

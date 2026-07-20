@@ -1,0 +1,37 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "plugins": ["typescript", "import", "react", "unicorn"],
+  "categories": {
+    "correctness": "error",
+    "suspicious": "warn"
+  },
+  "rules": {
+    "react/react-in-jsx-scope": "off",
+    "eslint/no-unused-vars": "warn",
+    "typescript/no-extraneous-class": "warn",
+    "unicorn/consistent-function-scoping": "off",
+    "import/no-unassigned-import": "off",
+    "eslint/no-new": "warn",
+    "eslint/no-shadow": "warn",
+    "eslint/preserve-caught-error": "warn",
+    "eslint/no-control-regex": "warn",
+    "eslint/no-useless-escape": "warn",
+    "eslint/no-unreachable": "warn",
+    "eslint/no-unassigned-vars": "warn",
+    "react-hooks/exhaustive-deps": "warn",
+    "unicorn/no-invalid-remove-event-listener": "warn"
+  },
+  "ignorePatterns": [
+    "**/node_modules/**",
+    "**/dist/**",
+    "**/.output/**",
+    "**/.nitro/**",
+    "**/coverage/**",
+    "**/routeTree.gen.ts",
+    "**/*.spec.ts",
+    "**/*.e2e-spec.ts",
+    "**/test/**",
+    "**/examples/**",
+    "**/scripts/**"
+  ]
+}

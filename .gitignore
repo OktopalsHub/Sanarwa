@@ -1,0 +1,54 @@
+# Dependencies & build
+node_modules/
+dist/
+coverage/
+*.log
+*.tsbuildinfo
+
+# Env (allow only .env.example)
+.env
+.env.*
+!.env.example
+!**/.env.example
+
+# Framework / tooling caches
+.next/
+.output/
+.nitro/
+.tanstack/
+.turbo/
+.fallow/
+.nx/
+.cache/
+
+# Dotfiles / agent / editor (allow only .github and .env.example)
+.*
+!.gitignore
+!.env.example
+!**/.env.example
+!.github/
+!.github/**
+
+# Markdown: only root README
+*.md
+!/README.md
+
+# Config that stays local / tool-owned
+*.toml
+
+# Agent skills / locks (local only)
+skills-lock.json
+.agents/
+.hallmark/
+.ponytail/
+**/ponytail/**
+
+# OS
+.DS_Store
+Thumbs.db
+
+*coverage*
+*logs*
+*temp*
+*cache*
+*backup*

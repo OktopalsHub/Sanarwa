@@ -1,0 +1,810 @@
+openapi: 3.0.3
+info:
+  title: Sanarwa Developer API
+  description: |
+    Developer API for sending notifications through the Sanarwa Platform.
+    This API allows developers to integrate notification capabilities into their applications.
+
+    ## Authentication
+    All endpoints require API Key authentication. You can obtain an API key from your project dashboard.
+
+    ## Rate Limits
+    - 1000 requests per minute per API key
+    - 10,000 notifications per day (varies by plan)
+
+    ## Supported Channels
+    - Email
+    - SMS
+    - Push Notifications
+    - WhatsApp
+    - In-App Notifications
+
+
+  version: 1.0.0
+  contact:
+    name: Developer Support
+    email: developers@sanarwa.com
+    url: https://docs.sanarwa.com
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: https://api.sanarwa.com/v1
+    description: Production API server
+  - url: https://api-staging.sanarwa.com/v1
+    description: Staging API server
+  - url: http://localhost:3000/v1
+    description: Development server
+
+security:
+  - ApiKeyAuth: []
+
+paths:
+  # Core Notification Endpoints
+  /notifications:
+    post:
+      tags:
+        - Notifications
+      summary: Send a single notification
+      description: |
+        Send a notification to one or more recipients through specified channels.
+        The notification will be processed asynchronously and delivered through the configured providers.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/NotificationRequest"
+            examples:
+              email_notification:
+                summary: Email notification example
+                value:
+                  templateId: "template_123"
+                  recipients:
+                    - email: "user@example.com"
+                      name: "John Doe"
+                  data:
+                    userName: "John"
+                    orderNumber: "ORD-12345"
+                  channels: ["email"]
+              multi_channel:
+                summary: Multi-channel notification
+                value:
+                  templateId: "template_456"
+                  recipients:
+                    - email: "user@example.com"
+                      phone: "+1234567890"
+                      name: "Jane Smith"
+                  data:
+                    alertMessage: "Your order has been shipped!"
+                  channels: ["email", "sms"]
+      responses:
+        "201":
+          description: Notification sent successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NotificationResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "429":
+          $ref: "#/components/responses/RateLimited"
+
+    get:
+      tags:
+        - Notifications
+      summary: Get notification history
+      description: Retrieve a paginated list of notifications sent through your project
+      parameters:
+        - $ref: "#/components/parameters/Page"
+        - $ref: "#/components/parameters/Limit"
+        - name: status
+          in: query
+          description: Filter by notification status
+          schema:
+            $ref: "#/components/schemas/NotificationStatus"
+        - name: channel
+          in: query
+          description: Filter by notification channel
+          schema:
+            type: string
+            enum: [email, sms, push, whatsapp, in_app]
+        - name: from
+          in: query
+          description: Filter notifications from this date (ISO 8601)
+          schema:
+            type: string
+            format: date-time
+        - name: to
+          in: query
+          description: Filter notifications to this date (ISO 8601)
+          schema:
+            type: string
+            format: date-time
+      responses:
+        "200":
+          description: Notifications retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PaginatedNotifications"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+
+  /notifications/bulk:
+    post:
+      tags:
+        - Notifications
+      summary: Send multiple notifications in bulk
+      description: |
+        Send multiple notifications in a single request. This is more efficient for sending
+        many notifications at once. Maximum 1000 notifications per bulk request.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BulkNotificationRequest"
+            example:
+              notifications:
+                - templateId: "welcome_email"
+                  recipients:
+                    - email: "user1@example.com"
+                      name: "User One"
+                  data:
+                    userName: "User One"
+                  channels: ["email"]
+                - templateId: "welcome_email"
+                  recipients:
+                    - email: "user2@example.com"
+                      name: "User Two"
+                  data:
+                    userName: "User Two"
+                  channels: ["email"]
+      responses:
+        "201":
+          description: Bulk notifications processed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BulkNotificationResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "429":
+          $ref: "#/components/responses/RateLimited"
+
+  /notifications/{id}:
+    get:
+      tags:
+        - Notifications
+      summary: Get notification details
+      description: Retrieve detailed information about a specific notification
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Notification ID
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Notification details retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NotificationDetails"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+
+  /notifications/{id}/status:
+    get:
+      tags:
+        - Notifications
+      summary: Get notification status
+      description: Get the current delivery status of a notification
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Notification ID
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Notification status retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NotificationStatus"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+
+  /notifications/{id}/retry:
+    post:
+      tags:
+        - Notifications
+      summary: Retry a failed notification
+      description: Retry delivery of a failed notification
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Notification ID
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Notification retry initiated successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NotificationResponse"
+        "400":
+          description: Cannot retry this notification (e.g., already delivered)
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+
+  # Template Management (Read-only for developers)
+  /templates:
+    get:
+      tags:
+        - Templates
+      summary: List available templates
+      description: Get a list of templates available for your project
+      parameters:
+        - $ref: "#/components/parameters/Page"
+        - $ref: "#/components/parameters/Limit"
+        - name: channel
+          in: query
+          description: Filter templates by channel
+          schema:
+            type: string
+            enum: [email, sms, push, whatsapp, in_app, voice]
+      responses:
+        "200":
+          description: Templates retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PaginatedTemplates"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+
+  /templates/{id}:
+    get:
+      tags:
+        - Templates
+      summary: Get template details
+      description: Get detailed information about a specific template
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Template ID
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Template details retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Template"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+
+  # Analytics and Reporting
+  /analytics/summary:
+    get:
+      tags:
+        - Analytics
+      summary: Get notification analytics summary
+      description: Get summary statistics for your notifications
+      parameters:
+        - name: from
+          in: query
+          description: Start date for analytics (ISO 8601)
+          schema:
+            type: string
+            format: date-time
+        - name: to
+          in: query
+          description: End date for analytics (ISO 8601)
+          schema:
+            type: string
+            format: date-time
+        - name: channel
+          in: query
+          description: Filter by channel
+          schema:
+            type: string
+            enum: [email, sms, push, whatsapp, in_app, voice]
+      responses:
+        "200":
+          description: Analytics summary retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AnalyticsSummary"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+
+components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
+      description: |
+        API key for authentication. Get your API key from the project dashboard.
+        Include it in the X-API-Key header for all requests.
+
+  parameters:
+    Page:
+      name: page
+      in: query
+      description: Page number for pagination
+      schema:
+        type: integer
+        minimum: 1
+        default: 1
+
+    Limit:
+      name: limit
+      in: query
+      description: Number of items per page
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 20
+
+  schemas:
+    # Core Notification Schemas
+    NotificationRequest:
+      type: object
+      required:
+        - recipients
+        - channels
+      properties:
+        templateId:
+          type: string
+          description: ID of the template to use (optional if content is provided)
+        recipients:
+          type: array
+          items:
+            $ref: "#/components/schemas/Recipient"
+          minItems: 1
+          maxItems: 1000
+        channels:
+          type: array
+          items:
+            type: string
+            enum: [email, sms, push, whatsapp, in_app, voice]
+          minItems: 1
+        data:
+          type: object
+          description: Dynamic data to populate the template
+        content:
+          $ref: "#/components/schemas/NotificationContent"
+          description: Direct content (used if templateId is not provided)
+        priority:
+          type: string
+          enum: [low, normal, high, urgent]
+          default: normal
+        scheduledAt:
+          type: string
+          format: date-time
+          description: Schedule notification for future delivery
+        metadata:
+          type: object
+          description: Additional metadata for tracking
+
+    BulkNotificationRequest:
+      type: object
+      required:
+        - notifications
+      properties:
+        notifications:
+          type: array
+          items:
+            $ref: "#/components/schemas/NotificationRequest"
+          minItems: 1
+          maxItems: 1000
+
+    Recipient:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+        phone:
+          type: string
+          description: Phone number for SMS (E.164 format recommended)
+
+        name:
+          type: string
+        userId:
+          type: string
+          description: Your internal user ID
+        deviceTokens:
+          type: array
+          items:
+            type: string
+          description: Push notification device tokens
+        metadata:
+          type: object
+          description: Additional recipient metadata
+
+    NotificationContent:
+      type: object
+      properties:
+        subject:
+          type: string
+          description: Subject line (for email)
+        body:
+          type: string
+          description: Message body
+        html:
+          type: string
+          description: HTML content (for email)
+        attachments:
+          type: array
+          items:
+            $ref: "#/components/schemas/Attachment"
+
+    Attachment:
+      type: object
+      required:
+        - filename
+        - content
+      properties:
+        filename:
+          type: string
+        content:
+          type: string
+          format: base64
+          description: Base64 encoded file content
+        contentType:
+          type: string
+          description: MIME type of the attachment
+
+    # Response Schemas
+    NotificationResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Unique notification ID
+        status:
+          $ref: "#/components/schemas/NotificationStatus"
+        createdAt:
+          type: string
+          format: date-time
+        scheduledAt:
+          type: string
+          format: date-time
+        estimatedDelivery:
+          type: string
+          format: date-time
+        channels:
+          type: array
+          items:
+            type: string
+        recipientCount:
+          type: integer
+
+    BulkNotificationResponse:
+      type: object
+      properties:
+        batchId:
+          type: string
+          format: uuid
+        totalNotifications:
+          type: integer
+        acceptedNotifications:
+          type: integer
+        rejectedNotifications:
+          type: integer
+        notifications:
+          type: array
+          items:
+            $ref: "#/components/schemas/NotificationResponse"
+        errors:
+          type: array
+          items:
+            $ref: "#/components/schemas/BulkError"
+
+    BulkError:
+      type: object
+      properties:
+        index:
+          type: integer
+          description: Index of the failed notification in the request array
+        error:
+          type: string
+        message:
+          type: string
+
+    NotificationDetails:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        status:
+          $ref: "#/components/schemas/NotificationStatus"
+        templateId:
+          type: string
+        channels:
+          type: array
+          items:
+            type: string
+        recipients:
+          type: array
+          items:
+            $ref: "#/components/schemas/RecipientStatus"
+        deliveries:
+          type: array
+          items:
+            $ref: "#/components/schemas/DeliveryStatus"
+        createdAt:
+          type: string
+          format: date-time
+        scheduledAt:
+          type: string
+          format: date-time
+        sentAt:
+          type: string
+          format: date-time
+        metadata:
+          type: object
+
+    RecipientStatus:
+      type: object
+      properties:
+        email:
+          type: string
+        phone:
+          type: string
+        name:
+          type: string
+        status:
+          type: string
+          enum: [pending, sent, delivered, failed, bounced, opened, clicked]
+
+    DeliveryStatus:
+      type: object
+      properties:
+        channel:
+          type: string
+        provider:
+          type: string
+        status:
+          type: string
+          enum: [pending, sent, delivered, failed, bounced]
+        sentAt:
+          type: string
+          format: date-time
+        deliveredAt:
+          type: string
+          format: date-time
+        error:
+          type: string
+        metadata:
+          type: object
+
+    NotificationStatus:
+      type: string
+      enum: [pending, processing, sent, delivered, failed, cancelled, scheduled]
+
+    # Template Schemas
+    Template:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        channel:
+          type: string
+        content:
+          type: object
+        variables:
+          type: array
+          items:
+            type: string
+          description: List of template variables
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    # Pagination Schemas
+    PaginatedNotifications:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/NotificationResponse"
+        total:
+          type: integer
+        page:
+          type: integer
+        limit:
+          type: integer
+        totalPages:
+          type: integer
+
+    PaginatedTemplates:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/Template"
+        total:
+          type: integer
+        page:
+          type: integer
+        limit:
+          type: integer
+        totalPages:
+          type: integer
+
+    # Analytics Schemas
+    AnalyticsSummary:
+      type: object
+      properties:
+        totalNotifications:
+          type: integer
+        deliveredNotifications:
+          type: integer
+        failedNotifications:
+          type: integer
+        deliveryRate:
+          type: number
+          format: float
+          description: Delivery rate as a percentage
+        channelBreakdown:
+          type: object
+          additionalProperties:
+            type: integer
+        statusBreakdown:
+          type: object
+          additionalProperties:
+            type: integer
+        timeSeriesData:
+          type: array
+          items:
+            $ref: "#/components/schemas/TimeSeriesPoint"
+
+    TimeSeriesPoint:
+      type: object
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+        sent:
+          type: integer
+        delivered:
+          type: integer
+        failed:
+          type: integer
+
+    # Error Schemas
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+        message:
+          type: string
+        code:
+          type: string
+        details:
+          type: object
+
+  responses:
+    BadRequest:
+      description: Bad request - Invalid input data
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+          example:
+            error: "Bad Request"
+            message: "Invalid recipient email format"
+            code: "INVALID_EMAIL"
+
+    Unauthorized:
+      description: Unauthorized - Invalid or missing API key
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+          example:
+            error: "Unauthorized"
+            message: "Invalid API key"
+            code: "INVALID_API_KEY"
+
+    Forbidden:
+      description: Forbidden - Insufficient permissions or quota exceeded
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+          example:
+            error: "Forbidden"
+            message: "Daily notification quota exceeded"
+            code: "QUOTA_EXCEEDED"
+
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+          example:
+            error: "Not Found"
+            message: "Notification not found"
+            code: "NOTIFICATION_NOT_FOUND"
+
+    RateLimited:
+      description: Rate limit exceeded
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+          example:
+            error: "Rate Limited"
+            message: "Too many requests. Please try again later."
+            code: "RATE_LIMIT_EXCEEDED"
+
+tags:
+  - name: Notifications
+    description: Send and manage notifications
+  - name: Templates
+    description: Access notification templates
+  - name: Analytics
+    description: Notification analytics and reporting

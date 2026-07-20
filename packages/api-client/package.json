@@ -1,0 +1,25 @@
+{
+  "name": "@sanarwa/api-client",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "type-check": "tsc --noEmit",
+    "build": "tsc --noEmit",
+    "lint": "echo 'lint skipped'",
+    "test": "echo 'no tests'"
+  },
+  "dependencies": {
+    "@sanarwa/shared-types": "workspace:*",
+    "axios": "^1.12.2"
+  },
+  "devDependencies": {
+    "@types/node": "^20",
+    "typescript": "^5.9.3"
+  }
+}

@@ -1,0 +1,47 @@
+import type { ComponentType, SVGProps } from 'react';
+
+export type IconComponent = ComponentType<SVGProps<SVGSVGElement>>;
+/** @deprecated Use IconComponent — kept for legacy metric cards */
+export type LucideIcon = IconComponent;
+
+export {
+  ArrowPathIcon as Repeat,
+  ArrowTopRightOnSquareIcon as ExternalLink,
+  ArrowTrendingDownIcon as TrendingDown,
+  ArrowTrendingUpIcon as TrendingUp,
+  BeakerIcon as Droplets,
+  BellIcon as Bell,
+  BoltIcon as Zap,
+  BugAntIcon as Bug,
+  CalendarIcon as Calendar,
+  ChartBarIcon as Activity,
+  ChatBubbleLeftRightIcon as MessageSquare,
+  ChatBubbleOvalLeftIcon as MessageCircle,
+  CheckCircleIcon as CheckCircle,
+  ClockIcon as Clock,
+  CodeBracketIcon as GitBranch,
+  CursorArrowRaysIcon as MousePointer,
+  CursorArrowRaysIcon as Target,
+  DevicePhoneMobileIcon as Smartphone,
+  DocumentTextIcon as FileText,
+  EnvelopeIcon as Mail,
+  ExclamationCircleIcon as AlertCircle,
+  ExclamationTriangleIcon as AlertTriangle,
+  EyeIcon as Eye,
+  FunnelIcon as Filter,
+  GlobeAltIcon as Webhook,
+  HandThumbDownIcon as ThumbsDown,
+  HandThumbUpIcon as ThumbsUp,
+  LightBulbIcon as Lightbulb,
+  PaperAirplaneIcon as Send,
+  PhoneIcon as Phone,
+  ShieldCheckIcon as Shield,
+  ShieldCheckIcon as ShieldCheck,
+  SpeakerWaveIcon as Volume2,
+  StarIcon as Star,
+  UserIcon as User,
+  UserMinusIcon as UserX,
+  UserPlusIcon as UserCheck,
+  UsersIcon as Users,
+  XCircleIcon as XCircle,
+} from '@heroicons/react/24/outline';

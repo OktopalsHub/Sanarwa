@@ -1,0 +1,46 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: sanarwa
+      POSTGRES_PASSWORD: sanarwa
+      POSTGRES_DB: sanarwa_db
+    ports:
+      - '5432:5432'
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - '6379:6379'
+
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    ports:
+      - '9000:9000'
+    environment:
+      DATABASE_URL: postgresql://sanarwa:sanarwa@postgres:5432/sanarwa_db
+      REDIS_URL: redis://redis:6379
+      PORT: 9000
+    depends_on:
+      - postgres
+      - redis
+
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+      args:
+        VITE_API_URL: http://api:9000/api/v1
+    ports:
+      - '3000:3000'
+    environment:
+      VITE_API_URL: http://localhost:9000/api/v1
+    depends_on:
+      - api
+
+volumes:
+  postgres_data:

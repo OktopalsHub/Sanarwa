@@ -1,0 +1,197 @@
+/* Sanarwa brand — restored from sanarwa-client
+ * Navy #001F3D · Peach accent #ED985F · Cool gray paper
+ */
+
+:root {
+  --brand-dark: #001f3d;
+  --accent: #ed985f;
+  --accent-hover: #e08a50;
+  --accent-light: #f7b980;
+  --neutral: #e6e6e6;
+
+  --color-paper: #f6f7f8;
+  --color-paper-2: #ffffff;
+  --color-paper-3: #eef0f2;
+  --color-rule: #e6e6e6;
+  --color-rule-2: #cbd5e1;
+  --color-muted: #64748b;
+  --color-neutral: #64748b;
+  --color-ink-2: #001f3d;
+  --color-ink: #001f3d;
+
+  /* Signal / CTA peach — paint with --hm-accent or text-accent */
+  --hm-accent: #ed985f;
+  --color-accent: var(--hm-accent);
+  --color-accent-ink: #ffffff;
+  --color-focus: #ed985f;
+  --color-graphite: #001f3d;
+  --color-graphite-2: #001020;
+  --color-ok: #059669;
+  --color-danger: #dc2626;
+
+  --font-display: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-body: "Geist", "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "Geist Mono", ui-monospace, "SF Mono", Menlo, monospace;
+  --font-outlier: var(--font-mono);
+
+  --display-weight: 700;
+  --display-style: normal;
+  --tracking-display: -0.02em;
+  --tracking-label: 0.04em;
+
+  --text-xs: 0.75rem;
+  --text-sm: 0.875rem;
+  --text-md: 1rem;
+  --text-lg: 1.125rem;
+  --text-xl: 1.375rem;
+  --text-2xl: 1.75rem;
+  --text-3xl: 2.25rem;
+  --text-4xl: clamp(2.25rem, 4vw + 0.5rem, 3.25rem);
+  --text-display: clamp(2.5rem, 5vw + 0.5rem, 4.5rem);
+  --text-display-s: clamp(2rem, 3.5vw + 0.5rem, 3.25rem);
+
+  --space-3xs: 0.25rem;
+  --space-2xs: 0.5rem;
+  --space-xs: 0.75rem;
+  --space-sm: 1rem;
+  --space-md: 1.5rem;
+  --space-lg: 2rem;
+  --space-xl: 3rem;
+  --space-2xl: 4.5rem;
+  --space-3xl: 7rem;
+  --space-4xl: 11rem;
+
+  --rule-hair: 1px;
+  --rule-fine: 1px;
+  --radius: 0.25rem;
+  --radius-card: 1.5rem;
+  --radius-pill: 0.25rem;
+  --radius-input: 0.5rem;
+  --shadow-card: 0 1px 2px rgb(0 31 61 / 0.06);
+
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in: cubic-bezier(0.7, 0, 0.84, 0);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --dur-micro: 120ms;
+  --dur-short: 220ms;
+  --dur-long: 420ms;
+
+  --background: #f6f7f8;
+  --foreground: #001f3d;
+  --card: #ffffff;
+  --card-foreground: #001f3d;
+  --popover: #ffffff;
+  --popover-foreground: #001f3d;
+  --primary: #001f3d;
+  --primary-foreground: #ffffff;
+  --secondary: #eef0f2;
+  --secondary-foreground: #001f3d;
+  --muted: #eef0f2;
+  --muted-foreground: #64748b;
+  --accent-foreground: #ffffff;
+  --destructive: #dc2626;
+  --destructive-foreground: #ffffff;
+  --border: #e6e6e6;
+  --input: #ffffff;
+  --ring: #ed985f;
+  --text-secondary: #64748b;
+  --chart-1: #ed985f;
+  --chart-2: #001f3d;
+  --chart-3: #0d9488;
+  --chart-4: #2563eb;
+  --chart-5: #9333ea;
+  --sidebar: #ffffff;
+  --sidebar-foreground: #001f3d;
+  --sidebar-primary: #001f3d;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #f1f5f9;
+  --sidebar-accent-foreground: #001f3d;
+  --sidebar-border: #e6e6e6;
+  --sidebar-ring: #ed985f;
+
+  --project-blue-start: #2563eb;
+  --project-blue-end: #1e40af;
+  --project-purple-start: #9333ea;
+  --project-purple-end: #7e22ce;
+  --project-gray-start: #4b5563;
+  --project-gray-end: #1f2937;
+  --project-pink-start: #db2777;
+  --project-pink-end: #9d174d;
+  --project-slate-start: #475569;
+  --project-slate-end: #1e293b;
+  --project-teal-start: #0d9488;
+  --project-teal-end: #115e59;
+}
+
+.dark {
+  --background: #001020;
+  --foreground: #ffffff;
+  --brand-card: #022445;
+  --brand-input: #001529;
+  --border-dark: #13385c;
+
+  --color-paper: #001020;
+  --color-paper-2: #022445;
+  --color-paper-3: #001529;
+  --color-rule: #13385c;
+  --color-rule-2: #1e4976;
+  --color-muted: #9cb5cb;
+  --color-neutral: #9cb5cb;
+  --color-ink-2: #ffffff;
+  --color-ink: #ffffff;
+  --hm-accent: #ed985f;
+  --color-accent: var(--hm-accent);
+  --color-accent-ink: #001f3d;
+  --color-focus: #f7b980;
+  --color-graphite: #001020;
+  --color-graphite-2: #00080f;
+
+  --card: #022445;
+  --card-foreground: #ffffff;
+  --popover: #022445;
+  --popover-foreground: #ffffff;
+  --primary: #ed985f;
+  --primary-foreground: #001f3d;
+  --secondary: #001529;
+  --secondary-foreground: #ffffff;
+  --muted: #001529;
+  --muted-foreground: #9cb5cb;
+  --accent-foreground: #001f3d;
+  --destructive: #f87171;
+  --destructive-foreground: #001020;
+  --border: #13385c;
+  --input: #001529;
+  --ring: #ed985f;
+  --text-secondary: #9cb5cb;
+  --sidebar: #001f3d;
+  --sidebar-foreground: #ffffff;
+  --sidebar-primary: #ed985f;
+  --sidebar-primary-foreground: #001f3d;
+  --sidebar-accent: #022445;
+  --sidebar-accent-foreground: #ffffff;
+  --sidebar-border: #13385c;
+  --sidebar-ring: #ed985f;
+
+  --status-active-bg: rgba(6, 78, 59, 0.5);
+  --status-active-text: #34d399;
+  --status-active-border: #065f46;
+  --status-inactive-bg: rgba(120, 53, 15, 0.5);
+  --status-inactive-text: #fbbf24;
+  --status-inactive-border: #78350f;
+  --status-archived-bg: rgba(15, 23, 42, 0.5);
+  --status-archived-text: #94a3b8;
+  --status-archived-border: #1e293b;
+
+  --project-blue-start: #1e40af;
+  --project-blue-end: #172554;
+  --project-purple-start: #7e22ce;
+  --project-purple-end: #581c87;
+  --project-gray-start: #374151;
+  --project-gray-end: #111827;
+  --project-pink-start: #be185d;
+  --project-pink-end: #831843;
+  --project-slate-start: #334155;
+  --project-slate-end: #0f172a;
+  --project-teal-start: #0f766e;
+  --project-teal-end: #134e4a;
+}

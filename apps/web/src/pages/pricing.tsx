@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import Link from '@/compat/next-link';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { Button } from '@/components/ui/button';
+import { useCheckoutCurrency } from '@/hooks/use-checkout-currency';
 import { SanarwaMark, SanarwaWordmark } from '@sanarwa/assets';
 import {
   BYO_ELIGIBLE_CHANNELS,
@@ -36,29 +37,6 @@ const CHANNEL_LOGOS: Record<ChannelId, { src: string; alt: string }> = {
   in_app: { src: '/channels/in_app.svg', alt: 'In-app' },
   voice: { src: '/channels/voice.svg', alt: 'Voice' },
 };
-
-function detectPreferredCurrency(): CurrencyCode {
-  if (typeof window === 'undefined') return 'USD';
-  try {
-    const locale = Intl.DateTimeFormat().resolvedOptions().locale || '';
-    const languages = navigator.languages?.length
-      ? navigator.languages
-      : [navigator.language].filter(Boolean);
-    const tz = Intl.DateTimeFormat().resolvedOptions().timeZone || '';
-    const hints = [locale, ...languages, tz].join(' ').toLowerCase();
-    if (
-      hints.includes('-ng') ||
-      hints.includes('_ng') ||
-      hints.includes('nigeria') ||
-      tz === 'africa/lagos'
-    ) {
-      return 'NGN';
-    }
-  } catch {
-    /* ignore */
-  }
-  return 'USD';
-}
 
 function SiteHeader({ active }: { active: 'home' | 'pricing' }) {
   return (
@@ -101,16 +79,16 @@ function SiteHeader({ active }: { active: 'home' | 'pricing' }) {
 }
 
 export default function PricingPage() {
-  const [currency, setCurrency] = useState<CurrencyCode>('USD');
+  const { currency: checkoutCurrency, setCurrency: setCheckoutCurrency, isReady } =
+    useCheckoutCurrency();
+  const currency = (isReady ? checkoutCurrency : 'USD') as CurrencyCode;
   const [spendInput, setSpendInput] = useState(1);
   const [billingMode, setBillingMode] = useState<BillingMode>('managed');
   const [selectedChannel, setSelectedChannel] = useState<ChannelId>('email');
 
   useEffect(() => {
-    const preferred = detectPreferredCurrency();
-    setCurrency(preferred);
-    setSpendInput(preferred === 'NGN' ? 1000 : 1);
-  }, []);
+    setSpendInput(currency === 'NGN' ? 1000 : 1);
+  }, [currency]);
 
   const packs = packagesForCurrency(currency, billingMode);
 
@@ -132,7 +110,7 @@ export default function PricingPage() {
 
   const switchCurrency = () => {
     const next: CurrencyCode = currency === 'NGN' ? 'USD' : 'NGN';
-    setCurrency(next);
+    setCheckoutCurrency(next);
     setSpendInput(next === 'NGN' ? 1000 : 1);
   };
 

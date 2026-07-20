@@ -1,55 +1,81 @@
-import { Injectable, Logger, BadRequestException } from '@nestjs/common';
+import { Injectable, Logger, BadRequestException, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { QueryFailedError, Repository } from 'typeorm';
 import { ConfigService } from '@nestjs/config';
 import { Cron, CronExpression } from '@nestjs/schedule';
-import { 
-  Subscription, 
-  SubscriptionStatus, 
-  SubscriptionPlan, 
-  PaymentProvider 
-} from '../entities/subscription.entity';
-import { 
-  TokenPurchase, 
-  TokenPurchaseStatus, 
-  TokenPurchaseType 
+import { createHash } from 'node:crypto';
+import {
+  TokenPurchase,
+  TokenPurchaseStatus,
+  TokenPurchaseType,
 } from '../entities/token-purchase.entity';
-import { 
-  AutoTopupConfig, 
-  TopupTrigger, 
-  ScheduleFrequency 
+import {
+  AutoTopupConfig,
+  TopupTrigger,
+  ScheduleFrequency,
 } from '../entities/auto-topup-config.entity';
-import { 
-  TokenBalance, 
-  TokenTransaction, 
-  TokenTransactionType 
-} from '../entities/token-balance.entity';
+import { WebhookEvent } from '../entities/webhook-event.entity';
+import { TenantPaymentMethod } from '../entities/tenant-payment-method.entity';
+import { Tenant } from '../../tenant/entities/tenant.entity';
+import { PaymentProvider } from '../enums/payment-provider.enum';
 import { PolarService } from './polar.service';
-import { PaystackService } from './paystack.service';
+import { BachsService } from './bachs.service';
+import { NombaService } from './nomba.service';
+import { PaymentMethodService } from './payment-method.service';
 import { TokenManagementService } from '../../token-management/services/token-management.service';
+import { TokenTransactionType } from '../entities/token-balance.entity';
+import {
+  BillingCurrency,
+  buildNotifiPurchaseReference,
+  packagePriceMinor,
+  resolvePackage,
+} from '../constants/token-packages';
+import { verifyBachsWebhook } from '../utils/bachs-webhook.util';
+import { verifyNombaWebhook } from '../utils/nomba-webhook.util';
 
-export interface CreateSubscriptionDto {
+export interface PurchaseTokenPackDto {
   tenantId: string;
-  plan: SubscriptionPlan;
-  paymentProvider: PaymentProvider;
-  customerEmail: string;
+  packageId: string;
+  currency: BillingCurrency;
+  customerEmail?: string;
   customerName?: string;
-  trialDays?: number;
+  type?: TokenPurchaseType;
 }
 
-export interface PurchaseTokensDto {
+export interface LegacyPurchaseTokensDto {
   tenantId: string;
   tokenAmount: number;
   paymentProvider: PaymentProvider;
   type?: TokenPurchaseType;
-  metadata?: any;
+  metadata?: Record<string, unknown>;
+}
+
+export type PurchaseTokensDto = PurchaseTokenPackDto | LegacyPurchaseTokensDto;
+
+export interface TokenPurchaseCheckoutResult {
+  purchaseId: string;
+  checkoutUrl: string;
+  provider: PaymentProvider;
+  status: TokenPurchaseStatus;
+}
+
+export interface CheckoutContextResult {
+  defaultCurrency: BillingCurrency;
+  availableCurrencies: BillingCurrency[];
+  bachsConfigured: boolean;
+  nombaConfigured: boolean;
+  providers: PaymentProvider[];
+  countryCode?: string;
 }
 
 export interface AutoTopupConfigDto {
   tenantId: string;
   enabled: boolean;
-  trigger: TopupTrigger;
+  trigger?: TopupTrigger;
   thresholdAmount?: number;
+  packageId?: string;
+  currency?: BillingCurrency;
+  paymentMethodId?: string;
   topupAmount?: number;
   scheduleFrequency?: ScheduleFrequency;
   scheduledAmount?: number;
@@ -64,114 +90,120 @@ export class SubscriptionBillingService {
   private readonly logger = new Logger(SubscriptionBillingService.name);
 
   constructor(
-    @InjectRepository(Subscription)
-    private subscriptionRepository: Repository<Subscription>,
     @InjectRepository(TokenPurchase)
     private tokenPurchaseRepository: Repository<TokenPurchase>,
     @InjectRepository(AutoTopupConfig)
     private autoTopupConfigRepository: Repository<AutoTopupConfig>,
-    @InjectRepository(TokenBalance)
-    private tokenBalanceRepository: Repository<TokenBalance>,
-    @InjectRepository(TokenTransaction)
-    private tokenTransactionRepository: Repository<TokenTransaction>,
+    @InjectRepository(WebhookEvent)
+    private webhookEventRepository: Repository<WebhookEvent>,
+    @InjectRepository(Tenant)
+    private tenantRepository: Repository<Tenant>,
+    @InjectRepository(TenantPaymentMethod)
+    private paymentMethodRepository: Repository<TenantPaymentMethod>,
     private polarService: PolarService,
-    private paystackService: PaystackService,
+    private bachsService: BachsService,
+    private nombaService: NombaService,
+    private paymentMethodService: PaymentMethodService,
     private tokenManagementService: TokenManagementService,
     private configService: ConfigService,
   ) {}
 
-  async createSubscription(dto: CreateSubscriptionDto): Promise<Subscription> {
+  async purchaseTokens(
+    dto: PurchaseTokensDto,
+  ): Promise<TokenPurchaseCheckoutResult | TokenPurchase> {
+    if (this.isLegacyPurchaseDto(dto)) {
+      return this.initiateLegacyTokenPurchase(dto);
+    }
+    return this.purchaseTokenPack(dto);
+  }
+
+  async purchaseTokenPack(dto: PurchaseTokenPackDto): Promise<TokenPurchaseCheckoutResult> {
+    let pkg;
     try {
-      let externalCustomerId: string;
-      let externalSubscriptionId: string;
+      pkg = resolvePackage(dto.packageId, dto.currency);
+    } catch {
+      throw new BadRequestException('Invalid token package or currency');
+    }
 
-      // Create customer and subscription with the chosen provider
-      if (dto.paymentProvider === PaymentProvider.POLAR) {
-        const customer = await this.polarService.createCustomer({
-          email: dto.customerEmail,
-          name: dto.customerName,
-          metadata: { tenantId: dto.tenantId },
-        });
-        externalCustomerId = customer.id;
+    const tenant = await this.tenantRepository.findOne({
+      where: { id: dto.tenantId },
+      relations: ['owner'],
+    });
 
-        // Get the appropriate price ID for the plan
-        const priceId = await this.getPolarPriceId(dto.plan);
-        
-        const subscription = await this.polarService.createSubscription({
-          customer_id: customer.id,
-          price_id: priceId,
-          trial_period_days: dto.trialDays,
-          metadata: { tenantId: dto.tenantId, plan: dto.plan },
-        });
-        externalSubscriptionId = subscription.id;
-      } else {
-        const customer = await this.paystackService.createCustomer({
-          email: dto.customerEmail,
-          first_name: dto.customerName?.split(' ')[0],
-          last_name: dto.customerName?.split(' ').slice(1).join(' '),
-          metadata: { tenantId: dto.tenantId },
-        });
-        externalCustomerId = customer.customer_code;
+    if (!tenant) {
+      throw new BadRequestException('Tenant not found');
+    }
 
-        // Get the appropriate plan code
-        const planCode = await this.getPaystackPlanCode(dto.plan);
-        
-        const subscription = await this.paystackService.createSubscription({
-          customer: customer.customer_code,
-          plan: planCode,
-          metadata: { tenantId: dto.tenantId, plan: dto.plan },
-        });
-        externalSubscriptionId = subscription.subscription_code;
-      }
+    const email = dto.customerEmail ?? tenant.owner?.email;
+    const name = dto.customerName ?? tenant.owner?.name ?? tenant.name;
 
-      // Create local subscription record
-      const planConfig = this.getPlanConfiguration(dto.plan);
-      const subscription = this.subscriptionRepository.create({
-        tenantId: dto.tenantId,
-        plan: dto.plan,
-        status: SubscriptionStatus.ACTIVE,
-        paymentProvider: dto.paymentProvider,
-        externalSubscriptionId,
-        externalCustomerId,
-        monthlyPrice: planConfig.monthlyPrice,
-        includedTokens: planConfig.includedTokens,
-        overageRate: planConfig.overageRate,
-        currentPeriodStart: new Date(),
-        currentPeriodEnd: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days
-        trialEnd: dto.trialDays ? new Date(Date.now() + dto.trialDays * 24 * 60 * 60 * 1000) : undefined,
+    if (!email) {
+      throw new BadRequestException('Customer email is required for checkout');
+    }
+
+    const priceMinor = packagePriceMinor(pkg);
+    const purchase = this.tokenPurchaseRepository.create({
+      tenantId: dto.tenantId,
+      tokenAmount: pkg.tokens,
+      totalPrice: pkg.price,
+      pricePerToken: pkg.pricePerToken,
+      status: TokenPurchaseStatus.PENDING,
+      type: dto.type ?? TokenPurchaseType.MANUAL,
+      paymentMetadata: {
+        packageId: pkg.id,
+        currency: pkg.currency,
+      },
+    });
+
+    const savedPurchase = await this.tokenPurchaseRepository.save(purchase);
+    const provider = this.resolveCheckoutProvider(pkg.currency);
+
+    try {
+      const checkout = await this.initializeProviderCheckout({
+        provider,
+        purchase: savedPurchase,
+        tenant,
+        email,
+        name,
+        packageId: pkg.id,
+        currency: pkg.currency,
+        priceMinor,
       });
 
-      const savedSubscription = await this.subscriptionRepository.save(subscription);
+      savedPurchase.paymentIntentId = checkout.paymentIntentId;
+      savedPurchase.transactionReference = checkout.transactionReference;
+      savedPurchase.paymentMetadata = {
+        ...savedPurchase.paymentMetadata,
+        provider,
+        checkoutUrl: checkout.checkoutUrl,
+      };
+      await this.tokenPurchaseRepository.save(savedPurchase);
 
-      // Initialize token balance if plan includes tokens
-      if (planConfig.includedTokens > 0) {
-        await this.tokenManagementService.addTokens(
-          dto.tenantId,
-          planConfig.includedTokens,
-          TokenTransactionType.PURCHASE,
-          'Monthly subscription tokens',
-          { subscriptionId: savedSubscription.id }
-        );
-      }
-
-      return savedSubscription;
+      return {
+        purchaseId: savedPurchase.id,
+        checkoutUrl: checkout.checkoutUrl,
+        provider,
+        status: savedPurchase.status,
+      };
     } catch (error) {
-      this.logger.error('Failed to create subscription:', error);
-      throw new BadRequestException('Failed to create subscription');
+      savedPurchase.status = TokenPurchaseStatus.FAILED;
+      await this.tokenPurchaseRepository.save(savedPurchase);
+      this.logger.error('Failed to purchase token pack:', error);
+      throw new BadRequestException('Failed to initiate token purchase');
     }
   }
 
-  async purchaseTokens(dto: PurchaseTokensDto): Promise<TokenPurchase> {
+  async initiateLegacyTokenPurchase(dto: LegacyPurchaseTokensDto): Promise<TokenPurchase> {
     try {
       const pricePerToken = this.getTokenPrice(dto.tokenAmount);
       const totalPrice = dto.tokenAmount * pricePerToken;
 
-      let paymentIntentId: string;
-      let transactionReference: string;
+      let paymentIntentId = '';
+      let transactionReference = '';
 
       if (dto.paymentProvider === PaymentProvider.POLAR) {
         const paymentIntent = await this.polarService.createPaymentIntent({
-          amount: Math.round(totalPrice * 100), // Convert to cents
+          amount: Math.round(totalPrice * 100),
           currency: 'USD',
           metadata: {
             tenantId: dto.tenantId,
@@ -182,21 +214,9 @@ export class SubscriptionBillingService {
         paymentIntentId = paymentIntent.id;
         transactionReference = paymentIntent.id;
       } else {
-        const transaction = await this.paystackService.initializeTransaction({
-          email: 'billing@tenant.com', // This should come from tenant info
-          amount: this.paystackService.toKobo(totalPrice),
-          currency: 'NGN',
-          metadata: {
-            tenantId: dto.tenantId,
-            tokenAmount: dto.tokenAmount,
-            type: dto.type || TokenPurchaseType.MANUAL,
-          },
-        });
-        paymentIntentId = transaction.access_code || '';
-        transactionReference = transaction.reference;
+        throw new BadRequestException('Legacy token purchase requires Polar');
       }
 
-      // Create token purchase record
       const tokenPurchase = this.tokenPurchaseRepository.create({
         tenantId: dto.tenantId,
         tokenAmount: dto.tokenAmount,
@@ -206,14 +226,256 @@ export class SubscriptionBillingService {
         type: dto.type || TokenPurchaseType.MANUAL,
         paymentIntentId,
         transactionReference,
-        paymentMetadata: dto.metadata,
+        paymentMetadata: {
+          ...dto.metadata,
+          provider: dto.paymentProvider,
+        },
       });
 
       return await this.tokenPurchaseRepository.save(tokenPurchase);
     } catch (error) {
-      this.logger.error('Failed to purchase tokens:', error);
+      this.logger.error('Failed to purchase tokens (legacy):', error);
       throw new BadRequestException('Failed to initiate token purchase');
     }
+  }
+
+  async getPurchaseStatus(purchaseId: string, tenantId: string) {
+    const purchase = await this.tokenPurchaseRepository.findOne({
+      where: { id: purchaseId, tenantId },
+    });
+
+    if (!purchase) {
+      throw new NotFoundException('Purchase not found');
+    }
+
+    return {
+      purchaseId: purchase.id,
+      status: purchase.status,
+      tokenAmount: purchase.tokenAmount,
+      totalPrice: Number(purchase.totalPrice),
+      currency: purchase.paymentMetadata?.currency as BillingCurrency | undefined,
+      provider: purchase.paymentMetadata?.provider as PaymentProvider | undefined,
+      completedAt: purchase.completedAt,
+    };
+  }
+
+  async syncPurchase(purchaseId: string, tenantId: string) {
+    const purchase = await this.tokenPurchaseRepository.findOne({
+      where: { id: purchaseId, tenantId },
+    });
+
+    if (!purchase) {
+      throw new NotFoundException('Purchase not found');
+    }
+
+    if (purchase.status === TokenPurchaseStatus.COMPLETED) {
+      return this.getPurchaseStatus(purchaseId, tenantId);
+    }
+
+    const provider = purchase.paymentMetadata?.provider as PaymentProvider | undefined;
+    let verified: 'success' | 'failed' | 'pending' = 'pending';
+
+    if (provider === PaymentProvider.BACHS && purchase.transactionReference) {
+      verified = await this.bachsService.verifyCheckoutSession(purchase.transactionReference);
+    } else if (provider === PaymentProvider.NOMBA && purchase.transactionReference) {
+      verified = await this.nombaService.verifyOrder(purchase.transactionReference);
+    } else if (provider === PaymentProvider.POLAR && purchase.transactionReference) {
+      verified = await this.polarService.verifyCheckout(purchase.transactionReference);
+    } else if (purchase.paymentIntentId?.startsWith('pi_')) {
+      const paymentIntent = await this.polarService.getPaymentIntent(purchase.paymentIntentId);
+      verified = paymentIntent.status === 'succeeded' ? 'success' : paymentIntent.status === 'canceled' ? 'failed' : 'pending';
+    }
+
+    if (verified === 'success') {
+      await this.confirmTokenPurchase(purchaseId);
+    } else if (verified === 'failed') {
+      await this.failTokenPurchase(purchaseId);
+    }
+
+    return this.getPurchaseStatus(purchaseId, tenantId);
+  }
+
+  getCheckoutContext(headers: Record<string, string | string[] | undefined>): CheckoutContextResult {
+    const countryCode = this.resolveCountryCode(headers);
+    const isNg = countryCode === 'NG';
+    const defaultCurrency: BillingCurrency = isNg ? 'NGN' : 'USD';
+    const availableCurrencies: BillingCurrency[] = isNg ? ['NGN', 'USD'] : ['USD'];
+    const bachsConfigured = this.bachsService.isConfigured();
+    const nombaConfigured = this.nombaService.isConfigured();
+    const providers: PaymentProvider[] = [];
+
+    if (nombaConfigured) {
+      providers.push(PaymentProvider.NOMBA);
+    }
+    if (bachsConfigured) {
+      providers.push(PaymentProvider.BACHS);
+    }
+    if (this.polarService.isConfigured()) {
+      providers.push(PaymentProvider.POLAR);
+    }
+
+    return {
+      defaultCurrency,
+      availableCurrencies,
+      bachsConfigured,
+      nombaConfigured,
+      providers,
+      countryCode,
+    };
+  }
+
+  async handleNombaWebhook(
+    rawBody: string,
+    headers: Record<string, string | string[] | undefined>,
+  ): Promise<{ received: boolean; duplicate?: boolean }> {
+    const verified = verifyNombaWebhook(
+      { rawBody, headers },
+      this.nombaService.getWebhookSecret(),
+    );
+
+    if (!verified) {
+      throw new BadRequestException('Invalid Nomba webhook');
+    }
+
+    if (verified.outcome === 'ignored') {
+      return { received: true };
+    }
+
+    const claimed = await this.claimWebhookEvent('nomba', verified.eventId, rawBody);
+    if (!claimed) {
+      return { received: true, duplicate: true };
+    }
+
+    if (verified.setupReference && verified.tenantId && verified.outcome === 'success') {
+      await this.completePaymentMethodSetup({
+        tenantId: verified.tenantId,
+        provider: PaymentProvider.NOMBA,
+        currency: (verified.currency as BillingCurrency | undefined) ?? 'NGN',
+        setupReference: verified.setupReference,
+        externalCustomerId: verified.customerEmail ?? verified.customerId ?? verified.tenantId,
+        externalPaymentMethodId: verified.tokenKey,
+        cardBrand: verified.cardBrand,
+        cardLast4: verified.cardLast4,
+      });
+    } else if (verified.outcome === 'success' && verified.purchaseId) {
+      await this.confirmTokenPurchase(verified.purchaseId);
+    }
+
+    return { received: true };
+  }
+
+  async handleBachsWebhook(
+    rawBody: string,
+    headers: Record<string, string | string[] | undefined>,
+  ): Promise<{ received: boolean; duplicate?: boolean }> {
+    const verified = verifyBachsWebhook(
+      { rawBody, headers },
+      this.bachsService.getWebhookSecret(),
+    );
+
+    if (!verified) {
+      throw new BadRequestException('Invalid Bachs webhook');
+    }
+
+    const eventId =
+      verified.eventId ??
+      createHash('sha256').update(`${verified.eventType}:${rawBody}`).digest('hex');
+
+    const claimed = await this.claimWebhookEvent('bachs', eventId, rawBody);
+    if (!claimed) {
+      return { received: true, duplicate: true };
+    }
+
+    if (verified.outcome === 'ignored') {
+      return { received: true };
+    }
+
+    if (verified.setupReference && verified.tenantId && verified.outcome === 'success') {
+      await this.completePaymentMethodSetup({
+        tenantId: verified.tenantId,
+        provider: PaymentProvider.BACHS,
+        currency: (verified.currency as BillingCurrency | undefined) ?? 'USD',
+        setupReference: verified.setupReference,
+        externalCustomerId: verified.customerId,
+        externalPaymentMethodId: verified.paymentMethodId,
+      });
+    } else if (verified.outcome === 'success' && verified.purchaseId) {
+      await this.confirmTokenPurchase(verified.purchaseId);
+    } else if (verified.outcome === 'failed' && verified.purchaseId) {
+      await this.failTokenPurchase(verified.purchaseId);
+    }
+
+    return { received: true };
+  }
+
+  async handlePolarWebhook(
+    rawBody: string,
+    headers: Record<string, string | string[] | undefined>,
+  ): Promise<{ received: boolean; duplicate?: boolean }> {
+    const verified = await this.polarService.handleWebhook(rawBody, headers);
+
+    if (verified.outcome === 'ignored') {
+      return { received: true };
+    }
+
+    const claimed = await this.claimWebhookEvent('polar', verified.eventId, rawBody);
+    if (!claimed) {
+      return { received: true, duplicate: true };
+    }
+
+    if (verified.outcome === 'success' && verified.setupReference && verified.tenantId) {
+      await this.completePaymentMethodSetup({
+        tenantId: verified.tenantId,
+        provider: PaymentProvider.POLAR,
+        currency: (verified.currency as BillingCurrency | undefined) ?? 'USD',
+        setupReference: verified.setupReference,
+        externalCustomerId: verified.customerId,
+        externalPaymentMethodId: verified.paymentMethodId,
+        providerReference: verified.providerReference,
+      });
+    } else if (verified.outcome === 'success' && verified.purchaseId) {
+      await this.confirmTokenPurchase(verified.purchaseId);
+    } else if (verified.outcome === 'failed' && verified.purchaseId) {
+      await this.failTokenPurchase(verified.purchaseId);
+    }
+
+    return { received: true };
+  }
+
+  async getAutoTopupConfig(tenantId: string) {
+    const config = await this.autoTopupConfigRepository.findOne({
+      where: { tenantId },
+      relations: ['paymentMethod'],
+    });
+
+    if (!config) {
+      return {
+        enabled: false,
+        trigger: TopupTrigger.THRESHOLD,
+      };
+    }
+
+    return {
+      enabled: config.enabled,
+      trigger: config.trigger,
+      thresholdAmount: config.thresholdAmount,
+      packageId: config.packageId,
+      currency: config.currency,
+      paymentMethodId: config.paymentMethodId,
+      paymentMethod: config.paymentMethod
+        ? {
+            id: config.paymentMethod.id,
+            provider: config.paymentMethod.provider,
+            currency: config.paymentMethod.currency,
+            cardBrand: config.paymentMethod.cardBrand,
+            cardLast4: config.paymentMethod.cardLast4,
+            cardExpMonth: config.paymentMethod.cardExpMonth,
+            cardExpYear: config.paymentMethod.cardExpYear,
+          }
+        : undefined,
+      maxMonthlySpend: config.maxMonthlySpend ? Number(config.maxMonthlySpend) : undefined,
+      lastTriggered: config.lastTriggered,
+    };
   }
 
   async confirmTokenPurchase(purchaseId: string): Promise<void> {
@@ -223,75 +485,99 @@ export class SubscriptionBillingService {
       });
 
       if (!purchase) {
-        throw new Error('Purchase not found');
+        throw new NotFoundException('Purchase not found');
       }
 
       if (purchase.status !== TokenPurchaseStatus.PENDING) {
-        return; // Already processed
+        return;
       }
 
-      // Verify payment with provider
-      let paymentConfirmed = false;
+      await this.tokenManagementService.addTokens(
+        purchase.tenantId,
+        purchase.tokenAmount,
+        TokenTransactionType.PURCHASE,
+        `Token purchase: ${purchase.tokenAmount} tokens`,
+        { purchaseId: purchase.id },
+      );
 
-      if (purchase.transactionReference.startsWith('pi_')) {
-        // Polar payment intent
-        const paymentIntent = await this.polarService.getPaymentIntent(purchase.paymentIntentId);
-        paymentConfirmed = paymentIntent.status === 'succeeded';
-      } else {
-        // Paystack transaction
-        const transaction = await this.paystackService.verifyTransaction(purchase.transactionReference);
-        paymentConfirmed = transaction.status === 'success';
-      }
+      purchase.status = TokenPurchaseStatus.COMPLETED;
+      purchase.completedAt = new Date();
+      await this.tokenPurchaseRepository.save(purchase);
 
-      if (paymentConfirmed) {
-        // Add tokens to balance
-        await this.tokenManagementService.addTokens(
-          purchase.tenantId,
-          purchase.tokenAmount,
-          TokenTransactionType.PURCHASE,
-          `Token purchase: ${purchase.tokenAmount} tokens`,
-          { purchaseId: purchase.id }
-        );
-
-        // Update purchase status
-        purchase.status = TokenPurchaseStatus.COMPLETED;
-        purchase.completedAt = new Date();
-        await this.tokenPurchaseRepository.save(purchase);
-
-        this.logger.log(`Token purchase completed: ${purchase.id}`);
-      } else {
-        purchase.status = TokenPurchaseStatus.FAILED;
-        await this.tokenPurchaseRepository.save(purchase);
-        
-        this.logger.warn(`Token purchase failed: ${purchase.id}`);
-      }
+      this.logger.log(`Token purchase completed: ${purchase.id}`);
     } catch (error) {
       this.logger.error('Failed to confirm token purchase:', error);
       throw error;
     }
   }
 
+  async failTokenPurchase(purchaseId: string): Promise<void> {
+    const purchase = await this.tokenPurchaseRepository.findOne({
+      where: { id: purchaseId },
+    });
+
+    if (!purchase || purchase.status !== TokenPurchaseStatus.PENDING) {
+      return;
+    }
+
+    purchase.status = TokenPurchaseStatus.FAILED;
+    await this.tokenPurchaseRepository.save(purchase);
+    this.logger.warn(`Token purchase failed: ${purchase.id}`);
+  }
+
   async configureAutoTopup(dto: AutoTopupConfigDto): Promise<AutoTopupConfig> {
     try {
+      if (dto.enabled) {
+        if (!dto.thresholdAmount || !dto.packageId || !dto.currency || !dto.paymentMethodId) {
+          throw new BadRequestException(
+            'Threshold, token pack, currency, and saved card are required for auto top-up',
+          );
+        }
+
+        const paymentMethod = await this.paymentMethodRepository.findOne({
+          where: { id: dto.paymentMethodId, tenantId: dto.tenantId },
+        });
+
+        if (!paymentMethod) {
+          throw new BadRequestException('Saved payment method not found');
+        }
+
+        resolvePackage(dto.packageId, dto.currency);
+      }
+
       let config = await this.autoTopupConfigRepository.findOne({
         where: { tenantId: dto.tenantId },
       });
 
+      const topupPackage =
+        dto.packageId && dto.currency ? resolvePackage(dto.packageId, dto.currency) : undefined;
+
       if (config) {
-        // Update existing config
-        Object.assign(config, dto);
+        Object.assign(config, {
+          ...dto,
+          trigger: dto.trigger ?? TopupTrigger.THRESHOLD,
+          topupAmount: topupPackage?.tokens ?? config.topupAmount,
+        });
       } else {
-        // Create new config
-        config = this.autoTopupConfigRepository.create(dto);
+        config = this.autoTopupConfigRepository.create({
+          ...dto,
+          trigger: dto.trigger ?? TopupTrigger.THRESHOLD,
+          topupAmount: topupPackage?.tokens,
+        });
       }
 
-      // Calculate next scheduled run if applicable
-      if (dto.trigger === TopupTrigger.SCHEDULED || dto.trigger === TopupTrigger.BOTH) {
+      if (
+        config.trigger === TopupTrigger.SCHEDULED ||
+        config.trigger === TopupTrigger.BOTH
+      ) {
         config.nextScheduledRun = this.calculateNextScheduledRun(config);
       }
 
       return await this.autoTopupConfigRepository.save(config);
     } catch (error) {
+      if (error instanceof BadRequestException) {
+        throw error;
+      }
       this.logger.error('Failed to configure auto topup:', error);
       throw new BadRequestException('Failed to configure auto topup');
     }
@@ -319,23 +605,31 @@ export class SubscriptionBillingService {
 
   private async processAutoTopupForTenant(config: AutoTopupConfig): Promise<void> {
     try {
+      if (!config.paymentMethodId || !config.packageId || !config.currency) {
+        return;
+      }
+
+      const paymentMethod = await this.paymentMethodRepository.findOne({
+        where: { id: config.paymentMethodId, tenantId: config.tenantId },
+      });
+
+      if (!paymentMethod) {
+        this.logger.warn(`Auto topup skipped for tenant ${config.tenantId}: no payment method`);
+        return;
+      }
+
       const balance = await this.tokenManagementService.getBalance(config.tenantId);
       let shouldTopup = false;
-      let topupAmount = 0;
       let topupType = TokenPurchaseType.AUTO_TOPUP;
 
-      // Check threshold trigger
       if (
         (config.trigger === TopupTrigger.THRESHOLD || config.trigger === TopupTrigger.BOTH) &&
         config.thresholdAmount &&
-        config.topupAmount &&
         balance.availableTokens <= config.thresholdAmount
       ) {
         shouldTopup = true;
-        topupAmount = config.topupAmount;
       }
 
-      // Check scheduled trigger
       if (
         (config.trigger === TopupTrigger.SCHEDULED || config.trigger === TopupTrigger.BOTH) &&
         config.nextScheduledRun &&
@@ -343,68 +637,147 @@ export class SubscriptionBillingService {
         new Date() >= config.nextScheduledRun
       ) {
         shouldTopup = true;
-        topupAmount = Math.max(topupAmount, config.scheduledAmount);
         topupType = TokenPurchaseType.SCHEDULED;
-        
-        // Update next scheduled run
         config.nextScheduledRun = this.calculateNextScheduledRun(config);
         await this.autoTopupConfigRepository.save(config);
       }
 
-      if (!shouldTopup || topupAmount === 0) {
+      if (!shouldTopup) {
         return;
       }
 
-      // Check monthly spending limit
+      const recentPending = await this.tokenPurchaseRepository.findOne({
+        where: {
+          tenantId: config.tenantId,
+          type: TokenPurchaseType.AUTO_TOPUP,
+          status: TokenPurchaseStatus.PENDING,
+        },
+        order: { createdAt: 'DESC' },
+      });
+
+      if (recentPending && Date.now() - recentPending.createdAt.getTime() < 30 * 60 * 1000) {
+        return;
+      }
+
+      const pkg = resolvePackage(config.packageId, config.currency as BillingCurrency);
+      const purchaseAmount = pkg.price;
+
       const currentMonth = new Date().getMonth() + 1;
       const currentYear = new Date().getFullYear();
-      
+
       if (config.currentMonth !== currentMonth || config.currentYear !== currentYear) {
-        // Reset monthly spending for new month
         config.currentMonthSpend = 0;
         config.currentMonth = currentMonth;
         config.currentYear = currentYear;
       }
 
-      const tokenPrice = this.getTokenPrice(topupAmount);
-      const purchaseAmount = topupAmount * tokenPrice;
-
       if (
         config.maxMonthlySpend &&
-        config.currentMonthSpend + purchaseAmount > config.maxMonthlySpend
+        Number(config.currentMonthSpend) + purchaseAmount > Number(config.maxMonthlySpend)
       ) {
         this.logger.warn(
-          `Auto topup skipped for tenant ${config.tenantId}: would exceed monthly spending limit`
+          `Auto topup skipped for tenant ${config.tenantId}: would exceed monthly spending limit`,
         );
         return;
       }
 
-      // Get tenant's preferred payment provider (default to first available subscription)
-      const subscription = await this.subscriptionRepository.findOne({
-        where: { tenantId: config.tenantId, status: SubscriptionStatus.ACTIVE },
-      });
-
-      const paymentProvider = subscription?.paymentProvider || PaymentProvider.PAYSTACK;
-
-      // Initiate auto purchase
-      await this.purchaseTokens({
+      const purchase = this.tokenPurchaseRepository.create({
         tenantId: config.tenantId,
-        tokenAmount: topupAmount,
-        paymentProvider,
+        tokenAmount: pkg.tokens,
+        totalPrice: pkg.price,
+        pricePerToken: pkg.pricePerToken,
+        status: TokenPurchaseStatus.PENDING,
         type: topupType,
-        metadata: { autoTopupConfigId: config.id },
+        paymentMetadata: {
+          packageId: pkg.id,
+          currency: pkg.currency,
+          provider: paymentMethod.provider,
+          autoTopupConfigId: config.id,
+          purpose: 'auto_topup',
+        },
       });
 
-      // Update spending tracking
-      config.currentMonthSpend += purchaseAmount;
+      const savedPurchase = await this.tokenPurchaseRepository.save(purchase);
+
+      const tenant = await this.tenantRepository.findOne({
+        where: { id: config.tenantId },
+        relations: ['owner'],
+      });
+
+      const charge = await this.paymentMethodService.chargeOffSession({
+        tenantId: config.tenantId,
+        purchaseId: savedPurchase.id,
+        packageId: pkg.id,
+        currency: pkg.currency,
+        paymentMethod,
+        customerEmail: tenant?.owner?.email ?? paymentMethod.externalCustomerId,
+      });
+
+      savedPurchase.paymentIntentId = charge.providerReference ?? '';
+      savedPurchase.transactionReference = charge.providerReference ?? '';
+      await this.tokenPurchaseRepository.save(savedPurchase);
+
+      if (charge.status === 'success') {
+        await this.confirmTokenPurchase(savedPurchase.id);
+      } else if (charge.status === 'failed') {
+        await this.failTokenPurchase(savedPurchase.id);
+        return;
+      }
+
+      config.currentMonthSpend = Number(config.currentMonthSpend) + purchaseAmount;
       config.lastTriggered = new Date();
+      config.topupAmount = pkg.tokens;
       await this.autoTopupConfigRepository.save(config);
 
       this.logger.log(
-        `Auto topup initiated for tenant ${config.tenantId}: ${topupAmount} tokens`
+        `Auto topup initiated for tenant ${config.tenantId}: ${pkg.tokens} tokens via ${paymentMethod.provider}`,
       );
     } catch (error) {
       this.logger.error(`Failed to process auto topup for tenant ${config.tenantId}:`, error);
+    }
+  }
+
+  private async completePaymentMethodSetup(input: {
+    tenantId: string;
+    provider: PaymentProvider;
+    currency: BillingCurrency;
+    setupReference: string;
+    externalCustomerId?: string;
+    externalPaymentMethodId?: string;
+    providerReference?: string;
+    cardBrand?: string;
+    cardLast4?: string;
+  }): Promise<void> {
+    if (!input.externalCustomerId) {
+      if (input.providerReference) {
+        const details = await this.polarService.getCheckoutDetails(input.providerReference);
+        input.externalCustomerId = details.customerId;
+        input.externalPaymentMethodId = details.paymentMethodId ?? input.externalPaymentMethodId;
+      }
+    }
+
+    if (!input.externalCustomerId) {
+      this.logger.warn(`Payment method setup missing customer for tenant ${input.tenantId}`);
+      return;
+    }
+
+    const saved = await this.paymentMethodService.saveFromProvider({
+      tenantId: input.tenantId,
+      provider: input.provider,
+      currency: input.currency,
+      externalCustomerId: input.externalCustomerId,
+      externalPaymentMethodId: input.externalPaymentMethodId,
+      cardBrand: input.cardBrand,
+      cardLast4: input.cardLast4,
+    });
+
+    const config = await this.autoTopupConfigRepository.findOne({
+      where: { tenantId: input.tenantId, setupReference: input.setupReference },
+    });
+
+    if (config) {
+      config.paymentMethodId = saved.id;
+      await this.autoTopupConfigRepository.save(config);
     }
   }
 
@@ -447,60 +820,185 @@ export class SubscriptionBillingService {
     return nextRun;
   }
 
-  private getPlanConfiguration(plan: SubscriptionPlan) {
-    const configs = {
-      [SubscriptionPlan.STARTER]: {
-        monthlyPrice: 29,
-        includedTokens: 10000,
-        overageRate: 0.001,
-      },
-      [SubscriptionPlan.PROFESSIONAL]: {
-        monthlyPrice: 99,
-        includedTokens: 50000,
-        overageRate: 0.0008,
-      },
-      [SubscriptionPlan.ENTERPRISE]: {
-        monthlyPrice: 299,
-        includedTokens: 200000,
-        overageRate: 0.0005,
-      },
-      [SubscriptionPlan.PAY_AS_YOU_GO]: {
-        monthlyPrice: 0,
-        includedTokens: 0,
-        overageRate: 0.002,
-      },
-    };
+  private resolveCheckoutProvider(currency: BillingCurrency): PaymentProvider {
+    if (currency === 'NGN' && this.nombaService.isConfigured()) {
+      return PaymentProvider.NOMBA;
+    }
+    if (this.bachsService.isConfigured(currency)) {
+      return PaymentProvider.BACHS;
+    }
+    if (currency === 'USD' && this.polarService.isConfigured()) {
+      return PaymentProvider.POLAR;
+    }
+    throw new BadRequestException(`No payment provider configured for ${currency}`);
+  }
 
-    return configs[plan];
+  private async initializeProviderCheckout(input: {
+    provider: PaymentProvider;
+    purchase: TokenPurchase;
+    tenant: Tenant;
+    email: string;
+    name: string;
+    packageId: string;
+    currency: BillingCurrency;
+    priceMinor: number;
+  }): Promise<{
+    checkoutUrl: string;
+    paymentIntentId: string;
+    transactionReference: string;
+  }> {
+    const metadata = {
+      purchaseId: input.purchase.id,
+      tenantId: input.tenant.id,
+      packageId: input.packageId,
+      currency: input.currency,
+      tokenAmount: input.purchase.tokenAmount,
+    };
+    const tenantSlug = input.tenant.subdomain;
+
+    if (input.provider === PaymentProvider.NOMBA) {
+      const { successUrl } = this.nombaService.buildCheckoutUrls(
+        tenantSlug,
+        input.purchase.id,
+      );
+      const orderReference = buildNotifiPurchaseReference(input.purchase.id);
+      const result = await this.nombaService.createCheckoutOrder({
+        orderReference,
+        amount: input.purchase.totalPrice,
+        currency: input.currency,
+        customerEmail: input.email,
+        callbackUrl: successUrl,
+        orderMetaData: {
+          purchase_id: input.purchase.id,
+          tenant_id: input.tenant.id,
+          package_id: input.packageId,
+          currency: input.currency,
+          token_amount: String(input.purchase.tokenAmount),
+        },
+        allowedPaymentMethods: ['Card', 'Transfer'],
+      });
+
+      return {
+        checkoutUrl: result.checkoutUrl,
+        paymentIntentId: result.orderReference,
+        transactionReference: result.orderReference,
+      };
+    }
+
+    if (input.provider === PaymentProvider.BACHS) {
+      const { successUrl, cancelUrl } = this.bachsService.buildCheckoutUrls(
+        tenantSlug,
+        input.purchase.id,
+      );
+      const result = await this.bachsService.initializeCheckout({
+        purchaseId: input.purchase.id,
+        tenantId: input.tenant.id,
+        packageId: input.packageId,
+        tokenAmount: input.purchase.tokenAmount,
+        currency: input.currency,
+        priceMinor: input.priceMinor,
+        email: input.email,
+        name: input.name,
+        successUrl,
+        cancelUrl,
+      });
+
+      return {
+        checkoutUrl: result.checkoutUrl,
+        paymentIntentId: result.checkoutId,
+        transactionReference: result.checkoutId,
+      };
+    }
+
+    if (input.provider === PaymentProvider.POLAR) {
+      const productId = this.polarService.getTokenProductId();
+      if (!productId) {
+        throw new Error('polar_product_not_configured');
+      }
+
+      const result = await this.polarService.createCheckout({
+        productId,
+        email: input.email,
+        amountMinor: input.priceMinor,
+        currency: input.currency,
+        successUrl: this.polarService.buildSuccessUrl(tenantSlug, input.purchase.id),
+        metadata,
+      });
+
+      return {
+        checkoutUrl: result.checkoutUrl,
+        paymentIntentId: result.checkoutId,
+        transactionReference: result.checkoutId,
+      };
+    }
+
+    throw new Error('unsupported_checkout_provider');
+  }
+
+  private isLegacyPurchaseDto(dto: PurchaseTokensDto): dto is LegacyPurchaseTokensDto {
+    return 'tokenAmount' in dto && 'paymentProvider' in dto;
   }
 
   private getTokenPrice(tokenAmount: number): number {
-    // Tiered pricing - more tokens = lower price per token
     if (tokenAmount >= 100000) return 0.0005;
     if (tokenAmount >= 50000) return 0.0008;
     if (tokenAmount >= 10000) return 0.001;
     return 0.002;
   }
 
-  private async getPolarPriceId(plan: SubscriptionPlan): Promise<string> {
-    // This would typically be stored in configuration or fetched from Polar
-    const priceIds = {
-      [SubscriptionPlan.STARTER]: this.configService.get('POLAR_STARTER_PRICE_ID'),
-      [SubscriptionPlan.PROFESSIONAL]: this.configService.get('POLAR_PROFESSIONAL_PRICE_ID'),
-      [SubscriptionPlan.ENTERPRISE]: this.configService.get('POLAR_ENTERPRISE_PRICE_ID'),
-    };
+  private async claimWebhookEvent(
+    provider: string,
+    eventId: string,
+    rawBody: string,
+  ): Promise<boolean> {
+    const payloadHash = createHash('sha256').update(rawBody).digest('hex');
 
-    return priceIds[plan];
+    try {
+      await this.webhookEventRepository.insert({
+        provider,
+        eventId,
+        payloadHash,
+      });
+      return true;
+    } catch (error) {
+      if (
+        error instanceof QueryFailedError &&
+        (error as QueryFailedError & { driverError?: { code?: string } }).driverError?.code ===
+          '23505'
+      ) {
+        return false;
+      }
+      throw error;
+    }
   }
 
-  private async getPaystackPlanCode(plan: SubscriptionPlan): Promise<string> {
-    // This would typically be stored in configuration or fetched from Paystack
-    const planCodes = {
-      [SubscriptionPlan.STARTER]: this.configService.get('PAYSTACK_STARTER_PLAN_CODE'),
-      [SubscriptionPlan.PROFESSIONAL]: this.configService.get('PAYSTACK_PROFESSIONAL_PLAN_CODE'),
-      [SubscriptionPlan.ENTERPRISE]: this.configService.get('PAYSTACK_ENTERPRISE_PLAN_CODE'),
-    };
+  private resolveCountryCode(
+    headers: Record<string, string | string[] | undefined>,
+  ): string | undefined {
+    const cfCountry = this.getHeaderValue(headers, 'cf-ipcountry');
+    if (cfCountry && cfCountry !== 'XX') {
+      return cfCountry.toUpperCase();
+    }
 
-    return planCodes[plan];
+    const countryHeader = this.getHeaderValue(headers, 'x-country-code');
+    if (countryHeader) {
+      return countryHeader.toUpperCase();
+    }
+
+    const acceptLanguage = this.getHeaderValue(headers, 'accept-language')?.toLowerCase() ?? '';
+    if (acceptLanguage.includes('-ng') || acceptLanguage.includes('_ng')) {
+      return 'NG';
+    }
+
+    return undefined;
+  }
+
+  private getHeaderValue(
+    headers: Record<string, string | string[] | undefined>,
+    name: string,
+  ): string | undefined {
+    const value = headers[name] ?? headers[name.toLowerCase()];
+    if (!value) return undefined;
+    return Array.isArray(value) ? value[0] : value;
   }
 }

@@ -10,6 +10,8 @@ import {
 } from 'typeorm';
 import { Tenant } from '../../tenant/entities/tenant.entity';
 import { TokenPurchase } from './token-purchase.entity';
+export { PaymentProvider } from '../enums/payment-provider.enum';
+import { PaymentProvider } from '../enums/payment-provider.enum';
 
 export enum SubscriptionStatus {
   ACTIVE = 'active',
@@ -24,11 +26,6 @@ export enum SubscriptionPlan {
   PROFESSIONAL = 'professional',
   ENTERPRISE = 'enterprise',
   PAY_AS_YOU_GO = 'pay_as_you_go',
-}
-
-export enum PaymentProvider {
-  POLAR = 'polar',
-  PAYSTACK = 'paystack',
 }
 
 @Entity('subscriptions')
@@ -64,10 +61,10 @@ export class Subscription {
   paymentProvider: PaymentProvider;
 
   @Column({ nullable: true })
-  externalSubscriptionId: string; // Polar or Paystack subscription ID
+  externalSubscriptionId: string; // Polar or Bachs subscription ID
 
   @Column({ nullable: true })
-  externalCustomerId: string; // Polar or Paystack customer ID
+  externalCustomerId: string; // Polar or Bachs customer ID
 
   @Column({ type: 'decimal', precision: 10, scale: 2, nullable: true })
   monthlyPrice: number;

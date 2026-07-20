@@ -1,9 +1,11 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import Link from '@/compat/next-link';
+import { useState } from 'react';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useCheckoutCurrency } from '@/hooks/use-checkout-currency';
+import { billingApi } from '@/lib/api';
 import {
   type CurrencyCode,
   formatMoney,
@@ -12,31 +14,35 @@ import {
   packPrice,
   sendsFromTokens,
 } from '@/lib/pricing';
-
-function detectPreferredCurrency(): CurrencyCode {
-  if (typeof window === 'undefined') return 'USD';
-  try {
-    const locale = Intl.DateTimeFormat().resolvedOptions().locale || '';
-    const tz = Intl.DateTimeFormat().resolvedOptions().timeZone || '';
-    const hints = `${locale} ${tz}`.toLowerCase();
-    if (hints.includes('-ng') || hints.includes('_ng') || hints.includes('nigeria') || tz === 'Africa/Lagos') {
-      return 'NGN';
-    }
-  } catch {
-    /* ignore */
-  }
-  return 'USD';
-}
+import { toast } from 'sonner';
 
 /** Pay-as-you-go token packs — not subscription plans. */
 export function TokenPacks() {
-  const [currency, setCurrency] = useState<CurrencyCode>('USD');
+  const { currency, setCurrency, availableCurrencies, isReady } = useCheckoutCurrency();
+  const [pendingPackId, setPendingPackId] = useState<string | null>(null);
 
-  useEffect(() => {
-    setCurrency(detectPreferredCurrency());
-  }, []);
+  const activeCurrency = (isReady ? currency : 'USD') as CurrencyCode;
+  const packs = packagesForCurrency(activeCurrency);
 
-  const packs = packagesForCurrency(currency);
+  const handlePurchase = async (packageId: string) => {
+    setPendingPackId(packageId);
+    try {
+      const result = await billingApi.purchaseTokens({
+        packageId,
+        currency: activeCurrency,
+      });
+
+      if (!result.checkoutUrl) {
+        throw new Error('Checkout URL missing from server response');
+      }
+
+      window.location.href = result.checkoutUrl;
+    } catch (error) {
+      console.error('Token purchase failed:', error);
+      toast.error('Could not start checkout. Please try again.');
+      setPendingPackId(null);
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -44,45 +50,55 @@ export function TokenPacks() {
         <div className="space-y-1">
           <h3 className="text-lg font-semibold">Buy tokens</h3>
           <p className="text-sm text-muted-foreground">
-            Pay as you go — top up when you need. Showing {currency} only.
+            Pay as you go — top up when you need. Showing {activeCurrency} only.
           </p>
         </div>
-        <button
-          type="button"
-          onClick={() => setCurrency(currency === 'NGN' ? 'USD' : 'NGN')}
-          className="text-sm text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
-        >
-          Switch to {currency === 'NGN' ? 'USD' : 'NGN'}
-        </button>
+        {availableCurrencies.length > 1 ? (
+          <button
+            type="button"
+            onClick={() =>
+              setCurrency(activeCurrency === 'NGN' ? 'USD' : 'NGN')
+            }
+            className="text-sm text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
+          >
+            Switch to {activeCurrency === 'NGN' ? 'USD' : 'NGN'}
+          </button>
+        ) : null}
       </div>
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
         {packs.map((pkg) => {
-          const href = `/register?pack=${encodeURIComponent(pkg.id)}&currency=${currency}`;
+          const isPending = pendingPackId === pkg.id;
           return (
-            <Link key={pkg.id} href={href} className="block transition-opacity hover:opacity-95">
-              <Card className={pkg.savingsPercent >= 20 ? 'border-primary shadow-md h-full' : 'h-full'}>
-                {pkg.savingsPercent > 0 ? (
-                  <div className="px-6 pt-4">
-                    <Badge variant="secondary">Save {pkg.savingsPercent}%</Badge>
-                  </div>
-                ) : null}
-                <CardHeader className={pkg.savingsPercent > 0 ? 'pt-2' : undefined}>
-                  <CardTitle className="font-mono text-xl">{formatTokens(pkg.tokens)} tokens</CardTitle>
-                  <p className="text-sm text-muted-foreground">
-                    ≈ {formatTokens(sendsFromTokens('email', pkg.tokens))} emails
-                  </p>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <p className="font-mono text-2xl font-bold">
-                    {formatMoney(packPrice(pkg, currency), currency)}
-                  </p>
-                  <span className="inline-flex h-10 w-full items-center justify-center rounded-md bg-primary text-sm font-medium text-primary-foreground">
-                    Buy pack
-                  </span>
-                </CardContent>
-              </Card>
-            </Link>
+            <Card
+              key={pkg.id}
+              className={pkg.savingsPercent >= 20 ? 'border-primary shadow-md h-full' : 'h-full'}
+            >
+              {pkg.savingsPercent > 0 ? (
+                <div className="px-6 pt-4">
+                  <Badge variant="secondary">Save {pkg.savingsPercent}%</Badge>
+                </div>
+              ) : null}
+              <CardHeader className={pkg.savingsPercent > 0 ? 'pt-2' : undefined}>
+                <CardTitle className="font-mono text-xl">{formatTokens(pkg.tokens)} tokens</CardTitle>
+                <p className="text-sm text-muted-foreground">
+                  ≈ {formatTokens(sendsFromTokens('email', pkg.tokens))} emails
+                </p>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <p className="font-mono text-2xl font-bold">
+                  {formatMoney(packPrice(pkg, activeCurrency), activeCurrency)}
+                </p>
+                <Button
+                  type="button"
+                  className="w-full"
+                  disabled={Boolean(pendingPackId)}
+                  onClick={() => handlePurchase(pkg.id)}
+                >
+                  {isPending ? 'Redirecting…' : 'Buy pack'}
+                </Button>
+              </CardContent>
+            </Card>
           );
         })}
       </div>

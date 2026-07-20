@@ -11,13 +11,18 @@ import { SubscriptionBillingService } from './services/subscription-billing.serv
 import { BillingIntegrationService } from './services/billing-integration.service';
 import { WelcomeTokenListener } from './services/welcome-token.listener';
 import { PolarService } from './services/polar.service';
-import { PaystackService } from './services/paystack.service';
+import { BachsService } from './services/bachs.service';
+import { NombaService } from './services/nomba.service';
+import { PaymentMethodService } from './services/payment-method.service';
 import { TokenManagementService } from '../token-management/services/token-management.service';
 import { TenantModule } from '../tenant/tenant.module';
 import { Subscription } from './entities/subscription.entity';
 import { TokenPurchase } from './entities/token-purchase.entity';
 import { AutoTopupConfig } from './entities/auto-topup-config.entity';
 import { TokenBalance, TokenTransaction } from './entities/token-balance.entity';
+import { WebhookEvent } from './entities/webhook-event.entity';
+import { TenantPaymentMethod } from './entities/tenant-payment-method.entity';
+import { Tenant } from '../tenant/entities/tenant.entity';
 
 @Module({
   imports: [
@@ -27,6 +32,9 @@ import { TokenBalance, TokenTransaction } from './entities/token-balance.entity'
       AutoTopupConfig,
       TokenBalance,
       TokenTransaction,
+      WebhookEvent,
+      TenantPaymentMethod,
+      Tenant,
     ]),
     ConfigModule,
     ScheduleModule.forRoot(),
@@ -39,7 +47,9 @@ import { TokenBalance, TokenTransaction } from './entities/token-balance.entity'
     BillingService,
     SubscriptionBillingService,
     PolarService,
-    PaystackService,
+    BachsService,
+    NombaService,
+    PaymentMethodService,
     TokenManagementService,
     BillingIntegrationService,
     WelcomeTokenListener,
@@ -51,7 +61,9 @@ import { TokenBalance, TokenTransaction } from './entities/token-balance.entity'
     TokenManagementService,
     BillingIntegrationService,
     PolarService,
-    PaystackService,
+    BachsService,
+    NombaService,
+    PaymentMethodService,
   ],
 })
 export class BillingModule {}

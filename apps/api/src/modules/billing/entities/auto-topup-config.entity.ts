@@ -8,6 +8,7 @@ import {
   JoinColumn,
 } from 'typeorm';
 import { Tenant } from '../../tenant/entities/tenant.entity';
+import { TenantPaymentMethod } from './tenant-payment-method.entity';
 
 export enum TopupTrigger {
   THRESHOLD = 'threshold',
@@ -85,6 +86,22 @@ export class AutoTopupConfig {
 
   @Column({ type: 'int', default: new Date().getFullYear() })
   currentYear: number;
+
+  @Column({ type: 'varchar', length: 64, nullable: true, name: 'package_id' })
+  packageId?: string;
+
+  @Column({ type: 'varchar', length: 8, nullable: true })
+  currency?: string;
+
+  @Column({ type: 'uuid', nullable: true, name: 'payment_method_id' })
+  paymentMethodId?: string;
+
+  @ManyToOne(() => TenantPaymentMethod, { nullable: true, onDelete: 'SET NULL' })
+  @JoinColumn({ name: 'payment_method_id' })
+  paymentMethod?: TenantPaymentMethod;
+
+  @Column({ type: 'varchar', length: 128, nullable: true, name: 'setup_reference' })
+  setupReference?: string;
 
   @CreateDateColumn()
   createdAt: Date;

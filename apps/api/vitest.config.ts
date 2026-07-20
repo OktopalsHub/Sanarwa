@@ -17,6 +17,10 @@ export default defineConfig({
       'src/modules/tenant/services/tenant-schema.service.spec.ts',
       'src/modules/configuration/services/test/configuration-validation.service.spec.ts',
       'src/modules/brand/tests/brand.service.spec.ts',
+      'src/modules/billing/test/bachs*.spec.ts',
+      'src/modules/billing/test/nomba*.spec.ts',
+      'src/modules/billing/test/polar*.spec.ts',
+      'src/modules/billing/test/token-packages.spec.ts',
     ],
     exclude: ['**/node_modules/**', '**/dist/**'],
     // Never load developer .env that points at real Postgres

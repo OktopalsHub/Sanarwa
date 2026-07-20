@@ -67,7 +67,7 @@ export class TokenPurchase {
   type: TokenPurchaseType;
 
   @Column({ nullable: true })
-  paymentIntentId: string; // Polar or Paystack payment intent ID
+  paymentIntentId: string; // Polar or Bachs payment reference
 
   @Column({ nullable: true })
   transactionReference: string;

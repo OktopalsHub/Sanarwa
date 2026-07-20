@@ -27,7 +27,6 @@ import {
   TokenTransactionType
 } from '../entities/token-balance.entity';
 import { PolarService } from './polar.service';
-import { PaystackService } from './paystack.service';
 import { TokenManagementService } from '../../token-management/services/token-management.service';
 import { TenantService } from '../../tenant/tenant.service';
 
@@ -78,7 +77,6 @@ export class BillingService {
     @InjectRepository(TokenTransaction)
     private tokenTransactionRepository: Repository<TokenTransaction>,
     private polarService: PolarService,
-    private paystackService: PaystackService,
     private tokenManagementService: TokenManagementService,
     private configService: ConfigService,
     private tenantService: TenantService,
@@ -109,23 +107,7 @@ export class BillingService {
         });
         externalSubscriptionId = subscription.id;
       } else {
-        const customer = await this.paystackService.createCustomer({
-          email: dto.customerEmail,
-          first_name: dto.customerName?.split(' ')[0],
-          last_name: dto.customerName?.split(' ').slice(1).join(' '),
-          metadata: { tenantId: dto.tenantId },
-        });
-        externalCustomerId = customer.customer_code;
-
-        // Get the appropriate plan code
-        const planCode = await this.getPaystackPlanCode(dto.plan);
-        
-        const subscription = await this.paystackService.createSubscription({
-          customer: customer.customer_code,
-          plan: planCode,
-          metadata: { tenantId: dto.tenantId, plan: dto.plan },
-        });
-        externalSubscriptionId = subscription.subscription_code;
+        throw new BadRequestException('Only Polar subscriptions are supported');
       }
 
       // Create local subscription record
@@ -186,18 +168,7 @@ export class BillingService {
         paymentIntentId = paymentIntent.id;
         transactionReference = paymentIntent.id;
       } else {
-        const transaction = await this.paystackService.initializeTransaction({
-          email: 'billing@tenant.com', // This should come from tenant info
-          amount: this.paystackService.toKobo(totalPrice),
-          currency: 'NGN',
-          metadata: {
-            tenantId: dto.tenantId,
-            tokenAmount: dto.tokenAmount,
-            type: dto.type || TokenPurchaseType.MANUAL,
-          },
-        });
-        paymentIntentId = transaction.access_code || '';
-        transactionReference = transaction.reference;
+        throw new BadRequestException('Use Bachs or Polar checkout for token purchases');
       }
 
       // Create token purchase record
@@ -242,9 +213,7 @@ export class BillingService {
         const paymentIntent = await this.polarService.getPaymentIntent(purchase.paymentIntentId);
         paymentConfirmed = paymentIntent.status === 'succeeded';
       } else {
-        // Paystack transaction
-        const transaction = await this.paystackService.verifyTransaction(purchase.transactionReference);
-        paymentConfirmed = transaction.status === 'success';
+        paymentConfirmed = false;
       }
 
       if (paymentConfirmed) {
@@ -319,17 +288,6 @@ export class BillingService {
     };
 
     return priceIds[plan];
-  }
-
-  private async getPaystackPlanCode(plan: SubscriptionPlan): Promise<string> {
-    // This would typically be stored in configuration or fetched from Paystack
-    const planCodes = {
-      [SubscriptionPlan.STARTER]: this.configService.get('PAYSTACK_STARTER_PLAN_CODE'),
-      [SubscriptionPlan.PROFESSIONAL]: this.configService.get('PAYSTACK_PROFESSIONAL_PLAN_CODE'),
-      [SubscriptionPlan.ENTERPRISE]: this.configService.get('PAYSTACK_ENTERPRISE_PLAN_CODE'),
-    };
-
-    return planCodes[plan];
   }
 
   // Additional methods for compatibility with existing code

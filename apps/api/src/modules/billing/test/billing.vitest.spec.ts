@@ -93,16 +93,28 @@ describe('Billing Module Integration Tests', () => {
       }
     });
 
-    it('should get subscriptions', async () => {
-      const response = await api.get('/billing/subscriptions', {
+    it('should get checkout context', async () => {
+      const response = await api.get('/billing/checkout/context');
+
+      console.log('🌍 Checkout context response:', response.status, response.data);
+
+      expect([200, 401, 403, 500]).toContain(response.status);
+      if (response.status === 200) {
+        expect(response.data).toHaveProperty('defaultCurrency');
+        expect(response.data).toHaveProperty('nombaConfigured');
+      }
+    });
+
+    it('should get auto-topup config', async () => {
+      const response = await api.get('/billing/auto-topup', {
         headers: { Authorization: `Bearer ${authToken}` }
       });
 
-      console.log('📋 Subscriptions response:', response.status, response.data);
+      console.log('🔄 Auto-topup get response:', response.status, response.data);
 
       expect([200, 400, 401, 403, 500]).toContain(response.status);
       if (response.status === 200) {
-        expect(response.data).toBeDefined();
+        expect(response.data).toHaveProperty('enabled');
       }
     });
 
@@ -140,20 +152,6 @@ describe('Billing Module Integration Tests', () => {
       expect([200, 400, 401, 403, 500]).toContain(response.status);
       if (response.status === 200) {
         expect(response.data).toBeDefined();
-      }
-    });
-
-    it('should get available plans', async () => {
-      const response = await api.get('/billing/plans', {
-        headers: { Authorization: `Bearer ${authToken}` }
-      });
-
-      console.log('📋 Available plans response:', response.status, response.data);
-
-      expect([200, 401, 403, 500]).toContain(response.status);
-      if (response.status === 200) {
-        expect(response.data).toHaveProperty('plans');
-        expect(Array.isArray(response.data.plans)).toBe(true);
       }
     });
 

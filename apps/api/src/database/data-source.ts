@@ -41,6 +41,8 @@ import { NotificationCenterItem } from '../modules/notifications/entities/notifi
 import { WABAConfig } from '../modules/whatsapp/entities/waba-config.entity';
 import { TenantWABAConfig } from '../modules/whatsapp/entities/tenant-waba-config.entity';
 import { TenantWABAAssignment } from '../modules/whatsapp/entities/tenant-waba-assignment.entity';
+import { WebhookEvent } from '../modules/billing/entities/webhook-event.entity';
+import { TenantPaymentMethod } from '../modules/billing/entities/tenant-payment-method.entity';
 
 import {
   ApiKeys1759217839563,
@@ -52,6 +54,8 @@ import {
   CreateTenantBillingInfo1765925330483,
   CreateTenantSettings1765925332227,
   CreateWebhook1766923292947,
+  CreateWebhookEvents1784581860483,
+  CreateTenantPaymentMethods1784581866458,
   CreateWhatsappEsuEntities1762015087961,
   DeadLetters1784543893390,
   DeviceRegistrations1760919969818,
@@ -117,6 +121,8 @@ const AppDataSource: DataSourceOptions = {
     WABAConfig,
     TenantWABAConfig,
     TenantWABAAssignment,
+    WebhookEvent,
+    TenantPaymentMethod,
   ],
   migrations: [
     User1759217753253,
@@ -140,8 +146,10 @@ const AppDataSource: DataSourceOptions = {
     CreateAuditLog1764821072158,
     CreateTenantBillingInfo1765925330483,
     CreateTenantSettings1765925332227,
-    CreateWebhook1766923292947,
-    NotificationLogs1784543879942,
+  CreateWebhook1766923292947,
+  CreateWebhookEvents1784581860483,
+  CreateTenantPaymentMethods1784581866458,
+  NotificationLogs1784543879942,
     PushCertificates1784543886414,
     DeadLetters1784543893390,
     SystemAlerts1784543899517,

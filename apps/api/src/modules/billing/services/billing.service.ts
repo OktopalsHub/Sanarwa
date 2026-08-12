@@ -191,57 +191,10 @@ export class BillingService {
     }
   }
 
-  async confirmTokenPurchase(purchaseId: string): Promise<void> {
-    try {
-      const purchase = await this.tokenPurchaseRepository.findOne({
-        where: { id: purchaseId },
-      });
-
-      if (!purchase) {
-        throw new Error('Purchase not found');
-      }
-
-      if (purchase.status !== TokenPurchaseStatus.PENDING) {
-        return; // Already processed
-      }
-
-      // Verify payment with provider
-      let paymentConfirmed = false;
-
-      if (purchase.transactionReference.startsWith('pi_')) {
-        // Polar payment intent
-        const paymentIntent = await this.polarService.getPaymentIntent(purchase.paymentIntentId);
-        paymentConfirmed = paymentIntent.status === 'succeeded';
-      } else {
-        paymentConfirmed = false;
-      }
-
-      if (paymentConfirmed) {
-        // Add tokens to balance
-        await this.tokenManagementService.addTokens(
-          purchase.tenantId,
-          purchase.tokenAmount,
-          TokenTransactionType.PURCHASE,
-          `Token purchase: ${purchase.tokenAmount} tokens`,
-          { purchaseId: purchase.id }
-        );
-
-        // Update purchase status
-        purchase.status = TokenPurchaseStatus.COMPLETED;
-        purchase.completedAt = new Date();
-        await this.tokenPurchaseRepository.save(purchase);
-
-        this.logger.log(`Token purchase completed: ${purchase.id}`);
-      } else {
-        purchase.status = TokenPurchaseStatus.FAILED;
-        await this.tokenPurchaseRepository.save(purchase);
-        
-        this.logger.warn(`Token purchase failed: ${purchase.id}`);
-      }
-    } catch (error) {
-      this.logger.error('Failed to confirm token purchase:', error);
-      throw error;
-    }
+  async confirmTokenPurchase(_purchaseId: string): Promise<void> {
+    throw new BadRequestException(
+      'Legacy confirmTokenPurchase is disabled; use SubscriptionBillingService',
+    );
   }
 
   private getPlanConfiguration(plan: SubscriptionPlan) {

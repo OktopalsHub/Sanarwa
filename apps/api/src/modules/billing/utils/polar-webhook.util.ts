@@ -1,6 +1,8 @@
 import { createHmac, timingSafeEqual } from 'node:crypto';
 import { parseNotifiPaymentMethodSetupReference } from '../constants/token-packages';
 
+const TIMESTAMP_SKEW_SECONDS = 300;
+
 export interface PolarWebhookVerifyInput {
   rawBody: string;
   headers: Record<string, string | string[] | undefined>;
@@ -16,6 +18,7 @@ export interface PolarWebhookVerifyResult {
   customerId?: string;
   paymentMethodId?: string;
   providerReference?: string;
+  amount?: number;
   outcome: 'success' | 'failed' | 'ignored';
 }
 
@@ -24,6 +27,8 @@ type PolarWebhookPayload = {
   data?: {
     id?: string;
     status?: string;
+    amount?: number;
+    total_amount?: number;
     metadata?: Record<string, unknown>;
   };
 };
@@ -37,6 +42,13 @@ export function verifyPolarWebhook(
   const signature = getHeader(input.headers, 'webhook-signature');
 
   if (!webhookId || !timestamp || !signature || !webhookSecret) return null;
+
+  const timestampSeconds = Number(timestamp);
+  if (!Number.isFinite(timestampSeconds)) return null;
+  const nowSeconds = Math.floor(Date.now() / 1000);
+  if (Math.abs(nowSeconds - timestampSeconds) > TIMESTAMP_SKEW_SECONDS) {
+    return null;
+  }
 
   const signedContent = `${webhookId}.${timestamp}.${input.rawBody}`;
   const expected = createHmac('sha256', webhookSecret).update(signedContent).digest('base64');
@@ -77,6 +89,13 @@ export function verifyPolarWebhook(
   const status = body.data?.status?.toLowerCase();
   const customerIdRaw = (body.data as { customer_id?: string })?.customer_id;
   const paymentMethodIdRaw = (body.data as { payment_method_id?: string })?.payment_method_id;
+  const amountRaw = body.data?.amount ?? body.data?.total_amount;
+  const amount =
+    typeof amountRaw === 'number'
+      ? amountRaw / 100
+      : typeof amountRaw === 'string' && Number.isFinite(Number(amountRaw))
+        ? Number(amountRaw) / 100
+        : undefined;
 
   if (purpose === 'payment_method_setup' || setupReference) {
     if (status === 'failed' || status === 'expired' || status === 'canceled') {
@@ -89,6 +108,7 @@ export function verifyPolarWebhook(
         customerId: customerIdRaw,
         paymentMethodId: paymentMethodIdRaw,
         providerReference,
+        amount,
         outcome: 'failed',
       };
     }
@@ -103,6 +123,7 @@ export function verifyPolarWebhook(
         customerId: customerIdRaw,
         paymentMethodId: paymentMethodIdRaw,
         providerReference,
+        amount,
         outcome: 'success',
       };
     }
@@ -119,6 +140,7 @@ export function verifyPolarWebhook(
         eventType,
         purchaseId,
         providerReference,
+        amount,
         outcome: 'failed',
       };
     }
@@ -129,6 +151,7 @@ export function verifyPolarWebhook(
         eventType,
         purchaseId,
         providerReference,
+        amount,
         outcome: 'success',
       };
     }
@@ -139,6 +162,7 @@ export function verifyPolarWebhook(
     eventType,
     purchaseId,
     providerReference,
+    amount,
     outcome: 'ignored',
   };
 }

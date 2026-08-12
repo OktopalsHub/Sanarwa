@@ -102,7 +102,7 @@ export class BachsService {
 
   async verifyCheckoutSession(
     checkoutId: string,
-  ): Promise<'success' | 'failed' | 'pending'> {
+  ): Promise<import('../types/payment-verify-result').PaymentVerifyResult> {
     const secretKey = this.getSecretKey();
     if (!secretKey) {
       throw new Error('bachs_not_configured');
@@ -117,13 +117,16 @@ export class BachsService {
     );
 
     if (response.status === 404) {
-      return 'pending';
+      return { status: 'pending' };
     }
 
     const payload = (await response.json().catch(() => ({}))) as {
       status?: string;
       payment_status?: string;
-      charge?: { status?: string };
+      amount?: string | number;
+      amount_total?: string | number;
+      currency?: string;
+      charge?: { status?: string; amount?: string | number };
       detail?: string;
     };
 
@@ -134,6 +137,11 @@ export class BachsService {
     const sessionStatus = payload.status?.toUpperCase();
     const chargeStatus = payload.charge?.status?.toLowerCase();
     const paymentStatus = payload.payment_status?.toLowerCase();
+    const amountRaw = payload.amount_total ?? payload.amount ?? payload.charge?.amount;
+    const amount =
+      amountRaw === undefined || amountRaw === null
+        ? undefined
+        : Number(amountRaw);
 
     if (
       sessionStatus === 'COMPLETED' ||
@@ -141,7 +149,11 @@ export class BachsService {
       chargeStatus === 'accepted' ||
       paymentStatus === 'succeeded'
     ) {
-      return 'success';
+      return {
+        status: 'success',
+        amount: Number.isFinite(amount) ? amount : undefined,
+        currency: payload.currency,
+      };
     }
 
     if (
@@ -153,10 +165,10 @@ export class BachsService {
       paymentStatus === 'failed' ||
       paymentStatus === 'canceled'
     ) {
-      return 'failed';
+      return { status: 'failed', amount: Number.isFinite(amount) ? amount : undefined, currency: payload.currency };
     }
 
-    return 'pending';
+    return { status: 'pending' };
   }
 
   getProductId(currency: BillingCurrency): string | undefined {

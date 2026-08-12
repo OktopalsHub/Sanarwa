@@ -1,6 +1,7 @@
 import { Injectable, Logger, Inject, Optional, forwardRef } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import axios, { AxiosResponse } from 'axios';
+import { assertSafeWebhookUrl } from '../../common/security/utils/safe-url';
 import { MessageDeliveryStatus as DeliveryStatus } from '../messaging/message-delivery.entity';
 import { MessageChannel as NotificationChannel } from '../messaging/message.entity';
 import { WebhookService as DatabaseWebhookService } from '../webhook/webhook.service';
@@ -238,6 +239,8 @@ export class WebhookService {
     idempotencyKey: string,
     tenantId?: string,
   ): Promise<void> {
+    assertSafeWebhookUrl(config.url);
+
     const maxRetries = config.retryAttempts || 3;
     const timeout = Math.max(0, config.timeout || 10000);
 

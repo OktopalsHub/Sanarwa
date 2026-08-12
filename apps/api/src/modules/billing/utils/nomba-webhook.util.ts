@@ -98,6 +98,19 @@ export function verifyNombaWebhook(
     };
   }
 
+  const txStatus = body.data?.transaction?.status?.toUpperCase();
+  if (txStatus && txStatus !== 'SUCCESS') {
+    return {
+      eventId,
+      eventType,
+      outcome: 'failed',
+      purchaseId,
+      setupReference,
+      orderReference,
+      transactionId: body.data?.transaction?.transactionId,
+    };
+  }
+
   return {
     eventId,
     eventType,

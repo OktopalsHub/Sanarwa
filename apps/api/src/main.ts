@@ -9,7 +9,7 @@ import { Logger } from 'nestjs-pino';
 import 'reflect-metadata';
 import { AppModule } from './app.module';
 import { initializeSentry } from './common/config/sentry.config';
-import { configureCORS } from './common/middleware/security.middleware';
+import { configureCORS, configureSecurityMiddleware } from './common/middleware/security.middleware';
 import { createSwaggerConfig } from './config/swagger.config';
 import { EnvironmentValidationService } from './modules/configuration/services/environment-validation.service';
 
@@ -59,8 +59,7 @@ async function bootstrap() {
     envValidationService.validateOrThrow();
 
     // Configure security middleware (Helmet + Morgan)
-    // FIXME: blocking authentication
-    // configureSecurityMiddleware(app, configService, logger);
+    configureSecurityMiddleware(app, configService, logger);
 
     // Configure CORS
     configureCORS(app, configService);

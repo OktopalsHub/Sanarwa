@@ -270,74 +270,12 @@ export class BachsService {
     tokenAmount: number;
     priceMinor: number;
   }): Promise<{ status: 'success' | 'pending' | 'failed'; providerReference?: string; errorCode?: string }> {
-    const secretKey = this.getSecretKey();
-    if (!secretKey) {
-      throw new Error('bachs_not_configured');
-    }
-
-    const productId = this.getProductId(input.currency);
-    if (!productId) {
-      return { status: 'failed', errorCode: 'bachs_product_unconfigured' };
-    }
-
-    const baseUrl = this.getBaseUrl();
-    const reference = buildNotifiPurchaseReference(input.purchaseId);
-    const amount = (input.priceMinor / 100).toFixed(2);
-
-    const response = await fetch(`${baseUrl}/v1/payments/charges`, {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${secretKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        customer_id: input.customerId,
-        payment_method_id: input.paymentMethodId,
-        subscription_id: input.subscriptionId,
-        product_cart: [
-          {
-            product_id: productId,
-            quantity: 1,
-            amount,
-          },
-        ],
-        billing_currency: input.currency,
-        reference,
-        metadata: {
-          purchase_id: input.purchaseId,
-          package_id: input.packageId,
-          currency: input.currency,
-          token_amount: input.tokenAmount,
-          purpose: 'auto_topup',
-        },
-      }),
-    });
-
-    const payload = (await response.json().catch(() => ({}))) as {
-      payment_id?: string;
-      status?: string;
-      error_code?: string;
-      detail?: string;
-    };
-
-    if (response.ok) {
-      const status = payload.status?.toLowerCase();
-      if (status === 'succeeded' || status === 'accepted') {
-        return { status: 'success', providerReference: payload.payment_id };
-      }
-      return { status: 'pending', providerReference: payload.payment_id };
-    }
-
-    const errorCode = payload.error_code ?? 'bachs_off_session_failed';
+    // Bachs has no documented off-session / saved-card charge API (checkout + webhooks only).
+    // Fail closed rather than invent POST /v1/payments/charges.
     this.logger.warn(
-      `Bachs off-session charge failed (${response.status}): ${payload.detail ?? errorCode}`,
+      `Bachs off-session charge refused for purchase ${input.purchaseId}: OFF_SESSION_NOT_SUPPORTED`,
     );
-
-    if (response.status === 400 && errorCode === 'OFF_SESSION_NOT_SUPPORTED') {
-      return { status: 'failed', errorCode };
-    }
-
-    return { status: 'failed', errorCode };
+    return { status: 'failed', errorCode: 'OFF_SESSION_NOT_SUPPORTED' };
   }
 
   async getCheckoutSessionDetails(checkoutId: string): Promise<{
@@ -401,16 +339,27 @@ export class BachsService {
     if (!secretKey) return;
 
     const baseUrl = this.getBaseUrl();
-    await fetch(`${baseUrl}/v1/subscriptions/${encodeURIComponent(subscriptionId)}`, {
-      method: 'PATCH',
-      headers: {
-        Authorization: `Bearer ${secretKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ cancel_at_period_end: true }),
-    }).catch((error) => {
+    try {
+      const response = await fetch(
+        `${baseUrl}/v1/subscriptions/${encodeURIComponent(subscriptionId)}`,
+        {
+          method: 'PATCH',
+          headers: {
+            Authorization: `Bearer ${secretKey}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ cancel_at_period_end: true }),
+        },
+      );
+      if (!response.ok) {
+        const payload = (await response.json().catch(() => ({}))) as { detail?: string };
+        this.logger.warn(
+          `Failed to cancel Bachs vault subscription ${subscriptionId}: ${response.status} - ${payload.detail ?? 'Unknown error'}`,
+        );
+      }
+    } catch (error) {
       this.logger.warn(`Failed to cancel Bachs vault subscription ${subscriptionId}:`, error);
-    });
+    }
   }
 
   private async createCheckoutSession(input: {

@@ -14,6 +14,7 @@ import {
 import { ConfigService } from '@nestjs/config';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { SkipThrottle } from '@nestjs/throttler';
 import { Public } from '../../auth/decorators/public.decorator';
 
 export interface WhatsAppWebhookEntry {
@@ -90,6 +91,7 @@ export interface WhatsAppStatusUpdate {
 @ApiTags('WhatsApp Webhooks')
 @Controller('webhooks/whatsapp')
 @Public()
+@SkipThrottle()
 export class WhatsAppWebhookController {
   private readonly logger = new Logger(WhatsAppWebhookController.name);
 

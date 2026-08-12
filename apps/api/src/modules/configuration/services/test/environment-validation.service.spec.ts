@@ -38,7 +38,8 @@ describe('EnvironmentValidationService', () => {
       configService.get.mockImplementation((key: string) => {
         const config = {
           DATABASE_URL: 'postgres://user:pass@localhost:5432/db',
-          AUTH_SECRET: 'a-very-secure-jwt-secret-that-is-long-enough',
+          JWT_AUTH_SECRET: 'a-very-secure-jwt-secret-that-is-long-enough',
+          JWT_REFRESH_SECRET: 'a-very-secure-refresh-secret-long-enough',
           PROVIDER_ENCRYPTION_KEY: 'a-very-secure-encryption-key-32-chars',
           SESSION_SECRET: 'a-very-secure-session-secret-32-chars',
           REDIS_URL: 'redis://localhost:6379',
@@ -74,7 +75,10 @@ describe('EnvironmentValidationService', () => {
         criticalErrors.some((error) => error.variable === 'DATABASE_URL'),
       ).toBe(true);
       expect(
-        criticalErrors.some((error) => error.variable === 'AUTH_SECRET'),
+        criticalErrors.some((error) => error.variable === 'JWT_AUTH_SECRET'),
+      ).toBe(true);
+      expect(
+        criticalErrors.some((error) => error.variable === 'JWT_REFRESH_SECRET'),
       ).toBe(true);
       expect(
         criticalErrors.some(
@@ -90,7 +94,8 @@ describe('EnvironmentValidationService', () => {
       configService.get.mockImplementation((key: string) => {
         const config = {
           DATABASE_URL: 'postgres://user:pass@localhost:5432/db',
-          AUTH_SECRET: 'default-secret-change-in-production',
+          JWT_AUTH_SECRET: 'default-secret-change-in-production',
+          JWT_REFRESH_SECRET: 'default-secret-change-in-production',
           PROVIDER_ENCRYPTION_KEY:
             'your-32-character-encryption-key-change-in-production',
           SESSION_SECRET: 'your-session-secret-change-in-production',
@@ -108,7 +113,7 @@ describe('EnvironmentValidationService', () => {
       expect(
         criticalErrors.some(
           (error) =>
-            error.variable === 'AUTH_SECRET' &&
+            error.variable === 'JWT_AUTH_SECRET' &&
             error.message.includes('default value'),
         ),
       ).toBe(true);
@@ -132,7 +137,8 @@ describe('EnvironmentValidationService', () => {
       configService.get.mockImplementation((key: string) => {
         const config = {
           DATABASE_URL: 'postgres://user:pass@localhost:5432/db',
-          AUTH_SECRET: 'a-very-secure-jwt-secret-that-is-long-enough',
+          JWT_AUTH_SECRET: 'a-very-secure-jwt-secret-that-is-long-enough',
+          JWT_REFRESH_SECRET: 'a-very-secure-refresh-secret-long-enough',
           PROVIDER_ENCRYPTION_KEY: 'a-very-secure-encryption-key-32-chars',
           SESSION_SECRET: 'a-very-secure-session-secret-32-chars',
           REDIS_URL: 'redis://localhost:6379',
@@ -161,7 +167,8 @@ describe('EnvironmentValidationService', () => {
       configService.get.mockImplementation((key: string) => {
         const config = {
           DATABASE_URL: 'postgres://user:pass@localhost:5432/db',
-          AUTH_SECRET: 'a-very-secure-jwt-secret-that-is-long-enough',
+          JWT_AUTH_SECRET: 'a-very-secure-jwt-secret-that-is-long-enough',
+          JWT_REFRESH_SECRET: 'a-very-secure-refresh-secret-long-enough',
           PROVIDER_ENCRYPTION_KEY: 'a-very-secure-encryption-key-32-chars',
           SESSION_SECRET: 'a-very-secure-session-secret-32-chars',
           REDIS_URL: 'redis://localhost:6379',
@@ -196,7 +203,8 @@ describe('EnvironmentValidationService', () => {
       configService.get.mockImplementation((key: string) => {
         const config = {
           DATABASE_URL: 'postgres://user:pass@localhost:5432/db',
-          AUTH_SECRET: 'a-very-secure-jwt-secret-that-is-long-enough',
+          JWT_AUTH_SECRET: 'a-very-secure-jwt-secret-that-is-long-enough',
+          JWT_REFRESH_SECRET: 'a-very-secure-refresh-secret-long-enough',
           PROVIDER_ENCRYPTION_KEY: 'a-very-secure-encryption-key-32-chars',
           SESSION_SECRET: 'a-very-secure-session-secret-32-chars',
           REDIS_URL: 'redis://localhost:6379',

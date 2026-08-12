@@ -10,14 +10,17 @@ import {
   Param,
   Post,
   Query,
+  UseGuards,
 } from '@nestjs/common';
 import { ApiHeader, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { ApiKeyAuthGuard } from '../../api-key/guards/api-key-auth.guard';
 import { Public } from '../../auth/decorators/public.decorator';
 import { OutboundCallRequest, VoiceService } from '../services/voice.service';
 
 @ApiTags('Voice')
 @Controller('voice')
 @Public()
+@UseGuards(ApiKeyAuthGuard)
 export class VoiceController {
   private readonly logger = new Logger(VoiceController.name);
 

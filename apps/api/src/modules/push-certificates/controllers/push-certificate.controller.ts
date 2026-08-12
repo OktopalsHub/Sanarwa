@@ -25,6 +25,7 @@ import {
   ApiBody,
 } from '@nestjs/swagger';
 import { CurrentTenantId } from '../../../common/decorators';
+import { TenantContextGuard } from '../../../common/guards';
 import { PushCertificateService } from '../services/push-certificate.service';
 import { PushCertificateCrudService } from '../services/push-certificate-crud.service';
 import { CreatePushCertificateDto, UpdatePushCertificateDto, TestCertificateDto, RotateCertificateDto } from '../dto/push-certificate.dto';
@@ -32,6 +33,7 @@ import { CreatePushCertificateDto, UpdatePushCertificateDto, TestCertificateDto,
 @ApiTags('Push Certificates')
 @Controller('push-certificates')
 @ApiBearerAuth()
+@UseGuards(TenantContextGuard)
 export class PushCertificateController {
   constructor(
     private readonly certificateService: PushCertificateService,
@@ -106,8 +108,11 @@ export class PushCertificateController {
   @Get(':id')
   @ApiOperation({ summary: 'Get certificate by ID' })
   @ApiParam({ name: 'id', description: 'Certificate ID' })
-  async getCertificate(@Param('id') id: string) {
-    const certificate = await this.certificateCrudService.getCertificate(id);
+  async getCertificate(
+    @CurrentTenantId() tenantId: string,
+    @Param('id') id: string,
+  ) {
+    const certificate = await this.certificateCrudService.getCertificate(id, tenantId);
     return certificate.getCertificateInfo();
   }
 
@@ -115,52 +120,64 @@ export class PushCertificateController {
   @ApiOperation({ summary: 'Update certificate' })
   @ApiParam({ name: 'id', description: 'Certificate ID' })
   async updateCertificate(
+    @CurrentTenantId() tenantId: string,
     @Param('id') id: string,
     @Body() updateDto: UpdatePushCertificateDto,
   ) {
-    return this.certificateCrudService.updateCertificate(id, updateDto);
+    return this.certificateCrudService.updateCertificate(id, tenantId, updateDto);
   }
 
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: 'Delete certificate' })
   @ApiParam({ name: 'id', description: 'Certificate ID' })
-  async deleteCertificate(@Param('id') id: string) {
-    await this.certificateCrudService.deleteCertificate(id);
+  async deleteCertificate(
+    @CurrentTenantId() tenantId: string,
+    @Param('id') id: string,
+  ) {
+    await this.certificateCrudService.deleteCertificate(id, tenantId);
   }
 
   @Post(':id/validate')
   @ApiOperation({ summary: 'Validate certificate' })
   @ApiParam({ name: 'id', description: 'Certificate ID' })
-  async validateCertificate(@Param('id') id: string) {
-    return this.certificateService.validateCertificate(id);
+  async validateCertificate(
+    @CurrentTenantId() tenantId: string,
+    @Param('id') id: string,
+  ) {
+    return this.certificateService.validateCertificate(id, tenantId);
   }
 
   @Post(':id/test')
   @ApiOperation({ summary: 'Test certificate with push notification' })
   @ApiParam({ name: 'id', description: 'Certificate ID' })
   async testCertificate(
+    @CurrentTenantId() tenantId: string,
     @Param('id') id: string,
     @Body() testDto: TestCertificateDto,
   ) {
-    return this.certificateService.testCertificate(id, testDto.testDeviceToken);
+    return this.certificateService.testCertificate(id, tenantId, testDto.testDeviceToken);
   }
 
   @Post(':id/rotate')
   @ApiOperation({ summary: 'Rotate certificate' })
   @ApiParam({ name: 'id', description: 'Certificate ID' })
   async rotateCertificate(
+    @CurrentTenantId() tenantId: string,
     @Param('id') id: string,
     @Body() rotateDto: RotateCertificateDto,
   ) {
-    return this.certificateService.rotateCertificate(id, rotateDto.newCertificateData);
+    return this.certificateService.rotateCertificate(id, tenantId, rotateDto.newCertificateData);
   }
 
   @Get(':id/usage')
   @ApiOperation({ summary: 'Get certificate usage statistics' })
   @ApiParam({ name: 'id', description: 'Certificate ID' })
-  async getCertificateUsage(@Param('id') id: string) {
-    return this.certificateService.getCertificateUsageStats(id);
+  async getCertificateUsage(
+    @CurrentTenantId() tenantId: string,
+    @Param('id') id: string,
+  ) {
+    return this.certificateService.getCertificateUsageStats(id, tenantId);
   }
 
   @Post('check-expiry')

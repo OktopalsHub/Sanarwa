@@ -246,7 +246,8 @@ describe('ConfigurationValidationService', () => {
         DATABASE_PORT: '5432',
         DATABASE_USERNAME: 'user',
         DATABASE_NAME: 'testdb',
-        AUTH_SECRET: 'test-secret',
+        JWT_AUTH_SECRET: 'test-secret',
+        JWT_REFRESH_SECRET: 'test-refresh-secret',
       };
 
       const result = await service.validateEnvironmentConfig(
@@ -262,7 +263,8 @@ describe('ConfigurationValidationService', () => {
         DATABASE_PORT: '5432',
         DATABASE_USERNAME: 'user',
         DATABASE_NAME: 'testdb',
-        AUTH_SECRET: 'test-secret',
+        JWT_AUTH_SECRET: 'test-secret',
+        JWT_REFRESH_SECRET: 'test-refresh-secret',
         REDIS_HOST: 'localhost',
         REDIS_PORT: '6379',
         ENCRYPTION_KEY_V1: 'encryption-key',
@@ -297,7 +299,8 @@ describe('ConfigurationValidationService', () => {
         DATABASE_PORT: '5432',
         DATABASE_USERNAME: 'user',
         DATABASE_NAME: 'testdb',
-        AUTH_SECRET: 'test-secret',
+        JWT_AUTH_SECRET: 'test-secret',
+        JWT_REFRESH_SECRET: 'test-refresh-secret',
         REDIS_HOST: 'localhost',
         REDIS_PORT: '6379',
       };

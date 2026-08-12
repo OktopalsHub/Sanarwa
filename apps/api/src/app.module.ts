@@ -1,7 +1,7 @@
 import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { EventEmitterModule } from '@nestjs/event-emitter';
-import { ThrottlerModule } from '@nestjs/throttler';
+import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 
@@ -10,7 +10,7 @@ import { LoggingModule } from './common/logging/logging.module';
 
 import { RedisModule } from '@nestjs-modules/ioredis';
 import { BullModule } from '@nestjs/bull';
-import { APP_INTERCEPTOR } from '@nestjs/core';
+import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AlertModule } from './common/alerts/alert.module';
 import { ErrorsModule } from './common/errors';
@@ -32,6 +32,7 @@ import { AnalyticsModule } from './modules/analytics/analytics.module';
 import { CampaignModule } from './modules/campaign/campaign.module';
 import { ApiKeyModule } from './modules/api-key/api-key.module';
 import { AuthModule } from './modules/auth/auth.module';
+import { AuthGuard } from './modules/auth/guards/jwt-auth.guard';
 import { BillingModule } from './modules/billing/billing.module';
 import { BrandModule } from './modules/brand/brand.module';
 import { ComplianceModule } from './modules/compliance/compliance.module';
@@ -148,6 +149,14 @@ import { SecurityModule } from './common/security/security.module';
     AppService,
     EnvironmentValidationService,
     PasswordService,
+    {
+      provide: APP_GUARD,
+      useClass: ThrottlerGuard,
+    },
+    {
+      provide: APP_GUARD,
+      useClass: AuthGuard,
+    },
     {
       provide: APP_INTERCEPTOR,
       useClass: MetricsInterceptor,

@@ -145,12 +145,13 @@ export class NotificationGateway
     @MessageBody() data: { notificationId: string },
   ) {
     try {
-      if (!client.subscriberId) {
+      if (!client.subscriberId || !client.tenantId) {
         return { error: 'Unauthorized' };
       }
 
       const notification = await this.notificationService.markAsRead(
         data.notificationId,
+        client.tenantId,
       );
 
       // Broadcast to all client connections
@@ -206,12 +207,13 @@ export class NotificationGateway
     @MessageBody() data: { notificationId: string },
   ) {
     try {
-      if (!client.subscriberId) {
+      if (!client.subscriberId || !client.tenantId) {
         return { error: 'Unauthorized' };
       }
 
       const notification = await this.notificationService.archiveNotification(
         data.notificationId,
+        client.tenantId,
       );
 
       const room = `subscriber:${client.subscriberId}`;
@@ -236,11 +238,14 @@ export class NotificationGateway
     @MessageBody() data: { notificationId: string },
   ) {
     try {
-      if (!client.subscriberId) {
+      if (!client.subscriberId || !client.tenantId) {
         return { error: 'Unauthorized' };
       }
 
-      await this.notificationService.deleteNotification(data.notificationId);
+      await this.notificationService.deleteNotification(
+        data.notificationId,
+        client.tenantId,
+      );
 
       const room = `subscriber:${client.subscriberId}`;
       this.server.to(room).emit('notification_deleted', {

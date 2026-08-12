@@ -138,9 +138,9 @@ export class PushCertificateCrudService {
     return query.getMany();
   }
 
-  async getCertificate(id: string): Promise<PushCertificate> {
+  async getCertificate(id: string, tenantId: string): Promise<PushCertificate> {
     const certificate = await this.certificateRepository.findOne({
-      where: { id },
+      where: { id, tenantId },
       relations: ['tenant', 'project', 'createdBy'],
     });
 
@@ -151,8 +151,12 @@ export class PushCertificateCrudService {
     return certificate;
   }
 
-  async updateCertificate(id: string, updateDto: UpdatePushCertificateDto): Promise<PushCertificate> {
-    const certificate = await this.getCertificate(id);
+  async updateCertificate(
+    id: string,
+    tenantId: string,
+    updateDto: UpdatePushCertificateDto,
+  ): Promise<PushCertificate> {
+    const certificate = await this.getCertificate(id, tenantId);
 
     // Validate updated certificate if critical fields changed
     if (updateDto.certificateData) {
@@ -166,9 +170,9 @@ export class PushCertificateCrudService {
       }
     }
 
-    await this.certificateRepository.update(id, updateDto);
+    await this.certificateRepository.update({ id, tenantId }, updateDto);
 
-    const updatedCertificate = await this.getCertificate(id);
+    const updatedCertificate = await this.getCertificate(id, tenantId);
 
     // Emit event
     this.eventEmitter.emit('certificate.updated', {
@@ -180,8 +184,8 @@ export class PushCertificateCrudService {
     return updatedCertificate;
   }
 
-  async deleteCertificate(id: string): Promise<void> {
-    const certificate = await this.getCertificate(id);
+  async deleteCertificate(id: string, tenantId: string): Promise<void> {
+    const certificate = await this.getCertificate(id, tenantId);
 
     await this.certificateRepository.remove(certificate);
 
@@ -192,8 +196,12 @@ export class PushCertificateCrudService {
     });
   }
 
-  async duplicateCertificate(id: string, newName?: string): Promise<PushCertificate> {
-    const originalCertificate = await this.getCertificate(id);
+  async duplicateCertificate(
+    id: string,
+    tenantId: string,
+    newName?: string,
+  ): Promise<PushCertificate> {
+    const originalCertificate = await this.getCertificate(id, tenantId);
 
     const duplicatedCertificate = this.certificateRepository.create({
       name: newName || `${originalCertificate.name} (Copy)`,

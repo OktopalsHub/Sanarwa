@@ -1,6 +1,5 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
-import { TypeOrmModule } from '@nestjs/typeorm';
 import { TelnyxVoiceProvider } from './providers/telnyx-voice.provider';
 import { VoiceOrchestratorService } from './voice-orchestrator.service';
 import { VoiceService } from '../../services/voice.service';
@@ -9,10 +8,12 @@ import { TelnyxWebhookController } from '../../controllers/telnyx-webhook.contro
 import { VoiceCallTrackingService } from '../../services/voice-call-tracking.service';
 
 import { BillingService } from '../../services/billing.service';
+import { ApiKeyModule } from '../../../api-key/api-key.module';
 
 @Module({
   imports: [
     ConfigModule,
+    ApiKeyModule,
   ],
   providers: [
     TelnyxVoiceProvider,

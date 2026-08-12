@@ -12,12 +12,15 @@ import {
   HttpStatus,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
+import { CurrentTenantId } from '../../../common/decorators';
+import { TenantMemberGuard } from '../../../common/guards';
 import { NotificationCenterService } from '../services/notification-center.service';
 import { NotificationCenterStatus } from '../entities/notification-center.entity';
-import { CurrentTenantId } from '../../../common/decorators/current-context.decorator';
+
 @ApiTags('notifications/center')
 @Controller('tenants/:tenantId/notifications/center')
 @ApiBearerAuth()
+@UseGuards(TenantMemberGuard)
 export class NotificationCenterController {
   constructor(private readonly service: NotificationCenterService) {}
 
@@ -27,7 +30,7 @@ export class NotificationCenterController {
   @Get('feed/:subscriberId')
   @ApiOperation({ summary: 'Get notification feed' })
   async getFeed(
-    @Param('tenantId') tenantId: string,
+    @CurrentTenantId() tenantId: string,
     @Param('subscriberId') subscriberId: string,
     @Query('page') page: number = 1,
     @Query('limit') limit: number = 20,
@@ -47,8 +50,11 @@ export class NotificationCenterController {
    */
   @Get(':id')
   @ApiOperation({ summary: 'Get notification by ID' })
-  async getNotification(@Param('id') id: string) {
-    return this.service.getNotification(id);
+  async getNotification(
+    @CurrentTenantId() tenantId: string,
+    @Param('id') id: string,
+  ) {
+    return this.service.getNotification(id, tenantId);
   }
 
   /**
@@ -56,8 +62,11 @@ export class NotificationCenterController {
    */
   @Patch(':id/read')
   @ApiOperation({ summary: 'Mark notification as read' })
-  async markAsRead(@Param('id') id: string) {
-    return this.service.markAsRead(id);
+  async markAsRead(
+    @CurrentTenantId() tenantId: string,
+    @Param('id') id: string,
+  ) {
+    return this.service.markAsRead(id, tenantId);
   }
 
   /**
@@ -66,8 +75,11 @@ export class NotificationCenterController {
   @Post('bulk/read')
   @ApiOperation({ summary: 'Mark multiple notifications as read' })
   @HttpCode(HttpStatus.NO_CONTENT)
-  async markMultipleAsRead(@Body() body: { ids: string[] }) {
-    await this.service.markMultipleAsRead(body.ids);
+  async markMultipleAsRead(
+    @CurrentTenantId() tenantId: string,
+    @Body() body: { ids: string[] },
+  ) {
+    await this.service.markMultipleAsRead(body.ids ?? [], tenantId);
   }
 
   /**
@@ -77,7 +89,7 @@ export class NotificationCenterController {
   @ApiOperation({ summary: 'Mark all notifications as read' })
   @HttpCode(HttpStatus.NO_CONTENT)
   async markAllAsRead(
-    @Param('tenantId') tenantId: string,
+    @CurrentTenantId() tenantId: string,
     @Param('subscriberId') subscriberId: string,
   ) {
     await this.service.markAllAsRead(subscriberId, tenantId);
@@ -88,8 +100,11 @@ export class NotificationCenterController {
    */
   @Patch(':id/archive')
   @ApiOperation({ summary: 'Archive notification' })
-  async archiveNotification(@Param('id') id: string) {
-    return this.service.archiveNotification(id);
+  async archiveNotification(
+    @CurrentTenantId() tenantId: string,
+    @Param('id') id: string,
+  ) {
+    return this.service.archiveNotification(id, tenantId);
   }
 
   /**
@@ -98,8 +113,11 @@ export class NotificationCenterController {
   @Post('bulk/archive')
   @ApiOperation({ summary: 'Archive multiple notifications' })
   @HttpCode(HttpStatus.NO_CONTENT)
-  async archiveMultiple(@Body() body: { ids: string[] }) {
-    await this.service.archiveMultiple(body.ids);
+  async archiveMultiple(
+    @CurrentTenantId() tenantId: string,
+    @Body() body: { ids: string[] },
+  ) {
+    await this.service.archiveMultiple(body.ids ?? [], tenantId);
   }
 
   /**
@@ -108,8 +126,11 @@ export class NotificationCenterController {
   @Delete(':id')
   @ApiOperation({ summary: 'Delete notification' })
   @HttpCode(HttpStatus.NO_CONTENT)
-  async deleteNotification(@Param('id') id: string) {
-    await this.service.deleteNotification(id);
+  async deleteNotification(
+    @CurrentTenantId() tenantId: string,
+    @Param('id') id: string,
+  ) {
+    await this.service.deleteNotification(id, tenantId);
   }
 
   /**
@@ -118,8 +139,11 @@ export class NotificationCenterController {
   @Post('bulk/delete')
   @ApiOperation({ summary: 'Delete multiple notifications' })
   @HttpCode(HttpStatus.NO_CONTENT)
-  async deleteMultiple(@Body() body: { ids: string[] }) {
-    await this.service.deleteMultiple(body.ids);
+  async deleteMultiple(
+    @CurrentTenantId() tenantId: string,
+    @Body() body: { ids: string[] },
+  ) {
+    await this.service.deleteMultiple(body.ids ?? [], tenantId);
   }
 
   /**
@@ -128,7 +152,7 @@ export class NotificationCenterController {
   @Get('stats/:subscriberId')
   @ApiOperation({ summary: 'Get notification center statistics' })
   async getStats(
-    @Param('tenantId') tenantId: string,
+    @CurrentTenantId() tenantId: string,
     @Param('subscriberId') subscriberId: string,
   ) {
     return this.service.getStats(subscriberId, tenantId);
@@ -140,7 +164,7 @@ export class NotificationCenterController {
   @Get('unread/:subscriberId')
   @ApiOperation({ summary: 'Get unread notification count' })
   async getUnreadCount(
-    @Param('tenantId') tenantId: string,
+    @CurrentTenantId() tenantId: string,
     @Param('subscriberId') subscriberId: string,
   ) {
     const count = await this.service.getUnreadCount(subscriberId, tenantId);
@@ -153,7 +177,7 @@ export class NotificationCenterController {
   @Get('search/:subscriberId')
   @ApiOperation({ summary: 'Search notifications' })
   async searchNotifications(
-    @Param('tenantId') tenantId: string,
+    @CurrentTenantId() tenantId: string,
     @Param('subscriberId') subscriberId: string,
     @Query('q') query: string,
     @Query('page') page: number = 1,
@@ -174,7 +198,7 @@ export class NotificationCenterController {
   @Get('channel/:subscriberId/:channel')
   @ApiOperation({ summary: 'Get notifications by channel' })
   async getByChannel(
-    @Param('tenantId') tenantId: string,
+    @CurrentTenantId() tenantId: string,
     @Param('subscriberId') subscriberId: string,
     @Param('channel') channel: string,
     @Query('page') page: number = 1,

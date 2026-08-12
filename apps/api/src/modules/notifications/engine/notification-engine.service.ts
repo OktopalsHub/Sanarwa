@@ -1,4 +1,4 @@
-import { Injectable, Logger, Inject, forwardRef } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { assertSafeWebhookUrl } from '../../../common/security/utils/safe-url';
 import { ProviderOrchestratorService } from '../../provider/provider-orchestrator.service';
 import { SmartPushRouterService } from '../../provider/services/smart-push-router.service';
@@ -28,7 +28,6 @@ export class NotificationEngineService {
 
   constructor(
     private readonly storageService: NotificationStorageService,
-    @Inject(forwardRef(() => ProviderOrchestratorService))
     private readonly providerOrchestrator: ProviderOrchestratorService,
     private readonly smartPushRouter: SmartPushRouterService,
     private readonly notificationQueueService: NotificationQueueService,

@@ -259,7 +259,8 @@ export class ConfigurationValidationService {
       'DATABASE_PORT',
       'DATABASE_USERNAME',
       'DATABASE_NAME',
-      'AUTH_SECRET',
+      'JWT_AUTH_SECRET',
+      'JWT_REFRESH_SECRET',
     ];
 
     switch (environment) {

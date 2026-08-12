@@ -19,7 +19,7 @@ export enum TokenTransactionType {
 }
 
 @Entity('token_balances')
-@Index(['tenantId'])
+@Index(['tenantId'], { unique: true })
 export class TokenBalance {
   @PrimaryGeneratedColumn('uuid')
   id: string;

@@ -1,4 +1,4 @@
-import { Injectable, Logger, Inject, Optional, forwardRef } from '@nestjs/common';
+import { Injectable, Logger, Optional } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import axios, { AxiosResponse } from 'axios';
 import { assertSafeWebhookUrl } from '../../common/security/utils/safe-url';
@@ -49,7 +49,7 @@ export class WebhookService {
   constructor(
     private readonly configService: ConfigService,
     @Optional() private readonly databaseWebhookService?: DatabaseWebhookService,
-    @Optional() @Inject(forwardRef(() => WebhookQueueService)) private readonly webhookQueueService?: WebhookQueueService,
+    @Optional() private readonly webhookQueueService?: WebhookQueueService,
   ) {}
 
   /**

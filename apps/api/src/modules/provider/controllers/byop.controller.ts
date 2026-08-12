@@ -7,9 +7,11 @@ import {
   Param,
   Post,
   Query,
+  UseGuards,
 } from '@nestjs/common';
-import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { CurrentTenantId } from '../../../common/decorators';
+import { TenantMemberGuard } from '../../../common/guards';
 import { NotificationChannel } from '../../../common/enums/notification-channel.enum';
 import { ProviderService } from '../provider.service';
 import { ProviderCostTrackerService } from '../services/provider-cost-tracker.service';
@@ -17,6 +19,8 @@ import { ProviderTemplateService } from '../services/provider-template.service';
 
 @ApiTags('byop')
 @Controller('tenants/:tenantId/projects/:projectId/byop')
+@ApiBearerAuth()
+@UseGuards(TenantMemberGuard)
 export class BYOPController {
   constructor(
     private readonly providerTemplateService: ProviderTemplateService,

@@ -15,6 +15,7 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import { ApiKeyAuthGuard } from '../../api-key/guards/api-key-auth.guard';
+import { Public } from '../../auth/decorators/public.decorator';
 import { WhatsAppBusinessAPIService } from '../services/whatsapp-business-api.service';
 import { WhatsAppEmbeddedSignupService } from '../services/whatsapp-embedded-signup.service';
 
@@ -45,6 +46,7 @@ export class WhatsAppController {
   ) {}
 
   @Post('messages/send')
+  @Public()
   @UseGuards(ApiKeyAuthGuard)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Send WhatsApp message using shared templates' })
@@ -77,6 +79,7 @@ export class WhatsAppController {
   }
 
   @Post('messages/template')
+  @Public()
   @UseGuards(ApiKeyAuthGuard)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Send WhatsApp template message directly' })
@@ -122,6 +125,7 @@ export class WhatsAppController {
   }
 
   @Get('templates')
+  @Public()
   @UseGuards(ApiKeyAuthGuard)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'List available WhatsApp templates' })

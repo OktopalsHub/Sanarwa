@@ -72,7 +72,6 @@ describe('SubscriptionBillingService.confirmTokenPurchase', () => {
       update: vi.fn().mockReturnThis(),
       set: vi.fn().mockReturnThis(),
       where: vi.fn().mockReturnThis(),
-      returning: vi.fn().mockReturnThis(),
       execute: updateExecute,
     };
 
@@ -94,13 +93,16 @@ describe('SubscriptionBillingService.confirmTokenPurchase', () => {
       {} as never,
       { addTokens } as never,
       {} as never,
+      {} as never,
     );
   });
 
   it('credits tokens once when claiming a pending purchase', async () => {
-    updateExecute.mockResolvedValue({
-      affected: 1,
-      raw: [{ id: purchaseId, tenant_id: tenantId, token_amount: 3000 }],
+    updateExecute.mockResolvedValue({ affected: 1 });
+    findOne.mockResolvedValue({
+      id: purchaseId,
+      tenantId,
+      tokenAmount: 3000,
     });
 
     await service.confirmTokenPurchase(purchaseId);
@@ -117,16 +119,19 @@ describe('SubscriptionBillingService.confirmTokenPurchase', () => {
 
   it('does not credit again when purchase was already claimed', async () => {
     updateExecute
-      .mockResolvedValueOnce({
-        affected: 1,
-        raw: [{ id: purchaseId, tenant_id: tenantId, token_amount: 3000 }],
-      })
-      .mockResolvedValueOnce({ affected: 0, raw: [] });
+      .mockResolvedValueOnce({ affected: 1 })
+      .mockResolvedValueOnce({ affected: 0 });
 
-    findOne.mockResolvedValue({
-      id: purchaseId,
-      status: TokenPurchaseStatus.COMPLETED,
-    });
+    findOne
+      .mockResolvedValueOnce({
+        id: purchaseId,
+        tenantId,
+        tokenAmount: 3000,
+      })
+      .mockResolvedValueOnce({
+        id: purchaseId,
+        status: TokenPurchaseStatus.COMPLETED,
+      });
 
     await service.confirmTokenPurchase(purchaseId);
     await service.confirmTokenPurchase(purchaseId);
@@ -135,7 +140,7 @@ describe('SubscriptionBillingService.confirmTokenPurchase', () => {
   });
 
   it('throws when purchase does not exist', async () => {
-    updateExecute.mockResolvedValue({ affected: 0, raw: [] });
+    updateExecute.mockResolvedValue({ affected: 0 });
     findOne.mockResolvedValue(null);
 
     await expect(service.confirmTokenPurchase(purchaseId)).rejects.toBeInstanceOf(
@@ -145,9 +150,11 @@ describe('SubscriptionBillingService.confirmTokenPurchase', () => {
   });
 
   it('releases the claim if addTokens fails so a retry can credit', async () => {
-    updateExecute.mockResolvedValue({
-      affected: 1,
-      raw: [{ id: purchaseId, tenant_id: tenantId, token_amount: 3000 }],
+    updateExecute.mockResolvedValue({ affected: 1 });
+    findOne.mockResolvedValue({
+      id: purchaseId,
+      tenantId,
+      tokenAmount: 3000,
     });
     addTokens.mockRejectedValue(new Error('balance write failed'));
 

@@ -54,13 +54,24 @@ class EnvironmentVariables {
   // JWT Configuration (required)
   @IsString()
   @MinLength(32, {
-    message: 'AUTH_SECRET must be at least 32 characters long for security',
+    message: 'JWT_AUTH_SECRET must be at least 32 characters long for security',
   })
-  AUTH_SECRET: string;
+  JWT_AUTH_SECRET: string;
+
+  @IsString()
+  @MinLength(32, {
+    message:
+      'JWT_REFRESH_SECRET must be at least 32 characters long for security',
+  })
+  JWT_REFRESH_SECRET: string;
 
   @IsString()
   @IsOptional()
   JWT_EXPIRES_IN: string = '24h';
+
+  @IsString()
+  @IsOptional()
+  JWT_REFRESH_EXPIRES_IN: string = '30d';
 
   // Logging Configuration
   @IsString()

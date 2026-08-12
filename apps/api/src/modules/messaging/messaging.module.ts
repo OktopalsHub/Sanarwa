@@ -1,4 +1,4 @@
-import { Module, forwardRef } from '@nestjs/common';
+import { Module } from '@nestjs/common';
 import { AuthModule } from '../auth/auth.module';
 import { ApiKeyModule } from '../api-key/api-key.module';
 import { ProviderModule } from '../provider/provider.module';
@@ -26,7 +26,7 @@ import { MessageRepository, MessageDeliveryRepository, DeadLetterRepository } fr
     TemplateModule,
     TenantModule,
     ProviderModule,
-    forwardRef(() => NotificationsModule),
+    NotificationsModule,
     AuthModule,
     ApiKeyModule,
   ],

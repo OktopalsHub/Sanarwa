@@ -122,11 +122,18 @@ export class EnvironmentVariables {
 
   // JWT Configuration
   @IsString()
-  AUTH_SECRET: string;
+  JWT_AUTH_SECRET: string;
+
+  @IsString()
+  JWT_REFRESH_SECRET: string;
 
   @IsOptional()
   @IsString()
   JWT_EXPIRES_IN?: string = '24h';
+
+  @IsOptional()
+  @IsString()
+  JWT_REFRESH_EXPIRES_IN?: string = '30d';
 
   // Session Configuration
   @IsString()

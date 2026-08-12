@@ -8,6 +8,7 @@ import {
   HttpException,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { SkipThrottle } from '@nestjs/throttler';
 import { Public } from '../../auth/decorators/public.decorator';
 import { VoiceService } from '../services/voice.service';
 
@@ -34,6 +35,7 @@ interface TelnyxWebhookEvent {
 @ApiTags('Telnyx Webhooks')
 @Controller('webhooks/telnyx')
 @Public()
+@SkipThrottle()
 export class TelnyxWebhookController {
   private readonly logger = new Logger(TelnyxWebhookController.name);
 

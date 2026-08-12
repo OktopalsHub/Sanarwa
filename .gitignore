@@ -29,7 +29,7 @@ coverage/
 !.github/
 !.github/**
 
-# Markdown: only root README
+# Markdown: only root README (Mintlify docs are .mdx under docs/)
 *.md
 !/README.md
 
@@ -52,3 +52,9 @@ Thumbs.db
 *temp*
 *cache*
 *backup*
+
+# Mintlify docs (must follow *temp* — that pattern matches "template" filenames)
+!docs/
+!docs/**
+
+.cursor

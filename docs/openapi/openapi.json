@@ -1,0 +1,857 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Sanarwa Developer API",
+    "version": "1.0.0",
+    "description": "Multi-channel notification API. Authenticate with an `sa_...` project API key via the `X-API-Key` header. Base URL is production only: `https://api.sanarwa.com/api/v1`.",
+    "contact": {
+      "name": "Sanarwa Support",
+      "url": "https://sanarwa.com",
+      "email": "developers@sanarwa.com"
+    }
+  },
+  "servers": [
+    {
+      "url": "https://api.sanarwa.com/api/v1",
+      "description": "Production"
+    }
+  ],
+  "security": [
+    {
+      "ApiKeyAuth": []
+    }
+  ],
+  "tags": [
+    {
+      "name": "Notifications",
+      "description": "Primary multi-channel send, status, and analytics."
+    },
+    {
+      "name": "Channels",
+      "description": "Channel-specific send endpoints for push and WhatsApp."
+    }
+  ],
+  "paths": {
+    "/notifications/send": {
+      "post": {
+        "tags": ["Notifications"],
+        "summary": "Send a notification",
+        "description": "Queue a single notification on one channel. Returns the queued delivery result.",
+        "operationId": "sendNotification",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SendNotificationRequest"
+              },
+              "examples": {
+                "Email": {
+                  "value": {
+                    "to": "user@example.com",
+                    "channel": "email",
+                    "title": "Welcome",
+                    "message": "Hello from Sanarwa"
+                  }
+                },
+                "SMS": {
+                  "value": {
+                    "to": "+1234567890",
+                    "channel": "sms",
+                    "message": "Your OTP is 123456"
+                  }
+                },
+                "Template": {
+                  "value": {
+                    "to": "user@example.com",
+                    "channel": "email",
+                    "message": "placeholder",
+                    "templateId": "welcome-notification",
+                    "templateData": {
+                      "name": "Jane Doe"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Notification queued for delivery",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TransportSendResponse"
+                },
+                "example": {
+                  "id": "ntf_1a2b3c4d",
+                  "trackingId": "trk_abc123",
+                  "status": "queued",
+                  "channel": "email",
+                  "to": "user@example.com"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          }
+        }
+      }
+    },
+    "/notifications/send/bulk": {
+      "post": {
+        "tags": ["Notifications"],
+        "summary": "Send bulk notifications",
+        "description": "Queue many notifications in one request. Optional batchId groups them for tracking.",
+        "operationId": "sendBulkNotifications",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BulkSendNotificationRequest"
+              },
+              "example": {
+                "batchId": "batch_promo_001",
+                "notifications": [
+                  {
+                    "to": "user1@example.com",
+                    "channel": "email",
+                    "title": "Promo",
+                    "message": "20% off today"
+                  },
+                  {
+                    "to": "+1234567890",
+                    "channel": "sms",
+                    "message": "20% off today"
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Bulk notifications queued for delivery",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BulkTransportSendResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          }
+        }
+      }
+    },
+    "/notifications/status/{trackingId}": {
+      "get": {
+        "tags": ["Notifications"],
+        "summary": "Get notification delivery status",
+        "description": "Look up delivery status by tracking ID for the tenant tied to your API key.",
+        "operationId": "getDeliveryStatus",
+        "parameters": [
+          {
+            "name": "trackingId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Tracking ID returned when the notification was queued."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Delivery status",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeliveryStatus"
+                },
+                "example": {
+                  "trackingId": "trk_abc123",
+                  "channel": "email",
+                  "status": "delivered",
+                  "sentAt": "2026-08-12T12:00:00.000Z",
+                  "deliveredAt": "2026-08-12T12:00:05.000Z",
+                  "externalId": "ext_xyz"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          }
+        }
+      }
+    },
+    "/notifications/analytics": {
+      "get": {
+        "tags": ["Notifications"],
+        "summary": "Get notification analytics",
+        "description": "Delivery analytics for the tenant tied to your API key.",
+        "operationId": "getNotificationAnalytics",
+        "parameters": [
+          {
+            "name": "startDate",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "description": "Inclusive start of the range (ISO 8601)."
+          },
+          {
+            "name": "endDate",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "description": "Inclusive end of the range (ISO 8601)."
+          },
+          {
+            "name": "channel",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": ["email", "sms", "push", "whatsapp", "webhook", "in_app"]
+            },
+            "description": "Filter by channel."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Analytics summary",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          }
+        }
+      }
+    },
+    "/notifications/health": {
+      "get": {
+        "tags": ["Notifications"],
+        "summary": "Transport health check",
+        "description": "Confirm the notification transport surface is reachable.",
+        "operationId": "notificationsHealth",
+        "responses": {
+          "200": {
+            "description": "Transport is healthy",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TransportHealth"
+                },
+                "example": {
+                  "status": "healthy",
+                  "timestamp": "2026-08-12T12:00:00.000Z",
+                  "services": {
+                    "email": "operational",
+                    "sms": "operational",
+                    "push": "operational",
+                    "whatsapp": "operational",
+                    "webhook": "operational",
+                    "in_app": "operational"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      }
+    },
+    "/push": {
+      "post": {
+        "tags": ["Channels"],
+        "summary": "Send push notification",
+        "description": "Queue a push notification to a device token or subscriber ID.",
+        "operationId": "sendPush",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SendPushRequest"
+              },
+              "example": {
+                "to": "fcm:device-token-here",
+                "title": "New message",
+                "body": "You have a new notification"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Push notification accepted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PushSendResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          }
+        }
+      }
+    },
+    "/push/bulk": {
+      "post": {
+        "tags": ["Channels"],
+        "summary": "Send bulk push notifications",
+        "description": "Send the same title and body to many device tokens.",
+        "operationId": "sendPushBulk",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BulkPushRequest"
+              },
+              "example": {
+                "title": "New message",
+                "body": "You have a new notification",
+                "notifications": [
+                  { "to": "fcm:token-1" },
+                  { "to": "fcm:token-2" }
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Bulk push accepted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BulkPushResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          }
+        }
+      }
+    },
+    "/whatsapp/messages/send": {
+      "post": {
+        "tags": ["Channels"],
+        "summary": "Send WhatsApp message",
+        "description": "Send a WhatsApp text message to an E.164 phone number.",
+        "operationId": "sendWhatsappMessage",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SendWhatsAppMessageRequest"
+              },
+              "example": {
+                "to": "+1234567890",
+                "message": "Hello from Sanarwa!"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Message sent successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          }
+        }
+      }
+    },
+    "/whatsapp/messages/template": {
+      "post": {
+        "tags": ["Channels"],
+        "summary": "Send WhatsApp template",
+        "description": "Send an approved WhatsApp template message.",
+        "operationId": "sendWhatsappTemplate",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SendWhatsAppTemplateRequest"
+              },
+              "example": {
+                "to": "+1234567890",
+                "templateName": "order_update",
+                "languageCode": "en",
+                "parameters": [
+                  { "type": "text", "text": "Jane" },
+                  { "type": "text", "text": "ORD-12345" }
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Template message sent successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "ApiKeyAuth": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "X-API-Key",
+        "description": "Project API key from the dashboard. Keys start with `sa_`. Pass as `X-API-Key: sa_...`. `Authorization: Bearer sa_...` is also accepted."
+      }
+    },
+    "schemas": {
+      "SendNotificationRequest": {
+        "type": "object",
+        "required": ["to", "channel", "message"],
+        "properties": {
+          "to": {
+            "type": "string",
+            "example": "user@example.com",
+            "description": "Recipient address for the channel (email, E.164 phone, device token, or subscriber ID)."
+          },
+          "channel": {
+            "type": "string",
+            "enum": ["email", "sms", "push", "whatsapp", "webhook", "in_app"],
+            "example": "email"
+          },
+          "title": {
+            "type": "string",
+            "example": "Welcome",
+            "description": "Optional title/subject."
+          },
+          "message": {
+            "type": "string",
+            "example": "Hello from Sanarwa",
+            "description": "Message body."
+          },
+          "data": {
+            "type": "object",
+            "additionalProperties": true,
+            "description": "Arbitrary payload data."
+          },
+          "priority": {
+            "type": "string",
+            "enum": ["low", "normal", "high"],
+            "example": "normal"
+          },
+          "scheduledAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Schedule for future delivery (ISO 8601)."
+          },
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Expiry time (ISO 8601)."
+          },
+          "templateId": {
+            "type": "string",
+            "example": "welcome-notification"
+          },
+          "templateData": {
+            "type": "object",
+            "additionalProperties": true
+          },
+          "trackingId": {
+            "type": "string",
+            "description": "Optional client-supplied tracking ID."
+          },
+          "webhookUrl": {
+            "type": "string",
+            "format": "uri",
+            "description": "Optional delivery webhook override."
+          }
+        }
+      },
+      "BulkSendNotificationRequest": {
+        "type": "object",
+        "required": ["notifications"],
+        "properties": {
+          "notifications": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SendNotificationRequest"
+            }
+          },
+          "batchId": {
+            "type": "string",
+            "example": "batch_promo_001"
+          }
+        }
+      },
+      "TransportSendResponse": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "example": "ntf_1a2b3c4d" },
+          "trackingId": { "type": "string", "example": "trk_abc123" },
+          "status": { "type": "string", "example": "queued" },
+          "channel": { "type": "string", "example": "email" },
+          "to": { "type": "string", "example": "user@example.com" },
+          "externalId": { "type": "string" },
+          "error": { "type": "string" }
+        }
+      },
+      "BulkTransportSendResponse": {
+        "type": "object",
+        "properties": {
+          "batchId": { "type": "string" },
+          "status": { "type": "string", "example": "queued" },
+          "results": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TransportSendResponse"
+            }
+          }
+        }
+      },
+      "DeliveryStatus": {
+        "type": "object",
+        "properties": {
+          "trackingId": { "type": "string" },
+          "channel": { "type": "string" },
+          "status": { "type": "string" },
+          "sentAt": { "type": "string", "format": "date-time" },
+          "deliveredAt": { "type": "string", "format": "date-time" },
+          "error": { "type": "string" },
+          "externalId": { "type": "string" }
+        }
+      },
+      "TransportHealth": {
+        "type": "object",
+        "properties": {
+          "status": { "type": "string", "example": "healthy" },
+          "timestamp": { "type": "string", "format": "date-time" },
+          "services": {
+            "type": "object",
+            "additionalProperties": { "type": "string" }
+          }
+        }
+      },
+      "SendPushRequest": {
+        "type": "object",
+        "required": ["to", "title", "body"],
+        "properties": {
+          "to": {
+            "type": "string",
+            "example": "fcm:device-token-here",
+            "description": "Device token or subscriber ID."
+          },
+          "title": { "type": "string", "example": "New message" },
+          "body": {
+            "type": "string",
+            "example": "You have a new notification"
+          },
+          "data": {
+            "type": "object",
+            "additionalProperties": true
+          },
+          "badge": { "type": "integer" },
+          "sound": { "type": "string" },
+          "category": { "type": "string" },
+          "threadId": { "type": "string" },
+          "imageUrl": { "type": "string" },
+          "actionUrl": { "type": "string" },
+          "scheduledAt": { "type": "string", "format": "date-time" },
+          "expiresAt": { "type": "string", "format": "date-time" },
+          "priority": {
+            "type": "string",
+            "enum": ["normal", "high"]
+          },
+          "collapseKey": { "type": "string" },
+          "timeToLive": { "type": "integer" }
+        }
+      },
+      "BulkPushRequest": {
+        "type": "object",
+        "required": ["title", "body", "notifications"],
+        "properties": {
+          "title": { "type": "string" },
+          "body": { "type": "string" },
+          "data": {
+            "type": "object",
+            "additionalProperties": true
+          },
+          "badge": { "type": "integer" },
+          "sound": { "type": "string" },
+          "category": { "type": "string" },
+          "imageUrl": { "type": "string" },
+          "actionUrl": { "type": "string" },
+          "priority": {
+            "type": "string",
+            "enum": ["normal", "high"]
+          },
+          "notifications": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["to"],
+              "properties": {
+                "to": { "type": "string" },
+                "data": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          }
+        }
+      },
+      "PushSendResponse": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "trackingId": { "type": "string" },
+          "status": { "type": "string" },
+          "deviceToken": { "type": "string" },
+          "title": { "type": "string" },
+          "body": { "type": "string" },
+          "scheduledAt": { "type": "string" },
+          "externalId": { "type": "string" },
+          "error": { "type": "string" },
+          "projectId": { "type": "string" },
+          "tenantId": { "type": "string" }
+        }
+      },
+      "BulkPushResponse": {
+        "type": "object",
+        "properties": {
+          "batchId": { "type": "string" },
+          "status": { "type": "string", "example": "queued" },
+          "totalNotifications": { "type": "integer" },
+          "title": { "type": "string" },
+          "body": { "type": "string" },
+          "notifications": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": { "type": "string" },
+                "deviceToken": { "type": "string" },
+                "status": { "type": "string" },
+                "trackingId": { "type": "string" },
+                "externalId": { "type": "string" },
+                "error": { "type": "string" }
+              }
+            }
+          }
+        }
+      },
+      "SendWhatsAppMessageRequest": {
+        "type": "object",
+        "required": ["to", "message"],
+        "properties": {
+          "to": {
+            "type": "string",
+            "example": "+1234567890",
+            "description": "Recipient phone number in E.164 format."
+          },
+          "message": {
+            "type": "string",
+            "example": "Hello from Sanarwa!"
+          },
+          "templateId": { "type": "string" },
+          "templateData": {
+            "type": "object",
+            "additionalProperties": { "type": "string" }
+          },
+          "tenantId": { "type": "string" }
+        }
+      },
+      "SendWhatsAppTemplateRequest": {
+        "type": "object",
+        "required": ["to", "templateName"],
+        "properties": {
+          "to": {
+            "type": "string",
+            "example": "+1234567890"
+          },
+          "templateName": {
+            "type": "string",
+            "example": "order_update"
+          },
+          "languageCode": {
+            "type": "string",
+            "example": "en",
+            "default": "en"
+          },
+          "parameters": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["type", "text"],
+              "properties": {
+                "type": { "type": "string", "example": "text" },
+                "text": { "type": "string", "example": "Jane" }
+              }
+            }
+          }
+        }
+      },
+      "Error": {
+        "type": "object",
+        "properties": {
+          "statusCode": {
+            "type": "integer",
+            "example": 400
+          },
+          "message": {
+            "oneOf": [
+              { "type": "string" },
+              {
+                "type": "array",
+                "items": { "type": "string" }
+              }
+            ],
+            "example": "Bad Request"
+          },
+          "error": {
+            "type": "string",
+            "example": "Bad Request"
+          }
+        }
+      }
+    },
+    "responses": {
+      "BadRequest": {
+        "description": "Invalid request body or missing required fields.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            },
+            "example": {
+              "statusCode": 400,
+              "message": "Bad Request",
+              "error": "Bad Request"
+            }
+          }
+        }
+      },
+      "Unauthorized": {
+        "description": "Missing or invalid API key.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            },
+            "example": {
+              "statusCode": 401,
+              "message": "Invalid or inactive API key",
+              "error": "Unauthorized"
+            }
+          }
+        }
+      },
+      "Forbidden": {
+        "description": "API key lacks permission, is revoked, or hit a rate limit.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            },
+            "example": {
+              "statusCode": 403,
+              "message": "Forbidden",
+              "error": "Forbidden"
+            }
+          }
+        }
+      }
+    }
+  }
+}

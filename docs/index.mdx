@@ -1,0 +1,43 @@
+---
+title: "Sanarwa API"
+description: "Send email, SMS, WhatsApp, push, and in-app notifications through one production API."
+---
+
+Sanarwa is a multi-channel notification API. Authenticate with a project API key, then send through the transport endpoint or a channel-specific path.
+
+## Base URL
+
+There is one environment. All playground requests go to production:
+
+```
+https://api.sanarwa.com/api/v1
+```
+
+## Quick start
+
+1. Create an API key in your project dashboard (`sa_...`).
+2. Open [Send a notification](/api-reference/notifications/send).
+3. Paste your key into the playground's `X-API-Key` field and send.
+
+```bash
+curl https://api.sanarwa.com/api/v1/notifications/send \
+  -H "X-API-Key: sa_..." \
+  -H "Content-Type: application/json" \
+  -d '{
+    "to": "user@example.com",
+    "channel": "email",
+    "title": "Welcome",
+    "message": "Hello from Sanarwa"
+  }'
+```
+
+## Next
+
+<Columns cols={2}>
+  <Card title="Authentication" icon="key" href="/authentication">
+    How API keys work and where to put them.
+  </Card>
+  <Card title="Send a notification" icon="paper-plane" href="/api-reference/notifications/send">
+    Primary multi-channel send endpoint.
+  </Card>
+</Columns>

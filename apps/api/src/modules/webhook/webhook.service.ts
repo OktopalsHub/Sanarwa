@@ -2,9 +2,11 @@ import {
   ConflictException,
   Injectable,
   NotFoundException,
+  BadRequestException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import { assertSafeWebhookUrl } from '../../common/security/utils/safe-url';
 import { CreateWebhookDto } from './dto/create-webhook.dto';
 import { UpdateWebhookDto } from './dto/update-webhook.dto';
 import { Webhook } from './entities/webhook.entity';
@@ -20,6 +22,14 @@ export class WebhookService {
     tenantId: string,
     createWebhookDto: CreateWebhookDto,
   ): Promise<Webhook> {
+    try {
+      assertSafeWebhookUrl(createWebhookDto.url);
+    } catch (error) {
+      throw new BadRequestException(
+        error instanceof Error ? error.message : 'Invalid webhook URL',
+      );
+    }
+
     // Check if webhook with same URL already exists for this tenant
     const existing = await this.webhookRepository.findOne({
       where: { tenantId, url: createWebhookDto.url },
@@ -67,6 +77,13 @@ export class WebhookService {
 
     // Check URL uniqueness if URL is being updated
     if (updateWebhookDto.url && updateWebhookDto.url !== webhook.url) {
+      try {
+        assertSafeWebhookUrl(updateWebhookDto.url);
+      } catch (error) {
+        throw new BadRequestException(
+          error instanceof Error ? error.message : 'Invalid webhook URL',
+        );
+      }
       const existing = await this.webhookRepository.findOne({
         where: { tenantId, url: updateWebhookDto.url },
       });

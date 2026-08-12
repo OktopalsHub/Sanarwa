@@ -168,7 +168,21 @@ export function verifyBachsWebhook(
 
     }
 
-
+    const setupStatus = body.data?.status?.toLowerCase();
+    if (setupStatus && !SUCCESS_STATUSES.has(setupStatus)) {
+      return {
+        eventId: body.id,
+        eventType,
+        outcome: setupStatus === 'failed' || setupStatus === 'canceled' || setupStatus === 'cancelled'
+          ? 'failed'
+          : 'ignored',
+        purchaseId: null,
+        setupReference,
+        tenantId,
+        currency,
+        metadata,
+      };
+    }
 
     return {
 

@@ -24,6 +24,7 @@ import {
   RequireRoles,
   Roles,
 } from 'src/modules/auth/decorators/roles.decorator';
+import { AuthGuard } from '../../auth/guards/jwt-auth.guard';
 
 // import { RolesGuard } from '../../modules/auth/guards/roles.guard';
 import { UserRole } from '../../../common/enums';
@@ -48,6 +49,7 @@ import {
 @ApiTags('Configuration Management')
 @Controller('configurations')
 @ApiBearerAuth()
+@UseGuards(AuthGuard)
 export class ConfigurationController {
   constructor(
     private readonly configurationService: ConfigurationService,

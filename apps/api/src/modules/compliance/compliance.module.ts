@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ScheduleModule } from '@nestjs/schedule';
+import { AuthModule } from '../auth/auth.module';
 import { NotificationLog } from '../notifications/entities/notification-log.entity';
 import { NotificationCenterItem } from '../notifications/entities/notification-center.entity';
 import { Message } from '../messaging/message.entity';
@@ -19,6 +20,7 @@ import { ComplianceController } from './compliance.controller';
       MessageDelivery,
       TenantSettings,
     ]),
+    AuthModule,
   ],
   controllers: [ComplianceController],
   providers: [ComplianceService],

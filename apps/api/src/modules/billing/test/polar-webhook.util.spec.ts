@@ -39,6 +39,31 @@ describe('verifyPolarWebhook', () => {
     });
   });
 
+  it('rejects stale timestamps', () => {
+    const rawBody = JSON.stringify({
+      type: 'checkout.updated',
+      data: { id: 'checkout-1', status: 'succeeded', metadata: { purchaseId } },
+    });
+    const webhookId = 'msg_stale';
+    const timestamp = String(Math.floor(Date.now() / 1000) - 600);
+    const signedContent = `${webhookId}.${timestamp}.${rawBody}`;
+    const signature = createHmac('sha256', secret).update(signedContent).digest('base64');
+
+    expect(
+      verifyPolarWebhook(
+        {
+          rawBody,
+          headers: {
+            'webhook-id': webhookId,
+            'webhook-timestamp': timestamp,
+            'webhook-signature': `v1,${signature}`,
+          },
+        },
+        secret,
+      ),
+    ).toBeNull();
+  });
+
   it('rejects invalid signatures', () => {
     const rawBody = JSON.stringify({
       type: 'checkout.updated',

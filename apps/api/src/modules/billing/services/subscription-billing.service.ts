@@ -273,7 +273,9 @@ export class SubscriptionBillingService {
     }
 
     const provider = purchase.paymentMetadata?.provider as PaymentProvider | undefined;
-    let verified: 'success' | 'failed' | 'pending' = 'pending';
+    let verified: import('../types/payment-verify-result').PaymentVerifyResult = {
+      status: 'pending',
+    };
 
     if (provider === PaymentProvider.BACHS && purchase.transactionReference) {
       verified = await this.bachsService.verifyCheckoutSession(purchase.transactionReference);
@@ -283,12 +285,29 @@ export class SubscriptionBillingService {
       verified = await this.polarService.verifyCheckout(purchase.transactionReference);
     } else if (purchase.paymentIntentId?.startsWith('pi_')) {
       const paymentIntent = await this.polarService.getPaymentIntent(purchase.paymentIntentId);
-      verified = paymentIntent.status === 'succeeded' ? 'success' : paymentIntent.status === 'canceled' ? 'failed' : 'pending';
+      verified = {
+        status:
+          paymentIntent.status === 'succeeded'
+            ? 'success'
+            : paymentIntent.status === 'canceled'
+              ? 'failed'
+              : 'pending',
+        amount:
+          typeof paymentIntent.amount === 'number' ? paymentIntent.amount / 100 : undefined,
+        currency: paymentIntent.currency,
+      };
     }
 
-    if (verified === 'success') {
-      await this.confirmTokenPurchase(purchaseId);
-    } else if (verified === 'failed') {
+    if (verified.status === 'success') {
+      if (!this.isFullyPaid(purchase, verified.amount, verified.currency)) {
+        this.logger.warn(
+          `Underpayment for purchase ${purchaseId}: paid=${verified.amount} expected=${purchase.totalPrice}`,
+        );
+        await this.failTokenPurchase(purchaseId);
+      } else {
+        await this.confirmTokenPurchase(purchaseId);
+      }
+    } else if (verified.status === 'failed') {
       await this.failTokenPurchase(purchaseId);
     }
 
@@ -358,7 +377,7 @@ export class SubscriptionBillingService {
         cardLast4: verified.cardLast4,
       });
     } else if (verified.outcome === 'success' && verified.purchaseId) {
-      await this.confirmTokenPurchase(verified.purchaseId);
+      await this.confirmTokenPurchaseIfPaid(verified.purchaseId, undefined, verified.currency);
     }
 
     return { received: true };
@@ -400,7 +419,7 @@ export class SubscriptionBillingService {
         externalPaymentMethodId: verified.paymentMethodId,
       });
     } else if (verified.outcome === 'success' && verified.purchaseId) {
-      await this.confirmTokenPurchase(verified.purchaseId);
+      await this.confirmTokenPurchaseIfPaid(verified.purchaseId, undefined, verified.currency);
     } else if (verified.outcome === 'failed' && verified.purchaseId) {
       await this.failTokenPurchase(verified.purchaseId);
     }
@@ -434,7 +453,11 @@ export class SubscriptionBillingService {
         providerReference: verified.providerReference,
       });
     } else if (verified.outcome === 'success' && verified.purchaseId) {
-      await this.confirmTokenPurchase(verified.purchaseId);
+      await this.confirmTokenPurchaseIfPaid(
+        verified.purchaseId,
+        verified.amount,
+        verified.currency,
+      );
     } else if (verified.outcome === 'failed' && verified.purchaseId) {
       await this.failTokenPurchase(verified.purchaseId);
     }
@@ -480,31 +503,58 @@ export class SubscriptionBillingService {
 
   async confirmTokenPurchase(purchaseId: string): Promise<void> {
     try {
-      const purchase = await this.tokenPurchaseRepository.findOne({
-        where: { id: purchaseId },
-      });
+      // Atomically claim PENDING → COMPLETED so concurrent webhook/sync cannot double-credit.
+      const claim = await this.tokenPurchaseRepository
+        .createQueryBuilder()
+        .update(TokenPurchase)
+        .set({
+          status: TokenPurchaseStatus.COMPLETED,
+          completedAt: () => 'CURRENT_TIMESTAMP',
+        })
+        .where('id = :id AND status = :pending', {
+          id: purchaseId,
+          pending: TokenPurchaseStatus.PENDING,
+        })
+        .returning(['id', 'tenant_id', 'token_amount'])
+        .execute();
 
-      if (!purchase) {
-        throw new NotFoundException('Purchase not found');
-      }
-
-      if (purchase.status !== TokenPurchaseStatus.PENDING) {
+      if (!claim.affected) {
+        const existing = await this.tokenPurchaseRepository.findOne({
+          where: { id: purchaseId },
+        });
+        if (!existing) {
+          throw new NotFoundException('Purchase not found');
+        }
         return;
       }
 
-      await this.tokenManagementService.addTokens(
-        purchase.tenantId,
-        purchase.tokenAmount,
-        TokenTransactionType.PURCHASE,
-        `Token purchase: ${purchase.tokenAmount} tokens`,
-        { purchaseId: purchase.id },
-      );
+      const claimed = claim.raw[0] as {
+        id: string;
+        tenant_id: string;
+        token_amount: number;
+      };
 
-      purchase.status = TokenPurchaseStatus.COMPLETED;
-      purchase.completedAt = new Date();
-      await this.tokenPurchaseRepository.save(purchase);
+      try {
+        await this.tokenManagementService.addTokens(
+          claimed.tenant_id,
+          Number(claimed.token_amount),
+          TokenTransactionType.PURCHASE,
+          `Token purchase: ${claimed.token_amount} tokens`,
+          { purchaseId: claimed.id },
+        );
+      } catch (error) {
+        // Release claim so a later sync/webhook retry can credit tokens.
+        await this.tokenPurchaseRepository.update(
+          { id: purchaseId, status: TokenPurchaseStatus.COMPLETED },
+          {
+            status: TokenPurchaseStatus.PENDING,
+            completedAt: () => 'NULL',
+          },
+        );
+        throw error;
+      }
 
-      this.logger.log(`Token purchase completed: ${purchase.id}`);
+      this.logger.log(`Token purchase completed: ${claimed.id}`);
     } catch (error) {
       this.logger.error('Failed to confirm token purchase:', error);
       throw error;
@@ -512,17 +562,94 @@ export class SubscriptionBillingService {
   }
 
   async failTokenPurchase(purchaseId: string): Promise<void> {
-    const purchase = await this.tokenPurchaseRepository.findOne({
-      where: { id: purchaseId },
-    });
+    const result = await this.tokenPurchaseRepository
+      .createQueryBuilder()
+      .update(TokenPurchase)
+      .set({ status: TokenPurchaseStatus.FAILED })
+      .where('id = :id AND status = :pending', {
+        id: purchaseId,
+        pending: TokenPurchaseStatus.PENDING,
+      })
+      .execute();
 
-    if (!purchase || purchase.status !== TokenPurchaseStatus.PENDING) {
-      return;
+    if (result.affected) {
+      this.logger.warn(`Token purchase failed: ${purchaseId}`);
+    }
+  }
+
+  /** Confirm only when paid amount covers purchase price (when amount is known). */
+  private async confirmTokenPurchaseIfPaid(
+    purchaseId: string,
+    paidAmount?: number,
+    currency?: string,
+  ): Promise<void> {
+    if (paidAmount !== undefined) {
+      const purchase = await this.tokenPurchaseRepository.findOne({
+        where: { id: purchaseId },
+      });
+      if (!purchase) {
+        throw new NotFoundException('Purchase not found');
+      }
+      if (!this.isFullyPaid(purchase, paidAmount, currency)) {
+        this.logger.warn(
+          `Underpayment for purchase ${purchaseId}: paid=${paidAmount} expected=${purchase.totalPrice}`,
+        );
+        await this.failTokenPurchase(purchaseId);
+        return;
+      }
+    } else {
+      // No amount in webhook — re-verify via provider API before crediting.
+      const purchase = await this.tokenPurchaseRepository.findOne({
+        where: { id: purchaseId },
+      });
+      if (!purchase) {
+        throw new NotFoundException('Purchase not found');
+      }
+      if (purchase.transactionReference) {
+        const provider = purchase.paymentMetadata?.provider as PaymentProvider | undefined;
+        let verified: import('../types/payment-verify-result').PaymentVerifyResult = {
+          status: 'pending',
+        };
+        if (provider === PaymentProvider.BACHS) {
+          verified = await this.bachsService.verifyCheckoutSession(purchase.transactionReference);
+        } else if (provider === PaymentProvider.NOMBA) {
+          verified = await this.nombaService.verifyOrder(purchase.transactionReference);
+        } else if (provider === PaymentProvider.POLAR) {
+          verified = await this.polarService.verifyCheckout(purchase.transactionReference);
+        }
+        if (verified.status !== 'success') {
+          return;
+        }
+        if (!this.isFullyPaid(purchase, verified.amount, verified.currency ?? currency)) {
+          this.logger.warn(
+            `Underpayment for purchase ${purchaseId}: paid=${verified.amount} expected=${purchase.totalPrice}`,
+          );
+          await this.failTokenPurchase(purchaseId);
+          return;
+        }
+      }
     }
 
-    purchase.status = TokenPurchaseStatus.FAILED;
-    await this.tokenPurchaseRepository.save(purchase);
-    this.logger.warn(`Token purchase failed: ${purchase.id}`);
+    await this.confirmTokenPurchase(purchaseId);
+  }
+
+  private isFullyPaid(
+    purchase: TokenPurchase,
+    paidAmount?: number,
+    currency?: string,
+  ): boolean {
+    if (paidAmount === undefined || paidAmount === null) {
+      // ponytail: amount missing from provider — trust signed success/status verify; add required amount when providers always return it
+      return true;
+    }
+    const expected = Number(purchase.totalPrice);
+    if (!Number.isFinite(expected)) return false;
+    if (paidAmount + 0.01 < expected) return false;
+    const expectedCurrency = purchase.paymentMetadata?.currency as string | undefined;
+    if (currency && expectedCurrency && currency.toUpperCase() !== String(expectedCurrency).toUpperCase()) {
+      return false;
+    }
+    return true;
   }
 
   async configureAutoTopup(dto: AutoTopupConfigDto): Promise<AutoTopupConfig> {

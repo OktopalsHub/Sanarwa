@@ -8,13 +8,16 @@ import {
   Param,
   Post,
   Query,
+  UseGuards,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { AuthGuard } from '../auth/guards/jwt-auth.guard';
 import { ComplianceService } from './compliance.service';
 
 @ApiTags('Compliance')
 @ApiBearerAuth()
 @Controller('compliance')
+@UseGuards(AuthGuard)
 export class ComplianceController {
   constructor(private readonly complianceService: ComplianceService) { }
 

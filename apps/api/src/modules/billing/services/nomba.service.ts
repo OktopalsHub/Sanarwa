@@ -32,6 +32,8 @@ interface NombaVerifyResponse {
   code?: string;
   data?: {
     status?: string;
+    amount?: number | string;
+    currency?: string;
   };
 }
 
@@ -182,7 +184,9 @@ export class NombaService {
     }
   }
 
-  async verifyOrder(orderReference: string): Promise<'success' | 'failed' | 'pending'> {
+  async verifyOrder(
+    orderReference: string,
+  ): Promise<import('../types/payment-verify-result').PaymentVerifyResult> {
     try {
       const response = await this.request<NombaVerifyResponse>(
         `/v1/transactions/accounts/single?orderReference=${encodeURIComponent(orderReference)}`,
@@ -190,16 +194,29 @@ export class NombaService {
       );
 
       const status = response.data?.status?.toUpperCase();
+      const amountRaw = response.data?.amount;
+      const amount =
+        amountRaw === undefined || amountRaw === null ? undefined : Number(amountRaw);
+      const currency = response.data?.currency;
+
       if (status === 'SUCCESS') {
-        return 'success';
+        return {
+          status: 'success',
+          amount: Number.isFinite(amount) ? amount : undefined,
+          currency,
+        };
       }
       if (status === 'FAILED' || status === 'CANCELLED' || status === 'REVERSED_BY_VENDOR') {
-        return 'failed';
+        return {
+          status: 'failed',
+          amount: Number.isFinite(amount) ? amount : undefined,
+          currency,
+        };
       }
-      return 'pending';
+      return { status: 'pending' };
     } catch (error) {
       this.logger.warn(`Nomba verify failed for ${orderReference}`, error);
-      return 'pending';
+      return { status: 'pending' };
     }
   }
 

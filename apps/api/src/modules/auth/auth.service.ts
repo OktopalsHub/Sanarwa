@@ -135,16 +135,11 @@ export class AuthService {
       throw new UnauthorizedException('Invalid credentials');
     }
 
-    // Try to verify with argon2, if it fails, check if it's plain text (for backward compatibility)
     let isPasswordValid = false;
     try {
       isPasswordValid = await argon2.verify(hashedPassword, password);
     } catch {
-      // If argon2 verification fails, check if password matches plain text (temporary fallback)
-      if (hashedPassword === password) {
-        isPasswordValid = true;
-        // TODO: Rehash the password in the background
-      }
+      // Invalid hash format — reject login (do not fall back to plaintext compare)
     }
 
     if (!isPasswordValid) {

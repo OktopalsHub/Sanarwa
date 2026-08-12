@@ -45,7 +45,7 @@ export class ProviderFactory implements IProviderFactory {
     } catch (error) {
       this.logger.error(`Failed to create provider ${providerId}:`, error);
       throw new Error(
-        `Failed to create provider ${providerId}: ${error.message}`,
+        `Failed to create provider ${providerId}: ${error.message}`, { cause: error },
       );
     }
   }

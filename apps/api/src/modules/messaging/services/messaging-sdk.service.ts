@@ -309,7 +309,7 @@ export class MessagingSDKService implements IMessagingSDK {
           d.status === MessageDeliveryStatus.DELIVERED ||
           d.status === MessageDeliveryStatus.FAILED,
       )
-      .sort(
+      .toSorted(
         (a, b) =>
           new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
       )[0];

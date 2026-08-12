@@ -174,7 +174,7 @@ export class ProviderPerformanceTracker {
         : 0;
 
     // Calculate percentiles
-    const sortedResponseTimes = responseTimes.sort((a, b) => a - b);
+    const sortedResponseTimes = responseTimes.toSorted((a, b) => a - b);
     const p95ResponseTime = this.calculatePercentile(sortedResponseTimes, 95);
     const p99ResponseTime = this.calculatePercentile(sortedResponseTimes, 99);
 
@@ -249,7 +249,7 @@ export class ProviderPerformanceTracker {
 
     // Sort by success rate and response time
     return allMetrics
-      .sort((a, b) => {
+      .toSorted((a, b) => {
         if (a.successRate !== b.successRate) {
           return b.successRate - a.successRate;
         }
@@ -311,7 +311,7 @@ export class ProviderPerformanceTracker {
       }
     }
 
-    return comparisons.sort(
+    return comparisons.toSorted(
       (a, b) => b.metrics.successRate - a.metrics.successRate,
     );
   }

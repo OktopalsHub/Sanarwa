@@ -47,7 +47,7 @@ export class MailgunProvider extends BaseEmailProvider {
       this.logger.log('Mailgun provider initialized successfully');
     } catch (error) {
       this.logger.error('Failed to initialize Mailgun provider', error);
-      throw new Error(`Mailgun initialization failed: ${error.message}`);
+      throw new Error(`Mailgun initialization failed: ${error.message}`, { cause: error });
     }
   }
 
@@ -318,7 +318,7 @@ export class MailgunProvider extends BaseEmailProvider {
       return response.template.name;
     } catch (error) {
       this.logger.error('Failed to create Mailgun template', error);
-      throw new Error(`Template creation failed: ${error.message}`);
+      throw new Error(`Template creation failed: ${error.message}`, { cause: error });
     }
   }
 

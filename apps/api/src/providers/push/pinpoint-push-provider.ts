@@ -297,7 +297,7 @@ export class PinpointPushProvider
         },
       };
     } catch (error) {
-      throw new Error(`Pinpoint health check failed: ${error.message}`);
+      throw new Error(`Pinpoint health check failed: ${error.message}`, { cause: error });
     }
   }
 

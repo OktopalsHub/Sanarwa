@@ -412,7 +412,7 @@ export class AuditLogService {
 
     // Combine and sort by timestamp
     const allLogs = [...notificationLogs, ...deliveryLogs];
-    return allLogs.sort(
+    return allLogs.toSorted(
       (a, b) => a.timestamp.getTime() - b.timestamp.getTime(),
     );
   }

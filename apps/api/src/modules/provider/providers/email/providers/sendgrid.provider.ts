@@ -37,7 +37,7 @@ export class SendGridProvider extends BaseEmailProvider {
       this.logger.log('SendGrid provider initialized successfully');
     } catch (error) {
       this.logger.error('Failed to initialize SendGrid provider', error);
-      throw new Error(`SendGrid initialization failed: ${error.message}`);
+      throw new Error(`SendGrid initialization failed: ${error.message}`, { cause: error });
     }
   }
 

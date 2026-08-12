@@ -66,7 +66,15 @@ async function bootstrap() {
     configureCORS(app, configService);
 
     // Add body parser and cookie parser middleware (bodyParser is disabled in NestFactory options)
-    app.use(express.json());
+    app.use(
+      express.json({
+        verify: (req: express.Request & { rawBody?: Buffer }, _res, buf) => {
+          if (req.originalUrl?.includes('/billing/webhooks/')) {
+            req.rawBody = buf;
+          }
+        },
+      }),
+    );
     app.use(express.urlencoded({ extended: true }));
     app.use(cookieParser());
 

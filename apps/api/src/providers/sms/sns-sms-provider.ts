@@ -121,7 +121,7 @@ export class SNSSMSProvider extends BaseProvider implements ISMSProvider {
         },
       };
     } catch (error) {
-      throw new Error(`SNS health check failed: ${error.message}`);
+      throw new Error(`SNS health check failed: ${error.message}`, { cause: error });
     }
   }
 

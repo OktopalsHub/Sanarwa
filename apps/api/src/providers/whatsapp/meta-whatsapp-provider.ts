@@ -303,7 +303,7 @@ export class MetaWhatsAppProvider
         },
       };
     } catch (error) {
-      throw new Error(`WhatsApp health check failed: ${error.message}`);
+      throw new Error(`WhatsApp health check failed: ${error.message}`, { cause: error });
     }
   }
 

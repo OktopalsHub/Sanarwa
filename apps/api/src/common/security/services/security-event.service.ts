@@ -450,7 +450,7 @@ export class SecurityEventService {
 
     // Get recent events (last 10)
     const recentEvents = events
-      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
+      .toSorted((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
       .slice(0, 10);
 
     // Count unresolved events

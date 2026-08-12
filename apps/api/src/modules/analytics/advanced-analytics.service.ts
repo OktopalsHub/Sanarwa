@@ -123,7 +123,7 @@ export class AdvancedAnalyticsService {
       });
     }
 
-    return result.sort((a, b) => b.cohort.localeCompare(a.cohort));
+    return result.toSorted((a, b) => b.cohort.localeCompare(a.cohort));
   }
 
   /**
@@ -214,7 +214,7 @@ export class AdvancedAnalyticsService {
     }
 
     return optimalTimes
-      .sort((a, b) => b.deliveryRate - a.deliveryRate)
+      .toSorted((a, b) => b.deliveryRate - a.deliveryRate)
       .slice(0, 10); // Top 10 optimal times
   }
 
@@ -294,7 +294,7 @@ export class AdvancedAnalyticsService {
       });
     }
 
-    return churnRisk.sort((a, b) => b.daysSinceLastActivity - a.daysSinceLastActivity);
+    return churnRisk.toSorted((a, b) => b.daysSinceLastActivity - a.daysSinceLastActivity);
   }
 
   // Helper methods

@@ -97,7 +97,7 @@ export class DeadLetterController {
         return acc;
       }, {} as Record<string, number>),
       recentFailures: items
-        .sort((a, b) => new Date(b.failedAt).getTime() - new Date(a.failedAt).getTime())
+        .toSorted((a, b) => new Date(b.failedAt).getTime() - new Date(a.failedAt).getTime())
         .slice(0, 10)
         .map(item => ({
           id: item.originalId,

@@ -1,5 +1,5 @@
 import { BullModule } from '@nestjs/bull';
-import { Module, forwardRef } from '@nestjs/common';
+import { Module } from '@nestjs/common';
 import { TemplateModule } from '../../template/template.module';
 import { ProviderModule } from '../../provider/provider.module';
 import { MessagingEntitiesModule } from '../shared/messaging-entities.module';
@@ -42,7 +42,7 @@ export { NOTIFICATION_DELIVERY_QUEUE, NOTIFICATION_QUEUE } from './notification-
     ),
     MessagingEntitiesModule,
     TemplateModule,
-    forwardRef(() => ProviderModule),
+    ProviderModule,
   ],
   providers: [NotificationQueueService, NotificationProcessor],
   exports: [NotificationQueueService, NotificationProcessor],

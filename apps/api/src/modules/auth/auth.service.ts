@@ -1,17 +1,17 @@
 import {
   BadRequestException,
   ConflictException,
-  Inject,
   Injectable,
   UnauthorizedException,
-  forwardRef,
 } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
 import * as argon2 from 'argon2';
 import { randomUUID } from 'node:crypto';
 import { Repository } from 'typeorm';
-import { TenantService } from '../tenant/tenant.service';
+import { UserRegisteredEvent } from '../../common/events/user.event';
 import { User } from '../user/entities/user.entity';
 import { ChangePasswordDto } from './dto/change-password.dto';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
@@ -31,9 +31,9 @@ export class AuthService {
     @InjectRepository(Session)
     private sessionRepository: Repository<Session>,
     private jwtService: JwtService,
-    @Inject(forwardRef(() => TenantService))
-    private tenantService: TenantService,
-  ) { }
+    private configService: ConfigService,
+    private eventEmitter: EventEmitter2,
+  ) {}
 
   async register(registerDto: RegisterDto) {
     const { email, password, name } = registerDto;
@@ -89,9 +89,14 @@ export class AuthService {
 
     await this.sessionRepository.save(session);
 
-    const tenant = await this.tenantService.createTenant(user.id, {
-      name: `${userName}'s Workspace`,
-    });
+    const [tenant] = await this.eventEmitter.emitAsync(
+      'user.registered',
+      new UserRegisteredEvent(user.id, `${userName}'s Workspace`),
+    );
+
+    if (!tenant) {
+      throw new BadRequestException('Failed to create workspace');
+    }
 
     const tenantSlug = tenant.subdomain || tenant.slug || tenant.id;
 
@@ -257,7 +262,7 @@ export class AuthService {
   async refreshToken(refreshToken: string) {
     try {
       const payload = this.jwtService.verify(refreshToken, {
-        secret: process.env.AUTH_SECRET || 'your-secret-key',
+        secret: this.configService.getOrThrow<string>('JWT_REFRESH_SECRET'),
       });
 
       const user = await this.userRepository.findOne({
@@ -303,17 +308,23 @@ export class AuthService {
 
   private generateTokens(user: User) {
     const payload = { sub: user.id, email: user.email };
+    const refreshSecret =
+      this.configService.getOrThrow<string>('JWT_REFRESH_SECRET');
 
-    // Use longer expiration in development
-    const accessTokenExpiry = process.env.NODE_ENV === 'production' ? '15m' : '7d';
+    const accessTokenExpiry =
+      this.configService.get('JWT_EXPIRES_IN') ||
+      (this.configService.get('NODE_ENV') === 'production' ? '15m' : '7d');
+
+    const refreshTokenExpiry =
+      this.configService.get('JWT_REFRESH_EXPIRES_IN') || '30d';
 
     const accessToken = this.jwtService.sign(payload, {
       expiresIn: accessTokenExpiry,
     });
 
     const refreshToken = this.jwtService.sign(payload, {
-      secret: process.env.AUTH_SECRET || 'your-secret-key',
-      expiresIn: '30d',
+      secret: refreshSecret,
+      expiresIn: refreshTokenExpiry,
     });
 
     return { accessToken, refreshToken };

@@ -39,6 +39,38 @@ describe('BachsService', () => {
     });
   });
 
+  it('refuses invented off-session charges', async () => {
+    const fetchMock = vi.spyOn(global, 'fetch');
+
+    const result = await service.chargeOffSession({
+      customerId: 'cust_1',
+      paymentMethodId: 'pm_1',
+      purchaseId: 'purchase-1',
+      packageId: 'usd-3000',
+      currency: 'USD',
+      tokenAmount: 3000,
+      priceMinor: 100,
+    });
+
+    expect(result).toEqual({ status: 'failed', errorCode: 'OFF_SESSION_NOT_SUPPORTED' });
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it('logs non-2xx when cancelling a vault subscription', async () => {
+    const warn = vi.spyOn(service['logger'], 'warn').mockImplementation(() => undefined);
+    vi.spyOn(global, 'fetch').mockResolvedValue({
+      ok: false,
+      status: 500,
+      json: async () => ({ detail: 'boom' }),
+    } as Response);
+
+    await service.cancelSubscriptionAtPeriodEnd('sub_1');
+
+    expect(warn).toHaveBeenCalledWith(
+      'Failed to cancel Bachs vault subscription sub_1: 500 - boom',
+    );
+  });
+
   it('initializes checkout with CUSTOM amount on the USD product', async () => {
     const fetchMock = vi.spyOn(global, 'fetch').mockResolvedValue({
       ok: true,

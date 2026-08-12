@@ -1,4 +1,4 @@
-import { Module, forwardRef } from '@nestjs/common';
+import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule } from '@nestjs/config';
 import { ScheduleModule } from '@nestjs/schedule';
@@ -15,7 +15,6 @@ import { BachsService } from './services/bachs.service';
 import { NombaService } from './services/nomba.service';
 import { PaymentMethodService } from './services/payment-method.service';
 import { TokenManagementService } from '../token-management/services/token-management.service';
-import { TenantModule } from '../tenant/tenant.module';
 import { Subscription } from './entities/subscription.entity';
 import { TokenPurchase } from './entities/token-purchase.entity';
 import { AutoTopupConfig } from './entities/auto-topup-config.entity';
@@ -38,9 +37,8 @@ import { Tenant } from '../tenant/entities/tenant.entity';
     ]),
     ConfigModule,
     ScheduleModule.forRoot(),
-    forwardRef(() => TenantModule),
-    forwardRef(() => AuthModule),
-    forwardRef(() => TenantMemberModule),
+    AuthModule,
+    TenantMemberModule,
   ],
   controllers: [BillingController],
   providers: [

@@ -17,9 +17,12 @@ export class PushCertificateService {
   /**
    * Validate a certificate
    */
-  async validateCertificate(certificateId: string): Promise<{ isValid: boolean; errors: string[]; warnings: string[] }> {
+  async validateCertificate(
+    certificateId: string,
+    tenantId: string,
+  ): Promise<{ isValid: boolean; errors: string[]; warnings: string[] }> {
     const certificate = await this.certificateRepository.findOne({
-      where: { id: certificateId },
+      where: { id: certificateId, tenantId },
     });
 
     if (!certificate) {
@@ -57,9 +60,13 @@ export class PushCertificateService {
   /**
    * Test a certificate by sending a test push notification
    */
-  async testCertificate(certificateId: string, testDeviceToken: string): Promise<{ success: boolean; messageId?: string; error?: string }> {
+  async testCertificate(
+    certificateId: string,
+    tenantId: string,
+    testDeviceToken: string,
+  ): Promise<{ success: boolean; messageId?: string; error?: string }> {
     const certificate = await this.certificateRepository.findOne({
-      where: { id: certificateId },
+      where: { id: certificateId, tenantId },
     });
 
     if (!certificate) {
@@ -159,9 +166,13 @@ export class PushCertificateService {
   /**
    * Rotate a certificate (create new one and deactivate old)
    */
-  async rotateCertificate(certificateId: string, newCertificateData: any): Promise<PushCertificate> {
+  async rotateCertificate(
+    certificateId: string,
+    tenantId: string,
+    newCertificateData: any,
+  ): Promise<PushCertificate> {
     const oldCertificate = await this.certificateRepository.findOne({
-      where: { id: certificateId },
+      where: { id: certificateId, tenantId },
     });
 
     if (!oldCertificate) {
@@ -201,9 +212,9 @@ export class PushCertificateService {
   /**
    * Get certificate usage statistics
    */
-  async getCertificateUsageStats(certificateId: string): Promise<any> {
+  async getCertificateUsageStats(certificateId: string, tenantId: string): Promise<any> {
     const certificate = await this.certificateRepository.findOne({
-      where: { id: certificateId },
+      where: { id: certificateId, tenantId },
     });
 
     if (!certificate) {

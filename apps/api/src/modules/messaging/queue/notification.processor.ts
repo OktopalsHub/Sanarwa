@@ -1,5 +1,5 @@
 import { InjectQueue, Process, Processor } from '@nestjs/bull';
-import { Injectable, Logger, Inject, forwardRef } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { Job, Queue } from 'bull';
 import { BaseProviderPayload } from '../../../providers/base/base-provider.interface';
 import { ProviderService } from '../../provider/provider.service';
@@ -29,7 +29,6 @@ export class NotificationProcessor {
     private readonly messageRepository: Repository<Message>,
     @InjectRepository(MessageDelivery)
     private readonly deliveryRepository: Repository<MessageDelivery>,
-    @Inject(forwardRef(() => ProviderService))
     private readonly providerService: ProviderService,
     private readonly templateService: TemplateService,
     @InjectQueue(NOTIFICATION_QUEUE)

@@ -1,18 +1,15 @@
-import { Controller, Get, Optional, Param, Query } from '@nestjs/common';
-import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { Controller, Get, Param, Query, UseGuards } from '@nestjs/common';
+import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { CurrentTenantId } from '../../../common/decorators';
-import { BillingService } from '../../billing/services/billing.service';
-import { QuotaAwareOrchestratorService } from '../../provider/services/quota-aware-orchestrator.service';
+import { TenantMemberGuard } from '../../../common/guards';
 import { TenantService } from '../tenant.service';
 
 @ApiTags('quota')
 @Controller('tenants/:tenantId/quota')
+@ApiBearerAuth()
+@UseGuards(TenantMemberGuard)
 export class QuotaController {
-  constructor(
-    private readonly tenantService: TenantService,
-    @Optional() private readonly quotaAwareOrchestrator?: QuotaAwareOrchestratorService,
-    private readonly billingService?: BillingService,
-  ) { }
+  constructor(private readonly tenantService: TenantService) {}
 
   @Get('status')
   @ApiOperation({ summary: 'Get quota status for all channels' })
@@ -26,11 +23,6 @@ export class QuotaController {
   async getQuotaStatus(@CurrentTenantId() tenantId: string) {
     const tenant = await this.tenantService.getTenantById(tenantId);
 
-    let quotaStatus: any = { channels: {} };
-    if (this.quotaAwareOrchestrator) {
-      quotaStatus = await this.quotaAwareOrchestrator.getQuotaStatus(tenantId);
-    }
-
     const usage = tenant.usage?.currentMonth || {};
     const quotas = tenant.quotas;
 
@@ -38,7 +30,7 @@ export class QuotaController {
       tenantId,
       quotas: quotas,
       usage: usage,
-      channels: quotaStatus.channels,
+      channels: {},
       summary: {
         totalNotifications: usage.notifications || 0,
         totalQuota: quotas.notifications?.total || 0,
@@ -125,12 +117,6 @@ export class QuotaController {
   @ApiResponse({ status: 404, description: 'Tenant not found' })
   async getRecommendations(@CurrentTenantId() tenantId: string) {
     const tenant = await this.tenantService.getTenantById(tenantId);
-
-    let quotaStatus: any = { channels: {} };
-    if (this.quotaAwareOrchestrator) {
-      quotaStatus = await this.quotaAwareOrchestrator.getQuotaStatus(tenantId);
-    }
-
     const usage = tenant.usage?.currentMonth || {};
     const quotas = tenant.quotas;
     const recommendations: Array<{
@@ -144,14 +130,13 @@ export class QuotaController {
       impact?: string;
     }> = [];
 
-    // Check each channel for recommendations
-    for (const [channel, channelStatus] of Object.entries(quotaStatus.channels)) {
-      const status = channelStatus as any;
+    for (const [channel, channelQuota] of Object.entries(quotas.channels || {})) {
       const channelUsage = usage[channel] || 0;
-      const channelQuota = quotas.channels?.[channel]?.monthly || 0;
-      const utilizationRate = channelQuota ? (channelUsage / channelQuota) * 100 : 0;
+      const monthly = (channelQuota as { monthly?: number })?.monthly || 0;
+      const utilizationRate = monthly ? (channelUsage / monthly) * 100 : 0;
+      const hasQuota = await this.tenantService.checkQuotas(tenantId, channel);
 
-      if (!status.hasBYOP && utilizationRate > 80) {
+      if (utilizationRate > 80) {
         recommendations.push({
           type: 'byop_suggestion',
           channel,
@@ -161,9 +146,7 @@ export class QuotaController {
           action: 'configure_byop',
           savings: 'Unlimited usage with your own provider',
         });
-      }
-
-      if (!status.hasBYOP && utilizationRate > 50 && utilizationRate <= 80) {
+      } else if (utilizationRate > 50) {
         recommendations.push({
           type: 'byop_suggestion',
           channel,
@@ -175,7 +158,7 @@ export class QuotaController {
         });
       }
 
-      if (!status.hasQuota) {
+      if (!hasQuota) {
         recommendations.push({
           type: 'quota_exhausted',
           channel,

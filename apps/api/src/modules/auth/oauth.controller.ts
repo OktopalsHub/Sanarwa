@@ -9,10 +9,12 @@ import {
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { Response } from 'express';
 import { AuthService } from './auth.service';
+import { Public } from './decorators/public.decorator';
 import { OAuthGuard } from './guards/google-auth.guard';
 
 @ApiTags('OAuth')
 @Controller('oauth')
+@Public()
 export class OAuthController {
   constructor(private authService: AuthService) { }
 

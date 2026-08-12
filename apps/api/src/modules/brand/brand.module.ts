@@ -1,8 +1,7 @@
-import { Module, forwardRef } from '@nestjs/common';
+import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { provideBaseRepository } from '../../database/repositories/provide-base-repository';
 import { TenantMemberModule } from '../tenant-member/tenant-member.module';
-import { TenantModule } from '../tenant/tenant.module';
 import { AuthModule } from '../auth/auth.module';
 import { BrandController } from './brand.controller';
 import { BrandService } from './brand.service';
@@ -17,8 +16,7 @@ import { CloudflareDNSService } from './services/cloudflare-dns.service';
   imports: [
     TypeOrmModule.forFeature([Brand]),
     AuthModule,
-    forwardRef(() => TenantModule),
-    forwardRef(() => TenantMemberModule),
+    TenantMemberModule,
   ],
   controllers: [BrandController],
   providers: [

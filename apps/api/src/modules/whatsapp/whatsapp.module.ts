@@ -18,6 +18,7 @@ import { WABAConfig } from './entities/waba-config.entity';
 import { TenantWABAConfig } from './entities/tenant-waba-config.entity';
 import { TenantWABAAssignment } from './entities/tenant-waba-assignment.entity';
 import { ApiKeyModule } from '../api-key/api-key.module';
+import { TenantMemberModule } from '../tenant-member/tenant-member.module';
 // import { TokenManagementModule } from '../token-management/token-management.module';
 
 @Module({
@@ -32,6 +33,7 @@ import { ApiKeyModule } from '../api-key/api-key.module';
     HttpModule,
     EventEmitterModule,
     ApiKeyModule,
+    TenantMemberModule,
     // TokenManagementModule,
   ],
   controllers: [

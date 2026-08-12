@@ -28,7 +28,6 @@ import {
 } from '../entities/token-balance.entity';
 import { PolarService } from './polar.service';
 import { TokenManagementService } from '../../token-management/services/token-management.service';
-import { TenantService } from '../../tenant/tenant.service';
 
 export interface CreateSubscriptionDto {
   tenantId: string;
@@ -79,7 +78,6 @@ export class BillingService {
     private polarService: PolarService,
     private tokenManagementService: TokenManagementService,
     private configService: ConfigService,
-    private tenantService: TenantService,
   ) {}
 
   async createSubscription(dto: CreateSubscriptionDto): Promise<Subscription> {

@@ -11,6 +11,7 @@ import {
   Logger,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
+import { TenantContextGuard } from '../../common/guards';
 import { WhatsAppEmbeddedSignupService, EmbeddedSignupRequest } from '../services/whatsapp-embedded-signup.service';
 
 export class CreateEmbeddedSignupDto {
@@ -30,6 +31,8 @@ export class CompleteSignupDto {
 
 @ApiTags('WhatsApp Embedded Signup')
 @Controller('whatsapp/embedded-signup')
+@ApiBearerAuth()
+@UseGuards(TenantContextGuard)
 export class WhatsAppEmbeddedSignupController {
   private readonly logger = new Logger(WhatsAppEmbeddedSignupController.name);
 

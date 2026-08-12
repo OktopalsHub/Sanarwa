@@ -7,11 +7,12 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { ApiHeader, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { ApiKey } from '../../api-key/entities/api-key.entity';
 import { ApiKeyAuthGuard } from '../../api-key/guards/api-key-auth.guard';
 import { CurrentApiKey } from '../../auth/decorators/current-api-key.decorator';
 import { CurrentProjectId } from '../../auth/decorators/current-project.decorator';
-import { NotificationEngineService } from '../../notifications/engine/notification-engine.service';
+import { Public } from '../../auth/decorators/public.decorator';
+import { ApiKey } from '../../api-key/entities/api-key.entity';
+import { NotificationEngineService } from '../engine/notification-engine.service';
 
 export class SendPushNotificationDto {
   to: string;
@@ -58,6 +59,7 @@ export class PushNotificationQueryDto {
 
 @ApiTags('Push Notifications (SDK)')
 @Controller('push')
+@Public()
 @UseGuards(ApiKeyAuthGuard)
 export class PublicPushController {
   constructor(

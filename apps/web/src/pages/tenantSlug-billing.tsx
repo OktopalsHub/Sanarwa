@@ -32,22 +32,27 @@ function CheckoutStatusBanner() {
     let cancelled = false;
     setMessage('Payment received — confirming your token purchase…');
 
+    const applyStatus = (status: { status: string }) => {
+      if (status.status === 'completed') {
+        setMessage('Payment confirmed. Your token balance has been updated.');
+        return true;
+      }
+      if (status.status === 'failed') {
+        setMessage('Payment failed. Please contact support if you were charged.');
+        setVariant('destructive');
+        return true;
+      }
+      return false;
+    };
+
     const poll = async () => {
       for (let attempt = 0; attempt < 12; attempt += 1) {
         if (cancelled) return;
 
         try {
           if (purchaseId) {
-            const status = await billingApi.syncPurchase(purchaseId);
-            if (status.status === 'completed') {
-              setMessage('Payment confirmed. Your token balance has been updated.');
-              return;
-            }
-            if (status.status === 'failed') {
-              setMessage('Payment failed. Please contact support if you were charged.');
-              setVariant('destructive');
-              return;
-            }
+            const status = await billingApi.getPurchaseStatus(purchaseId);
+            if (applyStatus(status)) return;
           }
         } catch {
           /* keep polling */
@@ -56,11 +61,20 @@ function CheckoutStatusBanner() {
         await new Promise((resolve) => setTimeout(resolve, 2500));
       }
 
-      if (!cancelled) {
-        setMessage(
-          'Payment is still processing. Your balance will update shortly once confirmation completes.',
-        );
+      if (cancelled) return;
+
+      try {
+        if (purchaseId) {
+          const status = await billingApi.syncPurchase(purchaseId);
+          if (applyStatus(status)) return;
+        }
+      } catch {
+        /* fall through to processing message */
       }
+
+      setMessage(
+        'Payment is still processing. Your balance will update shortly once confirmation completes.',
+      );
     };
 
     void poll();

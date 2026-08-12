@@ -102,32 +102,64 @@ export class EnvironmentValidationService {
       });
     }
 
-    // Auth Secret validation (used for JWT tokens, API keys, and notifications)
-    const authSecret = this.configService.get<string>('AUTH_SECRET');
-    if (!authSecret) {
+    const nodeEnv = this.configService.get<string>('NODE_ENV', 'development');
+    errors.push(
+      ...this.validateJwtSecret('JWT_AUTH_SECRET', 'access tokens', nodeEnv),
+      ...this.validateJwtSecret(
+        'JWT_REFRESH_SECRET',
+        'refresh tokens',
+        nodeEnv,
+      ),
+    );
+
+    return errors;
+  }
+
+  private validateJwtSecret(
+    variable: string,
+    purpose: string,
+    nodeEnv: string,
+  ): ValidationError[] {
+    const errors: ValidationError[] = [];
+    const secret = this.configService.get<string>(variable);
+
+    if (!secret) {
       errors.push({
-        variable: 'AUTH_SECRET',
-        message: 'Auth secret is required for authentication and API keys',
+        variable,
+        message: `${variable} is required for ${purpose}`,
         severity: 'error',
         suggestion:
           'Generate a secure random string at least 32 characters long',
       });
-    } else if (authSecret.length < 32) {
+      return errors;
+    }
+
+    if (secret.length < 32) {
       errors.push({
-        variable: 'AUTH_SECRET',
-        message:
-          'Auth secret should be at least 32 characters long for security',
+        variable,
+        message: `${variable} should be at least 32 characters long for security`,
         severity: 'warning',
         suggestion: 'Use a longer, more secure secret key',
       });
     }
 
-    // Production-specific validation
-    const nodeEnv = this.configService.get<string>('NODE_ENV', 'development');
-    if (nodeEnv === 'production' && authSecret && authSecret.length < 64) {
+    if (
+      secret.includes('change-in-production') ||
+      secret.includes('default-secret') ||
+      secret.includes('change-me')
+    ) {
       errors.push({
-        variable: 'AUTH_SECRET',
-        message: 'Auth secret should be at least 64 characters in production',
+        variable,
+        message: `${variable} is using a default value`,
+        severity: 'error',
+        suggestion: 'Change from default value to a secure random string',
+      });
+    }
+
+    if (nodeEnv === 'production' && secret.length < 64) {
+      errors.push({
+        variable,
+        message: `${variable} should be at least 64 characters in production`,
         severity: 'error',
         suggestion: 'Use a longer, more secure secret key for production',
       });

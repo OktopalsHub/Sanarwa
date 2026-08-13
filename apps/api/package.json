@@ -21,7 +21,7 @@
     "migration:generate": "pnpm typeorm -- migration:generate -d src/database/data-source.ts",
     "migration:run": "pnpm typeorm -- migration:run -d src/database/data-source.ts",
     "migration:revert": "pnpm typeorm -- migration:revert -d src/database/data-source.ts",
-    "migration:create": "pnpm typeorm -- migration:create",
+    "migration:create": "typeorm-ts-node-commonjs migration:create",
     "lint": "oxlint -c ../../oxlint.json src --quiet",
     "lint:fix": "oxlint -c ../../oxlint.json src --fix"
   },

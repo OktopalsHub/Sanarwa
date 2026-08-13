@@ -28,4 +28,4 @@ export * from './1784545192155-notification-center';
 export * from './1784545200000-create-campaigns';
 export * from './1784581860483-create-webhook-events';
 export * from './1784581866458-create-tenant-payment-methods';
-export * from './1784582000000-unique-token-balances-tenant-id';
+export * from './1786580420947-unique-token-balances-tenant-id';

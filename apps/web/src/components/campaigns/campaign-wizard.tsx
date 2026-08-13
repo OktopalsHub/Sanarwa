@@ -9,6 +9,7 @@ import { toast } from '@/lib/utils/toast';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { ArrowRightIcon, BookmarkIcon, PaperAirplaneIcon, ArrowLeftIcon } from '@heroicons/react/24/outline'
 import { useRouter } from '@/compat/next-navigation';
+import { useTenantBasePath } from '@/hooks/use-tenant-slug';
 import { useState } from 'react';
 import { AudienceTargetingStep } from './wizard-steps/audience-targeting-step';
 import { BasicInfoStep } from './wizard-steps/basic-info-step';
@@ -31,6 +32,7 @@ const WIZARD_STEPS = [
 
 export function CampaignWizard({ onClose, initialData }: CampaignWizardProps) {
   const router = useRouter();
+  const basePath = useTenantBasePath();
   const queryClient = useQueryClient();
 
   const [wizardData, setWizardData] = useState<CampaignWizardData>({
@@ -46,7 +48,7 @@ export function CampaignWizard({ onClose, initialData }: CampaignWizardProps) {
     onSuccess: (campaign) => {
       queryClient.invalidateQueries({ queryKey: ['campaigns'] });
       toast.success('Campaign created successfully!');
-      router.push(`/campaigns/${campaign.id}`);
+      router.push(`${basePath}/campaigns/${campaign.id}`);
     },
     onError: (error: any) => {
       toast.error(error.message || 'Failed to create campaign');

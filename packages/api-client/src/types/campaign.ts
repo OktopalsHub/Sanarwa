@@ -2,7 +2,7 @@
 
 export type CampaignType = 'one_time' | 'recurring' | 'triggered' | 'drip';
 export type CampaignStatus = 'draft' | 'scheduled' | 'active' | 'paused' | 'completed' | 'cancelled';
-export type CommunicationChannel = 'email' | 'sms' | 'push' | 'in_app' | 'voice';
+export type CommunicationChannel = 'email' | 'sms' | 'push' | 'in_app' | 'voice' | 'whatsapp';
 
 export interface Campaign {
   id: string;

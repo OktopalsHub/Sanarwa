@@ -2,6 +2,7 @@
 
 import { Send, User } from '@/lib/icons';
 
+import { AppShell } from '@/components/layout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { WorkflowCanvas } from '@/components/workflows';
@@ -139,7 +140,8 @@ export default function WorkflowsPage() {
 
   if (showCanvas) {
     return (
-      <div className="h-screen flex flex-col">
+      <AppShell>
+      <div className="h-[calc(100vh-8rem)] flex flex-col">
         <div className="flex items-center justify-between p-4 border-b">
           <h1 className="text-2xl font-bold">Workflow Builder</h1>
           <Button
@@ -156,10 +158,12 @@ export default function WorkflowsPage() {
           />
         </div>
       </div>
+      </AppShell>
     );
   }
 
   return (
+    <AppShell>
     <div className="container mx-auto p-6">
       <div className="flex items-center justify-between mb-6">
         <div>
@@ -222,5 +226,6 @@ export default function WorkflowsPage() {
         </Card>
       </div>
     </div>
+    </AppShell>
   );
 }

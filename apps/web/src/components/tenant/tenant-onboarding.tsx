@@ -109,7 +109,7 @@ export function TenantOnboarding({ onComplete }: TenantOnboardingProps) {
           <div className="space-y-6">
             <div className="text-center">
               <BuildingOfficeIcon className="w-12 h-12 mx-auto mb-4 text-primary" />
-              <h1 className="text-2xl font-bold">Welcome to Notifi</h1>
+              <h1 className="text-2xl font-bold">Welcome to Sanarwa</h1>
               <p className="text-muted-foreground">
                 Select an organization to continue or create a new one
               </p>

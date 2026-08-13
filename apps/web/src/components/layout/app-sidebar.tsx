@@ -15,7 +15,8 @@ import {
   CreditCardIcon,
   CubeIcon,
   HomeIcon,
-  DocumentTextIcon,
+  InboxIcon,
+  LinkIcon,
 } from '@heroicons/react/24/outline';
 import Link from '@/compat/next-link';
 import { usePathname } from '@/compat/next-navigation';
@@ -35,18 +36,22 @@ function buildNav(base: string, items: NavigationItem[]): Array<NavigationItem &
   }));
 }
 
-const mainSegments: NavigationItem[] = [
+const sendingSegments: NavigationItem[] = [
   { name: 'Dashboard', segment: 'dashboard', icon: HomeIcon },
+  { name: 'Messages', segment: 'messages', icon: InboxIcon },
+  { name: 'Campaigns', segment: 'campaigns', icon: BriefcaseIcon, permissions: ['campaigns:read'] },
+  { name: 'Analytics', segment: 'analytics', icon: ChartBarIcon, permissions: ['analytics:read'] },
+];
+
+const setupSegments: NavigationItem[] = [
   { name: 'Projects', segment: 'projects', icon: CubeIcon },
   { name: 'Providers', segment: 'providers', icon: BoltIcon },
   { name: 'API Keys', segment: 'api-keys', icon: CodeBracketSquareIcon },
-  { name: 'Templates', segment: 'templates', icon: DocumentTextIcon, permissions: ['templates:read'] },
-  { name: 'Campaigns', segment: 'campaigns', icon: BriefcaseIcon, permissions: ['campaigns:read'] },
-  { name: 'Analytics', segment: 'analytics', icon: ChartBarIcon, permissions: ['analytics:read'] },
-  { name: 'Billing', segment: 'billing', icon: CreditCardIcon },
+  { name: 'Webhooks', segment: 'webhooks', icon: LinkIcon },
 ];
 
-const settingsSegments: NavigationItem[] = [
+const workspaceSegments: NavigationItem[] = [
+  { name: 'Billing', segment: 'billing', icon: CreditCardIcon },
   { name: 'Settings', segment: 'settings', icon: Cog6ToothIcon, permissions: ['settings:read'] },
 ];
 
@@ -57,12 +62,11 @@ interface AppSidebarProps {
 export function AppSidebar({ onNavigate }: AppSidebarProps) {
   const pathname = usePathname();
   const basePath = useTenantBasePath();
+  const base = basePath || '/dashboard';
 
-  const navigation = useMemo(() => buildNav(basePath || '/dashboard', mainSegments), [basePath]);
-  const settingsNavigation = useMemo(
-    () => buildNav(basePath || '/dashboard', settingsSegments),
-    [basePath],
-  );
+  const sending = useMemo(() => buildNav(base, sendingSegments), [base]);
+  const setup = useMemo(() => buildNav(base, setupSegments), [base]);
+  const workspace = useMemo(() => buildNav(base, workspaceSegments), [base]);
 
   const handleNavigation = () => {
     onNavigate?.();
@@ -81,59 +85,27 @@ export function AppSidebar({ onNavigate }: AppSidebarProps) {
         </Link>
       </div>
 
-      <nav className="flex-1 space-y-1 p-4">
-        <div className="space-y-1">
-          {navigation.map((item) => {
-            const isActive = pathname === item.href || pathname.startsWith(item.href + '/');
-
-            if (item.permissions) {
-              return (
-                <PermissionGate key={item.name} permissions={item.permissions}>
-                  <NavigationLink item={item} isActive={isActive} onClick={handleNavigation} />
-                </PermissionGate>
-              );
-            }
-
-            return (
-              <NavigationLink
-                key={item.name}
-                item={item}
-                isActive={isActive}
-                onClick={handleNavigation}
-              />
-            );
-          })}
-        </div>
-
+      <nav className="flex-1 space-y-1 overflow-y-auto p-4">
+        <NavSection
+          title="Sending"
+          items={sending}
+          pathname={pathname}
+          onClick={handleNavigation}
+        />
         <Separator className="my-4" />
-
-        <div className="space-y-1">
-          <div className="px-3 py-2">
-            <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-              Settings
-            </h3>
-          </div>
-          {settingsNavigation.map((item) => {
-            const isActive = pathname === item.href || pathname.startsWith(item.href + '/');
-
-            if (item.permissions) {
-              return (
-                <PermissionGate key={item.name} permissions={item.permissions}>
-                  <NavigationLink item={item} isActive={isActive} onClick={handleNavigation} />
-                </PermissionGate>
-              );
-            }
-
-            return (
-              <NavigationLink
-                key={item.name}
-                item={item}
-                isActive={isActive}
-                onClick={handleNavigation}
-              />
-            );
-          })}
-        </div>
+        <NavSection
+          title="Setup"
+          items={setup}
+          pathname={pathname}
+          onClick={handleNavigation}
+        />
+        <Separator className="my-4" />
+        <NavSection
+          title="Workspace"
+          items={workspace}
+          pathname={pathname}
+          onClick={handleNavigation}
+        />
       </nav>
 
       <div className="p-4 border-t">
@@ -141,6 +113,46 @@ export function AppSidebar({ onNavigate }: AppSidebarProps) {
           <p>© {new Date().getFullYear()} Sanarwa</p>
         </div>
       </div>
+    </div>
+  );
+}
+
+function NavSection({
+  title,
+  items,
+  pathname,
+  onClick,
+}: {
+  title: string;
+  items: Array<NavigationItem & { href: string }>;
+  pathname: string;
+  onClick: () => void;
+}) {
+  return (
+    <div className="space-y-1">
+      <div className="px-3 py-2">
+        <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+          {title}
+        </h3>
+      </div>
+      {items.map((item) => {
+        const isActive = pathname === item.href || pathname.startsWith(item.href + '/');
+        if (item.permissions) {
+          return (
+            <PermissionGate key={item.name} permissions={item.permissions}>
+              <NavigationLink item={item} isActive={isActive} onClick={onClick} />
+            </PermissionGate>
+          );
+        }
+        return (
+          <NavigationLink
+            key={item.name}
+            item={item}
+            isActive={isActive}
+            onClick={onClick}
+          />
+        );
+      })}
     </div>
   );
 }

@@ -127,7 +127,7 @@ export function CreateApiKeyDialog({ open, onOpenChange }: CreateApiKeyDialogPro
           <DialogDescription>
             {createdApiKey
               ? 'Your API key has been created. Make sure to copy it now as you won\'t be able to see it again.'
-              : 'Create a new API key for accessing the Notifi API.'
+              : 'Create a new API key for accessing the Sanarwa API.'
             }
           </DialogDescription>
         </DialogHeader>

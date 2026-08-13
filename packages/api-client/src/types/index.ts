@@ -78,7 +78,7 @@ export interface BrandingConfig {
 export type TenantRole = "owner" | "admin" | "manager" | "member" | "viewer";
 export type Permission = "read" | "write" | "delete" | "admin";
 export type SubscriptionPlan = "free" | "pro" | "enterprise";
-export type CommunicationChannel = "email" | "sms" | "push" | "in_app" | "voice";
+export type CommunicationChannel = "email" | "sms" | "push" | "in_app" | "voice" | "whatsapp";
 
 export interface TenantSettings {
   allowMemberInvites: boolean;

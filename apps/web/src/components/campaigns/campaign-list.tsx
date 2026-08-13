@@ -2,7 +2,7 @@
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
   DropdownMenu,
@@ -11,22 +11,23 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Input } from '@/components/ui/input';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { campaignApi } from '@/lib/api/campaigns';
 import type { Campaign, CampaignStatus } from '@/lib/types/campaign';
 import { toast } from '@/lib/utils/toast';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { ChartBarIcon, DocumentDuplicateIcon, PencilIcon, EnvelopeIcon, ChatBubbleLeftRightIcon, EllipsisHorizontalIcon, PauseIcon, PlayIcon, MagnifyingGlassIcon, DevicePhoneMobileIcon, StopIcon, TrashIcon, UsersIcon, SpeakerWaveIcon, XMarkIcon } from '@heroicons/react/24/outline'
+import { ChartBarIcon, DocumentDuplicateIcon, PencilIcon, EnvelopeIcon, ChatBubbleLeftRightIcon, EllipsisHorizontalIcon, PauseIcon, PlayIcon, DevicePhoneMobileIcon, StopIcon, TrashIcon, UsersIcon, SpeakerWaveIcon, XMarkIcon } from '@heroicons/react/24/outline'
 import { useRouter } from '@/compat/next-navigation';
 import { CampaignFilters } from './campaign-filters';
 import { useState } from 'react';
+import { useTenantBasePath } from '@/hooks/use-tenant-slug';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
 
 interface CampaignListProps {
   onEdit?: (campaign: Campaign) => void;
@@ -39,6 +40,7 @@ const CHANNEL_ICONS = {
   push: DevicePhoneMobileIcon,
   in_app: UsersIcon,
   voice: SpeakerWaveIcon,
+  whatsapp: ChatBubbleLeftRightIcon,
 };
 
 const STATUS_COLORS = {
@@ -52,6 +54,7 @@ const STATUS_COLORS = {
 
 export function CampaignList({ onEdit, onDuplicate }: CampaignListProps) {
   const router = useRouter();
+  const basePath = useTenantBasePath();
   const queryClient = useQueryClient();
 
   const [searchTerm, setSearchTerm] = useState('');
@@ -302,7 +305,7 @@ export function CampaignList({ onEdit, onDuplicate }: CampaignListProps) {
     if (onEdit) {
       onEdit(campaign);
     } else {
-      router.push(`/campaigns/${campaign.id}/edit`);
+      router.push(`${basePath}/campaigns/${campaign.id}/edit`);
     }
   };
 
@@ -442,52 +445,69 @@ export function CampaignList({ onEdit, onDuplicate }: CampaignListProps) {
           </CardContent>
         </Card>
       ) : (
-        <div className="grid gap-4">
-          {campaigns.map((campaign) => (
-            <Card key={campaign.id} className="hover:shadow-md transition-shadow">
-              <CardHeader className="pb-3">
-                <div className="flex items-start justify-between">
-                  <div className="flex items-start gap-3 flex-1">
-                    {/* Selection Checkbox */}
-                    {canControlCampaign(campaign.status) && (
-                      <Checkbox
-                        checked={selectedCampaigns.includes(campaign.id)}
-                        onCheckedChange={(checked) =>
-                          handleSelectCampaign(campaign.id, checked as boolean)
-                        }
-                        className="mt-1"
-                      />
-                    )}
-
-                    <div className="flex-1">
-                      <div className="flex items-center gap-3 mb-2">
-                        <CardTitle
-                          className="text-lg cursor-pointer hover:text-primary"
-                          onClick={() => router.push(`/campaigns/${campaign.id}`)}
-                        >
-                          {campaign.name}
-                        </CardTitle>
-                        <Badge className={STATUS_COLORS[campaign.status]}>
-                          {campaign.status}
-                        </Badge>
-                      </div>
-
-                      {campaign.description && (
-                        <p className="text-sm text-muted-foreground mb-3">
-                          {campaign.description}
-                        </p>
-                      )}
-
-                      <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                        <span>Type: {campaign.type.replace('_', ' ')}</span>
-                        <span>•</span>
-                        <span>Created: {formatDate(campaign.createdAt)}</span>
-                        <span>•</span>
-                        <span>Updated: {formatDate(campaign.updatedAt)}</span>
-                      </div>
-                    </div>
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead className="w-10" />
+              <TableHead>Campaign</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead>Channels</TableHead>
+              <TableHead className="text-right">Sent</TableHead>
+              <TableHead className="text-right">Delivered</TableHead>
+              <TableHead className="w-10" />
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {campaigns.map((campaign) => (
+              <TableRow key={campaign.id}>
+                <TableCell>
+                  {canControlCampaign(campaign.status) ? (
+                    <Checkbox
+                      checked={selectedCampaigns.includes(campaign.id)}
+                      onCheckedChange={(checked) =>
+                        handleSelectCampaign(campaign.id, checked as boolean)
+                      }
+                    />
+                  ) : null}
+                </TableCell>
+                <TableCell>
+                  <button
+                    type="button"
+                    className="text-left font-medium hover:text-primary"
+                    onClick={() => router.push(`${basePath}/campaigns/${campaign.id}`)}
+                  >
+                    {campaign.name}
+                  </button>
+                  <div className="text-xs text-muted-foreground">
+                    {campaign.type.replace('_', ' ')} · {formatDate(campaign.updatedAt)}
                   </div>
-
+                </TableCell>
+                <TableCell>
+                  <Badge className={STATUS_COLORS[campaign.status]}>{campaign.status}</Badge>
+                </TableCell>
+                <TableCell>
+                  <div className="flex gap-1">
+                    {campaign.channels.map((channel) => {
+                      const Icon = CHANNEL_ICONS[channel] ?? EnvelopeIcon;
+                      return (
+                        <span
+                          key={channel}
+                          className="inline-flex items-center gap-1 rounded-md bg-muted px-2 py-1 text-xs"
+                        >
+                          <Icon className="h-3 w-3" />
+                          {channel}
+                        </span>
+                      );
+                    })}
+                  </div>
+                </TableCell>
+                <TableCell className="text-right">
+                  {campaign.analytics.totalSent.toLocaleString()}
+                </TableCell>
+                <TableCell className="text-right">
+                  {campaign.analytics.deliveryRate.toFixed(1)}%
+                </TableCell>
+                <TableCell>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                       <Button variant="ghost" size="sm">
@@ -495,39 +515,33 @@ export function CampaignList({ onEdit, onDuplicate }: CampaignListProps) {
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
-                      <DropdownMenuItem onClick={() => router.push(`/campaigns/${campaign.id}`)}>
+                      <DropdownMenuItem onClick={() => router.push(`${basePath}/campaigns/${campaign.id}`)}>
                         <ChartBarIcon className="w-4 h-4 mr-2" />
                         View Details
                       </DropdownMenuItem>
-
                       <DropdownMenuItem onClick={() => handleEditCampaign(campaign)}>
                         <PencilIcon className="w-4 h-4 mr-2" />
                         Edit Campaign
                       </DropdownMenuItem>
-
                       <DropdownMenuItem onClick={() => handleDuplicateCampaign(campaign)}>
                         <DocumentDuplicateIcon className="w-4 h-4 mr-2" />
                         Duplicate
                       </DropdownMenuItem>
-
                       {canControlCampaign(campaign.status) && (
                         <>
                           <DropdownMenuSeparator />
-
                           {campaign.status === 'active' && (
                             <DropdownMenuItem onClick={() => handlePauseCampaign(campaign)}>
                               <PauseIcon className="w-4 h-4 mr-2" />
                               Pause Campaign
                             </DropdownMenuItem>
                           )}
-
                           {campaign.status === 'paused' && (
                             <DropdownMenuItem onClick={() => handleResumeCampaign(campaign)}>
                               <PlayIcon className="w-4 h-4 mr-2" />
                               Resume Campaign
                             </DropdownMenuItem>
                           )}
-
                           {(campaign.status === 'active' || campaign.status === 'paused') && (
                             <DropdownMenuItem
                               onClick={() => handleStopCampaign(campaign)}
@@ -539,7 +553,6 @@ export function CampaignList({ onEdit, onDuplicate }: CampaignListProps) {
                           )}
                         </>
                       )}
-
                       {campaign.status === 'draft' && (
                         <>
                           <DropdownMenuSeparator />
@@ -554,54 +567,11 @@ export function CampaignList({ onEdit, onDuplicate }: CampaignListProps) {
                       )}
                     </DropdownMenuContent>
                   </DropdownMenu>
-                </div>
-              </CardHeader>
-
-              <CardContent className="pt-0">
-                <div className="flex items-center justify-between">
-                  {/* Channels */}
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm text-muted-foreground">Channels:</span>
-                    <div className="flex gap-1">
-                      {campaign.channels.map((channel) => {
-                        const Icon = CHANNEL_ICONS[channel];
-                        return (
-                          <div
-                            key={channel}
-                            className="flex items-center gap-1 px-2 py-1 bg-muted rounded-md text-xs"
-                          >
-                            <Icon className="w-3 h-3" />
-                            {channel}
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-
-                  {/* Quick Stats */}
-                  <div className="flex items-center gap-6 text-sm">
-                    <div className="text-center">
-                      <div className="font-medium">{campaign.analytics.totalSent.toLocaleString()}</div>
-                      <div className="text-muted-foreground">Sent</div>
-                    </div>
-                    <div className="text-center">
-                      <div className="font-medium">{campaign.analytics.deliveryRate.toFixed(1)}%</div>
-                      <div className="text-muted-foreground">Delivered</div>
-                    </div>
-                    <div className="text-center">
-                      <div className="font-medium">{campaign.analytics.openRate.toFixed(1)}%</div>
-                      <div className="text-muted-foreground">Opened</div>
-                    </div>
-                    <div className="text-center">
-                      <div className="font-medium">{campaign.analytics.clickRate.toFixed(1)}%</div>
-                      <div className="text-muted-foreground">Clicked</div>
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
       )}
     </div>
   );

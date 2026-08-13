@@ -77,6 +77,41 @@ export class MessagingController {
     return this.messagingService.sendBulkMessages(bulkMessageDto, tenantId);
   }
 
+  @Get()
+  @UseGuards(AuthGuard, TenantMemberGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Get messages with pagination' })
+  @ApiResponse({
+    status: 200,
+    description: 'Messages retrieved',
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Unauthorized'
+  })
+  async getMessages(@Query() query: any, @CurrentTenantId() tenantId?: string) {
+    return this.messagingService.getTenantMessages(query, tenantId);
+  }
+
+  @Get('stats/delivery')
+  @UseGuards(AuthGuard, TenantMemberGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Get delivery statistics' })
+  @ApiResponse({
+    status: 200,
+    description: 'Delivery stats retrieved',
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Unauthorized'
+  })
+  async getDeliveryStats(
+    @Query() query: any,
+    @CurrentTenantId() tenantId?: string,
+  ) {
+    return this.messagingService.getDeliveryStats(query, tenantId);
+  }
+
   @Get(':id/status')
   @UseGuards(AuthGuard, TenantMemberGuard)
   @ApiBearerAuth()
@@ -124,20 +159,17 @@ export class MessagingController {
     return this.messagingService.getDeliveryReports(messageId, tenantId);
   }
 
-  @Get()
+  @Get(':id')
   @UseGuards(AuthGuard, TenantMemberGuard)
   @ApiBearerAuth()
-  @ApiOperation({ summary: 'Get messages with pagination' })
-  @ApiResponse({
-    status: 200,
-    description: 'Messages retrieved',
-  })
-  @ApiResponse({
-    status: 401,
-    description: 'Unauthorized'
-  })
-  async getMessages(@Query() query: any, @CurrentTenantId() tenantId?: string) {
-    return this.messagingService.getTenantMessages(query, tenantId);
+  @ApiOperation({ summary: 'Get message log detail' })
+  @ApiResponse({ status: 200, description: 'Message detail retrieved' })
+  @ApiResponse({ status: 404, description: 'Message not found' })
+  async getMessageDetail(
+    @Param('id') messageId: string,
+    @CurrentTenantId() tenantId?: string,
+  ) {
+    return this.messagingService.getMessageDetail(messageId, tenantId);
   }
 
   @Delete(':id')
@@ -167,22 +199,4 @@ export class MessagingController {
     return this.messagingService.cancelMessage(messageId, tenantId);
   }
 
-  @Get('stats/delivery')
-  @UseGuards(AuthGuard, TenantMemberGuard)
-  @ApiBearerAuth()
-  @ApiOperation({ summary: 'Get delivery statistics' })
-  @ApiResponse({
-    status: 200,
-    description: 'Delivery stats retrieved',
-  })
-  @ApiResponse({
-    status: 401,
-    description: 'Unauthorized'
-  })
-  async getDeliveryStats(
-    @Query() query: any,
-    @CurrentTenantId() tenantId?: string,
-  ) {
-    return this.messagingService.getDeliveryStats(query, tenantId);
-  }
 }

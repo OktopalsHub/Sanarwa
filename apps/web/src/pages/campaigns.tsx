@@ -2,6 +2,7 @@
 
 import { CampaignList } from '@/components/campaigns/campaign-list';
 import { CampaignWizard } from '@/components/campaigns/campaign-wizard';
+import { AppShell } from '@/components/layout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { campaignApi } from '@/lib/api/campaigns';
@@ -41,32 +42,35 @@ export default function CampaignsPage() {
 
   if (showWizard) {
     return (
-      <CampaignWizard
-        onClose={handleCloseWizard}
-        initialData={editingCampaign ? {
-          data: {
-            basic: {
-              name: editingCampaign.name,
-              description: editingCampaign.description,
-              type: editingCampaign.type,
-            },
-            channels: {
-              selectedChannels: editingCampaign.channels,
-              channelConfigs: editingCampaign.channels.reduce((acc, channel) => {
-                acc[channel] = {};
-                return acc;
-              }, {} as Record<string, any>),
-            },
-            audience: editingCampaign.audience,
-            schedule: editingCampaign.schedule,
-            templates: editingCampaign.templates,
-          }
-        } : undefined}
-      />
+      <AppShell>
+        <CampaignWizard
+          onClose={handleCloseWizard}
+          initialData={editingCampaign ? {
+            data: {
+              basic: {
+                name: editingCampaign.name,
+                description: editingCampaign.description,
+                type: editingCampaign.type,
+              },
+              channels: {
+                selectedChannels: editingCampaign.channels,
+                channelConfigs: editingCampaign.channels.reduce((acc, channel) => {
+                  acc[channel] = {};
+                  return acc;
+                }, {} as Record<string, any>),
+              },
+              audience: editingCampaign.audience,
+              schedule: editingCampaign.schedule,
+              templates: editingCampaign.templates,
+            }
+          } : undefined}
+        />
+      </AppShell>
     );
   }
 
   return (
+    <AppShell>
     <div className="container mx-auto p-6 space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
@@ -135,5 +139,6 @@ export default function CampaignsPage() {
         }}
       />
     </div>
+    </AppShell>
   );
 }

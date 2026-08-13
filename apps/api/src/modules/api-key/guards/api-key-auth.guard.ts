@@ -185,8 +185,8 @@ export class ApiKeyAuthGuard implements CanActivate {
       'GET /templates': ['templates:read'],
       'PUT /templates': ['templates:update'],
       'DELETE /templates': ['templates:delete'],
-      'POST /messages': ['messages:send'],
-      'GET /messages': ['messages:read'],
+      'POST /messages': ['notifications:send'],
+      'GET /messages': ['notifications:read'],
       'POST /webhooks': ['webhooks:manage'],
       'GET /webhooks': ['webhooks:read'],
     };

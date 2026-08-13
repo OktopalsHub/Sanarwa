@@ -55,7 +55,7 @@ export default function TenantDashboardPage() {
                 {tenant?.name} Dashboard
               </h1>
               <p className="text-muted-foreground">
-                Overview of your notification performance and engagement.
+                Sends, delivery, and setup for this workspace.
               </p>
             </div>
           </div>

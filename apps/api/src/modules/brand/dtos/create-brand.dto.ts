@@ -5,15 +5,15 @@ import {
   IsOptional,
   IsString,
   IsUrl,
-  MaxLength
-} from 'class-validator';
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { WhiteLabelConfig } from 'src/common/interfaces';
+  MaxLength,
+} from "class-validator";
+import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
+import { WhiteLabelConfig } from "src/common/interfaces";
 
 export class CreateBrandDto {
   @ApiProperty({
-    description: 'Brand name',
-    example: 'My Brand',
+    description: "Brand name",
+    example: "My Brand",
     maxLength: 255,
   })
   @IsString()
@@ -21,8 +21,8 @@ export class CreateBrandDto {
   name: string;
 
   @ApiPropertyOptional({
-    description: 'Brand description',
-    example: 'A description of the brand',
+    description: "Brand description",
+    example: "A description of the brand",
     maxLength: 500,
   })
   @IsOptional()
@@ -31,8 +31,8 @@ export class CreateBrandDto {
   description?: string;
 
   @ApiPropertyOptional({
-    description: 'Brand domain',
-    example: 'mybrand.com',
+    description: "Brand domain",
+    example: "mybrand.com",
     maxLength: 255,
   })
   @IsOptional()
@@ -41,33 +41,33 @@ export class CreateBrandDto {
   domain?: string;
 
   @ApiPropertyOptional({
-    description: 'Brand logo URL',
-    example: 'https://example.com/logo.png',
+    description: "Brand logo URL",
+    example: "https://example.com/logo.png",
   })
   @IsOptional()
   @IsString()
   logo?: string;
 
   @ApiPropertyOptional({
-    description: 'Primary brand color in hex format',
-    example: '#FF5733',
+    description: "Primary brand color in hex format",
+    example: "#FF5733",
   })
   @IsOptional()
   @IsHexColor()
   primaryColor?: string;
 
   @ApiPropertyOptional({
-    description: 'Secondary brand color in hex format',
-    example: '#33FF57',
+    description: "Secondary brand color in hex format",
+    example: "#33FF57",
   })
   @IsOptional()
   @IsHexColor()
   secondaryColor?: string;
 
   @ApiPropertyOptional({
-    description: 'Default from email address',
-    example: 'noreply@mybrand.com',
-    format: 'email',
+    description: "Default from email address",
+    example: "noreply@mybrand.com",
+    format: "email",
     maxLength: 255,
   })
   @IsOptional()
@@ -76,8 +76,8 @@ export class CreateBrandDto {
   defaultFromEmail?: string;
 
   @ApiPropertyOptional({
-    description: 'Default from name',
-    example: 'My Brand Support',
+    description: "Default from name",
+    example: "My Brand Support",
     maxLength: 255,
   })
   @IsOptional()
@@ -86,8 +86,8 @@ export class CreateBrandDto {
   defaultFromName?: string;
 
   @ApiPropertyOptional({
-    description: 'Reply-to email address',
-    example: 'support@mybrand.com',
+    description: "Reply-to email address",
+    example: "support@mybrand.com",
     maxLength: 255,
   })
   @IsOptional()
@@ -96,18 +96,18 @@ export class CreateBrandDto {
   replyToEmail?: string;
 
   @ApiPropertyOptional({
-    description: 'White label configuration',
+    description: "White label configuration",
   })
   @IsOptional()
   @IsObject()
   whiteLabelConfig?: WhiteLabelConfig;
 
   @ApiPropertyOptional({
-    description: 'Email settings configuration',
+    description: "Email settings configuration",
     example: {
-      signature: 'Best regards, My Brand Team',
-      footerText: '© 2024 My Brand',
-      unsubscribeText: 'Unsubscribe',
+      signature: "Best regards, My Brand Team",
+      footerText: "© 2024 My Brand",
+      unsubscribeText: "Unsubscribe",
       trackingEnabled: true,
     },
   })
@@ -121,11 +121,11 @@ export class CreateBrandDto {
   };
 
   @ApiPropertyOptional({
-    description: 'SMS settings configuration',
+    description: "SMS settings configuration",
     example: {
-      defaultSenderId: 'MyBrand',
-      optOutKeywords: ['STOP', 'UNSUBSCRIBE'],
-      optInKeywords: ['START', 'SUBSCRIBE'],
+      defaultSenderId: "MyBrand",
+      optOutKeywords: ["STOP", "UNSUBSCRIBE"],
+      optInKeywords: ["START", "SUBSCRIBE"],
     },
   })
   @IsOptional()
@@ -137,13 +137,13 @@ export class CreateBrandDto {
   };
 
   @ApiPropertyOptional({
-    description: 'Social media links',
+    description: "Social media links",
     example: {
-      website: 'https://mybrand.com',
-      facebook: 'https://facebook.com/mybrand',
-      twitter: 'https://twitter.com/mybrand',
-      linkedin: 'https://linkedin.com/company/mybrand',
-      instagram: 'https://instagram.com/mybrand',
+      website: "https://mybrand.com",
+      facebook: "https://facebook.com/mybrand",
+      twitter: "https://twitter.com/mybrand",
+      linkedin: "https://linkedin.com/company/mybrand",
+      instagram: "https://instagram.com/mybrand",
     },
   })
   @IsOptional()
@@ -157,7 +157,7 @@ export class CreateBrandDto {
   };
 
   @ApiPropertyOptional({
-    description: 'Additional metadata',
+    description: "Additional metadata",
   })
   @IsOptional()
   @IsObject()

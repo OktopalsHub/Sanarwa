@@ -1,12 +1,12 @@
-import { Column, Entity, ManyToOne, OneToMany } from 'typeorm';
-import { BrandStatus } from '../../../common/enums';
-import { WhiteLabelConfig } from '../../../common/interfaces';
-import { BaseEntity } from '../../../database/entities/base.entity';
-import { Project } from '../../project/entities/project.entity';
-import { TenantMember } from '../../tenant-member/entities/tenant-member.entity';
-import { Tenant } from '../../tenant/entities/tenant.entity';
+import { Column, Entity, ManyToOne, OneToMany } from "typeorm";
+import { BrandStatus } from "../../../common/enums";
+import { WhiteLabelConfig } from "../../../common/interfaces";
+import { BaseEntity } from "../../../database/entities/base.entity";
+import { Project } from "../../project/entities/project.entity";
+import { TenantMember } from "../../tenant-member/entities/tenant-member.entity";
+import { Tenant } from "../../tenant/entities/tenant.entity";
 
-@Entity('brands')
+@Entity("brands")
 export class Brand extends BaseEntity {
   @Column()
   name: string;
@@ -18,7 +18,7 @@ export class Brand extends BaseEntity {
   domain?: string;
 
   @Column({
-    type: 'enum',
+    type: "enum",
     enum: BrandStatus,
     default: BrandStatus.ACTIVE,
   })
@@ -27,30 +27,30 @@ export class Brand extends BaseEntity {
   @Column({ nullable: true })
   logo?: string;
 
-  @Column({ type: 'varchar', length: 7, nullable: true, name: 'primary_color' })
+  @Column({ type: "varchar", length: 7, nullable: true, name: "primary_color" })
   primaryColor?: string;
 
   @Column({
-    type: 'varchar',
+    type: "varchar",
     length: 7,
     nullable: true,
-    name: 'secondary_color',
+    name: "secondary_color",
   })
   secondaryColor?: string;
 
-  @Column({ name: 'default_from_email', nullable: true })
+  @Column({ name: "default_from_email", nullable: true })
   defaultFromEmail?: string;
 
-  @Column({ name: 'default_from_name', nullable: true })
+  @Column({ name: "default_from_name", nullable: true })
   defaultFromName?: string;
 
-  @Column({ name: 'reply_to_email' })
+  @Column({ name: "reply_to_email" })
   replyToEmail?: string;
 
-  @Column({ type: 'json', nullable: true, name: 'white_label_config' })
+  @Column({ type: "json", nullable: true, name: "white_label_config" })
   whiteLabelConfig?: WhiteLabelConfig;
 
-  @Column({ type: 'json', nullable: true, name: 'email_settings' })
+  @Column({ type: "json", nullable: true, name: "email_settings" })
   emailSettings?: {
     signature?: string;
     footerText?: string;
@@ -58,14 +58,14 @@ export class Brand extends BaseEntity {
     trackingEnabled?: boolean;
   };
 
-  @Column({ type: 'json', nullable: true, name: 'sms_settings' })
+  @Column({ type: "json", nullable: true, name: "sms_settings" })
   smsSettings?: {
     defaultSenderId?: string;
     optOutKeywords?: string[];
     optInKeywords?: string[];
   };
 
-  @Column({ type: 'json', nullable: true, name: 'social_links' })
+  @Column({ type: "json", nullable: true, name: "social_links" })
   socialLinks?: {
     website?: string;
     facebook?: string;
@@ -74,7 +74,7 @@ export class Brand extends BaseEntity {
     instagram?: string;
   };
 
-  @Column({ type: 'json', nullable: true })
+  @Column({ type: "json", nullable: true })
   metadata?: Record<string, any>;
 
   @ManyToOne(() => TenantMember, (tenantMember) => tenantMember.createdBrands)

@@ -7,12 +7,10 @@ import {
   Repository,
   SelectQueryBuilder,
   UpdateResult,
-} from 'typeorm';
-import { IBaseRepository } from './base.repository.interface';
+} from "typeorm";
+import { IBaseRepository } from "./base.repository.interface";
 
-export class BaseRepository<T extends ObjectLiteral>
-  implements IBaseRepository<T>
-{
+export class BaseRepository<T extends ObjectLiteral> implements IBaseRepository<T> {
   constructor(private readonly repository: Repository<T>) {}
 
   async findOne(options: FindOneOptions<T>): Promise<T | null> {
@@ -21,7 +19,7 @@ export class BaseRepository<T extends ObjectLiteral>
 
   async findAll(
     includeDeleted = false,
-    where: FindManyOptions<T>['where'] = {},
+    where: FindManyOptions<T>["where"] = {},
     relations: string[] = [],
   ): Promise<T[]> {
     const options: FindManyOptions<T> = {
@@ -39,7 +37,7 @@ export class BaseRepository<T extends ObjectLiteral>
   async findById(
     id: string,
     includeDeleted = false,
-    additionalWhere: FindOneOptions<T>['where'] = {},
+    additionalWhere: FindOneOptions<T>["where"] = {},
     relations: string[] = [],
   ): Promise<T | null> {
     const options: FindOneOptions<T> = {
@@ -87,7 +85,7 @@ export class BaseRepository<T extends ObjectLiteral>
     page: number,
     limit: number,
     includeDeleted = false,
-    where: FindManyOptions<T>['where'] = {},
+    where: FindManyOptions<T>["where"] = {},
     relations: string[] = [],
   ): Promise<{
     data: T[];

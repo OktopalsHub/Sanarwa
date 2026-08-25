@@ -1,4 +1,4 @@
-import { DeepPartial, DeleteResult, UpdateResult } from 'typeorm';
+import { DeepPartial, DeleteResult, UpdateResult } from "typeorm";
 
 export interface IBaseRepository<T> {
   findAll(includeDeleted?: boolean): Promise<T[]>;

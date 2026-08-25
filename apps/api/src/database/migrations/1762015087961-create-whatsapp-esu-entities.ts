@@ -1,7 +1,7 @@
-import { MigrationInterface, QueryRunner } from 'typeorm';
+import { MigrationInterface, QueryRunner } from "typeorm";
 
 export class CreateWhatsappEsuEntities1762015087961 implements MigrationInterface {
-  name = 'CreateWhatsappEsuEntities1762015087961';
+  name = "CreateWhatsappEsuEntities1762015087961";
 
   public async up(queryRunner: QueryRunner): Promise<void> {
     // Create WABA configs table for ESU pattern
@@ -70,25 +70,9 @@ export class CreateWhatsappEsuEntities1762015087961 implements MigrationInterfac
         CONSTRAINT FK_tenant_waba_assignment_waba FOREIGN KEY (waba_id) REFERENCES waba_configs(id) ON DELETE CASCADE
       )
     `);
-
-    // Remove shared template fields from templates table
-    await queryRunner.query(`
-      ALTER TABLE templates 
-      DROP COLUMN IF EXISTS is_shared_template,
-      DROP COLUMN IF EXISTS max_shared_usage,
-      DROP COLUMN IF EXISTS current_shared_usage
-    `);
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {
-    // Re-add shared template fields if rollback is needed
-    await queryRunner.query(`
-      ALTER TABLE templates 
-      ADD COLUMN is_shared_template BOOLEAN DEFAULT false,
-      ADD COLUMN max_shared_usage INTEGER,
-      ADD COLUMN current_shared_usage INTEGER DEFAULT 0
-    `);
-
     // Drop tables in reverse order due to foreign key constraints
     await queryRunner.query(`DROP TABLE IF EXISTS tenant_waba_assignments`);
     await queryRunner.query(`DROP TABLE IF EXISTS tenant_waba_configs`);

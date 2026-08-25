@@ -1,6 +1,6 @@
-import { config } from 'dotenv';
-import { DataSource, DataSourceOptions } from 'typeorm';
-import { SnakeNamingStrategy } from 'typeorm-naming-strategies';
+import { config } from "dotenv";
+import { DataSource, DataSourceOptions } from "typeorm";
+import { SnakeNamingStrategy } from "typeorm-naming-strategies";
 
 import {
   ApiKey,
@@ -25,24 +25,24 @@ import {
   TokenPurchase,
   TokenTransaction,
   User,
-} from './entities';
+} from "./entities";
 
-import { TenantBillingInfo } from '../modules/tenant/entities/tenant-billing-info.entity';
-import { TenantSettings } from '../modules/tenant/entities/tenant-settings.entity';
-import { Webhook } from '../modules/webhook/entities/webhook.entity';
-import { Account } from '../modules/auth/entities/account.entity';
-import { Session } from '../modules/auth/entities/session.entity';
-import { Verification } from '../modules/auth/entities/verification.entity';
-import { DeadLetter } from '../modules/messaging/entities/dead-letter.entity';
-import { InAppNotification } from '../modules/messaging/entities/in-app-notification.entity';
-import { SystemAlert } from '../modules/messaging/entities/system-alert.entity';
-import { PushCertificate } from '../modules/push-certificates/entities/push-certificate.entity';
-import { NotificationCenterItem } from '../modules/notifications/entities/notification-center.entity';
-import { WABAConfig } from '../modules/whatsapp/entities/waba-config.entity';
-import { TenantWABAConfig } from '../modules/whatsapp/entities/tenant-waba-config.entity';
-import { TenantWABAAssignment } from '../modules/whatsapp/entities/tenant-waba-assignment.entity';
-import { WebhookEvent } from '../modules/billing/entities/webhook-event.entity';
-import { TenantPaymentMethod } from '../modules/billing/entities/tenant-payment-method.entity';
+import { TenantBillingInfo } from "../modules/tenant/entities/tenant-billing-info.entity";
+import { TenantSettings } from "../modules/tenant/entities/tenant-settings.entity";
+import { Webhook } from "../modules/webhook/entities/webhook.entity";
+import { Account } from "../modules/auth/entities/account.entity";
+import { Session } from "../modules/auth/entities/session.entity";
+import { Verification } from "../modules/auth/entities/verification.entity";
+import { DeadLetter } from "../modules/messaging/entities/dead-letter.entity";
+import { InAppNotification } from "../modules/messaging/entities/in-app-notification.entity";
+import { SystemAlert } from "../modules/messaging/entities/system-alert.entity";
+import { PushCertificate } from "../modules/push-certificates/entities/push-certificate.entity";
+import { NotificationCenterItem } from "../modules/notifications/entities/notification-center.entity";
+import { WABAConfig } from "../modules/whatsapp/entities/waba-config.entity";
+import { TenantWABAConfig } from "../modules/whatsapp/entities/tenant-waba-config.entity";
+import { TenantWABAAssignment } from "../modules/whatsapp/entities/tenant-waba-assignment.entity";
+import { WebhookEvent } from "../modules/billing/entities/webhook-event.entity";
+import { TenantPaymentMethod } from "../modules/billing/entities/tenant-payment-method.entity";
 
 import {
   ApiKeys1759217839563,
@@ -51,12 +51,11 @@ import {
   Configurations1759324085144,
   ConfigurationVersions1759447215818,
   CreateAuditLog1764821072158,
+  CreateCampaigns1787695570150,
   CreateTenantBillingInfo1765925330483,
   CreateTenantSettings1765925332227,
   CreateWebhook1766923292947,
   CreateWebhookEvents1784581860483,
-  CreateTenantPaymentMethods1784581866458,
-  UniqueTokenBalancesTenantId1786580420947,
   CreateWhatsappEsuEntities1762015087961,
   DeadLetters1784543893390,
   DeviceRegistrations1760919969818,
@@ -75,14 +74,14 @@ import {
   TenantMembers1759217768135,
   Tenants1759217759658,
   User1759217753253,
-} from './migrations';
+} from "./migrations";
 
 config();
 
-const isDev = process.env.NODE_ENV === 'development';
+const isDev = process.env.NODE_ENV === "development";
 
 const AppDataSource: DataSourceOptions = {
-  type: 'postgres',
+  type: "postgres",
   url: process.env.DATABASE_URL,
   synchronize: false,
   entities: [
@@ -147,19 +146,18 @@ const AppDataSource: DataSourceOptions = {
     CreateAuditLog1764821072158,
     CreateTenantBillingInfo1765925330483,
     CreateTenantSettings1765925332227,
-  CreateWebhook1766923292947,
-  CreateWebhookEvents1784581860483,
-  CreateTenantPaymentMethods1784581866458,
-  NotificationLogs1784543879942,
+    CreateWebhook1766923292947,
+    CreateWebhookEvents1784581860483,
+    NotificationLogs1784543879942,
     PushCertificates1784543886414,
     DeadLetters1784543893390,
     SystemAlerts1784543899517,
     NotificationCenter1784545192155,
-    UniqueTokenBalancesTenantId1786580420947,
+    CreateCampaigns1787695570150,
   ],
   logging: isDev,
   migrationsRun: true,
-  migrationsTransactionMode: 'all',
+  migrationsTransactionMode: "all",
   namingStrategy: new SnakeNamingStrategy(),
 };
 

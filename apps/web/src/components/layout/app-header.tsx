@@ -1,13 +1,13 @@
-'use client';
+"use client";
 
-import { User } from '@/lib/icons';
+import { User } from "@/lib/icons";
 
-import { TenantSwitcher } from '@/components/tenant/tenant-switcher';
-import { ThemeToggle } from '@/components/theme-toggle';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { BellIcon, MagnifyingGlassIcon } from '@heroicons/react/24/outline'
-import { UserProfileDropdown } from './user-profile-dropdown';
+import { TenantSwitcher } from "@/components/tenant/tenant-switcher";
+import { ThemeToggle } from "@/components/theme-toggle";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { BellIcon, MagnifyingGlassIcon } from "@heroicons/react/24/outline";
+import { UserProfileDropdown } from "./user-profile-dropdown";
 
 export function AppHeader() {
   return (
@@ -17,10 +17,7 @@ export function AppHeader() {
         <div className="flex-1 max-w-md">
           <div className="relative">
             <MagnifyingGlassIcon className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              placeholder="Search campaigns, workflows, templates..."
-              className="pl-9"
-            />
+            <Input placeholder="Search campaigns, workflows, templates..." className="pl-9" />
           </div>
         </div>
 

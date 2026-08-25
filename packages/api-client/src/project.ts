@@ -11,9 +11,9 @@ import {
   ProjectStats,
   ProjectStatus,
   ProjectUsage,
-  UpdateProjectRequest
-} from './types/project';
-import { ApiClient, createApiClient } from './client';
+  UpdateProjectRequest,
+} from "./types/project";
+import { ApiClient, createApiClient } from "./client";
 
 /**
  * Project Management API client for handling all project-related operations
@@ -35,7 +35,7 @@ class ProjectApiClient {
    * @returns Created project
    */
   async createProject(data: CreateProjectRequest): Promise<Project> {
-    return this.apiClient.post<Project>('/tenants/:tenantId/projects', data);
+    return this.apiClient.post<Project>("/tenants/:tenantId/projects", data);
   }
 
   /**
@@ -54,7 +54,7 @@ class ProjectApiClient {
       hasPrev: boolean;
     };
   }> {
-    return this.apiClient.get('/tenants/:tenantId/projects', params);
+    return this.apiClient.get("/tenants/:tenantId/projects", params);
   }
 
   /**
@@ -129,7 +129,7 @@ class ProjectApiClient {
    * @returns Project statistics
    */
   async getProjectStats(): Promise<ProjectStats> {
-    return this.apiClient.get<ProjectStats>('/projects/stats');
+    return this.apiClient.get<ProjectStats>("/projects/stats");
   }
 
   /**
@@ -138,11 +138,14 @@ class ProjectApiClient {
    * @param params Query parameters for usage data
    * @returns Project usage statistics
    */
-  async getProjectUsage(projectId: string, params?: {
-    startDate?: Date;
-    endDate?: Date;
-    granularity?: 'hour' | 'day' | 'week' | 'month';
-  }): Promise<ProjectUsage> {
+  async getProjectUsage(
+    projectId: string,
+    params?: {
+      startDate?: Date;
+      endDate?: Date;
+      granularity?: "hour" | "day" | "week" | "month";
+    },
+  ): Promise<ProjectUsage> {
     const queryParams: Record<string, string> = {};
     if (params?.startDate) queryParams.startDate = params.startDate.toISOString();
     if (params?.endDate) queryParams.endDate = params.endDate.toISOString();
@@ -157,10 +160,13 @@ class ProjectApiClient {
    * @param billingPeriod Optional billing period
    * @returns Project billing information
    */
-  async getProjectBilling(projectId: string, billingPeriod?: {
-    start: Date;
-    end: Date;
-  }): Promise<ProjectBilling> {
+  async getProjectBilling(
+    projectId: string,
+    billingPeriod?: {
+      start: Date;
+      end: Date;
+    },
+  ): Promise<ProjectBilling> {
     const queryParams: Record<string, string> = {};
     if (billingPeriod?.start) queryParams.startDate = billingPeriod.start.toISOString();
     if (billingPeriod?.end) queryParams.endDate = billingPeriod.end.toISOString();
@@ -174,14 +180,17 @@ class ProjectApiClient {
    * @param params Query parameters for activity log
    * @returns Project activity log
    */
-  async getProjectActivity(projectId: string, params?: {
-    action?: string;
-    userId?: string;
-    startDate?: Date;
-    endDate?: Date;
-    limit?: number;
-    offset?: number;
-  }): Promise<{
+  async getProjectActivity(
+    projectId: string,
+    params?: {
+      action?: string;
+      userId?: string;
+      startDate?: Date;
+      endDate?: Date;
+      limit?: number;
+      offset?: number;
+    },
+  ): Promise<{
     data: ProjectActivity[];
     total: number;
     hasMore: boolean;
@@ -205,12 +214,15 @@ class ProjectApiClient {
    * @param params Query parameters for member list
    * @returns List of project members
    */
-  async getProjectMembers(projectId: string, params?: {
-    role?: ProjectRole;
-    search?: string;
-    limit?: number;
-    offset?: number;
-  }): Promise<{
+  async getProjectMembers(
+    projectId: string,
+    params?: {
+      role?: ProjectRole;
+      search?: string;
+      limit?: number;
+      offset?: number;
+    },
+  ): Promise<{
     data: ProjectMember[];
     total: number;
     hasMore: boolean;
@@ -230,11 +242,14 @@ class ProjectApiClient {
    * @param data Member data
    * @returns Added project member
    */
-  async addProjectMember(projectId: string, data: {
-    userId: string;
-    role: ProjectRole;
-    permissions?: ProjectPermission[];
-  }): Promise<ProjectMember> {
+  async addProjectMember(
+    projectId: string,
+    data: {
+      userId: string;
+      role: ProjectRole;
+      permissions?: ProjectPermission[];
+    },
+  ): Promise<ProjectMember> {
     return this.apiClient.post<ProjectMember>(`/projects/${projectId}/members`, data);
   }
 
@@ -245,10 +260,14 @@ class ProjectApiClient {
    * @param data Update data
    * @returns Updated project member
    */
-  async updateProjectMember(projectId: string, memberId: string, data: {
-    role?: ProjectRole;
-    permissions?: ProjectPermission[];
-  }): Promise<ProjectMember> {
+  async updateProjectMember(
+    projectId: string,
+    memberId: string,
+    data: {
+      role?: ProjectRole;
+      permissions?: ProjectPermission[];
+    },
+  ): Promise<ProjectMember> {
     return this.apiClient.patch<ProjectMember>(`/projects/${projectId}/members/${memberId}`, data);
   }
 
@@ -269,12 +288,15 @@ class ProjectApiClient {
    * @param data Invitation data
    * @returns Created invitation
    */
-  async inviteToProject(projectId: string, data: {
-    email: string;
-    role: ProjectRole;
-    permissions?: ProjectPermission[];
-    message?: string;
-  }): Promise<ProjectInvitation> {
+  async inviteToProject(
+    projectId: string,
+    data: {
+      email: string;
+      role: ProjectRole;
+      permissions?: ProjectPermission[];
+      message?: string;
+    },
+  ): Promise<ProjectInvitation> {
     return this.apiClient.post<ProjectInvitation>(`/projects/${projectId}/invitations`, data);
   }
 
@@ -284,11 +306,14 @@ class ProjectApiClient {
    * @param params Query parameters
    * @returns List of project invitations
    */
-  async getProjectInvitations(projectId: string, params?: {
-    status?: 'pending' | 'accepted' | 'declined' | 'expired';
-    limit?: number;
-    offset?: number;
-  }): Promise<{
+  async getProjectInvitations(
+    projectId: string,
+    params?: {
+      status?: "pending" | "accepted" | "declined" | "expired";
+      limit?: number;
+      offset?: number;
+    },
+  ): Promise<{
     data: ProjectInvitation[];
     total: number;
     hasMore: boolean;
@@ -316,8 +341,14 @@ class ProjectApiClient {
    * @param invitationId Invitation ID
    * @returns Updated invitation
    */
-  async resendProjectInvitation(projectId: string, invitationId: string): Promise<ProjectInvitation> {
-    return this.apiClient.post<ProjectInvitation>(`/projects/${projectId}/invitations/${invitationId}/resend`, {});
+  async resendProjectInvitation(
+    projectId: string,
+    invitationId: string,
+  ): Promise<ProjectInvitation> {
+    return this.apiClient.post<ProjectInvitation>(
+      `/projects/${projectId}/invitations/${invitationId}/resend`,
+      {},
+    );
   }
 
   // Project Settings Management
@@ -328,18 +359,21 @@ class ProjectApiClient {
    * @param settings Project settings
    * @returns Updated project
    */
-  async updateProjectSettings(projectId: string, settings: {
-    webhookUrl?: string;
-    webhookSecret?: string;
-    retryPolicy?: {
-      maxRetries?: number;
-      retryDelay?: number;
-    };
-    rateLimiting?: {
-      enabled?: boolean;
-      requestsPerMinute?: number;
-    };
-  }): Promise<Project> {
+  async updateProjectSettings(
+    projectId: string,
+    settings: {
+      webhookUrl?: string;
+      webhookSecret?: string;
+      retryPolicy?: {
+        maxRetries?: number;
+        retryDelay?: number;
+      };
+      rateLimiting?: {
+        enabled?: boolean;
+        requestsPerMinute?: number;
+      };
+    },
+  ): Promise<Project> {
     return this.updateProject(projectId, { settings });
   }
 
@@ -363,13 +397,16 @@ class ProjectApiClient {
    * @param params Query parameters
    * @returns Webhook logs
    */
-  async getProjectWebhookLogs(projectId: string, params?: {
-    startDate?: Date;
-    endDate?: Date;
-    status?: 'success' | 'failed' | 'timeout';
-    limit?: number;
-    offset?: number;
-  }): Promise<{
+  async getProjectWebhookLogs(
+    projectId: string,
+    params?: {
+      startDate?: Date;
+      endDate?: Date;
+      status?: "success" | "failed" | "timeout";
+      limit?: number;
+      offset?: number;
+    },
+  ): Promise<{
     data: Array<{
       id: string;
       url: string;
@@ -403,14 +440,17 @@ class ProjectApiClient {
    * @param data Duplication options
    * @returns New project
    */
-  async duplicateProject(projectId: string, data: {
-    name: string;
-    description?: string;
-    includeSettings?: boolean;
-    includeMembers?: boolean;
-    includeApiKeys?: boolean;
-    includeProviders?: boolean;
-  }): Promise<Project> {
+  async duplicateProject(
+    projectId: string,
+    data: {
+      name: string;
+      description?: string;
+      includeSettings?: boolean;
+      includeMembers?: boolean;
+      includeApiKeys?: boolean;
+      includeProviders?: boolean;
+    },
+  ): Promise<Project> {
     return this.apiClient.post<Project>(`/projects/${projectId}/duplicate`, data);
   }
 
@@ -420,22 +460,29 @@ class ProjectApiClient {
    * @param options Export options
    * @returns Export data
    */
-  async exportProject(projectId: string, options?: {
-    includeSettings?: boolean;
-    includeMembers?: boolean;
-    includeApiKeys?: boolean;
-    includeProviders?: boolean;
-    format?: 'json' | 'yaml';
-  }): Promise<{
+  async exportProject(
+    projectId: string,
+    options?: {
+      includeSettings?: boolean;
+      includeMembers?: boolean;
+      includeApiKeys?: boolean;
+      includeProviders?: boolean;
+      format?: "json" | "yaml";
+    },
+  ): Promise<{
     format: string;
     data: any;
     exportedAt: Date;
   }> {
     const queryParams: Record<string, string> = {};
-    if (options?.includeSettings !== undefined) queryParams.includeSettings = options.includeSettings.toString();
-    if (options?.includeMembers !== undefined) queryParams.includeMembers = options.includeMembers.toString();
-    if (options?.includeApiKeys !== undefined) queryParams.includeApiKeys = options.includeApiKeys.toString();
-    if (options?.includeProviders !== undefined) queryParams.includeProviders = options.includeProviders.toString();
+    if (options?.includeSettings !== undefined)
+      queryParams.includeSettings = options.includeSettings.toString();
+    if (options?.includeMembers !== undefined)
+      queryParams.includeMembers = options.includeMembers.toString();
+    if (options?.includeApiKeys !== undefined)
+      queryParams.includeApiKeys = options.includeApiKeys.toString();
+    if (options?.includeProviders !== undefined)
+      queryParams.includeProviders = options.includeProviders.toString();
     if (options?.format) queryParams.format = options.format;
 
     return this.apiClient.get(`/projects/${projectId}/export`, queryParams);
@@ -452,7 +499,7 @@ class ProjectApiClient {
     config: any;
     overwriteExisting?: boolean;
   }): Promise<Project> {
-    return this.apiClient.post<Project>('/projects/import', data);
+    return this.apiClient.post<Project>("/projects/import", data);
   }
 
   // Utility Methods
@@ -469,48 +516,50 @@ class ProjectApiClient {
     const errors: string[] = [];
 
     // Validate name
-    if ('name' in data && data.name) {
+    if ("name" in data && data.name) {
       if (data.name.length < 2) {
-        errors.push('Project name must be at least 2 characters long');
+        errors.push("Project name must be at least 2 characters long");
       }
       if (data.name.length > 255) {
-        errors.push('Project name must be less than 255 characters');
+        errors.push("Project name must be less than 255 characters");
       }
       if (!/^[a-zA-Z0-9\s\-_]+$/.test(data.name)) {
-        errors.push('Project name can only contain letters, numbers, spaces, hyphens, and underscores');
+        errors.push(
+          "Project name can only contain letters, numbers, spaces, hyphens, and underscores",
+        );
       }
     }
 
     // Validate description
-    if ('description' in data && data.description && data.description.length > 500) {
-      errors.push('Project description must be less than 500 characters');
+    if ("description" in data && data.description && data.description.length > 500) {
+      errors.push("Project description must be less than 500 characters");
     }
 
     // Validate webhook URL
-    if ('settings' in data && data.settings?.webhookUrl) {
+    if ("settings" in data && data.settings?.webhookUrl) {
       try {
         new URL(data.settings.webhookUrl);
       } catch {
-        errors.push('Webhook URL must be a valid URL');
+        errors.push("Webhook URL must be a valid URL");
       }
     }
 
     // Validate retry policy
-    if ('settings' in data && data.settings?.retryPolicy) {
+    if ("settings" in data && data.settings?.retryPolicy) {
       const { maxRetries, retryDelay } = data.settings.retryPolicy;
       if (maxRetries !== undefined && (maxRetries < 0 || maxRetries > 10)) {
-        errors.push('Max retries must be between 0 and 10');
+        errors.push("Max retries must be between 0 and 10");
       }
       if (retryDelay !== undefined && (retryDelay < 1000 || retryDelay > 60000)) {
-        errors.push('Retry delay must be between 1000ms and 60000ms');
+        errors.push("Retry delay must be between 1000ms and 60000ms");
       }
     }
 
     // Validate rate limiting
-    if ('settings' in data && data.settings?.rateLimiting?.requestsPerMinute) {
+    if ("settings" in data && data.settings?.rateLimiting?.requestsPerMinute) {
       const rpm = data.settings.rateLimiting.requestsPerMinute;
       if (rpm < 1 || rpm > 10000) {
-        errors.push('Requests per minute must be between 1 and 10000');
+        errors.push("Requests per minute must be between 1 and 10000");
       }
     }
 
@@ -540,28 +589,32 @@ class ProjectApiClient {
       const diffMs = now.getTime() - new Date(date).getTime();
       const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
 
-      if (diffDays === 0) return 'Today';
-      if (diffDays === 1) return 'Yesterday';
+      if (diffDays === 0) return "Today";
+      if (diffDays === 1) return "Yesterday";
       if (diffDays < 7) return `${diffDays} days ago`;
       return new Date(date).toLocaleDateString();
     };
 
     const getStatusColor = (status: ProjectStatus) => {
       switch (status) {
-        case ProjectStatus.ACTIVE: return 'green';
-        case ProjectStatus.INACTIVE: return 'yellow';
-        case ProjectStatus.ARCHIVED: return 'gray';
-        default: return 'gray';
+        case ProjectStatus.ACTIVE:
+          return "green";
+        case ProjectStatus.INACTIVE:
+          return "yellow";
+        case ProjectStatus.ARCHIVED:
+          return "gray";
+        default:
+          return "gray";
       }
     };
 
     return {
       name: project.name,
-      description: project.description || 'No description',
+      description: project.description || "No description",
       status: project.status,
       statusColor: getStatusColor(project.status),
       createdAt: formatDate(project.createdAt),
-      lastActivity: project.lastActivity ? formatDate(project.lastActivity) : 'No activity',
+      lastActivity: project.lastActivity ? formatDate(project.lastActivity) : "No activity",
       memberCount: 0, // This would be populated from the API
       apiKeyCount: project.apiKeysCount || 0,
     };
@@ -575,10 +628,10 @@ class ProjectApiClient {
   generateProjectSlug(name: string): string {
     return name
       .toLowerCase()
-      .replace(/[^a-z0-9\s-]/g, '')
-      .replace(/\s+/g, '-')
-      .replace(/-+/g, '-')
-      .replace(/^-+|-+$/g, '') // Remove leading and trailing dashes
+      .replace(/[^a-z0-9\s-]/g, "")
+      .replace(/\s+/g, "-")
+      .replace(/-+/g, "-")
+      .replace(/^-+|-+$/g, "") // Remove leading and trailing dashes
       .trim();
   }
 
@@ -592,7 +645,7 @@ class ProjectApiClient {
   hasProjectPermission(
     project: Project,
     permission: ProjectPermission,
-    userRole: ProjectRole
+    userRole: ProjectRole,
   ): boolean {
     // Owner has all permissions
     if (userRole === ProjectRole.OWNER) return true;

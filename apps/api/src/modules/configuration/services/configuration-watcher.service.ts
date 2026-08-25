@@ -1,18 +1,10 @@
-import {
-  Injectable,
-  Logger,
-  OnModuleDestroy,
-  OnModuleInit,
-} from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import { EventEmitter2 } from '@nestjs/event-emitter';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import {
-  Configuration,
-  ConfigurationScope,
-} from '../entities/configuration.entity';
-import { ConfigurationCacheService } from './configuration-cache.service';
+import { Injectable, Logger, OnModuleDestroy, OnModuleInit } from "@nestjs/common";
+import { ConfigService } from "@nestjs/config";
+import { EventEmitter2 } from "@nestjs/event-emitter";
+import { InjectRepository } from "@nestjs/typeorm";
+import { Repository } from "typeorm";
+import { Configuration, ConfigurationScope } from "../entities/configuration.entity";
+import { ConfigurationCacheService } from "./configuration-cache.service";
 
 export interface ConfigurationChangeEvent {
   key: string;
@@ -21,7 +13,7 @@ export interface ConfigurationChangeEvent {
   environment: string;
   oldValue?: string;
   newValue: string;
-  action: 'create' | 'update' | 'delete';
+  action: "create" | "update" | "delete";
   timestamp: Date;
 }
 
@@ -32,9 +24,7 @@ export interface WatchOptions {
 }
 
 @Injectable()
-export class ConfigurationWatcherService
-  implements OnModuleInit, OnModuleDestroy
-{
+export class ConfigurationWatcherService implements OnModuleInit, OnModuleDestroy {
   private readonly logger = new Logger(ConfigurationWatcherService.name);
   private watchInterval: NodeJS.Timeout | null = null;
   private lastCheckTimestamp: Date = new Date();
@@ -51,17 +41,9 @@ export class ConfigurationWatcherService
     private readonly configService: ConfigService,
   ) {
     this.options = {
-      pollInterval: this.configService.get<number>(
-        'CONFIG_WATCH_INTERVAL',
-        30000,
-      ), // 30 seconds
-      enableHotReload: this.configService.get<boolean>(
-        'CONFIG_HOT_RELOAD_ENABLED',
-        true,
-      ),
-      watchPatterns: this.configService
-        .get<string>('CONFIG_WATCH_PATTERNS', '*')
-        .split(','),
+      pollInterval: this.configService.get<number>("CONFIG_WATCH_INTERVAL", 30000), // 30 seconds
+      enableHotReload: this.configService.get<boolean>("CONFIG_HOT_RELOAD_ENABLED", true),
+      watchPatterns: this.configService.get<string>("CONFIG_WATCH_PATTERNS", "*").split(","),
     };
   }
 
@@ -80,25 +62,20 @@ export class ConfigurationWatcherService
    */
   async startWatching(): Promise<void> {
     if (this.isWatching) {
-      this.logger.warn('Configuration watcher is already running');
+      this.logger.warn("Configuration watcher is already running");
       return;
     }
 
-    this.logger.log('Starting configuration watcher');
+    this.logger.log("Starting configuration watcher");
     this.isWatching = true;
 
     // Load initial configurations
     await this.loadWatchedConfigurations();
 
     // Start polling for changes
-    this.watchInterval = setInterval(
-      () => this.checkForChanges(),
-      this.options.pollInterval,
-    );
+    this.watchInterval = setInterval(() => this.checkForChanges(), this.options.pollInterval);
 
-    this.logger.log(
-      `Configuration watcher started with ${this.options.pollInterval}ms interval`,
-    );
+    this.logger.log(`Configuration watcher started with ${this.options.pollInterval}ms interval`);
   }
 
   /**
@@ -109,7 +86,7 @@ export class ConfigurationWatcherService
       return;
     }
 
-    this.logger.log('Stopping configuration watcher');
+    this.logger.log("Stopping configuration watcher");
     this.isWatching = false;
 
     if (this.watchInterval) {
@@ -118,7 +95,7 @@ export class ConfigurationWatcherService
     }
 
     this.watchedConfigurations.clear();
-    this.logger.log('Configuration watcher stopped');
+    this.logger.log("Configuration watcher stopped");
   }
 
   /**
@@ -176,7 +153,7 @@ export class ConfigurationWatcherService
    * Force check for configuration changes
    */
   async forceCheck(): Promise<ConfigurationChangeEvent[]> {
-    this.logger.debug('Forcing configuration change check');
+    this.logger.debug("Forcing configuration change check");
     return this.checkForChanges();
   }
 
@@ -190,25 +167,18 @@ export class ConfigurationWatcherService
 
       // Get all configurations that might have changed since last check
       const recentConfigurations = await this.configRepository
-        .createQueryBuilder('config')
-        .where('config.updatedAt > :lastCheck', {
+        .createQueryBuilder("config")
+        .where("config.updatedAt > :lastCheck", {
           lastCheck: this.lastCheckTimestamp,
         })
         .getMany();
 
       // Check for changes in watched configurations
-      for (const [
-        watchKey,
-        oldConfig,
-      ] of this.watchedConfigurations.entries()) {
+      for (const [watchKey, oldConfig] of this.watchedConfigurations.entries()) {
         const currentConfig = recentConfigurations.find(
           (config) =>
-            this.buildWatchKey(
-              config.key,
-              config.scope,
-              config.scopeId,
-              config.environment,
-            ) === watchKey,
+            this.buildWatchKey(config.key, config.scope, config.scopeId, config.environment) ===
+            watchKey,
         );
 
         if (currentConfig) {
@@ -224,7 +194,7 @@ export class ConfigurationWatcherService
               environment: currentConfig.environment,
               oldValue: oldConfig.value,
               newValue: currentConfig.value,
-              action: 'update',
+              action: "update",
               timestamp: currentConfig.updatedAt,
             };
 
@@ -240,7 +210,7 @@ export class ConfigurationWatcherService
             );
 
             // Emit change event
-            this.eventEmitter.emit('configuration.changed', changeEvent);
+            this.eventEmitter.emit("configuration.changed", changeEvent);
             this.logger.log(`Configuration changed: ${watchKey}`);
           }
         }
@@ -265,7 +235,7 @@ export class ConfigurationWatcherService
             scopeId: config.scopeId,
             environment: config.environment,
             newValue: config.value,
-            action: 'create',
+            action: "create",
             timestamp: config.createdAt,
           };
 
@@ -273,7 +243,7 @@ export class ConfigurationWatcherService
           this.watchedConfigurations.set(watchKey, config);
 
           // Emit change event
-          this.eventEmitter.emit('configuration.created', changeEvent);
+          this.eventEmitter.emit("configuration.created", changeEvent);
           this.logger.log(`New configuration detected: ${watchKey}`);
         }
       }
@@ -281,7 +251,7 @@ export class ConfigurationWatcherService
       this.lastCheckTimestamp = currentTimestamp;
       return changes;
     } catch (error) {
-      this.logger.error('Error checking for configuration changes:', error);
+      this.logger.error("Error checking for configuration changes:", error);
       return [];
     }
   }
@@ -291,25 +261,22 @@ export class ConfigurationWatcherService
    */
   private async loadWatchedConfigurations(): Promise<void> {
     try {
-      const queryBuilder = this.configRepository.createQueryBuilder('config');
+      const queryBuilder = this.configRepository.createQueryBuilder("config");
 
       // Build query for watch patterns
       if (this.options.watchPatterns && this.options.watchPatterns.length > 0) {
         const conditions = this.options.watchPatterns
-          .filter((pattern) => pattern !== '*')
+          .filter((pattern) => pattern !== "*")
           .map((pattern, index) => `config.key ILIKE :pattern${index}`)
-          .join(' OR ');
+          .join(" OR ");
 
         if (conditions) {
           queryBuilder.where(`(${conditions})`);
 
           // Add parameters for patterns
           this.options.watchPatterns.forEach((pattern, index) => {
-            if (pattern !== '*') {
-              queryBuilder.setParameter(
-                `pattern${index}`,
-                pattern.replace('*', '%'),
-              );
+            if (pattern !== "*") {
+              queryBuilder.setParameter(`pattern${index}`, pattern.replace("*", "%"));
             }
           });
         }
@@ -328,11 +295,9 @@ export class ConfigurationWatcherService
         this.watchedConfigurations.set(watchKey, config);
       }
 
-      this.logger.log(
-        `Loaded ${configurations.length} configurations to watch`,
-      );
+      this.logger.log(`Loaded ${configurations.length} configurations to watch`);
     } catch (error) {
-      this.logger.error('Error loading watched configurations:', error);
+      this.logger.error("Error loading watched configurations:", error);
     }
   }
 
@@ -340,18 +305,15 @@ export class ConfigurationWatcherService
    * Check if a configuration key should be watched based on patterns
    */
   private shouldWatchConfiguration(key: string): boolean {
-    if (
-      !this.options.watchPatterns ||
-      this.options.watchPatterns.includes('*')
-    ) {
+    if (!this.options.watchPatterns || this.options.watchPatterns.includes("*")) {
       return true;
     }
 
     return this.options.watchPatterns.some((pattern) => {
-      if (pattern === '*') return true;
+      if (pattern === "*") return true;
 
       // Convert glob pattern to regex
-      const regexPattern = pattern.replace(/\*/g, '.*').replace(/\?/g, '.');
+      const regexPattern = pattern.replace(/\*/g, ".*").replace(/\?/g, ".");
 
       return new RegExp(`^${regexPattern}$`).test(key);
     });
@@ -376,7 +338,7 @@ export class ConfigurationWatcherService
       parts.push(environment);
     }
 
-    return parts.join(':');
+    return parts.join(":");
   }
 
   /**
@@ -402,13 +364,13 @@ export class ConfigurationWatcherService
    * Reload watched configurations
    */
   async reload(): Promise<void> {
-    this.logger.log('Reloading watched configurations');
+    this.logger.log("Reloading watched configurations");
     await this.loadWatchedConfigurations();
 
     // Clear cache to force fresh reads
     await this.cacheService.clear();
 
-    this.eventEmitter.emit('configuration.reloaded', {
+    this.eventEmitter.emit("configuration.reloaded", {
       timestamp: new Date(),
       watchedCount: this.watchedConfigurations.size,
     });

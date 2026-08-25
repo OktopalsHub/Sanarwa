@@ -1,8 +1,8 @@
-import { Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { BaseRepository } from '../../../database/repositories/base.repository';
-import { Repository } from 'typeorm';
-import { DeadLetter, DeadLetterStatus, DeadLetterType } from '../entities/dead-letter.entity';
+import { Injectable } from "@nestjs/common";
+import { InjectRepository } from "@nestjs/typeorm";
+import { BaseRepository } from "../../../database/repositories/base.repository";
+import { Repository } from "typeorm";
+import { DeadLetter, DeadLetterStatus, DeadLetterType } from "../entities/dead-letter.entity";
 
 @Injectable()
 export class DeadLetterRepository extends BaseRepository<DeadLetter> {
@@ -19,7 +19,7 @@ export class DeadLetterRepository extends BaseRepository<DeadLetter> {
   async findByTenantId(tenantId: string): Promise<DeadLetter[]> {
     return this.find({
       where: { tenantId },
-      order: { createdAt: 'DESC' },
+      order: { createdAt: "DESC" },
     });
   }
 
@@ -29,7 +29,7 @@ export class DeadLetterRepository extends BaseRepository<DeadLetter> {
   async findByStatus(status: DeadLetterStatus): Promise<DeadLetter[]> {
     return this.find({
       where: { status },
-      order: { createdAt: 'DESC' },
+      order: { createdAt: "DESC" },
     });
   }
 
@@ -39,7 +39,7 @@ export class DeadLetterRepository extends BaseRepository<DeadLetter> {
   async findByType(type: DeadLetterType): Promise<DeadLetter[]> {
     return this.find({
       where: { originalType: type },
-      order: { createdAt: 'DESC' },
+      order: { createdAt: "DESC" },
     });
   }
 
@@ -49,7 +49,7 @@ export class DeadLetterRepository extends BaseRepository<DeadLetter> {
   async findByTenantAndStatus(tenantId: string, status: DeadLetterStatus): Promise<DeadLetter[]> {
     return this.find({
       where: { tenantId, status },
-      order: { createdAt: 'DESC' },
+      order: { createdAt: "DESC" },
     });
   }
 
@@ -83,7 +83,11 @@ export class DeadLetterRepository extends BaseRepository<DeadLetter> {
   /**
    * Mark dead letter as resolved
    */
-  async markAsResolved(id: string, resolvedBy: string, resolutionNotes?: string): Promise<DeadLetter | null> {
+  async markAsResolved(
+    id: string,
+    resolvedBy: string,
+    resolutionNotes?: string,
+  ): Promise<DeadLetter | null> {
     return this.update(id, {
       status: DeadLetterStatus.RESOLVED,
       resolvedBy,
@@ -104,7 +108,11 @@ export class DeadLetterRepository extends BaseRepository<DeadLetter> {
   /**
    * Mark dead letter as ignored
    */
-  async markAsIgnored(id: string, resolvedBy: string, resolutionNotes?: string): Promise<DeadLetter | null> {
+  async markAsIgnored(
+    id: string,
+    resolvedBy: string,
+    resolutionNotes?: string,
+  ): Promise<DeadLetter | null> {
     return this.update(id, {
       status: DeadLetterStatus.IGNORED,
       resolvedBy,
@@ -120,12 +128,12 @@ export class DeadLetterRepository extends BaseRepository<DeadLetter> {
     const yesterday = new Date();
     yesterday.setDate(yesterday.getDate() - 1);
 
-    const queryBuilder = this.createQueryBuilder('deadLetter')
-      .where('deadLetter.createdAt >= :yesterday', { yesterday })
-      .orderBy('deadLetter.createdAt', 'DESC');
+    const queryBuilder = this.createQueryBuilder("deadLetter")
+      .where("deadLetter.createdAt >= :yesterday", { yesterday })
+      .orderBy("deadLetter.createdAt", "DESC");
 
     if (tenantId) {
-      queryBuilder.andWhere('deadLetter.tenantId = :tenantId', { tenantId });
+      queryBuilder.andWhere("deadLetter.tenantId = :tenantId", { tenantId });
     }
 
     return queryBuilder.getMany();
@@ -140,7 +148,7 @@ export class DeadLetterRepository extends BaseRepository<DeadLetter> {
         retryCount: minRetryCount,
         status: DeadLetterStatus.PENDING_REVIEW,
       },
-      order: { retryCount: 'DESC', createdAt: 'DESC' },
+      order: { retryCount: "DESC", createdAt: "DESC" },
     });
   }
 }

@@ -1,12 +1,7 @@
-import {
-  Injectable,
-  CanActivate,
-  ExecutionContext,
-  UnauthorizedException,
-} from '@nestjs/common';
-import { Reflector } from '@nestjs/core';
-import { JwtService } from '@nestjs/jwt';
-import { PUBLIC_KEY } from '../decorators/public.decorator';
+import { Injectable, CanActivate, ExecutionContext, UnauthorizedException } from "@nestjs/common";
+import { Reflector } from "@nestjs/core";
+import { JwtService } from "@nestjs/jwt";
+import { PUBLIC_KEY } from "../decorators/public.decorator";
 
 @Injectable()
 export class AuthGuard implements CanActivate {
@@ -30,17 +25,17 @@ export class AuthGuard implements CanActivate {
     const authHeader = request.headers.authorization;
 
     if (!authHeader) {
-      throw new UnauthorizedException('Missing authorization header');
+      throw new UnauthorizedException("Missing authorization header");
     }
 
-    const [scheme, token] = authHeader.split(' ');
+    const [scheme, token] = authHeader.split(" ");
 
-    if (scheme !== 'Bearer') {
-      throw new UnauthorizedException('Invalid authorization scheme');
+    if (scheme !== "Bearer") {
+      throw new UnauthorizedException("Invalid authorization scheme");
     }
 
     if (!token) {
-      throw new UnauthorizedException('Missing token');
+      throw new UnauthorizedException("Missing token");
     }
 
     try {
@@ -50,7 +45,7 @@ export class AuthGuard implements CanActivate {
       // Set auth context on request
       request.auth = {
         principalId: payload.sub, // User ID
-        tokenType: 'jwt',
+        tokenType: "jwt",
         issuedAt: new Date(payload.iat * 1000),
         expiresAt: new Date(payload.exp * 1000),
       };
@@ -60,13 +55,13 @@ export class AuthGuard implements CanActivate {
         id: payload.sub,
         sub: payload.sub,
         email: payload.email,
-        provider: payload.provider || 'password',
+        provider: payload.provider || "password",
       };
 
       return true;
     } catch (error) {
-      console.error('JWT verification error:', error.message);
-      throw new UnauthorizedException('Invalid or expired token');
+      console.error("JWT verification error:", error.message);
+      throw new UnauthorizedException("Invalid or expired token");
     }
   }
 }

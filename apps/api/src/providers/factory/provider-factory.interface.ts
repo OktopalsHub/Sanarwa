@@ -1,5 +1,5 @@
-import { IBaseProvider } from '../base/base-provider.interface';
-import { Channel, ProviderConfig } from '../types';
+import { IBaseProvider } from "../base/base-provider.interface";
+import { Channel, ProviderConfig } from "../types";
 
 export interface IProviderFactory {
   /**

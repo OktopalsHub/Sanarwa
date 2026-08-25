@@ -1,12 +1,12 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, LessThan, In, Between, MoreThanOrEqual, LessThanOrEqual } from 'typeorm';
-import { Cron, CronExpression } from '@nestjs/schedule';
-import { NotificationLog } from '../notifications/entities/notification-log.entity';
-import { NotificationCenterItem } from '../notifications/entities/notification-center.entity';
-import { Message } from '../messaging/message.entity';
-import { MessageDelivery } from '../messaging/message-delivery.entity';
-import { TenantSettings } from '../tenant/entities/tenant-settings.entity';
+import { Injectable, Logger } from "@nestjs/common";
+import { InjectRepository } from "@nestjs/typeorm";
+import { Repository, LessThan, In, Between, MoreThanOrEqual, LessThanOrEqual } from "typeorm";
+import { Cron, CronExpression } from "@nestjs/schedule";
+import { NotificationLog } from "../notifications/entities/notification-log.entity";
+import { NotificationCenterItem } from "../notifications/entities/notification-center.entity";
+import { Message } from "../messaging/message.entity";
+import { MessageDelivery } from "../messaging/message-delivery.entity";
+import { TenantSettings } from "../tenant/entities/tenant-settings.entity";
 
 export interface DataPortabilityRequest {
   userId: string;
@@ -20,7 +20,7 @@ export interface DataPortabilityRequest {
 export interface DataErasureRequest {
   userId: string;
   tenantId: string;
-  reason: 'user_request' | 'retention_expired' | 'legal_requirement';
+  reason: "user_request" | "retention_expired" | "legal_requirement";
   requestedBy: string;
 }
 
@@ -28,7 +28,7 @@ export interface ConsentRecord {
   id: string;
   userId: string;
   tenantId: string;
-  consentType: 'marketing' | 'analytics' | 'third_party_sharing';
+  consentType: "marketing" | "analytics" | "third_party_sharing";
   consented: boolean;
   consentDate: Date;
   expiryDate?: Date;
@@ -38,12 +38,12 @@ export interface ConsentRecord {
 
 export interface RetentionPolicy {
   dataType:
-    | 'notifications'
-    | 'notification_content'
-    | 'notification_metadata'
-    | 'deliveries'
-    | 'logs'
-    | 'audit_trails';
+    | "notifications"
+    | "notification_content"
+    | "notification_metadata"
+    | "deliveries"
+    | "logs"
+    | "audit_trails";
   retentionPeriodDays: number;
   autoDelete: boolean;
   legalHold: boolean;
@@ -55,12 +55,22 @@ export class ComplianceService {
 
   // Default retention policies (configurable per tenant)
   private readonly defaultRetentionPolicies: RetentionPolicy[] = [
-    { dataType: 'notifications', retentionPeriodDays: 2555, autoDelete: true, legalHold: false },
-    { dataType: 'notification_content', retentionPeriodDays: 90, autoDelete: true, legalHold: false },
-    { dataType: 'notification_metadata', retentionPeriodDays: 90, autoDelete: true, legalHold: false },
-    { dataType: 'deliveries', retentionPeriodDays: 365, autoDelete: true, legalHold: false },
-    { dataType: 'logs', retentionPeriodDays: 90, autoDelete: true, legalHold: false },
-    { dataType: 'audit_trails', retentionPeriodDays: 2555, autoDelete: false, legalHold: true },
+    { dataType: "notifications", retentionPeriodDays: 2555, autoDelete: true, legalHold: false },
+    {
+      dataType: "notification_content",
+      retentionPeriodDays: 90,
+      autoDelete: true,
+      legalHold: false,
+    },
+    {
+      dataType: "notification_metadata",
+      retentionPeriodDays: 90,
+      autoDelete: true,
+      legalHold: false,
+    },
+    { dataType: "deliveries", retentionPeriodDays: 365, autoDelete: true, legalHold: false },
+    { dataType: "logs", retentionPeriodDays: 90, autoDelete: true, legalHold: false },
+    { dataType: "audit_trails", retentionPeriodDays: 2555, autoDelete: false, legalHold: true },
   ];
 
   constructor(
@@ -80,7 +90,8 @@ export class ComplianceService {
    * GDPR Data Portability - Export user data
    */
   async exportUserData(request: DataPortabilityRequest): Promise<any> {
-    const { userId, tenantId, includePersonalData, includeCommunicationHistory, dateFrom, dateTo } = request;
+    const { userId, tenantId, includePersonalData, includeCommunicationHistory, dateFrom, dateTo } =
+      request;
 
     const exportData: any = {
       userId,
@@ -95,54 +106,70 @@ export class ComplianceService {
         where: {
           tenantId,
           to: userId,
-          createdAt: dateFrom && dateTo ? Between(dateFrom, dateTo) :
-                   dateFrom ? MoreThanOrEqual(dateFrom) :
-                   dateTo ? LessThanOrEqual(dateTo) : undefined,
+          createdAt:
+            dateFrom && dateTo
+              ? Between(dateFrom, dateTo)
+              : dateFrom
+                ? MoreThanOrEqual(dateFrom)
+                : dateTo
+                  ? LessThanOrEqual(dateTo)
+                  : undefined,
         },
-        order: { createdAt: 'DESC' },
+        order: { createdAt: "DESC" },
       });
 
       // Export message history (if available)
       const messages = await this.messageRepository.find({
         where: {
           tenantId,
-          createdAt: dateFrom && dateTo ? Between(dateFrom, dateTo) :
-                   dateFrom ? MoreThanOrEqual(dateFrom) :
-                   dateTo ? LessThanOrEqual(dateTo) : undefined,
+          createdAt:
+            dateFrom && dateTo
+              ? Between(dateFrom, dateTo)
+              : dateFrom
+                ? MoreThanOrEqual(dateFrom)
+                : dateTo
+                  ? LessThanOrEqual(dateTo)
+                  : undefined,
         },
-        order: { createdAt: 'DESC' },
+        order: { createdAt: "DESC" },
       });
 
       // Filter messages that include the user as a recipient
-      const userMessages = messages.filter(msg =>
-        msg.recipients.some(recipient =>
-          recipient.email === userId ||
-          recipient.phone === userId ||
-          recipient.deviceToken === userId ||
-          recipient.whatsappNumber === userId ||
-          recipient.userId === userId
-        )
+      const userMessages = messages.filter((msg) =>
+        msg.recipients.some(
+          (recipient) =>
+            recipient.email === userId ||
+            recipient.phone === userId ||
+            recipient.deviceToken === userId ||
+            recipient.whatsappNumber === userId ||
+            recipient.userId === userId,
+        ),
       );
 
       // Export delivery records
       const deliveries = await this.deliveryRepository.find({
         where: {
           recipient: userId,
-          createdAt: dateFrom && dateTo ? Between(dateFrom, dateTo) :
-                   dateFrom ? MoreThanOrEqual(dateFrom) :
-                   dateTo ? LessThanOrEqual(dateTo) : undefined,
+          createdAt:
+            dateFrom && dateTo
+              ? Between(dateFrom, dateTo)
+              : dateFrom
+                ? MoreThanOrEqual(dateFrom)
+                : dateTo
+                  ? LessThanOrEqual(dateTo)
+                  : undefined,
         },
-        relations: ['message'],
-        order: { createdAt: 'DESC' },
+        relations: ["message"],
+        order: { createdAt: "DESC" },
       });
 
       // Filter deliveries by tenant through the message relation
-      const tenantDeliveries = deliveries.filter(delivery =>
-        delivery.message && delivery.message.tenantId === tenantId
+      const tenantDeliveries = deliveries.filter(
+        (delivery) => delivery.message && delivery.message.tenantId === tenantId,
       );
 
       exportData.data.communicationHistory = {
-        notificationLogs: notificationLogs.map(log => ({
+        notificationLogs: notificationLogs.map((log) => ({
           id: log.id,
           channel: log.channel,
           status: log.status,
@@ -152,7 +179,7 @@ export class ComplianceService {
           // Exclude sensitive metadata
           metadata: this.sanitizeMetadata(log.metadata),
         })),
-        messages: userMessages.map(msg => ({
+        messages: userMessages.map((msg) => ({
           id: msg.id,
           channels: msg.channels,
           status: msg.status,
@@ -160,7 +187,7 @@ export class ComplianceService {
           createdAt: msg.createdAt,
           // Content excluded for privacy
         })),
-        deliveries: deliveries.map(delivery => ({
+        deliveries: deliveries.map((delivery) => ({
           id: delivery.id,
           channel: delivery.channel,
           status: delivery.status,
@@ -185,10 +212,14 @@ export class ComplianceService {
   /**
    * GDPR Right to Erasure - Delete user data
    */
-  async deleteUserData(request: DataErasureRequest): Promise<{ deletedRecords: number; status: string }> {
+  async deleteUserData(
+    request: DataErasureRequest,
+  ): Promise<{ deletedRecords: number; status: string }> {
     const { userId, tenantId, reason, requestedBy } = request;
 
-    this.logger.log(`Processing data erasure request for user ${userId} in tenant ${tenantId}, reason: ${reason}`);
+    this.logger.log(
+      `Processing data erasure request for user ${userId} in tenant ${tenantId}, reason: ${reason}`,
+    );
 
     let totalDeleted = 0;
 
@@ -221,14 +252,16 @@ export class ComplianceService {
 
     return {
       deletedRecords: totalDeleted,
-      status: 'completed',
+      status: "completed",
     };
   }
 
   /**
    * Automated data retention cleanup
    */
-  async performRetentionCleanup(tenantId?: string): Promise<{ cleanedRecords: number; policiesApplied: number }> {
+  async performRetentionCleanup(
+    tenantId?: string,
+  ): Promise<{ cleanedRecords: number; policiesApplied: number }> {
     let totalCleaned = 0;
     let policiesApplied = 0;
 
@@ -246,13 +279,10 @@ export class ComplianceService {
       90;
 
     const policies = this.defaultRetentionPolicies.map((policy) => {
-      if (policy.dataType === 'notification_content') {
+      if (policy.dataType === "notification_content") {
         return { ...policy, retentionPeriodDays: contentRetentionDays };
       }
-      if (
-        policy.dataType === 'notification_metadata' ||
-        policy.dataType === 'logs'
-      ) {
+      if (policy.dataType === "notification_metadata" || policy.dataType === "logs") {
         return { ...policy, retentionPeriodDays: metadataRetentionDays };
       }
       return policy;
@@ -267,7 +297,7 @@ export class ComplianceService {
       let deletedCount = 0;
 
       switch (policy.dataType) {
-        case 'notifications':
+        case "notifications":
           if (tenantId) {
             const result = await this.messageRepository.delete({
               tenantId,
@@ -277,7 +307,7 @@ export class ComplianceService {
           }
           break;
 
-        case 'notification_content':
+        case "notification_content":
           if (tenantId) {
             const centerResult = await this.notificationCenterRepository.delete({
               tenantId,
@@ -286,18 +316,17 @@ export class ComplianceService {
             const scrubResult = await this.messageRepository
               .createQueryBuilder()
               .update(Message)
-              .set({ content: () => 'NULL', subject: () => 'NULL' })
-              .where('tenant_id = :tenantId', { tenantId })
-              .andWhere('created_at < :cutoffDate', { cutoffDate })
-              .andWhere('(content IS NOT NULL OR subject IS NOT NULL)')
+              .set({ content: () => "NULL", subject: () => "NULL" })
+              .where("tenant_id = :tenantId", { tenantId })
+              .andWhere("created_at < :cutoffDate", { cutoffDate })
+              .andWhere("(content IS NOT NULL OR subject IS NOT NULL)")
               .execute();
-            deletedCount =
-              (centerResult.affected || 0) + (scrubResult.affected || 0);
+            deletedCount = (centerResult.affected || 0) + (scrubResult.affected || 0);
           }
           break;
 
-        case 'notification_metadata':
-        case 'logs':
+        case "notification_metadata":
+        case "logs":
           if (tenantId) {
             const result = await this.notificationLogRepository.delete({
               tenantId,
@@ -307,14 +336,16 @@ export class ComplianceService {
           }
           break;
 
-        case 'deliveries':
+        case "deliveries":
           break;
       }
 
       if (deletedCount > 0) {
         totalCleaned += deletedCount;
         policiesApplied++;
-        this.logger.log(`Applied retention policy for ${policy.dataType}: deleted ${deletedCount} records older than ${cutoffDate.toISOString()}`);
+        this.logger.log(
+          `Applied retention policy for ${policy.dataType}: deleted ${deletedCount} records older than ${cutoffDate.toISOString()}`,
+        );
       }
     }
 
@@ -324,7 +355,7 @@ export class ComplianceService {
   @Cron(CronExpression.EVERY_DAY_AT_3AM)
   async runScheduledRetentionCleanup(): Promise<void> {
     const tenants = await this.tenantSettingsRepository.find({
-      select: ['tenantId'],
+      select: ["tenantId"],
     });
 
     for (const tenant of tenants) {
@@ -335,14 +366,16 @@ export class ComplianceService {
   /**
    * Consent management
    */
-  async recordConsent(consent: Omit<ConsentRecord, 'id'>): Promise<ConsentRecord> {
+  async recordConsent(consent: Omit<ConsentRecord, "id">): Promise<ConsentRecord> {
     // In a real implementation, this would save to a consent table
     const consentRecord: ConsentRecord = {
       id: `consent_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
       ...consent,
     };
 
-    this.logger.log(`Recorded consent for user ${consent.userId}: ${consent.consentType} = ${consent.consented}`);
+    this.logger.log(
+      `Recorded consent for user ${consent.userId}: ${consent.consentType} = ${consent.consented}`,
+    );
 
     // Store in memory for demo (would be database in real implementation)
     return consentRecord;
@@ -359,22 +392,22 @@ export class ComplianceService {
     // Return mock data for demonstration
     return [
       {
-        id: 'consent_001',
+        id: "consent_001",
         userId,
         tenantId,
-        consentType: 'marketing',
+        consentType: "marketing",
         consented: true,
-        consentDate: new Date('2024-01-15'),
-        source: 'website_registration',
+        consentDate: new Date("2024-01-15"),
+        source: "website_registration",
       },
       {
-        id: 'consent_002',
+        id: "consent_002",
         userId,
         tenantId,
-        consentType: 'analytics',
+        consentType: "analytics",
         consented: false,
-        consentDate: new Date('2024-01-15'),
-        source: 'cookie_banner',
+        consentDate: new Date("2024-01-15"),
+        source: "cookie_banner",
       },
     ];
   }
@@ -389,8 +422,8 @@ export class ComplianceService {
       emailMarketing?: boolean;
       smsMarketing?: boolean;
       pushNotifications?: boolean;
-      frequency?: 'daily' | 'weekly' | 'monthly' | 'never';
-    }
+      frequency?: "daily" | "weekly" | "monthly" | "never";
+    },
   ): Promise<boolean> {
     // In a real implementation, this would save to a preferences table
     this.logger.log(`Updated communication preferences for user ${userId}`, preferences);
@@ -404,8 +437,8 @@ export class ComplianceService {
       emailMarketing: true,
       smsMarketing: false,
       pushNotifications: true,
-      frequency: 'weekly',
-      updatedAt: new Date('2024-01-15'),
+      frequency: "weekly",
+      updatedAt: new Date("2024-01-15"),
     };
   }
 
@@ -416,16 +449,16 @@ export class ComplianceService {
     // Return audit trail of privacy-related actions
     return [
       {
-        action: 'data_export',
-        timestamp: new Date('2024-02-01'),
+        action: "data_export",
+        timestamp: new Date("2024-02-01"),
         requestedBy: userId,
-        reason: 'user_request',
+        reason: "user_request",
       },
       {
-        action: 'consent_given',
-        timestamp: new Date('2024-01-15'),
-        consentType: 'marketing',
-        source: 'website_registration',
+        action: "consent_given",
+        timestamp: new Date("2024-01-15"),
+        consentType: "marketing",
+        source: "website_registration",
       },
     ];
   }
@@ -453,6 +486,6 @@ export class ComplianceService {
     deletedAt: Date;
   }): Promise<void> {
     // In a real implementation, this would save to an audit log table
-    this.logger.log('Data erasure completed', erasureLog);
+    this.logger.log("Data erasure completed", erasureLog);
   }
 }

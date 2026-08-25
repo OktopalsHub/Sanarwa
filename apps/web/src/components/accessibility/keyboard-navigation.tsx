@@ -1,11 +1,11 @@
 "use client";
 
-import { cn } from '@/lib/utils';
-import { FocusManager, KEYBOARD_KEYS, useKeyboardNavigation } from '@/lib/utils/accessibility';
-import React, { forwardRef, useEffect, useRef } from 'react';
+import { cn } from "@/lib/utils";
+import { FocusManager, KEYBOARD_KEYS, useKeyboardNavigation } from "@/lib/utils/accessibility";
+import React, { forwardRef, useEffect, useRef } from "react";
 
 interface KeyboardNavigationProps extends React.HTMLAttributes<HTMLDivElement> {
-  orientation?: 'horizontal' | 'vertical' | 'both';
+  orientation?: "horizontal" | "vertical" | "both";
   wrap?: boolean;
   autoFocus?: boolean;
   onEscape?: () => void;
@@ -14,16 +14,19 @@ interface KeyboardNavigationProps extends React.HTMLAttributes<HTMLDivElement> {
 }
 
 export const KeyboardNavigation = forwardRef<HTMLDivElement, KeyboardNavigationProps>(
-  ({
-    orientation = 'both',
-    wrap = true,
-    autoFocus = false,
-    onEscape,
-    onEnter,
-    children,
-    className,
-    ...props
-  }, ref) => {
+  (
+    {
+      orientation = "both",
+      wrap = true,
+      autoFocus = false,
+      onEscape,
+      onEnter,
+      children,
+      className,
+      ...props
+    },
+    ref,
+  ) => {
     const containerRef = useRef<HTMLDivElement>(null);
     const mergedRef = ref || containerRef;
 
@@ -51,24 +54,24 @@ export const KeyboardNavigation = forwardRef<HTMLDivElement, KeyboardNavigationP
         {children}
       </div>
     );
-  }
+  },
 );
 
-KeyboardNavigation.displayName = 'KeyboardNavigation';
+KeyboardNavigation.displayName = "KeyboardNavigation";
 
 // Roving tabindex implementation for complex navigation patterns
 interface RovingTabindexProps {
   children: React.ReactNode;
-  orientation?: 'horizontal' | 'vertical';
+  orientation?: "horizontal" | "vertical";
   loop?: boolean;
   className?: string;
 }
 
 export function RovingTabindex({
   children,
-  orientation = 'horizontal',
+  orientation = "horizontal",
   loop = true,
-  className
+  className,
 }: RovingTabindexProps) {
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -81,12 +84,12 @@ export function RovingTabindex({
 
     // Set initial tabindex values
     items.forEach((item, index) => {
-      item.setAttribute('tabindex', index === 0 ? '0' : '-1');
+      item.setAttribute("tabindex", index === 0 ? "0" : "-1");
     });
 
     const updateTabindex = (newIndex: number) => {
       items.forEach((item, index) => {
-        item.setAttribute('tabindex', index === newIndex ? '0' : '-1');
+        item.setAttribute("tabindex", index === newIndex ? "0" : "-1");
       });
       currentIndex = newIndex;
       items[currentIndex]?.focus();
@@ -98,7 +101,7 @@ export function RovingTabindex({
 
       switch (key) {
         case KEYBOARD_KEYS.ARROW_RIGHT:
-          if (orientation === 'horizontal') {
+          if (orientation === "horizontal") {
             event.preventDefault();
             newIndex = loop
               ? (currentIndex + 1) % items.length
@@ -107,7 +110,7 @@ export function RovingTabindex({
           break;
 
         case KEYBOARD_KEYS.ARROW_LEFT:
-          if (orientation === 'horizontal') {
+          if (orientation === "horizontal") {
             event.preventDefault();
             newIndex = loop
               ? (currentIndex - 1 + items.length) % items.length
@@ -116,7 +119,7 @@ export function RovingTabindex({
           break;
 
         case KEYBOARD_KEYS.ARROW_DOWN:
-          if (orientation === 'vertical') {
+          if (orientation === "vertical") {
             event.preventDefault();
             newIndex = loop
               ? (currentIndex + 1) % items.length
@@ -125,7 +128,7 @@ export function RovingTabindex({
           break;
 
         case KEYBOARD_KEYS.ARROW_UP:
-          if (orientation === 'vertical') {
+          if (orientation === "vertical") {
             event.preventDefault();
             newIndex = loop
               ? (currentIndex - 1 + items.length) % items.length
@@ -158,21 +161,17 @@ export function RovingTabindex({
       }
     };
 
-    container.addEventListener('keydown', handleKeyDown);
-    container.addEventListener('focus', handleFocus, true);
+    container.addEventListener("keydown", handleKeyDown);
+    container.addEventListener("focus", handleFocus, true);
 
     return () => {
-      container.removeEventListener('keydown', handleKeyDown);
-      container.removeEventListener('focus', handleFocus, true);
+      container.removeEventListener("keydown", handleKeyDown);
+      container.removeEventListener("focus", handleFocus, true);
     };
   }, [orientation, loop]);
 
   return (
-    <div
-      ref={containerRef}
-      className={cn("focus-within:outline-none", className)}
-      role="group"
-    >
+    <div ref={containerRef} className={cn("focus-within:outline-none", className)} role="group">
       {children}
     </div>
   );
@@ -190,7 +189,7 @@ export function FocusTrap({
   children,
   active = true,
   restoreFocus = true,
-  className
+  className,
 }: FocusTrapProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const previousFocusRef = useRef<HTMLElement | null>(null);
@@ -216,10 +215,10 @@ export function FocusTrap({
       }
     };
 
-    document.addEventListener('keydown', handleKeyDown);
+    document.addEventListener("keydown", handleKeyDown);
 
     return () => {
-      document.removeEventListener('keydown', handleKeyDown);
+      document.removeEventListener("keydown", handleKeyDown);
 
       // Restore focus to the previously focused element
       if (restoreFocus && previousFocusRef.current) {
@@ -229,10 +228,7 @@ export function FocusTrap({
   }, [active, restoreFocus]);
 
   return (
-    <div
-      ref={containerRef}
-      className={cn("focus-within:outline-none", className)}
-    >
+    <div ref={containerRef} className={cn("focus-within:outline-none", className)}>
       {children}
     </div>
   );
@@ -241,14 +237,14 @@ export function FocusTrap({
 // Announcement component for screen readers
 interface AnnouncementProps {
   message: string;
-  priority?: 'polite' | 'assertive';
+  priority?: "polite" | "assertive";
   clearDelay?: number;
 }
 
 export function Announcement({
   message,
-  priority = 'polite',
-  clearDelay = 1000
+  priority = "polite",
+  clearDelay = 1000,
 }: AnnouncementProps) {
   const announcementRef = useRef<HTMLDivElement>(null);
 
@@ -259,18 +255,11 @@ export function Announcement({
     element.textContent = message;
 
     const timer = setTimeout(() => {
-      element.textContent = '';
+      element.textContent = "";
     }, clearDelay);
 
     return () => clearTimeout(timer);
   }, [message, clearDelay]);
 
-  return (
-    <div
-      ref={announcementRef}
-      aria-live={priority}
-      aria-atomic="true"
-      className="sr-only"
-    />
-  );
+  return <div ref={announcementRef} aria-live={priority} aria-atomic="true" className="sr-only" />;
 }

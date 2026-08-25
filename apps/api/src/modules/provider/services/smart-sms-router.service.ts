@@ -1,6 +1,6 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import { parsePhoneNumberWithError } from 'libphonenumber-js';
+import { Injectable, Logger } from "@nestjs/common";
+import { ConfigService } from "@nestjs/config";
+import { parsePhoneNumberWithError } from "libphonenumber-js";
 
 export interface SMSRoutingRule {
   region: string;
@@ -27,10 +27,7 @@ export class SmartSMSRouterService {
   // Performance optimization: Cache country code lookups
   private readonly countryCodeCache = new Map<string, string>();
   private readonly providerCache = new Map<string, any>();
-  private readonly healthCache = new Map<
-    string,
-    { isHealthy: boolean; lastCheck: Date }
-  >();
+  private readonly healthCache = new Map<string, { isHealthy: boolean; lastCheck: Date }>();
 
   // Cache TTL in milliseconds
   private readonly HEALTH_CACHE_TTL = 30000; // 30 seconds
@@ -39,17 +36,17 @@ export class SmartSMSRouterService {
   constructor(private configService: ConfigService) {}
 
   private static readonly DEFAULT_SMS_BY_REGION: Record<string, string> = {
-    AFRICA: 'africastalking',
-    NORTH_AMERICA: 'telnyx',
-    EUROPE: 'telnyx',
-    ASIA_PACIFIC: 'telnyx',
-    LATIN_AMERICA: 'telnyx',
-    MIDDLE_EAST: 'telnyx',
-    GLOBAL: 'telnyx',
+    AFRICA: "africastalking",
+    NORTH_AMERICA: "telnyx",
+    EUROPE: "telnyx",
+    ASIA_PACIFIC: "telnyx",
+    LATIN_AMERICA: "telnyx",
+    MIDDLE_EAST: "telnyx",
+    GLOBAL: "telnyx",
   };
 
   private getRegionalProvider(region: string): string {
-    const key = region.toUpperCase().replace(/\s+/g, '_');
+    const key = region.toUpperCase().replace(/\s+/g, "_");
     const regionKey = `SMS_${key}`;
     return (
       this.configService.get<string>(regionKey) ||
@@ -59,7 +56,7 @@ export class SmartSMSRouterService {
   }
 
   private getGlobalFallbackProvider(): string {
-    return this.configService.get<string>('SMS_GLOBAL') || 'telnyx';
+    return this.configService.get<string>("SMS_GLOBAL") || "telnyx";
   }
 
   /**
@@ -68,59 +65,59 @@ export class SmartSMSRouterService {
   private getRegionForCountry(countryCode: string): string {
     const regionMap: Record<string, string> = {
       // Africa
-      NG: 'AFRICA',
-      KE: 'AFRICA',
-      GH: 'AFRICA',
-      ZA: 'AFRICA',
-      EG: 'AFRICA',
-      TZ: 'AFRICA',
-      UG: 'AFRICA',
-      RW: 'AFRICA',
-      ET: 'AFRICA',
+      NG: "AFRICA",
+      KE: "AFRICA",
+      GH: "AFRICA",
+      ZA: "AFRICA",
+      EG: "AFRICA",
+      TZ: "AFRICA",
+      UG: "AFRICA",
+      RW: "AFRICA",
+      ET: "AFRICA",
       // North America
-      US: 'NORTH_AMERICA',
-      CA: 'NORTH_AMERICA',
+      US: "NORTH_AMERICA",
+      CA: "NORTH_AMERICA",
       // Europe
-      GB: 'EUROPE',
-      DE: 'EUROPE',
-      FR: 'EUROPE',
-      IT: 'EUROPE',
-      ES: 'EUROPE',
-      NL: 'EUROPE',
-      SE: 'EUROPE',
-      NO: 'EUROPE',
-      DK: 'EUROPE',
-      FI: 'EUROPE',
+      GB: "EUROPE",
+      DE: "EUROPE",
+      FR: "EUROPE",
+      IT: "EUROPE",
+      ES: "EUROPE",
+      NL: "EUROPE",
+      SE: "EUROPE",
+      NO: "EUROPE",
+      DK: "EUROPE",
+      FI: "EUROPE",
       // Asia Pacific
-      IN: 'ASIA_PACIFIC',
-      CN: 'ASIA_PACIFIC',
-      JP: 'ASIA_PACIFIC',
-      AU: 'ASIA_PACIFIC',
-      SG: 'ASIA_PACIFIC',
-      MY: 'ASIA_PACIFIC',
-      TH: 'ASIA_PACIFIC',
-      PH: 'ASIA_PACIFIC',
-      ID: 'ASIA_PACIFIC',
+      IN: "ASIA_PACIFIC",
+      CN: "ASIA_PACIFIC",
+      JP: "ASIA_PACIFIC",
+      AU: "ASIA_PACIFIC",
+      SG: "ASIA_PACIFIC",
+      MY: "ASIA_PACIFIC",
+      TH: "ASIA_PACIFIC",
+      PH: "ASIA_PACIFIC",
+      ID: "ASIA_PACIFIC",
       // Latin America
-      BR: 'LATIN_AMERICA',
-      MX: 'LATIN_AMERICA',
-      AR: 'LATIN_AMERICA',
-      CO: 'LATIN_AMERICA',
-      CL: 'LATIN_AMERICA',
-      PE: 'LATIN_AMERICA',
-      VE: 'LATIN_AMERICA',
-      EC: 'LATIN_AMERICA',
+      BR: "LATIN_AMERICA",
+      MX: "LATIN_AMERICA",
+      AR: "LATIN_AMERICA",
+      CO: "LATIN_AMERICA",
+      CL: "LATIN_AMERICA",
+      PE: "LATIN_AMERICA",
+      VE: "LATIN_AMERICA",
+      EC: "LATIN_AMERICA",
       // Middle East
-      AE: 'MIDDLE_EAST',
-      SA: 'MIDDLE_EAST',
-      QA: 'MIDDLE_EAST',
-      KW: 'MIDDLE_EAST',
-      BH: 'MIDDLE_EAST',
-      OM: 'MIDDLE_EAST',
-      JO: 'MIDDLE_EAST',
-      LB: 'MIDDLE_EAST',
+      AE: "MIDDLE_EAST",
+      SA: "MIDDLE_EAST",
+      QA: "MIDDLE_EAST",
+      KW: "MIDDLE_EAST",
+      BH: "MIDDLE_EAST",
+      OM: "MIDDLE_EAST",
+      JO: "MIDDLE_EAST",
+      LB: "MIDDLE_EAST",
     };
-    return regionMap[countryCode] || 'GLOBAL';
+    return regionMap[countryCode] || "GLOBAL";
   }
 
   /**
@@ -143,14 +140,14 @@ export class SmartSMSRouterService {
    */
   private getFallbackProviders(primaryProvider: string): string[] {
     const fallbackMap: Record<string, string[]> = {
-      telnyx: ['infobip', 'messagebird', 'aws_sns'],
-      africastalking: ['termii', 'telnyx', 'infobip'],
-      termii: ['telnyx', 'infobip', 'africastalking'],
-      infobip: ['telnyx', 'messagebird'],
-      messagebird: ['infobip', 'telnyx'],
-      aws_sns: ['telnyx', 'infobip'],
+      telnyx: ["infobip", "messagebird", "aws_sns"],
+      africastalking: ["termii", "telnyx", "infobip"],
+      termii: ["telnyx", "infobip", "africastalking"],
+      infobip: ["telnyx", "messagebird"],
+      messagebird: ["infobip", "telnyx"],
+      aws_sns: ["telnyx", "infobip"],
     };
-    return fallbackMap[primaryProvider] || ['telnyx', 'infobip'];
+    return fallbackMap[primaryProvider] || ["telnyx", "infobip"];
   }
 
   // Regional provider configuration is now read from environment variables
@@ -182,7 +179,7 @@ export class SmartSMSRouterService {
         const parsedNumber = parsePhoneNumberWithError(phoneNumber);
         if (!parsedNumber || !parsedNumber.country) {
           this.logger.warn(`Could not parse phone number: ${phoneNumber}`);
-          return this.getFallbackProvider('Unknown');
+          return this.getFallbackProvider("Unknown");
         }
 
         countryCode = parsedNumber.country;
@@ -200,8 +197,7 @@ export class SmartSMSRouterService {
 
       // Check if we should prefer a specific provider for conversation continuity
       if (preferredProvider) {
-        const preferredHealth =
-          await this.getCachedProviderHealth(preferredProvider);
+        const preferredHealth = await this.getCachedProviderHealth(preferredProvider);
         if (preferredHealth.isHealthy) {
           this.logger.debug(
             `Using preferred provider ${preferredProvider} for conversation continuity`,
@@ -224,13 +220,10 @@ export class SmartSMSRouterService {
       const primaryProviderId = this.getRegionalProvider(region);
 
       // Check primary provider health
-      const primaryProvider =
-        await this.getCachedProviderHealth(primaryProviderId);
+      const primaryProvider = await this.getCachedProviderHealth(primaryProviderId);
       if (primaryProvider.isHealthy) {
         const duration = Date.now() - startTime;
-        this.logger.debug(
-          `SMS routing completed in ${duration}ms for ${countryCode}`,
-        );
+        this.logger.debug(`SMS routing completed in ${duration}ms for ${countryCode}`);
 
         return {
           providerId: primaryProviderId,
@@ -252,7 +245,7 @@ export class SmartSMSRouterService {
 
       // Find first healthy fallback
       for (const result of fallbackResults) {
-        if (result.status === 'fulfilled' && result.value.isHealthy) {
+        if (result.status === "fulfilled" && result.value.isHealthy) {
           const fallbackId = result.value.providerId;
           this.logger.warn(
             `Primary provider ${primaryProviderId} unhealthy, using fallback ${fallbackId}`,
@@ -269,16 +262,11 @@ export class SmartSMSRouterService {
       }
 
       // All providers are down, use global fallback
-      this.logger.error(
-        `All providers for ${region} are unhealthy, using global fallback`,
-      );
+      this.logger.error(`All providers for ${region} are unhealthy, using global fallback`);
       return this.getFallbackProvider(countryCode);
     } catch (error) {
-      this.logger.error(
-        `Error selecting SMS provider for ${phoneNumber}:`,
-        error,
-      );
-      return this.getFallbackProvider('Error');
+      this.logger.error(`Error selecting SMS provider for ${phoneNumber}:`, error);
+      return this.getFallbackProvider("Error");
     }
   }
 
@@ -295,10 +283,7 @@ export class SmartSMSRouterService {
     const now = new Date();
 
     // Return cached result if still valid
-    if (
-      cached &&
-      now.getTime() - cached.lastCheck.getTime() < this.HEALTH_CACHE_TTL
-    ) {
+    if (cached && now.getTime() - cached.lastCheck.getTime() < this.HEALTH_CACHE_TTL) {
       return cached;
     }
 
@@ -362,12 +347,12 @@ export class SmartSMSRouterService {
 
     // Calculate cost statistics based on regional providers
     const regions = [
-      'AFRICA',
-      'NORTH_AMERICA',
-      'EUROPE',
-      'ASIA_PACIFIC',
-      'LATIN_AMERICA',
-      'MIDDLE_EAST',
+      "AFRICA",
+      "NORTH_AMERICA",
+      "EUROPE",
+      "ASIA_PACIFIC",
+      "LATIN_AMERICA",
+      "MIDDLE_EAST",
     ];
     const costs = regions.map((region) => {
       const provider = this.getRegionalProvider(region);
@@ -376,8 +361,8 @@ export class SmartSMSRouterService {
     const averageCost = costs.reduce((a, b) => a + b, 0) / costs.length;
 
     // Find cheapest and most expensive regions
-    let cheapestRegion = '';
-    let mostExpensiveRegion = '';
+    let cheapestRegion = "";
+    let mostExpensiveRegion = "";
     let cheapestCost = Infinity;
     let mostExpensiveCost = 0;
 
@@ -400,8 +385,8 @@ export class SmartSMSRouterService {
       providerHealth,
       costSavings: {
         averageCost,
-        cheapestRegion: cheapestRegion.replace(/_/g, ' '),
-        mostExpensiveRegion: mostExpensiveRegion.replace(/_/g, ' '),
+        cheapestRegion: cheapestRegion.replace(/_/g, " "),
+        mostExpensiveRegion: mostExpensiveRegion.replace(/_/g, " "),
       },
     };
   }
@@ -414,12 +399,8 @@ export class SmartSMSRouterService {
   updateRegionalProvider(region: string, providerId: string): void {
     // Note: In a real implementation, this would update environment variables
     // or a configuration store. For now, this is informational.
-    this.logger.log(
-      `Regional provider update requested: ${region} -> ${providerId}`,
-    );
-    this.logger.warn(
-      `To change regional providers, update SMS_${region} in environment variables`,
-    );
+    this.logger.log(`Regional provider update requested: ${region} -> ${providerId}`);
+    this.logger.warn(`To change regional providers, update SMS_${region} in environment variables`);
   }
 
   /**
@@ -445,12 +426,12 @@ export class SmartSMSRouterService {
   }> {
     // Calculate cost statistics based on regional providers
     const regions = [
-      'AFRICA',
-      'NORTH_AMERICA',
-      'EUROPE',
-      'ASIA_PACIFIC',
-      'LATIN_AMERICA',
-      'MIDDLE_EAST',
+      "AFRICA",
+      "NORTH_AMERICA",
+      "EUROPE",
+      "ASIA_PACIFIC",
+      "LATIN_AMERICA",
+      "MIDDLE_EAST",
     ];
     const costs = regions.map((region) => {
       const provider = this.getRegionalProvider(region);
@@ -459,8 +440,8 @@ export class SmartSMSRouterService {
     const averageCost = costs.reduce((a, b) => a + b, 0) / costs.length;
 
     // Find cheapest and most expensive providers
-    let cheapestProvider = '';
-    let mostExpensiveProvider = '';
+    let cheapestProvider = "";
+    let mostExpensiveProvider = "";
     let cheapestCost = Infinity;
     let mostExpensiveCost = 0;
 
@@ -481,8 +462,7 @@ export class SmartSMSRouterService {
     const providerDistribution: Record<string, number> = {};
     regions.forEach((region) => {
       const provider = this.getRegionalProvider(region);
-      providerDistribution[provider] =
-        (providerDistribution[provider] || 0) + 1;
+      providerDistribution[provider] = (providerDistribution[provider] || 0) + 1;
     });
 
     // Convert to percentages
@@ -519,7 +499,7 @@ export class SmartSMSRouterService {
   clearCaches(): void {
     this.countryCodeCache.clear();
     this.healthCache.clear();
-    this.logger.log('SMS router caches cleared');
+    this.logger.log("SMS router caches cleared");
   }
 
   /**
@@ -571,13 +551,13 @@ export class SmartSMSRouterService {
    */
   private getProviderName(providerId: string): string {
     const names = {
-      africastalking: 'AfricasTalking',
-      termii: 'Termii',
-      infobip: 'Infobip',
-      telnyx: 'Telnyx',
-      messagebird: 'MessageBird',
-      aws_sns: 'AWS SNS',
-      google_phone: 'Google Phone Numbers',
+      africastalking: "AfricasTalking",
+      termii: "Termii",
+      infobip: "Infobip",
+      telnyx: "Telnyx",
+      messagebird: "MessageBird",
+      aws_sns: "AWS SNS",
+      google_phone: "Google Phone Numbers",
     };
     return names[providerId] || providerId;
   }
@@ -590,12 +570,12 @@ export class SmartSMSRouterService {
 
     // Add providers from regional defaults
     const regions = [
-      'AFRICA',
-      'NORTH_AMERICA',
-      'EUROPE',
-      'ASIA_PACIFIC',
-      'LATIN_AMERICA',
-      'MIDDLE_EAST',
+      "AFRICA",
+      "NORTH_AMERICA",
+      "EUROPE",
+      "ASIA_PACIFIC",
+      "LATIN_AMERICA",
+      "MIDDLE_EAST",
     ];
     regions.forEach((region) => {
       const primary = this.getRegionalProvider(region);

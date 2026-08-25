@@ -1,6 +1,6 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { InjectDataSource } from '@nestjs/typeorm';
-import { DataSource } from 'typeorm';
+import { Injectable, Logger } from "@nestjs/common";
+import { InjectDataSource } from "@nestjs/typeorm";
+import { DataSource } from "typeorm";
 
 @Injectable()
 export class TenantSchemaService {
@@ -19,19 +19,14 @@ export class TenantSchemaService {
 
     try {
       // Create schema
-      await this.dataSource.query(
-        `CREATE SCHEMA IF NOT EXISTS "${schemaName}"`,
-      );
+      await this.dataSource.query(`CREATE SCHEMA IF NOT EXISTS "${schemaName}"`);
 
       // Create tenant-specific tables by copying structure from public schema
       await this.createTenantTables(schemaName);
 
       this.logger.log(`Created schema for tenant: ${tenantId}`);
     } catch (error) {
-      this.logger.error(
-        `Failed to create schema for tenant ${tenantId}:`,
-        error,
-      );
+      this.logger.error(`Failed to create schema for tenant ${tenantId}:`, error);
       throw error;
     }
   }
@@ -43,9 +38,7 @@ export class TenantSchemaService {
     const schemaName = this.getTenantSchemaName(tenantId);
 
     try {
-      await this.dataSource.query(
-        `DROP SCHEMA IF EXISTS "${schemaName}" CASCADE`,
-      );
+      await this.dataSource.query(`DROP SCHEMA IF EXISTS "${schemaName}" CASCADE`);
       this.logger.log(`Dropped schema for tenant: ${tenantId}`);
     } catch (error) {
       this.logger.error(`Failed to drop schema for tenant ${tenantId}:`, error);
@@ -105,10 +98,7 @@ export class TenantSchemaService {
 
       this.logger.log(`Migrated schema for tenant: ${tenantId}`);
     } catch (error) {
-      this.logger.error(
-        `Failed to migrate schema for tenant ${tenantId}:`,
-        error,
-      );
+      this.logger.error(`Failed to migrate schema for tenant ${tenantId}:`, error);
       throw error;
     }
   }
@@ -166,7 +156,7 @@ export class TenantSchemaService {
 
     return {
       tableCount: parseInt(tableCountResult[0].count),
-      totalSize: sizeResult[0]?.size || '0 bytes',
+      totalSize: sizeResult[0]?.size || "0 bytes",
       recordCounts,
     };
   }
@@ -175,7 +165,7 @@ export class TenantSchemaService {
    * Generate tenant schema name
    */
   private getTenantSchemaName(tenantId: string): string {
-    return `tenant_${tenantId.replace(/-/g, '_')}`;
+    return `tenant_${tenantId.replace(/-/g, "_")}`;
   }
 
   /**
@@ -184,10 +174,10 @@ export class TenantSchemaService {
   private async createTenantTables(schemaName: string): Promise<void> {
     // List of tables that should be created per tenant
     const tenantTables = [
-      'notifications',
-      'notification_deliveries',
-      'templates',
-      'provider_configs',
+      "notifications",
+      "notification_deliveries",
+      "templates",
+      "provider_configs",
     ];
 
     for (const tableName of tenantTables) {
@@ -198,10 +188,7 @@ export class TenantSchemaService {
   /**
    * Create a specific table in tenant schema
    */
-  private async createTableInSchema(
-    schemaName: string,
-    tableName: string,
-  ): Promise<void> {
+  private async createTableInSchema(schemaName: string, tableName: string): Promise<void> {
     try {
       // Copy table structure from public schema to tenant schema
       await this.dataSource.query(`
@@ -210,9 +197,7 @@ export class TenantSchemaService {
       `);
     } catch (error) {
       // If table doesn't exist in public schema, skip
-      this.logger.warn(
-        `Table ${tableName} not found in public schema, skipping`,
-      );
+      this.logger.warn(`Table ${tableName} not found in public schema, skipping`);
     }
   }
 
@@ -220,7 +205,7 @@ export class TenantSchemaService {
    * Get current search path
    */
   private async getCurrentSearchPath(): Promise<string> {
-    const result = await this.dataSource.query('SHOW search_path');
+    const result = await this.dataSource.query("SHOW search_path");
     return result[0].search_path;
   }
 }

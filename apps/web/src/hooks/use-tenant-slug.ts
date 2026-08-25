@@ -1,9 +1,9 @@
-'use client';
+"use client";
 
-import { apiClient } from '@/lib/api/client';
-import { useTenant } from '@/contexts/tenant-context';
-import { useParams } from '@tanstack/react-router';
-import { useEffect, useMemo } from 'react';
+import { apiClient } from "@/lib/api/client";
+import { useTenant } from "@/contexts/tenant-context";
+import { useParams } from "@tanstack/react-router";
+import { useEffect, useMemo } from "react";
 
 export function useTenantSlug(): string | undefined {
   const params = useParams({ strict: false }) as { tenantSlug?: string };
@@ -14,12 +14,8 @@ export function useTenantBasePath(): string {
   const slug = useTenantSlug();
   const { selectedTenant } = useTenant();
   const resolved =
-    slug ||
-    selectedTenant?.subdomain ||
-    selectedTenant?.slug ||
-    selectedTenant?.id ||
-    '';
-  return resolved ? `/${resolved}` : '';
+    slug || selectedTenant?.subdomain || selectedTenant?.slug || selectedTenant?.id || "";
+  return resolved ? `/${resolved}` : "";
 }
 
 export function useEnsureTenantFromSlug() {
@@ -29,10 +25,7 @@ export function useEnsureTenantFromSlug() {
   const matchedTenant = useMemo(() => {
     if (!tenantSlug) return null;
     return tenants.find(
-      (t) =>
-        t.slug === tenantSlug ||
-        t.subdomain === tenantSlug ||
-        t.id === tenantSlug,
+      (t) => t.slug === tenantSlug || t.subdomain === tenantSlug || t.id === tenantSlug,
     );
   }, [tenantSlug, tenants]);
 

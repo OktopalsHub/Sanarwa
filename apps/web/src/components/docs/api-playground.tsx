@@ -1,28 +1,34 @@
-'use client';
+"use client";
 
-import { Send } from '@/lib/icons';
+import { Send } from "@/lib/icons";
 
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Textarea } from '@/components/ui/textarea';
-import { toast } from '@/lib/utils/toast';
-import { ExclamationCircleIcon, CheckIcon, DocumentDuplicateIcon, ArrowPathIcon, PlayIcon } from '@heroicons/react/24/outline'
-import { useState } from 'react';
-import { CodeBlock } from './code-block';
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Textarea } from "@/components/ui/textarea";
+import { toast } from "@/lib/utils/toast";
+import {
+  ExclamationCircleIcon,
+  CheckIcon,
+  DocumentDuplicateIcon,
+  ArrowPathIcon,
+  PlayIcon,
+} from "@heroicons/react/24/outline";
+import { useState } from "react";
+import { CodeBlock } from "./code-block";
 
 interface ApiEndpoint {
   id: string;
-  method: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH';
+  method: "GET" | "POST" | "PUT" | "DELETE" | "PATCH";
   path: string;
   description: string;
   parameters?: {
     name: string;
     type: string;
-    in: 'query' | 'path' | 'header' | 'body';
+    in: "query" | "path" | "header" | "body";
     required: boolean;
     description: string;
     example?: any;
@@ -45,15 +51,19 @@ interface ApiPlaygroundProps {
   onExecute?: (request: any) => Promise<any>;
 }
 
-export function ApiPlayground({ endpoint, baseUrl = 'https://api.notifi.com', onExecute }: ApiPlaygroundProps) {
+export function ApiPlayground({
+  endpoint,
+  baseUrl = "https://api.notifi.com",
+  onExecute,
+}: ApiPlaygroundProps) {
   const [isExecuting, setIsExecuting] = useState(false);
   const [response, setResponse] = useState<any>(null);
-  const [error, setError] = useState<string>('');
+  const [error, setError] = useState<string>("");
   const [parameters, setParameters] = useState<Record<string, any>>({});
-  const [requestBody, setRequestBody] = useState<string>('');
+  const [requestBody, setRequestBody] = useState<string>("");
   const [headers, setHeaders] = useState<Record<string, string>>({
-    'Content-Type': 'application/json',
-    'Authorization': 'Bearer YOUR_API_KEY'
+    "Content-Type": "application/json",
+    Authorization: "Bearer YOUR_API_KEY",
   });
   const [copied, setCopied] = useState(false);
 
@@ -61,16 +71,16 @@ export function ApiPlayground({ endpoint, baseUrl = 'https://api.notifi.com', on
     try {
       await navigator.clipboard.writeText(text);
       setCopied(true);
-      toast.success('Copied to clipboard');
+      toast.success("Copied to clipboard");
       setTimeout(() => setCopied(false), 2000);
     } catch (err) {
-      toast.error('Failed to copy');
+      toast.error("Failed to copy");
     }
   };
 
   const handleExecute = async () => {
     setIsExecuting(true);
-    setError('');
+    setError("");
     setResponse(null);
 
     try {
@@ -79,7 +89,7 @@ export function ApiPlayground({ endpoint, baseUrl = 'https://api.notifi.com', on
 
       // Replace path parameters
       Object.entries(parameters).forEach(([key, value]) => {
-        if (endpoint.parameters?.find(p => p.name === key && p.in === 'path')) {
+        if (endpoint.parameters?.find((p) => p.name === key && p.in === "path")) {
           url = url.replace(`{${key}}`, encodeURIComponent(value));
         }
       });
@@ -87,7 +97,7 @@ export function ApiPlayground({ endpoint, baseUrl = 'https://api.notifi.com', on
       // Add query parameters
       const queryParams = new URLSearchParams();
       Object.entries(parameters).forEach(([key, value]) => {
-        if (endpoint.parameters?.find(p => p.name === key && p.in === 'query') && value) {
+        if (endpoint.parameters?.find((p) => p.name === key && p.in === "query") && value) {
           queryParams.append(key, value);
         }
       });
@@ -99,7 +109,7 @@ export function ApiPlayground({ endpoint, baseUrl = 'https://api.notifi.com', on
         method: endpoint.method,
         url,
         headers,
-        body: requestBody ? JSON.parse(requestBody) : undefined
+        body: requestBody ? JSON.parse(requestBody) : undefined,
       };
 
       let result;
@@ -107,27 +117,27 @@ export function ApiPlayground({ endpoint, baseUrl = 'https://api.notifi.com', on
         result = await onExecute(request);
       } else {
         // Simulate API call for demo purposes
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        await new Promise((resolve) => setTimeout(resolve, 1000));
         result = {
           status: 200,
-          data: endpoint.responses.find(r => r.status === 200)?.example || { message: 'Success' }
+          data: endpoint.responses.find((r) => r.status === 200)?.example || { message: "Success" },
         };
       }
 
       setResponse(result);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred');
+      setError(err instanceof Error ? err.message : "An error occurred");
     } finally {
       setIsExecuting(false);
     }
   };
 
   const handleParameterChange = (name: string, value: any) => {
-    setParameters(prev => ({ ...prev, [name]: value }));
+    setParameters((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleHeaderChange = (key: string, value: string) => {
-    setHeaders(prev => ({ ...prev, [key]: value }));
+    setHeaders((prev) => ({ ...prev, [key]: value }));
   };
 
   const generateCurlCommand = () => {
@@ -135,7 +145,7 @@ export function ApiPlayground({ endpoint, baseUrl = 'https://api.notifi.com', on
 
     // Replace path parameters
     Object.entries(parameters).forEach(([key, value]) => {
-      if (endpoint.parameters?.find(p => p.name === key && p.in === 'path')) {
+      if (endpoint.parameters?.find((p) => p.name === key && p.in === "path")) {
         url = url.replace(`{${key}}`, encodeURIComponent(value));
       }
     });
@@ -143,7 +153,7 @@ export function ApiPlayground({ endpoint, baseUrl = 'https://api.notifi.com', on
     // Add query parameters
     const queryParams = new URLSearchParams();
     Object.entries(parameters).forEach(([key, value]) => {
-      if (endpoint.parameters?.find(p => p.name === key && p.in === 'query') && value) {
+      if (endpoint.parameters?.find((p) => p.name === key && p.in === "query") && value) {
         queryParams.append(key, value);
       }
     });
@@ -159,7 +169,7 @@ export function ApiPlayground({ endpoint, baseUrl = 'https://api.notifi.com', on
     });
 
     // Add body
-    if (requestBody && ['POST', 'PUT', 'PATCH'].includes(endpoint.method)) {
+    if (requestBody && ["POST", "PUT", "PATCH"].includes(endpoint.method)) {
       curl += ` \\\n  -d '${requestBody}'`;
     }
 
@@ -172,7 +182,7 @@ export function ApiPlayground({ endpoint, baseUrl = 'https://api.notifi.com', on
         <div className="flex items-center justify-between">
           <div>
             <CardTitle className="text-lg flex items-center gap-2">
-              <Badge variant={endpoint.method === 'GET' ? 'secondary' : 'default'}>
+              <Badge variant={endpoint.method === "GET" ? "secondary" : "default"}>
                 {endpoint.method}
               </Badge>
               {endpoint.path}
@@ -198,14 +208,20 @@ export function ApiPlayground({ endpoint, baseUrl = 'https://api.notifi.com', on
                   <div key={param.name} className="space-y-2">
                     <Label htmlFor={param.name} className="flex items-center gap-2">
                       {param.name}
-                      <Badge variant="outline" className="text-xs">{param.in}</Badge>
-                      {param.required && <Badge variant="destructive" className="text-xs">Required</Badge>}
+                      <Badge variant="outline" className="text-xs">
+                        {param.in}
+                      </Badge>
+                      {param.required && (
+                        <Badge variant="destructive" className="text-xs">
+                          Required
+                        </Badge>
+                      )}
                     </Label>
                     <div className="space-y-1">
                       <Input
                         id={param.name}
                         placeholder={param.example ? String(param.example) : `Enter ${param.name}`}
-                        value={parameters[param.name] || ''}
+                        value={parameters[param.name] || ""}
                         onChange={(e) => handleParameterChange(param.name, e.target.value)}
                       />
                       <p className="text-xs text-muted-foreground">{param.description}</p>
@@ -262,7 +278,7 @@ export function ApiPlayground({ endpoint, baseUrl = 'https://api.notifi.com', on
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => setHeaders(prev => ({ ...prev, '': '' }))}
+                onClick={() => setHeaders((prev) => ({ ...prev, "": "" }))}
               >
                 Add Header
               </Button>
@@ -281,7 +297,7 @@ export function ApiPlayground({ endpoint, baseUrl = 'https://api.notifi.com', on
                 ) : (
                   <PlayIcon className="h-4 w-4" />
                 )}
-                {isExecuting ? 'Executing...' : 'Send Request'}
+                {isExecuting ? "Executing..." : "Send Request"}
               </Button>
             </div>
 
@@ -290,21 +306,20 @@ export function ApiPlayground({ endpoint, baseUrl = 'https://api.notifi.com', on
                 <ExclamationCircleIcon className="h-4 w-4 text-destructive mt-0.5" />
                 <div>
                   <p className="font-medium text-destructive">Error</p>
-                  <pre className="text-sm text-destructive/80 mt-1 whitespace-pre-wrap">{error}</pre>
+                  <pre className="text-sm text-destructive/80 mt-1 whitespace-pre-wrap">
+                    {error}
+                  </pre>
                 </div>
               </div>
             ) : response ? (
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <p className="text-sm font-medium">Response:</p>
-                  <Badge variant={response.status < 400 ? 'default' : 'destructive'}>
+                  <Badge variant={response.status < 400 ? "default" : "destructive"}>
                     {response.status}
                   </Badge>
                 </div>
-                <CodeBlock
-                  language="json"
-                  showLineNumbers={false}
-                >
+                <CodeBlock language="json" showLineNumbers={false}>
                   {JSON.stringify(response.data || response, null, 2)}
                 </CodeBlock>
               </div>
@@ -316,15 +331,12 @@ export function ApiPlayground({ endpoint, baseUrl = 'https://api.notifi.com', on
                   {endpoint.responses.map((resp) => (
                     <div key={resp.status} className="border rounded-lg p-3">
                       <div className="flex items-center gap-2 mb-2">
-                        <Badge variant={resp.status < 400 ? 'default' : 'destructive'}>
+                        <Badge variant={resp.status < 400 ? "default" : "destructive"}>
                           {resp.status}
                         </Badge>
                         <span className="text-sm">{resp.description}</span>
                       </div>
-                      <CodeBlock
-                        language="json"
-                        showLineNumbers={false}
-                      >
+                      <CodeBlock language="json" showLineNumbers={false}>
                         {JSON.stringify(resp.example, null, 2)}
                       </CodeBlock>
                     </div>
@@ -351,10 +363,7 @@ export function ApiPlayground({ endpoint, baseUrl = 'https://api.notifi.com', on
                   )}
                 </Button>
               </div>
-              <CodeBlock
-                language="bash"
-                showLineNumbers={false}
-              >
+              <CodeBlock language="bash" showLineNumbers={false}>
                 {generateCurlCommand()}
               </CodeBlock>
             </div>

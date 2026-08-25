@@ -1,25 +1,25 @@
-import { Test, TestingModule } from '@nestjs/testing';
-import { Channel, ProviderConfig, ProviderHealth } from '../types';
-import { EmailPayload } from './email-provider.interface';
-import { SESEmailProvider } from './ses-email-provider';
-import type { Mock } from 'vitest';
+import { Test, TestingModule } from "@nestjs/testing";
+import { Channel, ProviderConfig, ProviderHealth } from "../types";
+import { EmailPayload } from "./email-provider.interface";
+import { SESEmailProvider } from "./ses-email-provider";
+import type { Mock } from "vitest";
 
 // Mock AWS SDK
 const mockSend = vi.fn();
 const mockDestroy = vi.fn();
 
-vi.mock('@aws-sdk/client-ses', () => ({
+vi.mock("@aws-sdk/client-ses", () => ({
   SESClient: vi.fn().mockImplementation(() => ({
     send: mockSend,
     destroy: mockDestroy,
-    config: { region: 'us-east-1' },
+    config: { region: "us-east-1" },
   })),
   SendEmailCommand: vi.fn().mockImplementation((params) => params),
   GetSendQuotaCommand: vi.fn().mockImplementation((params) => params),
   GetSendStatisticsCommand: vi.fn().mockImplementation((params) => params),
 }));
 
-describe('SESEmailProvider', () => {
+describe("SESEmailProvider", () => {
   let provider: SESEmailProvider;
   let mockSESClient: any;
   let validConfig: ProviderConfig;
@@ -32,25 +32,25 @@ describe('SESEmailProvider', () => {
     provider = module.get<SESEmailProvider>(SESEmailProvider);
 
     validConfig = {
-      id: 'ses-provider',
-      name: 'SES Email Provider',
+      id: "ses-provider",
+      name: "SES Email Provider",
       channel: Channel.EMAIL,
       priority: 1,
       isActive: true,
       credentials: {
-        fromEmail: 'test@example.com',
-        region: 'us-east-1',
-        apiKey: 'test-key',
-        secretKey: 'test-secret',
+        fromEmail: "test@example.com",
+        region: "us-east-1",
+        apiKey: "test-key",
+        secretKey: "test-secret",
       },
     };
 
     // Reset mocks
     mockSend.mockReset();
     mockDestroy.mockReset();
-    
+
     // Get the mocked SES client
-    const { SESClient } = require('@aws-sdk/client-ses');
+    const { SESClient } = require("@aws-sdk/client-ses");
     mockSESClient = { send: mockSend, destroy: mockDestroy };
   });
 
@@ -61,147 +61,145 @@ describe('SESEmailProvider', () => {
     vi.clearAllMocks();
   });
 
-  describe('initialization', () => {
-    it('should initialize successfully with valid config', async () => {
+  describe("initialization", () => {
+    it("should initialize successfully with valid config", async () => {
       await provider.initialize(validConfig);
 
       expect(provider.isInitialized).toBe(true);
-      expect(provider.id).toBe('ses');
-      expect(provider.name).toBe('AWS SES');
+      expect(provider.id).toBe("ses");
+      expect(provider.name).toBe("AWS SES");
       expect(provider.channel).toBe(Channel.EMAIL);
     });
 
-    it('should fail initialization with missing fromEmail', async () => {
+    it("should fail initialization with missing fromEmail", async () => {
       const invalidConfig = {
         ...validConfig,
-        credentials: { ...validConfig.credentials, fromEmail: '' },
+        credentials: { ...validConfig.credentials, fromEmail: "" },
       };
 
       await expect(provider.initialize(invalidConfig)).rejects.toThrow(
-        'Invalid configuration for provider AWS SES',
+        "Invalid configuration for provider AWS SES",
       );
     });
 
-    it('should fail initialization with invalid email format', async () => {
+    it("should fail initialization with invalid email format", async () => {
       const invalidConfig = {
         ...validConfig,
-        credentials: { ...validConfig.credentials, fromEmail: 'invalid-email' },
+        credentials: { ...validConfig.credentials, fromEmail: "invalid-email" },
       };
 
       await expect(provider.initialize(invalidConfig)).rejects.toThrow(
-        'Invalid configuration for provider AWS SES',
+        "Invalid configuration for provider AWS SES",
       );
     });
   });
 
-  describe('sending emails', () => {
+  describe("sending emails", () => {
     beforeEach(async () => {
       await provider.initialize(validConfig);
     });
 
-    it('should send email successfully', async () => {
-      const mockResult = { MessageId: 'test-message-id' };
+    it("should send email successfully", async () => {
+      const mockResult = { MessageId: "test-message-id" };
       mockSend.mockResolvedValue(mockResult);
 
       const payload: EmailPayload = {
-        recipient: 'recipient@example.com',
-        subject: 'Test Subject',
-        htmlContent: '<p>Test HTML content</p>',
-        textContent: 'Test text content',
+        recipient: "recipient@example.com",
+        subject: "Test Subject",
+        htmlContent: "<p>Test HTML content</p>",
+        textContent: "Test text content",
         data: {},
       };
 
       const response = await provider.send(payload);
 
-      expect(response.status).toBe('sent');
-      expect(response.providerMessageId).toBe('test-message-id');
+      expect(response.status).toBe("sent");
+      expect(response.providerMessageId).toBe("test-message-id");
       expect(mockSend).toHaveBeenCalledTimes(1);
     });
 
-    it('should handle SES errors', async () => {
-      mockSend.mockRejectedValue(new Error('SES API Error'));
+    it("should handle SES errors", async () => {
+      mockSend.mockRejectedValue(new Error("SES API Error"));
 
       const payload: EmailPayload = {
-        recipient: 'recipient@example.com',
-        subject: 'Test Subject',
-        htmlContent: '<p>Test content</p>',
+        recipient: "recipient@example.com",
+        subject: "Test Subject",
+        htmlContent: "<p>Test content</p>",
         data: {},
       };
 
       const response = await provider.send(payload);
 
-      expect(response.status).toBe('failed');
-      expect(response.error).toContain('SES Error: SES API Error');
+      expect(response.status).toBe("failed");
+      expect(response.error).toContain("SES Error: SES API Error");
     });
 
-    it('should use custom from address when provided', async () => {
-      const mockResult = { MessageId: 'test-message-id' };
+    it("should use custom from address when provided", async () => {
+      const mockResult = { MessageId: "test-message-id" };
       mockSend.mockResolvedValue(mockResult);
 
       const payload: EmailPayload = {
-        recipient: 'recipient@example.com',
-        subject: 'Test Subject',
-        htmlContent: '<p>Test content</p>',
-        from: 'custom@example.com',
+        recipient: "recipient@example.com",
+        subject: "Test Subject",
+        htmlContent: "<p>Test content</p>",
+        from: "custom@example.com",
         data: {},
       };
 
       await provider.send(payload);
 
       const sendCall = mockSend.mock.calls[0][0];
-      expect(sendCall.Source).toBe('custom@example.com');
+      expect(sendCall.Source).toBe("custom@example.com");
     });
 
-    it('should fail when provider not initialized', async () => {
+    it("should fail when provider not initialized", async () => {
       await provider.destroy();
 
       const payload: EmailPayload = {
-        recipient: 'recipient@example.com',
-        subject: 'Test Subject',
-        htmlContent: '<p>Test content</p>',
+        recipient: "recipient@example.com",
+        subject: "Test Subject",
+        htmlContent: "<p>Test content</p>",
         data: {},
       };
 
       const response = await provider.send(payload);
 
-      expect(response.status).toBe('failed');
-      expect(response.error).toBe('Provider not initialized');
+      expect(response.status).toBe("failed");
+      expect(response.error).toBe("Provider not initialized");
     });
   });
 
-  describe('health checks', () => {
+  describe("health checks", () => {
     beforeEach(async () => {
       await provider.initialize(validConfig);
     });
 
-    it('should return healthy status when SES is accessible', async () => {
+    it("should return healthy status when SES is accessible", async () => {
       mockSend.mockResolvedValue({ Max24HourSend: 200 });
 
       const healthStatus = await provider.checkHealth();
 
       expect(healthStatus.status).toBe(ProviderHealth.HEALTHY);
-      expect(healthStatus.metadata?.service).toBe('AWS SES');
+      expect(healthStatus.metadata?.service).toBe("AWS SES");
     });
 
-    it('should return unhealthy status when SES is not accessible', async () => {
-      mockSend.mockRejectedValue(new Error('Connection failed'));
+    it("should return unhealthy status when SES is not accessible", async () => {
+      mockSend.mockRejectedValue(new Error("Connection failed"));
 
       const healthStatus = await provider.checkHealth();
 
       expect(healthStatus.status).toBe(ProviderHealth.UNHEALTHY);
-      expect(healthStatus.metadata?.error).toContain('SES health check failed');
+      expect(healthStatus.metadata?.error).toContain("SES health check failed");
     });
   });
 
-  describe('SES-specific methods', () => {
+  describe("SES-specific methods", () => {
     beforeEach(async () => {
       await provider.initialize(validConfig);
     });
 
-    it('should get sending statistics', async () => {
-      const mockStats = [
-        { DeliveryDelay: 0, Bounces: 0, Complaints: 0, Rejects: 0 },
-      ];
+    it("should get sending statistics", async () => {
+      const mockStats = [{ DeliveryDelay: 0, Bounces: 0, Complaints: 0, Rejects: 0 }];
       mockSend.mockResolvedValue({ SendDataPoints: mockStats });
 
       const stats = await provider.getSendingStatistics();
@@ -209,7 +207,7 @@ describe('SESEmailProvider', () => {
       expect(stats).toEqual(mockStats);
     });
 
-    it('should get send quota', async () => {
+    it("should get send quota", async () => {
       const mockQuota = {
         Max24HourSend: 200,
         MaxSendRate: 1,
@@ -227,13 +225,9 @@ describe('SESEmailProvider', () => {
     });
   });
 
-  describe('configuration validation', () => {
-    it('should validate email addresses correctly', async () => {
-      const validEmails = [
-        'test@example.com',
-        'user.name@domain.co.uk',
-        'user+tag@example.org',
-      ];
+  describe("configuration validation", () => {
+    it("should validate email addresses correctly", async () => {
+      const validEmails = ["test@example.com", "user.name@domain.co.uk", "user+tag@example.org"];
 
       for (const email of validEmails) {
         const config = {
@@ -246,13 +240,8 @@ describe('SESEmailProvider', () => {
       }
     });
 
-    it('should reject invalid email addresses', async () => {
-      const invalidEmails = [
-        'invalid-email',
-        '@example.com',
-        'test@',
-        'test.example.com',
-      ];
+    it("should reject invalid email addresses", async () => {
+      const invalidEmails = ["invalid-email", "@example.com", "test@", "test.example.com"];
 
       for (const email of invalidEmails) {
         const config = {

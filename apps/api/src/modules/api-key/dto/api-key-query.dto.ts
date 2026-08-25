@@ -1,11 +1,11 @@
-import { ApiPropertyOptional } from '@nestjs/swagger';
-import { IsEnum, IsOptional, IsString } from 'class-validator';
-import { PaginationDto } from '../../../common/dto/pagination.dto';
-import { ApiKeyStatus, ApiKeyEnvironment } from '../entities/api-key.entity';
+import { ApiPropertyOptional } from "@nestjs/swagger";
+import { IsEnum, IsOptional, IsString } from "class-validator";
+import { PaginationDto } from "../../../common/dto/pagination.dto";
+import { ApiKeyStatus, ApiKeyEnvironment } from "../entities/api-key.entity";
 
 export class ApiKeyQueryDto extends PaginationDto {
   @ApiPropertyOptional({
-    description: 'Filter by API key status',
+    description: "Filter by API key status",
     enum: ApiKeyStatus,
     example: ApiKeyStatus.ACTIVE,
     type: String,
@@ -15,7 +15,7 @@ export class ApiKeyQueryDto extends PaginationDto {
   status?: ApiKeyStatus;
 
   @ApiPropertyOptional({
-    description: 'Filter by API key environment',
+    description: "Filter by API key environment",
     enum: ApiKeyEnvironment,
     example: ApiKeyEnvironment.PRODUCTION,
     type: String,
@@ -25,8 +25,8 @@ export class ApiKeyQueryDto extends PaginationDto {
   environment?: ApiKeyEnvironment;
 
   @ApiPropertyOptional({
-    description: 'Search in API key name or prefix',
-    example: 'Production',
+    description: "Search in API key name or prefix",
+    example: "Production",
     type: String,
   })
   @IsOptional()
@@ -34,9 +34,9 @@ export class ApiKeyQueryDto extends PaginationDto {
   search?: string;
 
   @ApiPropertyOptional({
-    description: 'Field to sort by',
-    default: 'createdAt',
-    example: 'createdAt',
+    description: "Field to sort by",
+    default: "createdAt",
+    example: "createdAt",
     type: String,
   })
   @IsOptional()
@@ -44,12 +44,12 @@ export class ApiKeyQueryDto extends PaginationDto {
   sortBy?: string;
 
   @ApiPropertyOptional({
-    description: 'Sort order',
-    enum: ['ASC', 'DESC'],
-    default: 'DESC',
+    description: "Sort order",
+    enum: ["ASC", "DESC"],
+    default: "DESC",
     type: String,
   })
   @IsOptional()
-  @IsEnum(['ASC', 'DESC'])
-  sortOrder?: 'ASC' | 'DESC';
+  @IsEnum(["ASC", "DESC"])
+  sortOrder?: "ASC" | "DESC";
 }

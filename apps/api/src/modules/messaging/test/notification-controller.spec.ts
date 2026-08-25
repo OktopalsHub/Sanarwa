@@ -1,19 +1,19 @@
-import { Test, TestingModule } from '@nestjs/testing';
-import { Tenant } from '../../tenant/entities/tenant.entity';
-import { MessagingController } from '../messaging.controller';
-import { MessageChannel, MessagePriority, MessageStatus } from '../message.entity';
-import { MessagingService } from '../messaging.service';
+import { Test, TestingModule } from "@nestjs/testing";
+import { Tenant } from "../../tenant/entities/tenant.entity";
+import { MessagingController } from "../messaging.controller";
+import { MessageChannel, MessagePriority, MessageStatus } from "../message.entity";
+import { MessagingService } from "../messaging.service";
 
-describe('MessagingController', () => {
+describe("MessagingController", () => {
   let controller: MessagingController;
   let service: MessagingService;
 
   const mockTenant = {
-    id: 'tenant-1',
-    name: 'Test Tenant',
-    subdomain: 'test-tenant',
-    inviteCode: 'ABC123',
-    status: 'active' as any,
+    id: "tenant-1",
+    name: "Test Tenant",
+    subdomain: "test-tenant",
+    inviteCode: "ABC123",
+    status: "active" as any,
     quotas: {
       notifications: {
         daily: 1000,
@@ -62,31 +62,31 @@ describe('MessagingController', () => {
     vi.clearAllMocks();
   });
 
-  describe('POST /notifications', () => {
-    it('should send a notification successfully', async () => {
+  describe("POST /notifications", () => {
+    it("should send a notification successfully", async () => {
       const request = {
-        tenantId: 'original-tenant-id', // This should be overridden
+        tenantId: "original-tenant-id", // This should be overridden
         channels: [MessageChannel.EMAIL],
         recipients: [
           {
-            id: 'recipient-1',
-            email: 'test@example.com',
+            id: "recipient-1",
+            email: "test@example.com",
           },
         ],
-        data: { name: 'John Doe' },
+        data: { name: "John Doe" },
         priority: MessagePriority.NORMAL,
-        subject: 'Test Subject',
-        content: 'Test Content',
+        subject: "Test Subject",
+        content: "Test Content",
       };
 
       const expectedResponse = {
-        id: 'message-1',
+        id: "message-1",
         tenantId: mockTenant.id,
         channels: [MessageChannel.EMAIL],
         status: MessageStatus.PENDING,
         priority: MessagePriority.NORMAL,
-        subject: 'Test Subject',
-        content: 'Test Content',
+        subject: "Test Subject",
+        content: "Test Content",
         deliveries: [],
         createdAt: new Date(),
         updatedAt: new Date(),
@@ -96,64 +96,58 @@ describe('MessagingController', () => {
 
       const result = await controller.sendMessage(request, mockTenant.id);
 
-      expect(mockMessagingService.sendMessage).toHaveBeenCalledWith(
-        request,
-        mockTenant.id,
-      );
+      expect(mockMessagingService.sendMessage).toHaveBeenCalledWith(request, mockTenant.id);
       expect(result).toEqual(expectedResponse);
     });
 
-    it('should override tenantId with authenticated tenant ID for security', async () => {
+    it("should override tenantId with authenticated tenant ID for security", async () => {
       const request = {
-        tenantId: 'malicious-tenant-id',
+        tenantId: "malicious-tenant-id",
         channels: [MessageChannel.EMAIL],
         recipients: [
           {
-            id: 'recipient-1',
-            email: 'test@example.com',
+            id: "recipient-1",
+            email: "test@example.com",
           },
         ],
-        data: { name: 'John Doe' },
+        data: { name: "John Doe" },
       };
 
       mockMessagingService.sendMessage.mockResolvedValue({});
 
       await controller.sendMessage(request, mockTenant.id);
 
-      expect(mockMessagingService.sendMessage).toHaveBeenCalledWith(
-        request,
-        mockTenant.id,
-      );
+      expect(mockMessagingService.sendMessage).toHaveBeenCalledWith(request, mockTenant.id);
     });
   });
 
-  describe('POST /notifications/bulk', () => {
-    it('should send bulk notifications successfully', async () => {
+  describe("POST /notifications/bulk", () => {
+    it("should send bulk notifications successfully", async () => {
       const request = {
         messages: [
           {
-            tenantId: 'original-tenant-id-1',
+            tenantId: "original-tenant-id-1",
             channels: [MessageChannel.EMAIL],
             recipients: [
               {
-                id: 'recipient-1',
-                email: 'test1@example.com',
+                id: "recipient-1",
+                email: "test1@example.com",
               },
             ],
-            data: { name: 'John Doe' },
-            subject: 'Bulk Test 1',
+            data: { name: "John Doe" },
+            subject: "Bulk Test 1",
           },
           {
-            tenantId: 'original-tenant-id-2',
+            tenantId: "original-tenant-id-2",
             channels: [MessageChannel.SMS],
             recipients: [
               {
-                id: 'recipient-2',
-                phone: '+1234567890',
+                id: "recipient-2",
+                phone: "+1234567890",
               },
             ],
-            data: { name: 'Jane Doe' },
-            content: 'Bulk SMS Test',
+            data: { name: "Jane Doe" },
+            content: "Bulk SMS Test",
           },
         ],
       };
@@ -170,17 +164,14 @@ describe('MessagingController', () => {
 
       const result = await controller.sendBulkMessages(request, mockTenant.id);
 
-      expect(mockMessagingService.sendBulkMessages).toHaveBeenCalledWith(
-        request,
-        mockTenant.id,
-      );
+      expect(mockMessagingService.sendBulkMessages).toHaveBeenCalledWith(request, mockTenant.id);
       expect(result).toEqual(expectedResponse);
     });
   });
 
-  describe('GET /notifications/:id/status', () => {
-    it('should get notification status successfully', async () => {
-      const notificationId = 'notification-1';
+  describe("GET /notifications/:id/status", () => {
+    it("should get notification status successfully", async () => {
+      const notificationId = "notification-1";
       const expectedStatus = {
         id: notificationId,
         status: MessageStatus.SENT,
@@ -200,9 +191,9 @@ describe('MessagingController', () => {
     });
   });
 
-  describe('DELETE /messaging/:id', () => {
-    it('should cancel a scheduled message successfully', async () => {
-      const messageId = 'message-1';
+  describe("DELETE /messaging/:id", () => {
+    it("should cancel a scheduled message successfully", async () => {
+      const messageId = "message-1";
       const expectedResponse = {
         id: messageId,
         tenantId: mockTenant.id,
@@ -214,21 +205,18 @@ describe('MessagingController', () => {
 
       const result = await controller.cancelMessage(messageId, mockTenant.id);
 
-      expect(mockMessagingService.cancelMessage).toHaveBeenCalledWith(
-        messageId,
-        mockTenant.id,
-      );
+      expect(mockMessagingService.cancelMessage).toHaveBeenCalledWith(messageId, mockTenant.id);
       expect(result).toEqual(expectedResponse);
     });
   });
 
-  describe('GET /messaging', () => {
-    it('should get notifications with pagination and filtering', async () => {
+  describe("GET /messaging", () => {
+    it("should get notifications with pagination and filtering", async () => {
       const query = {
         page: 1,
         limit: 10,
         status: MessageStatus.SENT,
-        tenantId: 'original-tenant-id', // This should be overridden
+        tenantId: "original-tenant-id", // This should be overridden
       };
 
       const expectedResponse = {
@@ -243,10 +231,7 @@ describe('MessagingController', () => {
 
       const result = await controller.getMessages(query, mockTenant.id);
 
-      expect(mockMessagingService.getTenantMessages).toHaveBeenCalledWith(
-        query,
-        mockTenant.id,
-      );
+      expect(mockMessagingService.getTenantMessages).toHaveBeenCalledWith(query, mockTenant.id);
       expect(result).toEqual(expectedResponse);
     });
   });

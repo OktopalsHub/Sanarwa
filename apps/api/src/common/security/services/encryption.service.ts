@@ -1,6 +1,6 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import * as crypto from 'crypto';
+import { Injectable, Logger } from "@nestjs/common";
+import { ConfigService } from "@nestjs/config";
+import * as crypto from "crypto";
 
 export interface EncryptionResult {
   encryptedData: string;
@@ -19,7 +19,7 @@ export interface EncryptionOptions {
 @Injectable()
 export class EncryptionService {
   private readonly logger = new Logger(EncryptionService.name);
-  private readonly algorithm = 'aes-256-gcm';
+  private readonly algorithm = "aes-256-gcm";
   private readonly keyLength = 32; // 256 bits
   private readonly ivLength = 16; // 128 bits
   private readonly tagLength = 16; // 128 bits
@@ -27,10 +27,7 @@ export class EncryptionService {
   private readonly currentKeyVersion: string;
 
   constructor(private readonly configService: ConfigService) {
-    this.currentKeyVersion = this.configService.get<string>(
-      'ENCRYPTION_KEY_VERSION',
-      'v1',
-    );
+    this.currentKeyVersion = this.configService.get<string>("ENCRYPTION_KEY_VERSION", "v1");
     this.initializeEncryptionKeys();
   }
 
@@ -38,13 +35,9 @@ export class EncryptionService {
    * Initialize encryption keys from configuration
    */
   private initializeEncryptionKeys(): void {
-    const primaryKey = this.configService.get<string>(
-      'PROVIDER_ENCRYPTION_KEY',
-    );
+    const primaryKey = this.configService.get<string>("PROVIDER_ENCRYPTION_KEY");
     if (!primaryKey) {
-      throw new Error(
-        'PROVIDER_ENCRYPTION_KEY environment variable is required',
-      );
+      throw new Error("PROVIDER_ENCRYPTION_KEY environment variable is required");
     }
 
     // Generate random salt for key derivation
@@ -53,30 +46,21 @@ export class EncryptionService {
     this.encryptionKeys.set(this.currentKeyVersion, derivedKey);
 
     // Load additional key versions for key rotation support
-    const keyVersions = this.configService.get<string>(
-      'ENCRYPTION_KEY_VERSIONS',
-      '',
-    );
+    const keyVersions = this.configService.get<string>("ENCRYPTION_KEY_VERSIONS", "");
     if (keyVersions) {
-      const versions = keyVersions.split(',');
+      const versions = keyVersions.split(",");
       versions.forEach((version) => {
         const versionKey = this.configService.get<string>(
           `ENCRYPTION_KEY_${version.toUpperCase()}`,
         );
         if (versionKey) {
-          const derivedVersionKey = crypto.scryptSync(
-            versionKey,
-            'salt',
-            this.keyLength,
-          );
+          const derivedVersionKey = crypto.scryptSync(versionKey, "salt", this.keyLength);
           this.encryptionKeys.set(version, derivedVersionKey);
         }
       });
     }
 
-    this.logger.log(
-      `Initialized encryption with ${this.encryptionKeys.size} key versions`,
-    );
+    this.logger.log(`Initialized encryption with ${this.encryptionKeys.size} key versions`);
   }
 
   /**
@@ -95,36 +79,30 @@ export class EncryptionService {
         throw new Error(`Encryption key version '${keyVersion}' not found`);
       }
 
-      const plaintext = typeof data === 'string' ? data : JSON.stringify(data);
+      const plaintext = typeof data === "string" ? data : JSON.stringify(data);
       const iv = crypto.randomBytes(this.ivLength);
 
-      const cipher = crypto.createCipheriv(
-        algorithm,
-        encryptionKey,
-        iv,
-      ) as crypto.CipherGCM;
+      const cipher = crypto.createCipheriv(algorithm, encryptionKey, iv) as crypto.CipherGCM;
 
       // Add additional authenticated data if provided
       if (options.additionalData) {
-        cipher.setAAD(Buffer.from(options.additionalData, 'utf8'));
+        cipher.setAAD(Buffer.from(options.additionalData, "utf8"));
       }
 
-      let encrypted = cipher.update(plaintext, 'utf8', 'hex');
-      encrypted += cipher.final('hex');
+      let encrypted = cipher.update(plaintext, "utf8", "hex");
+      encrypted += cipher.final("hex");
 
       const tag = cipher.getAuthTag();
 
       const result: EncryptionResult = {
         encryptedData: encrypted,
-        iv: iv.toString('hex'),
-        tag: tag.toString('hex'),
+        iv: iv.toString("hex"),
+        tag: tag.toString("hex"),
         algorithm,
         keyVersion,
       };
 
-      this.logger.debug(
-        `Successfully encrypted data with key version ${keyVersion}`,
-      );
+      this.logger.debug(`Successfully encrypted data with key version ${keyVersion}`);
       return result;
     } catch (error) {
       this.logger.error(`Encryption failed: ${error.message}`);
@@ -135,21 +113,16 @@ export class EncryptionService {
   /**
    * Decrypt sensitive data
    */
-  async decrypt(
-    encryptedResult: EncryptionResult,
-    additionalData?: string,
-  ): Promise<string> {
+  async decrypt(encryptedResult: EncryptionResult, additionalData?: string): Promise<string> {
     try {
       const encryptionKey = this.encryptionKeys.get(encryptedResult.keyVersion);
 
       if (!encryptionKey) {
-        throw new Error(
-          `Encryption key version '${encryptedResult.keyVersion}' not found`,
-        );
+        throw new Error(`Encryption key version '${encryptedResult.keyVersion}' not found`);
       }
 
-      const iv = Buffer.from(encryptedResult.iv, 'hex');
-      const tag = Buffer.from(encryptedResult.tag, 'hex');
+      const iv = Buffer.from(encryptedResult.iv, "hex");
+      const tag = Buffer.from(encryptedResult.tag, "hex");
 
       const decipher = crypto.createDecipheriv(
         encryptedResult.algorithm,
@@ -161,15 +134,11 @@ export class EncryptionService {
 
       // Add additional authenticated data if provided
       if (additionalData) {
-        decipher.setAAD(Buffer.from(additionalData, 'utf8'));
+        decipher.setAAD(Buffer.from(additionalData, "utf8"));
       }
 
-      let decrypted = decipher.update(
-        encryptedResult.encryptedData,
-        'hex',
-        'utf8',
-      );
-      decrypted += decipher.final('utf8');
+      let decrypted = decipher.update(encryptedResult.encryptedData, "hex", "utf8");
+      decrypted += decipher.final("utf8");
 
       this.logger.debug(
         `Successfully decrypted data with key version ${encryptedResult.keyVersion}`,
@@ -184,10 +153,8 @@ export class EncryptionService {
   /**
    * Encrypt provider configuration data
    */
-  async encryptProviderConfig(
-    config: Record<string, any>,
-  ): Promise<Record<string, any>> {
-    if (!config || typeof config !== 'object') {
+  async encryptProviderConfig(config: Record<string, any>): Promise<Record<string, any>> {
+    if (!config || typeof config !== "object") {
       return config;
     }
 
@@ -200,12 +167,8 @@ export class EncryptionService {
             additionalData: `provider_config_${key}`,
           });
         } catch (error) {
-          this.logger.error(
-            `Failed to encrypt provider config field '${key}': ${error.message}`,
-          );
-          throw new Error(
-            `Provider config encryption failed for field '${key}'`, { cause: error },
-          );
+          this.logger.error(`Failed to encrypt provider config field '${key}': ${error.message}`);
+          throw new Error(`Provider config encryption failed for field '${key}'`, { cause: error });
         }
       } else {
         encryptedConfig[key] = value;
@@ -218,10 +181,8 @@ export class EncryptionService {
   /**
    * Decrypt provider configuration data
    */
-  async decryptProviderConfig(
-    config: Record<string, any>,
-  ): Promise<Record<string, any>> {
-    if (!config || typeof config !== 'object') {
+  async decryptProviderConfig(config: Record<string, any>): Promise<Record<string, any>> {
+    if (!config || typeof config !== "object") {
       return config;
     }
 
@@ -230,17 +191,10 @@ export class EncryptionService {
     for (const [key, value] of Object.entries(config)) {
       if (this.isEncryptedValue(value)) {
         try {
-          decryptedConfig[key] = await this.decrypt(
-            value,
-            `provider_config_${key}`,
-          );
+          decryptedConfig[key] = await this.decrypt(value, `provider_config_${key}`);
         } catch (error) {
-          this.logger.error(
-            `Failed to decrypt provider config field '${key}': ${error.message}`,
-          );
-          throw new Error(
-            `Provider config decryption failed for field '${key}'`, { cause: error },
-          );
+          this.logger.error(`Failed to decrypt provider config field '${key}': ${error.message}`);
+          throw new Error(`Provider config decryption failed for field '${key}'`, { cause: error });
         }
       } else {
         decryptedConfig[key] = value;
@@ -253,12 +207,9 @@ export class EncryptionService {
   /**
    * Hash sensitive data (one-way)
    */
-  async hash(
-    data: string,
-    salt?: string,
-  ): Promise<{ hash: string; salt: string }> {
-    const actualSalt = salt || crypto.randomBytes(16).toString('hex');
-    const hash = crypto.scryptSync(data, actualSalt, 64).toString('hex');
+  async hash(data: string, salt?: string): Promise<{ hash: string; salt: string }> {
+    const actualSalt = salt || crypto.randomBytes(16).toString("hex");
+    const hash = crypto.scryptSync(data, actualSalt, 64).toString("hex");
 
     return { hash, salt: actualSalt };
   }
@@ -268,11 +219,8 @@ export class EncryptionService {
    */
   async verifyHash(data: string, hash: string, salt: string): Promise<boolean> {
     try {
-      const computedHash = crypto.scryptSync(data, salt, 64).toString('hex');
-      return crypto.timingSafeEqual(
-        Buffer.from(hash, 'hex'),
-        Buffer.from(computedHash, 'hex'),
-      );
+      const computedHash = crypto.scryptSync(data, salt, 64).toString("hex");
+      return crypto.timingSafeEqual(Buffer.from(hash, "hex"), Buffer.from(computedHash, "hex"));
     } catch (error) {
       this.logger.error(`Hash verification failed: ${error.message}`);
       return false;
@@ -283,15 +231,15 @@ export class EncryptionService {
    * Generate secure random token
    */
   generateSecureToken(length: number = 32): string {
-    return crypto.randomBytes(length).toString('hex');
+    return crypto.randomBytes(length).toString("hex");
   }
 
   /**
    * Generate API key
    */
   generateApiKey(): { key: string; hash: string; prefix: string } {
-    const key = `nk_${crypto.randomBytes(32).toString('hex')}`;
-    const hash = crypto.createHash('sha256').update(key).digest('hex');
+    const key = `nk_${crypto.randomBytes(32).toString("hex")}`;
+    const hash = crypto.createHash("sha256").update(key).digest("hex");
     const prefix = key.substring(0, 8);
 
     return { key, hash, prefix };
@@ -356,7 +304,7 @@ export class EncryptionService {
    * Validate encryption key format
    */
   static validateEncryptionKey(key: string): boolean {
-    if (!key || typeof key !== 'string') {
+    if (!key || typeof key !== "string") {
       return false;
     }
     return key.length >= 32;
@@ -366,7 +314,7 @@ export class EncryptionService {
    * Generate new encryption key
    */
   static generateEncryptionKey(): string {
-    return crypto.randomBytes(32).toString('hex');
+    return crypto.randomBytes(32).toString("hex");
   }
 
   /**
@@ -374,32 +322,32 @@ export class EncryptionService {
    */
 
   private shouldEncryptField(fieldName: string, value: any): boolean {
-    if (typeof value !== 'string' && typeof value !== 'object') {
+    if (typeof value !== "string" && typeof value !== "object") {
       return false;
     }
 
     const sensitiveFields = [
-      'accessKeyId',
-      'secretAccessKey',
-      'apiKey',
-      'privateKey',
-      'certificate',
-      'password',
-      'token',
-      'accessToken',
-      'refreshToken',
-      'clientSecret',
-      'webhookSecret',
-      'encryptionKey',
-      'signingKey',
-      'credentials',
-      'authToken',
-      'bearerToken',
-      'sessionToken',
-      'oauthToken',
-      'jwtSecret',
-      'databasePassword',
-      'redisPassword',
+      "accessKeyId",
+      "secretAccessKey",
+      "apiKey",
+      "privateKey",
+      "certificate",
+      "password",
+      "token",
+      "accessToken",
+      "refreshToken",
+      "clientSecret",
+      "webhookSecret",
+      "encryptionKey",
+      "signingKey",
+      "credentials",
+      "authToken",
+      "bearerToken",
+      "sessionToken",
+      "oauthToken",
+      "jwtSecret",
+      "databasePassword",
+      "redisPassword",
     ];
 
     const fieldLower = fieldName.toLowerCase();
@@ -411,12 +359,12 @@ export class EncryptionService {
   private isEncryptedValue(value: any): value is EncryptionResult {
     return (
       value &&
-      typeof value === 'object' &&
-      typeof value.encryptedData === 'string' &&
-      typeof value.iv === 'string' &&
-      typeof value.tag === 'string' &&
-      typeof value.algorithm === 'string' &&
-      typeof value.keyVersion === 'string'
+      typeof value === "object" &&
+      typeof value.encryptedData === "string" &&
+      typeof value.iv === "string" &&
+      typeof value.tag === "string" &&
+      typeof value.algorithm === "string" &&
+      typeof value.keyVersion === "string"
     );
   }
 }

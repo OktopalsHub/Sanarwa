@@ -1,22 +1,14 @@
-import {
-  SESClient,
-  SendEmailCommand,
-  SendEmailCommandInput,
-} from '@aws-sdk/client-ses';
-import { Injectable } from '@nestjs/common';
-import { BaseProvider } from '../base/base-provider.abstract';
+import { SESClient, SendEmailCommand, SendEmailCommandInput } from "@aws-sdk/client-ses";
+import { Injectable } from "@nestjs/common";
+import { BaseProvider } from "../base/base-provider.abstract";
 import {
   Channel,
   ProviderConfig,
   ProviderHealth,
   ProviderHealthStatus,
   ProviderResponse,
-} from '../types';
-import {
-  EmailConfig,
-  EmailPayload,
-  IEmailProvider,
-} from './email-provider.interface';
+} from "../types";
+import { EmailConfig, EmailPayload, IEmailProvider } from "./email-provider.interface";
 
 @Injectable()
 export class SESEmailProvider extends BaseProvider implements IEmailProvider {
@@ -24,12 +16,12 @@ export class SESEmailProvider extends BaseProvider implements IEmailProvider {
   private emailConfig: EmailConfig;
 
   constructor() {
-    super('ses', 'AWS SES', Channel.EMAIL);
+    super("ses", "AWS SES", Channel.EMAIL);
   }
 
   async send(payload: EmailPayload): Promise<ProviderResponse> {
     if (!this.isInitialized) {
-      return this.createErrorResponse('Provider not initialized');
+      return this.createErrorResponse("Provider not initialized");
     }
 
     try {
@@ -41,19 +33,19 @@ export class SESEmailProvider extends BaseProvider implements IEmailProvider {
         Message: {
           Subject: {
             Data: payload.subject,
-            Charset: 'UTF-8',
+            Charset: "UTF-8",
           },
           Body: {
             Html: payload.htmlContent
               ? {
                   Data: payload.htmlContent,
-                  Charset: 'UTF-8',
+                  Charset: "UTF-8",
                 }
               : undefined,
             Text: payload.textContent
               ? {
                   Data: payload.textContent,
-                  Charset: 'UTF-8',
+                  Charset: "UTF-8",
                 }
               : undefined,
           },
@@ -76,10 +68,7 @@ export class SESEmailProvider extends BaseProvider implements IEmailProvider {
       });
     } catch (error) {
       this.logger.error(`Failed to send email via SES:`, error);
-      return this.createErrorResponse(
-        `SES Error: ${error.message}`,
-        `ses-error-${Date.now()}`,
-      );
+      return this.createErrorResponse(`SES Error: ${error.message}`, `ses-error-${Date.now()}`);
     }
   }
 
@@ -92,22 +81,19 @@ export class SESEmailProvider extends BaseProvider implements IEmailProvider {
 
     // Check required fields
     if (!credentials.fromEmail) {
-      this.logger.error('SES configuration missing fromEmail');
+      this.logger.error("SES configuration missing fromEmail");
       return false;
     }
 
     // Validate email format
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(credentials.fromEmail)) {
-      this.logger.error('SES configuration has invalid fromEmail format');
+      this.logger.error("SES configuration has invalid fromEmail format");
       return false;
     }
 
-    if (
-      credentials.replyToEmail &&
-      !emailRegex.test(credentials.replyToEmail)
-    ) {
-      this.logger.error('SES configuration has invalid replyToEmail format');
+    if (credentials.replyToEmail && !emailRegex.test(credentials.replyToEmail)) {
+      this.logger.error("SES configuration has invalid replyToEmail format");
       return false;
     }
 
@@ -116,12 +102,12 @@ export class SESEmailProvider extends BaseProvider implements IEmailProvider {
 
   protected async performHealthCheck(): Promise<ProviderHealthStatus> {
     if (!this.sesClient) {
-      throw new Error('SES client not initialized');
+      throw new Error("SES client not initialized");
     }
 
     try {
       // Test SES connectivity by getting send quota
-      const { GetSendQuotaCommand } = await import('@aws-sdk/client-ses');
+      const { GetSendQuotaCommand } = await import("@aws-sdk/client-ses");
       const command = new GetSendQuotaCommand({});
       await this.sesClient.send(command);
 
@@ -130,7 +116,7 @@ export class SESEmailProvider extends BaseProvider implements IEmailProvider {
         lastChecked: new Date(),
         uptime: 100,
         metadata: {
-          service: 'AWS SES',
+          service: "AWS SES",
           region: this.sesClient.config.region,
         },
       };
@@ -144,17 +130,17 @@ export class SESEmailProvider extends BaseProvider implements IEmailProvider {
 
     // Initialize SES client
     this.sesClient = new SESClient({
-      region: this.emailConfig.region || 'us-east-1',
+      region: this.emailConfig.region || "us-east-1",
       credentials: this.emailConfig.apiKey
         ? {
             accessKeyId: this.emailConfig.apiKey,
-            secretAccessKey: this.config.credentials.secretKey || '',
+            secretAccessKey: this.config.credentials.secretKey || "",
           }
         : undefined, // Use default credential chain if no explicit credentials
     });
 
     this.logger.log(
-      `SES Email Provider initialized for region: ${this.emailConfig.region || 'us-east-1'}`,
+      `SES Email Provider initialized for region: ${this.emailConfig.region || "us-east-1"}`,
     );
   }
 
@@ -170,16 +156,16 @@ export class SESEmailProvider extends BaseProvider implements IEmailProvider {
    */
   async getSendingStatistics(): Promise<any> {
     if (!this.sesClient) {
-      throw new Error('SES client not initialized');
+      throw new Error("SES client not initialized");
     }
 
     try {
-      const { GetSendStatisticsCommand } = await import('@aws-sdk/client-ses');
+      const { GetSendStatisticsCommand } = await import("@aws-sdk/client-ses");
       const command = new GetSendStatisticsCommand({});
       const result = await this.sesClient.send(command);
       return result.SendDataPoints;
     } catch (error) {
-      this.logger.error('Failed to get SES sending statistics:', error);
+      this.logger.error("Failed to get SES sending statistics:", error);
       throw error;
     }
   }
@@ -189,11 +175,11 @@ export class SESEmailProvider extends BaseProvider implements IEmailProvider {
    */
   async getSendQuota(): Promise<any> {
     if (!this.sesClient) {
-      throw new Error('SES client not initialized');
+      throw new Error("SES client not initialized");
     }
 
     try {
-      const { GetSendQuotaCommand } = await import('@aws-sdk/client-ses');
+      const { GetSendQuotaCommand } = await import("@aws-sdk/client-ses");
       const command = new GetSendQuotaCommand({});
       const result = await this.sesClient.send(command);
       return {
@@ -202,7 +188,7 @@ export class SESEmailProvider extends BaseProvider implements IEmailProvider {
         sentLast24Hours: result.SentLast24Hours,
       };
     } catch (error) {
-      this.logger.error('Failed to get SES send quota:', error);
+      this.logger.error("Failed to get SES send quota:", error);
       throw error;
     }
   }

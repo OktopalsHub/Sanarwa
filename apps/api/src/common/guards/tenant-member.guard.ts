@@ -5,13 +5,10 @@ import {
   Injectable,
   Optional,
   UnauthorizedException,
-} from '@nestjs/common';
-import { Reflector } from '@nestjs/core';
-import { TenantMemberService } from '../../modules/tenant-member/tenant-member.service';
-import {
-  AuthenticatedRequest,
-  MemberContext,
-} from '../interfaces/request-context.interface';
+} from "@nestjs/common";
+import { Reflector } from "@nestjs/core";
+import { TenantMemberService } from "../../modules/tenant-member/tenant-member.service";
+import { AuthenticatedRequest, MemberContext } from "../interfaces/request-context.interface";
 
 /**
  * This guard should be used on controllers that operate within a tenant context
@@ -27,8 +24,8 @@ export class TenantMemberGuard implements CanActivate {
     const request = context.switchToHttp().getRequest<AuthenticatedRequest>();
 
     // Check if user is authenticated (should be set by AuthGuard)
-    if (!request.user?.id || !request?.auth?.principalId ) {
-      throw new UnauthorizedException('User not authenticated');
+    if (!request.user?.id || !request?.auth?.principalId) {
+      throw new UnauthorizedException("User not authenticated");
     }
 
     // Skip tenant membership check if TenantMemberService is not available
@@ -39,7 +36,7 @@ export class TenantMemberGuard implements CanActivate {
     // Extract tenant ID from route parameters
     const tenantId = request.params?.tenantId;
     if (!tenantId) {
-      throw new ForbiddenException('Tenant ID not found in route parameters');
+      throw new ForbiddenException("Tenant ID not found in route parameters");
     }
 
     try {
@@ -50,7 +47,7 @@ export class TenantMemberGuard implements CanActivate {
       );
 
       if (!tenantMember) {
-        throw new ForbiddenException('User is not a member of this tenant');
+        throw new ForbiddenException("User is not a member of this tenant");
       }
 
       // Populate the member context
@@ -66,13 +63,10 @@ export class TenantMemberGuard implements CanActivate {
 
       return true;
     } catch (error) {
-      if (
-        error instanceof ForbiddenException ||
-        error instanceof UnauthorizedException
-      ) {
+      if (error instanceof ForbiddenException || error instanceof UnauthorizedException) {
         throw error;
       }
-      throw new ForbiddenException('Failed to verify tenant membership');
+      throw new ForbiddenException("Failed to verify tenant membership");
     }
   }
 }

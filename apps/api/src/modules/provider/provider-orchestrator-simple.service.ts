@@ -1,7 +1,7 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import { SMSRoutingService } from './providers/sms/sms-routing.service';
-import { ProviderConfigRepository } from './provider-config.repository';
+import { Injectable, Logger } from "@nestjs/common";
+import { ConfigService } from "@nestjs/config";
+import { SMSRoutingService } from "./providers/sms/sms-routing.service";
+import { ProviderConfigRepository } from "./provider-config.repository";
 
 @Injectable()
 export class ProviderOrchestratorSimpleService {
@@ -11,13 +11,16 @@ export class ProviderOrchestratorSimpleService {
     private configService: ConfigService,
     private smsRoutingService: SMSRoutingService,
     private providerConfigRepository: ProviderConfigRepository,
-  ) { }
+  ) {}
 
   // SMS orchestration with intelligent routing
-  async sendSMS(payload: { to: string; message: string; from?: string }, tenantId?: string): Promise<any> {
+  async sendSMS(
+    payload: { to: string; message: string; from?: string },
+    tenantId?: string,
+  ): Promise<any> {
     try {
       // Check for BYOP configuration
-      const byopProvider = await this.getBYOPProvider('sms', tenantId);
+      const byopProvider = await this.getBYOPProvider("sms", tenantId);
       if (byopProvider) {
         const provider = this.smsRoutingService.getProviderByName(byopProvider.providerName);
         if (provider) {
@@ -28,7 +31,7 @@ export class ProviderOrchestratorSimpleService {
       // Use intelligent routing to select best provider
       const bestProvider = this.smsRoutingService.getBestProvider(payload.to);
       if (!bestProvider) {
-        throw new Error('No SMS provider available for this phone number');
+        throw new Error("No SMS provider available for this phone number");
       }
 
       return await bestProvider.sendSMS(payload);
@@ -40,42 +43,46 @@ export class ProviderOrchestratorSimpleService {
 
   // BYOP helper methods
   private async getBYOPProvider(
-    type: 'email' | 'chat' | 'push' | 'sms',
+    type: "email" | "chat" | "push" | "sms",
     tenantId?: string,
-    providerName?: string
+    providerName?: string,
   ): Promise<{ providerName: string; config: any } | null> {
     if (!tenantId) return null;
 
     try {
       // Map our types to NotificationChannel enum
       const channelMap = {
-        'email': 'EMAIL',
-        'chat': 'CHAT',
-        'push': 'PUSH',
-        'sms': 'SMS'
+        email: "EMAIL",
+        chat: "CHAT",
+        push: "PUSH",
+        sms: "SMS",
       };
 
       const channel = channelMap[type] as any;
       const configs = await this.providerConfigRepository.findActiveByTenantAndChannel(
         tenantId,
-        channel
+        channel,
       );
 
       // If specific provider requested, find it
       if (providerName) {
-        const config = configs.find(c => c.providerId === providerName);
-        return config ? {
-          providerName: config.providerId,
-          config: config.config,
-        } : null;
+        const config = configs.find((c) => c.providerId === providerName);
+        return config
+          ? {
+              providerName: config.providerId,
+              config: config.config,
+            }
+          : null;
       }
 
       // Otherwise return first active config
       const config = configs[0];
-      return config ? {
-        providerName: config.providerId,
-        config: config.config,
-      } : null;
+      return config
+        ? {
+            providerName: config.providerId,
+            config: config.config,
+          }
+        : null;
     } catch (error) {
       this.logger.warn(`Failed to get BYOP config: ${error.message}`);
       return null;
@@ -83,9 +90,9 @@ export class ProviderOrchestratorSimpleService {
   }
 
   // Utility methods
-  getAvailableProviders(type: 'sms'): string[] {
-    if (type === 'sms') {
-      return this.smsRoutingService.getAllProviders().map(p => p.getProviderName());
+  getAvailableProviders(type: "sms"): string[] {
+    if (type === "sms") {
+      return this.smsRoutingService.getAllProviders().map((p) => p.getProviderName());
     }
     return [];
   }

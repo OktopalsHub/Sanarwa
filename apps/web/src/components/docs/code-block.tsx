@@ -1,9 +1,9 @@
-'use client';
+"use client";
 
-import { Button } from '@/components/ui/button';
-import { cn } from '@/lib/utils';
-import { CheckIcon, DocumentDuplicateIcon } from '@heroicons/react/24/outline'
-import { useState } from 'react';
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
+import { CheckIcon, DocumentDuplicateIcon } from "@heroicons/react/24/outline";
+import { useState } from "react";
 
 interface CodeBlockProps {
   children: string;
@@ -15,7 +15,7 @@ interface CodeBlockProps {
 
 export function CodeBlock({
   children,
-  language = 'javascript',
+  language = "javascript",
   title,
   showLineNumbers = false,
   className,
@@ -28,29 +28,27 @@ export function CodeBlock({
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch (err) {
-      console.error('Failed to copy code:', err);
+      console.error("Failed to copy code:", err);
     }
   };
 
-  const lines = children.split('\n');
+  const lines = children.split("\n");
 
   return (
-    <div className={cn('relative group', className)}>
+    <div className={cn("relative group", className)}>
       {title && (
         <div className="flex items-center justify-between rounded-t-lg bg-muted px-4 py-2 text-sm font-medium">
           <span>{title}</span>
-          <span className="text-xs text-muted-foreground uppercase">
-            {language}
-          </span>
+          <span className="text-xs text-muted-foreground uppercase">{language}</span>
         </div>
       )}
 
       <div className="relative">
         <pre
           className={cn(
-            'overflow-x-auto rounded-lg bg-slate-950 p-4 text-sm',
-            title && 'rounded-t-none',
-            'dark:bg-slate-900'
+            "overflow-x-auto rounded-lg bg-slate-950 p-4 text-sm",
+            title && "rounded-t-none",
+            "dark:bg-slate-900",
           )}
         >
           <code className="text-slate-50">
@@ -90,25 +88,49 @@ export function CodeBlock({
 
 // Language-specific code block components
 export function JavaScriptCode({ children, title }: { children: string; title?: string }) {
-  return <CodeBlock language="javascript" title={title}>{children}</CodeBlock>;
+  return (
+    <CodeBlock language="javascript" title={title}>
+      {children}
+    </CodeBlock>
+  );
 }
 
 export function PythonCode({ children, title }: { children: string; title?: string }) {
-  return <CodeBlock language="python" title={title}>{children}</CodeBlock>;
+  return (
+    <CodeBlock language="python" title={title}>
+      {children}
+    </CodeBlock>
+  );
 }
 
 export function PHPCode({ children, title }: { children: string; title?: string }) {
-  return <CodeBlock language="php" title={title}>{children}</CodeBlock>;
+  return (
+    <CodeBlock language="php" title={title}>
+      {children}
+    </CodeBlock>
+  );
 }
 
 export function JavaCode({ children, title }: { children: string; title?: string }) {
-  return <CodeBlock language="java" title={title}>{children}</CodeBlock>;
+  return (
+    <CodeBlock language="java" title={title}>
+      {children}
+    </CodeBlock>
+  );
 }
 
 export function GoCode({ children, title }: { children: string; title?: string }) {
-  return <CodeBlock language="go" title={title}>{children}</CodeBlock>;
+  return (
+    <CodeBlock language="go" title={title}>
+      {children}
+    </CodeBlock>
+  );
 }
 
 export function CSharpCode({ children, title }: { children: string; title?: string }) {
-  return <CodeBlock language="csharp" title={title}>{children}</CodeBlock>;
+  return (
+    <CodeBlock language="csharp" title={title}>
+      {children}
+    </CodeBlock>
+  );
 }

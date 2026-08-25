@@ -2,10 +2,10 @@
  * @vitest-environment jsdom
  */
 
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { act, render, renderHook, screen, waitFor } from '@testing-library/react';
-import React from 'react';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { act, render, renderHook, screen, waitFor } from "@testing-library/react";
+import React from "react";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
   ConfigDebugPanel,
   ConfigProvider,
@@ -18,9 +18,9 @@ import {
   useEnvironment,
   useFeatureFlag,
   useFeatureFlags,
-  withFeatureFlag
-} from '../config-provider';
-import { createEnvironmentConfig, type EnvironmentConfig } from '../environment';
+  withFeatureFlag,
+} from "../config-provider";
+import { createEnvironmentConfig, type EnvironmentConfig } from "../environment";
 
 // Mock fetch for remote config tests
 global.fetch = vi.fn();
@@ -38,7 +38,7 @@ const createWrapper = (initialConfig?: Partial<EnvironmentConfig>, enableRemoteC
       <ConfigProvider
         initialConfig={initialConfig}
         enableRemoteConfig={enableRemoteConfig}
-        remoteConfigEndpoint={enableRemoteConfig ? '/api/config' : undefined}
+        remoteConfigEndpoint={enableRemoteConfig ? "/api/config" : undefined}
       >
         {children}
       </ConfigProvider>
@@ -50,14 +50,14 @@ const createWrapper = (initialConfig?: Partial<EnvironmentConfig>, enableRemoteC
 const createCompleteConfig = (overrides: any = {}) => {
   const defaults = {
     app: {
-      name: 'Test App',
-      version: '1.0.0',
-      environment: 'development' as const,
+      name: "Test App",
+      version: "1.0.0",
+      environment: "development" as const,
       buildTime: new Date().toISOString(),
-      appUrl: 'http://localhost:3000',
+      appUrl: "http://localhost:3000",
     },
     api: {
-      baseUrl: 'http://localhost:9000',
+      baseUrl: "http://localhost:9000",
       timeout: 5000,
       retryAttempts: 3,
       retryDelay: 1000,
@@ -87,13 +87,13 @@ const createCompleteConfig = (overrides: any = {}) => {
   };
 };
 
-describe('ConfigProvider', () => {
+describe("ConfigProvider", () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
-  describe('Basic functionality', () => {
-    it('should provide configuration context', () => {
+  describe("Basic functionality", () => {
+    it("should provide configuration context", () => {
       const { result } = renderHook(() => useConfig(), {
         wrapper: createWrapper(),
       });
@@ -102,22 +102,22 @@ describe('ConfigProvider', () => {
       expect(result.current.isFeatureEnabled).toBeInstanceOf(Function);
       expect(result.current.updateFeatureFlag).toBeInstanceOf(Function);
       expect(result.current.updateApiConfig).toBeInstanceOf(Function);
-      expect(typeof result.current.isLoading).toBe('boolean');
+      expect(typeof result.current.isLoading).toBe("boolean");
       expect(Array.isArray(result.current.errors)).toBe(true);
     });
 
-    it('should merge initial config with defaults', () => {
+    it("should merge initial config with defaults", () => {
       const initialConfig = {
         app: {
-          name: 'Custom App',
-          version: '1.0.0',
-          environment: 'development' as const,
+          name: "Custom App",
+          version: "1.0.0",
+          environment: "development" as const,
           buildTime: new Date().toISOString(),
-          appUrl: 'http://localhost:3000'
+          appUrl: "http://localhost:3000",
         },
         api: {
           timeout: 15000,
-          baseUrl: 'http://localhost:9000',
+          baseUrl: "http://localhost:9000",
           retryAttempts: 3,
           retryDelay: 1000,
           maxRetryDelay: 5000,
@@ -129,65 +129,65 @@ describe('ConfigProvider', () => {
         wrapper: createWrapper(initialConfig),
       });
 
-      expect(result.current.config.app.name).toBe('Custom App');
+      expect(result.current.config.app.name).toBe("Custom App");
       expect(result.current.config.api.timeout).toBe(15000);
       expect(result.current.config.api.baseUrl).toBeDefined(); // Should have default
     });
 
-    it('should throw error when used outside provider', () => {
+    it("should throw error when used outside provider", () => {
       expect(() => {
         renderHook(() => useConfig());
-      }).toThrow('useConfig must be used within a ConfigProvider');
+      }).toThrow("useConfig must be used within a ConfigProvider");
     });
   });
 
-  describe('Feature flags', () => {
-    it('should check feature flags', () => {
-      const { result } = renderHook(() => useFeatureFlag('enableAnalytics'), {
+  describe("Feature flags", () => {
+    it("should check feature flags", () => {
+      const { result } = renderHook(() => useFeatureFlag("enableAnalytics"), {
         wrapper: createWrapper(),
       });
 
-      expect(typeof result.current).toBe('boolean');
+      expect(typeof result.current).toBe("boolean");
     });
 
-    it('should update feature flags', () => {
+    it("should update feature flags", () => {
       const { result } = renderHook(() => useConfig(), {
         wrapper: createWrapper(),
       });
 
       act(() => {
-        result.current.updateFeatureFlag('enableAnalytics', true);
+        result.current.updateFeatureFlag("enableAnalytics", true);
       });
 
-      expect(result.current.isFeatureEnabled('enableAnalytics')).toBe(true);
+      expect(result.current.isFeatureEnabled("enableAnalytics")).toBe(true);
 
       act(() => {
-        result.current.updateFeatureFlag('enableAnalytics', false);
+        result.current.updateFeatureFlag("enableAnalytics", false);
       });
 
-      expect(result.current.isFeatureEnabled('enableAnalytics')).toBe(false);
+      expect(result.current.isFeatureEnabled("enableAnalytics")).toBe(false);
     });
 
-    it('should provide feature flags with update capability', () => {
+    it("should provide feature flags with update capability", () => {
       const { result } = renderHook(() => useFeatureFlags(), {
         wrapper: createWrapper(),
       });
 
-      expect(typeof result.current.enableAnalytics).toBe('boolean');
-      expect(typeof result.current.enableWebRTC).toBe('boolean');
+      expect(typeof result.current.enableAnalytics).toBe("boolean");
+      expect(typeof result.current.enableWebRTC).toBe("boolean");
       expect(result.current.updateFlag).toBeInstanceOf(Function);
       expect(result.current.isEnabled).toBeInstanceOf(Function);
 
       act(() => {
-        result.current.updateFlag('enableAnalytics', true);
+        result.current.updateFlag("enableAnalytics", true);
       });
 
-      expect(result.current.isEnabled('enableAnalytics')).toBe(true);
+      expect(result.current.isEnabled("enableAnalytics")).toBe(true);
     });
   });
 
-  describe('API configuration', () => {
-    it('should provide API config with update capability', () => {
+  describe("API configuration", () => {
+    it("should provide API config with update capability", () => {
       const { result } = renderHook(() => useApiConfig(), {
         wrapper: createWrapper(),
       });
@@ -197,7 +197,7 @@ describe('ConfigProvider', () => {
       expect(result.current.updateConfig).toBeInstanceOf(Function);
     });
 
-    it('should update API configuration', () => {
+    it("should update API configuration", () => {
       const { result } = renderHook(() => useApiConfig(), {
         wrapper: createWrapper(),
       });
@@ -213,9 +213,9 @@ describe('ConfigProvider', () => {
     });
   });
 
-  describe('Configuration sections', () => {
-    it('should provide specific config sections', () => {
-      const { result } = renderHook(() => useConfigSection('api'), {
+  describe("Configuration sections", () => {
+    it("should provide specific config sections", () => {
+      const { result } = renderHook(() => useConfigSection("api"), {
         wrapper: createWrapper(),
       });
 
@@ -224,42 +224,44 @@ describe('ConfigProvider', () => {
       expect(result.current.retryAttempts).toBeGreaterThanOrEqual(0);
     });
 
-    it('should provide environment information', () => {
+    it("should provide environment information", () => {
       const { result } = renderHook(() => useEnvironment(), {
         wrapper: createWrapper(),
       });
 
-      expect(['development', 'staging', 'production', 'test']).toContain(result.current.environment);
-      expect(typeof result.current.isDevelopment).toBe('boolean');
-      expect(typeof result.current.isProduction).toBe('boolean');
-      expect(typeof result.current.isStaging).toBe('boolean');
-      expect(typeof result.current.isTest).toBe('boolean');
+      expect(["development", "staging", "production", "test"]).toContain(
+        result.current.environment,
+      );
+      expect(typeof result.current.isDevelopment).toBe("boolean");
+      expect(typeof result.current.isProduction).toBe("boolean");
+      expect(typeof result.current.isStaging).toBe("boolean");
+      expect(typeof result.current.isTest).toBe("boolean");
       expect(result.current.version).toBeDefined();
     });
 
-    it('should provide validation information', () => {
+    it("should provide validation information", () => {
       const { result } = renderHook(() => useConfigValidation(), {
         wrapper: createWrapper(),
       });
 
       expect(Array.isArray(result.current.errors)).toBe(true);
-      expect(typeof result.current.isValid).toBe('boolean');
-      expect(typeof result.current.isLoading).toBe('boolean');
-      expect(typeof result.current.hasErrors).toBe('boolean');
+      expect(typeof result.current.isValid).toBe("boolean");
+      expect(typeof result.current.isLoading).toBe("boolean");
+      expect(typeof result.current.hasErrors).toBe("boolean");
     });
   });
 
-  describe('Remote configuration', () => {
-    it('should load remote configuration successfully', async () => {
+  describe("Remote configuration", () => {
+    it("should load remote configuration successfully", async () => {
       const remoteConfig = {
         features: { enableAnalytics: true },
         api: {
           timeout: 25000,
-          baseUrl: 'http://localhost:9000' // Add required field
+          baseUrl: "http://localhost:9000", // Add required field
         },
         app: {
-          appUrl: 'http://localhost:3000' // Add required field
-        }
+          appUrl: "http://localhost:3000", // Add required field
+        },
       };
 
       (fetch as any).mockResolvedValueOnce({
@@ -283,8 +285,8 @@ describe('ConfigProvider', () => {
       expect(result.current.errors).toHaveLength(0);
     });
 
-    it('should handle remote configuration failure', async () => {
-      (fetch as any).mockRejectedValueOnce(new Error('Network error'));
+    it("should handle remote configuration failure", async () => {
+      (fetch as any).mockRejectedValueOnce(new Error("Network error"));
 
       const { result } = renderHook(() => useConfig(), {
         wrapper: createWrapper(undefined, true),
@@ -295,12 +297,12 @@ describe('ConfigProvider', () => {
       });
 
       expect(result.current.errors.length).toBeGreaterThan(0);
-      expect(result.current.errors[0]).toContain('Network error');
+      expect(result.current.errors[0]).toContain("Network error");
     });
 
-    it('should handle invalid remote configuration', async () => {
+    it("should handle invalid remote configuration", async () => {
       const invalidConfig = {
-        api: { baseUrl: 'invalid-url' },
+        api: { baseUrl: "invalid-url" },
       };
 
       (fetch as any).mockResolvedValueOnce({
@@ -319,10 +321,10 @@ describe('ConfigProvider', () => {
       expect(result.current.errors.length).toBeGreaterThan(0);
     });
 
-    it('should handle HTTP error responses', async () => {
+    it("should handle HTTP error responses", async () => {
       (fetch as any).mockResolvedValueOnce({
         ok: false,
-        statusText: 'Not Found',
+        statusText: "Not Found",
       });
 
       const { result } = renderHook(() => useConfig(), {
@@ -334,14 +336,14 @@ describe('ConfigProvider', () => {
       });
 
       expect(result.current.errors.length).toBeGreaterThan(0);
-      expect(result.current.errors[0]).toContain('Not Found');
+      expect(result.current.errors[0]).toContain("Not Found");
     });
   });
 
-  describe('Configuration validation', () => {
-    it('should validate configuration and show errors', () => {
+  describe("Configuration validation", () => {
+    it("should validate configuration and show errors", () => {
       const invalidConfig = createCompleteConfig({
-        api: { baseUrl: 'invalid-url', timeout: -1 },
+        api: { baseUrl: "invalid-url", timeout: -1 },
       });
 
       const { result } = renderHook(() => useConfig(), {
@@ -351,7 +353,7 @@ describe('ConfigProvider', () => {
       expect(result.current.errors.length).toBeGreaterThan(0);
     });
 
-    it('should show no errors for valid configuration', () => {
+    it("should show no errors for valid configuration", () => {
       const validConfig = createEnvironmentConfig();
 
       const { result } = renderHook(() => useConfig(), {
@@ -363,8 +365,8 @@ describe('ConfigProvider', () => {
   });
 });
 
-describe('FeatureGate', () => {
-  it('should render children when feature is enabled', () => {
+describe("FeatureGate", () => {
+  it("should render children when feature is enabled", () => {
     const initialConfig = createCompleteConfig({
       features: { enableAnalytics: true },
     });
@@ -373,13 +375,13 @@ describe('FeatureGate', () => {
       <FeatureGate feature="enableAnalytics">
         <div>Analytics Content</div>
       </FeatureGate>,
-      { wrapper: createWrapper(initialConfig) }
+      { wrapper: createWrapper(initialConfig) },
     );
 
-    expect(screen.getByText('Analytics Content')).toBeInTheDocument();
+    expect(screen.getByText("Analytics Content")).toBeInTheDocument();
   });
 
-  it('should not render children when feature is disabled', () => {
+  it("should not render children when feature is disabled", () => {
     const initialConfig = createCompleteConfig({
       features: { enableAnalytics: false },
     });
@@ -388,236 +390,219 @@ describe('FeatureGate', () => {
       <FeatureGate feature="enableAnalytics">
         <div>Analytics Content</div>
       </FeatureGate>,
-      { wrapper: createWrapper(initialConfig) }
+      { wrapper: createWrapper(initialConfig) },
     );
 
-    expect(screen.queryByText('Analytics Content')).not.toBeInTheDocument();
+    expect(screen.queryByText("Analytics Content")).not.toBeInTheDocument();
   });
 
-  it('should render fallback when feature is disabled', () => {
+  it("should render fallback when feature is disabled", () => {
     const initialConfig = createCompleteConfig({
       features: { enableAnalytics: false },
     });
 
     render(
-      <FeatureGate
-        feature="enableAnalytics"
-        fallback={<div>Feature Disabled</div>}
-      >
+      <FeatureGate feature="enableAnalytics" fallback={<div>Feature Disabled</div>}>
         <div>Analytics Content</div>
       </FeatureGate>,
-      { wrapper: createWrapper(initialConfig) }
+      { wrapper: createWrapper(initialConfig) },
     );
 
-    expect(screen.getByText('Feature Disabled')).toBeInTheDocument();
-    expect(screen.queryByText('Analytics Content')).not.toBeInTheDocument();
+    expect(screen.getByText("Feature Disabled")).toBeInTheDocument();
+    expect(screen.queryByText("Analytics Content")).not.toBeInTheDocument();
   });
 });
 
-describe('EnvironmentGate', () => {
-  it('should render children in matching environment', () => {
+describe("EnvironmentGate", () => {
+  it("should render children in matching environment", () => {
     const initialConfig = createCompleteConfig({
-      app: { environment: 'development' as const },
+      app: { environment: "development" as const },
     });
 
     render(
-      <EnvironmentGate environments={['development', 'staging']}>
+      <EnvironmentGate environments={["development", "staging"]}>
         <div>Dev/Staging Content</div>
       </EnvironmentGate>,
-      { wrapper: createWrapper(initialConfig) }
+      { wrapper: createWrapper(initialConfig) },
     );
 
-    expect(screen.getByText('Dev/Staging Content')).toBeInTheDocument();
+    expect(screen.getByText("Dev/Staging Content")).toBeInTheDocument();
   });
 
-  it('should not render children in non-matching environment', () => {
+  it("should not render children in non-matching environment", () => {
     const initialConfig = createCompleteConfig({
-      app: { environment: 'production' as const },
+      app: { environment: "production" as const },
     });
 
     render(
-      <EnvironmentGate environments={['development', 'staging']}>
+      <EnvironmentGate environments={["development", "staging"]}>
         <div>Dev/Staging Content</div>
       </EnvironmentGate>,
-      { wrapper: createWrapper(initialConfig) }
+      { wrapper: createWrapper(initialConfig) },
     );
 
-    expect(screen.queryByText('Dev/Staging Content')).not.toBeInTheDocument();
+    expect(screen.queryByText("Dev/Staging Content")).not.toBeInTheDocument();
   });
 
-  it('should render fallback in non-matching environment', () => {
+  it("should render fallback in non-matching environment", () => {
     const initialConfig = createCompleteConfig({
-      app: { environment: 'production' as const },
+      app: { environment: "production" as const },
     });
 
     render(
-      <EnvironmentGate
-        environments={['development']}
-        fallback={<div>Production Content</div>}
-      >
+      <EnvironmentGate environments={["development"]} fallback={<div>Production Content</div>}>
         <div>Dev Content</div>
       </EnvironmentGate>,
-      { wrapper: createWrapper(initialConfig) }
+      { wrapper: createWrapper(initialConfig) },
     );
 
-    expect(screen.getByText('Production Content')).toBeInTheDocument();
-    expect(screen.queryByText('Dev Content')).not.toBeInTheDocument();
+    expect(screen.getByText("Production Content")).toBeInTheDocument();
+    expect(screen.queryByText("Dev Content")).not.toBeInTheDocument();
   });
 });
 
-describe('withFeatureFlag HOC', () => {
-  const TestComponent = ({ message }: { message: string }) => (
-    <div>{message}</div>
-  );
+describe("withFeatureFlag HOC", () => {
+  const TestComponent = ({ message }: { message: string }) => <div>{message}</div>;
 
-  it('should render component when feature is enabled', () => {
+  it("should render component when feature is enabled", () => {
     const initialConfig = createCompleteConfig({
       features: { enableAnalytics: true },
     });
 
-    const WrappedComponent = withFeatureFlag<{ message: string }>('enableAnalytics')(TestComponent);
+    const WrappedComponent = withFeatureFlag<{ message: string }>("enableAnalytics")(TestComponent);
 
-    render(
-      <WrappedComponent message="Test Message" />,
-      { wrapper: createWrapper(initialConfig) }
-    );
+    render(<WrappedComponent message="Test Message" />, { wrapper: createWrapper(initialConfig) });
 
-    expect(screen.getByText('Test Message')).toBeInTheDocument();
+    expect(screen.getByText("Test Message")).toBeInTheDocument();
   });
 
-  it('should not render component when feature is disabled', () => {
+  it("should not render component when feature is disabled", () => {
     const initialConfig = createCompleteConfig({
       features: { enableAnalytics: false },
     });
 
-    const WrappedComponent = withFeatureFlag<{ message: string }>('enableAnalytics')(TestComponent);
+    const WrappedComponent = withFeatureFlag<{ message: string }>("enableAnalytics")(TestComponent);
 
-    render(
-      <WrappedComponent message="Test Message" />,
-      { wrapper: createWrapper(initialConfig) }
-    );
+    render(<WrappedComponent message="Test Message" />, { wrapper: createWrapper(initialConfig) });
 
-    expect(screen.queryByText('Test Message')).not.toBeInTheDocument();
+    expect(screen.queryByText("Test Message")).not.toBeInTheDocument();
   });
 
-  it('should render fallback component when feature is disabled', () => {
+  it("should render fallback component when feature is disabled", () => {
     const initialConfig = createCompleteConfig({
       features: { enableAnalytics: false },
     });
 
-    const FallbackComponent = ({ message }: { message: string }) => (
-      <div>Fallback: {message}</div>
-    );
+    const FallbackComponent = ({ message }: { message: string }) => <div>Fallback: {message}</div>;
 
     const WrappedComponent = withFeatureFlag<{ message: string }>(
-      'enableAnalytics',
-      FallbackComponent
+      "enableAnalytics",
+      FallbackComponent,
     )(TestComponent);
 
-    render(
-      <WrappedComponent message="Test Message" />,
-      { wrapper: createWrapper(initialConfig) }
-    );
+    render(<WrappedComponent message="Test Message" />, { wrapper: createWrapper(initialConfig) });
 
-    expect(screen.getByText('Fallback: Test Message')).toBeInTheDocument();
-    expect(screen.queryByText('Test Message')).not.toBeInTheDocument();
+    expect(screen.getByText("Fallback: Test Message")).toBeInTheDocument();
+    expect(screen.queryByText("Test Message")).not.toBeInTheDocument();
   });
 
-  it('should render fallback element when feature is disabled', () => {
+  it("should render fallback element when feature is disabled", () => {
     const initialConfig = createCompleteConfig({
       features: { enableAnalytics: false },
     });
 
     const fallbackElement = <div>Feature Not Available</div>;
     const WrappedComponent = withFeatureFlag<{ message: string }>(
-      'enableAnalytics',
-      fallbackElement
+      "enableAnalytics",
+      fallbackElement,
     )(TestComponent);
 
-    render(
-      <WrappedComponent message="Test Message" />,
-      { wrapper: createWrapper(initialConfig) }
-    );
+    render(<WrappedComponent message="Test Message" />, { wrapper: createWrapper(initialConfig) });
 
-    expect(screen.getByText('Feature Not Available')).toBeInTheDocument();
-    expect(screen.queryByText('Test Message')).not.toBeInTheDocument();
+    expect(screen.getByText("Feature Not Available")).toBeInTheDocument();
+    expect(screen.queryByText("Test Message")).not.toBeInTheDocument();
   });
 
-  it('should render nothing when feature is disabled and fallback is null', () => {
+  it("should render nothing when feature is disabled and fallback is null", () => {
     const initialConfig = createCompleteConfig({
       features: { enableAnalytics: false },
-      app: { appUrl: 'http://localhost:3000' },
-      api: { baseUrl: 'http://localhost:9000' }
+      app: { appUrl: "http://localhost:3000" },
+      api: { baseUrl: "http://localhost:9000" },
     });
 
-    const WrappedComponent = withFeatureFlag<{ message: string }>('enableAnalytics', null)(TestComponent);
+    const WrappedComponent = withFeatureFlag<{ message: string }>(
+      "enableAnalytics",
+      null,
+    )(TestComponent);
 
-    const { container } = render(
-      <WrappedComponent message="Test Message" />,
-      { wrapper: createWrapper(initialConfig) }
-    );
+    const { container } = render(<WrappedComponent message="Test Message" />, {
+      wrapper: createWrapper(initialConfig),
+    });
 
     expect(container.firstChild).toBeNull();
   });
 });
 
-describe('ConfigDebugPanel', () => {
-  it('should render in development environment', () => {
+describe("ConfigDebugPanel", () => {
+  it("should render in development environment", () => {
     const initialConfig = createCompleteConfig({
-      app: { environment: 'development' as const },
+      app: { environment: "development" as const },
     });
 
     render(<ConfigDebugPanel />, { wrapper: createWrapper(initialConfig) });
 
-    expect(screen.getByText('Configuration Debug')).toBeInTheDocument();
+    expect(screen.getByText("Configuration Debug")).toBeInTheDocument();
     expect(screen.getByText(/Environment: development/)).toBeInTheDocument();
   });
 
-  it('should not render in production environment', () => {
+  it("should not render in production environment", () => {
     const initialConfig = createCompleteConfig({
-      app: { environment: 'production' as const },
+      app: { environment: "production" as const },
     });
 
     render(<ConfigDebugPanel />, { wrapper: createWrapper(initialConfig) });
 
-    expect(screen.queryByText('Configuration Debug')).not.toBeInTheDocument();
+    expect(screen.queryByText("Configuration Debug")).not.toBeInTheDocument();
   });
 
-  it('should show errors when present', () => {
+  it("should show errors when present", () => {
     const initialConfig = createCompleteConfig({
-      app: { environment: 'development' as const },
-      api: { baseUrl: 'invalid-url' },
+      app: { environment: "development" as const },
+      api: { baseUrl: "invalid-url" },
     });
 
     render(<ConfigDebugPanel />, { wrapper: createWrapper(initialConfig) });
 
-    expect(screen.getByText('Errors:')).toBeInTheDocument();
+    expect(screen.getByText("Errors:")).toBeInTheDocument();
   });
 
-  it('should show configuration details', () => {
+  it("should show configuration details", () => {
     const initialConfig = createCompleteConfig({
-      app: { environment: 'development' as const },
+      app: { environment: "development" as const },
     });
 
     render(<ConfigDebugPanel />, { wrapper: createWrapper(initialConfig) });
 
     // Should have a details element for configuration
-    const details = screen.getByRole('group');
+    const details = screen.getByRole("group");
     expect(details).toBeInTheDocument();
   });
 });
 
-describe('Integration tests', () => {
-  it('should handle complex configuration updates', () => {
-    const { result } = renderHook(() => {
-      const config = useConfig();
-      const apiConfig = useApiConfig();
-      const featureFlags = useFeatureFlags();
+describe("Integration tests", () => {
+  it("should handle complex configuration updates", () => {
+    const { result } = renderHook(
+      () => {
+        const config = useConfig();
+        const apiConfig = useApiConfig();
+        const featureFlags = useFeatureFlags();
 
-      return { config, apiConfig, featureFlags };
-    }, {
-      wrapper: createWrapper(),
-    });
+        return { config, apiConfig, featureFlags };
+      },
+      {
+        wrapper: createWrapper(),
+      },
+    );
 
     // Update API config
     act(() => {
@@ -628,25 +613,30 @@ describe('Integration tests', () => {
 
     // Update feature flag
     act(() => {
-      result.current.featureFlags.updateFlag('enableAnalytics', true);
+      result.current.featureFlags.updateFlag("enableAnalytics", true);
     });
 
     expect(result.current.config.config.features.enableAnalytics).toBe(true);
     expect(result.current.featureFlags.enableAnalytics).toBe(true);
   });
 
-  it('should maintain consistency across hooks', () => {
-    const { result } = renderHook(() => {
-      const config = useConfig();
-      const environment = useEnvironment();
-      const validation = useConfigValidation();
+  it("should maintain consistency across hooks", () => {
+    const { result } = renderHook(
+      () => {
+        const config = useConfig();
+        const environment = useEnvironment();
+        const validation = useConfigValidation();
 
-      return { config, environment, validation };
-    }, {
-      wrapper: createWrapper(),
-    });
+        return { config, environment, validation };
+      },
+      {
+        wrapper: createWrapper(),
+      },
+    );
 
-    expect(result.current.config.config.app.environment).toBe(result.current.environment.environment);
+    expect(result.current.config.config.app.environment).toBe(
+      result.current.environment.environment,
+    );
     expect(result.current.config.errors).toBe(result.current.validation.errors);
     expect(result.current.config.isLoading).toBe(result.current.validation.isLoading);
   });

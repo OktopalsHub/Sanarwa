@@ -1,14 +1,14 @@
-import '@testing-library/jest-dom'
-import { cleanup } from '@testing-library/react'
-import { afterEach, beforeAll, vi } from 'vitest'
+import "@testing-library/jest-dom";
+import { cleanup } from "@testing-library/react";
+import { afterEach, beforeAll, vi } from "vitest";
 
 // Cleanup after each test case
 afterEach(() => {
-  cleanup()
-})
+  cleanup();
+});
 
 // Mock Next.js router
-vi.mock('next/navigation', () => ({
+vi.mock("next/navigation", () => ({
   useRouter: () => ({
     push: vi.fn(),
     replace: vi.fn(),
@@ -18,28 +18,28 @@ vi.mock('next/navigation', () => ({
     refresh: vi.fn(),
   }),
   useSearchParams: () => new URLSearchParams(),
-  usePathname: () => '/',
-}))
+  usePathname: () => "/",
+}));
 
 // Mock Next.js image component - simple string return to avoid JSX issues
-vi.mock('next/image', () => ({
+vi.mock("next/image", () => ({
   default: (props: any) => `Image: ${props.alt || props.src}`,
-}))
+}));
 
 // Mock js-cookie
-vi.mock('js-cookie', () => ({
+vi.mock("js-cookie", () => ({
   default: {
     get: vi.fn(),
     set: vi.fn(),
     remove: vi.fn(),
   },
-}))
+}));
 
 // Mock window.matchMedia (only in DOM environment)
-if (typeof window !== 'undefined') {
-  Object.defineProperty(window, 'matchMedia', {
+if (typeof window !== "undefined") {
+  Object.defineProperty(window, "matchMedia", {
     writable: true,
-    value: vi.fn().mockImplementation(query => ({
+    value: vi.fn().mockImplementation((query) => ({
       matches: false,
       media: query,
       onchange: null,
@@ -49,35 +49,35 @@ if (typeof window !== 'undefined') {
       removeEventListener: vi.fn(),
       dispatchEvent: vi.fn(),
     })),
-  })
+  });
 }
 
 // Mock ResizeObserver (only in DOM environment)
-if (typeof global !== 'undefined') {
+if (typeof global !== "undefined") {
   global.ResizeObserver = vi.fn().mockImplementation(() => ({
     observe: vi.fn(),
     unobserve: vi.fn(),
     disconnect: vi.fn(),
-  }))
+  }));
 
   // Mock IntersectionObserver
   global.IntersectionObserver = vi.fn().mockImplementation(() => ({
     observe: vi.fn(),
     unobserve: vi.fn(),
     disconnect: vi.fn(),
-  }))
+  }));
 }
 
 // Suppress console errors in tests unless explicitly needed
 beforeAll(() => {
-  const originalError = console.error
+  const originalError = console.error;
   console.error = (...args: any[]) => {
     if (
-      typeof args[0] === 'string' &&
-      args[0].includes('Warning: ReactDOM.render is no longer supported')
+      typeof args[0] === "string" &&
+      args[0].includes("Warning: ReactDOM.render is no longer supported")
     ) {
-      return
+      return;
     }
-    originalError.call(console, ...args)
-  }
-})
+    originalError.call(console, ...args);
+  };
+});

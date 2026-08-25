@@ -1,13 +1,13 @@
-import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
-import { getPaginationSummary, IPaginatedData } from 'src/common/dto/pagination.dto';
-import { CreateProjectDto } from './dto/create-project.dto';
-import { UpdateProjectDto } from './dto/update-project.dto';
-import { Project } from './entities/project.entity';
-import { ProjectRepository } from './project.repository';
+import { Injectable, NotFoundException, ConflictException } from "@nestjs/common";
+import { getPaginationSummary, IPaginatedData } from "src/common/dto/pagination.dto";
+import { CreateProjectDto } from "./dto/create-project.dto";
+import { UpdateProjectDto } from "./dto/update-project.dto";
+import { Project } from "./entities/project.entity";
+import { ProjectRepository } from "./project.repository";
 
 @Injectable()
 export class ProjectService {
-  constructor(private readonly projectRepository: ProjectRepository) { }
+  constructor(private readonly projectRepository: ProjectRepository) {}
 
   async createProject(
     tenantId: string,
@@ -15,10 +15,7 @@ export class ProjectService {
     createdById?: string,
   ): Promise<Project> {
     // Check if a project with the same name already exists in this tenant
-    const exists = await this.projectRepository.existsByNameAndTenant(
-      createDto.name,
-      tenantId,
-    );
+    const exists = await this.projectRepository.existsByNameAndTenant(createDto.name, tenantId);
 
     if (exists) {
       throw new ConflictException(
@@ -33,33 +30,29 @@ export class ProjectService {
     });
   }
 
-  async getAllProjects(
-    tenantId: string,
-    query?: any,
-  ): Promise<IPaginatedData<Partial<Project>>> {
+  async getAllProjects(tenantId: string, query?: any): Promise<IPaginatedData<Partial<Project>>> {
     const queryBuilder = this.projectRepository
-      .createQueryBuilder('project')
+      .createQueryBuilder("project")
       .select([
-        'project.id',
-        'project.name',
-        'project.description',
-        'project.status',
-        'project.createdAt',
-        'project.updatedAt',
+        "project.id",
+        "project.name",
+        "project.description",
+        "project.status",
+        "project.createdAt",
+        "project.updatedAt",
       ])
-      .where('project.tenant.id = :tenantId', { tenantId });
+      .where("project.tenant.id = :tenantId", { tenantId });
 
     // Apply filters
     if (query?.search) {
-      queryBuilder.andWhere(
-        '(project.name ILIKE :search OR project.description ILIKE :search)',
-        { search: `%${query.search}%` },
-      );
+      queryBuilder.andWhere("(project.name ILIKE :search OR project.description ILIKE :search)", {
+        search: `%${query.search}%`,
+      });
     }
 
     // Apply sorting
-    const sortField = query?.sortBy || 'createdAt';
-    const sortOrder = query?.sortOrder || 'DESC';
+    const sortField = query?.sortBy || "createdAt";
+    const sortOrder = query?.sortOrder || "DESC";
     queryBuilder.orderBy(`project.${sortField}`, sortOrder);
 
     // Apply pagination
@@ -76,22 +69,14 @@ export class ProjectService {
       id: project.id,
       name: project.name,
       description: project.description,
-      status: project.status
+      status: project.status,
     }));
 
-    return getPaginationSummary(
-      sanitizedProjects,
-      total,
-      { page, limit },
-      'projects',
-    );
+    return getPaginationSummary(sanitizedProjects, total, { page, limit }, "projects");
   }
 
   async getProjectById(tenantId: string, id: string): Promise<Project> {
-    const project = await this.projectRepository.findByIdAndTenant(
-      id,
-      tenantId,
-    );
+    const project = await this.projectRepository.findByIdAndTenant(id, tenantId);
 
     if (!project) {
       throw new NotFoundException(`Project with ID ${id} not found`);
@@ -100,11 +85,7 @@ export class ProjectService {
     return project;
   }
 
-  async updateProject(
-    tenantId: string,
-    id: string,
-    updateDto: UpdateProjectDto,
-  ): Promise<Project> {
+  async updateProject(tenantId: string, id: string, updateDto: UpdateProjectDto): Promise<Project> {
     const project = await this.getProjectById(tenantId, id);
 
     // Check if updating the name would create a duplicate

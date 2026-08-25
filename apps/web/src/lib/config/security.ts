@@ -1,20 +1,20 @@
 /**
  * Security Configuration and CORS Management
- * 
+ *
  * Provides security configuration, CORS handling, rate limiting awareness,
  * and request validation for the frontend application.
  */
 
-import { config } from './environment';
+import { config } from "./environment";
 
 export interface SecurityHeaders {
-  'Content-Security-Policy'?: string;
-  'X-Frame-Options'?: string;
-  'X-Content-Type-Options'?: string;
-  'Referrer-Policy'?: string;
-  'Permissions-Policy'?: string;
-  'Strict-Transport-Security'?: string;
-  'X-XSS-Protection'?: string;
+  "Content-Security-Policy"?: string;
+  "X-Frame-Options"?: string;
+  "X-Content-Type-Options"?: string;
+  "Referrer-Policy"?: string;
+  "Permissions-Policy"?: string;
+  "Strict-Transport-Security"?: string;
+  "X-XSS-Protection"?: string;
 }
 
 export interface CORSConfig {
@@ -39,7 +39,7 @@ export interface CSRFConfig {
   tokenName: string;
   cookieName: string;
   headerName: string;
-  sameSite: 'strict' | 'lax' | 'none';
+  sameSite: "strict" | "lax" | "none";
   secure: boolean;
 }
 
@@ -61,7 +61,7 @@ export function getContentSecurityPolicy(): string {
 
   // Extract domains from URLs
   const apiDomain = new URL(baseUrl).origin;
-  const wsDomain = wsUrl.replace(/^ws/, 'http'); // Convert for CSP
+  const wsDomain = wsUrl.replace(/^ws/, "http"); // Convert for CSP
 
   const policies = [
     "default-src 'self'",
@@ -77,7 +77,7 @@ export function getContentSecurityPolicy(): string {
   ];
 
   // Environment-specific adjustments
-  if (environment === 'development') {
+  if (environment === "development") {
     // Allow webpack dev server and hot reload
     policies.push("script-src 'self' 'unsafe-inline' 'unsafe-eval' webpack:");
     policies.push("connect-src 'self' ws: wss: webpack:");
@@ -94,7 +94,7 @@ export function getContentSecurityPolicy(): string {
     policies.push(`connect-src 'self' ${apiDomain} ${wsDomain} ${posthogDomain}`);
   }
 
-  return policies.join('; ');
+  return policies.join("; ");
 }
 
 /**
@@ -102,20 +102,20 @@ export function getContentSecurityPolicy(): string {
  */
 export function getSecurityHeaders(): SecurityHeaders {
   const { environment } = config.app;
-  const isProduction = environment === 'production';
+  const isProduction = environment === "production";
 
   const headers: SecurityHeaders = {
-    'Content-Security-Policy': getContentSecurityPolicy(),
-    'X-Frame-Options': 'DENY',
-    'X-Content-Type-Options': 'nosniff',
-    'Referrer-Policy': 'strict-origin-when-cross-origin',
-    'Permissions-Policy': 'camera=(), microphone=(), geolocation=(), payment=()',
-    'X-XSS-Protection': '1; mode=block',
+    "Content-Security-Policy": getContentSecurityPolicy(),
+    "X-Frame-Options": "DENY",
+    "X-Content-Type-Options": "nosniff",
+    "Referrer-Policy": "strict-origin-when-cross-origin",
+    "Permissions-Policy": "camera=(), microphone=(), geolocation=(), payment=()",
+    "X-XSS-Protection": "1; mode=block",
   };
 
   // Add HSTS in production with HTTPS
-  if (isProduction && config.app.appUrl.startsWith('https://')) {
-    headers['Strict-Transport-Security'] = 'max-age=31536000; includeSubDomains; preload';
+  if (isProduction && config.app.appUrl.startsWith("https://")) {
+    headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains; preload";
   }
 
   return headers;
@@ -130,33 +130,33 @@ export function getCORSConfig(): CORSConfig {
 
   return {
     allowedOrigins,
-    allowedMethods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedMethods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     allowedHeaders: [
-      'Content-Type',
-      'Authorization',
-      'X-Requested-With',
-      'X-Tenant-ID',
-      'X-API-Key',
-      'X-CSRF-Token',
-      'Accept',
-      'Origin',
-      'User-Agent',
-      'DNT',
-      'Cache-Control',
-      'X-Mx-ReqToken',
-      'Keep-Alive',
-      'If-Modified-Since',
+      "Content-Type",
+      "Authorization",
+      "X-Requested-With",
+      "X-Tenant-ID",
+      "X-API-Key",
+      "X-CSRF-Token",
+      "Accept",
+      "Origin",
+      "User-Agent",
+      "DNT",
+      "Cache-Control",
+      "X-Mx-ReqToken",
+      "Keep-Alive",
+      "If-Modified-Since",
     ],
     exposedHeaders: [
-      'X-Total-Count',
-      'X-Page-Count',
-      'X-Per-Page',
-      'X-Rate-Limit-Limit',
-      'X-Rate-Limit-Remaining',
-      'X-Rate-Limit-Reset',
+      "X-Total-Count",
+      "X-Page-Count",
+      "X-Per-Page",
+      "X-Rate-Limit-Limit",
+      "X-Rate-Limit-Remaining",
+      "X-Rate-Limit-Reset",
     ],
     allowCredentials: true,
-    maxAge: environment === 'production' ? 86400 : 3600, // 24h in prod, 1h in dev
+    maxAge: environment === "production" ? 86400 : 3600, // 24h in prod, 1h in dev
   };
 }
 
@@ -174,8 +174,8 @@ export function getRateLimitConfig(): RateLimitConfig {
     skipFailedRequests: false,
     keyGenerator: (request: any) => {
       // Use IP address and user ID if available
-      const ip = request.ip || request.connection?.remoteAddress || 'unknown';
-      const userId = request.user?.id || 'anonymous';
+      const ip = request.ip || request.connection?.remoteAddress || "unknown";
+      const userId = request.user?.id || "anonymous";
       return `${ip}:${userId}`;
     },
   };
@@ -187,15 +187,15 @@ export function getRateLimitConfig(): RateLimitConfig {
 export function getCSRFConfig(): CSRFConfig {
   const { enableCSRF } = config.security;
   const { environment } = config.app;
-  const isProduction = environment === 'production';
+  const isProduction = environment === "production";
 
   return {
     enabled: enableCSRF,
-    tokenName: 'csrfToken',
-    cookieName: '_csrf',
-    headerName: 'X-CSRF-Token',
-    sameSite: isProduction ? 'strict' : 'lax',
-    secure: isProduction && config.app.appUrl.startsWith('https://'),
+    tokenName: "csrfToken",
+    cookieName: "_csrf",
+    headerName: "X-CSRF-Token",
+    sameSite: isProduction ? "strict" : "lax",
+    secure: isProduction && config.app.appUrl.startsWith("https://"),
   };
 }
 
@@ -206,12 +206,12 @@ export function getRequestValidationConfig(): RequestValidationConfig {
   return {
     maxBodySize: 10 * 1024 * 1024, // 10MB
     allowedContentTypes: [
-      'application/json',
-      'application/x-www-form-urlencoded',
-      'multipart/form-data',
-      'text/plain',
-      'text/csv',
-      'application/octet-stream',
+      "application/json",
+      "application/x-www-form-urlencoded",
+      "multipart/form-data",
+      "text/plain",
+      "text/csv",
+      "application/octet-stream",
     ],
     requireContentType: true,
     validateHeaders: true,
@@ -238,9 +238,9 @@ export class RateLimitTracker {
    * Update rate limit info from response headers
    */
   updateFromHeaders(endpoint: string, headers: Record<string, string>): void {
-    const limit = parseInt(headers['x-rate-limit-limit'] || '0', 10);
-    const remaining = parseInt(headers['x-rate-limit-remaining'] || '0', 10);
-    const reset = parseInt(headers['x-rate-limit-reset'] || '0', 10);
+    const limit = parseInt(headers["x-rate-limit-limit"] || "0", 10);
+    const remaining = parseInt(headers["x-rate-limit-remaining"] || "0", 10);
+    const reset = parseInt(headers["x-rate-limit-reset"] || "0", 10);
 
     if (limit > 0) {
       const info: RateLimitInfo = {
@@ -291,7 +291,7 @@ export class RateLimitTracker {
   }
 
   private notifyCallbacks(info: RateLimitInfo): void {
-    this.callbacks.forEach(callback => callback(info));
+    this.callbacks.forEach((callback) => callback(info));
   }
 
   /**
@@ -339,23 +339,23 @@ export class RequestSanitizer {
    * Sanitize string input to prevent XSS
    */
   static sanitizeXSS(input: string): string {
-    if (typeof input !== 'string') return input;
+    if (typeof input !== "string") return input;
 
     let sanitized = input;
 
     // Remove dangerous HTML tags and attributes
-    this.XSS_PATTERNS.forEach(pattern => {
-      sanitized = sanitized.replace(pattern, '');
+    this.XSS_PATTERNS.forEach((pattern) => {
+      sanitized = sanitized.replace(pattern, "");
     });
 
     // Encode HTML entities
     sanitized = sanitized
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;')
-      .replace(/'/g, '&#x27;')
-      .replace(/\//g, '&#x2F;');
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#x27;")
+      .replace(/\//g, "&#x2F;");
 
     return sanitized;
   }
@@ -364,12 +364,12 @@ export class RequestSanitizer {
    * Sanitize input to prevent SQL injection
    */
   static sanitizeSQL(input: string): string {
-    if (typeof input !== 'string') return input;
+    if (typeof input !== "string") return input;
 
     let sanitized = input;
 
-    this.SQL_PATTERNS.forEach(pattern => {
-      sanitized = sanitized.replace(pattern, '');
+    this.SQL_PATTERNS.forEach((pattern) => {
+      sanitized = sanitized.replace(pattern, "");
     });
 
     return sanitized.trim();
@@ -381,15 +381,15 @@ export class RequestSanitizer {
   static sanitizeObject(obj: any): any {
     if (obj === null || obj === undefined) return obj;
 
-    if (typeof obj === 'string') {
+    if (typeof obj === "string") {
       return this.sanitizeXSS(obj);
     }
 
     if (Array.isArray(obj)) {
-      return obj.map(item => this.sanitizeObject(item));
+      return obj.map((item) => this.sanitizeObject(item));
     }
 
-    if (typeof obj === 'object') {
+    if (typeof obj === "object") {
       const sanitized: any = {};
       for (const [key, value] of Object.entries(obj)) {
         sanitized[this.sanitizeXSS(key)] = this.sanitizeObject(value);
@@ -434,7 +434,7 @@ export class SecurityMiddleware {
 
     // Add CSRF token if available
     const csrfConfig = getCSRFConfig();
-    if (csrfConfig.enabled && typeof window !== 'undefined') {
+    if (csrfConfig.enabled && typeof window !== "undefined") {
       const csrfToken = this.getCSRFToken();
       if (csrfToken) {
         headers.set(csrfConfig.headerName, csrfToken);
@@ -442,16 +442,16 @@ export class SecurityMiddleware {
     }
 
     // Add request ID for tracking
-    headers.set('X-Request-ID', this.generateRequestId());
+    headers.set("X-Request-ID", this.generateRequestId());
 
     // Validate and sanitize body
-    if (processedOptions.body && typeof processedOptions.body === 'string') {
+    if (processedOptions.body && typeof processedOptions.body === "string") {
       try {
         const parsed = JSON.parse(processedOptions.body);
         const sanitized = RequestSanitizer.validateAndSanitize(parsed, this.config);
         processedOptions.body = JSON.stringify(sanitized);
       } catch (error) {
-        console.warn('Failed to sanitize request body:', error);
+        console.warn("Failed to sanitize request body:", error);
       }
     }
 
@@ -474,13 +474,13 @@ export class SecurityMiddleware {
     // Log security-related headers
     if (config.logging.enablePerformanceLogs) {
       const securityHeaders = [
-        'x-rate-limit-remaining',
-        'x-rate-limit-reset',
-        'strict-transport-security',
-        'content-security-policy',
+        "x-rate-limit-remaining",
+        "x-rate-limit-reset",
+        "strict-transport-security",
+        "content-security-policy",
       ];
 
-      securityHeaders.forEach(header => {
+      securityHeaders.forEach((header) => {
         const value = headers[header];
         if (value) {
           console.debug(`Security header ${header}:`, value);
@@ -493,23 +493,23 @@ export class SecurityMiddleware {
    * Get CSRF token from cookie or meta tag
    */
   private getCSRFToken(): string | null {
-    if (typeof window === 'undefined') return null;
+    if (typeof window === "undefined") return null;
 
     const csrfConfig = getCSRFConfig();
 
     // Try to get from cookie
-    const cookies = document.cookie.split(';');
+    const cookies = document.cookie.split(";");
     for (const cookie of cookies) {
-      const [name, value] = cookie.trim().split('=');
+      const [name, value] = cookie.trim().split("=");
       if (name === csrfConfig.cookieName) {
-        return value ? decodeURIComponent(value) : '';
+        return value ? decodeURIComponent(value) : "";
       }
     }
 
     // Try to get from meta tag
     const metaTag = document.querySelector(`meta[name="${csrfConfig.tokenName}"]`);
     if (metaTag) {
-      return metaTag.getAttribute('content');
+      return metaTag.getAttribute("content");
     }
 
     return null;
@@ -542,7 +542,7 @@ export const SecurityUtils = {
    */
   isOriginAllowed(origin: string): boolean {
     const { allowedOrigins } = config.security;
-    return allowedOrigins.includes('*') || allowedOrigins.includes(origin);
+    return allowedOrigins.includes("*") || allowedOrigins.includes(origin);
   },
 
   /**
@@ -553,19 +553,14 @@ export const SecurityUtils = {
       const urlObj = new URL(url);
 
       // Check protocol
-      if (!['http:', 'https:', 'ws:', 'wss:'].includes(urlObj.protocol)) {
+      if (!["http:", "https:", "ws:", "wss:"].includes(urlObj.protocol)) {
         return false;
       }
 
       // Check for suspicious patterns
-      const suspiciousPatterns = [
-        /javascript:/i,
-        /data:/i,
-        /vbscript:/i,
-        /file:/i,
-      ];
+      const suspiciousPatterns = [/javascript:/i, /data:/i, /vbscript:/i, /file:/i];
 
-      return !suspiciousPatterns.some(pattern => pattern.test(url));
+      return !suspiciousPatterns.some((pattern) => pattern.test(url));
     } catch {
       return false;
     }
@@ -575,33 +570,33 @@ export const SecurityUtils = {
    * Generate secure random string
    */
   generateSecureToken(length: number = 32): string {
-    if (typeof window !== 'undefined' && window.crypto && window.crypto.getRandomValues) {
+    if (typeof window !== "undefined" && window.crypto && window.crypto.getRandomValues) {
       const array = new Uint8Array(length);
       window.crypto.getRandomValues(array);
-      return Array.from(array, byte => byte.toString(16).padStart(2, '0')).join('');
+      return Array.from(array, (byte) => byte.toString(16).padStart(2, "0")).join("");
     }
 
     // Fallback for environments without crypto API
-    return Array.from({ length }, () => Math.floor(Math.random() * 16).toString(16)).join('');
+    return Array.from({ length }, () => Math.floor(Math.random() * 16).toString(16)).join("");
   },
 
   /**
    * Hash string using Web Crypto API
    */
   async hashString(input: string): Promise<string> {
-    if (typeof window !== 'undefined' && window.crypto && window.crypto.subtle) {
+    if (typeof window !== "undefined" && window.crypto && window.crypto.subtle) {
       const encoder = new TextEncoder();
       const data = encoder.encode(input);
-      const hashBuffer = await window.crypto.subtle.digest('SHA-256', data);
+      const hashBuffer = await window.crypto.subtle.digest("SHA-256", data);
       const hashArray = Array.from(new Uint8Array(hashBuffer));
-      return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+      return hashArray.map((b) => b.toString(16).padStart(2, "0")).join("");
     }
 
     // Fallback - not cryptographically secure
     let hash = 0;
     for (let i = 0; i < input.length; i++) {
       const char = input.charCodeAt(i);
-      hash = ((hash << 5) - hash) + char;
+      hash = (hash << 5) - hash + char;
       hash = hash & hash; // Convert to 32-bit integer
     }
     return hash.toString(16);

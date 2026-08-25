@@ -1,23 +1,16 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { NotificationChannel } from '../../common/enums/notification-channel.enum';
-import {
-  BaseProviderPayload,
-  IBaseProvider,
-} from '../../providers/base/base-provider.interface';
-import { ProviderFactory } from '../../providers/factory/provider-factory';
-import { ProviderHealthMonitor } from '../../providers/health/provider-health-monitor';
-import {
-  Channel,
-  ProviderHealth,
-  ProviderResponse,
-} from '../../providers/types';
-import { ProviderConfigValidator } from './provider-config-validator';
-import { ProviderConfig } from './provider-config.entity';
-import { ProviderEncryptionService } from './provider-encryption.service';
-import { ProviderPerformanceTracker } from './provider-performance-tracker';
+import { Injectable, Logger } from "@nestjs/common";
+import { ConfigService } from "@nestjs/config";
+import { InjectRepository } from "@nestjs/typeorm";
+import { Repository } from "typeorm";
+import { NotificationChannel } from "../../common/enums/notification-channel.enum";
+import { BaseProviderPayload, IBaseProvider } from "../../providers/base/base-provider.interface";
+import { ProviderFactory } from "../../providers/factory/provider-factory";
+import { ProviderHealthMonitor } from "../../providers/health/provider-health-monitor";
+import { Channel, ProviderHealth, ProviderResponse } from "../../providers/types";
+import { ProviderConfigValidator } from "./provider-config-validator";
+import { ProviderConfig } from "./provider-config.entity";
+import { ProviderEncryptionService } from "./provider-encryption.service";
+import { ProviderPerformanceTracker } from "./provider-performance-tracker";
 
 export interface ProviderSelectionOptions {
   tenantId: string;
@@ -65,7 +58,7 @@ export class ProviderService {
       throw new Error(`No available providers for channel ${options.channel}`);
     }
 
-    let lastError: string = '';
+    let lastError: string = "";
 
     for (const providerConfig of providers) {
       const circuitBreaker = this.getCircuitBreaker(providerConfig.id);
@@ -123,10 +116,7 @@ export class ProviderService {
     const results: ProviderSendResult[] = [];
 
     // Process in batches to avoid overwhelming providers
-    const batchSize = this.configService.get<number>(
-      'PROVIDER_BULK_BATCH_SIZE',
-      100,
-    );
+    const batchSize = this.configService.get<number>("PROVIDER_BULK_BATCH_SIZE", 100);
 
     for (let i = 0; i < payloads.length; i += batchSize) {
       const batch = payloads.slice(i, i + batchSize);
@@ -134,7 +124,7 @@ export class ProviderService {
         this.send(payload, options).catch((error) => ({
           success: false,
           error: error.message,
-          providerId: 'unknown',
+          providerId: "unknown",
           responseTime: 0,
         })),
       );
@@ -149,41 +139,37 @@ export class ProviderService {
   /**
    * Select providers based on options with failover priority
    */
-  async selectProviders(
-    options: ProviderSelectionOptions,
-  ): Promise<ProviderConfig[]> {
+  async selectProviders(options: ProviderSelectionOptions): Promise<ProviderConfig[]> {
     const query = this.providerConfigRepository
-      .createQueryBuilder('provider')
-      .where('provider.tenantId = :tenantId', { tenantId: options.tenantId })
-      .andWhere('provider.channel = :channel', { channel: options.channel })
-      .andWhere('provider.isActive = :isActive', { isActive: true });
+      .createQueryBuilder("provider")
+      .where("provider.tenantId = :tenantId", { tenantId: options.tenantId })
+      .andWhere("provider.channel = :channel", { channel: options.channel })
+      .andWhere("provider.isActive = :isActive", { isActive: true });
 
     // Filter by country if specified
     if (options.country) {
       query.andWhere(
-        '(provider.supportedCountries IS NULL OR JSON_CONTAINS(provider.supportedCountries, :country))',
+        "(provider.supportedCountries IS NULL OR JSON_CONTAINS(provider.supportedCountries, :country))",
         { country: JSON.stringify(options.country) },
       );
     }
 
     // Exclude specific providers if requested
     if (options.excludeProviders && options.excludeProviders.length > 0) {
-      query.andWhere('provider.providerId NOT IN (:...excludeProviders)', {
+      query.andWhere("provider.providerId NOT IN (:...excludeProviders)", {
         excludeProviders: options.excludeProviders,
       });
     }
 
     const providers = await query
-      .orderBy('provider.priority', 'ASC')
-      .addOrderBy('provider.createdAt', 'ASC')
+      .orderBy("provider.priority", "ASC")
+      .addOrderBy("provider.createdAt", "ASC")
       .getMany();
 
     // Decrypt configurations
     const decryptedProviders = await Promise.all(
       providers.map(async (provider) => {
-        const decryptedConfig = await this.encryptionService.decrypt(
-          provider.config,
-        );
+        const decryptedConfig = await this.encryptionService.decrypt(provider.config);
         return {
           ...provider,
           config: decryptedConfig,
@@ -192,8 +178,7 @@ export class ProviderService {
     );
 
     // Filter by health status and performance
-    const healthyProviders =
-      await this.filterHealthyProviders(decryptedProviders);
+    const healthyProviders = await this.filterHealthyProviders(decryptedProviders);
 
     return healthyProviders;
   }
@@ -211,10 +196,10 @@ export class ProviderService {
         channel,
         isActive: true,
       },
-      relations: ['project', 'project.tenant'],
+      relations: ["project", "project.tenant"],
       order: {
-        priority: 'ASC',
-        createdAt: 'ASC',
+        priority: "ASC",
+        createdAt: "ASC",
       },
     });
   }
@@ -244,14 +229,9 @@ export class ProviderService {
   /**
    * Create a new provider configuration
    */
-  async createConfig(
-    tenantId: string,
-    createDto: any,
-  ): Promise<ProviderConfig> {
+  async createConfig(tenantId: string, createDto: any): Promise<ProviderConfig> {
     // Encrypt sensitive configuration data
-    const encryptedConfig = await this.encryptionService.encrypt(
-      createDto.config,
-    );
+    const encryptedConfig = await this.encryptionService.encrypt(createDto.config);
 
     const providerConfig = this.providerConfigRepository.create({
       ...createDto,
@@ -259,8 +239,7 @@ export class ProviderService {
       config: encryptedConfig,
     });
 
-    const savedConfig =
-      await this.providerConfigRepository.save(providerConfig);
+    const savedConfig = await this.providerConfigRepository.save(providerConfig);
 
     // The save method returns the saved entity, but TypeScript might infer it as an array
     // Let's handle both cases
@@ -269,9 +248,7 @@ export class ProviderService {
     // Validate the configuration
     const isValid = await this.validateProviderConfig(config);
     if (!isValid) {
-      this.logger.warn(
-        `Created provider config ${config.id} failed validation`,
-      );
+      this.logger.warn(`Created provider config ${config.id} failed validation`);
     }
 
     return config;
@@ -290,26 +267,26 @@ export class ProviderService {
     limit: number;
   }> {
     const queryBuilder = this.providerConfigRepository
-      .createQueryBuilder('config')
-      .leftJoinAndSelect('config.project', 'project')
-      .leftJoinAndSelect('project.tenant', 'tenant');
+      .createQueryBuilder("config")
+      .leftJoinAndSelect("config.project", "project")
+      .leftJoinAndSelect("project.tenant", "tenant");
 
-    queryBuilder.where('project.tenantId = :tenantId', { tenantId });
+    queryBuilder.where("project.tenantId = :tenantId", { tenantId });
 
     if (query.channel) {
-      queryBuilder.andWhere('config.channel = :channel', {
+      queryBuilder.andWhere("config.channel = :channel", {
         channel: query.channel,
       });
     }
 
     if (query.isActive !== undefined) {
-      queryBuilder.andWhere('config.isActive = :isActive', {
+      queryBuilder.andWhere("config.isActive = :isActive", {
         isActive: query.isActive,
       });
     }
 
     if (query.providerType) {
-      queryBuilder.andWhere('config.providerType = :providerType', {
+      queryBuilder.andWhere("config.providerType = :providerType", {
         providerType: query.providerType,
       });
     }
@@ -323,8 +300,8 @@ export class ProviderService {
     const offset = (page - 1) * limit;
 
     queryBuilder
-      .orderBy('config.priority', 'ASC')
-      .addOrderBy('config.createdAt', 'DESC')
+      .orderBy("config.priority", "ASC")
+      .addOrderBy("config.createdAt", "DESC")
       .skip(offset)
       .take(limit);
 
@@ -333,9 +310,7 @@ export class ProviderService {
     // Decrypt configurations for response
     const decryptedConfigs = await Promise.all(
       configs.map(async (config) => {
-        const decryptedConfig = await this.encryptionService.decrypt(
-          config.config,
-        );
+        const decryptedConfig = await this.encryptionService.decrypt(config.config);
         return {
           ...config,
           config: decryptedConfig,
@@ -365,22 +340,22 @@ export class ProviderService {
     limit: number;
   }> {
     const queryBuilder = this.providerConfigRepository
-      .createQueryBuilder('config')
-      .leftJoinAndSelect('config.project', 'project')
-      .leftJoinAndSelect('project.tenant', 'tenant');
+      .createQueryBuilder("config")
+      .leftJoinAndSelect("config.project", "project")
+      .leftJoinAndSelect("project.tenant", "tenant");
 
     queryBuilder
-      .where('project.tenantId = :tenantId', { tenantId })
-      .andWhere('config.projectId = :projectId', { projectId });
+      .where("project.tenantId = :tenantId", { tenantId })
+      .andWhere("config.projectId = :projectId", { projectId });
 
     if (query.channel) {
-      queryBuilder.andWhere('config.channel = :channel', {
+      queryBuilder.andWhere("config.channel = :channel", {
         channel: query.channel,
       });
     }
 
     if (query.isActive !== undefined) {
-      queryBuilder.andWhere('config.isActive = :isActive', {
+      queryBuilder.andWhere("config.isActive = :isActive", {
         isActive: query.isActive,
       });
     }
@@ -394,8 +369,8 @@ export class ProviderService {
     const offset = (page - 1) * limit;
 
     queryBuilder
-      .orderBy('config.priority', 'ASC')
-      .addOrderBy('config.createdAt', 'DESC')
+      .orderBy("config.priority", "ASC")
+      .addOrderBy("config.createdAt", "DESC")
       .skip(offset)
       .take(limit);
 
@@ -404,9 +379,7 @@ export class ProviderService {
     // Decrypt configurations for response
     const decryptedConfigs = await Promise.all(
       configs.map(async (config) => {
-        const decryptedConfig = await this.encryptionService.decrypt(
-          config.config,
-        );
+        const decryptedConfig = await this.encryptionService.decrypt(config.config);
         return {
           ...config,
           config: decryptedConfig,
@@ -428,7 +401,7 @@ export class ProviderService {
   async findConfigById(tenantId: string, id: string): Promise<ProviderConfig> {
     const config = await this.providerConfigRepository.findOne({
       where: { id, project: { tenant: { id: tenantId } } },
-      relations: ['project', 'project.tenant'],
+      relations: ["project", "project.tenant"],
     });
 
     if (!config) {
@@ -446,14 +419,10 @@ export class ProviderService {
   /**
    * Update provider configuration
    */
-  async updateConfig(
-    tenantId: string,
-    id: string,
-    updateDto: any,
-  ): Promise<ProviderConfig> {
+  async updateConfig(tenantId: string, id: string, updateDto: any): Promise<ProviderConfig> {
     const existingConfig = await this.providerConfigRepository.findOne({
       where: { id, project: { tenant: { id: tenantId } } },
-      relations: ['project', 'project.tenant'],
+      relations: ["project", "project.tenant"],
     });
 
     if (!existingConfig) {
@@ -477,9 +446,7 @@ export class ProviderService {
     this.providerInstances.delete(cacheKey);
 
     // Decrypt configuration for response
-    const decryptedConfig = await this.encryptionService.decrypt(
-      updatedConfig.config,
-    );
+    const decryptedConfig = await this.encryptionService.decrypt(updatedConfig.config);
     return {
       ...updatedConfig,
       config: decryptedConfig,
@@ -492,7 +459,7 @@ export class ProviderService {
   async removeConfig(tenantId: string, id: string): Promise<void> {
     const config = await this.providerConfigRepository.findOne({
       where: { id, project: { tenant: { id: tenantId } } },
-      relations: ['project', 'project.tenant'],
+      relations: ["project", "project.tenant"],
     });
 
     if (!config) {
@@ -505,9 +472,7 @@ export class ProviderService {
     const cacheKey = this.getProviderCacheKey(config);
     this.providerInstances.delete(cacheKey);
 
-    this.logger.log(
-      `Removed provider configuration ${id} for tenant ${tenantId}`,
-    );
+    this.logger.log(`Removed provider configuration ${id} for tenant ${tenantId}`);
   }
 
   /**
@@ -532,13 +497,13 @@ export class ProviderService {
 
       return {
         success: healthStatus.status === ProviderHealth.HEALTHY,
-        message: 'Provider test completed',
+        message: "Provider test completed",
         responseTime,
       };
     } catch (error) {
       return {
         success: false,
-        message: 'Provider test failed',
+        message: "Provider test failed",
         error: error.message,
       };
     }
@@ -550,7 +515,7 @@ export class ProviderService {
   async activateConfig(tenantId: string, id: string): Promise<ProviderConfig> {
     const config = await this.providerConfigRepository.findOne({
       where: { id, project: { tenant: { id: tenantId } } },
-      relations: ['project', 'project.tenant'],
+      relations: ["project", "project.tenant"],
     });
 
     if (!config) {
@@ -560,13 +525,9 @@ export class ProviderService {
     config.isActive = true;
     const updatedConfig = await this.providerConfigRepository.save(config);
 
-    this.logger.log(
-      `Activated provider configuration ${id} for tenant ${tenantId}`,
-    );
+    this.logger.log(`Activated provider configuration ${id} for tenant ${tenantId}`);
 
-    const decryptedConfig = await this.encryptionService.decrypt(
-      updatedConfig.config,
-    );
+    const decryptedConfig = await this.encryptionService.decrypt(updatedConfig.config);
     return {
       ...updatedConfig,
       config: decryptedConfig,
@@ -576,13 +537,10 @@ export class ProviderService {
   /**
    * Deactivate provider configuration
    */
-  async deactivateConfig(
-    tenantId: string,
-    id: string,
-  ): Promise<ProviderConfig> {
+  async deactivateConfig(tenantId: string, id: string): Promise<ProviderConfig> {
     const config = await this.providerConfigRepository.findOne({
       where: { id, project: { tenant: { id: tenantId } } },
-      relations: ['project', 'project.tenant'],
+      relations: ["project", "project.tenant"],
     });
 
     if (!config) {
@@ -596,13 +554,9 @@ export class ProviderService {
     const cacheKey = this.getProviderCacheKey(updatedConfig);
     this.providerInstances.delete(cacheKey);
 
-    this.logger.log(
-      `Deactivated provider configuration ${id} for tenant ${tenantId}`,
-    );
+    this.logger.log(`Deactivated provider configuration ${id} for tenant ${tenantId}`);
 
-    const decryptedConfig = await this.encryptionService.decrypt(
-      updatedConfig.config,
-    );
+    const decryptedConfig = await this.encryptionService.decrypt(updatedConfig.config);
     return {
       ...updatedConfig,
       config: decryptedConfig,
@@ -638,7 +592,7 @@ export class ProviderService {
 
       return {
         status: healthStatus.status,
-        message: 'Health check completed',
+        message: "Health check completed",
         lastCheck: new Date(),
         responseTime,
         metrics,
@@ -655,27 +609,15 @@ export class ProviderService {
   /**
    * Get provider health status
    */
-  async getProviderHealth(
-    providerId: string,
-    channel: NotificationChannel,
-  ): Promise<any> {
-    return this.healthMonitor.checkProviderHealth(
-      providerId,
-      channel as unknown as Channel,
-    );
+  async getProviderHealth(providerId: string, channel: NotificationChannel): Promise<any> {
+    return this.healthMonitor.checkProviderHealth(providerId, channel as unknown as Channel);
   }
 
   /**
    * Get provider performance metrics
    */
-  async getProviderMetrics(
-    providerId: string,
-    channel: NotificationChannel,
-  ): Promise<any> {
-    return this.performanceTracker.getMetrics(
-      providerId,
-      channel as unknown as Channel,
-    );
+  async getProviderMetrics(providerId: string, channel: NotificationChannel): Promise<any> {
+    return this.performanceTracker.getMetrics(providerId, channel as unknown as Channel);
   }
 
   /**
@@ -689,13 +631,11 @@ export class ProviderService {
   ): Promise<ProviderConfig> {
     const existingConfig = await this.providerConfigRepository.findOne({
       where: { project: { tenant: { id: tenantId } }, providerId, channel },
-      relations: ['project', 'project.tenant'],
+      relations: ["project", "project.tenant"],
     });
 
     if (!existingConfig) {
-      throw new Error(
-        `Provider configuration not found: ${providerId} for ${channel}`,
-      );
+      throw new Error(`Provider configuration not found: ${providerId} for ${channel}`);
     }
 
     // Encrypt sensitive data
@@ -724,22 +664,15 @@ export class ProviderService {
     channel: NotificationChannel,
     isActive: boolean,
   ): Promise<void> {
-    await this.providerConfigRepository.update(
-      { tenantId, providerId, channel },
-      { isActive },
-    );
+    await this.providerConfigRepository.update({ tenantId, providerId, channel }, { isActive });
 
-    this.logger.log(
-      `Provider ${providerId} (${channel}) ${isActive ? 'enabled' : 'disabled'}`,
-    );
+    this.logger.log(`Provider ${providerId} (${channel}) ${isActive ? "enabled" : "disabled"}`);
   }
 
   /**
    * Get provider instance with caching
    */
-  private async getProviderInstance(
-    config: ProviderConfig,
-  ): Promise<IBaseProvider> {
+  private async getProviderInstance(config: ProviderConfig): Promise<IBaseProvider> {
     const cacheKey = this.getProviderCacheKey(config);
 
     if (this.providerInstances.has(cacheKey)) {
@@ -774,9 +707,7 @@ export class ProviderService {
   /**
    * Filter providers by health status
    */
-  private async filterHealthyProviders(
-    providers: ProviderConfig[],
-  ): Promise<ProviderConfig[]> {
+  private async filterHealthyProviders(providers: ProviderConfig[]): Promise<ProviderConfig[]> {
     const healthyProviders: ProviderConfig[] = [];
 
     for (const provider of providers) {
@@ -794,10 +725,7 @@ export class ProviderService {
       );
 
       // Include provider if success rate is acceptable
-      const minSuccessRate = this.configService.get<number>(
-        'PROVIDER_MIN_SUCCESS_RATE',
-        80,
-      );
+      const minSuccessRate = this.configService.get<number>("PROVIDER_MIN_SUCCESS_RATE", 80);
       if (metrics.successRate >= minSuccessRate) {
         healthyProviders.push(provider);
       }
@@ -809,10 +737,7 @@ export class ProviderService {
   /**
    * Record successful provider operation
    */
-  private async recordSuccess(
-    config: ProviderConfig,
-    responseTime: number,
-  ): Promise<void> {
+  private async recordSuccess(config: ProviderConfig, responseTime: number): Promise<void> {
     await Promise.all([
       this.healthMonitor.recordSuccess(
         config.providerId,
@@ -830,10 +755,7 @@ export class ProviderService {
   /**
    * Record failed provider operation
    */
-  private async recordFailure(
-    config: ProviderConfig,
-    error: string,
-  ): Promise<void> {
+  private async recordFailure(config: ProviderConfig, error: string): Promise<void> {
     await Promise.all([
       this.healthMonitor.recordFailure(
         config.providerId,
@@ -854,18 +776,15 @@ export class ProviderService {
   private getCircuitBreaker(providerId: string): CircuitBreaker {
     if (!this.circuitBreakers.has(providerId)) {
       const failureThreshold = this.configService.get<number>(
-        'CIRCUIT_BREAKER_FAILURE_THRESHOLD',
+        "CIRCUIT_BREAKER_FAILURE_THRESHOLD",
         5,
       );
-      const resetTimeout = Math.max(0, this.configService.get<number>(
-        'CIRCUIT_BREAKER_RESET_TIMEOUT',
-        60000,
-      ));
-
-      this.circuitBreakers.set(
-        providerId,
-        new CircuitBreaker(failureThreshold, resetTimeout),
+      const resetTimeout = Math.max(
+        0,
+        this.configService.get<number>("CIRCUIT_BREAKER_RESET_TIMEOUT", 60000),
       );
+
+      this.circuitBreakers.set(providerId, new CircuitBreaker(failureThreshold, resetTimeout));
     }
 
     return this.circuitBreakers.get(providerId)!;
@@ -885,7 +804,7 @@ export class ProviderService {
 class CircuitBreaker {
   private failures = 0;
   private lastFailureTime = 0;
-  private state: 'CLOSED' | 'OPEN' | 'HALF_OPEN' = 'CLOSED';
+  private state: "CLOSED" | "OPEN" | "HALF_OPEN" = "CLOSED";
 
   constructor(
     private readonly failureThreshold: number,
@@ -894,7 +813,7 @@ class CircuitBreaker {
 
   recordSuccess(): void {
     this.failures = 0;
-    this.state = 'CLOSED';
+    this.state = "CLOSED";
   }
 
   recordFailure(): void {
@@ -902,14 +821,14 @@ class CircuitBreaker {
     this.lastFailureTime = Date.now();
 
     if (this.failures >= this.failureThreshold) {
-      this.state = 'OPEN';
+      this.state = "OPEN";
     }
   }
 
   isOpen(): boolean {
-    if (this.state === 'OPEN') {
+    if (this.state === "OPEN") {
       if (Date.now() - this.lastFailureTime >= this.resetTimeout) {
-        this.state = 'HALF_OPEN';
+        this.state = "HALF_OPEN";
         return false;
       }
       return true;

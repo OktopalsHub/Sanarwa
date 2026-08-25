@@ -1,10 +1,10 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { Cron, CronExpression } from '@nestjs/schedule';
-import { Repository } from 'typeorm';
-import { InjectRepository } from '@nestjs/typeorm';
+import { Injectable, Logger } from "@nestjs/common";
+import { Cron, CronExpression } from "@nestjs/schedule";
+import { Repository } from "typeorm";
+import { InjectRepository } from "@nestjs/typeorm";
 
 export interface DigestConfig {
-  frequency: 'instant' | 'daily' | 'weekly' | 'monthly';
+  frequency: "instant" | "daily" | "weekly" | "monthly";
   maxNotificationsPerDigest?: number;
   timeWindow?: number; // in minutes
 }
@@ -47,26 +47,26 @@ export class DigestService {
    * Initialize default digest configurations
    */
   private initializeDefaultConfigs(): void {
-    this.digestConfigs.set('instant', {
-      frequency: 'instant',
+    this.digestConfigs.set("instant", {
+      frequency: "instant",
       maxNotificationsPerDigest: 1,
       timeWindow: 0,
     });
 
-    this.digestConfigs.set('daily', {
-      frequency: 'daily',
+    this.digestConfigs.set("daily", {
+      frequency: "daily",
       maxNotificationsPerDigest: 50,
       timeWindow: 1440, // 24 hours
     });
 
-    this.digestConfigs.set('weekly', {
-      frequency: 'weekly',
+    this.digestConfigs.set("weekly", {
+      frequency: "weekly",
       maxNotificationsPerDigest: 100,
       timeWindow: 10080, // 7 days
     });
 
-    this.digestConfigs.set('monthly', {
-      frequency: 'monthly',
+    this.digestConfigs.set("monthly", {
+      frequency: "monthly",
       maxNotificationsPerDigest: 200,
       timeWindow: 43200, // 30 days
     });
@@ -88,12 +88,10 @@ export class DigestService {
     const queue = this.digestQueue.get(queueKey)!;
     queue.push(notification);
 
-    this.logger.debug(
-      `Queued notification for digest: ${queueKey} (total: ${queue.length})`,
-    );
+    this.logger.debug(`Queued notification for digest: ${queueKey} (total: ${queue.length})`);
 
     // Check if we should send immediately (for instant frequency)
-    if (config.frequency === 'instant' && queue.length >= (config.maxNotificationsPerDigest || 1)) {
+    if (config.frequency === "instant" && queue.length >= (config.maxNotificationsPerDigest || 1)) {
       await this.sendDigest(queueKey);
     }
   }
@@ -114,7 +112,7 @@ export class DigestService {
       return null;
     }
 
-    const [tenantId, subscriberId, channel, frequency] = queueKey.split(':');
+    const [tenantId, subscriberId, channel, frequency] = queueKey.split(":");
     const config = this.digestConfigs.get(frequency);
 
     if (!config) {
@@ -154,26 +152,26 @@ export class DigestService {
    */
   @Cron(CronExpression.EVERY_DAY_AT_9AM)
   async processDailyDigests(): Promise<void> {
-    this.logger.log('Processing daily digests...');
-    await this.processDigestsByFrequency('daily');
+    this.logger.log("Processing daily digests...");
+    await this.processDigestsByFrequency("daily");
   }
 
   /**
    * Process weekly digests (runs every Monday at 9 AM)
    */
-  @Cron('0 9 * * 1')
+  @Cron("0 9 * * 1")
   async processWeeklyDigests(): Promise<void> {
-    this.logger.log('Processing weekly digests...');
-    await this.processDigestsByFrequency('weekly');
+    this.logger.log("Processing weekly digests...");
+    await this.processDigestsByFrequency("weekly");
   }
 
   /**
    * Process monthly digests (runs on 1st of month at 9 AM)
    */
-  @Cron('0 9 1 * *')
+  @Cron("0 9 1 * *")
   async processMonthlyDigests(): Promise<void> {
-    this.logger.log('Processing monthly digests...');
-    await this.processDigestsByFrequency('monthly');
+    this.logger.log("Processing monthly digests...");
+    await this.processDigestsByFrequency("monthly");
   }
 
   /**
@@ -212,7 +210,7 @@ export class DigestService {
     const queuesByFrequency: Record<string, number> = {};
 
     for (const [key, notifications] of this.digestQueue) {
-      const frequency = key.split(':')[3];
+      const frequency = key.split(":")[3];
       totalNotifications += notifications.length;
       queuesByFrequency[frequency] = (queuesByFrequency[frequency] || 0) + notifications.length;
     }
@@ -251,7 +249,7 @@ export class DigestService {
 
     for (const notification of notifications) {
       const key = `${notification.templateId || notification.title}`;
-      
+
       if (aggregated.has(key)) {
         const existing = aggregated.get(key)!;
         // Increment count in data

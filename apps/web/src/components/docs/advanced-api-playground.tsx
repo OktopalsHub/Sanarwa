@@ -1,19 +1,35 @@
-'use client';
+"use client";
 
-import { Send, User } from '@/lib/icons';
+import { Send, User } from "@/lib/icons";
 
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Textarea } from '@/components/ui/textarea';
-import { toast } from '@/lib/utils/toast';
-import { CheckIcon, ClockIcon, DocumentDuplicateIcon, ArrowDownTrayIcon, ArrowPathIcon, PlayIcon, BookmarkIcon, ShareIcon, TrashIcon } from '@heroicons/react/24/outline'
-import { useState } from 'react';
-import { CodeBlock } from './code-block';
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Textarea } from "@/components/ui/textarea";
+import { toast } from "@/lib/utils/toast";
+import {
+  CheckIcon,
+  ClockIcon,
+  DocumentDuplicateIcon,
+  ArrowDownTrayIcon,
+  ArrowPathIcon,
+  PlayIcon,
+  BookmarkIcon,
+  ShareIcon,
+  TrashIcon,
+} from "@heroicons/react/24/outline";
+import { useState } from "react";
+import { CodeBlock } from "./code-block";
 
 interface ApiRequest {
   id: string;
@@ -40,29 +56,29 @@ interface AdvancedApiPlaygroundProps {
 }
 
 const commonHeaders = {
-  'Content-Type': 'application/json',
-  'Accept': 'application/json',
-  'User-Agent': 'Notifi-Playground/1.0'
+  "Content-Type": "application/json",
+  Accept: "application/json",
+  "User-Agent": "Notifi-Playground/1.0",
 };
 
-const httpMethods = ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'HEAD', 'OPTIONS'];
+const httpMethods = ["GET", "POST", "PUT", "DELETE", "PATCH", "HEAD", "OPTIONS"];
 
 export function AdvancedApiPlayground({ initialRequest, onExecute }: AdvancedApiPlaygroundProps) {
   const [request, setRequest] = useState<ApiRequest>({
     id: crypto.randomUUID(),
-    name: 'New Request',
-    method: 'GET',
-    url: 'https://api.notifi.com/v1/',
+    name: "New Request",
+    method: "GET",
+    url: "https://api.notifi.com/v1/",
     headers: { ...commonHeaders },
     timestamp: new Date(),
-    ...initialRequest
+    ...initialRequest,
   });
 
   const [response, setResponse] = useState<ApiResponse | null>(null);
   const [isExecuting, setIsExecuting] = useState(false);
   const [history, setHistory] = useState<ApiRequest[]>([]);
   const [savedRequests, setSavedRequests] = useState<ApiRequest[]>([]);
-  const [copied, setCopied] = useState<string>('');
+  const [copied, setCopied] = useState<string>("");
 
   const handleExecute = async () => {
     setIsExecuting(true);
@@ -76,27 +92,27 @@ export function AdvancedApiPlayground({ initialRequest, onExecute }: AdvancedApi
         setResponse(result);
       } else {
         // Simulate API call
-        await new Promise(resolve => setTimeout(resolve, 500 + Math.random() * 1500));
+        await new Promise((resolve) => setTimeout(resolve, 500 + Math.random() * 1500));
 
         const mockResponse: ApiResponse = {
           status: 200,
-          statusText: 'OK',
+          statusText: "OK",
           headers: {
-            'content-type': 'application/json',
-            'x-ratelimit-remaining': '99',
-            'x-ratelimit-reset': String(Math.floor(Date.now() / 1000) + 3600)
+            "content-type": "application/json",
+            "x-ratelimit-remaining": "99",
+            "x-ratelimit-reset": String(Math.floor(Date.now() / 1000) + 3600),
           },
           data: {
             success: true,
-            message: 'Mock response from playground',
+            message: "Mock response from playground",
             timestamp: new Date().toISOString(),
             request: {
               method: request.method,
-              url: request.url
-            }
+              url: request.url,
+            },
           },
           duration: Date.now() - startTime,
-          size: 1024
+          size: 1024,
         };
 
         setResponse(mockResponse);
@@ -104,19 +120,18 @@ export function AdvancedApiPlayground({ initialRequest, onExecute }: AdvancedApi
 
       // Add to history
       const historyItem = { ...request, timestamp: new Date() };
-      setHistory(prev => [historyItem, ...prev.slice(0, 9)]); // Keep last 10
-
+      setHistory((prev) => [historyItem, ...prev.slice(0, 9)]); // Keep last 10
     } catch (error) {
       const errorResponse: ApiResponse = {
         status: 500,
-        statusText: 'Internal Server Error',
+        statusText: "Internal Server Error",
         headers: {},
         data: {
-          error: error instanceof Error ? error.message : 'Unknown error',
-          timestamp: new Date().toISOString()
+          error: error instanceof Error ? error.message : "Unknown error",
+          timestamp: new Date().toISOString(),
         },
         duration: Date.now() - Date.now(),
-        size: 0
+        size: 0,
       };
       setResponse(errorResponse);
     } finally {
@@ -129,11 +144,11 @@ export function AdvancedApiPlayground({ initialRequest, onExecute }: AdvancedApi
       ...request,
       id: crypto.randomUUID(),
       name: request.name || `${request.method} ${new URL(request.url).pathname}`,
-      timestamp: new Date()
+      timestamp: new Date(),
     };
 
-    setSavedRequests(prev => [savedRequest, ...prev]);
-    toast.success('Request saved successfully');
+    setSavedRequests((prev) => [savedRequest, ...prev]);
+    toast.success("Request saved successfully");
   };
 
   const handleLoadRequest = (savedRequest: ApiRequest) => {
@@ -146,9 +161,9 @@ export function AdvancedApiPlayground({ initialRequest, onExecute }: AdvancedApi
       await navigator.clipboard.writeText(text);
       setCopied(type);
       toast.success(`${type} copied to clipboard`);
-      setTimeout(() => setCopied(''), 2000);
+      setTimeout(() => setCopied(""), 2000);
     } catch (err) {
-      toast.error('Failed to copy');
+      toast.error("Failed to copy");
     }
   };
 
@@ -161,7 +176,7 @@ export function AdvancedApiPlayground({ initialRequest, onExecute }: AdvancedApi
       }
     });
 
-    if (request.body && ['POST', 'PUT', 'PATCH'].includes(request.method)) {
+    if (request.body && ["POST", "PUT", "PATCH"].includes(request.method)) {
       curl += ` \\\n  -d '${request.body}'`;
     }
 
@@ -170,27 +185,27 @@ export function AdvancedApiPlayground({ initialRequest, onExecute }: AdvancedApi
 
   const generateCodeSnippet = (language: string) => {
     switch (language) {
-      case 'javascript':
+      case "javascript":
         return `fetch('${request.url}', {
   method: '${request.method}',
-  headers: ${JSON.stringify(request.headers, null, 2)},${request.body ? `\n  body: ${JSON.stringify(request.body)}` : ''}
+  headers: ${JSON.stringify(request.headers, null, 2)},${request.body ? `\n  body: ${JSON.stringify(request.body)}` : ""}
 })
 .then(response => response.json())
 .then(data => console.log(data))
 .catch(error => console.error('Error:', error));`;
 
-      case 'python':
+      case "python":
         return `import requests
 import json
 
 url = "${request.url}"
 headers = ${JSON.stringify(request.headers, null, 2).replace(/"/g, "'")}
-${request.body ? `data = ${JSON.stringify(request.body, null, 2)}` : ''}
+${request.body ? `data = ${JSON.stringify(request.body, null, 2)}` : ""}
 
-response = requests.${request.method.toLowerCase()}(url, headers=headers${request.body ? ', json=data' : ''})
+response = requests.${request.method.toLowerCase()}(url, headers=headers${request.body ? ", json=data" : ""})
 print(response.json())`;
 
-      case 'curl':
+      case "curl":
         return generateCurlCommand();
 
       default:
@@ -206,19 +221,19 @@ print(response.json())`;
         method: request.method,
         url: request.url,
         headers: request.headers,
-        body: request.body
+        body: request.body,
       },
       response: {
         status: response.status,
         headers: response.headers,
-        data: response.data
+        data: response.data,
       },
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     };
 
-    const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+    const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: "application/json" });
     const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
+    const a = document.createElement("a");
     a.href = url;
     a.download = `api-response-${Date.now()}.json`;
     a.click();
@@ -250,7 +265,7 @@ print(response.json())`;
             <Label>Request Name</Label>
             <Input
               value={request.name}
-              onChange={(e) => setRequest(prev => ({ ...prev, name: e.target.value }))}
+              onChange={(e) => setRequest((prev) => ({ ...prev, name: e.target.value }))}
               placeholder="Enter request name"
             />
           </div>
@@ -261,17 +276,15 @@ print(response.json())`;
               <Label>Method</Label>
               <Select
                 value={request.method}
-                onValueChange={(value) => setRequest(prev => ({ ...prev, method: value }))}
+                onValueChange={(value) => setRequest((prev) => ({ ...prev, method: value }))}
               >
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {httpMethods.map(method => (
+                  {httpMethods.map((method) => (
                     <SelectItem key={method} value={method}>
-                      <Badge variant={method === 'GET' ? 'secondary' : 'default'}>
-                        {method}
-                      </Badge>
+                      <Badge variant={method === "GET" ? "secondary" : "default"}>{method}</Badge>
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -281,7 +294,7 @@ print(response.json())`;
               <Label>URL</Label>
               <Input
                 value={request.url}
-                onChange={(e) => setRequest(prev => ({ ...prev, url: e.target.value }))}
+                onChange={(e) => setRequest((prev) => ({ ...prev, url: e.target.value }))}
                 placeholder="https://api.notifi.com/v1/..."
               />
             </div>
@@ -300,16 +313,16 @@ print(response.json())`;
                       const newHeaders = { ...request.headers };
                       delete newHeaders[key];
                       newHeaders[e.target.value] = value;
-                      setRequest(prev => ({ ...prev, headers: newHeaders }));
+                      setRequest((prev) => ({ ...prev, headers: newHeaders }));
                     }}
                   />
                   <Input
                     placeholder="Header value"
                     value={value}
                     onChange={(e) => {
-                      setRequest(prev => ({
+                      setRequest((prev) => ({
                         ...prev,
-                        headers: { ...prev.headers, [key]: e.target.value }
+                        headers: { ...prev.headers, [key]: e.target.value },
                       }));
                     }}
                   />
@@ -319,7 +332,7 @@ print(response.json())`;
                     onClick={() => {
                       const newHeaders = { ...request.headers };
                       delete newHeaders[key];
-                      setRequest(prev => ({ ...prev, headers: newHeaders }));
+                      setRequest((prev) => ({ ...prev, headers: newHeaders }));
                     }}
                   >
                     <TrashIcon className="h-4 w-4" />
@@ -330,9 +343,9 @@ print(response.json())`;
                 size="sm"
                 variant="outline"
                 onClick={() => {
-                  setRequest(prev => ({
+                  setRequest((prev) => ({
                     ...prev,
-                    headers: { ...prev.headers, '': '' }
+                    headers: { ...prev.headers, "": "" },
                   }));
                 }}
               >
@@ -342,12 +355,12 @@ print(response.json())`;
           </div>
 
           {/* Request Body */}
-          {['POST', 'PUT', 'PATCH'].includes(request.method) && (
+          {["POST", "PUT", "PATCH"].includes(request.method) && (
             <div className="space-y-2">
               <Label>Request Body</Label>
               <Textarea
-                value={request.body || ''}
-                onChange={(e) => setRequest(prev => ({ ...prev, body: e.target.value }))}
+                value={request.body || ""}
+                onChange={(e) => setRequest((prev) => ({ ...prev, body: e.target.value }))}
                 placeholder="Enter JSON request body"
                 rows={6}
                 className="font-mono text-sm"
@@ -356,17 +369,13 @@ print(response.json())`;
           )}
 
           {/* Execute Button */}
-          <Button
-            onClick={handleExecute}
-            disabled={isExecuting || !request.url}
-            className="w-full"
-          >
+          <Button onClick={handleExecute} disabled={isExecuting || !request.url} className="w-full">
             {isExecuting ? (
               <ArrowPathIcon className="h-4 w-4 animate-spin mr-2" />
             ) : (
               <PlayIcon className="h-4 w-4 mr-2" />
             )}
-            {isExecuting ? 'Executing...' : 'Send Request'}
+            {isExecuting ? "Executing..." : "Send Request"}
           </Button>
         </CardContent>
       </Card>
@@ -378,7 +387,7 @@ print(response.json())`;
             <div className="flex items-center justify-between">
               <CardTitle className="flex items-center gap-2">
                 Response
-                <Badge variant={response.status < 400 ? 'default' : 'destructive'}>
+                <Badge variant={response.status < 400 ? "default" : "destructive"}>
                   {response.status} {response.statusText}
                 </Badge>
                 <Badge variant="outline" className="text-xs">
@@ -406,9 +415,13 @@ print(response.json())`;
                   <Button
                     size="sm"
                     variant="outline"
-                    onClick={() => handleCopy(JSON.stringify(response.data, null, 2), 'Response')}
+                    onClick={() => handleCopy(JSON.stringify(response.data, null, 2), "Response")}
                   >
-                    {copied === 'Response' ? <CheckIcon className="h-3 w-3" /> : <DocumentDuplicateIcon className="h-3 w-3" />}
+                    {copied === "Response" ? (
+                      <CheckIcon className="h-3 w-3" />
+                    ) : (
+                      <DocumentDuplicateIcon className="h-3 w-3" />
+                    )}
                   </Button>
                 </div>
                 <CodeBlock language="json" showLineNumbers={false}>
@@ -429,9 +442,11 @@ print(response.json())`;
 
               <TabsContent value="raw" className="space-y-2">
                 <CodeBlock language="http" showLineNumbers={false}>
-                  {`HTTP/1.1 ${response.status} ${response.statusText}\n${Object.entries(response.headers)
+                  {`HTTP/1.1 ${response.status} ${response.statusText}\n${Object.entries(
+                    response.headers,
+                  )
                     .map(([key, value]) => `${key}: ${value}`)
-                    .join('\n')}\n\n${JSON.stringify(response.data, null, 2)}`}
+                    .join("\n")}\n\n${JSON.stringify(response.data, null, 2)}`}
                 </CodeBlock>
               </TabsContent>
             </Tabs>
@@ -452,7 +467,7 @@ print(response.json())`;
               <TabsTrigger value="python">Python</TabsTrigger>
             </TabsList>
 
-            {['curl', 'javascript', 'python'].map(lang => (
+            {["curl", "javascript", "python"].map((lang) => (
               <TabsContent key={lang} value={lang} className="space-y-2">
                 <div className="flex items-center justify-between">
                   <span className="text-sm font-medium capitalize">{lang} Code</span>
@@ -461,10 +476,14 @@ print(response.json())`;
                     variant="outline"
                     onClick={() => handleCopy(generateCodeSnippet(lang), `${lang} code`)}
                   >
-                    {copied === `${lang} code` ? <CheckIcon className="h-3 w-3" /> : <DocumentDuplicateIcon className="h-3 w-3" />}
+                    {copied === `${lang} code` ? (
+                      <CheckIcon className="h-3 w-3" />
+                    ) : (
+                      <DocumentDuplicateIcon className="h-3 w-3" />
+                    )}
                   </Button>
                 </div>
-                <CodeBlock language={lang === 'curl' ? 'bash' : lang} showLineNumbers={false}>
+                <CodeBlock language={lang === "curl" ? "bash" : lang} showLineNumbers={false}>
                   {generateCodeSnippet(lang)}
                 </CodeBlock>
               </TabsContent>
@@ -494,7 +513,9 @@ print(response.json())`;
                   >
                     <div>
                       <div className="flex items-center gap-2">
-                        <Badge variant="outline" className="text-xs">{item.method}</Badge>
+                        <Badge variant="outline" className="text-xs">
+                          {item.method}
+                        </Badge>
                         <span className="text-sm font-medium">{item.name}</span>
                       </div>
                       <p className="text-xs text-muted-foreground truncate">
@@ -532,7 +553,9 @@ print(response.json())`;
                   >
                     <div>
                       <div className="flex items-center gap-2">
-                        <Badge variant="outline" className="text-xs">{item.method}</Badge>
+                        <Badge variant="outline" className="text-xs">
+                          {item.method}
+                        </Badge>
                         <span className="text-sm font-medium">{item.name}</span>
                       </div>
                       <p className="text-xs text-muted-foreground truncate">
@@ -544,7 +567,7 @@ print(response.json())`;
                       variant="ghost"
                       onClick={(e) => {
                         e.stopPropagation();
-                        setSavedRequests(prev => prev.filter((_, i) => i !== index));
+                        setSavedRequests((prev) => prev.filter((_, i) => i !== index));
                       }}
                     >
                       <TrashIcon className="h-3 w-3" />

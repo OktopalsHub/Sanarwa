@@ -1,8 +1,8 @@
-import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
-import { ShieldExclamationIcon } from '@heroicons/react/24/outline'
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { ShieldExclamationIcon } from "@heroicons/react/24/outline";
 
-import Link from '@/compat/next-link';
+import Link from "@/compat/next-link";
 
 export default function UnauthorizedPage() {
   return (
@@ -13,14 +13,13 @@ export default function UnauthorizedPage() {
 
           <h1 className="text-2xl font-bold">Access Denied</h1>
           <p className="text-muted-foreground">
-            You don't have permission to access this resource or you're not a member of the selected organization.
+            You don't have permission to access this resource or you're not a member of the selected
+            organization.
           </p>
 
           <div className="space-y-2">
             <Link href="/dashboard">
-              <Button className="w-full">
-                Go to Dashboard
-              </Button>
+              <Button className="w-full">Go to Dashboard</Button>
             </Link>
 
             <Link href="/onboarding">
@@ -36,6 +35,6 @@ export default function UnauthorizedPage() {
 }
 
 export const metadata = {
-  title: 'Unauthorized - Notifi',
-  description: 'You do not have permission to access this resource',
+  title: "Unauthorized - Notifi",
+  description: "You do not have permission to access this resource",
 };

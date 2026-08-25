@@ -24,28 +24,28 @@ export interface WebSocketSubscription {
 }
 
 export interface WebSocketConnectionState {
-  status: 'connecting' | 'connected' | 'disconnected' | 'reconnecting' | 'error';
+  status: "connecting" | "connected" | "disconnected" | "reconnecting" | "error";
   lastConnected?: Date;
   reconnectAttempts: number;
   error?: string;
 }
 
 export interface WebSocketManagerEvents {
-  'connection:open': () => void;
-  'connection:close': (event: CloseEvent) => void;
-  'connection:error': (error: Event) => void;
-  'connection:reconnecting': (attempt: number) => void;
-  'connection:reconnected': () => void;
-  'connection:failed': () => void;
-  'message:received': (message: WebSocketMessage) => void;
-  'subscription:added': (subscription: WebSocketSubscription) => void;
-  'subscription:removed': (subscriptionId: string) => void;
+  "connection:open": () => void;
+  "connection:close": (event: CloseEvent) => void;
+  "connection:error": (error: Event) => void;
+  "connection:reconnecting": (attempt: number) => void;
+  "connection:reconnected": () => void;
+  "connection:failed": () => void;
+  "message:received": (message: WebSocketMessage) => void;
+  "subscription:added": (subscription: WebSocketSubscription) => void;
+  "subscription:removed": (subscriptionId: string) => void;
 }
 
 // Real-time notification update types
 export interface NotificationUpdate {
   id: string;
-  status: 'pending' | 'sent' | 'delivered' | 'failed' | 'bounced';
+  status: "pending" | "sent" | "delivered" | "failed" | "bounced";
   deliveredAt?: Date;
   failureReason?: string;
   metadata?: Record<string, any>;
@@ -62,11 +62,11 @@ export interface QueueStatus {
 }
 
 export interface SystemHealth {
-  status: 'healthy' | 'degraded' | 'down';
+  status: "healthy" | "degraded" | "down";
   services: {
-    database: 'up' | 'down';
-    redis: 'up' | 'down';
-    providers: Record<string, 'up' | 'down'>;
+    database: "up" | "down";
+    redis: "up" | "down";
+    providers: Record<string, "up" | "down">;
   };
   metrics: {
     cpu: number;
@@ -78,7 +78,14 @@ export interface SystemHealth {
 
 // WebRTC signaling types
 export interface WebRTCSignalingMessage {
-  type: 'offer' | 'answer' | 'ice-candidate' | 'call-request' | 'call-accept' | 'call-reject' | 'call-end';
+  type:
+    | "offer"
+    | "answer"
+    | "ice-candidate"
+    | "call-request"
+    | "call-accept"
+    | "call-reject"
+    | "call-end";
   sessionId: string;
   from: string;
   to: string;
@@ -90,7 +97,7 @@ export interface CallSession {
   id: string;
   initiator: string;
   participants: string[];
-  status: 'initiating' | 'ringing' | 'active' | 'ended' | 'failed';
+  status: "initiating" | "ringing" | "active" | "ended" | "failed";
   startedAt?: Date;
   endedAt?: Date;
   duration?: number;
@@ -99,18 +106,18 @@ export interface CallSession {
 
 // Channel-specific message types
 export type WebSocketChannels =
-  | 'notifications'
-  | 'queue-status'
-  | 'system-health'
-  | 'webrtc-signaling'
-  | 'tenant-updates'
-  | 'user-presence';
+  | "notifications"
+  | "queue-status"
+  | "system-health"
+  | "webrtc-signaling"
+  | "tenant-updates"
+  | "user-presence";
 
 export interface ChannelMessageMap {
-  'notifications': NotificationUpdate;
-  'queue-status': QueueStatus;
-  'system-health': SystemHealth;
-  'webrtc-signaling': WebRTCSignalingMessage;
-  'tenant-updates': { type: 'member-added' | 'member-removed' | 'settings-updated'; data: any };
-  'user-presence': { userId: string; status: 'online' | 'offline' | 'away'; lastSeen?: Date };
+  notifications: NotificationUpdate;
+  "queue-status": QueueStatus;
+  "system-health": SystemHealth;
+  "webrtc-signaling": WebRTCSignalingMessage;
+  "tenant-updates": { type: "member-added" | "member-removed" | "settings-updated"; data: any };
+  "user-presence": { userId: string; status: "online" | "offline" | "away"; lastSeen?: Date };
 }

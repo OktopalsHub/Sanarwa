@@ -1,4 +1,4 @@
-import { apiClient } from './client';
+import { apiClient } from "./client";
 
 export interface WebhookRecord {
   id: string;
@@ -20,17 +20,14 @@ export interface CreateWebhookRequest {
 
 export const webhookApi = {
   async list(): Promise<WebhookRecord[]> {
-    return apiClient.get<WebhookRecord[]>('/tenants/:tenantId/webhooks');
+    return apiClient.get<WebhookRecord[]>("/tenants/:tenantId/webhooks");
   },
 
   async create(data: CreateWebhookRequest): Promise<WebhookRecord> {
-    return apiClient.post<WebhookRecord>('/tenants/:tenantId/webhooks', data);
+    return apiClient.post<WebhookRecord>("/tenants/:tenantId/webhooks", data);
   },
 
-  async update(
-    id: string,
-    data: Partial<CreateWebhookRequest>,
-  ): Promise<WebhookRecord> {
+  async update(id: string, data: Partial<CreateWebhookRequest>): Promise<WebhookRecord> {
     return apiClient.patch<WebhookRecord>(`/tenants/:tenantId/webhooks/${id}`, data);
   },
 

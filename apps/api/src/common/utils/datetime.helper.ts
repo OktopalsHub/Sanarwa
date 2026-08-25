@@ -1,4 +1,4 @@
-import dayjs from 'dayjs';
+import dayjs from "dayjs";
 
 /**
  * Timezone offset mapping (in minutes)
@@ -6,54 +6,54 @@ import dayjs from 'dayjs';
  */
 const TIMEZONE_OFFSETS: Record<string, number> = {
   // UTC
-  'UTC': 0,
-  'GMT': 0,
+  UTC: 0,
+  GMT: 0,
 
   // Americas
-  'America/New_York': -300, // EST/EDT
-  'America/Chicago': -360,
-  'America/Denver': -420,
-  'America/Los_Angeles': -480,
-  'America/Anchorage': -540,
-  'Pacific/Honolulu': -600,
-  'America/Toronto': -300,
-  'America/Mexico_City': -360,
-  'America/Buenos_Aires': -180,
-  'America/Sao_Paulo': -180,
+  "America/New_York": -300, // EST/EDT
+  "America/Chicago": -360,
+  "America/Denver": -420,
+  "America/Los_Angeles": -480,
+  "America/Anchorage": -540,
+  "Pacific/Honolulu": -600,
+  "America/Toronto": -300,
+  "America/Mexico_City": -360,
+  "America/Buenos_Aires": -180,
+  "America/Sao_Paulo": -180,
 
   // Europe
-  'Europe/London': 0,
-  'Europe/Paris': 60,
-  'Europe/Berlin': 60,
-  'Europe/Amsterdam': 60,
-  'Europe/Brussels': 60,
-  'Europe/Vienna': 60,
-  'Europe/Prague': 60,
-  'Europe/Warsaw': 60,
-  'Europe/Moscow': 180,
-  'Europe/Istanbul': 180,
+  "Europe/London": 0,
+  "Europe/Paris": 60,
+  "Europe/Berlin": 60,
+  "Europe/Amsterdam": 60,
+  "Europe/Brussels": 60,
+  "Europe/Vienna": 60,
+  "Europe/Prague": 60,
+  "Europe/Warsaw": 60,
+  "Europe/Moscow": 180,
+  "Europe/Istanbul": 180,
 
   // Asia
-  'Asia/Tokyo': 540,
-  'Asia/Shanghai': 480,
-  'Asia/Hong_Kong': 480,
-  'Asia/Singapore': 480,
-  'Asia/Bangkok': 420,
-  'Asia/Dubai': 240,
-  'Asia/Kolkata': 330,
-  'Asia/Karachi': 300,
-  'Asia/Jakarta': 420,
-  'Asia/Manila': 480,
-  'Asia/Seoul': 540,
+  "Asia/Tokyo": 540,
+  "Asia/Shanghai": 480,
+  "Asia/Hong_Kong": 480,
+  "Asia/Singapore": 480,
+  "Asia/Bangkok": 420,
+  "Asia/Dubai": 240,
+  "Asia/Kolkata": 330,
+  "Asia/Karachi": 300,
+  "Asia/Jakarta": 420,
+  "Asia/Manila": 480,
+  "Asia/Seoul": 540,
 
   // Australia & Pacific
-  'Australia/Sydney': 600,
-  'Australia/Melbourne': 600,
-  'Australia/Brisbane': 600,
-  'Australia/Perth': 480,
-  'Pacific/Auckland': 720,
-  'Pacific/Fiji': 720,
-  'Pacific/Tongatapu': 780,
+  "Australia/Sydney": 600,
+  "Australia/Melbourne": 600,
+  "Australia/Brisbane": 600,
+  "Australia/Perth": 480,
+  "Pacific/Auckland": 720,
+  "Pacific/Fiji": 720,
+  "Pacific/Tongatapu": 780,
 };
 
 /**
@@ -115,7 +115,7 @@ export class DateTimeHelper {
   ): Date {
     try {
       // Parse send time
-      const [hours, minutes] = sendTime.split(':').map(Number);
+      const [hours, minutes] = sendTime.split(":").map(Number);
 
       // Get current time in subscriber's timezone
       const offset = this.getTimezoneOffset(timezone);
@@ -151,20 +151,20 @@ export class DateTimeHelper {
    */
   static getNextRecurrence(
     currentDate: Date,
-    frequency: 'daily' | 'weekly' | 'monthly',
+    frequency: "daily" | "weekly" | "monthly",
     endDate?: Date,
   ): Date | null {
     try {
       let next = new Date(currentDate);
 
       switch (frequency) {
-        case 'daily':
+        case "daily":
           next.setDate(next.getDate() + 1);
           break;
-        case 'weekly':
+        case "weekly":
           next.setDate(next.getDate() + 7);
           break;
-        case 'monthly':
+        case "monthly":
           next.setMonth(next.getMonth() + 1);
           break;
       }
@@ -204,7 +204,7 @@ export class DateTimeHelper {
   static formatInTimezone(
     date: Date,
     timezone: string,
-    format: string = 'YYYY-MM-DD HH:mm:ss',
+    format: string = "YYYY-MM-DD HH:mm:ss",
   ): string {
     try {
       const offset = this.getTimezoneOffset(timezone);
@@ -221,19 +221,19 @@ export class DateTimeHelper {
    */
   private static formatDate(date: Date, format: string): string {
     const year = date.getUTCFullYear();
-    const month = String(date.getUTCMonth() + 1).padStart(2, '0');
-    const day = String(date.getUTCDate()).padStart(2, '0');
-    const hours = String(date.getUTCHours()).padStart(2, '0');
-    const minutes = String(date.getUTCMinutes()).padStart(2, '0');
-    const seconds = String(date.getUTCSeconds()).padStart(2, '0');
+    const month = String(date.getUTCMonth() + 1).padStart(2, "0");
+    const day = String(date.getUTCDate()).padStart(2, "0");
+    const hours = String(date.getUTCHours()).padStart(2, "0");
+    const minutes = String(date.getUTCMinutes()).padStart(2, "0");
+    const seconds = String(date.getUTCSeconds()).padStart(2, "0");
 
     return format
-      .replace('YYYY', String(year))
-      .replace('MM', month)
-      .replace('DD', day)
-      .replace('HH', hours)
-      .replace('mm', minutes)
-      .replace('ss', seconds);
+      .replace("YYYY", String(year))
+      .replace("MM", month)
+      .replace("DD", day)
+      .replace("HH", hours)
+      .replace("mm", minutes)
+      .replace("ss", seconds);
   }
 
   /**
@@ -244,7 +244,7 @@ export class DateTimeHelper {
     timezone: string,
   ): Date {
     try {
-      const [hours, minutes] = timeString.split(':').map(Number);
+      const [hours, minutes] = timeString.split(":").map(Number);
       const offset = this.getTimezoneOffset(timezone);
       const now = new Date();
       const localNow = new Date(now.getTime() + offset * 60000);
@@ -279,32 +279,32 @@ export class DateTimeHelper {
   static addTime(
     date: Date,
     amount: number,
-    unit: 'millisecond' | 'second' | 'minute' | 'hour' | 'day' | 'week' | 'month' | 'year',
+    unit: "millisecond" | "second" | "minute" | "hour" | "day" | "week" | "month" | "year",
   ): Date {
     const result = new Date(date);
     switch (unit) {
-      case 'millisecond':
+      case "millisecond":
         result.setMilliseconds(result.getMilliseconds() + amount);
         break;
-      case 'second':
+      case "second":
         result.setSeconds(result.getSeconds() + amount);
         break;
-      case 'minute':
+      case "minute":
         result.setMinutes(result.getMinutes() + amount);
         break;
-      case 'hour':
+      case "hour":
         result.setHours(result.getHours() + amount);
         break;
-      case 'day':
+      case "day":
         result.setDate(result.getDate() + amount);
         break;
-      case 'week':
+      case "week":
         result.setDate(result.getDate() + amount * 7);
         break;
-      case 'month':
+      case "month":
         result.setMonth(result.getMonth() + amount);
         break;
-      case 'year':
+      case "year":
         result.setFullYear(result.getFullYear() + amount);
         break;
     }
@@ -317,7 +317,7 @@ export class DateTimeHelper {
   static subtractTime(
     date: Date,
     amount: number,
-    unit: 'millisecond' | 'second' | 'minute' | 'hour' | 'day' | 'week' | 'month' | 'year',
+    unit: "millisecond" | "second" | "minute" | "hour" | "day" | "week" | "month" | "year",
   ): Date {
     return this.addTime(date, -amount, unit);
   }
@@ -416,25 +416,33 @@ export class DateTimeHelper {
   static getDifference(
     date1: Date,
     date2: Date,
-    unit: 'millisecond' | 'second' | 'minute' | 'hour' | 'day' | 'week' | 'month' | 'year' = 'millisecond',
+    unit:
+      | "millisecond"
+      | "second"
+      | "minute"
+      | "hour"
+      | "day"
+      | "week"
+      | "month"
+      | "year" = "millisecond",
   ): number {
     const diffMs = date1.getTime() - date2.getTime();
     switch (unit) {
-      case 'millisecond':
+      case "millisecond":
         return diffMs;
-      case 'second':
+      case "second":
         return Math.floor(diffMs / 1000);
-      case 'minute':
+      case "minute":
         return Math.floor(diffMs / (1000 * 60));
-      case 'hour':
+      case "hour":
         return Math.floor(diffMs / (1000 * 60 * 60));
-      case 'day':
+      case "day":
         return Math.floor(diffMs / (1000 * 60 * 60 * 24));
-      case 'week':
+      case "week":
         return Math.floor(diffMs / (1000 * 60 * 60 * 24 * 7));
-      case 'month':
+      case "month":
         return Math.floor(diffMs / (1000 * 60 * 60 * 24 * 30));
-      case 'year':
+      case "year":
         return Math.floor(diffMs / (1000 * 60 * 60 * 24 * 365));
       default:
         return diffMs;

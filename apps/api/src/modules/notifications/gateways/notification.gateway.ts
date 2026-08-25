@@ -6,12 +6,12 @@ import {
   OnGatewayDisconnect,
   ConnectedSocket,
   MessageBody,
-} from '@nestjs/websockets';
-import { Server, Socket } from 'socket.io';
-import { Logger, UseGuards, Inject } from '@nestjs/common';
-import { JwtService } from '@nestjs/jwt';
-import { NotificationCenterService } from '../services/notification-center.service';
-import { OnEvent } from '@nestjs/event-emitter';
+} from "@nestjs/websockets";
+import { Server, Socket } from "socket.io";
+import { Logger, UseGuards, Inject } from "@nestjs/common";
+import { JwtService } from "@nestjs/jwt";
+import { NotificationCenterService } from "../services/notification-center.service";
+import { OnEvent } from "@nestjs/event-emitter";
 
 interface AuthenticatedSocket extends Socket {
   subscriberId?: string;
@@ -20,14 +20,12 @@ interface AuthenticatedSocket extends Socket {
 
 @WebSocketGateway({
   cors: {
-    origin: process.env.FRONTEND_URL || '*',
+    origin: process.env.FRONTEND_URL || "*",
     credentials: true,
   },
-  namespace: '/notifications',
+  namespace: "/notifications",
 })
-export class NotificationGateway
-  implements OnGatewayConnection, OnGatewayDisconnect
-{
+export class NotificationGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @WebSocketServer()
   server: Server;
 
@@ -46,7 +44,7 @@ export class NotificationGateway
     try {
       const token = client.handshake.auth.token;
       if (!token) {
-        this.logger.warn('Connection attempt without token');
+        this.logger.warn("Connection attempt without token");
         client.disconnect();
         return;
       }
@@ -66,13 +64,11 @@ export class NotificationGateway
       }
       this.connectedClients.get(decoded.sub)!.add(client.id);
 
-      this.logger.log(
-        `Client connected: ${client.id} (subscriber: ${decoded.sub})`,
-      );
+      this.logger.log(`Client connected: ${client.id} (subscriber: ${decoded.sub})`);
 
       // Send connection confirmation
-      client.emit('connected', {
-        message: 'Connected to notification service',
+      client.emit("connected", {
+        message: "Connected to notification service",
         subscriberId: decoded.sub,
         timestamp: new Date(),
       });
@@ -82,9 +78,9 @@ export class NotificationGateway
         decoded.sub,
         decoded.tenantId,
       );
-      client.emit('unread_count', { count: unreadCount });
+      client.emit("unread_count", { count: unreadCount });
     } catch (error) {
-      this.logger.error('Connection error', error);
+      this.logger.error("Connection error", error);
       client.disconnect();
     }
   }
@@ -102,23 +98,21 @@ export class NotificationGateway
         }
       }
 
-      this.logger.log(
-        `Client disconnected: ${client.id} (subscriber: ${client.subscriberId})`,
-      );
+      this.logger.log(`Client disconnected: ${client.id} (subscriber: ${client.subscriberId})`);
     }
   }
 
   /**
    * Get notification feed
    */
-  @SubscribeMessage('get_notifications')
+  @SubscribeMessage("get_notifications")
   async handleGetNotifications(
     @ConnectedSocket() client: AuthenticatedSocket,
     @MessageBody() data: { page?: number; limit?: number; status?: string },
   ) {
     try {
       if (!client.subscriberId || !client.tenantId) {
-        return { error: 'Unauthorized' };
+        return { error: "Unauthorized" };
       }
 
       const feed = await this.notificationService.getNotificationFeed(
@@ -131,7 +125,7 @@ export class NotificationGateway
 
       return { success: true, data: feed };
     } catch (error) {
-      this.logger.error('Error getting notifications', error);
+      this.logger.error("Error getting notifications", error);
       return { error: error.message };
     }
   }
@@ -139,14 +133,14 @@ export class NotificationGateway
   /**
    * Mark notification as read
    */
-  @SubscribeMessage('mark_as_read')
+  @SubscribeMessage("mark_as_read")
   async handleMarkAsRead(
     @ConnectedSocket() client: AuthenticatedSocket,
     @MessageBody() data: { notificationId: string },
   ) {
     try {
       if (!client.subscriberId || !client.tenantId) {
-        return { error: 'Unauthorized' };
+        return { error: "Unauthorized" };
       }
 
       const notification = await this.notificationService.markAsRead(
@@ -156,14 +150,14 @@ export class NotificationGateway
 
       // Broadcast to all client connections
       const room = `subscriber:${client.subscriberId}`;
-      this.server.to(room).emit('notification_read', {
+      this.server.to(room).emit("notification_read", {
         notificationId: data.notificationId,
         timestamp: new Date(),
       });
 
       return { success: true, data: notification };
     } catch (error) {
-      this.logger.error('Error marking notification as read', error);
+      this.logger.error("Error marking notification as read", error);
       return { error: error.message };
     }
   }
@@ -171,29 +165,24 @@ export class NotificationGateway
   /**
    * Mark all notifications as read
    */
-  @SubscribeMessage('mark_all_as_read')
-  async handleMarkAllAsRead(
-    @ConnectedSocket() client: AuthenticatedSocket,
-  ) {
+  @SubscribeMessage("mark_all_as_read")
+  async handleMarkAllAsRead(@ConnectedSocket() client: AuthenticatedSocket) {
     try {
       if (!client.subscriberId || !client.tenantId) {
-        return { error: 'Unauthorized' };
+        return { error: "Unauthorized" };
       }
 
-      await this.notificationService.markAllAsRead(
-        client.subscriberId,
-        client.tenantId,
-      );
+      await this.notificationService.markAllAsRead(client.subscriberId, client.tenantId);
 
       // Broadcast to all client connections
       const room = `subscriber:${client.subscriberId}`;
-      this.server.to(room).emit('all_marked_as_read', {
+      this.server.to(room).emit("all_marked_as_read", {
         timestamp: new Date(),
       });
 
       return { success: true };
     } catch (error) {
-      this.logger.error('Error marking all as read', error);
+      this.logger.error("Error marking all as read", error);
       return { error: error.message };
     }
   }
@@ -201,14 +190,14 @@ export class NotificationGateway
   /**
    * Archive notification
    */
-  @SubscribeMessage('archive_notification')
+  @SubscribeMessage("archive_notification")
   async handleArchiveNotification(
     @ConnectedSocket() client: AuthenticatedSocket,
     @MessageBody() data: { notificationId: string },
   ) {
     try {
       if (!client.subscriberId || !client.tenantId) {
-        return { error: 'Unauthorized' };
+        return { error: "Unauthorized" };
       }
 
       const notification = await this.notificationService.archiveNotification(
@@ -217,14 +206,14 @@ export class NotificationGateway
       );
 
       const room = `subscriber:${client.subscriberId}`;
-      this.server.to(room).emit('notification_archived', {
+      this.server.to(room).emit("notification_archived", {
         notificationId: data.notificationId,
         timestamp: new Date(),
       });
 
       return { success: true, data: notification };
     } catch (error) {
-      this.logger.error('Error archiving notification', error);
+      this.logger.error("Error archiving notification", error);
       return { error: error.message };
     }
   }
@@ -232,30 +221,27 @@ export class NotificationGateway
   /**
    * Delete notification
    */
-  @SubscribeMessage('delete_notification')
+  @SubscribeMessage("delete_notification")
   async handleDeleteNotification(
     @ConnectedSocket() client: AuthenticatedSocket,
     @MessageBody() data: { notificationId: string },
   ) {
     try {
       if (!client.subscriberId || !client.tenantId) {
-        return { error: 'Unauthorized' };
+        return { error: "Unauthorized" };
       }
 
-      await this.notificationService.deleteNotification(
-        data.notificationId,
-        client.tenantId,
-      );
+      await this.notificationService.deleteNotification(data.notificationId, client.tenantId);
 
       const room = `subscriber:${client.subscriberId}`;
-      this.server.to(room).emit('notification_deleted', {
+      this.server.to(room).emit("notification_deleted", {
         notificationId: data.notificationId,
         timestamp: new Date(),
       });
 
       return { success: true };
     } catch (error) {
-      this.logger.error('Error deleting notification', error);
+      this.logger.error("Error deleting notification", error);
       return { error: error.message };
     }
   }
@@ -263,7 +249,7 @@ export class NotificationGateway
   /**
    * Search notifications
    */
-  @SubscribeMessage('search_notifications')
+  @SubscribeMessage("search_notifications")
   async handleSearchNotifications(
     @ConnectedSocket() client: AuthenticatedSocket,
     @MessageBody()
@@ -271,7 +257,7 @@ export class NotificationGateway
   ) {
     try {
       if (!client.subscriberId || !client.tenantId) {
-        return { error: 'Unauthorized' };
+        return { error: "Unauthorized" };
       }
 
       const results = await this.notificationService.searchNotifications(
@@ -284,7 +270,7 @@ export class NotificationGateway
 
       return { success: true, data: results };
     } catch (error) {
-      this.logger.error('Error searching notifications', error);
+      this.logger.error("Error searching notifications", error);
       return { error: error.message };
     }
   }
@@ -292,21 +278,18 @@ export class NotificationGateway
   /**
    * Get statistics
    */
-  @SubscribeMessage('get_stats')
+  @SubscribeMessage("get_stats")
   async handleGetStats(@ConnectedSocket() client: AuthenticatedSocket) {
     try {
       if (!client.subscriberId || !client.tenantId) {
-        return { error: 'Unauthorized' };
+        return { error: "Unauthorized" };
       }
 
-      const stats = await this.notificationService.getStats(
-        client.subscriberId,
-        client.tenantId,
-      );
+      const stats = await this.notificationService.getStats(client.subscriberId, client.tenantId);
 
       return { success: true, data: stats };
     } catch (error) {
-      this.logger.error('Error getting stats', error);
+      this.logger.error("Error getting stats", error);
       return { error: error.message };
     }
   }
@@ -314,15 +297,12 @@ export class NotificationGateway
   /**
    * Event listener: New notification added
    */
-  @OnEvent('notification.created')
-  async handleNotificationCreated(payload: {
-    subscriberId: string;
-    notification: any;
-  }) {
+  @OnEvent("notification.created")
+  async handleNotificationCreated(payload: { subscriberId: string; notification: any }) {
     const room = `subscriber:${payload.subscriberId}`;
 
     // Broadcast to all connected clients for this subscriber
-    this.server.to(room).emit('new_notification', {
+    this.server.to(room).emit("new_notification", {
       notification: payload.notification,
       timestamp: new Date(),
     });
@@ -333,26 +313,21 @@ export class NotificationGateway
       payload.notification.tenantId,
     );
 
-    this.server.to(room).emit('unread_count', { count: unreadCount });
+    this.server.to(room).emit("unread_count", { count: unreadCount });
 
-    this.logger.log(
-      `Notification broadcast to ${room}: ${payload.notification.id}`,
-    );
+    this.logger.log(`Notification broadcast to ${room}: ${payload.notification.id}`);
   }
 
   /**
    * Event listener: Bulk notifications added
    */
-  @OnEvent('notifications.bulk_created')
-  async handleBulkNotificationsCreated(payload: {
-    subscriberIds: string[];
-    notifications: any[];
-  }) {
+  @OnEvent("notifications.bulk_created")
+  async handleBulkNotificationsCreated(payload: { subscriberIds: string[]; notifications: any[] }) {
     for (const subscriberId of payload.subscriberIds) {
       const room = `subscriber:${subscriberId}`;
 
       // Broadcast to all connected clients
-      this.server.to(room).emit('bulk_notifications', {
+      this.server.to(room).emit("bulk_notifications", {
         notifications: payload.notifications,
         count: payload.notifications.length,
         timestamp: new Date(),
@@ -365,7 +340,7 @@ export class NotificationGateway
           payload.notifications[0].tenantId,
         );
 
-        this.server.to(room).emit('unread_count', { count: unreadCount });
+        this.server.to(room).emit("unread_count", { count: unreadCount });
       }
     }
   }
@@ -373,11 +348,7 @@ export class NotificationGateway
   /**
    * Broadcast notification to subscriber
    */
-  broadcastToSubscriber(
-    subscriberId: string,
-    event: string,
-    data: any,
-  ): void {
+  broadcastToSubscriber(subscriberId: string, event: string, data: any): void {
     const room = `subscriber:${subscriberId}`;
     this.server.to(room).emit(event, {
       ...data,

@@ -1,4 +1,4 @@
-import { NotificationChannel } from '../../../../common/enums/notification-channel.enum';
+import { NotificationChannel } from "../../../../common/enums/notification-channel.enum";
 
 export interface EmailMessage {
   to: string | string[];
@@ -33,7 +33,7 @@ export interface EmailAttachment {
 
 export interface EmailDeliveryResult {
   messageId: string;
-  status: 'sent' | 'queued' | 'failed';
+  status: "sent" | "queued" | "failed";
   providerId: string;
   timestamp: Date;
   cost?: number;
@@ -74,33 +74,43 @@ export abstract class BaseEmailProvider {
   abstract readonly name: string;
   abstract readonly channel: NotificationChannel.EMAIL;
 
-  constructor(protected config: EmailProviderConfig) { }
+  constructor(protected config: EmailProviderConfig) {}
 
   abstract initialize(): Promise<void>;
   abstract sendEmail(message: EmailMessage): Promise<EmailDeliveryResult>;
-  abstract validateConfig(config: Record<string, any>): Promise<{ isValid: boolean; errors: string[] }>;
+  abstract validateConfig(
+    config: Record<string, any>,
+  ): Promise<{ isValid: boolean; errors: string[] }>;
   abstract getStats(): Promise<EmailProviderStats>;
   abstract healthCheck(): Promise<{ healthy: boolean; latency: number; error?: string }>;
   abstract getCost(messageCount: number): Promise<number>;
 
   // Optional methods that providers can override
   async sendBulkEmails?(messages: EmailMessage[]): Promise<EmailDeliveryResult[]> {
-    return Promise.all(messages.map(msg => this.sendEmail(msg)));
+    return Promise.all(messages.map((msg) => this.sendEmail(msg)));
   }
 
   async getTemplates?(): Promise<Array<{ id: string; name: string; subject: string }>> {
     return [];
   }
 
-  async createTemplate?(template: { name: string; subject: string; html: string; text?: string }): Promise<string> {
-    throw new Error('Template creation not supported by this provider');
+  async createTemplate?(template: {
+    name: string;
+    subject: string;
+    html: string;
+    text?: string;
+  }): Promise<string> {
+    throw new Error("Template creation not supported by this provider");
   }
 
-  async updateTemplate?(templateId: string, template: Partial<{ name: string; subject: string; html: string; text?: string }>): Promise<void> {
-    throw new Error('Template updates not supported by this provider');
+  async updateTemplate?(
+    templateId: string,
+    template: Partial<{ name: string; subject: string; html: string; text?: string }>,
+  ): Promise<void> {
+    throw new Error("Template updates not supported by this provider");
   }
 
   async deleteTemplate?(templateId: string): Promise<void> {
-    throw new Error('Template deletion not supported by this provider');
+    throw new Error("Template deletion not supported by this provider");
   }
 }

@@ -1,6 +1,6 @@
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsArray, IsEnum, IsObject, IsOptional, IsString, MinLength } from 'class-validator';
-import { CampaignStatus, CampaignType } from '../entities/campaign.entity';
+import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
+import { IsArray, IsEnum, IsObject, IsOptional, IsString, MinLength } from "class-validator";
+import { CampaignStatus, CampaignType } from "../entities/campaign.entity";
 
 export class CreateCampaignDto {
   @ApiProperty()
@@ -13,14 +13,16 @@ export class CreateCampaignDto {
   @IsString()
   description?: string;
 
-  @ApiPropertyOptional({ enum: ['one_time', 'recurring', 'triggered', 'drip'] })
+  @ApiPropertyOptional({ enum: ["one_time", "recurring", "triggered", "drip"] })
   @IsOptional()
-  @IsEnum(['one_time', 'recurring', 'triggered', 'drip'] as const)
+  @IsEnum(["one_time", "recurring", "triggered", "drip"] as const)
   type?: CampaignType;
 
-  @ApiPropertyOptional({ enum: ['draft', 'scheduled', 'active', 'paused', 'completed', 'cancelled'] })
+  @ApiPropertyOptional({
+    enum: ["draft", "scheduled", "active", "paused", "completed", "cancelled"],
+  })
   @IsOptional()
-  @IsEnum(['draft', 'scheduled', 'active', 'paused', 'completed', 'cancelled'] as const)
+  @IsEnum(["draft", "scheduled", "active", "paused", "completed", "cancelled"] as const)
   status?: CampaignStatus;
 
   @ApiPropertyOptional({ type: [String] })

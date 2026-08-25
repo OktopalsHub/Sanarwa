@@ -1,55 +1,65 @@
-import { Webhook } from '@/lib/icons';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowRightIcon, ArrowDownTrayIcon, ArrowTopRightOnSquareIcon, CodeBracketIcon } from '@heroicons/react/24/outline'
+import { Webhook } from "@/lib/icons";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  ArrowRightIcon,
+  ArrowDownTrayIcon,
+  ArrowTopRightOnSquareIcon,
+  CodeBracketIcon,
+} from "@heroicons/react/24/outline";
 
-import Link from '@/compat/next-link';
+import Link from "@/compat/next-link";
 
 const sdks = [
   {
-    name: 'JavaScript/Node.js',
-    description: 'Official SDK for JavaScript and Node.js applications',
-    href: '/docs/sdks/javascript',
-    packageName: '@notifi/sdk',
+    name: "JavaScript/Node.js",
+    description: "Official SDK for JavaScript and Node.js applications",
+    href: "/docs/sdks/javascript",
+    packageName: "@notifi/sdk",
     popular: true,
-    features: ['TypeScript support', 'Promise-based API', 'Webhook validation', 'Template helpers'],
+    features: ["TypeScript support", "Promise-based API", "Webhook validation", "Template helpers"],
   },
   {
-    name: 'Python',
-    description: 'Python SDK with Django and Flask integration examples',
-    href: '/docs/sdks/python',
-    packageName: 'notifi-python',
+    name: "Python",
+    description: "Python SDK with Django and Flask integration examples",
+    href: "/docs/sdks/python",
+    packageName: "notifi-python",
     popular: true,
-    features: ['Async/await support', 'Django integration', 'Flask helpers', 'Type hints'],
+    features: ["Async/await support", "Django integration", "Flask helpers", "Type hints"],
   },
   {
-    name: 'PHP',
-    description: 'PHP SDK with Laravel and Symfony examples',
-    href: '/docs/sdks/php',
-    packageName: 'notifi/php-sdk',
-    features: ['PSR-4 autoloading', 'Laravel service provider', 'Guzzle HTTP client', 'PHPUnit tests'],
+    name: "PHP",
+    description: "PHP SDK with Laravel and Symfony examples",
+    href: "/docs/sdks/php",
+    packageName: "notifi/php-sdk",
+    features: [
+      "PSR-4 autoloading",
+      "Laravel service provider",
+      "Guzzle HTTP client",
+      "PHPUnit tests",
+    ],
   },
   {
-    name: 'Java',
-    description: 'Java SDK for Spring Boot and standalone applications',
-    href: '/docs/sdks/java',
-    packageName: 'com.notifi:notifi-java-sdk',
-    features: ['Spring Boot starter', 'Reactive support', 'Jackson serialization', 'Maven/Gradle'],
+    name: "Java",
+    description: "Java SDK for Spring Boot and standalone applications",
+    href: "/docs/sdks/java",
+    packageName: "com.notifi:notifi-java-sdk",
+    features: ["Spring Boot starter", "Reactive support", "Jackson serialization", "Maven/Gradle"],
   },
   {
-    name: 'Go',
-    description: 'Go SDK with context support and structured logging',
-    href: '/docs/sdks/go',
-    packageName: 'github.com/notifi/go-sdk',
-    features: ['Context support', 'Structured logging', 'HTTP/2 client', 'Go modules'],
+    name: "Go",
+    description: "Go SDK with context support and structured logging",
+    href: "/docs/sdks/go",
+    packageName: "github.com/notifi/go-sdk",
+    features: ["Context support", "Structured logging", "HTTP/2 client", "Go modules"],
   },
   {
-    name: '.NET',
-    description: '.NET SDK for C# applications with async/await support',
-    href: '/docs/sdks/dotnet',
-    packageName: 'Notifi.SDK',
-    features: ['Async/await', 'Dependency injection', 'Configuration binding', 'NuGet package'],
+    name: ".NET",
+    description: ".NET SDK for C# applications with async/await support",
+    href: "/docs/sdks/dotnet",
+    packageName: "Notifi.SDK",
+    features: ["Async/await", "Dependency injection", "Configuration binding", "NuGet package"],
   },
 ];
 
@@ -59,8 +69,8 @@ export default function SDKsPage() {
       <div className="space-y-4">
         <h1 className="text-4xl font-bold tracking-tight">SDK Guides</h1>
         <p className="text-xl text-muted-foreground max-w-3xl">
-          Choose your preferred programming language to get started with Notifi.
-          Our SDKs provide a simple, consistent interface for all communication channels.
+          Choose your preferred programming language to get started with Notifi. Our SDKs provide a
+          simple, consistent interface for all communication channels.
         </p>
       </div>
 
@@ -80,9 +90,7 @@ export default function SDKsPage() {
             <CardContent className="space-y-4">
               <div className="space-y-2">
                 <div className="text-sm font-medium">Package:</div>
-                <code className="text-sm bg-muted px-2 py-1 rounded">
-                  {sdk.packageName}
-                </code>
+                <code className="text-sm bg-muted px-2 py-1 rounded">{sdk.packageName}</code>
               </div>
 
               <div className="space-y-2">

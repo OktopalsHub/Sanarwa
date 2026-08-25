@@ -1,50 +1,55 @@
-'use client';
+"use client";
 
-import { Send } from '@/lib/icons';
+import { Send } from "@/lib/icons";
 
-import { CodeRunner } from '@/components/docs/code-runner';
-import { FeedbackSystem } from '@/components/docs/feedback-system';
-import { InteractiveCodeExample } from '@/components/docs/interactive-code-example';
-import { SdkTester } from '@/components/docs/sdk-tester';
-import { Badge } from '@/components/ui/badge';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { sdkExamples } from '@/lib/data/sdk-examples';
-import { PlayIcon, BoltIcon, BookOpenIcon, CodeBracketIcon, BeakerIcon } from '@heroicons/react/24/outline'
-
+import { CodeRunner } from "@/components/docs/code-runner";
+import { FeedbackSystem } from "@/components/docs/feedback-system";
+import { InteractiveCodeExample } from "@/components/docs/interactive-code-example";
+import { SdkTester } from "@/components/docs/sdk-tester";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { sdkExamples } from "@/lib/data/sdk-examples";
+import {
+  PlayIcon,
+  BoltIcon,
+  BookOpenIcon,
+  CodeBracketIcon,
+  BeakerIcon,
+} from "@heroicons/react/24/outline";
 
 export default function ExamplesPage() {
   const handleRunExample = async (code: string, parameters: Record<string, any>) => {
     // Simulate API execution
-    await new Promise(resolve => setTimeout(resolve, 1500));
+    await new Promise((resolve) => setTimeout(resolve, 1500));
 
     // Return mock response based on the code content
-    if (code.includes('email.send')) {
+    if (code.includes("email.send")) {
       return {
-        id: 'msg_' + Math.random().toString(36).substr(2, 9),
-        status: 'sent',
-        to: parameters.to || 'user@example.com',
-        subject: parameters.subject || 'Test Email',
-        sentAt: new Date().toISOString()
+        id: "msg_" + Math.random().toString(36).substr(2, 9),
+        status: "sent",
+        to: parameters.to || "user@example.com",
+        subject: parameters.subject || "Test Email",
+        sentAt: new Date().toISOString(),
       };
-    } else if (code.includes('sms.send')) {
+    } else if (code.includes("sms.send")) {
       return {
-        id: 'sms_' + Math.random().toString(36).substr(2, 9),
-        status: 'sent',
-        to: parameters.to || '+1234567890',
-        message: parameters.message || 'Test SMS',
-        sentAt: new Date().toISOString()
+        id: "sms_" + Math.random().toString(36).substr(2, 9),
+        status: "sent",
+        to: parameters.to || "+1234567890",
+        message: parameters.message || "Test SMS",
+        sentAt: new Date().toISOString(),
       };
-    } else if (code.includes('workflows.create')) {
+    } else if (code.includes("workflows.create")) {
       return {
-        id: 'wf_' + Math.random().toString(36).substr(2, 9),
-        name: parameters.name || 'Test Workflow',
-        status: 'active',
-        createdAt: new Date().toISOString()
+        id: "wf_" + Math.random().toString(36).substr(2, 9),
+        name: parameters.name || "Test Workflow",
+        status: "active",
+        createdAt: new Date().toISOString(),
       };
     }
 
-    return { success: true, message: 'Code executed successfully' };
+    return { success: true, message: "Code executed successfully" };
   };
 
   return (
@@ -56,8 +61,8 @@ export default function ExamplesPage() {
           <h1 className="text-4xl font-bold tracking-tight">Interactive Examples</h1>
         </div>
         <p className="text-xl text-muted-foreground max-w-3xl">
-          Try out Notifi's APIs and SDKs with live, runnable code examples.
-          Modify parameters and see real-time results.
+          Try out Notifi's APIs and SDKs with live, runnable code examples. Modify parameters and
+          see real-time results.
         </p>
       </div>
 
@@ -69,7 +74,8 @@ export default function ExamplesPage() {
             Quick Start Examples
           </CardTitle>
           <CardDescription>
-            Get started quickly with these common use cases. Each example is fully interactive and runnable.
+            Get started quickly with these common use cases. Each example is fully interactive and
+            runnable.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -154,8 +160,8 @@ export default function ExamplesPage() {
             Live Code Runner
           </CardTitle>
           <CardDescription>
-            Write and execute code directly in your browser with our interactive code runner.
-            Test your integration logic in a safe sandbox environment.
+            Write and execute code directly in your browser with our interactive code runner. Test
+            your integration logic in a safe sandbox environment.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -241,8 +247,8 @@ sendTestEmail();`}
                 <Badge variant="secondary">In-App</Badge>
               </div>
               <p className="text-sm text-muted-foreground">
-                Learn how to orchestrate notifications across email, SMS, push notifications,
-                and in-app messages for maximum reach and engagement.
+                Learn how to orchestrate notifications across email, SMS, push notifications, and
+                in-app messages for maximum reach and engagement.
               </p>
             </CardContent>
           </Card>
@@ -262,8 +268,8 @@ sendTestEmail();`}
                 <Badge variant="secondary">A/B Testing</Badge>
               </div>
               <p className="text-sm text-muted-foreground">
-                Create sophisticated workflows that respond to user actions,
-                time-based triggers, and custom business logic.
+                Create sophisticated workflows that respond to user actions, time-based triggers,
+                and custom business logic.
               </p>
             </CardContent>
           </Card>
@@ -271,9 +277,7 @@ sendTestEmail();`}
           <Card>
             <CardHeader>
               <CardTitle className="text-lg">Template Personalization</CardTitle>
-              <CardDescription>
-                Dynamic content and personalization with variables
-              </CardDescription>
+              <CardDescription>Dynamic content and personalization with variables</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="flex flex-wrap gap-2 mb-4">
@@ -282,8 +286,8 @@ sendTestEmail();`}
                 <Badge variant="secondary">Localization</Badge>
               </div>
               <p className="text-sm text-muted-foreground">
-                Use template variables, conditional content blocks, and localization
-                to create personalized experiences for your users.
+                Use template variables, conditional content blocks, and localization to create
+                personalized experiences for your users.
               </p>
             </CardContent>
           </Card>
@@ -302,8 +306,8 @@ sendTestEmail();`}
                 <Badge variant="secondary">Conversions</Badge>
               </div>
               <p className="text-sm text-muted-foreground">
-                Track message delivery, user engagement, and conversion rates
-                to optimize your communication strategy.
+                Track message delivery, user engagement, and conversion rates to optimize your
+                communication strategy.
               </p>
             </CardContent>
           </Card>
@@ -323,19 +327,28 @@ sendTestEmail();`}
         </CardHeader>
         <CardContent>
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            <a href="/docs/tutorials" className="block p-4 border rounded-lg hover:bg-accent transition-colors">
+            <a
+              href="/docs/tutorials"
+              className="block p-4 border rounded-lg hover:bg-accent transition-colors"
+            >
               <h4 className="font-medium mb-2">Step-by-Step Tutorials</h4>
               <p className="text-sm text-muted-foreground">
                 Guided tutorials for common integration scenarios
               </p>
             </a>
-            <a href="/docs/api" className="block p-4 border rounded-lg hover:bg-accent transition-colors">
+            <a
+              href="/docs/api"
+              className="block p-4 border rounded-lg hover:bg-accent transition-colors"
+            >
               <h4 className="font-medium mb-2">API Reference</h4>
               <p className="text-sm text-muted-foreground">
                 Complete API documentation with interactive playground
               </p>
             </a>
-            <a href="/docs/best-practices" className="block p-4 border rounded-lg hover:bg-accent transition-colors">
+            <a
+              href="/docs/best-practices"
+              className="block p-4 border rounded-lg hover:bg-accent transition-colors"
+            >
               <h4 className="font-medium mb-2">Best Practices</h4>
               <p className="text-sm text-muted-foreground">
                 Tips and recommendations for optimal implementation
@@ -346,10 +359,7 @@ sendTestEmail();`}
       </Card>
 
       {/* Feedback */}
-      <FeedbackSystem
-        page="examples"
-        category="documentation"
-      />
+      <FeedbackSystem page="examples" category="documentation" />
     </div>
   );
 }

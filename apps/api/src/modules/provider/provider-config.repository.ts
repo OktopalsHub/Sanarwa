@@ -1,9 +1,9 @@
-import { Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { NotificationChannel } from '../../common/enums/notification-channel.enum';
-import { BaseRepository } from '../../database/repositories/base.repository';
-import { ProviderConfig } from './provider-config.entity';
+import { Injectable } from "@nestjs/common";
+import { InjectRepository } from "@nestjs/typeorm";
+import { Repository } from "typeorm";
+import { NotificationChannel } from "../../common/enums/notification-channel.enum";
+import { BaseRepository } from "../../database/repositories/base.repository";
+import { ProviderConfig } from "./provider-config.entity";
 
 @Injectable()
 export class ProviderConfigRepository extends BaseRepository<ProviderConfig> {
@@ -19,11 +19,11 @@ export class ProviderConfigRepository extends BaseRepository<ProviderConfig> {
    */
   async findByTenantId(tenantId: string): Promise<ProviderConfig[]> {
     return this.providerConfigRepository
-      .createQueryBuilder('config')
-      .leftJoinAndSelect('config.project', 'project')
-      .where('project.tenantId = :tenantId', { tenantId })
-      .orderBy('config.priority', 'ASC')
-      .addOrderBy('config.createdAt', 'DESC')
+      .createQueryBuilder("config")
+      .leftJoinAndSelect("config.project", "project")
+      .where("project.tenantId = :tenantId", { tenantId })
+      .orderBy("config.priority", "ASC")
+      .addOrderBy("config.createdAt", "DESC")
       .getMany();
   }
 
@@ -33,10 +33,10 @@ export class ProviderConfigRepository extends BaseRepository<ProviderConfig> {
   async findByProjectId(projectId: string): Promise<ProviderConfig[]> {
     return this.providerConfigRepository.find({
       where: { projectId },
-      relations: ['project'],
+      relations: ["project"],
       order: {
-        priority: 'ASC',
-        createdAt: 'DESC',
+        priority: "ASC",
+        createdAt: "DESC",
       },
     });
   }
@@ -49,28 +49,25 @@ export class ProviderConfigRepository extends BaseRepository<ProviderConfig> {
     channel: NotificationChannel,
   ): Promise<ProviderConfig[]> {
     return this.providerConfigRepository
-      .createQueryBuilder('config')
-      .leftJoinAndSelect('config.project', 'project')
-      .where('project.tenantId = :tenantId', { tenantId })
-      .andWhere('config.channel = :channel', { channel })
-      .andWhere('config.isActive = :isActive', { isActive: true })
-      .orderBy('config.priority', 'ASC')
-      .addOrderBy('config.createdAt', 'ASC')
+      .createQueryBuilder("config")
+      .leftJoinAndSelect("config.project", "project")
+      .where("project.tenantId = :tenantId", { tenantId })
+      .andWhere("config.channel = :channel", { channel })
+      .andWhere("config.isActive = :isActive", { isActive: true })
+      .orderBy("config.priority", "ASC")
+      .addOrderBy("config.createdAt", "ASC")
       .getMany();
   }
 
   /**
    * Find provider config by ID and tenant ID (through project)
    */
-  async findByIdAndTenant(
-    id: string,
-    tenantId: string,
-  ): Promise<ProviderConfig | null> {
+  async findByIdAndTenant(id: string, tenantId: string): Promise<ProviderConfig | null> {
     return this.providerConfigRepository
-      .createQueryBuilder('config')
-      .leftJoinAndSelect('config.project', 'project')
-      .where('config.id = :id', { id })
-      .andWhere('project.tenantId = :tenantId', { tenantId })
+      .createQueryBuilder("config")
+      .leftJoinAndSelect("config.project", "project")
+      .where("config.id = :id", { id })
+      .andWhere("project.tenantId = :tenantId", { tenantId })
       .getOne();
   }
 
@@ -83,22 +80,18 @@ export class ProviderConfigRepository extends BaseRepository<ProviderConfig> {
     tenantId: string,
   ): Promise<ProviderConfig | null> {
     return this.providerConfigRepository
-      .createQueryBuilder('config')
-      .leftJoinAndSelect('config.project', 'project')
-      .where('config.providerId = :providerId', { providerId })
-      .andWhere('config.channel = :channel', { channel })
-      .andWhere('project.tenantId = :tenantId', { tenantId })
+      .createQueryBuilder("config")
+      .leftJoinAndSelect("config.project", "project")
+      .where("config.providerId = :providerId", { providerId })
+      .andWhere("config.channel = :channel", { channel })
+      .andWhere("project.tenantId = :tenantId", { tenantId })
       .getOne();
   }
 
   /**
    * Update health status for a provider config
    */
-  async updateHealthStatus(
-    id: string,
-    healthStatus: string,
-    lastHealthCheck: Date,
-  ): Promise<void> {
+  async updateHealthStatus(id: string, healthStatus: string, lastHealthCheck: Date): Promise<void> {
     await this.providerConfigRepository.update(id, {
       healthStatus,
       lastHealthCheck,

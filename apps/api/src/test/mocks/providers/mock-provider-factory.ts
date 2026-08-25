@@ -1,33 +1,25 @@
-import { IBaseProvider } from '../../../providers/base/base-provider.interface';
-import { IProviderFactory } from '../../../providers/factory/provider-factory.interface';
-import { Channel, ProviderConfig } from '../../../providers/types';
-import { MockEmailProvider } from './mock-email-provider';
-import { MockPushProvider } from './mock-push-provider';
-import { MockSMSProvider } from './mock-sms-provider';
-import { MockWhatsAppProvider } from './mock-whatsapp-provider';
+import { IBaseProvider } from "../../../providers/base/base-provider.interface";
+import { IProviderFactory } from "../../../providers/factory/provider-factory.interface";
+import { Channel, ProviderConfig } from "../../../providers/types";
+import { MockEmailProvider } from "./mock-email-provider";
+import { MockPushProvider } from "./mock-push-provider";
+import { MockSMSProvider } from "./mock-sms-provider";
+import { MockWhatsAppProvider } from "./mock-whatsapp-provider";
 
 export class MockProviderFactory implements IProviderFactory {
   private providers = new Map<string, any>();
   private shouldFailCreation = false;
-  private failureMessage = 'Mock factory failure';
+  private failureMessage = "Mock factory failure";
 
   constructor() {
     // Register default mock providers
-    this.registerProvider('mock-email', Channel.EMAIL, MockEmailProvider);
-    this.registerProvider('mock-sms', Channel.SMS, MockSMSProvider);
-    this.registerProvider('mock-push', Channel.PUSH, MockPushProvider);
-    this.registerProvider(
-      'mock-whatsapp',
-      Channel.WHATSAPP,
-      MockWhatsAppProvider,
-    );
+    this.registerProvider("mock-email", Channel.EMAIL, MockEmailProvider);
+    this.registerProvider("mock-sms", Channel.SMS, MockSMSProvider);
+    this.registerProvider("mock-push", Channel.PUSH, MockPushProvider);
+    this.registerProvider("mock-whatsapp", Channel.WHATSAPP, MockWhatsAppProvider);
   }
 
-  registerProvider(
-    providerId: string,
-    channel: Channel,
-    providerClass: any,
-  ): void {
+  registerProvider(providerId: string, channel: Channel, providerClass: any): void {
     const key = `${providerId}-${channel}`;
     this.providers.set(key, providerClass);
   }
@@ -55,9 +47,7 @@ export class MockProviderFactory implements IProviderFactory {
     const ProviderClass = this.providers.get(key);
 
     if (!ProviderClass) {
-      throw new Error(
-        `Provider ${providerId} for channel ${channel} is not registered`,
-      );
+      throw new Error(`Provider ${providerId} for channel ${channel} is not registered`);
     }
 
     const provider = new ProviderClass(config);
@@ -68,7 +58,7 @@ export class MockProviderFactory implements IProviderFactory {
   getAvailableProviders(channel: Channel): string[] {
     const providers: string[] = [];
     for (const [key, _] of this.providers) {
-      const [providerId, providerChannel] = key.split('-');
+      const [providerId, providerChannel] = key.split("-");
       if (providerChannel === channel) {
         providers.push(providerId);
       }
@@ -79,7 +69,7 @@ export class MockProviderFactory implements IProviderFactory {
   getAllRegisteredProviders(): Array<{ providerId: string; channel: Channel }> {
     const providers: Array<{ providerId: string; channel: Channel }> = [];
     for (const [key, _] of this.providers) {
-      const [providerId, channel] = key.split('-');
+      const [providerId, channel] = key.split("-");
       providers.push({ providerId, channel: channel as Channel });
     }
     return providers;
@@ -99,17 +89,13 @@ export class MockProviderFactory implements IProviderFactory {
 
   reset(): void {
     this.shouldFailCreation = false;
-    this.failureMessage = 'Mock factory failure';
+    this.failureMessage = "Mock factory failure";
     this.clearProviders();
 
     // Re-register default providers
-    this.registerProvider('mock-email', Channel.EMAIL, MockEmailProvider);
-    this.registerProvider('mock-sms', Channel.SMS, MockSMSProvider);
-    this.registerProvider('mock-push', Channel.PUSH, MockPushProvider);
-    this.registerProvider(
-      'mock-whatsapp',
-      Channel.WHATSAPP,
-      MockWhatsAppProvider,
-    );
+    this.registerProvider("mock-email", Channel.EMAIL, MockEmailProvider);
+    this.registerProvider("mock-sms", Channel.SMS, MockSMSProvider);
+    this.registerProvider("mock-push", Channel.PUSH, MockPushProvider);
+    this.registerProvider("mock-whatsapp", Channel.WHATSAPP, MockWhatsAppProvider);
   }
 }

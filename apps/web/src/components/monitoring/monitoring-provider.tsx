@@ -1,10 +1,10 @@
-'use client';
+"use client";
 
-import { useAuth } from '@/contexts/auth-context';
-import { useTenant } from '@/contexts/tenant-context';
-import { reportError, setContext, setUser } from '@/lib/monitoring/error-reporter';
-import { monitoringService } from '@/lib/services/monitoring';
-import React, { useEffect } from 'react';
+import { useAuth } from "@/contexts/auth-context";
+import { useTenant } from "@/contexts/tenant-context";
+import { reportError, setContext, setUser } from "@/lib/monitoring/error-reporter";
+import { monitoringService } from "@/lib/services/monitoring";
+import React, { useEffect } from "react";
 
 interface MonitoringProviderProps {
   children: React.ReactNode;
@@ -12,7 +12,7 @@ interface MonitoringProviderProps {
 
 export default function MonitoringProvider({ children }: MonitoringProviderProps) {
   // Disable all monitoring in development
-  if (process.env.NODE_ENV === 'development') {
+  if (process.env.NODE_ENV === "development") {
     return <>{children}</>;
   }
 
@@ -26,7 +26,7 @@ export default function MonitoringProvider({ children }: MonitoringProviderProps
     // Set up global error handling
     const handleUnhandledError = (event: ErrorEvent) => {
       reportError(event.error || new Error(event.message), {
-        context: 'unhandled_error',
+        context: "unhandled_error",
         extra: {
           filename: event.filename,
           lineno: event.lineno,
@@ -38,18 +38,18 @@ export default function MonitoringProvider({ children }: MonitoringProviderProps
     const handleUnhandledRejection = (event: PromiseRejectionEvent) => {
       const error = event.reason instanceof Error ? event.reason : new Error(String(event.reason));
       reportError(error, {
-        context: 'unhandled_promise_rejection',
+        context: "unhandled_promise_rejection",
       });
     };
 
     // Add global error listeners
-    window.addEventListener('error', handleUnhandledError);
-    window.addEventListener('unhandledrejection', handleUnhandledRejection);
+    window.addEventListener("error", handleUnhandledError);
+    window.addEventListener("unhandledrejection", handleUnhandledRejection);
 
     // Cleanup
     return () => {
-      window.removeEventListener('error', handleUnhandledError);
-      window.removeEventListener('unhandledrejection', handleUnhandledRejection);
+      window.removeEventListener("error", handleUnhandledError);
+      window.removeEventListener("unhandledrejection", handleUnhandledRejection);
       monitoringService.destroy();
     };
   }, []);
@@ -63,7 +63,7 @@ export default function MonitoringProvider({ children }: MonitoringProviderProps
         tenantId: selectedTenant?.id,
       });
 
-      setContext('user', {
+      setContext("user", {
         id: user.id,
         email: user.email,
         name: user.name,
@@ -75,7 +75,7 @@ export default function MonitoringProvider({ children }: MonitoringProviderProps
   // Update tenant context when tenant changes
   useEffect(() => {
     if (selectedTenant) {
-      setContext('tenant', {
+      setContext("tenant", {
         id: selectedTenant.id,
         name: selectedTenant.name,
         slug: selectedTenant.slug,
@@ -87,7 +87,7 @@ export default function MonitoringProvider({ children }: MonitoringProviderProps
   // Track application lifecycle events
   useEffect(() => {
     const trackAppStart = () => {
-      monitoringService.trackEvent('app_start', {
+      monitoringService.trackEvent("app_start", {
         timestamp: Date.now(),
         userAgent: navigator.userAgent,
         viewport: `${window.innerWidth}x${window.innerHeight}`,
@@ -98,14 +98,14 @@ export default function MonitoringProvider({ children }: MonitoringProviderProps
     };
 
     const trackAppVisibilityChange = () => {
-      monitoringService.trackEvent('app_visibility_change', {
+      monitoringService.trackEvent("app_visibility_change", {
         hidden: document.hidden,
         visibilityState: document.visibilityState,
       });
     };
 
     const trackAppBeforeUnload = () => {
-      monitoringService.trackEvent('app_unload', {
+      monitoringService.trackEvent("app_unload", {
         timestamp: Date.now(),
       });
     };
@@ -114,12 +114,12 @@ export default function MonitoringProvider({ children }: MonitoringProviderProps
     trackAppStart();
 
     // Add lifecycle event listeners
-    document.addEventListener('visibilitychange', trackAppVisibilityChange);
-    window.addEventListener('beforeunload', trackAppBeforeUnload);
+    document.addEventListener("visibilitychange", trackAppVisibilityChange);
+    window.addEventListener("beforeunload", trackAppBeforeUnload);
 
     return () => {
-      document.removeEventListener('visibilitychange', trackAppVisibilityChange);
-      window.removeEventListener('beforeunload', trackAppBeforeUnload);
+      document.removeEventListener("visibilitychange", trackAppVisibilityChange);
+      window.removeEventListener("beforeunload", trackAppBeforeUnload);
     };
   }, []);
 

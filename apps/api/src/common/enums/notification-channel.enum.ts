@@ -3,14 +3,14 @@
  * Defines all supported notification channels for the platform
  */
 export enum NotificationChannel {
-  EMAIL = 'email',
-  SMS = 'sms',
-  PUSH = 'push',
-  WHATSAPP = 'whatsapp',
-  IN_APP = 'in_app',
-  VOICE = 'voice',
-  WEBHOOK = 'webhook',
-  CHAT = 'chat',
+  EMAIL = "email",
+  SMS = "sms",
+  PUSH = "push",
+  WHATSAPP = "whatsapp",
+  IN_APP = "in_app",
+  VOICE = "voice",
+  WEBHOOK = "webhook",
+  CHAT = "chat",
 }
 
 /**

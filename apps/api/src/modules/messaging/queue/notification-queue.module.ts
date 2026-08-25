@@ -1,16 +1,13 @@
-import { BullModule } from '@nestjs/bull';
-import { Module } from '@nestjs/common';
-import { TemplateModule } from '../../template/template.module';
-import { ProviderModule } from '../../provider/provider.module';
-import { MessagingEntitiesModule } from '../shared/messaging-entities.module';
-import { NotificationQueueService } from './notification-queue.service';
-import { NotificationProcessor } from './notification.processor';
-import {
-  NOTIFICATION_DELIVERY_QUEUE,
-  NOTIFICATION_QUEUE,
-} from './notification-queue.constants';
+import { BullModule } from "@nestjs/bull";
+import { Module } from "@nestjs/common";
+import { TemplateModule } from "../../template/template.module";
+import { ProviderModule } from "../../provider/provider.module";
+import { MessagingEntitiesModule } from "../shared/messaging-entities.module";
+import { NotificationQueueService } from "./notification-queue.service";
+import { NotificationProcessor } from "./notification.processor";
+import { NOTIFICATION_DELIVERY_QUEUE, NOTIFICATION_QUEUE } from "./notification-queue.constants";
 
-export { NOTIFICATION_DELIVERY_QUEUE, NOTIFICATION_QUEUE } from './notification-queue.constants';
+export { NOTIFICATION_DELIVERY_QUEUE, NOTIFICATION_QUEUE } from "./notification-queue.constants";
 
 @Module({
   imports: [
@@ -22,7 +19,7 @@ export { NOTIFICATION_DELIVERY_QUEUE, NOTIFICATION_QUEUE } from './notification-
           removeOnFail: 50,
           attempts: 3,
           backoff: {
-            type: 'exponential',
+            type: "exponential",
             delay: 2000,
           },
         },
@@ -34,7 +31,7 @@ export { NOTIFICATION_DELIVERY_QUEUE, NOTIFICATION_QUEUE } from './notification-
           removeOnFail: 50,
           attempts: 5,
           backoff: {
-            type: 'exponential',
+            type: "exponential",
             delay: 1000,
           },
         },

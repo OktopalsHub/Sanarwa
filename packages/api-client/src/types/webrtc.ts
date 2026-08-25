@@ -2,69 +2,69 @@
 
 // Enums for WebRTC
 export enum CallStatus {
-  INITIATING = 'initiating',
-  RINGING = 'ringing',
-  CONNECTING = 'connecting',
-  CONNECTED = 'connected',
-  ON_HOLD = 'on_hold',
-  ENDED = 'ended',
-  FAILED = 'failed',
-  CANCELLED = 'cancelled',
-  DECLINED = 'declined',
-  BUSY = 'busy',
-  NO_ANSWER = 'no_answer',
+  INITIATING = "initiating",
+  RINGING = "ringing",
+  CONNECTING = "connecting",
+  CONNECTED = "connected",
+  ON_HOLD = "on_hold",
+  ENDED = "ended",
+  FAILED = "failed",
+  CANCELLED = "cancelled",
+  DECLINED = "declined",
+  BUSY = "busy",
+  NO_ANSWER = "no_answer",
 }
 
 export enum CallType {
-  AUDIO = 'audio',
-  VIDEO = 'video',
-  SCREEN_SHARE = 'screen_share',
+  AUDIO = "audio",
+  VIDEO = "video",
+  SCREEN_SHARE = "screen_share",
 }
 
 export enum ConnectionState {
-  NEW = 'new',
-  CONNECTING = 'connecting',
-  CONNECTED = 'connected',
-  DISCONNECTED = 'disconnected',
-  FAILED = 'failed',
-  CLOSED = 'closed',
+  NEW = "new",
+  CONNECTING = "connecting",
+  CONNECTED = "connected",
+  DISCONNECTED = "disconnected",
+  FAILED = "failed",
+  CLOSED = "closed",
 }
 
 export enum IceConnectionState {
-  NEW = 'new',
-  CHECKING = 'checking',
-  CONNECTED = 'connected',
-  COMPLETED = 'completed',
-  FAILED = 'failed',
-  DISCONNECTED = 'disconnected',
-  CLOSED = 'closed',
+  NEW = "new",
+  CHECKING = "checking",
+  CONNECTED = "connected",
+  COMPLETED = "completed",
+  FAILED = "failed",
+  DISCONNECTED = "disconnected",
+  CLOSED = "closed",
 }
 
 export enum SignalingState {
-  STABLE = 'stable',
-  HAVE_LOCAL_OFFER = 'have-local-offer',
-  HAVE_REMOTE_OFFER = 'have-remote-offer',
-  HAVE_LOCAL_PRANSWER = 'have-local-pranswer',
-  HAVE_REMOTE_PRANSWER = 'have-remote-pranswer',
-  CLOSED = 'closed',
+  STABLE = "stable",
+  HAVE_LOCAL_OFFER = "have-local-offer",
+  HAVE_REMOTE_OFFER = "have-remote-offer",
+  HAVE_LOCAL_PRANSWER = "have-local-pranswer",
+  HAVE_REMOTE_PRANSWER = "have-remote-pranswer",
+  CLOSED = "closed",
 }
 
 export enum MediaType {
-  AUDIO = 'audio',
-  VIDEO = 'video',
-  SCREEN = 'screen',
-  DATA = 'data',
+  AUDIO = "audio",
+  VIDEO = "video",
+  SCREEN = "screen",
+  DATA = "data",
 }
 
 export enum CallEndReason {
-  USER_HANGUP = 'user_hangup',
-  REMOTE_HANGUP = 'remote_hangup',
-  CONNECTION_FAILED = 'connection_failed',
-  TIMEOUT = 'timeout',
-  BUSY = 'busy',
-  DECLINED = 'declined',
-  NETWORK_ERROR = 'network_error',
-  SYSTEM_ERROR = 'system_error',
+  USER_HANGUP = "user_hangup",
+  REMOTE_HANGUP = "remote_hangup",
+  CONNECTION_FAILED = "connection_failed",
+  TIMEOUT = "timeout",
+  BUSY = "busy",
+  DECLINED = "declined",
+  NETWORK_ERROR = "network_error",
+  SYSTEM_ERROR = "system_error",
 }
 
 // Core WebRTC interfaces
@@ -106,8 +106,8 @@ export interface CallParticipant {
   id: string;
   sessionId: string;
   userId: string;
-  role: 'caller' | 'callee' | 'moderator' | 'participant';
-  status: 'invited' | 'joining' | 'connected' | 'disconnected' | 'left';
+  role: "caller" | "callee" | "moderator" | "participant";
+  status: "invited" | "joining" | "connected" | "disconnected" | "left";
   joinedAt?: Date;
   leftAt?: Date;
   mediaSettings: MediaSettings;
@@ -180,8 +180,8 @@ export interface IceCandidate {
   sdpMid?: string;
   sdpMLineIndex?: number;
   usernameFragment?: string;
-  type: 'host' | 'srflx' | 'prflx' | 'relay';
-  protocol: 'udp' | 'tcp';
+  type: "host" | "srflx" | "prflx" | "relay";
+  protocol: "udp" | "tcp";
   address: string;
   port: number;
   priority: number;
@@ -191,7 +191,7 @@ export interface IceCandidate {
 export interface CandidatePair {
   local: IceCandidate;
   remote: IceCandidate;
-  state: 'waiting' | 'in-progress' | 'succeeded' | 'failed';
+  state: "waiting" | "in-progress" | "succeeded" | "failed";
   priority: number;
   nominated: boolean;
 }
@@ -203,14 +203,14 @@ export interface DataChannel {
   ordered: boolean;
   maxRetransmits?: number;
   maxPacketLifeTime?: number;
-  readyState: 'connecting' | 'open' | 'closing' | 'closed';
+  readyState: "connecting" | "open" | "closing" | "closed";
   bufferedAmount: number;
 }
 
 // Call quality and metrics
 export interface CallQualityMetrics {
   sessionId: string;
-  overallQuality: 'excellent' | 'good' | 'fair' | 'poor';
+  overallQuality: "excellent" | "good" | "fair" | "poor";
   audioQuality?: AudioQualityMetrics;
   videoQuality?: VideoQualityMetrics;
   networkQuality?: NetworkQualityMetrics;
@@ -250,14 +250,14 @@ export interface NetworkQualityMetrics {
   latency: number; // in milliseconds
   jitter: number; // in milliseconds
   packetLoss: number; // percentage
-  connectionType: 'wifi' | 'ethernet' | 'cellular' | 'unknown';
+  connectionType: "wifi" | "ethernet" | "cellular" | "unknown";
 }
 
 export interface SystemMetrics {
   cpuUsage: number; // percentage
   memoryUsage: number; // percentage
   batteryLevel?: number; // percentage
-  thermalState?: 'nominal' | 'fair' | 'serious' | 'critical';
+  thermalState?: "nominal" | "fair" | "serious" | "critical";
 }
 
 // Call records and history
@@ -305,7 +305,7 @@ export interface CallSettings {
   // Video settings
   videoSettings: {
     defaultCamera?: string;
-    resolution: 'low' | 'medium' | 'high' | 'hd' | '4k';
+    resolution: "low" | "medium" | "high" | "hd" | "4k";
     frameRate: number;
     enableHdVideo: boolean;
     enableLowLightEnhancement: boolean;
@@ -342,7 +342,7 @@ export interface IceServer {
   urls: string | string[];
   username?: string;
   credential?: string;
-  credentialType?: 'password' | 'oauth';
+  credentialType?: "password" | "oauth";
 }
 
 // Signaling and real-time events
@@ -357,19 +357,19 @@ export interface SignalingMessage {
 }
 
 export enum SignalingMessageType {
-  CALL_INVITE = 'call_invite',
-  CALL_ACCEPT = 'call_accept',
-  CALL_DECLINE = 'call_decline',
-  CALL_CANCEL = 'call_cancel',
-  CALL_END = 'call_end',
-  OFFER = 'offer',
-  ANSWER = 'answer',
-  ICE_CANDIDATE = 'ice_candidate',
-  MEDIA_STATE_CHANGE = 'media_state_change',
-  PARTICIPANT_JOINED = 'participant_joined',
-  PARTICIPANT_LEFT = 'participant_left',
-  QUALITY_UPDATE = 'quality_update',
-  ERROR = 'error',
+  CALL_INVITE = "call_invite",
+  CALL_ACCEPT = "call_accept",
+  CALL_DECLINE = "call_decline",
+  CALL_CANCEL = "call_cancel",
+  CALL_END = "call_end",
+  OFFER = "offer",
+  ANSWER = "answer",
+  ICE_CANDIDATE = "ice_candidate",
+  MEDIA_STATE_CHANGE = "media_state_change",
+  PARTICIPANT_JOINED = "participant_joined",
+  PARTICIPANT_LEFT = "participant_left",
+  QUALITY_UPDATE = "quality_update",
+  ERROR = "error",
 }
 
 export interface CallInvitePayload {
@@ -407,24 +407,24 @@ export interface RealTimeEvent {
 }
 
 export enum RealTimeEventType {
-  CALL_INVITE = 'call_invite',
-  CALL_STATUS_CHANGE = 'call_status_change',
-  PARTICIPANT_UPDATE = 'participant_update',
-  MEDIA_UPDATE = 'media_update',
-  QUALITY_UPDATE = 'quality_update',
-  CONNECTION_UPDATE = 'connection_update',
-  NOTIFICATION = 'notification',
-  PRESENCE_UPDATE = 'presence_update',
-  SYSTEM_MESSAGE = 'system_message',
+  CALL_INVITE = "call_invite",
+  CALL_STATUS_CHANGE = "call_status_change",
+  PARTICIPANT_UPDATE = "participant_update",
+  MEDIA_UPDATE = "media_update",
+  QUALITY_UPDATE = "quality_update",
+  CONNECTION_UPDATE = "connection_update",
+  NOTIFICATION = "notification",
+  PRESENCE_UPDATE = "presence_update",
+  SYSTEM_MESSAGE = "system_message",
 }
 
 export interface PresenceInfo {
   userId: string;
-  status: 'online' | 'offline' | 'away' | 'busy' | 'do_not_disturb';
+  status: "online" | "offline" | "away" | "busy" | "do_not_disturb";
   lastSeen?: Date;
   currentActivity?: string;
   deviceInfo?: {
-    type: 'desktop' | 'mobile' | 'tablet' | 'web';
+    type: "desktop" | "mobile" | "tablet" | "web";
     platform: string;
     userAgent?: string;
   };
@@ -466,10 +466,10 @@ export interface SendSignalingMessageRequest {
 }
 
 export interface UpdateCallSettingsRequest {
-  audioSettings?: Partial<CallSettings['audioSettings']>;
-  videoSettings?: Partial<CallSettings['videoSettings']>;
-  callPreferences?: Partial<CallSettings['callPreferences']>;
-  networkSettings?: Partial<CallSettings['networkSettings']>;
+  audioSettings?: Partial<CallSettings["audioSettings"]>;
+  videoSettings?: Partial<CallSettings["videoSettings"]>;
+  callPreferences?: Partial<CallSettings["callPreferences"]>;
+  networkSettings?: Partial<CallSettings["networkSettings"]>;
 }
 
 export interface CallHistoryQueryParams {
@@ -481,7 +481,7 @@ export interface CallHistoryQueryParams {
   page?: number;
   limit?: number;
   sortBy?: string;
-  sortOrder?: 'ASC' | 'DESC';
+  sortOrder?: "ASC" | "DESC";
 }
 
 // State management

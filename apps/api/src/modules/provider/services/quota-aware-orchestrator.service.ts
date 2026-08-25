@@ -1,24 +1,14 @@
-import { Injectable, Logger, BadRequestException } from '@nestjs/common';
-import { NotificationChannel } from '../../../common/enums/notification-channel.enum';
-import { TenantService } from '../../tenant/tenant.service';
-import { ProviderOrchestratorService } from '../provider-orchestrator.service';
-import { ProviderConfigRepository } from '../provider-config.repository';
-import { BillingService } from '../../billing/services/billing.service';
-import {
-  EmailMessage
-} from '../providers/email/email-provider.interface';
-import {
-  ChatPayload
-} from '../providers/chat/chat-provider.interface';
-import {
-  PushPayload
-} from '../providers/push/push-provider.interface';
-import {
-  SMSPayload
-} from '../providers/sms/sms-provider.interface';
-import {
-  InAppPayload
-} from '../providers/in-app/in-app-provider.interface';
+import { Injectable, Logger, BadRequestException } from "@nestjs/common";
+import { NotificationChannel } from "../../../common/enums/notification-channel.enum";
+import { TenantService } from "../../tenant/tenant.service";
+import { ProviderOrchestratorService } from "../provider-orchestrator.service";
+import { ProviderConfigRepository } from "../provider-config.repository";
+import { BillingService } from "../../billing/services/billing.service";
+import { EmailMessage } from "../providers/email/email-provider.interface";
+import { ChatPayload } from "../providers/chat/chat-provider.interface";
+import { PushPayload } from "../providers/push/push-provider.interface";
+import { SMSPayload } from "../providers/sms/sms-provider.interface";
+import { InAppPayload } from "../providers/in-app/in-app-provider.interface";
 
 @Injectable()
 export class QuotaAwareOrchestratorService {
@@ -29,16 +19,14 @@ export class QuotaAwareOrchestratorService {
     private readonly tenantService: TenantService,
     private readonly providerConfigRepository: ProviderConfigRepository,
     private readonly billingService: BillingService,
-  ) { }
+  ) {}
 
   /**
    * Send email with quota checking and brand support
    */
   async sendEmail(payload: EmailMessage, tenantId: string, brandId?: string): Promise<any> {
-    return this.sendWithQuotaCheck(
-      'email',
-      tenantId,
-      () => this.providerOrchestrator.sendEmail(payload, tenantId, brandId)
+    return this.sendWithQuotaCheck("email", tenantId, () =>
+      this.providerOrchestrator.sendEmail(payload, tenantId, brandId),
     );
   }
 
@@ -46,32 +34,34 @@ export class QuotaAwareOrchestratorService {
    * Send SMS with quota checking
    */
   async sendSMS(payload: SMSPayload, tenantId: string): Promise<any> {
-    return this.sendWithQuotaCheck(
-      'sms',
-      tenantId,
-      () => this.providerOrchestrator.sendSMS(payload, tenantId)
+    return this.sendWithQuotaCheck("sms", tenantId, () =>
+      this.providerOrchestrator.sendSMS(payload, tenantId),
     );
   }
 
   /**
    * Send push notification with quota checking and brand support
    */
-  async sendPushNotification(payload: PushPayload, tenantId: string, brandId?: string): Promise<any> {
-    return this.sendWithQuotaCheck(
-      'push',
-      tenantId,
-      () => this.providerOrchestrator.sendPushNotification(payload, tenantId, brandId)
+  async sendPushNotification(
+    payload: PushPayload,
+    tenantId: string,
+    brandId?: string,
+  ): Promise<any> {
+    return this.sendWithQuotaCheck("push", tenantId, () =>
+      this.providerOrchestrator.sendPushNotification(payload, tenantId, brandId),
     );
   }
 
   /**
    * Send chat message with quota checking
    */
-  async sendChatMessage(payload: ChatPayload, providerName: string, tenantId: string): Promise<any> {
-    return this.sendWithQuotaCheck(
-      'chat',
-      tenantId,
-      () => this.providerOrchestrator.sendChatMessage(payload, providerName, tenantId)
+  async sendChatMessage(
+    payload: ChatPayload,
+    providerName: string,
+    tenantId: string,
+  ): Promise<any> {
+    return this.sendWithQuotaCheck("chat", tenantId, () =>
+      this.providerOrchestrator.sendChatMessage(payload, providerName, tenantId),
     );
   }
 
@@ -86,11 +76,12 @@ export class QuotaAwareOrchestratorService {
   /**
    * Send voice call with quota checking
    */
-  async sendVoiceCall(payload: { to: string[]; message?: string; templateId?: string; templateData?: any }, tenantId: string): Promise<any> {
-    return this.sendWithQuotaCheck(
-      'voice',
-      tenantId,
-      () => this.providerOrchestrator.sendVoiceCall(payload, tenantId)
+  async sendVoiceCall(
+    payload: { to: string[]; message?: string; templateId?: string; templateData?: any },
+    tenantId: string,
+  ): Promise<any> {
+    return this.sendWithQuotaCheck("voice", tenantId, () =>
+      this.providerOrchestrator.sendVoiceCall(payload, tenantId),
     );
   }
 
@@ -100,7 +91,7 @@ export class QuotaAwareOrchestratorService {
   async sendMultiChannelEvent(
     tenantId: string,
     channels: string[],
-    payloads: Record<string, any>
+    payloads: Record<string, any>,
   ): Promise<{
     eventId: string;
     results: Array<{ channel: string; success: boolean; result?: any; error?: string }>;
@@ -129,23 +120,21 @@ export class QuotaAwareOrchestratorService {
     let billing;
     if (hasBYOP && !hasSystemProvider) {
       // All channels use BYOP - charge 1 event
-      billing = await this.billingService.calculateEventBilling(
-        tenantId,
-        'event',
-        1,
-        { eventId, channels, allBYOP: true }
-      );
+      billing = await this.billingService.calculateEventBilling(tenantId, "event", 1, {
+        eventId,
+        channels,
+        allBYOP: true,
+      });
     } else if (!hasBYOP && hasSystemProvider) {
       // All channels use system providers - use quota system
-      billing = { charged: false, amount: 0, reason: 'Using quota system for all channels' };
+      billing = { charged: false, amount: 0, reason: "Using quota system for all channels" };
     } else {
       // Mixed BYOP and system providers - charge 1 event for BYOP portion
-      billing = await this.billingService.calculateEventBilling(
-        tenantId,
-        'event',
-        1,
-        { eventId, channels, mixed: true }
-      );
+      billing = await this.billingService.calculateEventBilling(tenantId, "event", 1, {
+        eventId,
+        channels,
+        mixed: true,
+      });
     }
 
     // Send to each channel
@@ -155,19 +144,19 @@ export class QuotaAwareOrchestratorService {
         const payload = payloads[channel];
 
         switch (channel) {
-          case 'email':
+          case "email":
             result = await this.sendEmail(payload, tenantId);
             break;
-          case 'sms':
+          case "sms":
             result = await this.sendSMS(payload, tenantId);
             break;
-          case 'push':
+          case "push":
             result = await this.sendPushNotification(payload, tenantId);
             break;
-          case 'whatsapp':
-            result = await this.sendChatMessage(payload, 'whatsapp', tenantId);
+          case "whatsapp":
+            result = await this.sendChatMessage(payload, "whatsapp", tenantId);
             break;
-          case 'inApp':
+          case "inApp":
             result = await this.sendInAppNotification(payload);
             break;
           default:
@@ -190,7 +179,7 @@ export class QuotaAwareOrchestratorService {
     channel: string,
     tenantId: string,
     sendFunction: () => Promise<T>,
-    messageCount: number = 1
+    messageCount: number = 1,
   ): Promise<T> {
     // Step 1: Check if tenant has BYOP configured for this channel
     const hasBYOP = await this.checkBYOPConfiguration(tenantId, channel);
@@ -203,14 +192,15 @@ export class QuotaAwareOrchestratorService {
         // Calculate and track event-based billing for BYOP usage
         const billingResult = await this.billingService.calculateEventBilling(
           tenantId,
-          'event',
+          "event",
           1, // 1 event regardless of channels (like Novu)
-          { byop: true, channels: [channel], provider: 'customer' }
+          { byop: true, channels: [channel], provider: "customer" },
         );
 
-        this.logger.log(`BYOP ${channel} sent - tenant: ${tenantId} - infrastructure fee: $${billingResult.amount}`);
+        this.logger.log(
+          `BYOP ${channel} sent - tenant: ${tenantId} - infrastructure fee: $${billingResult.amount}`,
+        );
         return result;
-
       } catch (error) {
         this.logger.error(`BYOP ${channel} failed - tenant: ${tenantId} - no charges applied`);
         throw error;
@@ -222,7 +212,7 @@ export class QuotaAwareOrchestratorService {
 
     if (!hasQuota) {
       throw new BadRequestException(
-        `${channel.toUpperCase()} quota exhausted. Please configure your own provider (BYOP) or purchase more tokens.`
+        `${channel.toUpperCase()} quota exhausted. Please configure your own provider (BYOP) or purchase more tokens.`,
       );
     }
 
@@ -233,12 +223,15 @@ export class QuotaAwareOrchestratorService {
       // Step 4: Deduct from quota after successful send (full service charge)
       await this.tenantService.updateUsage(tenantId, channel, messageCount);
 
-      this.logger.log(`System provider ${channel} sent - tenant: ${tenantId} - quota deducted: ${messageCount}`);
+      this.logger.log(
+        `System provider ${channel} sent - tenant: ${tenantId} - quota deducted: ${messageCount}`,
+      );
       return result;
-
     } catch (error) {
       // Don't deduct quota if sending failed
-      this.logger.error(`System provider failed for ${channel} - tenant: ${tenantId} - no quota deducted`);
+      this.logger.error(
+        `System provider failed for ${channel} - tenant: ${tenantId} - no quota deducted`,
+      );
       throw error;
     }
   }
@@ -249,13 +242,13 @@ export class QuotaAwareOrchestratorService {
   private async checkBYOPConfiguration(tenantId: string, channel: string): Promise<boolean> {
     try {
       const channelMap = {
-        'email': NotificationChannel.EMAIL,
-        'sms': NotificationChannel.SMS,
-        'push': NotificationChannel.PUSH,
-        'chat': NotificationChannel.CHAT,
-        'whatsapp': NotificationChannel.CHAT, // WhatsApp is a chat channel
-        'inApp': NotificationChannel.IN_APP,
-        'voice': NotificationChannel.VOICE,
+        email: NotificationChannel.EMAIL,
+        sms: NotificationChannel.SMS,
+        push: NotificationChannel.PUSH,
+        chat: NotificationChannel.CHAT,
+        whatsapp: NotificationChannel.CHAT, // WhatsApp is a chat channel
+        inApp: NotificationChannel.IN_APP,
+        voice: NotificationChannel.VOICE,
       };
 
       const notificationChannel = channelMap[channel];
@@ -266,11 +259,10 @@ export class QuotaAwareOrchestratorService {
       // Check if tenant has active BYOP provider for this channel
       const activeProviders = await this.providerConfigRepository.findActiveByTenantAndChannel(
         tenantId,
-        notificationChannel
+        notificationChannel,
       );
 
       return activeProviders.length > 0;
-
     } catch (error) {
       this.logger.warn(`Failed to check BYOP configuration: ${error.message}`);
       return false;
@@ -281,14 +273,17 @@ export class QuotaAwareOrchestratorService {
    * Get quota status for a tenant
    */
   async getQuotaStatus(tenantId: string): Promise<{
-    channels: Record<string, {
-      hasQuota: boolean;
-      hasBYOP: boolean;
-      usage?: number;
-      limit?: number;
-    }>;
+    channels: Record<
+      string,
+      {
+        hasQuota: boolean;
+        hasBYOP: boolean;
+        usage?: number;
+        limit?: number;
+      }
+    >;
   }> {
-    const channels = ['email', 'sms', 'push', 'whatsapp', 'inApp', 'voice'];
+    const channels = ["email", "sms", "push", "whatsapp", "inApp", "voice"];
     const status: Record<string, any> = {};
 
     for (const channel of channels) {
@@ -312,7 +307,7 @@ export class QuotaAwareOrchestratorService {
     channel: string,
     tenantId: string,
     payloads: any[],
-    sendFunction: (payload: any) => Promise<T>
+    sendFunction: (payload: any) => Promise<T>,
   ): Promise<Array<{ success: boolean; result?: T; error?: string }>> {
     const results: Array<{ success: boolean; result?: T; error?: string }> = [];
 
@@ -324,7 +319,7 @@ export class QuotaAwareOrchestratorService {
       const hasQuota = await this.tenantService.checkQuotas(tenantId, channel);
       if (!hasQuota) {
         throw new BadRequestException(
-          `Insufficient ${channel.toUpperCase()} quota for bulk send. Configure BYOP or purchase more tokens.`
+          `Insufficient ${channel.toUpperCase()} quota for bulk send. Configure BYOP or purchase more tokens.`,
         );
       }
     }
@@ -332,7 +327,9 @@ export class QuotaAwareOrchestratorService {
     // Process each payload
     for (const payload of payloads) {
       try {
-        const result = await this.sendWithQuotaCheck(channel, tenantId, () => sendFunction(payload));
+        const result = await this.sendWithQuotaCheck(channel, tenantId, () =>
+          sendFunction(payload),
+        );
         results.push({ success: true, result });
       } catch (error) {
         results.push({ success: false, error: error.message });

@@ -1,6 +1,6 @@
-import { Injectable, NestMiddleware } from '@nestjs/common';
-import { NextFunction, Request, Response } from 'express';
-import { MetricsService } from '../services/metrics.service';
+import { Injectable, NestMiddleware } from "@nestjs/common";
+import { NextFunction, Request, Response } from "express";
+import { MetricsService } from "../services/metrics.service";
 
 interface User {
   tenantId?: string;
@@ -24,21 +24,13 @@ export class MetricsMiddleware implements NestMiddleware {
 
     // Extract tenant ID from request (could be from headers, JWT, etc.)
     const tenantId =
-      (req.headers['x-tenant-id'] as string) ||
-      (req.user as any)?.tenantId ||
-      'unknown';
+      (req.headers["x-tenant-id"] as string) || (req.user as any)?.tenantId || "unknown";
 
-    res.on('finish', () => {
+    res.on("finish", () => {
       const duration = Date.now() - startTime;
       const route = req.route?.path || req.path;
 
-      this.metricsService.recordHttpRequest(
-        req.method,
-        route,
-        res.statusCode,
-        duration,
-        tenantId,
-      );
+      this.metricsService.recordHttpRequest(req.method, route, res.statusCode, duration, tenantId);
     });
 
     next();

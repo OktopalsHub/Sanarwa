@@ -1,18 +1,18 @@
-import { Template } from '../../template/template.entity';
-import { Column, Entity, Index, ManyToOne, OneToMany, OneToOne } from 'typeorm';
-import { ProjectStatus } from '../../../common/enums';
-import { BaseEntity } from '../../../database/entities/base.entity';
-import { ApiKey } from '../../api-key/entities/api-key.entity';
-import { Brand } from '../../brand/entities/brand.entity';
-import { ProviderConfig } from '../../provider/provider-config.entity';
-import { TenantMember } from '../../tenant-member/entities/tenant-member.entity';
-import { Tenant } from '../../tenant/entities/tenant.entity';
-import { PushCertificate } from '../../push-certificates/entities/push-certificate.entity';
+import { Template } from "../../template/template.entity";
+import { Column, Entity, Index, ManyToOne, OneToMany, OneToOne } from "typeorm";
+import { ProjectStatus } from "../../../common/enums";
+import { BaseEntity } from "../../../database/entities/base.entity";
+import { ApiKey } from "../../api-key/entities/api-key.entity";
+import { Brand } from "../../brand/entities/brand.entity";
+import { ProviderConfig } from "../../provider/provider-config.entity";
+import { TenantMember } from "../../tenant-member/entities/tenant-member.entity";
+import { Tenant } from "../../tenant/entities/tenant.entity";
+import { PushCertificate } from "../../push-certificates/entities/push-certificate.entity";
 
-@Entity('projects')
-@Index(['tenantId'])
-@Index(['status'])
-@Index(['tenantId', 'name'], { unique: true })
+@Entity("projects")
+@Index(["tenantId"])
+@Index(["status"])
+@Index(["tenantId", "name"], { unique: true })
 export class Project extends BaseEntity {
   @Column()
   name: string;
@@ -21,17 +21,17 @@ export class Project extends BaseEntity {
   description?: string;
 
   @Column({
-    type: 'enum',
+    type: "enum",
     enum: ProjectStatus,
     default: ProjectStatus.ACTIVE,
   })
   status: ProjectStatus;
 
-  @Column({ type: 'json', nullable: true })
+  @Column({ type: "json", nullable: true })
   metadata?: Record<string, any>;
 
   // Foreign key columns
-  @Column({ type: 'uuid' })
+  @Column({ type: "uuid" })
   tenantId: string;
 
   // Relationships
@@ -43,7 +43,6 @@ export class Project extends BaseEntity {
 
   @ManyToOne(() => TenantMember, (tenantMember) => tenantMember.createdProjects)
   createdBy: TenantMember;
-
 
   @OneToMany(() => ApiKey, (apiKey) => apiKey.project)
   apiKeys: ApiKey[];

@@ -1,13 +1,8 @@
-import {
-  Injectable,
-  NestInterceptor,
-  ExecutionContext,
-  CallHandler,
-} from '@nestjs/common';
-import { Observable } from 'rxjs';
-import { tap, catchError, finalize } from 'rxjs/operators';
-import { Request, Response } from 'express';
-import { MetricsService } from '../metrics.service';
+import { Injectable, NestInterceptor, ExecutionContext, CallHandler } from "@nestjs/common";
+import { Observable } from "rxjs";
+import { tap, catchError, finalize } from "rxjs/operators";
+import { Request, Response } from "express";
+import { MetricsService } from "../metrics.service";
 
 @Injectable()
 export class MetricsInterceptor implements NestInterceptor {
@@ -16,7 +11,7 @@ export class MetricsInterceptor implements NestInterceptor {
   intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
     const request = context.switchToHttp().getRequest<Request>();
     const response = context.switchToHttp().getResponse<Response>();
-    
+
     const startTime = Date.now();
     const method = request.method;
     const route = this.getRoute(request);
@@ -59,14 +54,14 @@ export class MetricsInterceptor implements NestInterceptor {
     }
 
     // Fallback to URL path with parameter normalization
-    let path = request.url.split('?')[0];
-    
+    let path = request.url.split("?")[0];
+
     // Replace UUIDs with :id
-    path = path.replace(/\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/gi, '/:id');
-    
+    path = path.replace(/\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/gi, "/:id");
+
     // Replace numeric IDs with :id
-    path = path.replace(/\/\d+/g, '/:id');
-    
+    path = path.replace(/\/\d+/g, "/:id");
+
     return path;
   }
 }

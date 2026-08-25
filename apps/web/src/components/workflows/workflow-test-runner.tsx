@@ -1,24 +1,33 @@
-'use client';
+"use client";
 
-import { User } from '@/lib/icons';
+import { User } from "@/lib/icons";
 
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog';
-import { Label } from '@/components/ui/label';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Textarea } from '@/components/ui/textarea';
-import { Workflow } from '@/lib/types/workflow';
-import { ExclamationTriangleIcon, CheckCircleIcon, ClockIcon, ArrowDownTrayIcon, PlayIcon, ArrowPathIcon, XMarkIcon, BeakerIcon } from '@heroicons/react/24/outline'
-import { useState } from 'react';
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Textarea } from "@/components/ui/textarea";
+import { Workflow } from "@/lib/types/workflow";
+import {
+  ExclamationTriangleIcon,
+  CheckCircleIcon,
+  ClockIcon,
+  ArrowDownTrayIcon,
+  PlayIcon,
+  ArrowPathIcon,
+  XMarkIcon,
+  BeakerIcon,
+} from "@heroicons/react/24/outline";
+import { useState } from "react";
 
 interface WorkflowTestRunnerProps {
   workflow: Workflow;
@@ -32,14 +41,14 @@ interface TestData {
 
 interface TestResult {
   id: string;
-  status: 'running' | 'completed' | 'failed';
+  status: "running" | "completed" | "failed";
   startTime: Date;
   endTime?: Date;
   testData: TestData;
   results: {
     nodeId: string;
     nodeName: string;
-    status: 'success' | 'failed' | 'skipped';
+    status: "success" | "failed" | "skipped";
     output?: any;
     error?: string;
     executionTime: number;
@@ -50,36 +59,32 @@ interface TestResult {
 
 const DEFAULT_TEST_DATA = {
   user: {
-    id: 'user_123',
-    email: 'test@example.com',
-    name: 'Test User',
+    id: "user_123",
+    email: "test@example.com",
+    name: "Test User",
     signupDate: new Date().toISOString(),
   },
   event: {
-    type: 'user.signup',
+    type: "user.signup",
     timestamp: new Date().toISOString(),
     properties: {
-      source: 'web',
-      campaign: 'summer_2024',
+      source: "web",
+      campaign: "summer_2024",
     },
   },
   order: {
-    id: 'order_456',
+    id: "order_456",
     total: 99.99,
-    currency: 'USD',
+    currency: "USD",
     items: [
-      { id: 'item_1', name: 'Product A', price: 49.99 },
-      { id: 'item_2', name: 'Product B', price: 49.99 },
+      { id: "item_1", name: "Product A", price: 49.99 },
+      { id: "item_2", name: "Product B", price: 49.99 },
     ],
   },
 };
 
-export function WorkflowTestRunner({
-  workflow,
-  isOpen,
-  onClose,
-}: WorkflowTestRunnerProps) {
-  const [activeTab, setActiveTab] = useState('setup');
+export function WorkflowTestRunner({ workflow, isOpen, onClose }: WorkflowTestRunnerProps) {
+  const [activeTab, setActiveTab] = useState("setup");
   const [testData, setTestData] = useState<TestData>(DEFAULT_TEST_DATA);
   const [testDataJson, setTestDataJson] = useState(JSON.stringify(DEFAULT_TEST_DATA, null, 2));
   const [testResults, setTestResults] = useState<TestResult[]>([]);
@@ -100,14 +105,14 @@ export function WorkflowTestRunner({
 
     const testResult: TestResult = {
       id: `test_${Date.now()}`,
-      status: 'running',
+      status: "running",
       startTime: new Date(),
       testData,
       results: [],
       successRate: 0,
     };
 
-    setTestResults(prev => [testResult, ...prev]);
+    setTestResults((prev) => [testResult, ...prev]);
 
     try {
       // Simulate test execution
@@ -115,35 +120,35 @@ export function WorkflowTestRunner({
 
       const completedResult: TestResult = {
         ...testResult,
-        status: 'completed',
+        status: "completed",
         endTime: new Date(),
         results,
         totalExecutionTime: results.reduce((sum, r) => sum + r.executionTime, 0),
-        successRate: (results.filter(r => r.status === 'success').length / results.length) * 100,
+        successRate: (results.filter((r) => r.status === "success").length / results.length) * 100,
       };
 
-      setTestResults(prev => prev.map(r => r.id === testResult.id ? completedResult : r));
+      setTestResults((prev) => prev.map((r) => (r.id === testResult.id ? completedResult : r)));
     } catch (error) {
       const failedResult: TestResult = {
         ...testResult,
-        status: 'failed',
+        status: "failed",
         endTime: new Date(),
         results: [],
         successRate: 0,
       };
 
-      setTestResults(prev => prev.map(r => r.id === testResult.id ? failedResult : r));
+      setTestResults((prev) => prev.map((r) => (r.id === testResult.id ? failedResult : r)));
     }
 
     setIsRunning(false);
-    setActiveTab('results');
+    setActiveTab("results");
   };
 
   const simulateWorkflowExecution = async (workflow: Workflow, testData: TestData) => {
-    const results: TestResult['results'] = [];
+    const results: TestResult["results"] = [];
 
     // Get execution order (simplified - start with triggers)
-    const triggerNodes = workflow.nodes.filter(node => node.type === 'trigger');
+    const triggerNodes = workflow.nodes.filter((node) => node.type === "trigger");
     const executionQueue = [...triggerNodes];
     const executed = new Set<string>();
 
@@ -154,7 +159,7 @@ export function WorkflowTestRunner({
       const startTime = Date.now();
 
       // Simulate processing delay
-      await new Promise(resolve => setTimeout(resolve, 500 + Math.random() * 1500));
+      await new Promise((resolve) => setTimeout(resolve, 500 + Math.random() * 1500));
 
       const executionTime = Date.now() - startTime;
 
@@ -164,7 +169,7 @@ export function WorkflowTestRunner({
       const result = {
         nodeId: currentNode.id,
         nodeName: currentNode.data.label,
-        status: success ? 'success' as const : 'failed' as const,
+        status: success ? ("success" as const) : ("failed" as const),
         output: success ? generateTestOutput(currentNode, testData) : undefined,
         error: success ? undefined : `Simulated error in ${currentNode.data.label}`,
         executionTime,
@@ -175,9 +180,9 @@ export function WorkflowTestRunner({
 
       // Add connected nodes to queue if current node succeeded
       if (success) {
-        const connections = workflow.connections.filter(c => c.sourceNodeId === currentNode.id);
-        connections.forEach(conn => {
-          const targetNode = workflow.nodes.find(n => n.id === conn.targetNodeId);
+        const connections = workflow.connections.filter((c) => c.sourceNodeId === currentNode.id);
+        connections.forEach((conn) => {
+          const targetNode = workflow.nodes.find((n) => n.id === conn.targetNodeId);
           if (targetNode && !executed.has(targetNode.id)) {
             executionQueue.push(targetNode);
           }
@@ -190,31 +195,31 @@ export function WorkflowTestRunner({
 
   const generateTestOutput = (node: any, testData: TestData) => {
     switch (node.type) {
-      case 'trigger':
+      case "trigger":
         return {
           triggered: true,
           eventData: testData.event,
           timestamp: new Date().toISOString(),
         };
-      case 'action':
+      case "action":
         const config = node.data.config;
-        if (config.type === 'email') {
+        if (config.type === "email") {
           return {
             messageId: `msg_${Math.random().toString(36).substr(2, 9)}`,
             recipient: testData.user.email,
-            subject: config.subject || 'Test Email',
+            subject: config.subject || "Test Email",
             sent: true,
           };
-        } else if (config.type === 'sms') {
+        } else if (config.type === "sms") {
           return {
             messageId: `sms_${Math.random().toString(36).substr(2, 9)}`,
-            recipient: '+1234567890',
-            message: config.message || 'Test SMS',
+            recipient: "+1234567890",
+            message: config.message || "Test SMS",
             sent: true,
           };
         }
         return { executed: true };
-      case 'condition':
+      case "condition":
         const conditionResult = Math.random() > 0.5;
         return {
           field: (node.data.config as any).field,
@@ -223,7 +228,7 @@ export function WorkflowTestRunner({
           result: conditionResult,
           actualValue: testData.user.email,
         };
-      case 'delay':
+      case "delay":
         return {
           delayed: true,
           duration: (node.data.config as any).duration,
@@ -253,9 +258,9 @@ export function WorkflowTestRunner({
       results: result.results,
     };
 
-    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
     const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
+    const a = document.createElement("a");
     a.href = url;
     a.download = `workflow-test-${result.id}.json`;
     document.body.appendChild(a);
@@ -274,9 +279,7 @@ export function WorkflowTestRunner({
                 <BeakerIcon className="h-5 w-5" />
                 Workflow Test Runner
               </DialogTitle>
-              <DialogDescription>
-                Test your workflow with sample data
-              </DialogDescription>
+              <DialogDescription>Test your workflow with sample data</DialogDescription>
             </div>
             <Button variant="ghost" size="icon" onClick={onClose}>
               <XMarkIcon className="h-4 w-4" />
@@ -337,7 +340,7 @@ export function WorkflowTestRunner({
                     ) : (
                       <PlayIcon className="h-4 w-4" />
                     )}
-                    {isRunning ? 'Running Test...' : 'Run Test'}
+                    {isRunning ? "Running Test..." : "Run Test"}
                   </Button>
                 </div>
               </div>
@@ -350,36 +353,43 @@ export function WorkflowTestRunner({
                     <div className="text-center">
                       <BeakerIcon className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
                       <p className="text-muted-foreground">No test results yet</p>
-                      <p className="text-sm text-muted-foreground">Run a test to see results here</p>
+                      <p className="text-sm text-muted-foreground">
+                        Run a test to see results here
+                      </p>
                     </div>
                   </div>
                 ) : (
                   <div className="space-y-4">
-                    {testResults.slice(0, 1).map(result => (
+                    {testResults.slice(0, 1).map((result) => (
                       <div key={result.id} className="space-y-4">
                         <Card>
                           <CardHeader>
                             <div className="flex items-center justify-between">
                               <CardTitle className="flex items-center gap-2">
-                                {result.status === 'completed' && (
+                                {result.status === "completed" && (
                                   <CheckCircleIcon className="h-5 w-5 text-green-500" />
                                 )}
-                                {result.status === 'failed' && (
+                                {result.status === "failed" && (
                                   <ExclamationTriangleIcon className="h-5 w-5 text-red-500" />
                                 )}
-                                {result.status === 'running' && (
+                                {result.status === "running" && (
                                   <ClockIcon className="h-5 w-5 animate-spin text-blue-500" />
                                 )}
                                 Test Result
                               </CardTitle>
                               <div className="flex items-center gap-2">
-                                <Badge variant={
-                                  result.status === 'completed' ? 'default' :
-                                    result.status === 'failed' ? 'destructive' : 'secondary'
-                                }>
+                                <Badge
+                                  variant={
+                                    result.status === "completed"
+                                      ? "default"
+                                      : result.status === "failed"
+                                        ? "destructive"
+                                        : "secondary"
+                                  }
+                                >
                                   {result.status}
                                 </Badge>
-                                {result.status === 'completed' && (
+                                {result.status === "completed" && (
                                   <Button
                                     variant="outline"
                                     size="sm"
@@ -404,22 +414,31 @@ export function WorkflowTestRunner({
                               <div>
                                 <p className="text-sm font-medium">Total Time</p>
                                 <p className="text-2xl font-bold">
-                                  {result.totalExecutionTime ? `${result.totalExecutionTime}ms` : '-'}
+                                  {result.totalExecutionTime
+                                    ? `${result.totalExecutionTime}ms`
+                                    : "-"}
                                 </p>
                               </div>
                             </div>
 
                             <div className="space-y-2">
                               <h4 className="text-sm font-medium">Node Results</h4>
-                              {result.results.map(nodeResult => (
+                              {result.results.map((nodeResult) => (
                                 <div key={nodeResult.nodeId} className="p-3 border rounded">
                                   <div className="flex items-center justify-between mb-2">
                                     <div className="flex items-center gap-2">
-                                      <span className="text-sm font-medium">{nodeResult.nodeName}</span>
-                                      <Badge variant={
-                                        nodeResult.status === 'success' ? 'default' :
-                                          nodeResult.status === 'failed' ? 'destructive' : 'secondary'
-                                      }>
+                                      <span className="text-sm font-medium">
+                                        {nodeResult.nodeName}
+                                      </span>
+                                      <Badge
+                                        variant={
+                                          nodeResult.status === "success"
+                                            ? "default"
+                                            : nodeResult.status === "failed"
+                                              ? "destructive"
+                                              : "secondary"
+                                        }
+                                      >
                                         {nodeResult.status}
                                       </Badge>
                                     </div>
@@ -454,24 +473,25 @@ export function WorkflowTestRunner({
             <TabsContent value="history" className="h-full">
               <ScrollArea className="h-full">
                 <div className="space-y-2">
-                  {testResults.map(result => (
-                    <Card key={result.id} className="cursor-pointer hover:shadow-md transition-shadow">
+                  {testResults.map((result) => (
+                    <Card
+                      key={result.id}
+                      className="cursor-pointer hover:shadow-md transition-shadow"
+                    >
                       <CardContent className="p-4">
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-2">
-                            {result.status === 'completed' && (
+                            {result.status === "completed" && (
                               <CheckCircleIcon className="h-4 w-4 text-green-500" />
                             )}
-                            {result.status === 'failed' && (
+                            {result.status === "failed" && (
                               <ExclamationTriangleIcon className="h-4 w-4 text-red-500" />
                             )}
-                            {result.status === 'running' && (
+                            {result.status === "running" && (
                               <ClockIcon className="h-4 w-4 animate-spin text-blue-500" />
                             )}
                             <div>
-                              <p className="text-sm font-medium">
-                                Test {result.id.split('_')[1]}
-                              </p>
+                              <p className="text-sm font-medium">Test {result.id.split("_")[1]}</p>
                               <p className="text-xs text-muted-foreground">
                                 {result.startTime.toLocaleString()}
                               </p>

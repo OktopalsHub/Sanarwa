@@ -1,19 +1,19 @@
-import { ApiPropertyOptional } from '@nestjs/swagger';
-import { IsEnum, IsOptional, IsString } from 'class-validator';
-import { PaginationDto } from 'src/common/dto/pagination.dto';
-import { TenantMemberRole } from 'src/common/enums';
+import { ApiPropertyOptional } from "@nestjs/swagger";
+import { IsEnum, IsOptional, IsString } from "class-validator";
+import { PaginationDto } from "src/common/dto/pagination.dto";
+import { TenantMemberRole } from "src/common/enums";
 
 export class UserTenantsQueryDto extends PaginationDto {
   @ApiPropertyOptional({
-    description: 'Search by tenant name or subdomain',
-    example: 'acme',
+    description: "Search by tenant name or subdomain",
+    example: "acme",
   })
   @IsOptional()
   @IsString()
   search?: string;
 
   @ApiPropertyOptional({
-    description: 'Filter by user role in tenant',
+    description: "Filter by user role in tenant",
     enum: TenantMemberRole,
     example: TenantMemberRole.OWNER,
   })
@@ -22,20 +22,20 @@ export class UserTenantsQueryDto extends PaginationDto {
   role?: TenantMemberRole;
 
   @ApiPropertyOptional({
-    description: 'Sort field',
-    enum: ['createdAt', 'role', 'tenantName'],
-    default: 'createdAt',
+    description: "Sort field",
+    enum: ["createdAt", "role", "tenantName"],
+    default: "createdAt",
   })
   @IsOptional()
   @IsString()
-  sortBy?: 'createdAt' | 'role' | 'tenantName' = 'createdAt';
+  sortBy?: "createdAt" | "role" | "tenantName" = "createdAt";
 
   @ApiPropertyOptional({
-    description: 'Sort order',
-    enum: ['ASC', 'DESC'],
-    default: 'DESC',
+    description: "Sort order",
+    enum: ["ASC", "DESC"],
+    default: "DESC",
   })
   @IsOptional()
-  @IsEnum(['ASC', 'DESC'])
-  sortOrder?: 'ASC' | 'DESC' = 'DESC';
+  @IsEnum(["ASC", "DESC"])
+  sortOrder?: "ASC" | "DESC" = "DESC";
 }

@@ -1,32 +1,31 @@
-import { Column, Entity, Index, ManyToOne, OneToMany } from 'typeorm';
-import { TenantMemberRole, TenantMemberStatus } from '../../../common/enums';
-import { BaseEntity } from '../../../database/entities/base.entity';
-import { ApiKey } from '../../api-key/entities/api-key.entity';
-import { Brand } from '../../brand/entities/brand.entity';
-import { Configuration } from '../../configuration/entities/configuration.entity';
-import { Invite } from '../../invite/entities/invite.entity';
-import { Message } from '../../messaging/message.entity';
-import { Project } from '../../project/entities/project.entity';
-import { ProviderConfig } from '../../provider/provider-config.entity';
-import { Template } from '../../template/template.entity';
-import { Tenant } from '../../tenant/entities/tenant.entity';
-import { User } from '../../user/entities/user.entity';
-import { PushCertificate } from '../../push-certificates/entities/push-certificate.entity';
+import { Column, Entity, Index, ManyToOne, OneToMany } from "typeorm";
+import { TenantMemberRole, TenantMemberStatus } from "../../../common/enums";
+import { BaseEntity } from "../../../database/entities/base.entity";
+import { ApiKey } from "../../api-key/entities/api-key.entity";
+import { Brand } from "../../brand/entities/brand.entity";
+import { Configuration } from "../../configuration/entities/configuration.entity";
+import { Invite } from "../../invite/entities/invite.entity";
+import { Message } from "../../messaging/message.entity";
+import { Project } from "../../project/entities/project.entity";
+import { ProviderConfig } from "../../provider/provider-config.entity";
+import { Template } from "../../template/template.entity";
+import { Tenant } from "../../tenant/entities/tenant.entity";
+import { User } from "../../user/entities/user.entity";
+import { PushCertificate } from "../../push-certificates/entities/push-certificate.entity";
 
-
-@Entity('tenant_members')
-@Index(['tenantId', 'userId'], { unique: true })
-@Index(['status'])
+@Entity("tenant_members")
+@Index(["tenantId", "userId"], { unique: true })
+@Index(["status"])
 export class TenantMember extends BaseEntity {
   @Column({
-    type: 'enum',
+    type: "enum",
     enum: TenantMemberRole,
     default: TenantMemberRole.MEMBER,
   })
   role: TenantMemberRole;
 
   @Column({
-    type: 'enum',
+    type: "enum",
     enum: TenantMemberStatus,
     default: TenantMemberStatus.ACTIVE,
   })
@@ -36,10 +35,10 @@ export class TenantMember extends BaseEntity {
   // permissions?: string[];
 
   // Foreign key columns
-  @Column({ type: 'uuid' })
+  @Column({ type: "uuid" })
   tenantId: string;
 
-  @Column({ type: 'uuid' })
+  @Column({ type: "uuid" })
   userId: string;
 
   // Relationships

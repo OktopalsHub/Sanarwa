@@ -1,9 +1,4 @@
-import {
-  CanActivate,
-  ExecutionContext,
-  Injectable,
-  UnauthorizedException,
-} from '@nestjs/common';
+import { CanActivate, ExecutionContext, Injectable, UnauthorizedException } from "@nestjs/common";
 
 @Injectable()
 export class TenantAuthGuard implements CanActivate {
@@ -14,7 +9,7 @@ export class TenantAuthGuard implements CanActivate {
     // Authentication is handled at the project level through API keys
     // Use the ApiKeyAuthGuard instead for project-level authentication
     throw new UnauthorizedException(
-      'Tenant-level API authentication is not supported. Use project-level API keys instead.',
+      "Tenant-level API authentication is not supported. Use project-level API keys instead.",
     );
   }
 }

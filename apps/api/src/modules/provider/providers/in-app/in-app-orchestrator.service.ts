@@ -1,8 +1,8 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import { IInAppProvider, InAppPayload, InAppResponse } from './in-app-provider.interface';
-import { WebSocketProvider } from './providers/websocket.provider';
-import { SSEProvider } from './providers/sse.provider';
+import { Injectable, Logger } from "@nestjs/common";
+import { ConfigService } from "@nestjs/config";
+import { IInAppProvider, InAppPayload, InAppResponse } from "./in-app-provider.interface";
+import { WebSocketProvider } from "./providers/websocket.provider";
+import { SSEProvider } from "./providers/sse.provider";
 
 @Injectable()
 export class InAppOrchestratorService {
@@ -12,7 +12,7 @@ export class InAppOrchestratorService {
     private configService: ConfigService,
     private webSocketProvider: WebSocketProvider,
     private sseProvider: SSEProvider,
-  ) { }
+  ) {}
 
   /**
    * Send in-app notification with automatic fallback
@@ -23,24 +23,28 @@ export class InAppOrchestratorService {
     try {
       // Try WebSocket first (primary provider)
       if (await this.webSocketProvider.validateConfig()) {
-        this.logger.debug('Attempting to send in-app notification via WebSocket (primary)');
+        this.logger.debug("Attempting to send in-app notification via WebSocket (primary)");
         const result = await this.webSocketProvider.sendNotification(payload);
 
         if (result.success) {
-          this.logger.log(`In-app notification sent successfully via WebSocket: ${result.messageId}`);
+          this.logger.log(
+            `In-app notification sent successfully via WebSocket: ${result.messageId}`,
+          );
           return result;
         } else {
           this.logger.warn(`WebSocket failed: ${result.error}, falling back to SSE`);
         }
       } else {
-        this.logger.debug('WebSocket not configured, using SSE fallback');
+        this.logger.debug("WebSocket not configured, using SSE fallback");
       }
 
       // Fallback to SSE
       const result = await this.sseProvider.sendNotification(payload);
 
       if (result.success) {
-        this.logger.log(`In-app notification sent successfully via SSE (fallback): ${result.messageId}`);
+        this.logger.log(
+          `In-app notification sent successfully via SSE (fallback): ${result.messageId}`,
+        );
       } else {
         this.logger.error(`Both WebSocket and SSE failed for in-app notification`);
       }
@@ -51,7 +55,7 @@ export class InAppOrchestratorService {
       return {
         success: false,
         error: error.message,
-        provider: 'in-app-orchestrator',
+        provider: "in-app-orchestrator",
       };
     }
   }
@@ -70,7 +74,9 @@ export class InAppOrchestratorService {
           this.logger.log(`Room notification sent successfully via WebSocket: ${result.messageId}`);
           return result;
         } else {
-          this.logger.warn(`WebSocket room notification failed: ${result.error}, falling back to SSE`);
+          this.logger.warn(
+            `WebSocket room notification failed: ${result.error}, falling back to SSE`,
+          );
         }
       }
 
@@ -78,7 +84,9 @@ export class InAppOrchestratorService {
       const result = await this.sseProvider.sendToRoom(roomId, payload);
 
       if (result.success) {
-        this.logger.log(`Room notification sent successfully via SSE (fallback): ${result.messageId}`);
+        this.logger.log(
+          `Room notification sent successfully via SSE (fallback): ${result.messageId}`,
+        );
       } else {
         this.logger.error(`Both WebSocket and SSE failed for room notification`);
       }
@@ -89,7 +97,7 @@ export class InAppOrchestratorService {
       return {
         success: false,
         error: error.message,
-        provider: 'in-app-orchestrator',
+        provider: "in-app-orchestrator",
       };
     }
   }
@@ -101,24 +109,24 @@ export class InAppOrchestratorService {
     title: string,
     message: string,
     options?: {
-      type?: InAppPayload['type'];
-      priority?: InAppPayload['priority'];
+      type?: InAppPayload["type"];
+      priority?: InAppPayload["priority"];
       persistent?: boolean;
       data?: Record<string, any>;
-    }
+    },
   ): Promise<InAppResponse> {
     try {
       // System announcements go to all connected users
       const result = await this.sendInAppNotification({
-        userId: ['*'], // Special case for all users
+        userId: ["*"], // Special case for all users
         title,
         message,
-        type: options?.type || 'info',
-        priority: options?.priority || 'normal',
+        type: options?.type || "info",
+        priority: options?.priority || "normal",
         persistent: options?.persistent || true,
         data: {
           ...options?.data,
-          announcementType: 'system_wide',
+          announcementType: "system_wide",
           timestamp: new Date().toISOString(),
         },
       });
@@ -137,18 +145,18 @@ export class InAppOrchestratorService {
   async sendActivityNotification(
     userId: string,
     activity: {
-      type: 'online' | 'offline' | 'typing' | 'idle' | 'away';
+      type: "online" | "offline" | "typing" | "idle" | "away";
       roomId?: string;
       metadata?: Record<string, any>;
-    }
+    },
   ): Promise<InAppResponse> {
     try {
       const result = await this.sendInAppNotification({
-        userId: activity.roomId ? ['*'] : [userId], // Room-wide or user-specific
-        title: 'User Activity',
+        userId: activity.roomId ? ["*"] : [userId], // Room-wide or user-specific
+        title: "User Activity",
         message: `User ${userId} is ${activity.type}`,
-        type: 'info',
-        priority: 'low',
+        type: "info",
+        priority: "low",
         persistent: false,
         data: {
           activityType: activity.type,
@@ -177,19 +185,23 @@ export class InAppOrchestratorService {
       taskId: string;
       taskName: string;
       percentage: number;
-      status: 'started' | 'in_progress' | 'completed' | 'failed';
+      status: "started" | "in_progress" | "completed" | "failed";
       message?: string;
-    }
+    },
   ): Promise<InAppResponse> {
     try {
       const result = await this.sendInAppNotification({
         userId,
         title: progress.taskName,
         message: progress.message || `${progress.status} - ${progress.percentage}%`,
-        type: progress.status === 'failed' ? 'error' :
-          progress.status === 'completed' ? 'success' : 'info',
-        priority: 'normal',
-        persistent: progress.status === 'completed' || progress.status === 'failed',
+        type:
+          progress.status === "failed"
+            ? "error"
+            : progress.status === "completed"
+              ? "success"
+              : "info",
+        priority: "normal",
+        persistent: progress.status === "completed" || progress.status === "failed",
         data: {
           taskId: progress.taskId,
           taskName: progress.taskName,
@@ -199,7 +211,9 @@ export class InAppOrchestratorService {
         },
       });
 
-      this.logger.debug(`Progress notification sent for task ${progress.taskId}: ${progress.percentage}%`);
+      this.logger.debug(
+        `Progress notification sent for task ${progress.taskId}: ${progress.percentage}%`,
+      );
       return result;
     } catch (error) {
       this.logger.error(`Progress notification failed: ${error.message}`, error.stack);
@@ -241,7 +255,7 @@ export class InAppOrchestratorService {
 
     // LiveKit status (mock for now)
     try {
-      const liveKitApiKey = this.configService.get('LIVEKIT_API_KEY');
+      const liveKitApiKey = this.configService.get("LIVEKIT_API_KEY");
       status.liveKit.available = !!liveKitApiKey;
       status.liveKit.healthy = status.liveKit.available;
     } catch (error) {
@@ -259,23 +273,25 @@ export class InAppOrchestratorService {
       userId: string | string[];
       title: string;
       message: string;
-      type?: InAppPayload['type'];
-      priority?: InAppPayload['priority'];
+      type?: InAppPayload["type"];
+      priority?: InAppPayload["priority"];
       data?: Record<string, any>;
-    }>
+    }>,
   ): Promise<InAppResponse[]> {
     try {
       const results = await Promise.all(
-        notifications.map(notification =>
+        notifications.map((notification) =>
           this.sendInAppNotification({
             ...notification,
             persistent: false, // Batch notifications are typically not persistent
-          })
-        )
+          }),
+        ),
       );
 
-      const successCount = results.filter(r => r.success).length;
-      this.logger.log(`Batch notifications sent: ${successCount}/${notifications.length} successful`);
+      const successCount = results.filter((r) => r.success).length;
+      this.logger.log(
+        `Batch notifications sent: ${successCount}/${notifications.length} successful`,
+      );
 
       return results;
     } catch (error) {
@@ -284,12 +300,12 @@ export class InAppOrchestratorService {
     }
   }
 
-
-
   /**
    * Send call notification
    */
-  async sendCallNotification(payload: InAppPayload & { callData: NonNullable<InAppPayload['callData']> }): Promise<InAppResponse> {
+  async sendCallNotification(
+    payload: InAppPayload & { callData: NonNullable<InAppPayload["callData"]> },
+  ): Promise<InAppResponse> {
     try {
       return await this.sendInAppNotification(payload);
     } catch (error) {

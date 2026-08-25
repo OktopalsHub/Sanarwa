@@ -1,11 +1,11 @@
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsArray, IsEnum, IsObject, IsOptional } from 'class-validator';
-import { TenantMemberRole, TenantMemberStatus } from 'src/common/enums';
-import { User } from '../../user/entities/user.entity';
+import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
+import { IsArray, IsEnum, IsObject, IsOptional } from "class-validator";
+import { TenantMemberRole, TenantMemberStatus } from "src/common/enums";
+import { User } from "../../user/entities/user.entity";
 
 export class CreateTenantMemberDto {
   @ApiProperty({
-    description: 'Member role in the tenant',
+    description: "Member role in the tenant",
     enum: TenantMemberRole,
     example: TenantMemberRole.MEMBER,
     type: String,
@@ -14,7 +14,7 @@ export class CreateTenantMemberDto {
   role: TenantMemberRole;
 
   @ApiPropertyOptional({
-    description: 'Member status',
+    description: "Member status",
     enum: TenantMemberStatus,
     example: TenantMemberStatus.ACTIVE,
     type: String,
@@ -24,16 +24,16 @@ export class CreateTenantMemberDto {
   status?: TenantMemberStatus;
 
   @ApiPropertyOptional({
-    description: 'Member permissions',
+    description: "Member permissions",
     type: [String],
-    example: ['read', 'write'],
+    example: ["read", "write"],
   })
   @IsOptional()
   @IsArray()
   permissions?: string[];
 
   @ApiPropertyOptional({
-    description: 'Additional metadata',
+    description: "Additional metadata",
     type: Object,
   })
   @IsOptional()

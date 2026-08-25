@@ -1,4 +1,4 @@
-import { apiClient } from './client';
+import { apiClient } from "./client";
 
 export interface MessageLogListParams {
   page?: number;
@@ -74,7 +74,7 @@ export interface DeliveryStats {
 
 export const messagingApi = {
   async list(params: MessageLogListParams = {}): Promise<MessageLogListResponse> {
-    return apiClient.get<MessageLogListResponse>('/messaging', params);
+    return apiClient.get<MessageLogListResponse>("/messaging", params);
   },
 
   async get(id: string): Promise<MessageLogDetail> {
@@ -82,6 +82,6 @@ export const messagingApi = {
   },
 
   async stats(params?: { startDate?: string; endDate?: string }): Promise<DeliveryStats> {
-    return apiClient.get<DeliveryStats>('/messaging/stats/delivery', params);
+    return apiClient.get<DeliveryStats>("/messaging/stats/delivery", params);
   },
 };

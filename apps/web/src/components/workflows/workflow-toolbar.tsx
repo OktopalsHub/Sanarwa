@@ -1,10 +1,19 @@
-'use client';
+"use client";
 
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Workflow } from '@/lib/types/workflow';
-import { cn } from '@/lib/utils';
-import { EyeIcon, PauseIcon, PlayIcon, BookmarkIcon, Cog6ToothIcon, StopIcon, ClockIcon, BeakerIcon } from '@heroicons/react/24/outline'
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Workflow } from "@/lib/types/workflow";
+import { cn } from "@/lib/utils";
+import {
+  EyeIcon,
+  PauseIcon,
+  PlayIcon,
+  BookmarkIcon,
+  Cog6ToothIcon,
+  StopIcon,
+  ClockIcon,
+  BeakerIcon,
+} from "@heroicons/react/24/outline";
 
 interface WorkflowToolbarProps {
   workflow: Workflow;
@@ -35,36 +44,41 @@ export function WorkflowToolbar({
 }: WorkflowToolbarProps) {
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'active':
-        return 'bg-green-500';
-      case 'paused':
-        return 'bg-yellow-500';
-      case 'draft':
-        return 'bg-gray-500';
-      case 'archived':
-        return 'bg-red-500';
+      case "active":
+        return "bg-green-500";
+      case "paused":
+        return "bg-yellow-500";
+      case "draft":
+        return "bg-gray-500";
+      case "archived":
+        return "bg-red-500";
       default:
-        return 'bg-gray-500';
+        return "bg-gray-500";
     }
   };
 
   const getStatusText = (status: string) => {
     switch (status) {
-      case 'active':
-        return 'Active';
-      case 'paused':
-        return 'Paused';
-      case 'draft':
-        return 'Draft';
-      case 'archived':
-        return 'Archived';
+      case "active":
+        return "Active";
+      case "paused":
+        return "Paused";
+      case "draft":
+        return "Draft";
+      case "archived":
+        return "Archived";
       default:
-        return 'Unknown';
+        return "Unknown";
     }
   };
 
   return (
-    <div className={cn("flex items-center gap-2 p-2 bg-background border rounded-lg shadow-sm", className)}>
+    <div
+      className={cn(
+        "flex items-center gap-2 p-2 bg-background border rounded-lg shadow-sm",
+        className,
+      )}
+    >
       {/* Workflow Info */}
       <div className="flex items-center gap-2 mr-4">
         <h3 className="font-medium text-sm">{workflow.name}</h3>
@@ -91,7 +105,7 @@ export function WorkflowToolbar({
               Save
             </Button>
 
-            {workflow.status === 'draft' || workflow.status === 'paused' ? (
+            {workflow.status === "draft" || workflow.status === "paused" ? (
               <Button
                 variant="default"
                 size="sm"
@@ -113,7 +127,7 @@ export function WorkflowToolbar({
               </Button>
             )}
 
-            {workflow.status === 'active' && (
+            {workflow.status === "active" && (
               <Button
                 variant="outline"
                 size="sm"
@@ -127,32 +141,17 @@ export function WorkflowToolbar({
           </>
         )}
 
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={onPreview}
-          className="flex items-center gap-1"
-        >
+        <Button variant="outline" size="sm" onClick={onPreview} className="flex items-center gap-1">
           <EyeIcon className="h-3 w-3" />
           Preview
         </Button>
 
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={onTest}
-          className="flex items-center gap-1"
-        >
+        <Button variant="outline" size="sm" onClick={onTest} className="flex items-center gap-1">
           <BeakerIcon className="h-3 w-3" />
           Test
         </Button>
 
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={onHistory}
-          className="flex items-center gap-1"
-        >
+        <Button variant="outline" size="sm" onClick={onHistory} className="flex items-center gap-1">
           <ClockIcon className="h-3 w-3" />
           History
         </Button>
@@ -172,9 +171,7 @@ export function WorkflowToolbar({
       <div className="flex items-center gap-4 ml-4 text-xs text-muted-foreground">
         <span>{workflow.nodes.length} nodes</span>
         <span>{workflow.connections.length} connections</span>
-        {workflow.analytics && (
-          <span>{workflow.analytics.totalExecutions} executions</span>
-        )}
+        {workflow.analytics && <span>{workflow.analytics.totalExecutions} executions</span>}
       </div>
     </div>
   );

@@ -1,21 +1,31 @@
-'use client';
+"use client";
 
-import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Separator } from '@/components/ui/separator';
-import { BrandingColors } from '@/contexts/branding-context';
-import { useThemeCustomization } from '@/hooks/use-theme-customization';
-import { cn } from '@/lib/utils';
-import { ExclamationTriangleIcon, CheckIcon, ArrowDownTrayIcon, EyeIcon, SwatchIcon, ArrowPathIcon, BookmarkIcon, ArrowUpTrayIcon, XMarkIcon } from '@heroicons/react/24/outline'
-import { useCallback, useRef, useState } from 'react';
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Separator } from "@/components/ui/separator";
+import { BrandingColors } from "@/contexts/branding-context";
+import { useThemeCustomization } from "@/hooks/use-theme-customization";
+import { cn } from "@/lib/utils";
+import {
+  ExclamationTriangleIcon,
+  CheckIcon,
+  ArrowDownTrayIcon,
+  EyeIcon,
+  SwatchIcon,
+  ArrowPathIcon,
+  BookmarkIcon,
+  ArrowUpTrayIcon,
+  XMarkIcon,
+} from "@heroicons/react/24/outline";
+import { useCallback, useRef, useState } from "react";
 
 interface ColorInputProps {
   label: string;
   value: string;
   onChange: (value: string) => void;
-  accessibilityLevel?: 'AAA' | 'AA' | 'FAIL';
+  accessibilityLevel?: "AAA" | "AA" | "FAIL";
   description?: string;
 }
 
@@ -29,11 +39,11 @@ function ColorInput({ label, value, onChange, accessibilityLevel, description }:
 
   const getAccessibilityIcon = () => {
     switch (accessibilityLevel) {
-      case 'AAA':
+      case "AAA":
         return <CheckIcon className="h-4 w-4 text-green-600" />;
-      case 'AA':
+      case "AA":
         return <CheckIcon className="h-4 w-4 text-yellow-600" />;
-      case 'FAIL':
+      case "FAIL":
         return <ExclamationTriangleIcon className="h-4 w-4 text-red-600" />;
       default:
         return null;
@@ -91,13 +101,13 @@ export function ThemeConfigurator({ className }: ThemeConfiguratorProps) {
   } = useThemeCustomization();
 
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [customCss, setCustomCss] = useState(currentTheme?.customCss || '');
+  const [customCss, setCustomCss] = useState(currentTheme?.customCss || "");
 
   const handleColorChange = useCallback(
     (colorKey: keyof BrandingColors, value: string) => {
       updateColor(colorKey, value);
     },
-    [updateColor]
+    [updateColor],
   );
 
   const handlePreview = useCallback(() => {
@@ -127,12 +137,12 @@ export function ThemeConfigurator({ className }: ThemeConfiguratorProps) {
     if (!themeData) return;
 
     const blob = new Blob([JSON.stringify(themeData, null, 2)], {
-      type: 'application/json',
+      type: "application/json",
     });
     const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
+    const a = document.createElement("a");
     a.href = url;
-    a.download = `${themeData.name.toLowerCase().replace(/\s+/g, '-')}-theme.json`;
+    a.download = `${themeData.name.toLowerCase().replace(/\s+/g, "-")}-theme.json`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -153,19 +163,19 @@ export function ThemeConfigurator({ className }: ThemeConfiguratorProps) {
         try {
           const themeData = JSON.parse(e.target?.result as string);
           importTheme(themeData);
-          setCustomCss(themeData.config.customCss || '');
+          setCustomCss(themeData.config.customCss || "");
         } catch (error) {
-          console.error('Failed to import theme:', error);
+          console.error("Failed to import theme:", error);
         }
       };
       reader.readAsText(file);
     },
-    [importTheme]
+    [importTheme],
   );
 
   if (!currentTheme) {
     return (
-      <Card className={cn('p-6', className)}>
+      <Card className={cn("p-6", className)}>
         <div className="text-center text-muted-foreground">
           <SwatchIcon className="h-12 w-12 mx-auto mb-4 opacity-50" />
           <p>No theme configuration available</p>
@@ -175,7 +185,7 @@ export function ThemeConfigurator({ className }: ThemeConfiguratorProps) {
   }
 
   return (
-    <Card className={cn('p-6', className)}>
+    <Card className={cn("p-6", className)}>
       <div className="space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
@@ -206,7 +216,7 @@ export function ThemeConfigurator({ className }: ThemeConfiguratorProps) {
             </div>
             <div className="space-y-1">
               {accessibilityReport.issues
-                .filter(issue => issue.level === 'FAIL')
+                .filter((issue) => issue.level === "FAIL")
                 .map((issue, index) => (
                   <p key={index} className="text-xs text-red-700 dark:text-red-300">
                     {issue.combination}: Contrast ratio {issue.ratio.toFixed(2)} is too low
@@ -222,50 +232,50 @@ export function ThemeConfigurator({ className }: ThemeConfiguratorProps) {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <ColorInput
               label="Primary"
-              value={currentTheme.colors.primary || '#f97316'}
-              onChange={(value) => handleColorChange('primary', value)}
+              value={currentTheme.colors.primary || "#f97316"}
+              onChange={(value) => handleColorChange("primary", value)}
               description="Main brand color (NectarHR Orange)"
             />
             <ColorInput
               label="Secondary"
-              value={currentTheme.colors.secondary || '#64748b'}
-              onChange={(value) => handleColorChange('secondary', value)}
+              value={currentTheme.colors.secondary || "#64748b"}
+              onChange={(value) => handleColorChange("secondary", value)}
               description="Secondary brand color"
             />
             <ColorInput
               label="Accent"
-              value={currentTheme.colors.accent || '#3b82f6'}
-              onChange={(value) => handleColorChange('accent', value)}
+              value={currentTheme.colors.accent || "#3b82f6"}
+              onChange={(value) => handleColorChange("accent", value)}
               description="Accent color for highlights"
             />
             <ColorInput
               label="Background"
-              value={currentTheme.colors.background || '#ffffff'}
-              onChange={(value) => handleColorChange('background', value)}
+              value={currentTheme.colors.background || "#ffffff"}
+              onChange={(value) => handleColorChange("background", value)}
               description="Main background color"
             />
             <ColorInput
               label="Foreground"
-              value={currentTheme.colors.foreground || '#0f172a'}
-              onChange={(value) => handleColorChange('foreground', value)}
+              value={currentTheme.colors.foreground || "#0f172a"}
+              onChange={(value) => handleColorChange("foreground", value)}
               description="Main text color"
             />
             <ColorInput
               label="Muted"
-              value={currentTheme.colors.muted || '#f1f5f9'}
-              onChange={(value) => handleColorChange('muted', value)}
+              value={currentTheme.colors.muted || "#f1f5f9"}
+              onChange={(value) => handleColorChange("muted", value)}
               description="Muted background color"
             />
             <ColorInput
               label="Muted Foreground"
-              value={currentTheme.colors.mutedForeground || '#64748b'}
-              onChange={(value) => handleColorChange('mutedForeground', value)}
+              value={currentTheme.colors.mutedForeground || "#64748b"}
+              onChange={(value) => handleColorChange("mutedForeground", value)}
               description="Muted text color"
             />
             <ColorInput
               label="Border"
-              value={currentTheme.colors.border || '#e2e8f0'}
-              onChange={(value) => handleColorChange('border', value)}
+              value={currentTheme.colors.border || "#e2e8f0"}
+              onChange={(value) => handleColorChange("border", value)}
               description="Border and divider color"
             />
           </div>
@@ -292,7 +302,7 @@ export function ThemeConfigurator({ className }: ThemeConfiguratorProps) {
               <Label htmlFor="headingFont">Heading Font</Label>
               <Input
                 id="headingFont"
-                value={currentTheme.typography.headingFont || ''}
+                value={currentTheme.typography.headingFont || ""}
                 onChange={(e) => {
                   // Handle heading font change
                 }}

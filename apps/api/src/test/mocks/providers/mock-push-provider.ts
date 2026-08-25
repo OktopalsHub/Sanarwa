@@ -1,21 +1,21 @@
-import { IPushProvider } from '../../../providers/push/push-provider.interface';
+import { IPushProvider } from "../../../providers/push/push-provider.interface";
 import {
   Channel,
   DeliveryStatus,
   ProviderConfig,
   ProviderHealth,
   ProviderResponse,
-} from '../../../providers/types';
+} from "../../../providers/types";
 
 export class MockPushProvider implements IPushProvider {
-  id = 'mock-push-provider';
-  name = 'Mock Push Provider';
+  id = "mock-push-provider";
+  name = "Mock Push Provider";
   channel = Channel.PUSH;
   config: ProviderConfig;
   isInitialized = true;
 
   private shouldFail = false;
-  private failureMessage = 'Mock push provider failure';
+  private failureMessage = "Mock push provider failure";
   private responseDelay = 0;
   private registeredDevices = new Set<string>();
 
@@ -33,10 +33,10 @@ export class MockPushProvider implements IPushProvider {
     }
 
     return {
-      messageId: 'mock-push-' + Math.random().toString(36).substr(2, 9),
+      messageId: "mock-push-" + Math.random().toString(36).substr(2, 9),
       status: DeliveryStatus.SENT,
       timestamp: new Date(),
-      providerMessageId: 'mock-push-message-id',
+      providerMessageId: "mock-push-message-id",
       metadata: {
         deliveryReceipt: true,
       },
@@ -44,26 +44,20 @@ export class MockPushProvider implements IPushProvider {
   }
 
   async validateConfig(config: ProviderConfig): Promise<boolean> {
-    return (
-      config && config.credentials && typeof config.credentials === 'object'
-    );
+    return config && config.credentials && typeof config.credentials === "object";
   }
 
   async checkHealth(): Promise<{ status: ProviderHealth; lastChecked: Date }> {
     return {
-      status: this.shouldFail
-        ? ProviderHealth.UNHEALTHY
-        : ProviderHealth.HEALTHY,
+      status: this.shouldFail ? ProviderHealth.UNHEALTHY : ProviderHealth.HEALTHY,
       lastChecked: new Date(),
     };
   }
 
   async registerDevice(
-    registration: import('../../../providers/push/push-provider.interface').DeviceRegistration,
+    registration: import("../../../providers/push/push-provider.interface").DeviceRegistration,
   ): Promise<void> {
-    this.registeredDevices.add(
-      `${registration.userId}:${registration.deviceToken}`,
-    );
+    this.registeredDevices.add(`${registration.userId}:${registration.deviceToken}`);
   }
 
   async unregisterDevice(deviceToken: string): Promise<void> {
@@ -77,7 +71,7 @@ export class MockPushProvider implements IPushProvider {
 
   validateDeviceToken(deviceToken: string): boolean {
     // Simple validation - just check if it's a non-empty string
-    return typeof deviceToken === 'string' && deviceToken.length > 0;
+    return typeof deviceToken === "string" && deviceToken.length > 0;
   }
 
   async sendBulk(payloads: any[]): Promise<ProviderResponse[]> {
@@ -89,11 +83,10 @@ export class MockPushProvider implements IPushProvider {
         results.push(result);
       } catch (error) {
         results.push({
-          messageId:
-            'mock-push-failed-' + Math.random().toString(36).substr(2, 9),
+          messageId: "mock-push-failed-" + Math.random().toString(36).substr(2, 9),
           status: DeliveryStatus.FAILED,
           timestamp: new Date(),
-          error: error instanceof Error ? error.message : 'Unknown error',
+          error: error instanceof Error ? error.message : "Unknown error",
         });
       }
     }
@@ -132,7 +125,7 @@ export class MockPushProvider implements IPushProvider {
 
   reset(): void {
     this.shouldFail = false;
-    this.failureMessage = 'Mock push provider failure';
+    this.failureMessage = "Mock push provider failure";
     this.responseDelay = 0;
     this.registeredDevices.clear();
   }

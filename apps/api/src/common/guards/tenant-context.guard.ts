@@ -4,14 +4,11 @@ import {
   ForbiddenException,
   Injectable,
   UnauthorizedException,
-} from '@nestjs/common';
-import { Reflector } from '@nestjs/core';
-import { PUBLIC_KEY } from '../../modules/auth/decorators/public.decorator';
-import { TenantMemberService } from '../../modules/tenant-member/tenant-member.service';
-import {
-  AuthenticatedRequest,
-  MemberContext,
-} from '../interfaces/request-context.interface';
+} from "@nestjs/common";
+import { Reflector } from "@nestjs/core";
+import { PUBLIC_KEY } from "../../modules/auth/decorators/public.decorator";
+import { TenantMemberService } from "../../modules/tenant-member/tenant-member.service";
+import { AuthenticatedRequest, MemberContext } from "../interfaces/request-context.interface";
 
 /**
  * Resolves tenant context from route param or X-Tenant-ID header.
@@ -36,27 +33,21 @@ export class TenantContextGuard implements CanActivate {
     const request = context.switchToHttp().getRequest<AuthenticatedRequest>();
 
     if (!request.user?.id && !request?.auth?.principalId) {
-      throw new UnauthorizedException('User not authenticated');
+      throw new UnauthorizedException("User not authenticated");
     }
 
     const userId = request.user?.id || request.auth?.principalId;
     const tenantId =
-      request.params?.tenantId ||
-      (request.headers['x-tenant-id'] as string | undefined);
+      request.params?.tenantId || (request.headers["x-tenant-id"] as string | undefined);
 
     if (!tenantId) {
-      throw new ForbiddenException(
-        'Tenant ID required via route param or X-Tenant-ID header',
-      );
+      throw new ForbiddenException("Tenant ID required via route param or X-Tenant-ID header");
     }
 
-    const tenantMember = await this.tenantMemberService.getMemberByUserId(
-      tenantId,
-      userId,
-    );
+    const tenantMember = await this.tenantMemberService.getMemberByUserId(tenantId, userId);
 
     if (!tenantMember) {
-      throw new ForbiddenException('User is not a member of this tenant');
+      throw new ForbiddenException("User is not a member of this tenant");
     }
 
     const memberContext: MemberContext = {

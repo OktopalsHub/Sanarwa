@@ -1,13 +1,13 @@
-'use client';
+"use client";
 
-import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
-import { Label } from '@/components/ui/label';
-import { Separator } from '@/components/ui/separator';
-import { BrandingConfig } from '@/contexts/branding-context';
-import { cn } from '@/lib/utils';
-import { CubeIcon, SwatchIcon, PhotoIcon } from '@heroicons/react/24/outline'
-import { useCallback, useState } from 'react';
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Label } from "@/components/ui/label";
+import { Separator } from "@/components/ui/separator";
+import { BrandingConfig } from "@/contexts/branding-context";
+import { cn } from "@/lib/utils";
+import { CubeIcon, SwatchIcon, PhotoIcon } from "@heroicons/react/24/outline";
+import { useCallback, useState } from "react";
 
 interface BrandAssetManagerProps {
   branding: BrandingConfig;
@@ -15,7 +15,11 @@ interface BrandAssetManagerProps {
   className?: string;
 }
 
-export function BrandAssetManager({ branding, onBrandingChange, className }: BrandAssetManagerProps) {
+export function BrandAssetManager({
+  branding,
+  onBrandingChange,
+  className,
+}: BrandAssetManagerProps) {
   const [isExporting, setIsExporting] = useState(false);
 
   const handleExportAssets = useCallback(async () => {
@@ -24,7 +28,7 @@ export function BrandAssetManager({ branding, onBrandingChange, className }: Bra
       // Create a comprehensive brand package
       const brandPackage = {
         name: branding.name,
-        version: '1.0.0',
+        version: "1.0.0",
         exportedAt: new Date().toISOString(),
         branding: {
           ...branding,
@@ -32,7 +36,7 @@ export function BrandAssetManager({ branding, onBrandingChange, className }: Bra
           assets: {
             logoLight: branding.logo.light,
             logoDark: branding.logo.dark,
-          }
+          },
         },
         colorPalette: {
           primary: branding.colors.primary,
@@ -55,18 +59,18 @@ export function BrandAssetManager({ branding, onBrandingChange, className }: Bra
 
       // Create and download the brand package
       const blob = new Blob([JSON.stringify(brandPackage, null, 2)], {
-        type: 'application/json',
+        type: "application/json",
       });
       const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
+      const a = document.createElement("a");
       a.href = url;
-      a.download = `${branding.name.toLowerCase().replace(/\s+/g, '-')}-brand-package.json`;
+      a.download = `${branding.name.toLowerCase().replace(/\s+/g, "-")}-brand-package.json`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
     } catch (error) {
-      console.error('Failed to export brand assets:', error);
+      console.error("Failed to export brand assets:", error);
     } finally {
       setIsExporting(false);
     }
@@ -74,11 +78,11 @@ export function BrandAssetManager({ branding, onBrandingChange, className }: Bra
 
   const handleExportCSS = useCallback(() => {
     const cssContent = generateCSSVariables(branding);
-    const blob = new Blob([cssContent], { type: 'text/css' });
+    const blob = new Blob([cssContent], { type: "text/css" });
     const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
+    const a = document.createElement("a");
     a.href = url;
-    a.download = `${branding.name.toLowerCase().replace(/\s+/g, '-')}-variables.css`;
+    a.download = `${branding.name.toLowerCase().replace(/\s+/g, "-")}-variables.css`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -87,11 +91,11 @@ export function BrandAssetManager({ branding, onBrandingChange, className }: Bra
 
   const handleExportTailwindConfig = useCallback(() => {
     const configContent = generateTailwindConfig(branding);
-    const blob = new Blob([configContent], { type: 'text/javascript' });
+    const blob = new Blob([configContent], { type: "text/javascript" });
     const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
+    const a = document.createElement("a");
     a.href = url;
-    a.download = `${branding.name.toLowerCase().replace(/\s+/g, '-')}-tailwind.config.js`;
+    a.download = `${branding.name.toLowerCase().replace(/\s+/g, "-")}-tailwind.config.js`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -99,7 +103,7 @@ export function BrandAssetManager({ branding, onBrandingChange, className }: Bra
   }, [branding]);
 
   return (
-    <Card className={cn('p-6', className)}>
+    <Card className={cn("p-6", className)}>
       <div className="space-y-6">
         <div>
           <h3 className="text-lg font-semibold">Brand Asset Manager</h3>
@@ -159,7 +163,7 @@ export function BrandAssetManager({ branding, onBrandingChange, className }: Bra
                 />
                 <div className="text-xs">
                   <div className="font-medium capitalize">
-                    {key.replace(/([A-Z])/g, ' $1').trim()}
+                    {key.replace(/([A-Z])/g, " $1").trim()}
                   </div>
                   <div className="text-muted-foreground font-mono">{value}</div>
                 </div>
@@ -183,9 +187,7 @@ export function BrandAssetManager({ branding, onBrandingChange, className }: Bra
               <CubeIcon className="h-6 w-6" />
               <div className="text-center">
                 <div className="font-medium">Complete Package</div>
-                <div className="text-xs text-muted-foreground">
-                  JSON with all brand data
-                </div>
+                <div className="text-xs text-muted-foreground">JSON with all brand data</div>
               </div>
             </Button>
 
@@ -197,9 +199,7 @@ export function BrandAssetManager({ branding, onBrandingChange, className }: Bra
               <SwatchIcon className="h-6 w-6" />
               <div className="text-center">
                 <div className="font-medium">CSS Variables</div>
-                <div className="text-xs text-muted-foreground">
-                  Ready-to-use CSS file
-                </div>
+                <div className="text-xs text-muted-foreground">Ready-to-use CSS file</div>
               </div>
             </Button>
 
@@ -211,9 +211,7 @@ export function BrandAssetManager({ branding, onBrandingChange, className }: Bra
               <PhotoIcon className="h-6 w-6" />
               <div className="text-center">
                 <div className="font-medium">Tailwind Config</div>
-                <div className="text-xs text-muted-foreground">
-                  Tailwind theme config
-                </div>
+                <div className="text-xs text-muted-foreground">Tailwind theme config</div>
               </div>
             </Button>
           </div>
@@ -226,13 +224,16 @@ export function BrandAssetManager({ branding, onBrandingChange, className }: Bra
           <h4 className="text-md font-medium">Usage Instructions</h4>
           <div className="text-sm text-muted-foreground space-y-2">
             <p>
-              <strong>Complete Package:</strong> Contains all brand data in JSON format for backup or sharing.
+              <strong>Complete Package:</strong> Contains all brand data in JSON format for backup
+              or sharing.
             </p>
             <p>
-              <strong>CSS Variables:</strong> Import into your project to use the color scheme with CSS custom properties.
+              <strong>CSS Variables:</strong> Import into your project to use the color scheme with
+              CSS custom properties.
             </p>
             <p>
-              <strong>Tailwind Config:</strong> Add to your Tailwind configuration to use brand colors as utility classes.
+              <strong>Tailwind Config:</strong> Add to your Tailwind configuration to use brand
+              colors as utility classes.
             </p>
           </div>
         </div>
@@ -245,10 +246,10 @@ export function BrandAssetManager({ branding, onBrandingChange, className }: Bra
 function generateCSSVariables(branding: BrandingConfig): string {
   const variables = Object.entries(branding.colors)
     .map(([key, value]) => {
-      const cssVar = `--${key.replace(/([A-Z])/g, '-$1').toLowerCase()}`;
+      const cssVar = `--${key.replace(/([A-Z])/g, "-$1").toLowerCase()}`;
       return `  ${cssVar}: ${value};`;
     })
-    .join('\n');
+    .join("\n");
 
   return `:root {
 ${variables}
@@ -259,13 +260,13 @@ ${variables}
 }
 
 /* Custom CSS */
-${branding.customCss || ''}`;
+${branding.customCss || ""}`;
 }
 
 function generateTailwindConfig(branding: BrandingConfig): string {
   const colors = Object.entries(branding.colors)
     .map(([key, value]) => `        ${key}: '${value}',`)
-    .join('\n');
+    .join("\n");
 
   return `module.exports = {
   theme: {

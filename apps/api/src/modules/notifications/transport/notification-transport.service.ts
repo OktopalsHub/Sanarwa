@@ -1,17 +1,17 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { NotificationLog } from '../entities/notification-log.entity';
-import { NotificationEngineService } from '../engine/notification-engine.service';
-import { NotificationEngineRequest } from '../engine/notification-engine.types';
+import { Injectable, Logger } from "@nestjs/common";
+import { InjectRepository } from "@nestjs/typeorm";
+import { Repository } from "typeorm";
+import { NotificationLog } from "../entities/notification-log.entity";
+import { NotificationEngineService } from "../engine/notification-engine.service";
+import { NotificationEngineRequest } from "../engine/notification-engine.types";
 
 export interface NotificationRequest {
   to: string;
-  channel: 'email' | 'sms' | 'push' | 'whatsapp' | 'webhook' | 'in_app';
+  channel: "email" | "sms" | "push" | "whatsapp" | "webhook" | "in_app";
   title?: string;
   message: string;
   data?: Record<string, any>;
-  priority?: 'low' | 'normal' | 'high';
+  priority?: "low" | "normal" | "high";
   scheduledAt?: Date;
   expiresAt?: Date;
   templateId?: string;
@@ -29,7 +29,7 @@ export interface BulkNotificationRequest {
 
 export interface NotificationResponse {
   id: string;
-  status: 'queued' | 'sent' | 'delivered' | 'failed';
+  status: "queued" | "sent" | "delivered" | "failed";
   trackingId?: string;
   externalId?: string;
   error?: string;
@@ -62,9 +62,8 @@ export class NotificationTransportService {
       templateData: request.templateData,
       trackingId: request.trackingId,
       webhookUrl: request.webhookUrl,
-      subscriberId: request.channel === 'push' || request.channel === 'in_app'
-        ? request.to
-        : undefined,
+      subscriberId:
+        request.channel === "push" || request.channel === "in_app" ? request.to : undefined,
       metadata: request.data,
     };
 
@@ -105,13 +104,13 @@ export class NotificationTransportService {
       const batchResults = await Promise.allSettled(batchPromises);
 
       batchResults.forEach((result, index) => {
-        if (result.status === 'fulfilled') {
+        if (result.status === "fulfilled") {
           results.push(result.value);
         } else {
           results.push({
             id: `${batchId}_${index}_failed`,
-            status: 'failed',
-            error: result.reason?.message || 'Unknown error',
+            status: "failed",
+            error: result.reason?.message || "Unknown error",
             timestamp: new Date(),
           });
         }
@@ -120,10 +119,8 @@ export class NotificationTransportService {
 
     const summary = {
       total: results.length,
-      queued: results.filter(
-        (item) => item.status === 'queued' || item.status === 'sent',
-      ).length,
-      failed: results.filter((item) => item.status === 'failed').length,
+      queued: results.filter((item) => item.status === "queued" || item.status === "sent").length,
+      failed: results.filter((item) => item.status === "failed").length,
     };
 
     return { batchId, results, summary };
@@ -133,14 +130,14 @@ export class NotificationTransportService {
     return this.logRepository.findOne({
       where: { trackingId },
       select: [
-        'id',
-        'trackingId',
-        'channel',
-        'status',
-        'sentAt',
-        'deliveredAt',
-        'error',
-        'externalId',
+        "id",
+        "trackingId",
+        "channel",
+        "status",
+        "sentAt",
+        "deliveredAt",
+        "error",
+        "externalId",
       ],
     });
   }
@@ -154,32 +151,26 @@ export class NotificationTransportService {
     } = {},
   ) {
     const query = this.logRepository
-      .createQueryBuilder('log')
-      .where('log.tenantId = :tenantId', { tenantId });
+      .createQueryBuilder("log")
+      .where("log.tenantId = :tenantId", { tenantId });
 
     if (options.startDate) {
-      query.andWhere('log.createdAt >= :startDate', {
+      query.andWhere("log.createdAt >= :startDate", {
         startDate: options.startDate,
       });
     }
     if (options.endDate) {
-      query.andWhere('log.createdAt <= :endDate', { endDate: options.endDate });
+      query.andWhere("log.createdAt <= :endDate", { endDate: options.endDate });
     }
     if (options.channel) {
-      query.andWhere('log.channel = :channel', { channel: options.channel });
+      query.andWhere("log.channel = :channel", { channel: options.channel });
     }
 
     const [total, sent, delivered, failed] = await Promise.all([
       query.getCount(),
-      query.clone().andWhere('log.status = :status', { status: 'sent' }).getCount(),
-      query
-        .clone()
-        .andWhere('log.status = :status', { status: 'delivered' })
-        .getCount(),
-      query
-        .clone()
-        .andWhere('log.status = :status', { status: 'failed' })
-        .getCount(),
+      query.clone().andWhere("log.status = :status", { status: "sent" }).getCount(),
+      query.clone().andWhere("log.status = :status", { status: "delivered" }).getCount(),
+      query.clone().andWhere("log.status = :status", { status: "failed" }).getCount(),
     ]);
 
     return {

@@ -1,21 +1,21 @@
-'use client';
+"use client";
 
-import { Webhook } from '@/lib/icons';
+import { Webhook } from "@/lib/icons";
 
-import { useState } from 'react';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { projectApi } from '@/lib/api/project';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Switch } from '@/components/ui/switch';
-import { Separator } from '@/components/ui/separator';
-import { useForm } from 'react-hook-form';
-import { Project, UpdateProjectRequest } from '@/lib/types/project';
-import { toast } from 'sonner';
-import { ExclamationTriangleIcon, BookmarkIcon } from '@heroicons/react/24/outline'
+import { useState } from "react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { projectApi } from "@/lib/api/project";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Switch } from "@/components/ui/switch";
+import { Separator } from "@/components/ui/separator";
+import { useForm } from "react-hook-form";
+import { Project, UpdateProjectRequest } from "@/lib/types/project";
+import { toast } from "sonner";
+import { ExclamationTriangleIcon, BookmarkIcon } from "@heroicons/react/24/outline";
 
 interface ProjectSettingsProps {
   project: Project;
@@ -34,9 +34,9 @@ export function ProjectSettings({ project }: ProjectSettingsProps) {
   } = useForm<UpdateProjectRequest>({
     defaultValues: {
       name: project.name,
-      description: project.description || '',
+      description: project.description || "",
       settings: {
-        webhookUrl: project.settings?.webhookUrl || '',
+        webhookUrl: project.settings?.webhookUrl || "",
         retryPolicy: {
           maxRetries: project.settings?.retryPolicy?.maxRetries || 3,
           retryDelay: project.settings?.retryPolicy?.retryDelay || 5000,
@@ -52,11 +52,11 @@ export function ProjectSettings({ project }: ProjectSettingsProps) {
   const updateProjectMutation = useMutation({
     mutationFn: (data: UpdateProjectRequest) => projectApi.updateProject(project.id, data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['project', project.id] });
-      toast.success('Project settings updated successfully');
+      queryClient.invalidateQueries({ queryKey: ["project", project.id] });
+      toast.success("Project settings updated successfully");
     },
     onError: (error: any) => {
-      toast.error(error.message || 'Failed to update project settings');
+      toast.error(error.message || "Failed to update project settings");
     },
     onSettled: () => {
       setIsSubmitting(false);
@@ -68,7 +68,7 @@ export function ProjectSettings({ project }: ProjectSettingsProps) {
     updateProjectMutation.mutate(data);
   };
 
-  const rateLimitingEnabled = watch('settings.rateLimiting.enabled');
+  const rateLimitingEnabled = watch("settings.rateLimiting.enabled");
 
   return (
     <div className="space-y-6">
@@ -86,18 +86,16 @@ export function ProjectSettings({ project }: ProjectSettingsProps) {
               <Label htmlFor="name">Project Name</Label>
               <Input
                 id="name"
-                {...register('name', {
-                  required: 'Project name is required',
+                {...register("name", {
+                  required: "Project name is required",
                   minLength: {
                     value: 2,
-                    message: 'Project name must be at least 2 characters',
+                    message: "Project name must be at least 2 characters",
                   },
                 })}
                 disabled={isSubmitting}
               />
-              {errors.name && (
-                <p className="text-sm text-destructive">{errors.name.message}</p>
-              )}
+              {errors.name && <p className="text-sm text-destructive">{errors.name.message}</p>}
             </div>
 
             <div className="space-y-2">
@@ -105,7 +103,7 @@ export function ProjectSettings({ project }: ProjectSettingsProps) {
               <Textarea
                 id="description"
                 rows={3}
-                {...register('description')}
+                {...register("description")}
                 disabled={isSubmitting}
               />
             </div>
@@ -127,7 +125,7 @@ export function ProjectSettings({ project }: ProjectSettingsProps) {
                 id="webhookUrl"
                 type="url"
                 placeholder="https://your-domain.com/webhook"
-                {...register('settings.webhookUrl')}
+                {...register("settings.webhookUrl")}
                 disabled={isSubmitting}
               />
               <p className="text-sm text-muted-foreground">
@@ -141,9 +139,7 @@ export function ProjectSettings({ project }: ProjectSettingsProps) {
         <Card>
           <CardHeader>
             <CardTitle>Retry Policy</CardTitle>
-            <CardDescription>
-              Configure how failed notifications should be retried.
-            </CardDescription>
+            <CardDescription>Configure how failed notifications should be retried.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
@@ -154,10 +150,10 @@ export function ProjectSettings({ project }: ProjectSettingsProps) {
                   type="number"
                   min="0"
                   max="10"
-                  {...register('settings.retryPolicy.maxRetries', {
+                  {...register("settings.retryPolicy.maxRetries", {
                     valueAsNumber: true,
-                    min: { value: 0, message: 'Must be at least 0' },
-                    max: { value: 10, message: 'Must be at most 10' },
+                    min: { value: 0, message: "Must be at least 0" },
+                    max: { value: 10, message: "Must be at most 10" },
                   })}
                   disabled={isSubmitting}
                 />
@@ -175,10 +171,10 @@ export function ProjectSettings({ project }: ProjectSettingsProps) {
                   type="number"
                   min="1000"
                   max="60000"
-                  {...register('settings.retryPolicy.retryDelay', {
+                  {...register("settings.retryPolicy.retryDelay", {
                     valueAsNumber: true,
-                    min: { value: 1000, message: 'Must be at least 1000ms' },
-                    max: { value: 60000, message: 'Must be at most 60000ms' },
+                    min: { value: 1000, message: "Must be at least 1000ms" },
+                    max: { value: 60000, message: "Must be at most 60000ms" },
                   })}
                   disabled={isSubmitting}
                 />
@@ -211,7 +207,7 @@ export function ProjectSettings({ project }: ProjectSettingsProps) {
               <Switch
                 id="rateLimitingEnabled"
                 checked={rateLimitingEnabled}
-                onCheckedChange={(checked) => setValue('settings.rateLimiting.enabled', checked)}
+                onCheckedChange={(checked) => setValue("settings.rateLimiting.enabled", checked)}
                 disabled={isSubmitting}
               />
             </div>
@@ -224,10 +220,10 @@ export function ProjectSettings({ project }: ProjectSettingsProps) {
                   type="number"
                   min="1"
                   max="10000"
-                  {...register('settings.rateLimiting.requestsPerMinute', {
+                  {...register("settings.rateLimiting.requestsPerMinute", {
                     valueAsNumber: true,
-                    min: { value: 1, message: 'Must be at least 1' },
-                    max: { value: 10000, message: 'Must be at most 10000' },
+                    min: { value: 1, message: "Must be at least 1" },
+                    max: { value: 10000, message: "Must be at most 10000" },
                   })}
                   disabled={isSubmitting}
                 />
@@ -245,7 +241,7 @@ export function ProjectSettings({ project }: ProjectSettingsProps) {
         <div className="flex justify-end">
           <Button type="submit" disabled={!isDirty || isSubmitting}>
             <BookmarkIcon className="h-4 w-4 mr-2" />
-            {isSubmitting ? 'Saving...' : 'Save Changes'}
+            {isSubmitting ? "Saving..." : "Save Changes"}
           </Button>
         </div>
       </form>
@@ -259,9 +255,7 @@ export function ProjectSettings({ project }: ProjectSettingsProps) {
             <ExclamationTriangleIcon className="h-5 w-5" />
             Danger Zone
           </CardTitle>
-          <CardDescription>
-            Irreversible and destructive actions for this project.
-          </CardDescription>
+          <CardDescription>Irreversible and destructive actions for this project.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex items-center justify-between p-4 border border-destructive/20 rounded-lg">

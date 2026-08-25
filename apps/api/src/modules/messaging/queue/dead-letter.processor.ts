@@ -1,20 +1,25 @@
-import { Process, Processor } from '@nestjs/bull';
-import { Injectable, Logger } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { Job } from 'bull';
-import { NOTIFICATION_QUEUE } from './notification-queue.module';
-import { DeadLetter, DeadLetterStatus, DeadLetterType } from '../entities/dead-letter.entity';
-import { SystemAlert, AlertSeverity, AlertStatus, AlertType } from '../entities/system-alert.entity';
-import { AuthEmailService } from '../../auth/services/auth-email.service';
-import { DeadLetterRepository } from '../repositories/dead-letter.repository';
+import { Process, Processor } from "@nestjs/bull";
+import { Injectable, Logger } from "@nestjs/common";
+import { InjectRepository } from "@nestjs/typeorm";
+import { Repository } from "typeorm";
+import { Job } from "bull";
+import { NOTIFICATION_QUEUE } from "./notification-queue.module";
+import { DeadLetter, DeadLetterStatus, DeadLetterType } from "../entities/dead-letter.entity";
+import {
+  SystemAlert,
+  AlertSeverity,
+  AlertStatus,
+  AlertType,
+} from "../entities/system-alert.entity";
+import { AuthEmailService } from "../../auth/services/auth-email.service";
+import { DeadLetterRepository } from "../repositories/dead-letter.repository";
 // UNCOMMENT TO ENABLE SMS/VOICE NOTIFICATIONS
 // import { SMSService } from '../../provider/services/sms.service';
 // import { VoiceService } from '../../provider/services/voice.service';
 
 export interface DeadLetterJobData {
-  type: 'dead_letter';
-  originalType: 'notification' | 'delivery';
+  type: "dead_letter";
+  originalType: "notification" | "delivery";
   originalId: string;
   tenantId: string;
   failureReason: string;
@@ -26,10 +31,10 @@ export interface DeadLetterJobData {
 }
 
 export interface AlertJobData {
-  type: 'system_alert';
+  type: "system_alert";
   alert: {
     type: string;
-    severity: 'low' | 'medium' | 'high' | 'critical';
+    severity: "low" | "medium" | "high" | "critical";
     title: string;
     message: string;
     tenantId: string;
@@ -52,12 +57,12 @@ export class DeadLetterProcessor {
     // UNCOMMENT TO ENABLE SMS/VOICE NOTIFICATIONS
     // private readonly smsService: SMSService,
     // private readonly voiceService: VoiceService,
-  ) { }
+  ) {}
 
   /**
    * Process dead letter queue items
    */
-  @Process('handle-dead-letter')
+  @Process("handle-dead-letter")
   async handleDeadLetter(job: Job<DeadLetterJobData>): Promise<void> {
     const { originalType, originalId } = job.data;
 
@@ -81,7 +86,7 @@ export class DeadLetterProcessor {
   /**
    * Process system alerts
    */
-  @Process('process-alert')
+  @Process("process-alert")
   async processAlert(job: Job<AlertJobData>): Promise<void> {
     const { alert } = job.data;
 
@@ -119,11 +124,11 @@ export class DeadLetterProcessor {
         status: DeadLetterStatus.PENDING_REVIEW,
         metadata: {
           processedAt: new Date(),
-          processor: 'dead-letter-processor',
+          processor: "dead-letter-processor",
         },
       });
 
-      this.logger.log('Dead letter item stored for manual review', {
+      this.logger.log("Dead letter item stored for manual review", {
         deadLetterId: savedRecord.id,
         originalType: data.originalType,
         originalId: data.originalId,
@@ -149,7 +154,7 @@ export class DeadLetterProcessor {
       if (adminEmails.length > 0) {
         await this.sendDeadLetterNotification(adminEmails, data);
       } else {
-        this.logger.warn('No admin emails configured for dead letter notifications');
+        this.logger.warn("No admin emails configured for dead letter notifications");
       }
       //   subject,
       //   html: message,
@@ -167,7 +172,7 @@ export class DeadLetterProcessor {
    */
   private async sendAlert(alert: {
     type: string;
-    severity: 'low' | 'medium' | 'high' | 'critical';
+    severity: "low" | "medium" | "high" | "critical";
     title: string;
     message: string;
     tenantId: string;
@@ -187,7 +192,7 @@ export class DeadLetterProcessor {
         await this.sendAlertViaChannel(alert, channel);
       }
 
-      this.logger.log(`Alert sent via ${channels.join(', ')}: ${alert.type}`);
+      this.logger.log(`Alert sent via ${channels.join(", ")}: ${alert.type}`);
     } catch (error) {
       this.logger.error(`Failed to send alert ${alert.type}: ${error.message}`);
     }
@@ -212,7 +217,7 @@ export class DeadLetterProcessor {
 
       await this.systemAlertRepository.save(alertRecord);
 
-      this.logger.log('Alert stored in system logs', {
+      this.logger.log("Alert stored in system logs", {
         alertId: alertRecord.id,
         type: alert.type,
         severity: alert.severity,
@@ -222,23 +227,21 @@ export class DeadLetterProcessor {
     }
   }
 
-
-
   /**
    * Get alert channels based on severity
    */
   private getAlertChannels(severity: string): string[] {
     switch (severity) {
-      case 'critical':
-        return ['email', 'sms', 'slack'];
-      case 'high':
-        return ['email', 'slack'];
-      case 'medium':
-        return ['email'];
-      case 'low':
-        return ['slack'];
+      case "critical":
+        return ["email", "sms", "slack"];
+      case "high":
+        return ["email", "slack"];
+      case "medium":
+        return ["email"];
+      case "low":
+        return ["slack"];
       default:
-        return ['email'];
+        return ["email"];
     }
   }
 
@@ -248,13 +251,13 @@ export class DeadLetterProcessor {
   private async sendAlertViaChannel(alert: any, channel: string): Promise<void> {
     try {
       switch (channel) {
-        case 'email':
+        case "email":
           await this.sendEmailAlert(alert);
           break;
-        case 'sms':
+        case "sms":
           await this.sendSMSAlert(alert);
           break;
-        case 'slack':
+        case "slack":
           await this.sendSlackAlert(alert);
           break;
         default:
@@ -270,10 +273,10 @@ export class DeadLetterProcessor {
    */
   private async sendEmailAlert(alert: any): Promise<void> {
     try {
-      const emailRecipients = alert.recipients.filter((r: string) => r.includes('@'));
-      
+      const emailRecipients = alert.recipients.filter((r: string) => r.includes("@"));
+
       if (emailRecipients.length === 0) {
-        this.logger.warn('No email recipients found for alert');
+        this.logger.warn("No email recipients found for alert");
         return;
       }
 
@@ -288,7 +291,7 @@ export class DeadLetterProcessor {
           subject,
           html: htmlContent,
           text: textContent,
-          from: process.env.SYSTEM_ALERT_FROM_EMAIL || 'alerts@yourapp.com',
+          from: process.env.SYSTEM_ALERT_FROM_EMAIL || "alerts@yourapp.com",
         });
       }
 
@@ -303,23 +306,23 @@ export class DeadLetterProcessor {
    */
   private async sendSMSAlert(alert: any): Promise<void> {
     try {
-      const smsRecipients = alert.recipients.filter((r: string) => r.startsWith('+'));
-      
+      const smsRecipients = alert.recipients.filter((r: string) => r.startsWith("+"));
+
       if (smsRecipients.length === 0) {
-        this.logger.warn('No SMS recipients found for alert');
+        this.logger.warn("No SMS recipients found for alert");
         return;
       }
 
       const message = `🚨 SYSTEM ALERT: ${alert.title}\n\n${alert.message}\n\nSeverity: ${alert.severity.toUpperCase()}\nTenant: ${alert.tenantId}\nTime: ${new Date().toLocaleString()}\n\nCheck dashboard for details.`;
-      
+
       // REMOVE COMMENTS TO ENABLE SMS ALERTS
       // for (const phoneNumber of smsRecipients) {
       //   await this.smsService.sendSMS({
       //     to: phoneNumber,
       //     message,
       //     tenantId: alert.tenantId,
-      //     metadata: { 
-      //       type: 'system_alert', 
+      //     metadata: {
+      //       type: 'system_alert',
       //       alertType: alert.type,
       //       severity: alert.severity,
       //       alertId: alert.id || `alert_${Date.now()}`,
@@ -331,7 +334,9 @@ export class DeadLetterProcessor {
       // this.logger.log(`SMS alert sent to ${smsRecipients.length} recipients: ${alert.title}`);
 
       // FOR TESTING: Log what would be sent
-      this.logger.log(`[SMS DISABLED] Would send SMS alert to ${smsRecipients.length} recipients (${smsRecipients.join(', ')}): ${message}`);
+      this.logger.log(
+        `[SMS DISABLED] Would send SMS alert to ${smsRecipients.length} recipients (${smsRecipients.join(", ")}): ${message}`,
+      );
     } catch (error) {
       this.logger.error(`Failed to send SMS alert: ${error.message}`, error);
     }
@@ -344,7 +349,9 @@ export class DeadLetterProcessor {
     try {
       const slackWebhookUrl = process.env.SLACK_WEBHOOK_URL;
       if (!slackWebhookUrl) {
-        this.logger.warn('Slack webhook URL not configured - set SLACK_WEBHOOK_URL environment variable');
+        this.logger.warn(
+          "Slack webhook URL not configured - set SLACK_WEBHOOK_URL environment variable",
+        );
         return;
       }
 
@@ -354,16 +361,16 @@ export class DeadLetterProcessor {
           {
             color: this.getSlackColorBySeverity(alert.severity),
             fields: [
-              { title: 'Severity', value: alert.severity.toUpperCase(), short: true },
-              { title: 'Type', value: alert.type, short: true },
-              { title: 'Tenant', value: alert.tenantId, short: true },
-              { title: 'Time', value: new Date().toLocaleString(), short: true },
-              { title: 'Message', value: alert.message, short: false }
+              { title: "Severity", value: alert.severity.toUpperCase(), short: true },
+              { title: "Type", value: alert.type, short: true },
+              { title: "Tenant", value: alert.tenantId, short: true },
+              { title: "Time", value: new Date().toLocaleString(), short: true },
+              { title: "Message", value: alert.message, short: false },
             ],
-            footer: 'System Alert',
-            ts: Math.floor(Date.now() / 1000)
-          }
-        ]
+            footer: "System Alert",
+            ts: Math.floor(Date.now() / 1000),
+          },
+        ],
       };
 
       // REMOVE COMMENTS TO ENABLE SLACK ALERTS
@@ -380,7 +387,9 @@ export class DeadLetterProcessor {
       // this.logger.log(`Slack alert sent: ${alert.title}`);
 
       // FOR TESTING: Log what would be sent
-      this.logger.log(`[SLACK DISABLED] Would send Slack alert: ${JSON.stringify(slackMessage, null, 2)}`);
+      this.logger.log(
+        `[SLACK DISABLED] Would send Slack alert: ${JSON.stringify(slackMessage, null, 2)}`,
+      );
     } catch (error) {
       this.logger.error(`Failed to send Slack alert: ${error.message}`, error);
     }
@@ -391,15 +400,13 @@ export class DeadLetterProcessor {
    */
   private getSlackColorBySeverity(severity: string): string {
     const colors = {
-      low: '#36a64f',      // Green
-      medium: '#ff9500',   // Orange  
-      high: '#ff6b35',     // Red-Orange
-      critical: '#e01e5a'  // Red
+      low: "#36a64f", // Green
+      medium: "#ff9500", // Orange
+      high: "#ff6b35", // Red-Orange
+      critical: "#e01e5a", // Red
     };
-    return colors[severity] || '#808080'; // Gray for unknown
+    return colors[severity] || "#808080"; // Gray for unknown
   }
-
-
 
   /**
    * Create critical failure alert
@@ -427,7 +434,10 @@ export class DeadLetterProcessor {
   /**
    * Send dead letter notification email
    */
-  private async sendDeadLetterNotification(adminEmails: string[], data: DeadLetterJobData): Promise<void> {
+  private async sendDeadLetterNotification(
+    adminEmails: string[],
+    data: DeadLetterJobData,
+  ): Promise<void> {
     try {
       const subject = `🚨 Dead Letter Queue Alert: ${data.originalType} ${data.originalId}`;
       const htmlContent = this.generateDeadLetterEmailHtml(data);
@@ -439,7 +449,7 @@ export class DeadLetterProcessor {
           subject,
           html: htmlContent,
           text: textContent,
-          from: process.env.SYSTEM_ALERT_FROM_EMAIL || 'alerts@yourapp.com',
+          from: process.env.SYSTEM_ALERT_FROM_EMAIL || "alerts@yourapp.com",
         });
       }
 
@@ -455,20 +465,21 @@ export class DeadLetterProcessor {
   private async getAdminEmails(tenantId: string): Promise<string[]> {
     // In production, query tenant admins from database
     // For now, return system admin emails from environment
-    const systemAdmins = process.env.SYSTEM_ADMIN_EMAILS?.split(',') || [];
-    return systemAdmins.filter(email => email.includes('@'));
+    const systemAdmins = process.env.SYSTEM_ADMIN_EMAILS?.split(",") || [];
+    return systemAdmins.filter((email) => email.includes("@"));
   }
 
   /**
    * Generate HTML content for alert email
    */
   private generateAlertEmailHtml(alert: any): string {
-    const severityColor = {
-      low: '#28a745',
-      medium: '#ffc107', 
-      high: '#fd7e14',
-      critical: '#dc3545'
-    }[alert.severity] || '#6c757d';
+    const severityColor =
+      {
+        low: "#28a745",
+        medium: "#ffc107",
+        high: "#fd7e14",
+        critical: "#dc3545",
+      }[alert.severity] || "#6c757d";
 
     return `
 <!DOCTYPE html>
@@ -500,12 +511,16 @@ export class DeadLetterProcessor {
             <h3>Message:</h3>
             <p>${alert.message}</p>
             
-            ${alert.metadata ? `
+            ${
+              alert.metadata
+                ? `
             <div class="metadata">
                 <h4>Additional Details:</h4>
                 <pre>${JSON.stringify(alert.metadata, null, 2)}</pre>
             </div>
-            ` : ''}
+            `
+                : ""
+            }
             
             <p><em>This is an automated system alert. Please investigate and take appropriate action.</em></p>
         </div>
@@ -530,10 +545,14 @@ Time: ${new Date().toLocaleString()}
 Message:
 ${alert.message}
 
-${alert.metadata ? `
+${
+  alert.metadata
+    ? `
 Additional Details:
 ${JSON.stringify(alert.metadata, null, 2)}
-` : ''}
+`
+    : ""
+}
 
 This is an automated system alert. Please investigate and take appropriate action.
     `.trim();

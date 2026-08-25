@@ -1,39 +1,39 @@
 // Analytics and metrics types
 
-import { NotificationChannel, NotificationStatus } from './notification';
-import { ProviderType } from './provider';
+import { NotificationChannel, NotificationStatus } from "./notification";
+import { ProviderType } from "./provider";
 
 // Enums for analytics
 export enum MetricType {
-  DELIVERY = 'delivery',
-  ENGAGEMENT = 'engagement',
-  PERFORMANCE = 'performance',
-  USAGE = 'usage',
-  ERROR = 'error',
+  DELIVERY = "delivery",
+  ENGAGEMENT = "engagement",
+  PERFORMANCE = "performance",
+  USAGE = "usage",
+  ERROR = "error",
 }
 
 export enum TimeRange {
-  LAST_HOUR = 'last_hour',
-  LAST_24_HOURS = 'last_24_hours',
-  LAST_7_DAYS = 'last_7_days',
-  LAST_30_DAYS = 'last_30_days',
-  LAST_90_DAYS = 'last_90_days',
-  CUSTOM = 'custom',
+  LAST_HOUR = "last_hour",
+  LAST_24_HOURS = "last_24_hours",
+  LAST_7_DAYS = "last_7_days",
+  LAST_30_DAYS = "last_30_days",
+  LAST_90_DAYS = "last_90_days",
+  CUSTOM = "custom",
 }
 
 export enum AggregationType {
-  SUM = 'sum',
-  AVERAGE = 'average',
-  COUNT = 'count',
-  RATE = 'rate',
-  PERCENTAGE = 'percentage',
+  SUM = "sum",
+  AVERAGE = "average",
+  COUNT = "count",
+  RATE = "rate",
+  PERCENTAGE = "percentage",
 }
 
 export enum ExportFormat {
-  CSV = 'csv',
-  JSON = 'json',
-  XLSX = 'xlsx',
-  PDF = 'pdf',
+  CSV = "csv",
+  JSON = "json",
+  XLSX = "xlsx",
+  PDF = "pdf",
 }
 
 // Core analytics interfaces
@@ -154,11 +154,14 @@ export interface QuotaUsageMetrics {
     limit: number;
     percentage: number;
   };
-  channels: Record<NotificationChannel, {
-    used: number;
-    limit: number;
-    percentage: number;
-  }>;
+  channels: Record<
+    NotificationChannel,
+    {
+      used: number;
+      limit: number;
+      percentage: number;
+    }
+  >;
   apiCalls: {
     used: number;
     limit: number;
@@ -218,7 +221,7 @@ export interface QueueMetrics {
 }
 
 export interface SystemHealthMetrics {
-  status: 'healthy' | 'degraded' | 'unhealthy';
+  status: "healthy" | "degraded" | "unhealthy";
   uptime: number;
   lastHealthCheck: Date;
   services: ServiceHealthMetrics[];
@@ -226,7 +229,7 @@ export interface SystemHealthMetrics {
 
 export interface ServiceHealthMetrics {
   name: string;
-  status: 'healthy' | 'degraded' | 'unhealthy';
+  status: "healthy" | "degraded" | "unhealthy";
   responseTime: number;
   errorRate: number;
   lastCheck: Date;
@@ -253,16 +256,16 @@ export interface AnalyticsReport {
 }
 
 export enum ReportType {
-  DELIVERY = 'delivery',
-  ENGAGEMENT = 'engagement',
-  USAGE = 'usage',
-  PERFORMANCE = 'performance',
-  COST = 'cost',
-  CUSTOM = 'custom',
+  DELIVERY = "delivery",
+  ENGAGEMENT = "engagement",
+  USAGE = "usage",
+  PERFORMANCE = "performance",
+  COST = "cost",
+  CUSTOM = "custom",
 }
 
 export interface ReportSchedule {
-  frequency: 'daily' | 'weekly' | 'monthly' | 'quarterly';
+  frequency: "daily" | "weekly" | "monthly" | "quarterly";
   time: string; // HH:MM format
   dayOfWeek?: number; // 0-6 for weekly
   dayOfMonth?: number; // 1-31 for monthly
@@ -313,14 +316,14 @@ export interface DashboardWidget {
 }
 
 export enum WidgetType {
-  METRIC_CARD = 'metric_card',
-  LINE_CHART = 'line_chart',
-  BAR_CHART = 'bar_chart',
-  PIE_CHART = 'pie_chart',
-  TABLE = 'table',
-  HEATMAP = 'heatmap',
-  GAUGE = 'gauge',
-  FUNNEL = 'funnel',
+  METRIC_CARD = "metric_card",
+  LINE_CHART = "line_chart",
+  BAR_CHART = "bar_chart",
+  PIE_CHART = "pie_chart",
+  TABLE = "table",
+  HEATMAP = "heatmap",
+  GAUGE = "gauge",
+  FUNNEL = "funnel",
 }
 
 export interface WidgetConfig {
@@ -369,7 +372,7 @@ export interface RealTimeMetrics {
 
 export interface RecentEvent {
   id: string;
-  type: 'notification_sent' | 'notification_delivered' | 'notification_failed' | 'provider_error';
+  type: "notification_sent" | "notification_delivered" | "notification_failed" | "provider_error";
   timestamp: Date;
   data: Record<string, any>;
 }
@@ -413,7 +416,7 @@ export interface ExportRequest {
 export interface CreateDashboardRequest {
   name: string;
   description?: string;
-  widgets: Omit<DashboardWidget, 'id'>[];
+  widgets: Omit<DashboardWidget, "id">[];
   layout: DashboardLayout;
   isPublic?: boolean;
   tags?: string[];
@@ -490,6 +493,6 @@ export interface ThresholdExceededEvent {
   metric: string;
   threshold: number;
   currentValue: number;
-  severity: 'warning' | 'critical';
+  severity: "warning" | "critical";
   timestamp: Date;
 }

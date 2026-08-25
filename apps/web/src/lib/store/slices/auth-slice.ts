@@ -1,12 +1,12 @@
-import { authApi } from '@/lib/api/auth';
+import { authApi } from "@/lib/api/auth";
 import type {
   AuthError,
   LoginCredentials,
   RegisterData,
   SessionInfo,
-  User
-} from '@/lib/types/auth';
-import { createAsyncThunk, createSlice, PayloadAction } from '@reduxjs/toolkit';
+  User,
+} from "@/lib/types/auth";
+import { createAsyncThunk, createSlice, PayloadAction } from "@reduxjs/toolkit";
 
 export interface AuthState {
   // User and authentication status
@@ -51,136 +51,133 @@ const initialState: AuthState = {
 
 // Async thunks for authentication actions
 export const loginUser = createAsyncThunk(
-  'auth/login',
+  "auth/login",
   async (credentials: LoginCredentials, { rejectWithValue }) => {
     try {
       const response = await authApi.login(credentials);
       return response;
     } catch (error: any) {
       return rejectWithValue({
-        message: error.message || 'Login failed',
-        code: error.code || 'LOGIN_ERROR',
+        message: error.message || "Login failed",
+        code: error.code || "LOGIN_ERROR",
         statusCode: error.statusCode || 401,
       } as AuthError);
     }
-  }
+  },
 );
 
 export const registerUser = createAsyncThunk(
-  'auth/register',
+  "auth/register",
   async (userData: RegisterData, { rejectWithValue }) => {
     try {
       const response = await authApi.register(userData);
       return response;
     } catch (error: any) {
       return rejectWithValue({
-        message: error.message || 'Registration failed',
-        code: error.code || 'REGISTRATION_ERROR',
+        message: error.message || "Registration failed",
+        code: error.code || "REGISTRATION_ERROR",
         statusCode: error.statusCode || 400,
       } as AuthError);
     }
-  }
+  },
 );
 
 export const refreshAuthToken = createAsyncThunk(
-  'auth/refreshToken',
+  "auth/refreshToken",
   async (_, { getState, rejectWithValue }) => {
     try {
       const state = getState() as { auth: AuthState };
       if (!state.auth.refreshToken) {
-        throw new Error('No refresh token available');
+        throw new Error("No refresh token available");
       }
 
       const response = await authApi.refreshToken();
       return response;
     } catch (error: any) {
       return rejectWithValue({
-        message: error.message || 'Token refresh failed',
-        code: error.code || 'TOKEN_REFRESH_ERROR',
+        message: error.message || "Token refresh failed",
+        code: error.code || "TOKEN_REFRESH_ERROR",
         statusCode: error.statusCode || 401,
       } as AuthError);
     }
-  }
+  },
 );
 
-export const logoutUser = createAsyncThunk(
-  'auth/logout',
-  async (_, { rejectWithValue }) => {
-    try {
-      await authApi.logout();
-    } catch (error: any) {
-      // Even if logout fails on server, we should clear local state
-      console.warn('Logout API call failed:', error);
-    }
+export const logoutUser = createAsyncThunk("auth/logout", async (_, { rejectWithValue }) => {
+  try {
+    await authApi.logout();
+  } catch (error: any) {
+    // Even if logout fails on server, we should clear local state
+    console.warn("Logout API call failed:", error);
   }
-);
+});
 
 export const getCurrentUser = createAsyncThunk(
-  'auth/getCurrentUser',
+  "auth/getCurrentUser",
   async (_, { rejectWithValue }) => {
     try {
       const user = await authApi.getCurrentUser();
       return user;
     } catch (error: any) {
       return rejectWithValue({
-        message: error.message || 'Failed to get current user',
-        code: error.code || 'GET_USER_ERROR',
+        message: error.message || "Failed to get current user",
+        code: error.code || "GET_USER_ERROR",
         statusCode: error.statusCode || 401,
       } as AuthError);
     }
-  }
+  },
 );
 
 export const verifyEmail = createAsyncThunk(
-  'auth/verifyEmail',
+  "auth/verifyEmail",
   async (token: string, { rejectWithValue }) => {
     try {
       await authApi.verifyEmail({ token });
       return { success: true };
     } catch (error: any) {
       return rejectWithValue({
-        message: error.message || 'Email verification failed',
-        code: error.code || 'EMAIL_VERIFICATION_ERROR',
+        message: error.message || "Email verification failed",
+        code: error.code || "EMAIL_VERIFICATION_ERROR",
         statusCode: error.statusCode || 400,
       } as AuthError);
     }
-  }
+  },
 );
 
 export const requestPasswordReset = createAsyncThunk(
-  'auth/requestPasswordReset',
+  "auth/requestPasswordReset",
   async (email: string, { rejectWithValue }) => {
     try {
       await authApi.requestPasswordReset({ email });
       return { success: true };
     } catch (error: any) {
       return rejectWithValue({
-        message: error.message || 'Password reset request failed',
-        code: error.code || 'PASSWORD_RESET_REQUEST_ERROR',
+        message: error.message || "Password reset request failed",
+        code: error.code || "PASSWORD_RESET_REQUEST_ERROR",
         statusCode: error.statusCode || 400,
       } as AuthError);
     }
-  }
+  },
 );
 
 export const resetPassword = createAsyncThunk(
-  'auth/resetPassword',
+  "auth/resetPassword",
   async ({ token, password }: { token: string; password: string }, { rejectWithValue }) => {
     try {
       await authApi.confirmPasswordReset({ token, password, confirmPassword: password });
       return { success: true };
     } catch (error: any) {
       return rejectWithValue({
-        message: error.message || 'Password reset failed',
-        code: error.code || 'PASSWORD_RESET_ERROR',
+        message: error.message || "Password reset failed",
+        code: error.code || "PASSWORD_RESET_ERROR",
         statusCode: error.statusCode || 400,
       } as AuthError);
     }
-  }
+  },
 );
 
 export const authSlice = createSlice({
-  name: 'auth',
+  name: "auth",
   initialState,
   selectors: {
     selectUser: (state) => state.user,
@@ -189,7 +186,10 @@ export const authSlice = createSlice({
   },
   reducers: {
     // Token management
-    setTokens: (state, action: PayloadAction<{ accessToken: string; refreshToken: string; expiresIn: number }>) => {
+    setTokens: (
+      state,
+      action: PayloadAction<{ accessToken: string; refreshToken: string; expiresIn: number }>,
+    ) => {
       const { accessToken, refreshToken, expiresIn } = action.payload;
       state.accessToken = accessToken;
       state.refreshToken = refreshToken;
@@ -214,7 +214,7 @@ export const authSlice = createSlice({
     },
 
     removePermission: (state, action: PayloadAction<string>) => {
-      state.permissions = state.permissions.filter(p => p !== action.payload);
+      state.permissions = state.permissions.filter((p) => p !== action.payload);
     },
 
     clearPermissions: (state) => {
@@ -483,8 +483,10 @@ export const selectPermissions = (state: { auth: AuthState }) => state.auth.perm
 export const selectCurrentTenantId = (state: { auth: AuthState }) => state.auth.currentTenantId;
 export const selectSessionInfo = (state: { auth: AuthState }) => state.auth.sessionInfo;
 export const selectIsLoginModalOpen = (state: { auth: AuthState }) => state.auth.isLoginModalOpen;
-export const selectIsRegistrationModalOpen = (state: { auth: AuthState }) => state.auth.isRegistrationModalOpen;
-export const selectRedirectAfterLogin = (state: { auth: AuthState }) => state.auth.redirectAfterLogin;
+export const selectIsRegistrationModalOpen = (state: { auth: AuthState }) =>
+  state.auth.isRegistrationModalOpen;
+export const selectRedirectAfterLogin = (state: { auth: AuthState }) =>
+  state.auth.redirectAfterLogin;
 
 // Computed selectors
 export const selectIsTokenExpired = (state: { auth: AuthState }) => {
@@ -498,11 +500,11 @@ export const selectHasPermission = (permission: string) => (state: { auth: AuthS
 };
 
 export const selectHasAnyPermission = (permissions: string[]) => (state: { auth: AuthState }) => {
-  return permissions.some(permission => state.auth.permissions.includes(permission));
+  return permissions.some((permission) => state.auth.permissions.includes(permission));
 };
 
 export const selectHasAllPermissions = (permissions: string[]) => (state: { auth: AuthState }) => {
-  return permissions.every(permission => state.auth.permissions.includes(permission));
+  return permissions.every((permission) => state.auth.permissions.includes(permission));
 };
 
 export const selectUserRole = (state: { auth: AuthState }) => state.auth.user?.role;
@@ -513,6 +515,7 @@ export const selectUserFullName = (state: { auth: AuthState }) => {
   return `${user.firstName} ${user.lastName}`.trim();
 };
 
-export const selectIsEmailVerified = (state: { auth: AuthState }) => state.auth.user?.emailVerified ?? false;
+export const selectIsEmailVerified = (state: { auth: AuthState }) =>
+  state.auth.user?.emailVerified ?? false;
 
 export default authSlice.reducer;

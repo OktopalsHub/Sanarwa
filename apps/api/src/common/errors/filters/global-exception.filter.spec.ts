@@ -1,19 +1,19 @@
-import { ArgumentsHost, HttpStatus, HttpException } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import { Test, TestingModule } from '@nestjs/testing';
-import { Request, Response } from 'express';
-import { AlertService } from '../../alerts/alert.service';
-import { GlobalExceptionFilter } from './global-exception.filter';
+import { ArgumentsHost, HttpStatus, HttpException } from "@nestjs/common";
+import { ConfigService } from "@nestjs/config";
+import { Test, TestingModule } from "@nestjs/testing";
+import { Request, Response } from "express";
+import { AlertService } from "../../alerts/alert.service";
+import { GlobalExceptionFilter } from "./global-exception.filter";
 
-describe('GlobalExceptionFilter', () => {
+describe("GlobalExceptionFilter", () => {
   let filter: GlobalExceptionFilter;
   let alertService: AlertService;
 
   const mockRequest = {
-    method: 'POST',
-    url: '/api/test',
-    get: vi.fn().mockReturnValue('test-agent'),
-    ip: '127.0.0.1',
+    method: "POST",
+    url: "/api/test",
+    get: vi.fn().mockReturnValue("test-agent"),
+    ip: "127.0.0.1",
   } as unknown as Request;
 
   const mockResponse = {
@@ -42,7 +42,7 @@ describe('GlobalExceptionFilter', () => {
           provide: ConfigService,
           useValue: {
             get: vi.fn().mockImplementation((key: string) => {
-              if (key === 'NODE_ENV') return 'test';
+              if (key === "NODE_ENV") return "test";
               return undefined;
             }),
           },
@@ -58,9 +58,9 @@ describe('GlobalExceptionFilter', () => {
     vi.clearAllMocks();
   });
 
-  describe('catch', () => {
-    it('should handle regular errors and send appropriate response', async () => {
-      const error = new Error('Test error');
+  describe("catch", () => {
+    it("should handle regular errors and send appropriate response", async () => {
+      const error = new Error("Test error");
 
       await filter.catch(error, mockArgumentsHost);
 
@@ -69,18 +69,18 @@ describe('GlobalExceptionFilter', () => {
         expect.objectContaining({
           success: false,
           error: expect.objectContaining({
-            code: 'INTERNAL_ERROR',
-            message: 'Test error',
+            code: "INTERNAL_ERROR",
+            message: "Test error",
             timestamp: expect.any(String),
-            path: '/api/test',
-            method: 'POST',
+            path: "/api/test",
+            method: "POST",
           }),
         }),
       );
     });
 
-    it('should send alert for 5xx errors', async () => {
-      const error = new Error('Server error');
+    it("should send alert for 5xx errors", async () => {
+      const error = new Error("Server error");
 
       await filter.catch(error, mockArgumentsHost);
 
@@ -91,15 +91,15 @@ describe('GlobalExceptionFilter', () => {
       );
     });
 
-    it('should not send alert for client errors', async () => {
-      const clientError = new HttpException('Bad request', HttpStatus.BAD_REQUEST);
+    it("should not send alert for client errors", async () => {
+      const clientError = new HttpException("Bad request", HttpStatus.BAD_REQUEST);
 
       await filter.catch(clientError, mockArgumentsHost);
 
       expect(alertService.send5xxAlert).not.toHaveBeenCalled();
     });
 
-    it('should include debug information in development environment', async () => {
+    it("should include debug information in development environment", async () => {
       const module: TestingModule = await Test.createTestingModule({
         providers: [
           GlobalExceptionFilter,
@@ -113,7 +113,7 @@ describe('GlobalExceptionFilter', () => {
             provide: ConfigService,
             useValue: {
               get: vi.fn().mockImplementation((key: string) => {
-                if (key === 'NODE_ENV') return 'development';
+                if (key === "NODE_ENV") return "development";
                 return undefined;
               }),
             },
@@ -122,8 +122,8 @@ describe('GlobalExceptionFilter', () => {
       }).compile();
 
       const devFilter = module.get<GlobalExceptionFilter>(GlobalExceptionFilter);
-      const error = new Error('Test error');
-      error.stack = 'Error: Test error\n    at test\n    at another line';
+      const error = new Error("Test error");
+      error.stack = "Error: Test error\n    at test\n    at another line";
 
       await devFilter.catch(error, mockArgumentsHost);
 
@@ -136,8 +136,8 @@ describe('GlobalExceptionFilter', () => {
       );
     });
 
-    it('should sanitize sensitive data from request body', async () => {
-      const error = new Error('Test error');
+    it("should sanitize sensitive data from request body", async () => {
+      const error = new Error("Test error");
 
       await filter.catch(error, mockArgumentsHost);
 
@@ -145,8 +145,8 @@ describe('GlobalExceptionFilter', () => {
       expect(mockResponse.status).toHaveBeenCalledWith(HttpStatus.INTERNAL_SERVER_ERROR);
     });
 
-    it('should generate correlation ID if not present in headers', async () => {
-      const error = new Error('Test error');
+    it("should generate correlation ID if not present in headers", async () => {
+      const error = new Error("Test error");
 
       await filter.catch(error, mockArgumentsHost);
 
@@ -154,16 +154,12 @@ describe('GlobalExceptionFilter', () => {
       expect(mockResponse.status).toHaveBeenCalledWith(HttpStatus.INTERNAL_SERVER_ERROR);
     });
 
-    it('should handle alerting service failures gracefully', async () => {
-      const error = new Error('Critical error');
-      vi
-        .spyOn(alertService, 'send5xxAlert')
-        .mockRejectedValue(new Error('Alert service down'));
+    it("should handle alerting service failures gracefully", async () => {
+      const error = new Error("Critical error");
+      vi.spyOn(alertService, "send5xxAlert").mockRejectedValue(new Error("Alert service down"));
 
       // Should not throw even if alerting fails
-      await expect(
-        filter.catch(error, mockArgumentsHost),
-      ).resolves.not.toThrow();
+      await expect(filter.catch(error, mockArgumentsHost)).resolves.not.toThrow();
 
       expect(mockResponse.status).toHaveBeenCalledWith(HttpStatus.INTERNAL_SERVER_ERROR);
     });

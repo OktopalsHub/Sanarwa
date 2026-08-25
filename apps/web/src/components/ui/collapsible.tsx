@@ -1,1 +1,1 @@
-export * from '@sanarwa/ui/collapsible';
+export * from "@sanarwa/ui/collapsible";

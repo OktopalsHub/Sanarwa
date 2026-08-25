@@ -1,11 +1,11 @@
-'use client';
+"use client";
 
-import { CampaignDetails } from '@/components/campaigns/campaign-details';
-import { AppShell } from '@/components/layout';
-import { useParams } from '@/compat/next-navigation';
+import { CampaignDetails } from "@/components/campaigns/campaign-details";
+import { AppShell } from "@/components/layout";
+import { useParams } from "@/compat/next-navigation";
 
 export default function CampaignDetailsPage() {
-  const { id: campaignId = '' } = useParams({ strict: false }) as { id?: string };
+  const { id: campaignId = "" } = useParams({ strict: false }) as { id?: string };
 
   return (
     <AppShell>

@@ -1,1 +1,1 @@
-export * from '@sanarwa/api-client';
+export * from "@sanarwa/api-client";

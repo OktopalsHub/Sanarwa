@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger } from "@nestjs/common";
 
 export interface VoiceRoutingRule {
   region: string;
@@ -12,14 +12,14 @@ export interface VoiceRoutingRule {
   voiceOptions: {
     language: string;
     voices: string[];
-    quality: 'standard' | 'neural' | 'premium';
+    quality: "standard" | "neural" | "premium";
   };
 }
 
 export interface VoiceProvider {
   id: string;
   name: string;
-  type: 'voice_call' | 'tts' | 'both';
+  type: "voice_call" | "tts" | "both";
   supportedLanguages: string[];
   costPerMinute: number;
   costPerCharacter?: number;
@@ -29,12 +29,12 @@ export interface VoiceProvider {
 @Injectable()
 export class SmartVoiceRouterService {
   private readonly logger = new Logger(SmartVoiceRouterService.name);
-  
+
   // Performance optimization: Cache voice provider lookups
   private readonly providerCache = new Map<string, any>();
   private readonly healthCache = new Map<string, { isHealthy: boolean; lastCheck: Date }>();
   private readonly voiceCache = new Map<string, string[]>();
-  
+
   // Cache TTL in milliseconds
   private readonly HEALTH_CACHE_TTL = 60000; // 1 minute (voice calls need fresh health)
   private readonly VOICE_CACHE_TTL = 300000; // 5 minutes
@@ -43,71 +43,71 @@ export class SmartVoiceRouterService {
   // Primary: Inworld TTS (cheaper), Fallback: AWS Polly (reliable)
   private readonly voiceRoutingRules: VoiceRoutingRule[] = [
     {
-      region: 'North America',
-      countryCodes: ['US', 'CA'],
+      region: "North America",
+      countryCodes: ["US", "CA"],
       providers: {
-        primary: 'inworld_tts',
-        fallback: ['aws_polly', 'livekit_voice'],
+        primary: "inworld_tts",
+        fallback: ["aws_polly", "livekit_voice"],
         costPerMinute: 4.0, // $4/minute for voice calls
         costPerCharacter: 0.000003, // Inworld TTS cheaper pricing
       },
       voiceOptions: {
-        language: 'en-US',
-        voices: ['Sarah', 'David', 'Emma', 'James'], // Inworld TTS voices
-        quality: 'standard',
+        language: "en-US",
+        voices: ["Sarah", "David", "Emma", "James"], // Inworld TTS voices
+        quality: "standard",
       },
     },
     {
-      region: 'Europe',
-      countryCodes: ['GB', 'DE', 'FR', 'IT', 'ES', 'NL', 'SE', 'NO', 'DK'],
+      region: "Europe",
+      countryCodes: ["GB", "DE", "FR", "IT", "ES", "NL", "SE", "NO", "DK"],
       providers: {
-        primary: 'inworld_tts',
-        fallback: ['aws_polly', 'livekit_voice'],
+        primary: "inworld_tts",
+        fallback: ["aws_polly", "livekit_voice"],
         costPerMinute: 4.2, // Slightly higher for international
         costPerCharacter: 0.000003,
       },
       voiceOptions: {
-        language: 'en-GB', // Default to British English, can be overridden
-        voices: ['Alice', 'Oliver', 'Emma', 'James'], // Inworld TTS voices
-        quality: 'standard',
+        language: "en-GB", // Default to British English, can be overridden
+        voices: ["Alice", "Oliver", "Emma", "James"], // Inworld TTS voices
+        quality: "standard",
       },
     },
     {
-      region: 'Asia Pacific',
-      countryCodes: ['AU', 'NZ', 'SG', 'HK', 'IN', 'JP'],
+      region: "Asia Pacific",
+      countryCodes: ["AU", "NZ", "SG", "HK", "IN", "JP"],
       providers: {
-        primary: 'inworld_tts',
-        fallback: ['aws_polly', 'livekit_voice'],
+        primary: "inworld_tts",
+        fallback: ["aws_polly", "livekit_voice"],
         costPerMinute: 4.5, // Higher for APAC
         costPerCharacter: 0.000003,
       },
       voiceOptions: {
-        language: 'en-AU', // Australian English
-        voices: ['Sarah', 'David', 'Alice', 'Oliver'],
-        quality: 'standard',
+        language: "en-AU", // Australian English
+        voices: ["Sarah", "David", "Alice", "Oliver"],
+        quality: "standard",
       },
     },
     {
-      region: 'Global',
+      region: "Global",
       countryCodes: [], // Fallback for all other countries
       providers: {
-        primary: 'inworld_tts',
-        fallback: ['aws_polly'],
+        primary: "inworld_tts",
+        fallback: ["aws_polly"],
         costPerMinute: 5.0, // Max pricing as specified
         costPerCharacter: 0.000003,
       },
       voiceOptions: {
-        language: 'en-US',
-        voices: ['Sarah', 'David'], // Safe default voices
-        quality: 'standard',
+        language: "en-US",
+        voices: ["Sarah", "David"], // Safe default voices
+        quality: "standard",
       },
     },
   ];
 
   // Global fallback for when all providers fail
   private readonly globalFallback = {
-    primary: 'aws_polly',
-    fallback: ['livekit_voice'],
+    primary: "aws_polly",
+    fallback: ["livekit_voice"],
     costPerMinute: 5.0,
   };
 
@@ -120,8 +120,8 @@ export class SmartVoiceRouterService {
    */
   async selectVoiceProvider(
     phoneNumber?: string,
-    useCase: 'voice_call' | 'tts' | 'voice_notification' = 'voice_call',
-    language?: string
+    useCase: "voice_call" | "tts" | "voice_notification" = "voice_call",
+    language?: string,
   ): Promise<{
     providerId: string;
     providerName: string;
@@ -136,13 +136,13 @@ export class SmartVoiceRouterService {
     isOptimal: boolean;
   }> {
     const startTime = Date.now();
-    
+
     try {
-      let countryCode = 'US'; // Default to US
-      
+      let countryCode = "US"; // Default to US
+
       // Parse country code if phone number provided
       if (phoneNumber) {
-        const { parsePhoneNumber } = await import('libphonenumber-js');
+        const { parsePhoneNumber } = await import("libphonenumber-js");
         const parsedNumber = parsePhoneNumber(phoneNumber);
         if (parsedNumber && parsedNumber.country) {
           countryCode = parsedNumber.country;
@@ -151,7 +151,7 @@ export class SmartVoiceRouterService {
 
       // Find routing rule for this country
       const rule = this.findVoiceRuleForCountry(countryCode);
-      
+
       if (!rule) {
         this.logger.debug(`No specific voice rule for ${countryCode}, using global fallback`);
         return this.getVoiceFallbackProvider(countryCode, useCase);
@@ -165,7 +165,7 @@ export class SmartVoiceRouterService {
       if (primaryProvider.isHealthy) {
         const duration = Date.now() - startTime;
         this.logger.debug(`Voice routing completed in ${duration}ms for ${countryCode}`);
-        
+
         return {
           providerId: rule.providers.primary,
           providerName: this.getVoiceProviderName(rule.providers.primary),
@@ -186,19 +186,21 @@ export class SmartVoiceRouterService {
         const fallbackProvider = await this.getCachedVoiceProviderHealth(fallbackId);
         if (fallbackProvider.isHealthy) {
           this.logger.warn(
-            `Primary voice provider ${rule.providers.primary} unhealthy, using fallback ${fallbackId}`
+            `Primary voice provider ${rule.providers.primary} unhealthy, using fallback ${fallbackId}`,
           );
-          
+
           return {
             providerId: fallbackId,
             providerName: this.getVoiceProviderName(fallbackId),
             region: rule.region,
             costPerMinute: rule.providers.costPerMinute * 1.2, // 20% penalty for fallback
-            costPerCharacter: rule.providers.costPerCharacter ? rule.providers.costPerCharacter * 1.2 : undefined,
+            costPerCharacter: rule.providers.costPerCharacter
+              ? rule.providers.costPerCharacter * 1.2
+              : undefined,
             voiceOptions: {
               language: selectedLanguage,
               recommendedVoices: this.getFallbackVoices(fallbackId, selectedLanguage),
-              quality: 'standard',
+              quality: "standard",
             },
             isOptimal: false,
           };
@@ -206,12 +208,13 @@ export class SmartVoiceRouterService {
       }
 
       // All providers down, use global fallback
-      this.logger.error(`All voice providers for ${rule.region} are unhealthy, using global fallback`);
+      this.logger.error(
+        `All voice providers for ${rule.region} are unhealthy, using global fallback`,
+      );
       return this.getVoiceFallbackProvider(countryCode, useCase);
-
     } catch (error) {
       this.logger.error(`Error selecting voice provider:`, error);
-      return this.getVoiceFallbackProvider('Error', useCase);
+      return this.getVoiceFallbackProvider("Error", useCase);
     }
   }
 
@@ -227,7 +230,7 @@ export class SmartVoiceRouterService {
     duration?: number,
     textLength?: number,
     phoneNumber?: string,
-    useCase: 'voice_call' | 'tts' | 'voice_notification' = 'voice_call'
+    useCase: "voice_call" | "tts" | "voice_notification" = "voice_call",
   ): Promise<{
     costPerMinute?: number;
     costPerCharacter?: number;
@@ -242,7 +245,7 @@ export class SmartVoiceRouterService {
     };
   }> {
     const provider = await this.selectVoiceProvider(phoneNumber, useCase);
-    
+
     let totalCost = 0;
     const breakdown: any = {};
 
@@ -278,49 +281,62 @@ export class SmartVoiceRouterService {
    * @param providerId - Provider identifier
    * @returns Available voices
    */
-  async getAvailableVoices(language: string, providerId: string = 'aws_polly'): Promise<{
+  async getAvailableVoices(
+    language: string,
+    providerId: string = "aws_polly",
+  ): Promise<{
     language: string;
     voices: Array<{
       id: string;
       name: string;
-      gender: 'male' | 'female' | 'neutral';
-      quality: 'standard' | 'neural';
+      gender: "male" | "female" | "neutral";
+      quality: "standard" | "neural";
       sampleUrl?: string;
     }>;
   }> {
     // AWS Polly standard voices (within pricing range)
     const awsPollyVoices = {
-      'en-US': [
-        { id: 'Joanna', name: 'Joanna', gender: 'female' as const, quality: 'standard' as const },
-        { id: 'Matthew', name: 'Matthew', gender: 'male' as const, quality: 'standard' as const },
-        { id: 'Ivy', name: 'Ivy', gender: 'female' as const, quality: 'standard' as const },
-        { id: 'Justin', name: 'Justin', gender: 'male' as const, quality: 'standard' as const },
+      "en-US": [
+        { id: "Joanna", name: "Joanna", gender: "female" as const, quality: "standard" as const },
+        { id: "Matthew", name: "Matthew", gender: "male" as const, quality: "standard" as const },
+        { id: "Ivy", name: "Ivy", gender: "female" as const, quality: "standard" as const },
+        { id: "Justin", name: "Justin", gender: "male" as const, quality: "standard" as const },
       ],
-      'en-GB': [
-        { id: 'Amy', name: 'Amy', gender: 'female' as const, quality: 'standard' as const },
-        { id: 'Brian', name: 'Brian', gender: 'male' as const, quality: 'standard' as const },
-        { id: 'Emma', name: 'Emma', gender: 'female' as const, quality: 'standard' as const },
-        { id: 'Arthur', name: 'Arthur', gender: 'male' as const, quality: 'standard' as const },
+      "en-GB": [
+        { id: "Amy", name: "Amy", gender: "female" as const, quality: "standard" as const },
+        { id: "Brian", name: "Brian", gender: "male" as const, quality: "standard" as const },
+        { id: "Emma", name: "Emma", gender: "female" as const, quality: "standard" as const },
+        { id: "Arthur", name: "Arthur", gender: "male" as const, quality: "standard" as const },
       ],
-      'en-AU': [
-        { id: 'Nicole', name: 'Nicole', gender: 'female' as const, quality: 'standard' as const },
-        { id: 'Russell', name: 'Russell', gender: 'male' as const, quality: 'standard' as const },
+      "en-AU": [
+        { id: "Nicole", name: "Nicole", gender: "female" as const, quality: "standard" as const },
+        { id: "Russell", name: "Russell", gender: "male" as const, quality: "standard" as const },
       ],
     };
 
     // Inworld TTS voices (fallback)
     const inworldVoices = {
-      'en-US': [
-        { id: 'inworld_sarah', name: 'Sarah', gender: 'female' as const, quality: 'standard' as const },
-        { id: 'inworld_david', name: 'David', gender: 'male' as const, quality: 'standard' as const },
+      "en-US": [
+        {
+          id: "inworld_sarah",
+          name: "Sarah",
+          gender: "female" as const,
+          quality: "standard" as const,
+        },
+        {
+          id: "inworld_david",
+          name: "David",
+          gender: "male" as const,
+          quality: "standard" as const,
+        },
       ],
     };
 
     let voices = [];
-    if (providerId === 'aws_polly') {
-      voices = awsPollyVoices[language] || awsPollyVoices['en-US'];
-    } else if (providerId === 'inworld_tts') {
-      voices = inworldVoices[language] || inworldVoices['en-US'];
+    if (providerId === "aws_polly") {
+      voices = awsPollyVoices[language] || awsPollyVoices["en-US"];
+    } else if (providerId === "inworld_tts") {
+      voices = inworldVoices[language] || inworldVoices["en-US"];
     }
 
     return {
@@ -351,14 +367,14 @@ export class SmartVoiceRouterService {
     };
   }> {
     // Calculate cost statistics
-    const costs = this.voiceRoutingRules.map(r => r.providers.costPerMinute);
+    const costs = this.voiceRoutingRules.map((r) => r.providers.costPerMinute);
     const averageCostPerMinute = costs.reduce((a, b) => a + b, 0) / costs.length;
-    
-    const cheapestRule = this.voiceRoutingRules.reduce((min, rule) => 
-      rule.providers.costPerMinute < min.providers.costPerMinute ? rule : min
+
+    const cheapestRule = this.voiceRoutingRules.reduce((min, rule) =>
+      rule.providers.costPerMinute < min.providers.costPerMinute ? rule : min,
     );
-    const mostExpensiveRule = this.voiceRoutingRules.reduce((max, rule) => 
-      rule.providers.costPerMinute > max.providers.costPerMinute ? rule : max
+    const mostExpensiveRule = this.voiceRoutingRules.reduce((max, rule) =>
+      rule.providers.costPerMinute > max.providers.costPerMinute ? rule : max,
     );
 
     return {
@@ -366,9 +382,9 @@ export class SmartVoiceRouterService {
         totalRules: this.voiceRoutingRules.length,
         averageRoutingTime: 18, // 18ms average (slightly slower than SMS due to voice complexity)
         providerDistribution: {
-          aws_polly: 85,      // 85% primary usage
-          inworld_tts: 12,    // 12% fallback usage
-          livekit_voice: 3,   // 3% emergency fallback
+          aws_polly: 85, // 85% primary usage
+          inworld_tts: 12, // 12% fallback usage
+          livekit_voice: 3, // 3% emergency fallback
         },
       },
       costOptimization: {
@@ -379,8 +395,8 @@ export class SmartVoiceRouterService {
       },
       qualityMetrics: {
         primaryProviderUptime: 0.99, // 99% AWS Polly uptime
-        fallbackUsageRate: 0.15,     // 15% fallback usage
-        averageVoiceQuality: 'standard', // Standard quality within budget
+        fallbackUsageRate: 0.15, // 15% fallback usage
+        averageVoiceQuality: "standard", // Standard quality within budget
       },
     };
   }
@@ -396,7 +412,7 @@ export class SmartVoiceRouterService {
       }
     }
     // Return global rule if no specific match
-    return this.voiceRoutingRules.find(r => r.region === 'Global');
+    return this.voiceRoutingRules.find((r) => r.region === "Global");
   }
 
   /**
@@ -408,14 +424,14 @@ export class SmartVoiceRouterService {
   }> {
     const cached = this.healthCache.get(providerId);
     const now = new Date();
-    
-    if (cached && (now.getTime() - cached.lastCheck.getTime()) < this.HEALTH_CACHE_TTL) {
+
+    if (cached && now.getTime() - cached.lastCheck.getTime() < this.HEALTH_CACHE_TTL) {
       return cached;
     }
-    
+
     const health = await this.getVoiceProviderHealth(providerId);
     this.healthCache.set(providerId, health);
-    
+
     return health;
   }
 
@@ -428,11 +444,11 @@ export class SmartVoiceRouterService {
   }> {
     // Simulate realistic health patterns for voice providers
     const healthPatterns = {
-      inworld_tts: 0.96,    // 96% uptime (primary TTS service)
-      aws_polly: 0.99,      // 99% uptime (AWS reliability - fallback)
+      inworld_tts: 0.96, // 96% uptime (primary TTS service)
+      aws_polly: 0.99, // 99% uptime (AWS reliability - fallback)
     };
 
-    const reliability = healthPatterns[providerId] || 0.90;
+    const reliability = healthPatterns[providerId] || 0.9;
     const isHealthy = Math.random() < reliability;
 
     return {
@@ -446,9 +462,9 @@ export class SmartVoiceRouterService {
    */
   private getVoiceProviderName(providerId: string): string {
     const names = {
-      inworld_tts: 'Inworld TTS',
-      aws_polly: 'AWS Polly',
-      livekit_voice: 'LiveKit Voice',
+      inworld_tts: "Inworld TTS",
+      aws_polly: "AWS Polly",
+      livekit_voice: "LiveKit Voice",
     };
     return names[providerId] || providerId;
   }
@@ -458,11 +474,11 @@ export class SmartVoiceRouterService {
    */
   private getFallbackVoices(providerId: string, language: string): string[] {
     const fallbackVoices = {
-      aws_polly: ['Joanna', 'Matthew'],
-      inworld_tts: ['Sarah', 'David'],
-      livekit_voice: ['Default'],
+      aws_polly: ["Joanna", "Matthew"],
+      inworld_tts: ["Sarah", "David"],
+      livekit_voice: ["Default"],
     };
-    return fallbackVoices[providerId] || ['Default'];
+    return fallbackVoices[providerId] || ["Default"];
   }
 
   /**
@@ -476,9 +492,9 @@ export class SmartVoiceRouterService {
       costPerMinute: this.globalFallback.costPerMinute,
       costPerCharacter: 0.000005, // Slightly higher for fallback
       voiceOptions: {
-        language: 'en-US',
-        recommendedVoices: ['Default'],
-        quality: 'standard',
+        language: "en-US",
+        recommendedVoices: ["Default"],
+        quality: "standard",
       },
       isOptimal: false,
     };

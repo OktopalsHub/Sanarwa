@@ -1,8 +1,8 @@
-import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 
 export interface WorkflowNode {
   id: string;
-  type: 'trigger' | 'action' | 'condition' | 'delay' | 'split';
+  type: "trigger" | "action" | "condition" | "delay" | "split";
   position: { x: number; y: number };
   data: Record<string, any>;
   config?: Record<string, any>;
@@ -54,7 +54,7 @@ export interface WorkflowState {
     executionLog: Array<{
       nodeId: string;
       timestamp: number;
-      status: 'pending' | 'running' | 'success' | 'error';
+      status: "pending" | "running" | "success" | "error";
       message?: string;
       data?: any;
     }>;
@@ -78,8 +78,8 @@ export interface WorkflowState {
 const initialState: WorkflowState = {
   currentWorkflow: {
     id: null,
-    name: 'Untitled Workflow',
-    description: '',
+    name: "Untitled Workflow",
+    description: "",
     nodes: [],
     connections: [],
     isDirty: false,
@@ -113,17 +113,20 @@ const initialState: WorkflowState = {
 };
 
 export const workflowSlice = createSlice({
-  name: 'workflow',
+  name: "workflow",
   initialState,
   reducers: {
     // Workflow actions
-    loadWorkflow: (state, action: PayloadAction<{
-      id: string;
-      name: string;
-      description: string;
-      nodes: WorkflowNode[];
-      connections: WorkflowConnection[];
-    }>) => {
+    loadWorkflow: (
+      state,
+      action: PayloadAction<{
+        id: string;
+        name: string;
+        description: string;
+        nodes: WorkflowNode[];
+        connections: WorkflowConnection[];
+      }>,
+    ) => {
       const { id, name, description, nodes, connections } = action.payload;
       state.currentWorkflow = {
         id,
@@ -175,7 +178,7 @@ export const workflowSlice = createSlice({
 
     updateNode: (state, action: PayloadAction<{ id: string; updates: Partial<WorkflowNode> }>) => {
       const { id, updates } = action.payload;
-      const nodeIndex = state.currentWorkflow.nodes.findIndex(n => n.id === id);
+      const nodeIndex = state.currentWorkflow.nodes.findIndex((n) => n.id === id);
       if (nodeIndex !== -1) {
         const node = state.currentWorkflow.nodes[nodeIndex];
         if (node) {
@@ -198,11 +201,11 @@ export const workflowSlice = createSlice({
       state.history.canRedo = false;
 
       // Remove node
-      state.currentWorkflow.nodes = state.currentWorkflow.nodes.filter(n => n.id !== nodeId);
+      state.currentWorkflow.nodes = state.currentWorkflow.nodes.filter((n) => n.id !== nodeId);
 
       // Remove connections involving this node
       state.currentWorkflow.connections = state.currentWorkflow.connections.filter(
-        c => c.sourceNodeId !== nodeId && c.targetNodeId !== nodeId
+        (c) => c.sourceNodeId !== nodeId && c.targetNodeId !== nodeId,
       );
 
       state.currentWorkflow.isDirty = true;
@@ -236,7 +239,7 @@ export const workflowSlice = createSlice({
       state.history.canRedo = false;
 
       state.currentWorkflow.connections = state.currentWorkflow.connections.filter(
-        c => c.id !== connectionId
+        (c) => c.id !== connectionId,
       );
       state.currentWorkflow.isDirty = true;
     },
@@ -275,7 +278,7 @@ export const workflowSlice = createSlice({
     // Node configuration actions
     openNodeConfig: (state, action: PayloadAction<string>) => {
       const nodeId = action.payload;
-      const node = state.currentWorkflow.nodes.find(n => n.id === nodeId);
+      const node = state.currentWorkflow.nodes.find((n) => n.id === nodeId);
       if (node) {
         state.nodeConfig.activeNodeId = nodeId;
         state.nodeConfig.configPanelOpen = true;
@@ -296,7 +299,7 @@ export const workflowSlice = createSlice({
     saveNodeConfig: (state) => {
       const { activeNodeId, configData } = state.nodeConfig;
       if (activeNodeId) {
-        const nodeIndex = state.currentWorkflow.nodes.findIndex(n => n.id === activeNodeId);
+        const nodeIndex = state.currentWorkflow.nodes.findIndex((n) => n.id === activeNodeId);
         if (nodeIndex !== -1) {
           if (state.currentWorkflow.nodes[nodeIndex]) {
             state.currentWorkflow.nodes[nodeIndex].config = { ...configData };
@@ -322,12 +325,15 @@ export const workflowSlice = createSlice({
       state.execution.currentStep = action.payload;
     },
 
-    addExecutionLog: (state, action: PayloadAction<{
-      nodeId: string;
-      status: 'pending' | 'running' | 'success' | 'error';
-      message?: string;
-      data?: any;
-    }>) => {
+    addExecutionLog: (
+      state,
+      action: PayloadAction<{
+        nodeId: string;
+        status: "pending" | "running" | "success" | "error";
+        message?: string;
+        data?: any;
+      }>,
+    ) => {
       state.execution.executionLog.push({
         ...action.payload,
         timestamp: Date.now(),
@@ -381,8 +387,8 @@ export const workflowSlice = createSlice({
     clearWorkflow: (state) => {
       state.currentWorkflow = {
         id: null,
-        name: 'Untitled Workflow',
-        description: '',
+        name: "Untitled Workflow",
+        description: "",
         nodes: [],
         connections: [],
         isDirty: false,
@@ -448,11 +454,16 @@ export const {
 } = workflowSlice.actions;
 
 // Selectors
-export const selectCurrentWorkflow = (state: { workflow: WorkflowState }) => state.workflow.currentWorkflow;
-export const selectWorkflowNodes = (state: { workflow: WorkflowState }) => state.workflow.currentWorkflow.nodes;
-export const selectWorkflowConnections = (state: { workflow: WorkflowState }) => state.workflow.currentWorkflow.connections;
-export const selectWorkflowIsDirty = (state: { workflow: WorkflowState }) => state.workflow.currentWorkflow.isDirty;
+export const selectCurrentWorkflow = (state: { workflow: WorkflowState }) =>
+  state.workflow.currentWorkflow;
+export const selectWorkflowNodes = (state: { workflow: WorkflowState }) =>
+  state.workflow.currentWorkflow.nodes;
+export const selectWorkflowConnections = (state: { workflow: WorkflowState }) =>
+  state.workflow.currentWorkflow.connections;
+export const selectWorkflowIsDirty = (state: { workflow: WorkflowState }) =>
+  state.workflow.currentWorkflow.isDirty;
 export const selectCanvasState = (state: { workflow: WorkflowState }) => state.workflow.canvas;
 export const selectNodeConfig = (state: { workflow: WorkflowState }) => state.workflow.nodeConfig;
-export const selectExecutionState = (state: { workflow: WorkflowState }) => state.workflow.execution;
+export const selectExecutionState = (state: { workflow: WorkflowState }) =>
+  state.workflow.execution;
 export const selectHistoryState = (state: { workflow: WorkflowState }) => state.workflow.history;

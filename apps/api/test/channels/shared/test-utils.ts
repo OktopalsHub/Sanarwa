@@ -2,8 +2,8 @@
  * Shared test utilities for notification channel testing
  */
 
-import axios, { AxiosInstance } from 'axios';
-import { expect } from 'vitest';
+import axios, { AxiosInstance } from "axios";
+import { expect } from "vitest";
 
 export interface TestUser {
   email: string;
@@ -27,27 +27,27 @@ export interface TestSetup {
 }
 
 export async function createTestSetup(): Promise<TestSetup> {
-  const baseURL = 'http://localhost:9000/api/v1';
+  const baseURL = "http://localhost:9000/api/v1";
   const timestamp = Date.now();
-  
+
   const api = axios.create({
     baseURL,
     timeout: 15000,
-    validateStatus: () => true
+    validateStatus: () => true,
   });
 
   const testUser: TestUser = {
     email: `test-${timestamp}@example.com`,
-    password: 'Test123!',
-    firstName: 'Test',
-    lastName: 'User'
+    password: "Test123!",
+    firstName: "Test",
+    lastName: "User",
   };
 
   await waitForServer(api);
 
   // Register user and create project
-  const response = await api.post('/auth/register', testUser);
-  
+  const response = await api.post("/auth/register", testUser);
+
   if (response.status !== 201) {
     throw new Error(`Failed to register user: ${response.status}`);
   }
@@ -55,39 +55,47 @@ export async function createTestSetup(): Promise<TestSetup> {
   const authData: AuthData = {
     accessToken: response.data.access_token,
     userId: response.data.user.id,
-    tenantId: response.data.user.tenantId || `tenant_${timestamp}`
+    tenantId: response.data.user.tenantId || `tenant_${timestamp}`,
   };
 
   // Create project
-  const projectResponse = await api.post('/projects', {
-    name: `Test Project ${timestamp}`,
-    description: 'Project for notification channel testing'
-  }, {
-    headers: { Authorization: `Bearer ${authData.accessToken}` }
-  });
+  const projectResponse = await api.post(
+    "/projects",
+    {
+      name: `Test Project ${timestamp}`,
+      description: "Project for notification channel testing",
+    },
+    {
+      headers: { Authorization: `Bearer ${authData.accessToken}` },
+    },
+  );
 
   let projectId: string;
   let apiKey: string;
 
   if (projectResponse.status === 201) {
     projectId = projectResponse.data.id;
-    
+
     // Create API key
-    const apiKeyResponse = await api.post(`/projects/${projectId}/api-keys`, {
-      name: `Test API Key ${timestamp}`,
-      description: 'API key for testing'
-    }, {
-      headers: { Authorization: `Bearer ${authData.accessToken}` }
-    });
+    const apiKeyResponse = await api.post(
+      `/projects/${projectId}/api-keys`,
+      {
+        name: `Test API Key ${timestamp}`,
+        description: "API key for testing",
+      },
+      {
+        headers: { Authorization: `Bearer ${authData.accessToken}` },
+      },
+    );
 
     if (apiKeyResponse.status === 201) {
       apiKey = apiKeyResponse.data.key;
     } else {
-      apiKey = `nf_proj_dev_${Buffer.from(`test_${timestamp}`).toString('base64url')}`;
+      apiKey = `nf_proj_dev_${Buffer.from(`test_${timestamp}`).toString("base64url")}`;
     }
   } else {
     projectId = `proj_${timestamp}`;
-    apiKey = `nf_proj_dev_${Buffer.from(`test_${timestamp}`).toString('base64url')}`;
+    apiKey = `nf_proj_dev_${Buffer.from(`test_${timestamp}`).toString("base64url")}`;
   }
 
   return {
@@ -95,20 +103,20 @@ export async function createTestSetup(): Promise<TestSetup> {
     authData,
     apiKey,
     projectId,
-    testUser
+    testUser,
   };
 }
 
 export async function waitForServer(api: AxiosInstance, maxRetries = 10): Promise<void> {
   for (let i = 0; i < maxRetries; i++) {
     try {
-      const response = await api.get('/health');
+      const response = await api.get("/health");
       if (response.status === 200) return;
     } catch (error) {
       if (i === maxRetries - 1) {
-        throw new Error('Server not ready. Start with: npm run start:dev');
+        throw new Error("Server not ready. Start with: npm run start:dev");
       }
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      await new Promise((resolve) => setTimeout(resolve, 1000));
     }
   }
 }
@@ -116,24 +124,24 @@ export async function waitForServer(api: AxiosInstance, maxRetries = 10): Promis
 export async function createTemplate(
   api: AxiosInstance,
   authData: AuthData,
-  templateData: any
+  templateData: any,
 ): Promise<{ id: string; name: string; channel: string }> {
   const response = await api.post(`/tenants/${authData.tenantId}/templates`, templateData, {
-    headers: { Authorization: `Bearer ${authData.accessToken}` }
+    headers: { Authorization: `Bearer ${authData.accessToken}` },
   });
 
   if (response.status === 201) {
     return {
       id: response.data.id,
       name: response.data.name,
-      channel: templateData.channel
+      channel: templateData.channel,
     };
   } else {
     // Return mock template if creation fails
     return {
       id: `tpl_${templateData.channel.toLowerCase()}_${Date.now()}`,
       name: templateData.name,
-      channel: templateData.channel
+      channel: templateData.channel,
     };
   }
 }
@@ -141,11 +149,11 @@ export async function createTemplate(
 export async function cleanupTemplate(
   api: AxiosInstance,
   authData: AuthData,
-  templateId: string
+  templateId: string,
 ): Promise<void> {
   try {
     await api.delete(`/tenants/${authData.tenantId}/templates/${templateId}`, {
-      headers: { Authorization: `Bearer ${authData.accessToken}` }
+      headers: { Authorization: `Bearer ${authData.accessToken}` },
     });
   } catch (error) {
     // Ignore cleanup errors
@@ -162,9 +170,9 @@ export function expectValidStatusCodes(actualStatus: number, expectedCodes: numb
  */
 export function createApiKeyHeaders(apiKey: string, projectId: string): Record<string, string> {
   return {
-    'X-API-Key': apiKey,
-    'X-Project-ID': projectId,
-    'Content-Type': 'application/json'
+    "X-API-Key": apiKey,
+    "X-Project-ID": projectId,
+    "Content-Type": "application/json",
   };
 }
 
@@ -173,7 +181,7 @@ export function createApiKeyHeaders(apiKey: string, projectId: string): Record<s
  */
 export function createAuthHeaders(accessToken: string): Record<string, string> {
   return {
-    'Authorization': `Bearer ${accessToken}`,
-    'Content-Type': 'application/json'
+    Authorization: `Bearer ${accessToken}`,
+    "Content-Type": "application/json",
   };
 }

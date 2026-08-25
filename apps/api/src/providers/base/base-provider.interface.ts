@@ -1,9 +1,4 @@
-import {
-  Channel,
-  ProviderConfig,
-  ProviderHealthStatus,
-  ProviderResponse,
-} from '../types';
+import { Channel, ProviderConfig, ProviderHealthStatus, ProviderResponse } from "../types";
 
 export interface BaseProviderPayload {
   recipient: string;

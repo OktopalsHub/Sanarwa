@@ -1,7 +1,7 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { IBaseProvider } from '../base/base-provider.interface';
-import { Channel, ProviderConfig } from '../types';
-import { IProviderFactory } from './provider-factory.interface';
+import { Injectable, Logger } from "@nestjs/common";
+import { IBaseProvider } from "../base/base-provider.interface";
+import { Channel, ProviderConfig } from "../types";
+import { IProviderFactory } from "./provider-factory.interface";
 
 type ProviderConstructor = new (...args: any[]) => IBaseProvider;
 
@@ -22,15 +22,11 @@ export class ProviderFactory implements IProviderFactory {
     const ProviderClass = this.providers.get(providerKey);
 
     if (!ProviderClass) {
-      throw new Error(
-        `Provider ${providerId} for channel ${channel} is not registered`,
-      );
+      throw new Error(`Provider ${providerId} for channel ${channel} is not registered`);
     }
 
     try {
-      this.logger.log(
-        `Creating provider instance: ${providerId} for channel ${channel}`,
-      );
+      this.logger.log(`Creating provider instance: ${providerId} for channel ${channel}`);
 
       // Create provider instance with basic parameters
       const provider = new ProviderClass(config.id, config.name, channel);
@@ -38,15 +34,13 @@ export class ProviderFactory implements IProviderFactory {
       // Initialize the provider with configuration
       await provider.initialize(config);
 
-      this.logger.log(
-        `Provider ${providerId} created and initialized successfully`,
-      );
+      this.logger.log(`Provider ${providerId} created and initialized successfully`);
       return provider;
     } catch (error) {
       this.logger.error(`Failed to create provider ${providerId}:`, error);
-      throw new Error(
-        `Failed to create provider ${providerId}: ${error.message}`, { cause: error },
-      );
+      throw new Error(`Failed to create provider ${providerId}: ${error.message}`, {
+        cause: error,
+      });
     }
   }
 
@@ -57,7 +51,7 @@ export class ProviderFactory implements IProviderFactory {
     const providers: string[] = [];
 
     for (const [key] of this.providers) {
-      const [providerId, providerChannel] = key.split(':');
+      const [providerId, providerChannel] = key.split(":");
       if (providerChannel === channel) {
         providers.push(providerId);
       }
@@ -69,11 +63,7 @@ export class ProviderFactory implements IProviderFactory {
   /**
    * Register a new provider type
    */
-  registerProvider(
-    providerId: string,
-    channel: Channel,
-    providerClass: ProviderConstructor,
-  ): void {
+  registerProvider(providerId: string, channel: Channel, providerClass: ProviderConstructor): void {
     const providerKey = this.getProviderKey(providerId, channel);
 
     if (this.providers.has(providerKey)) {
@@ -83,9 +73,7 @@ export class ProviderFactory implements IProviderFactory {
     }
 
     this.providers.set(providerKey, providerClass);
-    this.logger.log(
-      `Registered provider: ${providerId} for channel ${channel}`,
-    );
+    this.logger.log(`Registered provider: ${providerId} for channel ${channel}`);
   }
 
   /**
@@ -103,7 +91,7 @@ export class ProviderFactory implements IProviderFactory {
     const result: Array<{ providerId: string; channel: Channel }> = [];
 
     for (const [key] of this.providers) {
-      const [providerId, channel] = key.split(':');
+      const [providerId, channel] = key.split(":");
       result.push({ providerId, channel: channel as Channel });
     }
 
@@ -119,9 +107,7 @@ export class ProviderFactory implements IProviderFactory {
 
     if (existed) {
       this.providers.delete(providerKey);
-      this.logger.log(
-        `Unregistered provider: ${providerId} for channel ${channel}`,
-      );
+      this.logger.log(`Unregistered provider: ${providerId} for channel ${channel}`);
     }
 
     return existed;
@@ -132,7 +118,7 @@ export class ProviderFactory implements IProviderFactory {
    */
   clearProviders(): void {
     this.providers.clear();
-    this.logger.log('Cleared all registered providers');
+    this.logger.log("Cleared all registered providers");
   }
 
   /**

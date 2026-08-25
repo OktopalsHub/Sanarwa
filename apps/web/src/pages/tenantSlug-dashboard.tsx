@@ -1,13 +1,13 @@
-'use client';
+"use client";
 
-import { DashboardOverview } from '@/components/dashboard';
-import { AdvancedDashboard } from '@/components/dashboard/advanced-dashboard';
-import { AppShell } from '@/components/layout';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { useEnsureTenantFromSlug } from '@/hooks/use-tenant-slug';
-import { useTenant } from '@/contexts/tenant-context';
-import { ChartBarIcon, Squares2X2Icon } from '@heroicons/react/24/outline';
-import { useNavigate } from '@tanstack/react-router';
+import { DashboardOverview } from "@/components/dashboard";
+import { AdvancedDashboard } from "@/components/dashboard/advanced-dashboard";
+import { AppShell } from "@/components/layout";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useEnsureTenantFromSlug } from "@/hooks/use-tenant-slug";
+import { useTenant } from "@/contexts/tenant-context";
+import { ChartBarIcon, Squares2X2Icon } from "@heroicons/react/24/outline";
+import { useNavigate } from "@tanstack/react-router";
 
 export default function TenantDashboardPage() {
   const navigate = useNavigate();
@@ -32,7 +32,7 @@ export default function TenantDashboardPage() {
             <h1 className="text-2xl font-bold">Tenant not found</h1>
             <button
               type="button"
-              onClick={() => navigate({ to: '/onboarding' })}
+              onClick={() => navigate({ to: "/onboarding" })}
               className="px-4 py-2 bg-primary text-primary-foreground rounded-md"
             >
               Set up workspace

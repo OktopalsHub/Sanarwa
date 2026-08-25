@@ -5,11 +5,11 @@ import {
   HttpStatus,
   Injectable,
   NestInterceptor,
-} from '@nestjs/common';
-import { Observable, throwError } from 'rxjs';
-import { catchError } from 'rxjs/operators';
-import { AlertingService } from '../services/alerting.service';
-import { LoggingService } from '../services/logging.service';
+} from "@nestjs/common";
+import { Observable, throwError } from "rxjs";
+import { catchError } from "rxjs/operators";
+import { AlertingService } from "../services/alerting.service";
+import { LoggingService } from "../services/logging.service";
 
 @Injectable()
 export class ErrorAlertingInterceptor implements NestInterceptor {
@@ -34,13 +34,13 @@ export class ErrorAlertingInterceptor implements NestInterceptor {
         }
 
         // Log the error
-        this.loggingService.error('Request error', error, {
+        this.loggingService.error("Request error", error, {
           method: request.method,
           url: request.url,
           statusCode,
-          userAgent: request.headers['user-agent'],
+          userAgent: request.headers["user-agent"],
           ip: request.ip,
-          tenantId: request.headers['x-tenant-id'] || request.user?.tenantId,
+          tenantId: request.headers["x-tenant-id"] || request.user?.tenantId,
         });
 
         return throwError(() => error);
@@ -57,15 +57,11 @@ export class ErrorAlertingInterceptor implements NestInterceptor {
     return HttpStatus.INTERNAL_SERVER_ERROR;
   }
 
-  private async sendCriticalErrorAlert(
-    error: any,
-    request: any,
-    statusCode: number,
-  ) {
+  private async sendCriticalErrorAlert(error: any, request: any, statusCode: number) {
     try {
       await this.alertingService.sendAlert({
-        type: 'system_error',
-        severity: 'critical',
+        type: "system_error",
+        severity: "critical",
         title: `Critical Error: ${statusCode}`,
         message: `A critical error occurred in the notification platform: ${error.message}`,
         metadata: {
@@ -73,20 +69,14 @@ export class ErrorAlertingInterceptor implements NestInterceptor {
           method: request.method,
           url: request.url,
           errorName: error.name,
-          stack: error.stack?.split('\n').slice(0, 5).join('\n'), // First 5 lines of stack
-          tenantId:
-            request.headers['x-tenant-id'] ||
-            request.user?.tenantId ||
-            'unknown',
+          stack: error.stack?.split("\n").slice(0, 5).join("\n"), // First 5 lines of stack
+          tenantId: request.headers["x-tenant-id"] || request.user?.tenantId || "unknown",
           timestamp: new Date().toISOString(),
         },
       });
     } catch (alertError) {
       // Don't let alerting errors break the main error flow
-      this.loggingService.error(
-        'Failed to send critical error alert',
-        alertError,
-      );
+      this.loggingService.error("Failed to send critical error alert", alertError);
     }
   }
 }

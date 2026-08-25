@@ -1,17 +1,12 @@
-import {
-  Injectable,
-  NestInterceptor,
-  ExecutionContext,
-  CallHandler,
-} from '@nestjs/common';
-import { Reflector } from '@nestjs/core';
-import { Observable } from 'rxjs';
-import { tap, catchError } from 'rxjs/operators';
-import { StructuredLoggerService } from '../structured-logger.service';
+import { Injectable, NestInterceptor, ExecutionContext, CallHandler } from "@nestjs/common";
+import { Reflector } from "@nestjs/core";
+import { Observable } from "rxjs";
+import { tap, catchError } from "rxjs/operators";
+import { StructuredLoggerService } from "../structured-logger.service";
 import {
   LOG_PERFORMANCE_KEY,
   LogPerformanceOptions,
-} from '../decorators/log-performance.decorator';
+} from "../decorators/log-performance.decorator";
 
 @Injectable()
 export class PerformanceLoggingInterceptor implements NestInterceptor {
@@ -32,14 +27,20 @@ export class PerformanceLoggingInterceptor implements NestInterceptor {
 
     const request = context.switchToHttp().getRequest();
     const startTime = Date.now();
-    const { operation, threshold = 1000, includeArgs, includeResult, category } = performanceOptions;
+    const {
+      operation,
+      threshold = 1000,
+      includeArgs,
+      includeResult,
+      category,
+    } = performanceOptions;
 
     const baseContext = {
-      correlationId: request.headers['x-correlation-id'],
+      correlationId: request.headers["x-correlation-id"],
       userId: request.user?.id,
       tenantId: request.user?.tenantId,
       operation,
-      category: category || 'performance',
+      category: category || "performance",
     };
 
     return next.handle().pipe(
@@ -77,8 +78,8 @@ export class PerformanceLoggingInterceptor implements NestInterceptor {
 
   private sanitizeArgs(args: any[]): any {
     // Remove sensitive data from arguments
-    return args.map(arg => {
-      if (typeof arg === 'object' && arg !== null) {
+    return args.map((arg) => {
+      if (typeof arg === "object" && arg !== null) {
         const sanitized = { ...arg };
         // Remove common sensitive fields
         delete sanitized.password;
@@ -92,7 +93,7 @@ export class PerformanceLoggingInterceptor implements NestInterceptor {
   }
 
   private sanitizeResult(result: any): any {
-    if (typeof result === 'object' && result !== null) {
+    if (typeof result === "object" && result !== null) {
       const sanitized = { ...result };
       // Remove sensitive fields from result
       delete sanitized.password;

@@ -1,33 +1,29 @@
-import { BadRequestException } from '@nestjs/common';
-import { Tenant } from '../../tenant/entities/tenant.entity';
+import { BadRequestException } from "@nestjs/common";
+import { Tenant } from "../../tenant/entities/tenant.entity";
 import {
   BulkNotificationRequestDto,
   NotificationRequestDto,
-} from '../dto/notification-request.dto';
+} from "../dto/notification-request.dto";
 import {
   BulkNotificationResponseDto,
   NotificationResponseDto,
   NotificationStatusDto,
-} from '../dto/notification-response.dto';
-import { DeliveryStatus } from '../notification-delivery.entity';
-import { NotificationController } from '../notification.controller';
-import {
-  NotificationChannel,
-  NotificationStatus,
-  Priority,
-} from '../notification.entity';
-import { NotificationService } from '../notification.service';
+} from "../dto/notification-response.dto";
+import { DeliveryStatus } from "../notification-delivery.entity";
+import { NotificationController } from "../notification.controller";
+import { NotificationChannel, NotificationStatus, Priority } from "../notification.entity";
+import { NotificationService } from "../notification.service";
 
-describe('NotificationController (Unit)', () => {
+describe("NotificationController (Unit)", () => {
   let controller: NotificationController;
   let service: NotificationService;
 
   const mockTenant: Tenant = {
-    id: 'tenant-123',
-    name: 'Test Tenant',
-    subdomain: 'test-tenant',
-    inviteCode: 'ABC123',
-    status: 'active' as any,
+    id: "tenant-123",
+    name: "Test Tenant",
+    subdomain: "test-tenant",
+    inviteCode: "ABC123",
+    status: "active" as any,
     quotas: {
       notifications: {
         daily: 1000,
@@ -48,8 +44,8 @@ describe('NotificationController (Unit)', () => {
   } as Tenant;
 
   const mockNotificationResponse: NotificationResponseDto = {
-    id: 'notification-123',
-    status: 'pending',
+    id: "notification-123",
+    status: "pending",
     createdAt: new Date(),
   };
 
@@ -70,15 +66,15 @@ describe('NotificationController (Unit)', () => {
     vi.clearAllMocks();
   });
 
-  describe('sendNotification', () => {
-    it('should send a notification successfully', async () => {
+  describe("sendNotification", () => {
+    it("should send a notification successfully", async () => {
       const request: NotificationRequestDto = {
-        to: 'test@example.com',
-        message: 'Test message',
-        subject: 'Test Subject',
+        to: "test@example.com",
+        message: "Test message",
+        subject: "Test Subject",
         channel: NotificationChannel.EMAIL,
         priority: Priority.NORMAL,
-        metadata: { name: 'John Doe' },
+        metadata: { name: "John Doe" },
       };
 
       mockNotificationService.sendNotification.mockResolvedValue(mockNotificationResponse);
@@ -89,35 +85,33 @@ describe('NotificationController (Unit)', () => {
       expect(result).toEqual(mockNotificationResponse);
     });
 
-    it('should handle service errors', async () => {
+    it("should handle service errors", async () => {
       const request: NotificationRequestDto = {
-        to: 'test@example.com',
-        message: 'Test message',
+        to: "test@example.com",
+        message: "Test message",
         channel: NotificationChannel.EMAIL,
       };
 
       mockNotificationService.sendNotification.mockRejectedValue(
-        new BadRequestException('Invalid request'),
+        new BadRequestException("Invalid request"),
       );
 
-      await expect(controller.sendNotification(request)).rejects.toThrow(
-        BadRequestException,
-      );
+      await expect(controller.sendNotification(request)).rejects.toThrow(BadRequestException);
     });
   });
 
-  describe('sendBulkNotifications', () => {
-    it('should send bulk notifications successfully', async () => {
+  describe("sendBulkNotifications", () => {
+    it("should send bulk notifications successfully", async () => {
       const request: BulkNotificationRequestDto = {
         notifications: [
           {
-            to: 'test1@example.com',
-            message: 'Test message 1',
+            to: "test1@example.com",
+            message: "Test message 1",
             channel: NotificationChannel.EMAIL,
           },
           {
-            to: '+1234567890',
-            message: 'Test message 2',
+            to: "+1234567890",
+            message: "Test message 2",
             channel: NotificationChannel.SMS,
           },
         ],
@@ -139,24 +133,24 @@ describe('NotificationController (Unit)', () => {
     });
   });
 
-  describe('getStatus', () => {
-    it('should get notification status successfully', async () => {
-      const notificationId = 'notification-123';
+  describe("getStatus", () => {
+    it("should get notification status successfully", async () => {
+      const notificationId = "notification-123";
       const mockStatusResponse: NotificationStatusDto = {
         id: notificationId,
         status: DeliveryStatus.DELIVERED,
         updatedAt: new Date(),
         retryCount: 0,
       };
-      
+
       mockNotificationService.getNotificationStatus.mockResolvedValue(mockStatusResponse);
 
-      const result = await controller.getStatus(notificationId, 'tenant-123');
+      const result = await controller.getStatus(notificationId, "tenant-123");
 
       expect(result).toEqual(mockStatusResponse);
       expect(mockNotificationService.getNotificationStatus).toHaveBeenCalledWith(
         notificationId,
-        'tenant-123',
+        "tenant-123",
       );
     });
   });

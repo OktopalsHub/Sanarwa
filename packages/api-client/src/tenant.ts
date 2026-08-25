@@ -8,9 +8,9 @@ import {
   TenantMember,
   TenantQueryParams,
   UpdateTenantMemberRequest,
-  UpdateTenantRequest
-} from './types/tenant';
-import { ApiClient, createApiClient } from './client';
+  UpdateTenantRequest,
+} from "./types/tenant";
+import { ApiClient, createApiClient } from "./client";
 
 /**
  * Tenant Management API client for handling all tenant-related operations
@@ -32,7 +32,7 @@ class TenantApiClient {
    * @returns List of tenants
    */
   async getTenants(params?: TenantQueryParams): Promise<Tenant[]> {
-    return this.apiClient.get<Tenant[]>('/tenants', params, { tenantScoped: false });
+    return this.apiClient.get<Tenant[]>("/tenants", params, { tenantScoped: false });
   }
 
   /**
@@ -50,7 +50,7 @@ class TenantApiClient {
    * @returns Created tenant
    */
   async createTenant(data: CreateTenantRequest): Promise<Tenant> {
-    return this.apiClient.post<Tenant>('/tenants', data, { tenantScoped: false });
+    return this.apiClient.post<Tenant>("/tenants", data, { tenantScoped: false });
   }
 
   /**
@@ -86,7 +86,11 @@ class TenantApiClient {
    * @returns Updated tenant
    */
   async activateTenant(tenantId: string): Promise<Tenant> {
-    return this.apiClient.post<Tenant>(`/tenants/${tenantId}/activate`, {}, { tenantScoped: false });
+    return this.apiClient.post<Tenant>(
+      `/tenants/${tenantId}/activate`,
+      {},
+      { tenantScoped: false },
+    );
   }
 
   /**
@@ -94,7 +98,7 @@ class TenantApiClient {
    * @returns Current tenant profile
    */
   async getCurrentTenantProfile(): Promise<Tenant> {
-    return this.apiClient.get<Tenant>('/tenants/me/profile');
+    return this.apiClient.get<Tenant>("/tenants/me/profile");
   }
 
   // Tenant Member Management Methods
@@ -105,9 +109,13 @@ class TenantApiClient {
    */
   async getTenantMembers(tenantId?: string): Promise<TenantMember[]> {
     if (tenantId) {
-      return this.apiClient.get<TenantMember[]>(`/tenants/${tenantId}/members`, {}, { tenantScoped: false });
+      return this.apiClient.get<TenantMember[]>(
+        `/tenants/${tenantId}/members`,
+        {},
+        { tenantScoped: false },
+      );
     }
-    return this.apiClient.get<TenantMember[]>('/tenants/:tenantId/me/members');
+    return this.apiClient.get<TenantMember[]>("/tenants/:tenantId/me/members");
   }
 
   /**
@@ -125,7 +133,7 @@ class TenantApiClient {
    * @returns Created tenant member
    */
   async addTenantMember(data: CreateTenantMemberRequest): Promise<TenantMember> {
-    return this.apiClient.post<TenantMember>('/tenants/:tenantId/me/members', data);
+    return this.apiClient.post<TenantMember>("/tenants/:tenantId/me/members", data);
   }
 
   /**
@@ -134,7 +142,10 @@ class TenantApiClient {
    * @param data Member update data
    * @returns Updated tenant member
    */
-  async updateTenantMember(memberId: string, data: UpdateTenantMemberRequest): Promise<TenantMember> {
+  async updateTenantMember(
+    memberId: string,
+    data: UpdateTenantMemberRequest,
+  ): Promise<TenantMember> {
     return this.apiClient.patch<TenantMember>(`/tenants/:tenantId/me/members/${memberId}`, data);
   }
 
@@ -155,7 +166,9 @@ class TenantApiClient {
    * @returns Created invitation
    */
   async inviteMember(tenantId: string, data: InviteMemberRequest): Promise<Invitation> {
-    return this.apiClient.post<Invitation>(`/tenants/${tenantId}/invites`, data, { tenantScoped: false });
+    return this.apiClient.post<Invitation>(`/tenants/${tenantId}/invites`, data, {
+      tenantScoped: false,
+    });
   }
 
   /**
@@ -164,7 +177,7 @@ class TenantApiClient {
    * @returns Created invitation
    */
   async createInvitation(data: InviteMemberRequest): Promise<Invitation> {
-    return this.apiClient.post<Invitation>('/invites', data);
+    return this.apiClient.post<Invitation>("/invites", data);
   }
 
   /**
@@ -172,7 +185,7 @@ class TenantApiClient {
    * @returns List of invitations
    */
   async getTenantInvitations(): Promise<Invitation[]> {
-    return this.apiClient.get<Invitation[]>('/invites');
+    return this.apiClient.get<Invitation[]>("/invites");
   }
 
   /**
@@ -190,7 +203,7 @@ class TenantApiClient {
    * @returns Created tenant member
    */
   async acceptInvitation(data: AcceptInviteRequest): Promise<TenantMember> {
-    return this.apiClient.post<TenantMember>('/invites/accept', data, { tenantScoped: false });
+    return this.apiClient.post<TenantMember>("/invites/accept", data, { tenantScoped: false });
   }
 
   /**
@@ -225,7 +238,7 @@ class TenantApiClient {
    * @returns Current tenant
    */
   async getCurrentTenant(): Promise<Tenant> {
-    return this.apiClient.get<Tenant>('/tenants/current', {}, { tenantScoped: false });
+    return this.apiClient.get<Tenant>("/tenants/current", {}, { tenantScoped: false });
   }
 
   /**
@@ -274,9 +287,9 @@ class TenantApiClient {
   canManageMember(
     currentUserRole: string,
     targetMemberRole: string,
-    action: 'update' | 'remove'
+    action: "update" | "remove",
   ): boolean {
-    const roleHierarchy = ['viewer', 'member', 'admin', 'owner'];
+    const roleHierarchy = ["viewer", "member", "admin", "owner"];
     const currentRoleIndex = roleHierarchy.indexOf(currentUserRole);
     const targetRoleIndex = roleHierarchy.indexOf(targetMemberRole);
 
@@ -284,12 +297,12 @@ class TenantApiClient {
     if (currentRoleIndex < 2) return false;
 
     // Owners can manage anyone except other owners (for removal)
-    if (currentUserRole === 'owner') {
-      return !(action === 'remove' && targetMemberRole === 'owner');
+    if (currentUserRole === "owner") {
+      return !(action === "remove" && targetMemberRole === "owner");
     }
 
     // Admins can only manage members and viewers
-    if (currentUserRole === 'admin') {
+    if (currentUserRole === "admin") {
       return targetRoleIndex < 2;
     }
 
@@ -307,22 +320,22 @@ class TenantApiClient {
   } {
     const errors: string[] = [];
 
-    if ('name' in data && data.name) {
+    if ("name" in data && data.name) {
       if (data.name.length < 2) {
-        errors.push('Tenant name must be at least 2 characters long');
+        errors.push("Tenant name must be at least 2 characters long");
       }
       if (data.name.length > 100) {
-        errors.push('Tenant name must be less than 100 characters');
+        errors.push("Tenant name must be less than 100 characters");
       }
     }
 
-    if ('subdomain' in data && data.subdomain) {
+    if ("subdomain" in data && data.subdomain) {
       const subdomainRegex = /^[a-z0-9]([a-z0-9-]*[a-z0-9])?$/;
       if (!subdomainRegex.test(data.subdomain)) {
-        errors.push('Subdomain must contain only lowercase letters, numbers, and hyphens');
+        errors.push("Subdomain must contain only lowercase letters, numbers, and hyphens");
       }
       if (data.subdomain.length < 3 || data.subdomain.length > 63) {
-        errors.push('Subdomain must be between 3 and 63 characters');
+        errors.push("Subdomain must be between 3 and 63 characters");
       }
     }
 

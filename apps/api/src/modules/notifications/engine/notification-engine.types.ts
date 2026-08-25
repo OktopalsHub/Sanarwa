@@ -1,10 +1,4 @@
-export type NotificationChannel =
-  | 'email'
-  | 'sms'
-  | 'push'
-  | 'whatsapp'
-  | 'webhook'
-  | 'in_app';
+export type NotificationChannel = "email" | "sms" | "push" | "whatsapp" | "webhook" | "in_app";
 
 export interface NotificationEngineRequest {
   tenantId: string;
@@ -14,7 +8,7 @@ export interface NotificationEngineRequest {
   title?: string;
   message: string;
   data?: Record<string, any>;
-  priority?: 'low' | 'normal' | 'high';
+  priority?: "low" | "normal" | "high";
   scheduledAt?: Date;
   expiresAt?: Date;
   templateId?: string;
@@ -31,7 +25,7 @@ export interface NotificationEngineResponse {
   trackingId: string;
   messageId?: string;
   deliveryId?: string;
-  status: 'queued' | 'sent' | 'delivered' | 'failed';
+  status: "queued" | "sent" | "delivered" | "failed";
   externalId?: string;
   error?: string;
   timestamp: Date;

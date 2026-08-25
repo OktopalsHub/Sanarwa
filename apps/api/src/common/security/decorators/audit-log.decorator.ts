@@ -1,5 +1,5 @@
-import { SetMetadata } from '@nestjs/common';
-import { AuditAction, AuditResourceType } from '../entities/audit-log.entity';
+import { SetMetadata } from "@nestjs/common";
+import { AuditAction, AuditResourceType } from "../entities/audit-log.entity";
 
 export interface AuditLogOptions {
   action: AuditAction;
@@ -10,7 +10,6 @@ export interface AuditLogOptions {
   includeResponseBody?: boolean;
 }
 
-export const AUDIT_LOG_KEY = 'audit_log';
+export const AUDIT_LOG_KEY = "audit_log";
 
-export const AuditLog = (options: AuditLogOptions) =>
-  SetMetadata(AUDIT_LOG_KEY, options);
+export const AuditLog = (options: AuditLogOptions) => SetMetadata(AUDIT_LOG_KEY, options);

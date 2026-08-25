@@ -1,14 +1,14 @@
-import { User } from '../../modules/user/entities/user.entity';
-import { AuthProvider, UserRole } from '../../common/enums';
-import { DeepPartial } from 'typeorm';
+import { User } from "../../modules/user/entities/user.entity";
+import { AuthProvider, UserRole } from "../../common/enums";
+import { DeepPartial } from "typeorm";
 
 export class UserFactory {
   static create(overrides: DeepPartial<User> = {}): User {
     const defaultUser: DeepPartial<User> = {
-      id: 'user-' + Math.random().toString(36).substr(2, 9),
-      email: 'test@example.com',
-      name: 'Test User',
-      password: '$argon2id$v=19$m=65536,t=3,p=4$hashed_password',
+      id: "user-" + Math.random().toString(36).substr(2, 9),
+      email: "test@example.com",
+      name: "Test User",
+      password: "$argon2id$v=19$m=65536,t=3,p=4$hashed_password",
       createdAt: new Date(),
       updatedAt: new Date(),
     };
@@ -32,8 +32,8 @@ export class UserFactory {
   static createAdmin(overrides: DeepPartial<User> = {}): User {
     return this.create({
       ...overrides,
-      email: 'admin@example.com',
-      name: 'Admin User',
+      email: "admin@example.com",
+      name: "Admin User",
     });
   }
 
@@ -41,11 +41,9 @@ export class UserFactory {
     return this.create({ ...overrides, email });
   }
 
-  static createSanitized(
-    overrides: DeepPartial<User> = {},
-  ): Omit<User, 'password'> {
+  static createSanitized(overrides: DeepPartial<User> = {}): Omit<User, "password"> {
     const user = this.create(overrides);
     const { password, ...sanitized } = user;
-    return sanitized as Omit<User, 'password'>;
+    return sanitized as Omit<User, "password">;
   }
 }

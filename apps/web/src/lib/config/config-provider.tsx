@@ -1,14 +1,14 @@
-'use client';
+"use client";
 
-import React, { createContext, ReactNode, useContext, useEffect, useState } from 'react';
+import React, { createContext, ReactNode, useContext, useEffect, useState } from "react";
 import {
   ApiConfig,
   configManager,
   config as defaultConfig,
   EnvironmentConfig,
   FeatureFlags,
-  validateConfig
-} from './environment';
+  validateConfig,
+} from "./environment";
 
 interface ConfigContextValue {
   config: EnvironmentConfig;
@@ -32,7 +32,7 @@ export function ConfigProvider({
   children,
   initialConfig,
   enableRemoteConfig = false,
-  remoteConfigEndpoint
+  remoteConfigEndpoint,
 }: ConfigProviderProps) {
   const [config, setConfig] = useState<EnvironmentConfig>(() => ({
     ...defaultConfig,
@@ -66,15 +66,17 @@ export function ConfigProvider({
         const validationErrors = validateConfig(mergedConfig);
         if (validationErrors.length > 0) {
           setErrors(validationErrors);
-          console.warn('Configuration validation errors:', validationErrors);
+          console.warn("Configuration validation errors:", validationErrors);
         } else {
           setErrors([]);
         }
 
         setConfig(mergedConfig);
       } catch (error) {
-        console.error('Failed to load remote configuration:', error);
-        setErrors([`Failed to load remote configuration: ${error instanceof Error ? error.message : 'Unknown error'}`]);
+        console.error("Failed to load remote configuration:", error);
+        setErrors([
+          `Failed to load remote configuration: ${error instanceof Error ? error.message : "Unknown error"}`,
+        ]);
       } finally {
         setIsLoading(false);
       }
@@ -98,7 +100,7 @@ export function ConfigProvider({
     setErrors(validationErrors);
 
     if (validationErrors.length > 0) {
-      console.warn('Configuration validation errors:', validationErrors);
+      console.warn("Configuration validation errors:", validationErrors);
     }
   }, [config]);
 
@@ -110,7 +112,7 @@ export function ConfigProvider({
     configManager.updateFeatureFlag(flag, enabled);
 
     // Trigger re-render by updating config state
-    setConfig(prevConfig => ({
+    setConfig((prevConfig) => ({
       ...prevConfig,
       features: {
         ...prevConfig.features,
@@ -123,7 +125,7 @@ export function ConfigProvider({
     configManager.updateApiConfig(updates);
 
     // Trigger re-render by updating config state
-    setConfig(prevConfig => ({
+    setConfig((prevConfig) => ({
       ...prevConfig,
       api: {
         ...prevConfig.api,
@@ -141,11 +143,7 @@ export function ConfigProvider({
     errors,
   };
 
-  return (
-    <ConfigContext.Provider value={contextValue}>
-      {children}
-    </ConfigContext.Provider>
-  );
+  return <ConfigContext.Provider value={contextValue}>{children}</ConfigContext.Provider>;
 }
 
 /**
@@ -154,7 +152,7 @@ export function ConfigProvider({
 export function useConfig(): ConfigContextValue {
   const context = useContext(ConfigContext);
   if (context === undefined) {
-    throw new Error('useConfig must be used within a ConfigProvider');
+    throw new Error("useConfig must be used within a ConfigProvider");
   }
   return context;
 }
@@ -163,7 +161,7 @@ export function useConfig(): ConfigContextValue {
  * Hook to access specific configuration section
  */
 export function useConfigSection<K extends keyof EnvironmentConfig>(
-  section: K
+  section: K,
 ): EnvironmentConfig[K] {
   const { config } = useConfig();
   return config[section];
@@ -214,10 +212,10 @@ export function useEnvironment() {
 
   return {
     environment: config.app.environment,
-    isDevelopment: config.app.environment === 'development',
-    isProduction: config.app.environment === 'production',
-    isStaging: config.app.environment === 'staging',
-    isTest: config.app.environment === 'test',
+    isDevelopment: config.app.environment === "development",
+    isProduction: config.app.environment === "production",
+    isStaging: config.app.environment === "staging",
+    isTest: config.app.environment === "test",
     version: config.app.version,
     buildTime: config.app.buildTime,
     buildId: config.app.buildId,
@@ -243,7 +241,7 @@ export function useConfigValidation() {
  */
 export function withFeatureFlag<P extends object>(
   feature: keyof FeatureFlags,
-  fallback?: React.ComponentType<P> | React.ReactElement | null
+  fallback?: React.ComponentType<P> | React.ReactElement | null,
 ) {
   return function FeatureGatedComponent(Component: React.ComponentType<P>) {
     return function WrappedComponent(props: P) {
@@ -287,7 +285,7 @@ export function FeatureGate({ feature, children, fallback = null }: FeatureGateP
  * Component for environment-specific rendering
  */
 interface EnvironmentGateProps {
-  environments: Array<'development' | 'staging' | 'production' | 'test'>;
+  environments: Array<"development" | "staging" | "production" | "test">;
   children: ReactNode;
   fallback?: ReactNode;
 }
@@ -312,46 +310,52 @@ export function ConfigDebugPanel() {
   if (!isDevelopment) return null;
 
   return (
-    <div style={{
-      position: 'fixed',
-      bottom: 0,
-      right: 0,
-      width: '400px',
-      maxHeight: '300px',
-      overflow: 'auto',
-      backgroundColor: '#1a1a1a',
-      color: '#fff',
-      padding: '16px',
-      fontSize: '12px',
-      fontFamily: 'monospace',
-      zIndex: 9999,
-      border: '1px solid #333',
-    }}>
-      <h4 style={{ margin: '0 0 8px 0', color: '#4ade80' }}>Configuration Debug</h4>
+    <div
+      style={{
+        position: "fixed",
+        bottom: 0,
+        right: 0,
+        width: "400px",
+        maxHeight: "300px",
+        overflow: "auto",
+        backgroundColor: "#1a1a1a",
+        color: "#fff",
+        padding: "16px",
+        fontSize: "12px",
+        fontFamily: "monospace",
+        zIndex: 9999,
+        border: "1px solid #333",
+      }}
+    >
+      <h4 style={{ margin: "0 0 8px 0", color: "#4ade80" }}>Configuration Debug</h4>
 
       {errors.length > 0 && (
-        <div style={{ marginBottom: '8px' }}>
-          <strong style={{ color: '#ef4444' }}>Errors:</strong>
-          <ul style={{ margin: '4px 0', paddingLeft: '16px' }}>
+        <div style={{ marginBottom: "8px" }}>
+          <strong style={{ color: "#ef4444" }}>Errors:</strong>
+          <ul style={{ margin: "4px 0", paddingLeft: "16px" }}>
             {errors.map((error, index) => (
-              <li key={index} style={{ color: '#ef4444' }}>{error}</li>
+              <li key={index} style={{ color: "#ef4444" }}>
+                {error}
+              </li>
             ))}
           </ul>
         </div>
       )}
 
       <details>
-        <summary style={{ cursor: 'pointer', marginBottom: '8px' }}>
+        <summary style={{ cursor: "pointer", marginBottom: "8px" }}>
           Environment: {config.app.environment}
         </summary>
-        <pre style={{
-          margin: 0,
-          whiteSpace: 'pre-wrap',
-          wordBreak: 'break-word',
-          fontSize: '10px',
-          maxHeight: '200px',
-          overflow: 'auto'
-        }}>
+        <pre
+          style={{
+            margin: 0,
+            whiteSpace: "pre-wrap",
+            wordBreak: "break-word",
+            fontSize: "10px",
+            maxHeight: "200px",
+            overflow: "auto",
+          }}
+        >
           {JSON.stringify(config, null, 2)}
         </pre>
       </details>

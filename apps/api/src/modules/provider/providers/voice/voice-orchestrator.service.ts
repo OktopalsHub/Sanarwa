@@ -1,13 +1,13 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
+import { Injectable, Logger } from "@nestjs/common";
+import { ConfigService } from "@nestjs/config";
 import {
   IVoiceProvider,
   VoiceCallPayload,
   VoiceCallResponse,
   TTSPayload,
-  TTSResponse
-} from './voice-provider.interface';
-import { TelnyxVoiceProvider } from './providers/telnyx-voice.provider';
+  TTSResponse,
+} from "./voice-provider.interface";
+import { TelnyxVoiceProvider } from "./providers/telnyx-voice.provider";
 
 @Injectable()
 export class VoiceOrchestratorService {
@@ -16,12 +16,15 @@ export class VoiceOrchestratorService {
   constructor(
     private configService: ConfigService,
     private telnyxVoiceProvider: TelnyxVoiceProvider,
-  ) { }
+  ) {}
 
   /**
    * Create voice call using Telnyx
    */
-  async createVoiceCall(phoneNumber: string, message?: string): Promise<{ success: boolean; callId?: string; error?: string }> {
+  async createVoiceCall(
+    phoneNumber: string,
+    message?: string,
+  ): Promise<{ success: boolean; callId?: string; error?: string }> {
     try {
       // Use Telnyx for voice calls
       if (await this.telnyxVoiceProvider.validateConfig()) {
@@ -42,10 +45,10 @@ export class VoiceOrchestratorService {
           };
         }
       } else {
-        this.logger.error('Telnyx not configured');
+        this.logger.error("Telnyx not configured");
         return {
           success: false,
-          error: 'Telnyx voice provider not configured',
+          error: "Telnyx voice provider not configured",
         };
       }
     } catch (error) {
@@ -73,7 +76,7 @@ export class VoiceOrchestratorService {
         }
       }
 
-      return { success: false, error: 'Telnyx not configured' };
+      return { success: false, error: "Telnyx not configured" };
     } catch (error) {
       this.logger.error(`End voice call failed: ${error.message}`, error.stack);
       return { success: false, error: error.message };
@@ -83,7 +86,11 @@ export class VoiceOrchestratorService {
   /**
    * Send TTS to call with Telnyx built-in TTS
    */
-  async sendTTSToCall(callControlId: string, text: string, voice?: string): Promise<{ success: boolean; messageId?: string; error?: string }> {
+  async sendTTSToCall(
+    callControlId: string,
+    text: string,
+    voice?: string,
+  ): Promise<{ success: boolean; messageId?: string; error?: string }> {
     try {
       // Use Telnyx built-in TTS (much simpler and cheaper)
       if (await this.telnyxVoiceProvider.validateConfig()) {
@@ -107,7 +114,7 @@ export class VoiceOrchestratorService {
 
       return {
         success: false,
-        error: 'Telnyx TTS provider not available',
+        error: "Telnyx TTS provider not available",
       };
     } catch (error) {
       this.logger.error(`Call TTS failed: ${error.message}`, error.stack);
@@ -121,21 +128,25 @@ export class VoiceOrchestratorService {
   /**
    * Send TTS to multiple calls using Telnyx
    */
-  async sendTTSToMultipleCalls(callControlIds: string[], text: string, voice?: string): Promise<{ success: boolean; results?: any[]; error?: string }> {
+  async sendTTSToMultipleCalls(
+    callControlIds: string[],
+    text: string,
+    voice?: string,
+  ): Promise<{ success: boolean; results?: any[]; error?: string }> {
     try {
       // Use Telnyx built-in TTS for multiple calls
       if (await this.telnyxVoiceProvider.validateConfig()) {
         this.logger.debug(`Sending TTS to multiple calls via Telnyx`);
-        
+
         const results = await Promise.all(
-          callControlIds.map(callId => this.telnyxVoiceProvider.sendTTS(callId, text, voice))
+          callControlIds.map((callId) => this.telnyxVoiceProvider.sendTTS(callId, text, voice)),
         );
 
-        const successful = results.filter(r => r.success);
-        const failed = results.filter(r => !r.success);
+        const successful = results.filter((r) => r.success);
+        const failed = results.filter((r) => !r.success);
 
         this.logger.log(`TTS sent to ${successful.length}/${callControlIds.length} calls`);
-        
+
         return {
           success: successful.length > 0,
           results: results,
@@ -144,7 +155,7 @@ export class VoiceOrchestratorService {
 
       return {
         success: false,
-        error: 'Telnyx TTS provider not available',
+        error: "Telnyx TTS provider not available",
       };
     } catch (error) {
       this.logger.error(`Multiple call TTS failed: ${error.message}`, error.stack);
@@ -164,13 +175,13 @@ export class VoiceOrchestratorService {
     options?: {
       voice?: string;
       metadata?: Record<string, any>;
-    }
+    },
   ): Promise<{ success: boolean; messageId?: string; error?: string }> {
     try {
       const result = await this.sendTTSToCall(
-        callControlId, 
-        text, 
-        options?.voice || 'Telnyx.Natural.abbie'
+        callControlId,
+        text,
+        options?.voice || "Telnyx.Natural.abbie",
       );
 
       this.logger.log(`Voice announcement sent to call ${callControlId}: ${result.messageId}`);
@@ -233,13 +244,13 @@ export class VoiceOrchestratorService {
   async getAvailableVoices(): Promise<{ success: boolean; voices?: any[]; error?: string }> {
     try {
       if (await this.telnyxVoiceProvider.validateConfig()) {
-        this.logger.debug('Getting available voices from Telnyx');
+        this.logger.debug("Getting available voices from Telnyx");
         return await this.telnyxVoiceProvider.getAvailableVoices();
       }
 
       return {
         success: false,
-        error: 'Telnyx provider is not configured',
+        error: "Telnyx provider is not configured",
       };
     } catch (error) {
       this.logger.error(`Get available voices failed: ${error.message}`);

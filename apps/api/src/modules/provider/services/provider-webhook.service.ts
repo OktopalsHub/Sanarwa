@@ -1,11 +1,11 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import { EventEmitter2 } from '@nestjs/event-emitter';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { NotificationChannel } from '../../../common/enums/notification-channel.enum';
-import { ProviderWebhookEvent } from '../interfaces/byop.interface';
-import { ProviderConfig } from '../provider-config.entity';
+import { Injectable, Logger } from "@nestjs/common";
+import { ConfigService } from "@nestjs/config";
+import { EventEmitter2 } from "@nestjs/event-emitter";
+import { InjectRepository } from "@nestjs/typeorm";
+import { Repository } from "typeorm";
+import { NotificationChannel } from "../../../common/enums/notification-channel.enum";
+import { ProviderWebhookEvent } from "../interfaces/byop.interface";
+import { ProviderConfig } from "../provider-config.entity";
 
 export interface WebhookSubscription {
   id: string;
@@ -32,7 +32,7 @@ export class ProviderWebhookService {
     @InjectRepository(ProviderConfig)
     private readonly providerConfigRepository: Repository<ProviderConfig>,
     private readonly eventEmitter: EventEmitter2,
-    private readonly configService: ConfigService
+    private readonly configService: ConfigService,
   ) {
     this.setupEventListeners();
   }
@@ -42,13 +42,13 @@ export class ProviderWebhookService {
    */
   async subscribe(
     tenantId: string,
-    subscription: Omit<WebhookSubscription, 'id' | 'createdAt'>
+    subscription: Omit<WebhookSubscription, "id" | "createdAt">,
   ): Promise<WebhookSubscription> {
     const webhookSubscription: WebhookSubscription = {
       ...subscription,
       id: this.generateId(),
       tenantId,
-      createdAt: new Date()
+      createdAt: new Date(),
     };
 
     if (!this.subscriptions.has(tenantId)) {
@@ -58,7 +58,7 @@ export class ProviderWebhookService {
     this.subscriptions.get(tenantId)!.push(webhookSubscription);
 
     this.logger.log(
-      `Created webhook subscription ${webhookSubscription.id} for tenant ${tenantId}`
+      `Created webhook subscription ${webhookSubscription.id} for tenant ${tenantId}`,
     );
 
     return webhookSubscription;
@@ -71,12 +71,10 @@ export class ProviderWebhookService {
     const subscriptions = this.subscriptions.get(tenantId);
     if (!subscriptions) return;
 
-    const index = subscriptions.findIndex(sub => sub.id === subscriptionId);
+    const index = subscriptions.findIndex((sub) => sub.id === subscriptionId);
     if (index !== -1) {
       subscriptions.splice(index, 1);
-      this.logger.log(
-        `Removed webhook subscription ${subscriptionId} for tenant ${tenantId}`
-      );
+      this.logger.log(`Removed webhook subscription ${subscriptionId} for tenant ${tenantId}`);
     }
   }
 
@@ -94,7 +92,7 @@ export class ProviderWebhookService {
     // Find provider config to get tenant ID
     const providerConfig = await this.providerConfigRepository.findOne({
       where: { providerId: event.providerId },
-      relations: ['project', 'project.tenant']
+      relations: ["project", "project.tenant"],
     });
 
     if (!providerConfig) {
@@ -107,7 +105,7 @@ export class ProviderWebhookService {
 
     // Filter subscriptions that are interested in this event
     const interestedSubscriptions = subscriptions.filter(
-      sub => sub.isActive && sub.events.includes(event.type)
+      (sub) => sub.isActive && sub.events.includes(event.type),
     );
 
     if (interestedSubscriptions.length === 0) {
@@ -116,17 +114,17 @@ export class ProviderWebhookService {
     }
 
     // Send webhooks
-    const webhookPromises = interestedSubscriptions.map(subscription =>
-      this.sendWebhook(subscription, event)
+    const webhookPromises = interestedSubscriptions.map((subscription) =>
+      this.sendWebhook(subscription, event),
     );
 
     await Promise.allSettled(webhookPromises);
 
     // Emit internal event for other services
-    this.eventEmitter.emit('provider.webhook.triggered', {
+    this.eventEmitter.emit("provider.webhook.triggered", {
       tenantId,
       event,
-      subscriptionCount: interestedSubscriptions.length
+      subscriptionCount: interestedSubscriptions.length,
     });
   }
 
@@ -136,7 +134,7 @@ export class ProviderWebhookService {
   private async sendWebhook(
     subscription: WebhookSubscription,
     event: ProviderWebhookEvent,
-    attempt: number = 1
+    attempt: number = 1,
   ): Promise<void> {
     try {
       const payload = {
@@ -147,32 +145,32 @@ export class ProviderWebhookService {
           providerId: event.providerId,
           channel: event.channel,
           severity: event.severity,
-          ...event.data
-        }
+          ...event.data,
+        },
       };
 
       const headers: Record<string, string> = {
-        'Content-Type': 'application/json',
-        'User-Agent': 'BYOP-Webhook/1.0',
-        'X-Webhook-Event': event.type,
-        'X-Webhook-Timestamp': event.timestamp.toISOString(),
-        'X-Webhook-Attempt': attempt.toString()
+        "Content-Type": "application/json",
+        "User-Agent": "BYOP-Webhook/1.0",
+        "X-Webhook-Event": event.type,
+        "X-Webhook-Timestamp": event.timestamp.toISOString(),
+        "X-Webhook-Attempt": attempt.toString(),
       };
 
       // Add signature if secret is provided
       if (subscription.secret) {
         const signature = await this.generateSignature(
           JSON.stringify(payload),
-          subscription.secret
+          subscription.secret,
         );
-        headers['X-Webhook-Signature'] = signature;
+        headers["X-Webhook-Signature"] = signature;
       }
 
       const response = await fetch(subscription.url, {
-        method: 'POST',
+        method: "POST",
         headers,
         body: JSON.stringify(payload),
-        signal: AbortSignal.timeout(30000) // 30 second timeout
+        signal: AbortSignal.timeout(30000), // 30 second timeout
       });
 
       if (!response.ok) {
@@ -182,35 +180,31 @@ export class ProviderWebhookService {
       // Update last triggered time
       subscription.lastTriggered = new Date();
 
-      this.logger.debug(
-        `Webhook sent successfully to ${subscription.url} for event ${event.type}`
-      );
+      this.logger.debug(`Webhook sent successfully to ${subscription.url} for event ${event.type}`);
     } catch (error) {
       this.logger.error(
-        `Failed to send webhook to ${subscription.url} (attempt ${attempt}): ${error.message}`
+        `Failed to send webhook to ${subscription.url} (attempt ${attempt}): ${error.message}`,
       );
 
       // Retry logic
       if (attempt < subscription.retryPolicy.maxRetries) {
         const backoffMs = Math.min(
           subscription.retryPolicy.backoffMultiplier ** (attempt - 1) * 1000,
-          subscription.retryPolicy.maxBackoffMs
+          subscription.retryPolicy.maxBackoffMs,
         );
 
         setTimeout(() => {
           this.sendWebhook(subscription, event, attempt + 1);
         }, backoffMs);
       } else {
-        this.logger.error(
-          `Max retries exceeded for webhook ${subscription.id}. Giving up.`
-        );
+        this.logger.error(`Max retries exceeded for webhook ${subscription.id}. Giving up.`);
 
         // Emit failure event
-        this.eventEmitter.emit('provider.webhook.failed', {
+        this.eventEmitter.emit("provider.webhook.failed", {
           subscriptionId: subscription.id,
           tenantId: subscription.tenantId,
           event,
-          error: error.message
+          error: error.message,
         });
       }
     }
@@ -221,95 +215,107 @@ export class ProviderWebhookService {
    */
   private setupEventListeners(): void {
     // Listen for provider status changes
-    this.eventEmitter.on('provider.status.changed', async (data: {
-      providerId: string;
-      channel: NotificationChannel;
-      oldStatus: string;
-      newStatus: string;
-      metadata?: Record<string, any>;
-    }) => {
-      await this.triggerEvent({
-        type: 'provider.status.changed',
-        providerId: data.providerId,
-        channel: data.channel.toString(),
-        timestamp: new Date(),
-        severity: data.newStatus === 'unhealthy' ? 'critical' : 'info',
-        data: {
-          oldStatus: data.oldStatus,
-          newStatus: data.newStatus,
-          ...data.metadata
-        }
-      });
-    });
+    this.eventEmitter.on(
+      "provider.status.changed",
+      async (data: {
+        providerId: string;
+        channel: NotificationChannel;
+        oldStatus: string;
+        newStatus: string;
+        metadata?: Record<string, any>;
+      }) => {
+        await this.triggerEvent({
+          type: "provider.status.changed",
+          providerId: data.providerId,
+          channel: data.channel.toString(),
+          timestamp: new Date(),
+          severity: data.newStatus === "unhealthy" ? "critical" : "info",
+          data: {
+            oldStatus: data.oldStatus,
+            newStatus: data.newStatus,
+            ...data.metadata,
+          },
+        });
+      },
+    );
 
     // Listen for quota exceeded events
-    this.eventEmitter.on('provider.quota.exceeded', async (data: {
-      providerId: string;
-      channel: NotificationChannel;
-      quotaType: string;
-      limit: number;
-      current: number;
-    }) => {
-      await this.triggerEvent({
-        type: 'provider.quota.exceeded',
-        providerId: data.providerId,
-        channel: data.channel.toString(),
-        timestamp: new Date(),
-        severity: 'warning',
-        data: {
-          quotaType: data.quotaType,
-          limit: data.limit,
-          current: data.current,
-          utilizationPercentage: (data.current / data.limit) * 100
-        }
-      });
-    });
+    this.eventEmitter.on(
+      "provider.quota.exceeded",
+      async (data: {
+        providerId: string;
+        channel: NotificationChannel;
+        quotaType: string;
+        limit: number;
+        current: number;
+      }) => {
+        await this.triggerEvent({
+          type: "provider.quota.exceeded",
+          providerId: data.providerId,
+          channel: data.channel.toString(),
+          timestamp: new Date(),
+          severity: "warning",
+          data: {
+            quotaType: data.quotaType,
+            limit: data.limit,
+            current: data.current,
+            utilizationPercentage: (data.current / data.limit) * 100,
+          },
+        });
+      },
+    );
 
     // Listen for cost threshold events
-    this.eventEmitter.on('provider.cost.threshold', async (data: {
-      providerId: string;
-      channel: NotificationChannel;
-      threshold: number;
-      currentCost: number;
-      period: string;
-    }) => {
-      await this.triggerEvent({
-        type: 'provider.cost.threshold',
-        providerId: data.providerId,
-        channel: data.channel.toString(),
-        timestamp: new Date(),
-        severity: 'warning',
-        data: {
-          threshold: data.threshold,
-          currentCost: data.currentCost,
-          period: data.period,
-          exceedancePercentage: ((data.currentCost - data.threshold) / data.threshold) * 100
-        }
-      });
-    });
+    this.eventEmitter.on(
+      "provider.cost.threshold",
+      async (data: {
+        providerId: string;
+        channel: NotificationChannel;
+        threshold: number;
+        currentCost: number;
+        period: string;
+      }) => {
+        await this.triggerEvent({
+          type: "provider.cost.threshold",
+          providerId: data.providerId,
+          channel: data.channel.toString(),
+          timestamp: new Date(),
+          severity: "warning",
+          data: {
+            threshold: data.threshold,
+            currentCost: data.currentCost,
+            period: data.period,
+            exceedancePercentage: ((data.currentCost - data.threshold) / data.threshold) * 100,
+          },
+        });
+      },
+    );
 
     // Listen for failover events
-    this.eventEmitter.on('provider.failover.triggered', async (data: {
-      fromProviderId: string;
-      toProviderId: string;
-      channel: NotificationChannel;
-      reason: string;
-      messageCount: number;
-    }) => {
-      await this.triggerEvent({
-        type: 'provider.failover.triggered',
-        providerId: data.fromProviderId,
-        channel: data.channel.toString(),
-        timestamp: new Date(),
-        severity: 'warning',
-        data: {
-          fromProvider: data.fromProviderId,
-          toProvider: data.toProviderId,
-          reason: data.reason,
-          affectedMessages: data.messageCount
-        }
-      });
-    });
+    this.eventEmitter.on(
+      "provider.failover.triggered",
+      async (data: {
+        fromProviderId: string;
+        toProviderId: string;
+        channel: NotificationChannel;
+        reason: string;
+        messageCount: number;
+      }) => {
+        await this.triggerEvent({
+          type: "provider.failover.triggered",
+          providerId: data.fromProviderId,
+          channel: data.channel.toString(),
+          timestamp: new Date(),
+          severity: "warning",
+          data: {
+            fromProvider: data.fromProviderId,
+            toProvider: data.toProviderId,
+            reason: data.reason,
+            affectedMessages: data.messageCount,
+          },
+        });
+      },
+    );
   }
 
   /**
@@ -318,16 +324,16 @@ export class ProviderWebhookService {
   private async generateSignature(payload: string, secret: string): Promise<string> {
     const encoder = new TextEncoder();
     const key = await crypto.subtle.importKey(
-      'raw',
+      "raw",
       encoder.encode(secret),
-      { name: 'HMAC', hash: 'SHA-256' },
+      { name: "HMAC", hash: "SHA-256" },
       false,
-      ['sign']
+      ["sign"],
     );
 
-    const signature = await crypto.subtle.sign('HMAC', key, encoder.encode(payload));
+    const signature = await crypto.subtle.sign("HMAC", key, encoder.encode(payload));
     const hashArray = Array.from(new Uint8Array(signature));
-    const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+    const hashHex = hashArray.map((b) => b.toString(16).padStart(2, "0")).join("");
 
     return `sha256=${hashHex}`;
   }
@@ -342,11 +348,7 @@ export class ProviderWebhookService {
   /**
    * Validate webhook signature
    */
-  async validateSignature(
-    payload: string,
-    signature: string,
-    secret: string
-  ): Promise<boolean> {
+  async validateSignature(payload: string, signature: string, secret: string): Promise<boolean> {
     try {
       const expectedSignature = await this.generateSignature(payload, secret);
       return signature === expectedSignature;
@@ -370,10 +372,10 @@ export class ProviderWebhookService {
 
     return {
       totalSubscriptions: subscriptions.length,
-      activeSubscriptions: subscriptions.filter(sub => sub.isActive).length,
+      activeSubscriptions: subscriptions.filter((sub) => sub.isActive).length,
       totalDeliveries: 0, // TODO: Implement delivery tracking
       successfulDeliveries: 0,
-      failedDeliveries: 0
+      failedDeliveries: 0,
     };
   }
 
@@ -390,28 +392,28 @@ export class ProviderWebhookService {
 
     try {
       const testEvent: ProviderWebhookEvent = {
-        type: 'provider.status.changed',
-        providerId: 'test-provider',
-        channel: 'email',
+        type: "provider.status.changed",
+        providerId: "test-provider",
+        channel: "email",
         timestamp: new Date(),
-        severity: 'info',
+        severity: "info",
         data: {
           test: true,
-          message: 'This is a test webhook'
-        }
+          message: "This is a test webhook",
+        },
       };
 
       await this.sendWebhook(subscription, testEvent);
 
       return {
         success: true,
-        responseTime: Date.now() - startTime
+        responseTime: Date.now() - startTime,
       };
     } catch (error) {
       return {
         success: false,
         responseTime: Date.now() - startTime,
-        error: error.message
+        error: error.message,
       };
     }
   }

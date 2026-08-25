@@ -1,8 +1,14 @@
 // Campaign management types
 
-export type CampaignType = 'one_time' | 'recurring' | 'triggered' | 'drip';
-export type CampaignStatus = 'draft' | 'scheduled' | 'active' | 'paused' | 'completed' | 'cancelled';
-export type CommunicationChannel = 'email' | 'sms' | 'push' | 'in_app' | 'voice' | 'whatsapp';
+export type CampaignType = "one_time" | "recurring" | "triggered" | "drip";
+export type CampaignStatus =
+  | "draft"
+  | "scheduled"
+  | "active"
+  | "paused"
+  | "completed"
+  | "cancelled";
+export type CommunicationChannel = "email" | "sms" | "push" | "in_app" | "voice" | "whatsapp";
 
 export interface Campaign {
   id: string;
@@ -22,7 +28,7 @@ export interface Campaign {
 }
 
 export interface AudienceConfig {
-  type: 'all' | 'segment' | 'custom';
+  type: "all" | "segment" | "custom";
   segmentIds?: string[];
   customFilters?: AudienceFilter[];
   estimatedSize?: number;
@@ -30,19 +36,27 @@ export interface AudienceConfig {
 
 export interface AudienceFilter {
   field: string;
-  operator: 'equals' | 'not_equals' | 'contains' | 'not_contains' | 'greater_than' | 'less_than' | 'in' | 'not_in';
+  operator:
+    | "equals"
+    | "not_equals"
+    | "contains"
+    | "not_contains"
+    | "greater_than"
+    | "less_than"
+    | "in"
+    | "not_in";
   value: any;
 }
 
 export interface ScheduleConfig {
-  type: 'immediate' | 'scheduled' | 'recurring';
+  type: "immediate" | "scheduled" | "recurring";
   scheduledAt?: Date;
   timezone?: string;
   recurring?: RecurringConfig;
 }
 
 export interface RecurringConfig {
-  frequency: 'daily' | 'weekly' | 'monthly' | 'yearly';
+  frequency: "daily" | "weekly" | "monthly" | "yearly";
   interval: number; // Every N days/weeks/months/years
   daysOfWeek?: number[]; // For weekly (0 = Sunday, 6 = Saturday)
   dayOfMonth?: number; // For monthly

@@ -1,11 +1,11 @@
-import { Injectable, Logger, BadRequestException } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, DataSource } from 'typeorm';
-import { 
-  TokenBalance, 
-  TokenTransaction, 
-  TokenTransactionType 
-} from '../../billing/entities/token-balance.entity';
+import { Injectable, Logger, BadRequestException } from "@nestjs/common";
+import { InjectRepository } from "@nestjs/typeorm";
+import { Repository, DataSource } from "typeorm";
+import {
+  TokenBalance,
+  TokenTransaction,
+  TokenTransactionType,
+} from "../../billing/entities/token-balance.entity";
 
 export interface TokenUsageDto {
   tenantId: string;
@@ -64,7 +64,7 @@ export class TokenManagementService {
       };
     } catch (error) {
       this.logger.error(`Failed to get token balance for tenant ${tenantId}:`, error);
-      throw new BadRequestException('Failed to get token balance');
+      throw new BadRequestException("Failed to get token balance");
     }
   }
 
@@ -77,7 +77,7 @@ export class TokenManagementService {
     referenceId?: string,
   ): Promise<TokenBalanceInfo> {
     if (amount <= 0) {
-      throw new BadRequestException('Token amount must be positive');
+      throw new BadRequestException("Token amount must be positive");
     }
 
     const queryRunner = this.dataSource.createQueryRunner();
@@ -88,7 +88,7 @@ export class TokenManagementService {
       // Get or create balance record with lock
       let balance = await queryRunner.manager.findOne(TokenBalance, {
         where: { tenantId },
-        lock: { mode: 'pessimistic_write' },
+        lock: { mode: "pessimistic_write" },
       });
 
       if (!balance) {
@@ -107,7 +107,7 @@ export class TokenManagementService {
 
       balance.totalTokens = newTotalTokens;
       balance.availableTokens = newAvailableTokens;
-      
+
       if (type === TokenTransactionType.PURCHASE) {
         balance.lastPurchase = new Date();
       }
@@ -129,7 +129,9 @@ export class TokenManagementService {
 
       await queryRunner.commitTransaction();
 
-      this.logger.log(`Added ${amount} tokens to tenant ${tenantId}. New balance: ${newAvailableTokens}`);
+      this.logger.log(
+        `Added ${amount} tokens to tenant ${tenantId}. New balance: ${newAvailableTokens}`,
+      );
 
       return {
         totalTokens: newTotalTokens,
@@ -142,7 +144,7 @@ export class TokenManagementService {
     } catch (error) {
       await queryRunner.rollbackTransaction();
       this.logger.error(`Failed to add tokens for tenant ${tenantId}:`, error);
-      throw new BadRequestException('Failed to add tokens');
+      throw new BadRequestException("Failed to add tokens");
     } finally {
       await queryRunner.release();
     }
@@ -150,7 +152,7 @@ export class TokenManagementService {
 
   async useTokens(dto: TokenUsageDto): Promise<TokenBalanceInfo> {
     if (dto.amount <= 0) {
-      throw new BadRequestException('Token amount must be positive');
+      throw new BadRequestException("Token amount must be positive");
     }
 
     const queryRunner = this.dataSource.createQueryRunner();
@@ -161,18 +163,18 @@ export class TokenManagementService {
       // Get balance record with lock
       const balance = await queryRunner.manager.findOne(TokenBalance, {
         where: { tenantId: dto.tenantId },
-        lock: { mode: 'pessimistic_write' },
+        lock: { mode: "pessimistic_write" },
       });
 
       if (!balance) {
-        throw new BadRequestException('No token balance found for tenant');
+        throw new BadRequestException("No token balance found for tenant");
       }
 
       const availableTokens = Number(balance.availableTokens);
-      
+
       if (availableTokens < dto.amount) {
         throw new BadRequestException(
-          `Insufficient tokens. Available: ${availableTokens}, Required: ${dto.amount}`
+          `Insufficient tokens. Available: ${availableTokens}, Required: ${dto.amount}`,
         );
       }
 
@@ -201,7 +203,9 @@ export class TokenManagementService {
 
       await queryRunner.commitTransaction();
 
-      this.logger.log(`Used ${dto.amount} tokens for tenant ${dto.tenantId}. Remaining: ${newAvailableTokens}`);
+      this.logger.log(
+        `Used ${dto.amount} tokens for tenant ${dto.tenantId}. Remaining: ${newAvailableTokens}`,
+      );
 
       return {
         totalTokens: Number(balance.totalTokens),
@@ -213,13 +217,13 @@ export class TokenManagementService {
       };
     } catch (error) {
       await queryRunner.rollbackTransaction();
-      
+
       if (error instanceof BadRequestException) {
         throw error;
       }
-      
+
       this.logger.error(`Failed to use tokens for tenant ${dto.tenantId}:`, error);
-      throw new BadRequestException('Failed to use tokens');
+      throw new BadRequestException("Failed to use tokens");
     } finally {
       await queryRunner.release();
     }
@@ -227,7 +231,7 @@ export class TokenManagementService {
 
   async reserveTokens(tenantId: string, amount: number, referenceId?: string): Promise<void> {
     if (amount <= 0) {
-      throw new BadRequestException('Token amount must be positive');
+      throw new BadRequestException("Token amount must be positive");
     }
 
     const queryRunner = this.dataSource.createQueryRunner();
@@ -237,18 +241,18 @@ export class TokenManagementService {
     try {
       const balance = await queryRunner.manager.findOne(TokenBalance, {
         where: { tenantId },
-        lock: { mode: 'pessimistic_write' },
+        lock: { mode: "pessimistic_write" },
       });
 
       if (!balance) {
-        throw new BadRequestException('No token balance found for tenant');
+        throw new BadRequestException("No token balance found for tenant");
       }
 
       const availableTokens = Number(balance.availableTokens);
-      
+
       if (availableTokens < amount) {
         throw new BadRequestException(
-          `Insufficient tokens to reserve. Available: ${availableTokens}, Required: ${amount}`
+          `Insufficient tokens to reserve. Available: ${availableTokens}, Required: ${amount}`,
         );
       }
 
@@ -261,13 +265,13 @@ export class TokenManagementService {
       this.logger.log(`Reserved ${amount} tokens for tenant ${tenantId}`);
     } catch (error) {
       await queryRunner.rollbackTransaction();
-      
+
       if (error instanceof BadRequestException) {
         throw error;
       }
-      
+
       this.logger.error(`Failed to reserve tokens for tenant ${tenantId}:`, error);
-      throw new BadRequestException('Failed to reserve tokens');
+      throw new BadRequestException("Failed to reserve tokens");
     } finally {
       await queryRunner.release();
     }
@@ -275,7 +279,7 @@ export class TokenManagementService {
 
   async releaseReservedTokens(tenantId: string, amount: number, consume = false): Promise<void> {
     if (amount <= 0) {
-      throw new BadRequestException('Token amount must be positive');
+      throw new BadRequestException("Token amount must be positive");
     }
 
     const queryRunner = this.dataSource.createQueryRunner();
@@ -285,18 +289,18 @@ export class TokenManagementService {
     try {
       const balance = await queryRunner.manager.findOne(TokenBalance, {
         where: { tenantId },
-        lock: { mode: 'pessimistic_write' },
+        lock: { mode: "pessimistic_write" },
       });
 
       if (!balance) {
-        throw new BadRequestException('No token balance found for tenant');
+        throw new BadRequestException("No token balance found for tenant");
       }
 
       const reservedTokens = Number(balance.reservedTokens);
-      
+
       if (reservedTokens < amount) {
         throw new BadRequestException(
-          `Insufficient reserved tokens. Reserved: ${reservedTokens}, Requested: ${amount}`
+          `Insufficient reserved tokens. Reserved: ${reservedTokens}, Requested: ${amount}`,
         );
       }
 
@@ -326,17 +330,17 @@ export class TokenManagementService {
       await queryRunner.commitTransaction();
 
       this.logger.log(
-        `${consume ? 'Consumed' : 'Released'} ${amount} reserved tokens for tenant ${tenantId}`
+        `${consume ? "Consumed" : "Released"} ${amount} reserved tokens for tenant ${tenantId}`,
       );
     } catch (error) {
       await queryRunner.rollbackTransaction();
-      
+
       if (error instanceof BadRequestException) {
         throw error;
       }
-      
+
       this.logger.error(`Failed to release reserved tokens for tenant ${tenantId}:`, error);
-      throw new BadRequestException('Failed to release reserved tokens');
+      throw new BadRequestException("Failed to release reserved tokens");
     } finally {
       await queryRunner.release();
     }
@@ -350,14 +354,14 @@ export class TokenManagementService {
   ): Promise<{ transactions: TokenTransaction[]; total: number }> {
     try {
       const queryBuilder = this.tokenTransactionRepository
-        .createQueryBuilder('transaction')
-        .where('transaction.tenantId = :tenantId', { tenantId })
-        .orderBy('transaction.createdAt', 'DESC')
+        .createQueryBuilder("transaction")
+        .where("transaction.tenantId = :tenantId", { tenantId })
+        .orderBy("transaction.createdAt", "DESC")
         .skip(offset)
         .take(limit);
 
       if (type) {
-        queryBuilder.andWhere('transaction.type = :type', { type });
+        queryBuilder.andWhere("transaction.type = :type", { type });
       }
 
       const [transactions, total] = await queryBuilder.getManyAndCount();
@@ -365,7 +369,7 @@ export class TokenManagementService {
       return { transactions, total };
     } catch (error) {
       this.logger.error(`Failed to get transaction history for tenant ${tenantId}:`, error);
-      throw new BadRequestException('Failed to get transaction history');
+      throw new BadRequestException("Failed to get transaction history");
     }
   }
 
@@ -390,13 +394,13 @@ export class TokenManagementService {
   }> {
     try {
       const transactions = await this.tokenTransactionRepository
-        .createQueryBuilder('transaction')
-        .where('transaction.tenantId = :tenantId', { tenantId })
-        .andWhere('transaction.createdAt BETWEEN :startDate AND :endDate', {
+        .createQueryBuilder("transaction")
+        .where("transaction.tenantId = :tenantId", { tenantId })
+        .andWhere("transaction.createdAt BETWEEN :startDate AND :endDate", {
           startDate,
           endDate,
         })
-        .orderBy('transaction.createdAt', 'ASC')
+        .orderBy("transaction.createdAt", "ASC")
         .getMany();
 
       let totalUsed = 0;
@@ -405,7 +409,7 @@ export class TokenManagementService {
 
       for (const transaction of transactions) {
         const amount = Number(transaction.amount);
-        const date = transaction.createdAt.toISOString().split('T')[0];
+        const date = transaction.createdAt.toISOString().split("T")[0];
 
         if (transaction.type === TokenTransactionType.USAGE) {
           totalUsed += Math.abs(amount);
@@ -427,7 +431,7 @@ export class TokenManagementService {
       };
     } catch (error) {
       this.logger.error(`Failed to get token usage stats for tenant ${tenantId}:`, error);
-      throw new BadRequestException('Failed to get token usage stats');
+      throw new BadRequestException("Failed to get token usage stats");
     }
   }
 }

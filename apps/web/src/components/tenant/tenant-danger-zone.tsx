@@ -1,7 +1,7 @@
-'use client';
+"use client";
 
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
@@ -10,16 +10,16 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Separator } from '@/components/ui/separator';
-import { useTenant } from '@/contexts/tenant-context';
-import { Tenant } from '@/lib/types/tenant';
-import { ExclamationTriangleIcon, TrashIcon } from '@heroicons/react/24/outline'
-import { useRouter } from '@/compat/next-navigation';
-import { useState } from 'react';
-import { toast } from 'sonner';
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Separator } from "@/components/ui/separator";
+import { useTenant } from "@/contexts/tenant-context";
+import { Tenant } from "@/lib/types/tenant";
+import { ExclamationTriangleIcon, TrashIcon } from "@heroicons/react/24/outline";
+import { useRouter } from "@/compat/next-navigation";
+import { useState } from "react";
+import { toast } from "sonner";
 
 interface TenantDangerZoneProps {
   tenant: Tenant;
@@ -29,7 +29,7 @@ export function TenantDangerZone({ tenant }: TenantDangerZoneProps) {
   const { deleteTenant, isLoading } = useTenant();
   const router = useRouter();
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [confirmationText, setConfirmationText] = useState('');
+  const [confirmationText, setConfirmationText] = useState("");
   const [isDeleting, setIsDeleting] = useState(false);
 
   const expectedConfirmationText = `delete ${tenant.slug}`;
@@ -41,12 +41,12 @@ export function TenantDangerZone({ tenant }: TenantDangerZoneProps) {
     setIsDeleting(true);
     try {
       await deleteTenant(tenant.id);
-      toast.success('Organization deleted successfully');
+      toast.success("Organization deleted successfully");
       setDeleteDialogOpen(false);
-      router.push('/dashboard');
+      router.push("/dashboard");
     } catch (error) {
-      toast.error('Failed to delete organization');
-      console.error('Delete error:', error);
+      toast.error("Failed to delete organization");
+      console.error("Delete error:", error);
     } finally {
       setIsDeleting(false);
     }
@@ -54,12 +54,12 @@ export function TenantDangerZone({ tenant }: TenantDangerZoneProps) {
 
   const handleTransferOwnership = async () => {
     // This would open a dialog to transfer ownership
-    toast.info('Transfer ownership feature coming soon');
+    toast.info("Transfer ownership feature coming soon");
   };
 
   const handleLeaveOrganization = async () => {
     // This would allow the user to leave the organization
-    toast.info('Leave organization feature coming soon');
+    toast.info("Leave organization feature coming soon");
   };
 
   return (
@@ -82,11 +82,7 @@ export function TenantDangerZone({ tenant }: TenantDangerZoneProps) {
               Transfer ownership of this organization to another member.
             </p>
           </div>
-          <Button
-            onClick={handleTransferOwnership}
-            variant="outline"
-            disabled={isLoading}
-          >
+          <Button onClick={handleTransferOwnership} variant="outline" disabled={isLoading}>
             Transfer
           </Button>
         </div>
@@ -101,11 +97,7 @@ export function TenantDangerZone({ tenant }: TenantDangerZoneProps) {
               Remove yourself from this organization. You will lose access immediately.
             </p>
           </div>
-          <Button
-            onClick={handleLeaveOrganization}
-            variant="outline"
-            disabled={isLoading}
-          >
+          <Button onClick={handleLeaveOrganization} variant="outline" disabled={isLoading}>
             Leave
           </Button>
         </div>
@@ -117,7 +109,8 @@ export function TenantDangerZone({ tenant }: TenantDangerZoneProps) {
           <div className="space-y-1">
             <h4 className="font-medium text-destructive">Delete Organization</h4>
             <p className="text-sm text-muted-foreground">
-              Permanently delete this organization and all associated data. This action cannot be undone.
+              Permanently delete this organization and all associated data. This action cannot be
+              undone.
             </p>
             <div className="text-xs text-muted-foreground mt-2">
               <p className="font-medium">This will delete:</p>
@@ -132,10 +125,7 @@ export function TenantDangerZone({ tenant }: TenantDangerZoneProps) {
           </div>
           <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
             <DialogTrigger asChild>
-              <Button
-                variant="destructive"
-                disabled={isLoading}
-              >
+              <Button variant="destructive" disabled={isLoading}>
                 <TrashIcon className="mr-2 h-4 w-4" />
                 Delete
               </Button>
@@ -147,8 +137,9 @@ export function TenantDangerZone({ tenant }: TenantDangerZoneProps) {
                   Delete Organization
                 </DialogTitle>
                 <DialogDescription>
-                  This action cannot be undone. This will permanently delete the{' '}
-                  <span className="font-medium">{tenant.name}</span> organization and all associated data.
+                  This action cannot be undone. This will permanently delete the{" "}
+                  <span className="font-medium">{tenant.name}</span> organization and all associated
+                  data.
                 </DialogDescription>
               </DialogHeader>
 
@@ -168,7 +159,8 @@ export function TenantDangerZone({ tenant }: TenantDangerZoneProps) {
 
                 <div className="space-y-2">
                   <Label htmlFor="confirmation">
-                    Type <span className="font-mono font-medium">{expectedConfirmationText}</span> to confirm:
+                    Type <span className="font-mono font-medium">{expectedConfirmationText}</span>{" "}
+                    to confirm:
                   </Label>
                   <Input
                     id="confirmation"
@@ -185,7 +177,7 @@ export function TenantDangerZone({ tenant }: TenantDangerZoneProps) {
                   variant="outline"
                   onClick={() => {
                     setDeleteDialogOpen(false);
-                    setConfirmationText('');
+                    setConfirmationText("");
                   }}
                   disabled={isDeleting}
                   className="w-full sm:w-auto"
@@ -199,7 +191,7 @@ export function TenantDangerZone({ tenant }: TenantDangerZoneProps) {
                   className="w-full sm:w-auto"
                 >
                   <TrashIcon className="mr-2 h-4 w-4" />
-                  {isDeleting ? 'Deleting...' : 'Delete Organization'}
+                  {isDeleting ? "Deleting..." : "Delete Organization"}
                 </Button>
               </DialogFooter>
             </DialogContent>

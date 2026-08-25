@@ -1,13 +1,12 @@
-'use client';
+"use client";
 
-import { BrandAssetManager } from '@/components/branding/brand-asset-manager';
-import { BrandPreview } from '@/components/branding/brand-preview';
-import { BrandTestingTool } from '@/components/branding/brand-testing-tool';
-import { BrandingConfigurator } from '@/components/branding/branding-configurator';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { useBranding } from '@/contexts/branding-context';
-import { EyeIcon, CubeIcon, SwatchIcon, BeakerIcon } from '@heroicons/react/24/outline'
-
+import { BrandAssetManager } from "@/components/branding/brand-asset-manager";
+import { BrandPreview } from "@/components/branding/brand-preview";
+import { BrandTestingTool } from "@/components/branding/brand-testing-tool";
+import { BrandingConfigurator } from "@/components/branding/branding-configurator";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useBranding } from "@/contexts/branding-context";
+import { EyeIcon, CubeIcon, SwatchIcon, BeakerIcon } from "@heroicons/react/24/outline";
 
 export default function BrandingSettingsPage() {
   const { branding, applyBranding } = useBranding();
@@ -70,10 +69,7 @@ export default function BrandingSettingsPage() {
         </TabsContent>
 
         <TabsContent value="assets" className="mt-6">
-          <BrandAssetManager
-            branding={branding}
-            onBrandingChange={handleBrandingChange}
-          />
+          <BrandAssetManager branding={branding} onBrandingChange={handleBrandingChange} />
         </TabsContent>
       </Tabs>
     </div>

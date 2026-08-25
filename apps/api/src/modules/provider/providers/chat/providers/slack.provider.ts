@@ -1,6 +1,6 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import { IChatProvider, ChatPayload, ChatResponse } from '../chat-provider.interface';
+import { Injectable, Logger } from "@nestjs/common";
+import { ConfigService } from "@nestjs/config";
+import { IChatProvider, ChatPayload, ChatResponse } from "../chat-provider.interface";
 
 @Injectable()
 export class SlackProvider implements IChatProvider {
@@ -8,7 +8,7 @@ export class SlackProvider implements IChatProvider {
   private readonly webhookUrl: string;
 
   constructor(private configService: ConfigService) {
-    this.webhookUrl = this.configService.get('SLACK_WEBHOOK_URL') || '';
+    this.webhookUrl = this.configService.get("SLACK_WEBHOOK_URL") || "";
   }
 
   async sendMessage(payload: ChatPayload): Promise<ChatResponse> {
@@ -16,17 +16,17 @@ export class SlackProvider implements IChatProvider {
       const slackPayload = {
         channel: payload.channel,
         text: payload.message,
-        attachments: payload.attachments?.map(att => ({
-          image_url: att.type === 'image' ? att.url : undefined,
+        attachments: payload.attachments?.map((att) => ({
+          image_url: att.type === "image" ? att.url : undefined,
           title: att.filename,
           title_link: att.url,
         })),
       };
 
       const response = await fetch(this.webhookUrl, {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify(slackPayload),
       });
@@ -41,14 +41,14 @@ export class SlackProvider implements IChatProvider {
         success: true,
         messageId: `slack_${Date.now()}`,
         timestamp: new Date().toISOString(),
-        provider: 'slack',
+        provider: "slack",
       };
     } catch (error) {
       this.logger.error(`Failed to send Slack message: ${error.message}`, error.stack);
       return {
         success: false,
         error: error.message,
-        provider: 'slack',
+        provider: "slack",
       };
     }
   }
@@ -58,6 +58,6 @@ export class SlackProvider implements IChatProvider {
   }
 
   getProviderName(): string {
-    return 'slack';
+    return "slack";
   }
 }

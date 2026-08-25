@@ -1,9 +1,9 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, LessThanOrEqual } from 'typeorm';
-import { NotificationCenterItem } from '../entities/notification-center.entity';
-import { TenantSettings } from '../../tenant/entities/tenant-settings.entity';
-import { Cron, CronExpression } from '@nestjs/schedule';
+import { Injectable, Logger } from "@nestjs/common";
+import { InjectRepository } from "@nestjs/typeorm";
+import { Repository, LessThanOrEqual } from "typeorm";
+import { NotificationCenterItem } from "../entities/notification-center.entity";
+import { TenantSettings } from "../../tenant/entities/tenant-settings.entity";
+import { Cron, CronExpression } from "@nestjs/schedule";
 
 @Injectable()
 export class NotificationPersistenceService {
@@ -30,7 +30,7 @@ export class NotificationPersistenceService {
 
       return saved;
     } catch (error) {
-      this.logger.error('Failed to persist notification', error);
+      this.logger.error("Failed to persist notification", error);
       throw error;
     }
   }
@@ -49,7 +49,7 @@ export class NotificationPersistenceService {
 
       return saved;
     } catch (error) {
-      this.logger.error('Failed to batch persist notifications', error);
+      this.logger.error("Failed to batch persist notifications", error);
       throw error;
     }
   }
@@ -74,7 +74,7 @@ export class NotificationPersistenceService {
 
       this.logger.debug(`Updated notification ${id} status to ${status}`);
     } catch (error) {
-      this.logger.error('Failed to update notification status', error);
+      this.logger.error("Failed to update notification status", error);
       throw error;
     }
   }
@@ -114,7 +114,7 @@ export class NotificationPersistenceService {
 
       return count;
     } catch (error) {
-      this.logger.error('Failed to cleanup expired notifications', error);
+      this.logger.error("Failed to cleanup expired notifications", error);
       return 0;
     }
   }
@@ -130,11 +130,11 @@ export class NotificationPersistenceService {
 
       const result = await this.repository.update(
         {
-          status: 'read' as any,
+          status: "read" as any,
           readAt: new Date(thirtyDaysAgo),
         },
         {
-          status: 'archived' as any,
+          status: "archived" as any,
           archivedAt: new Date(),
         },
       );
@@ -145,7 +145,7 @@ export class NotificationPersistenceService {
 
       return count;
     } catch (error) {
-      this.logger.error('Failed to archive old notifications', error);
+      this.logger.error("Failed to archive old notifications", error);
       return 0;
     }
   }
@@ -168,20 +168,20 @@ export class NotificationPersistenceService {
       });
 
       const delivered = await this.repository.count({
-        where: { subscriberId, tenantId, status: 'read' as any },
+        where: { subscriberId, tenantId, status: "read" as any },
       });
 
       const failed = await this.repository.count({
-        where: { subscriberId, tenantId, status: 'archived' as any },
+        where: { subscriberId, tenantId, status: "archived" as any },
       });
 
       const pending = await this.repository.count({
-        where: { subscriberId, tenantId, status: 'unread' as any },
+        where: { subscriberId, tenantId, status: "unread" as any },
       });
 
       return { total, delivered, failed, pending };
     } catch (error) {
-      this.logger.error('Failed to get delivery stats', error);
+      this.logger.error("Failed to get delivery stats", error);
       throw error;
     }
   }
@@ -202,7 +202,7 @@ export class NotificationPersistenceService {
 
       return count;
     } catch (error) {
-      this.logger.error('Failed to bulk update notifications', error);
+      this.logger.error("Failed to bulk update notifications", error);
       throw error;
     }
   }
@@ -217,7 +217,7 @@ export class NotificationPersistenceService {
     try {
       const notifications = await this.repository.find({
         where: { subscriberId, tenantId },
-        order: { createdAt: 'DESC' },
+        order: { createdAt: "DESC" },
       });
 
       this.logger.log(
@@ -226,7 +226,7 @@ export class NotificationPersistenceService {
 
       return notifications;
     } catch (error) {
-      this.logger.error('Failed to export notifications', error);
+      this.logger.error("Failed to export notifications", error);
       throw error;
     }
   }
@@ -234,10 +234,7 @@ export class NotificationPersistenceService {
   /**
    * Delete all notifications for subscriber
    */
-  async deleteAllNotifications(
-    subscriberId: string,
-    tenantId: string,
-  ): Promise<number> {
+  async deleteAllNotifications(subscriberId: string, tenantId: string): Promise<number> {
     try {
       const result = await this.repository.delete({
         subscriberId,
@@ -246,13 +243,11 @@ export class NotificationPersistenceService {
 
       const count = result.affected || 0;
 
-      this.logger.log(
-        `Deleted ${count} notifications for subscriber ${subscriberId}`,
-      );
+      this.logger.log(`Deleted ${count} notifications for subscriber ${subscriberId}`);
 
       return count;
     } catch (error) {
-      this.logger.error('Failed to delete notifications', error);
+      this.logger.error("Failed to delete notifications", error);
       throw error;
     }
   }

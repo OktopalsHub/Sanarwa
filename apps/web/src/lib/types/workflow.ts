@@ -1,35 +1,20 @@
 // Workflow types for the drag-and-drop workflow builder
 
-export type WorkflowNodeType =
-  | 'trigger'
-  | 'action'
-  | 'condition'
-  | 'delay'
-  | 'split';
+export type WorkflowNodeType = "trigger" | "action" | "condition" | "delay" | "split";
 
-export type TriggerType =
-  | 'event'
-  | 'time'
-  | 'api'
-  | 'webhook';
+export type TriggerType = "event" | "time" | "api" | "webhook";
 
-export type ActionType =
-  | 'email'
-  | 'sms'
-  | 'push'
-  | 'in_app'
-  | 'voice'
-  | 'webhook';
+export type ActionType = "email" | "sms" | "push" | "in_app" | "voice" | "webhook";
 
 export type ConditionOperator =
-  | 'equals'
-  | 'not_equals'
-  | 'contains'
-  | 'not_contains'
-  | 'greater_than'
-  | 'less_than'
-  | 'exists'
-  | 'not_exists';
+  | "equals"
+  | "not_equals"
+  | "contains"
+  | "not_contains"
+  | "greater_than"
+  | "less_than"
+  | "exists"
+  | "not_exists";
 
 export interface WorkflowPosition {
   x: number;
@@ -78,11 +63,11 @@ export interface ConditionConfig {
 
 export interface DelayConfig {
   duration: number;
-  unit: 'minutes' | 'hours' | 'days';
+  unit: "minutes" | "hours" | "days";
 }
 
 export interface SplitConfig {
-  type: 'ab_test' | 'random';
+  type: "ab_test" | "random";
   percentage?: number; // for A/B testing
   branches: {
     id: string;
@@ -114,7 +99,7 @@ export interface Workflow {
   tenantId: string;
 }
 
-export type WorkflowStatus = 'draft' | 'active' | 'paused' | 'archived';
+export type WorkflowStatus = "draft" | "active" | "paused" | "archived";
 
 export interface WorkflowAnalytics {
   totalExecutions: number;
@@ -126,7 +111,7 @@ export interface WorkflowAnalytics {
 export interface WorkflowExecution {
   id: string;
   workflowId: string;
-  status: 'running' | 'completed' | 'failed' | 'cancelled';
+  status: "running" | "completed" | "failed" | "cancelled";
   startedAt: Date;
   completedAt?: Date;
   error?: string;
@@ -135,7 +120,7 @@ export interface WorkflowExecution {
 
 export interface WorkflowNodeExecution {
   nodeId: string;
-  status: 'pending' | 'running' | 'completed' | 'failed' | 'skipped';
+  status: "pending" | "running" | "completed" | "failed" | "skipped";
   startedAt?: Date;
   completedAt?: Date;
   error?: string;

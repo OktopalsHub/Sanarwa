@@ -1,42 +1,42 @@
-'use client';
+"use client";
 
-import { Send } from '@/lib/icons';
+import { Send } from "@/lib/icons";
 
-import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { authApi } from '@/lib/api/auth';
-import Link from '@/compat/next-link';
-import { useState } from 'react';
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { authApi } from "@/lib/api/auth";
+import Link from "@/compat/next-link";
+import { useState } from "react";
 
 export function ForgotPasswordForm() {
-  const [email, setEmail] = useState('');
+  const [email, setEmail] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!email) {
-      setError('Email is required');
+      setError("Email is required");
       return;
     }
 
     if (!/\S+@\S+\.\S+/.test(email)) {
-      setError('Please enter a valid email address');
+      setError("Please enter a valid email address");
       return;
     }
 
     setIsLoading(true);
-    setError('');
+    setError("");
 
     try {
       await authApi.requestPasswordReset({ email });
       setIsSubmitted(true);
     } catch (error) {
-      setError(error instanceof Error ? error.message : 'Failed to send reset email');
+      setError(error instanceof Error ? error.message : "Failed to send reset email");
     } finally {
       setIsLoading(false);
     }
@@ -67,11 +67,8 @@ export function ForgotPasswordForm() {
             We've sent a password reset link to <strong>{email}</strong>
           </p>
           <p className="text-sm text-muted-foreground">
-            Didn't receive the email? Check your spam folder or{' '}
-            <button
-              onClick={() => setIsSubmitted(false)}
-              className="text-primary hover:underline"
-            >
+            Didn't receive the email? Check your spam folder or{" "}
+            <button onClick={() => setIsSubmitted(false)} className="text-primary hover:underline">
               try again
             </button>
           </p>
@@ -105,12 +102,12 @@ export function ForgotPasswordForm() {
               value={email}
               onChange={(e) => {
                 setEmail(e.target.value);
-                setError('');
+                setError("");
               }}
               placeholder="Enter your email"
               disabled={isLoading}
               aria-invalid={!!error}
-              aria-describedby={error ? 'email-error' : undefined}
+              aria-describedby={error ? "email-error" : undefined}
             />
             {error && (
               <p id="email-error" className="text-sm text-destructive">
@@ -119,12 +116,8 @@ export function ForgotPasswordForm() {
             )}
           </div>
 
-          <Button
-            type="submit"
-            className="w-full"
-            disabled={isLoading}
-          >
-            {isLoading ? 'Sending...' : 'Send reset link'}
+          <Button type="submit" className="w-full" disabled={isLoading}>
+            {isLoading ? "Sending..." : "Send reset link"}
           </Button>
         </form>
 

@@ -1,5 +1,5 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { BillingService } from './billing.service';
+import { Injectable, Logger } from "@nestjs/common";
+import { BillingService } from "./billing.service";
 
 export interface CallStartData {
   tenantId: string;
@@ -22,7 +22,7 @@ interface CallRecord {
   startTime: Date;
   endTime?: Date;
   duration?: number;
-  status: 'initiated' | 'connected' | 'ended' | 'failed';
+  status: "initiated" | "connected" | "ended" | "failed";
   ttsMessage?: string;
   hangupCause?: string;
   metadata?: Record<string, any>;
@@ -33,9 +33,7 @@ export class VoiceCallTrackingService {
   private readonly logger = new Logger(VoiceCallTrackingService.name);
   private readonly activeCalls = new Map<string, CallRecord>();
 
-  constructor(
-    private billingService: BillingService,
-  ) {}
+  constructor(private billingService: BillingService) {}
 
   /**
    * Start tracking a new voice call
@@ -47,15 +45,15 @@ export class VoiceCallTrackingService {
         tenantId: data.tenantId,
         phoneNumber: data.phoneNumber,
         startTime: new Date(),
-        status: 'initiated',
+        status: "initiated",
         ttsMessage: data.ttsMessage,
         metadata: data.metadata,
       };
 
       this.activeCalls.set(data.callControlId, callRecord);
-      
+
       this.logger.log(`Started tracking call: ${data.callControlId} for tenant: ${data.tenantId}`);
-      
+
       return callRecord;
     } catch (error) {
       this.logger.error(`Failed to start call tracking: ${error.message}`, error.stack);
@@ -70,7 +68,7 @@ export class VoiceCallTrackingService {
     try {
       const callRecord = this.activeCalls.get(callControlId);
       if (callRecord) {
-        callRecord.status = 'connected';
+        callRecord.status = "connected";
         this.logger.log(`Call answered: ${callControlId}`);
       }
     } catch (error) {
@@ -94,7 +92,7 @@ export class VoiceCallTrackingService {
       const billableSeconds = Math.ceil(data.durationSeconds / 60) * 60;
 
       // Update call record
-      callRecord.status = 'ended';
+      callRecord.status = "ended";
       callRecord.duration = data.durationSeconds;
       callRecord.endTime = new Date();
       callRecord.hangupCause = data.hangupCause;
@@ -107,7 +105,7 @@ export class VoiceCallTrackingService {
       this.activeCalls.delete(data.callControlId);
 
       this.logger.log(
-        `Call ended: ${data.callControlId}, Duration: ${data.durationSeconds}s, Billable: ${billableSeconds}s`
+        `Call ended: ${data.callControlId}, Duration: ${data.durationSeconds}s, Billable: ${billableSeconds}s`,
       );
     } catch (error) {
       this.logger.error(`Failed to end call tracking: ${error.message}`, error.stack);
@@ -121,10 +119,10 @@ export class VoiceCallTrackingService {
     try {
       const callRecord = this.activeCalls.get(callControlId);
       if (callRecord) {
-        callRecord.status = 'failed';
+        callRecord.status = "failed";
         callRecord.endTime = new Date();
         callRecord.hangupCause = hangupCause;
-        
+
         // Remove from active calls
         this.activeCalls.delete(callControlId);
       }
@@ -138,7 +136,11 @@ export class VoiceCallTrackingService {
   /**
    * Deduct voice usage from tenant quota
    */
-  private async deductFromQuota(tenantId: string, billableSeconds: number, ttsCharacters: number): Promise<void> {
+  private async deductFromQuota(
+    tenantId: string,
+    billableSeconds: number,
+    ttsCharacters: number,
+  ): Promise<void> {
     try {
       // Convert seconds to minutes for quota deduction
       const billableMinutes = Math.ceil(billableSeconds / 60);
@@ -147,12 +149,12 @@ export class VoiceCallTrackingService {
       await this.billingService.deductVoiceUsage(tenantId, {
         voiceMinutes: billableMinutes,
         ttsCharacters,
-        provider: 'telnyx',
+        provider: "telnyx",
         timestamp: new Date(),
       });
 
       this.logger.log(
-        `Deducted from quota - Tenant: ${tenantId}, Minutes: ${billableMinutes}, TTS chars: ${ttsCharacters}`
+        `Deducted from quota - Tenant: ${tenantId}, Minutes: ${billableMinutes}, TTS chars: ${ttsCharacters}`,
       );
     } catch (error) {
       this.logger.error(`Failed to deduct from quota: ${error.message}`, error.stack);
@@ -175,7 +177,10 @@ export class VoiceCallTrackingService {
   /**
    * Get call statistics for tenant (simplified version)
    */
-  async getCallStats(tenantId: string, startDate?: Date): Promise<{
+  async getCallStats(
+    tenantId: string,
+    startDate?: Date,
+  ): Promise<{
     totalCalls: number;
     totalMinutes: number;
     successfulCalls: number;
@@ -186,7 +191,7 @@ export class VoiceCallTrackingService {
       // This is a simplified implementation since we don't have persistent storage
       // In a real implementation, you'd want to store call records in a database
       this.logger.log(`Getting call stats for tenant: ${tenantId} (simplified implementation)`);
-      
+
       return {
         totalCalls: 0,
         totalMinutes: 0,
@@ -207,9 +212,9 @@ export class VoiceCallTrackingService {
     try {
       // Return active calls for this tenant
       const tenantCalls = Array.from(this.activeCalls.values())
-        .filter(call => call.tenantId === tenantId)
+        .filter((call) => call.tenantId === tenantId)
         .slice(0, limit);
-      
+
       return tenantCalls;
     } catch (error) {
       this.logger.error(`Failed to get recent calls: ${error.message}`, error.stack);

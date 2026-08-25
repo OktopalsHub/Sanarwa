@@ -1,12 +1,16 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { PushCertificate, CertificateType, CertificateStatus } from '../entities/push-certificate.entity';
-import { Project } from '../../project/entities/project.entity';
-import { CreatePushCertificateDto, UpdatePushCertificateDto } from '../dto/push-certificate.dto';
-import { EventEmitter2 } from '@nestjs/event-emitter';
-import { TenantRepository } from '../../tenant/tenant.repository';
-import { ProjectRepository } from '../../project/project.repository';
+import { Injectable, NotFoundException, BadRequestException } from "@nestjs/common";
+import { InjectRepository } from "@nestjs/typeorm";
+import { Repository } from "typeorm";
+import {
+  PushCertificate,
+  CertificateType,
+  CertificateStatus,
+} from "../entities/push-certificate.entity";
+import { Project } from "../../project/entities/project.entity";
+import { CreatePushCertificateDto, UpdatePushCertificateDto } from "../dto/push-certificate.dto";
+import { EventEmitter2 } from "@nestjs/event-emitter";
+import { TenantRepository } from "../../tenant/tenant.repository";
+import { ProjectRepository } from "../../project/project.repository";
 
 @Injectable()
 export class PushCertificateCrudService {
@@ -18,23 +22,27 @@ export class PushCertificateCrudService {
     private readonly eventEmitter: EventEmitter2,
   ) {}
 
-  async createCertificate(tenantId: string, createDto: CreatePushCertificateDto): Promise<PushCertificate> {
+  async createCertificate(
+    tenantId: string,
+    createDto: CreatePushCertificateDto,
+  ): Promise<PushCertificate> {
     // Validate tenant exists
     const tenant = await this.tenantRepository.findOne({
       where: { id: tenantId },
     });
     if (!tenant) {
-      throw new NotFoundException('Tenant not found');
+      throw new NotFoundException("Tenant not found");
     }
 
     // Validate project if provided
     let project: Project | undefined;
     if (createDto.projectId) {
-      project = await this.projectRepository.findOne({
-        where: { id: createDto.projectId, tenantId },
-      }) || undefined;
+      project =
+        (await this.projectRepository.findOne({
+          where: { id: createDto.projectId, tenantId },
+        })) || undefined;
       if (!project) {
-        throw new NotFoundException('Project not found');
+        throw new NotFoundException("Project not found");
       }
     }
 
@@ -50,13 +58,13 @@ export class PushCertificateCrudService {
 
     const validation = certificate.validateCertificate();
     if (!validation.isValid) {
-      throw new BadRequestException(`Invalid certificate: ${validation.errors.join(', ')}`);
+      throw new BadRequestException(`Invalid certificate: ${validation.errors.join(", ")}`);
     }
 
     const result = await this.certificateRepository.save(certificate);
 
     // Emit event
-    this.eventEmitter.emit('certificate.created', {
+    this.eventEmitter.emit("certificate.created", {
       certificateId: result.id,
       tenantId,
       type: createDto.type,
@@ -74,15 +82,15 @@ export class PushCertificateCrudService {
     // Parse certificate file based on type
     let certificateData: any;
 
-    if (metadata.type === 'ios') {
+    if (metadata.type === "ios") {
       // Parse iOS certificate (.p12 or .pem)
       certificateData = {
-        certificateData: file.buffer.toString('base64'),
+        certificateData: file.buffer.toString("base64"),
         certificatePassword: metadata.password,
         bundleId: metadata.bundleId,
         teamId: metadata.teamId,
       };
-    } else if (metadata.type === 'android') {
+    } else if (metadata.type === "android") {
       // Parse Android service account key (.json)
       const keyData = JSON.parse(file.buffer.toString());
       certificateData = {
@@ -91,7 +99,7 @@ export class PushCertificateCrudService {
         packageName: metadata.packageName,
       };
     } else {
-      throw new BadRequestException('Unsupported certificate type');
+      throw new BadRequestException("Unsupported certificate type");
     }
 
     const createDto: CreatePushCertificateDto = {
@@ -110,30 +118,32 @@ export class PushCertificateCrudService {
     filters: { projectId?: string; type?: string; status?: string; environment?: string } = {},
   ): Promise<PushCertificate[]> {
     const query = this.certificateRepository
-      .createQueryBuilder('certificate')
-      .leftJoinAndSelect('certificate.project', 'project')
-      .leftJoinAndSelect('certificate.createdBy', 'createdBy')
-      .where('certificate.tenantId = :tenantId', { tenantId });
+      .createQueryBuilder("certificate")
+      .leftJoinAndSelect("certificate.project", "project")
+      .leftJoinAndSelect("certificate.createdBy", "createdBy")
+      .where("certificate.tenantId = :tenantId", { tenantId });
 
     if (filters.projectId) {
-      query.andWhere('certificate.projectId = :projectId', {
+      query.andWhere("certificate.projectId = :projectId", {
         projectId: filters.projectId,
       });
     }
 
     if (filters.type) {
-      query.andWhere('certificate.type = :type', { type: filters.type });
+      query.andWhere("certificate.type = :type", { type: filters.type });
     }
 
     if (filters.status) {
-      query.andWhere('certificate.status = :status', { status: filters.status });
+      query.andWhere("certificate.status = :status", { status: filters.status });
     }
 
     if (filters.environment) {
-      query.andWhere('certificate.environment = :environment', { environment: filters.environment });
+      query.andWhere("certificate.environment = :environment", {
+        environment: filters.environment,
+      });
     }
 
-    query.orderBy('certificate.createdAt', 'DESC');
+    query.orderBy("certificate.createdAt", "DESC");
 
     return query.getMany();
   }
@@ -141,11 +151,11 @@ export class PushCertificateCrudService {
   async getCertificate(id: string, tenantId: string): Promise<PushCertificate> {
     const certificate = await this.certificateRepository.findOne({
       where: { id, tenantId },
-      relations: ['tenant', 'project', 'createdBy'],
+      relations: ["tenant", "project", "createdBy"],
     });
 
     if (!certificate) {
-      throw new NotFoundException('Certificate not found');
+      throw new NotFoundException("Certificate not found");
     }
 
     return certificate;
@@ -166,7 +176,7 @@ export class PushCertificateCrudService {
 
       const validation = tempCertificate.validateCertificate();
       if (!validation.isValid) {
-        throw new BadRequestException(`Invalid certificate: ${validation.errors.join(', ')}`);
+        throw new BadRequestException(`Invalid certificate: ${validation.errors.join(", ")}`);
       }
     }
 
@@ -175,7 +185,7 @@ export class PushCertificateCrudService {
     const updatedCertificate = await this.getCertificate(id, tenantId);
 
     // Emit event
-    this.eventEmitter.emit('certificate.updated', {
+    this.eventEmitter.emit("certificate.updated", {
       certificateId: id,
       tenantId: certificate.tenantId,
       changes: updateDto,
@@ -190,7 +200,7 @@ export class PushCertificateCrudService {
     await this.certificateRepository.remove(certificate);
 
     // Emit event
-    this.eventEmitter.emit('certificate.deleted', {
+    this.eventEmitter.emit("certificate.deleted", {
       certificateId: id,
       tenantId: certificate.tenantId,
     });
@@ -212,7 +222,7 @@ export class PushCertificateCrudService {
       allowedProjects: originalCertificate.allowedProjects,
       accessControl: originalCertificate.accessControl,
       rotationConfig: originalCertificate.rotationConfig,
-      tags: [...(originalCertificate.tags || []), 'duplicated'],
+      tags: [...(originalCertificate.tags || []), "duplicated"],
       tenantId: originalCertificate.tenantId,
       tenant: originalCertificate.tenant,
       projectId: originalCertificate.projectId,
@@ -223,7 +233,7 @@ export class PushCertificateCrudService {
     const result = await this.certificateRepository.save(duplicatedCertificate);
 
     // Emit event
-    this.eventEmitter.emit('certificate.duplicated', {
+    this.eventEmitter.emit("certificate.duplicated", {
       originalCertificateId: id,
       newCertificateId: result.id,
       tenantId: originalCertificate.tenantId,

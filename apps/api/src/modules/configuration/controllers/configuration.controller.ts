@@ -10,8 +10,8 @@ import {
   Post,
   Query,
   UseGuards,
-} from '@nestjs/common';
-import { CurrentMemberId, CurrentTenantId } from '../../../common/decorators';
+} from "@nestjs/common";
+import { CurrentMemberId, CurrentTenantId } from "../../../common/decorators";
 import {
   ApiBearerAuth,
   ApiOperation,
@@ -19,15 +19,12 @@ import {
   ApiQuery,
   ApiResponse,
   ApiTags,
-} from '@nestjs/swagger';
-import {
-  RequireRoles,
-  Roles,
-} from 'src/modules/auth/decorators/roles.decorator';
-import { AuthGuard } from '../../auth/guards/jwt-auth.guard';
+} from "@nestjs/swagger";
+import { RequireRoles, Roles } from "src/modules/auth/decorators/roles.decorator";
+import { AuthGuard } from "../../auth/guards/jwt-auth.guard";
 
 // import { RolesGuard } from '../../modules/auth/guards/roles.guard';
-import { UserRole } from '../../../common/enums';
+import { UserRole } from "../../../common/enums";
 
 import {
   BulkConfigurationDto,
@@ -35,19 +32,16 @@ import {
   CreateConfigurationDto,
   RollbackConfigurationDto,
   UpdateConfigurationDto,
-} from '../dto/configuration.dto';
-import { ConfigurationVersion } from '../entities/configuration-version.entity';
-import { Configuration } from '../entities/configuration.entity';
-import { ConfigurationCacheService } from '../services/configuration-cache.service';
-import { ConfigurationValidationService } from '../services/configuration-validation.service';
-import { ConfigurationWatcherService } from '../services/configuration-watcher.service';
-import {
-  BulkOperationResult,
-  ConfigurationService,
-} from '../services/configuration.service';
+} from "../dto/configuration.dto";
+import { ConfigurationVersion } from "../entities/configuration-version.entity";
+import { Configuration } from "../entities/configuration.entity";
+import { ConfigurationCacheService } from "../services/configuration-cache.service";
+import { ConfigurationValidationService } from "../services/configuration-validation.service";
+import { ConfigurationWatcherService } from "../services/configuration-watcher.service";
+import { BulkOperationResult, ConfigurationService } from "../services/configuration.service";
 
-@ApiTags('Configuration Management')
-@Controller('configurations')
+@ApiTags("Configuration Management")
+@Controller("configurations")
 @ApiBearerAuth()
 @UseGuards(AuthGuard)
 export class ConfigurationController {
@@ -60,22 +54,19 @@ export class ConfigurationController {
 
   @Post()
   @Roles(UserRole.ADMIN, UserRole.SUPER_ADMIN)
-  @ApiOperation({ summary: 'Create a new configuration' })
+  @ApiOperation({ summary: "Create a new configuration" })
   @ApiResponse({
     status: 201,
-    description: 'Configuration created successfully',
+    description: "Configuration created successfully",
     type: Configuration,
   })
-  @ApiResponse({ status: 400, description: 'Invalid configuration data' })
-  @ApiResponse({ status: 409, description: 'Configuration already exists' })
+  @ApiResponse({ status: 400, description: "Invalid configuration data" })
+  @ApiResponse({ status: 409, description: "Configuration already exists" })
   async create(
     @CurrentMemberId() memberId: string,
     @Body() createConfigurationDto: CreateConfigurationDto,
   ) {
-    const result = await this.configurationService.create(
-      createConfigurationDto,
-      memberId,
-    );
+    const result = await this.configurationService.create(createConfigurationDto, memberId);
 
     if (!result.validationResult?.isValid) {
       return {
@@ -93,10 +84,10 @@ export class ConfigurationController {
 
   @Get()
   @Roles(UserRole.ADMIN, UserRole.SUPER_ADMIN)
-  @ApiOperation({ summary: 'Get configurations with filtering' })
+  @ApiOperation({ summary: "Get configurations with filtering" })
   @ApiResponse({
     status: 200,
-    description: 'Configurations retrieved successfully',
+    description: "Configurations retrieved successfully",
     type: [Configuration],
   })
   async findAll(@Query() query: ConfigurationQueryDto) {
@@ -108,57 +99,47 @@ export class ConfigurationController {
     };
   }
 
-  @Get(':id')
+  @Get(":id")
   @Roles(UserRole.ADMIN, UserRole.SUPER_ADMIN)
-  @ApiOperation({ summary: 'Get configuration by ID' })
-  @ApiParam({ name: 'id', description: 'Configuration ID' })
+  @ApiOperation({ summary: "Get configuration by ID" })
+  @ApiParam({ name: "id", description: "Configuration ID" })
   @ApiQuery({
-    name: 'includeSecrets',
+    name: "includeSecrets",
     required: false,
-    description: 'Include secret configurations',
+    description: "Include secret configurations",
     type: Boolean,
   })
   @ApiResponse({
     status: 200,
-    description: 'Configuration retrieved successfully',
+    description: "Configuration retrieved successfully",
     type: Configuration,
   })
-  @ApiResponse({ status: 404, description: 'Configuration not found' })
-  async findOne(
-    @Param('id') id: string,
-    @Query('includeSecrets') includeSecrets?: boolean,
-  ) {
-    const configuration = await this.configurationService.findById(
-      id,
-      includeSecrets,
-    );
+  @ApiResponse({ status: 404, description: "Configuration not found" })
+  async findOne(@Param("id") id: string, @Query("includeSecrets") includeSecrets?: boolean) {
+    const configuration = await this.configurationService.findById(id, includeSecrets);
     return {
       success: true,
       configuration,
     };
   }
 
-  @Patch(':id')
+  @Patch(":id")
   @RequireRoles(UserRole.ADMIN, UserRole.SUPER_ADMIN)
-  @ApiOperation({ summary: 'Update configuration' })
-  @ApiParam({ name: 'id', description: 'Configuration ID' })
+  @ApiOperation({ summary: "Update configuration" })
+  @ApiParam({ name: "id", description: "Configuration ID" })
   @ApiResponse({
     status: 200,
-    description: 'Configuration updated successfully',
+    description: "Configuration updated successfully",
     type: Configuration,
   })
-  @ApiResponse({ status: 404, description: 'Configuration not found' })
-  @ApiResponse({ status: 400, description: 'Invalid configuration data' })
+  @ApiResponse({ status: 404, description: "Configuration not found" })
+  @ApiResponse({ status: 400, description: "Invalid configuration data" })
   async update(
     @CurrentMemberId() memberId: string,
-    @Param('id') id: string,
+    @Param("id") id: string,
     @Body() updateConfigurationDto: UpdateConfigurationDto,
   ) {
-    const result = await this.configurationService.update(
-      id,
-      updateConfigurationDto,
-      memberId,
-    );
+    const result = await this.configurationService.update(id, updateConfigurationDto, memberId);
 
     if (!result.validationResult?.isValid) {
       return {
@@ -174,68 +155,61 @@ export class ConfigurationController {
     };
   }
 
-  @Delete(':id')
+  @Delete(":id")
   @RequireRoles(UserRole.ADMIN, UserRole.SUPER_ADMIN)
-  @ApiOperation({ summary: 'Delete configuration' })
-  @ApiParam({ name: 'id', description: 'Configuration ID' })
+  @ApiOperation({ summary: "Delete configuration" })
+  @ApiParam({ name: "id", description: "Configuration ID" })
   @ApiResponse({
     status: 204,
-    description: 'Configuration deleted successfully',
+    description: "Configuration deleted successfully",
   })
-  @ApiResponse({ status: 404, description: 'Configuration not found' })
+  @ApiResponse({ status: 404, description: "Configuration not found" })
   @HttpCode(HttpStatus.NO_CONTENT)
-  async remove(
-    @CurrentMemberId() memberId: string,
-    @Param('id') id: string,
-  ) {
+  async remove(@CurrentMemberId() memberId: string, @Param("id") id: string) {
     await this.configurationService.delete(id, memberId);
     return {
       success: true,
-      message: 'Configuration deleted successfully',
+      message: "Configuration deleted successfully",
     };
   }
 
-  @Post(':id/rollback')
+  @Post(":id/rollback")
   @RequireRoles(UserRole.ADMIN, UserRole.SUPER_ADMIN)
-  @ApiOperation({ summary: 'Rollback configuration to previous version' })
-  @ApiParam({ name: 'id', description: 'Configuration ID' })
+  @ApiOperation({ summary: "Rollback configuration to previous version" })
+  @ApiParam({ name: "id", description: "Configuration ID" })
   @ApiResponse({
     status: 200,
-    description: 'Configuration rolled back successfully',
+    description: "Configuration rolled back successfully",
     type: Configuration,
   })
   @ApiResponse({
     status: 404,
-    description: 'Configuration or version not found',
+    description: "Configuration or version not found",
   })
   async rollback(
     @CurrentMemberId() memberId: string,
-    @Param('id') id: string,
+    @Param("id") id: string,
     @Body() rollbackDto: RollbackConfigurationDto,
   ) {
-    const configuration = await this.configurationService.rollback(
-      id,
-      rollbackDto,
-      memberId,
-    );
+    const configuration = await this.configurationService.rollback(id, rollbackDto, memberId);
 
     return {
       success: true,
       configuration,
-      message: 'Configuration rolled back successfully',
+      message: "Configuration rolled back successfully",
     };
   }
 
-  @Get(':id/versions')
+  @Get(":id/versions")
   @RequireRoles(UserRole.ADMIN, UserRole.SUPER_ADMIN)
-  @ApiOperation({ summary: 'Get configuration version history' })
-  @ApiParam({ name: 'id', description: 'Configuration ID' })
+  @ApiOperation({ summary: "Get configuration version history" })
+  @ApiParam({ name: "id", description: "Configuration ID" })
   @ApiResponse({
     status: 200,
-    description: 'Version history retrieved successfully',
+    description: "Version history retrieved successfully",
     type: [ConfigurationVersion],
   })
-  async getVersions(@Param('id') id: string) {
+  async getVersions(@Param("id") id: string) {
     const versions = await this.configurationService.getVersions(id);
     return {
       success: true,
@@ -244,12 +218,12 @@ export class ConfigurationController {
     };
   }
 
-  @Post('bulk')
+  @Post("bulk")
   @RequireRoles(UserRole.ADMIN, UserRole.SUPER_ADMIN)
-  @ApiOperation({ summary: 'Bulk create/update configurations' })
+  @ApiOperation({ summary: "Bulk create/update configurations" })
   @ApiResponse({
     status: 200,
-    description: 'Bulk operation completed',
+    description: "Bulk operation completed",
   })
   async bulkOperation(
     @CurrentMemberId() memberId: string,
@@ -263,10 +237,7 @@ export class ConfigurationController {
       failed: number;
     };
   }> {
-    const result = await this.configurationService.bulkOperation(
-      bulkDto,
-      memberId,
-    );
+    const result = await this.configurationService.bulkOperation(bulkDto, memberId);
 
     return {
       success: true,
@@ -279,12 +250,12 @@ export class ConfigurationController {
     };
   }
 
-  @Get('validation/schemas')
+  @Get("validation/schemas")
   @RequireRoles(UserRole.ADMIN, UserRole.SUPER_ADMIN)
-  @ApiOperation({ summary: 'Get available validation schemas' })
+  @ApiOperation({ summary: "Get available validation schemas" })
   @ApiResponse({
     status: 200,
-    description: 'Available schemas retrieved successfully',
+    description: "Available schemas retrieved successfully",
   })
   async getValidationSchemas() {
     const schemas = this.validationService.getAvailableSchemas();
@@ -294,18 +265,15 @@ export class ConfigurationController {
     };
   }
 
-  @Post('validation/test')
+  @Post("validation/test")
   @RequireRoles(UserRole.ADMIN, UserRole.SUPER_ADMIN)
-  @ApiOperation({ summary: 'Test configuration value against schema' })
+  @ApiOperation({ summary: "Test configuration value against schema" })
   @ApiResponse({
     status: 200,
-    description: 'Validation result',
+    description: "Validation result",
   })
   async testValidation(@Body() testData: { value: string; schema?: string }) {
-    const result = await this.validationService.validateValue(
-      testData.value,
-      testData.schema,
-    );
+    const result = await this.validationService.validateValue(testData.value, testData.schema);
 
     return {
       success: true,
@@ -313,12 +281,12 @@ export class ConfigurationController {
     };
   }
 
-  @Get('cache/stats')
+  @Get("cache/stats")
   @RequireRoles(UserRole.ADMIN, UserRole.SUPER_ADMIN)
-  @ApiOperation({ summary: 'Get cache statistics' })
+  @ApiOperation({ summary: "Get cache statistics" })
   @ApiResponse({
     status: 200,
-    description: 'Cache statistics retrieved successfully',
+    description: "Cache statistics retrieved successfully",
   })
   async getCacheStats() {
     const stats = await this.cacheService.getStats();
@@ -328,28 +296,28 @@ export class ConfigurationController {
     };
   }
 
-  @Post('cache/clear')
+  @Post("cache/clear")
   @RequireRoles(UserRole.ADMIN, UserRole.SUPER_ADMIN)
-  @ApiOperation({ summary: 'Clear configuration cache' })
+  @ApiOperation({ summary: "Clear configuration cache" })
   @ApiResponse({
     status: 200,
-    description: 'Cache cleared successfully',
+    description: "Cache cleared successfully",
   })
   @HttpCode(HttpStatus.OK)
   async clearCache() {
     await this.cacheService.clear();
     return {
       success: true,
-      message: 'Configuration cache cleared successfully',
+      message: "Configuration cache cleared successfully",
     };
   }
 
-  @Get('watcher/status')
+  @Get("watcher/status")
   @RequireRoles(UserRole.ADMIN, UserRole.SUPER_ADMIN)
-  @ApiOperation({ summary: 'Get configuration watcher status' })
+  @ApiOperation({ summary: "Get configuration watcher status" })
   @ApiResponse({
     status: 200,
-    description: 'Watcher status retrieved successfully',
+    description: "Watcher status retrieved successfully",
   })
   async getWatcherStatus() {
     const status = this.watcherService.getStatus();
@@ -359,28 +327,28 @@ export class ConfigurationController {
     };
   }
 
-  @Post('watcher/reload')
+  @Post("watcher/reload")
   @RequireRoles(UserRole.ADMIN, UserRole.SUPER_ADMIN)
-  @ApiOperation({ summary: 'Reload watched configurations' })
+  @ApiOperation({ summary: "Reload watched configurations" })
   @ApiResponse({
     status: 200,
-    description: 'Configurations reloaded successfully',
+    description: "Configurations reloaded successfully",
   })
   @HttpCode(HttpStatus.OK)
   async reloadWatcher() {
     await this.watcherService.reload();
     return {
       success: true,
-      message: 'Watched configurations reloaded successfully',
+      message: "Watched configurations reloaded successfully",
     };
   }
 
-  @Post('watcher/force-check')
+  @Post("watcher/force-check")
   @RequireRoles(UserRole.ADMIN, UserRole.SUPER_ADMIN)
-  @ApiOperation({ summary: 'Force check for configuration changes' })
+  @ApiOperation({ summary: "Force check for configuration changes" })
   @ApiResponse({
     status: 200,
-    description: 'Change check completed',
+    description: "Change check completed",
   })
   async forceCheck() {
     const changes = await this.watcherService.forceCheck();
@@ -391,11 +359,11 @@ export class ConfigurationController {
     };
   }
 
-  @Get('health')
-  @ApiOperation({ summary: 'Configuration management health check' })
+  @Get("health")
+  @ApiOperation({ summary: "Configuration management health check" })
   @ApiResponse({
     status: 200,
-    description: 'Health status',
+    description: "Health status",
   })
   async healthCheck() {
     const cacheHealth = await this.cacheService.healthCheck();
@@ -406,7 +374,7 @@ export class ConfigurationController {
       health: {
         cache: cacheHealth,
         watcher: {
-          status: watcherStatus.isWatching ? 'healthy' : 'inactive',
+          status: watcherStatus.isWatching ? "healthy" : "inactive",
           watchedCount: watcherStatus.watchedCount,
         },
         timestamp: new Date(),

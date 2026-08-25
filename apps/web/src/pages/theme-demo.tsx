@@ -1,16 +1,14 @@
-import { BrandingConfigurator } from '@/components/branding/branding-configurator';
-import { ThemeConfigurator } from '@/components/theme/theme-configurator';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Separator } from '@/components/ui/separator';
+import { BrandingConfigurator } from "@/components/branding/branding-configurator";
+import { ThemeConfigurator } from "@/components/theme/theme-configurator";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
 
 export default function ThemeDemoPage() {
   return (
     <div className="container mx-auto py-8 space-y-8">
       <div className="text-center space-y-2">
         <h1 className="text-3xl font-bold">Theme & Branding Demo</h1>
-        <p className="text-muted-foreground">
-          Test and configure your theme and branding settings
-        </p>
+        <p className="text-muted-foreground">Test and configure your theme and branding settings</p>
       </div>
 
       <Separator />
@@ -71,9 +69,7 @@ export default function ThemeDemoPage() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <p className="text-sm text-accent-foreground/90">
-                This card uses the accent color.
-              </p>
+              <p className="text-sm text-accent-foreground/90">This card uses the accent color.</p>
             </CardContent>
           </Card>
         </div>

@@ -6,10 +6,10 @@ import {
   HttpStatus,
   Logger,
   Inject,
-} from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import { Request, Response } from 'express';
-import { AlertService } from '../../alerts/alert.service';
+} from "@nestjs/common";
+import { ConfigService } from "@nestjs/config";
+import { Request, Response } from "express";
+import { AlertService } from "../../alerts/alert.service";
 
 @Catch()
 export class GlobalExceptionFilter implements ExceptionFilter {
@@ -18,7 +18,7 @@ export class GlobalExceptionFilter implements ExceptionFilter {
   constructor(
     @Inject(AlertService) private readonly alertService: AlertService,
     private readonly configService: ConfigService,
-  ) { }
+  ) {}
 
   async catch(exception: unknown, host: ArgumentsHost): Promise<void> {
     const ctx = host.switchToHttp();
@@ -26,20 +26,17 @@ export class GlobalExceptionFilter implements ExceptionFilter {
     const request = ctx.getRequest<Request>();
 
     let status = HttpStatus.INTERNAL_SERVER_ERROR;
-    let message = 'Internal server error';
-    let error = 'INTERNAL_ERROR';
+    let message = "Internal server error";
+    let error = "INTERNAL_ERROR";
     let originalError: Error | undefined;
 
     if (exception instanceof HttpException) {
       status = exception.getStatus();
       const exceptionResponse = exception.getResponse();
 
-      if (typeof exceptionResponse === 'string') {
+      if (typeof exceptionResponse === "string") {
         message = exceptionResponse;
-      } else if (
-        typeof exceptionResponse === 'object' &&
-        exceptionResponse !== null
-      ) {
+      } else if (typeof exceptionResponse === "object" && exceptionResponse !== null) {
         const responseObj = exceptionResponse as any;
         message = responseObj.message || responseObj.error || message;
         error = responseObj.error || error;
@@ -48,14 +45,14 @@ export class GlobalExceptionFilter implements ExceptionFilter {
     } else if (exception instanceof Error) {
       originalError = exception;
       // Don't expose internal error messages in production
-      if (this.configService.get('NODE_ENV') === 'production') {
-        message = 'Internal server error';
+      if (this.configService.get("NODE_ENV") === "production") {
+        message = "Internal server error";
       } else {
         message = exception.message;
       }
       this.logger.error(exception.message, exception.stack);
     } else {
-      this.logger.error('Unknown exception', exception);
+      this.logger.error("Unknown exception", exception);
     }
 
     // Send alert for 5xx errors
@@ -63,7 +60,7 @@ export class GlobalExceptionFilter implements ExceptionFilter {
       try {
         await this.alertService.send5xxAlert(originalError, request, status);
       } catch (alertError) {
-        this.logger.error('Failed to send alert', alertError);
+        this.logger.error("Failed to send alert", alertError);
       }
     }
 
@@ -76,9 +73,10 @@ export class GlobalExceptionFilter implements ExceptionFilter {
         timestamp: new Date().toISOString(),
         path: request.url,
         method: request.method,
-        ...(this.configService.get('NODE_ENV') !== 'production' && originalError && {
-          stack: originalError.stack?.split('\n').slice(0, 10),
-        }),
+        ...(this.configService.get("NODE_ENV") !== "production" &&
+          originalError && {
+            stack: originalError.stack?.split("\n").slice(0, 10),
+          }),
       },
     };
 

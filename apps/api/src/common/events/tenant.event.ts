@@ -1,5 +1,5 @@
-import { Tenant } from '../../modules/tenant/entities/tenant.entity';
-import { User } from '../../modules/user/entities/user.entity';
+import { Tenant } from "../../modules/tenant/entities/tenant.entity";
+import { User } from "../../modules/user/entities/user.entity";
 
 export class TenantCreatedEvent {
   constructor(

@@ -1,6 +1,6 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import { IChatProvider, ChatPayload, ChatResponse } from '../chat-provider.interface';
+import { Injectable, Logger } from "@nestjs/common";
+import { ConfigService } from "@nestjs/config";
+import { IChatProvider, ChatPayload, ChatResponse } from "../chat-provider.interface";
 
 @Injectable()
 export class DiscordProvider implements IChatProvider {
@@ -8,24 +8,24 @@ export class DiscordProvider implements IChatProvider {
   private readonly webhookUrl: string;
 
   constructor(private configService: ConfigService) {
-    this.webhookUrl = this.configService.get('DISCORD_WEBHOOK_URL') || '';
+    this.webhookUrl = this.configService.get("DISCORD_WEBHOOK_URL") || "";
   }
 
   async sendMessage(payload: ChatPayload): Promise<ChatResponse> {
     try {
       const discordPayload = {
         content: payload.message,
-        embeds: payload.attachments?.map(att => ({
-          image: att.type === 'image' ? { url: att.url } : undefined,
+        embeds: payload.attachments?.map((att) => ({
+          image: att.type === "image" ? { url: att.url } : undefined,
           title: att.filename,
           url: att.url,
         })),
       };
 
       const response = await fetch(this.webhookUrl, {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify(discordPayload),
       });
@@ -40,14 +40,14 @@ export class DiscordProvider implements IChatProvider {
         success: true,
         messageId: `discord_${Date.now()}`,
         timestamp: new Date().toISOString(),
-        provider: 'discord',
+        provider: "discord",
       };
     } catch (error) {
       this.logger.error(`Failed to send Discord message: ${error.message}`, error.stack);
       return {
         success: false,
         error: error.message,
-        provider: 'discord',
+        provider: "discord",
       };
     }
   }
@@ -57,6 +57,6 @@ export class DiscordProvider implements IChatProvider {
   }
 
   getProviderName(): string {
-    return 'discord';
+    return "discord";
   }
 }

@@ -8,7 +8,7 @@ export interface PushPayload {
   imageUrl?: string;
   clickAction?: string;
   category?: string;
-  priority?: 'high' | 'normal';
+  priority?: "high" | "normal";
   ttl?: number; // Time to live in seconds
 
   // Deep linking support
@@ -49,7 +49,7 @@ export interface PushPayload {
     launchImage?: string;
     mutableContent?: boolean;
     contentAvailable?: boolean;
-    interruptionLevel?: 'passive' | 'active' | 'timeSensitive' | 'critical';
+    interruptionLevel?: "passive" | "active" | "timeSensitive" | "critical";
   };
 }
 

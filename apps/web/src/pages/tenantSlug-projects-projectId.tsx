@@ -1,14 +1,14 @@
-'use client';
+"use client";
 
-import { ProjectDetails } from '@/components/projects/project-details';
-import { AppShell } from '@/components/layout';
-import { useRouter } from '@/compat/next-navigation';
-import { ArrowLeftIcon } from '@heroicons/react/24/outline'
+import { ProjectDetails } from "@/components/projects/project-details";
+import { AppShell } from "@/components/layout";
+import { useRouter } from "@/compat/next-navigation";
+import { ArrowLeftIcon } from "@heroicons/react/24/outline";
 
-import { Button } from '@/components/ui/button';
+import { Button } from "@/components/ui/button";
 
-import { useTenantSlug } from '@/hooks/use-tenant-slug';
-import { useParams } from '@tanstack/react-router';
+import { useTenantSlug } from "@/hooks/use-tenant-slug";
+import { useParams } from "@tanstack/react-router";
 
 export default function ProjectDetailPage() {
   const router = useRouter();
@@ -30,7 +30,7 @@ export default function ProjectDetailPage() {
             </Button>
           </div>
 
-          <ProjectDetails projectId={projectId || ''} />
+          <ProjectDetails projectId={projectId || ""} />
         </div>
       </div>
     </AppShell>

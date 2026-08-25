@@ -1,21 +1,21 @@
 // Enums matching backend
 export enum UserRole {
-  SUPER_ADMIN = 'super_admin',
-  ADMIN = 'admin',
-  DEVELOPER = 'developer',
-  BASIC = 'basic',
+  SUPER_ADMIN = "super_admin",
+  ADMIN = "admin",
+  DEVELOPER = "developer",
+  BASIC = "basic",
 }
 
 export enum UserStatus {
-  ACTIVE = 'active',
-  INACTIVE = 'inactive',
-  SUSPENDED = 'suspended',
+  ACTIVE = "active",
+  INACTIVE = "inactive",
+  SUSPENDED = "suspended",
 }
 
 export enum AuthProvider {
-  LOCAL = 'local',
-  GOOGLE = 'google',
-  GITHUB = 'github',
+  LOCAL = "local",
+  GOOGLE = "google",
+  GITHUB = "github",
 }
 
 // Core User interface matching backend entity
@@ -91,7 +91,7 @@ export interface RegisterData {
 }
 
 // Legacy interface for backward compatibility
-export interface RegisterCredentials extends RegisterData { }
+export interface RegisterCredentials extends RegisterData {}
 
 export interface AuthResponse {
   user: User;
@@ -262,13 +262,13 @@ export interface SecurityEvent {
 }
 
 export enum SecurityEventType {
-  LOGIN_SUCCESS = 'login_success',
-  LOGIN_FAILURE = 'login_failure',
-  LOGOUT = 'logout',
-  PASSWORD_RESET = 'password_reset',
-  EMAIL_VERIFICATION = 'email_verification',
-  ACCOUNT_LOCKED = 'account_locked',
-  ACCOUNT_UNLOCKED = 'account_unlocked',
-  PERMISSION_DENIED = 'permission_denied',
-  SUSPICIOUS_ACTIVITY = 'suspicious_activity',
+  LOGIN_SUCCESS = "login_success",
+  LOGIN_FAILURE = "login_failure",
+  LOGOUT = "logout",
+  PASSWORD_RESET = "password_reset",
+  EMAIL_VERIFICATION = "email_verification",
+  ACCOUNT_LOCKED = "account_locked",
+  ACCOUNT_UNLOCKED = "account_unlocked",
+  PERMISSION_DENIED = "permission_denied",
+  SUSPICIOUS_ACTIVITY = "suspicious_activity",
 }

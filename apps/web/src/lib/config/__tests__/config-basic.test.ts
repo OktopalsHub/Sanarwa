@@ -2,23 +2,23 @@
  * @vitest-environment jsdom
  */
 
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from "vitest";
 import {
   createEnvironmentConfig,
   getEnvironment,
   getEnvironmentDefaults,
   isFeatureEnabled,
   validateConfig,
-} from '../environment';
+} from "../environment";
 
-describe('Configuration System', () => {
-  describe('Environment Detection', () => {
-    it('should detect test environment', () => {
+describe("Configuration System", () => {
+  describe("Environment Detection", () => {
+    it("should detect test environment", () => {
       const env = getEnvironment();
-      expect(['development', 'test', 'production', 'staging']).toContain(env);
+      expect(["development", "test", "production", "staging"]).toContain(env);
     });
 
-    it('should create valid configuration', () => {
+    it("should create valid configuration", () => {
       const config = createEnvironmentConfig();
 
       expect(config.app).toBeDefined();
@@ -31,7 +31,7 @@ describe('Configuration System', () => {
       expect(config.websocket).toBeDefined();
     });
 
-    it('should validate configuration', () => {
+    it("should validate configuration", () => {
       const config = createEnvironmentConfig();
       const errors = validateConfig(config);
 
@@ -39,29 +39,29 @@ describe('Configuration System', () => {
       expect(Array.isArray(errors)).toBe(true);
     });
 
-    it('should provide environment defaults', () => {
-      const devDefaults = getEnvironmentDefaults('development');
-      const prodDefaults = getEnvironmentDefaults('production');
+    it("should provide environment defaults", () => {
+      const devDefaults = getEnvironmentDefaults("development");
+      const prodDefaults = getEnvironmentDefaults("production");
 
       expect(devDefaults.api.timeout).toBeGreaterThan(prodDefaults.api.timeout);
       expect(devDefaults.api.retryAttempts).toBeLessThan(prodDefaults.api.retryAttempts);
-      expect(devDefaults.logging.level).toBe('debug');
-      expect(prodDefaults.logging.level).toBe('info');
+      expect(devDefaults.logging.level).toBe("debug");
+      expect(prodDefaults.logging.level).toBe("info");
     });
   });
 
-  describe('Feature Flags', () => {
-    it('should check feature flags', () => {
-      const analyticsEnabled = isFeatureEnabled('enableAnalytics');
-      const webrtcEnabled = isFeatureEnabled('enableWebRTC');
+  describe("Feature Flags", () => {
+    it("should check feature flags", () => {
+      const analyticsEnabled = isFeatureEnabled("enableAnalytics");
+      const webrtcEnabled = isFeatureEnabled("enableWebRTC");
 
-      expect(typeof analyticsEnabled).toBe('boolean');
-      expect(typeof webrtcEnabled).toBe('boolean');
+      expect(typeof analyticsEnabled).toBe("boolean");
+      expect(typeof webrtcEnabled).toBe("boolean");
     });
   });
 
-  describe('API Configuration', () => {
-    it('should have valid API configuration', () => {
+  describe("API Configuration", () => {
+    it("should have valid API configuration", () => {
       const config = createEnvironmentConfig();
 
       expect(config.api.baseUrl).toBeTruthy();
@@ -72,8 +72,8 @@ describe('Configuration System', () => {
     });
   });
 
-  describe('Security Configuration', () => {
-    it('should have valid security configuration', () => {
+  describe("Security Configuration", () => {
+    it("should have valid security configuration", () => {
       const config = createEnvironmentConfig();
 
       expect(Array.isArray(config.security.allowedOrigins)).toBe(true);
@@ -83,8 +83,8 @@ describe('Configuration System', () => {
     });
   });
 
-  describe('WebSocket Configuration', () => {
-    it('should have valid WebSocket configuration', () => {
+  describe("WebSocket Configuration", () => {
+    it("should have valid WebSocket configuration", () => {
       const config = createEnvironmentConfig();
 
       expect(config.websocket.url).toBeTruthy();
@@ -94,26 +94,26 @@ describe('Configuration System', () => {
     });
   });
 
-  describe('Monitoring Configuration', () => {
-    it('should have valid monitoring configuration', () => {
+  describe("Monitoring Configuration", () => {
+    it("should have valid monitoring configuration", () => {
       const config = createEnvironmentConfig();
 
-      expect(typeof config.monitoring.enableSentry).toBe('boolean');
-      expect(typeof config.monitoring.enablePosthog).toBe('boolean');
-      expect(typeof config.monitoring.enableGoogleAnalytics).toBe('boolean');
+      expect(typeof config.monitoring.enableSentry).toBe("boolean");
+      expect(typeof config.monitoring.enablePosthog).toBe("boolean");
+      expect(typeof config.monitoring.enableGoogleAnalytics).toBe("boolean");
       expect(config.monitoring.sentryEnvironment).toBeTruthy();
     });
   });
 
-  describe('Cache Configuration', () => {
-    it('should have valid cache configuration', () => {
+  describe("Cache Configuration", () => {
+    it("should have valid cache configuration", () => {
       const config = createEnvironmentConfig();
 
       expect(config.cache.defaultStaleTime).toBeGreaterThanOrEqual(0);
       expect(config.cache.defaultCacheTime).toBeGreaterThanOrEqual(0);
       expect(config.cache.persistenceKey).toBeTruthy();
-      expect(typeof config.cache.enableQueryCache).toBe('boolean');
-      expect(typeof config.cache.enablePersistence).toBe('boolean');
+      expect(typeof config.cache.enableQueryCache).toBe("boolean");
+      expect(typeof config.cache.enablePersistence).toBe("boolean");
     });
   });
 });

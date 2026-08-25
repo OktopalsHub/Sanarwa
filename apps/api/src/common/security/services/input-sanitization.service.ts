@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger } from "@nestjs/common";
 
 export interface SanitizationOptions {
   allowHtml?: boolean;
@@ -68,13 +68,10 @@ export class InputSanitizationService {
   /**
    * Sanitize input string with comprehensive security checks
    */
-  sanitize(
-    input: string,
-    options: SanitizationOptions = {},
-  ): SanitizationResult {
-    if (!input || typeof input !== 'string') {
+  sanitize(input: string, options: SanitizationOptions = {}): SanitizationResult {
+    if (!input || typeof input !== "string") {
       return {
-        sanitized: input || '',
+        sanitized: input || "",
         wasModified: false,
         removedPatterns: [],
       };
@@ -87,10 +84,10 @@ export class InputSanitizationService {
     // Remove null bytes
     if (options.removeNullBytes !== false) {
       const beforeNullBytes = sanitized;
-      sanitized = sanitized.replace(/\0/g, '');
+      sanitized = sanitized.replace(/\0/g, "");
       if (sanitized !== beforeNullBytes) {
         wasModified = true;
-        removedPatterns.push('null_bytes');
+        removedPatterns.push("null_bytes");
       }
     }
 
@@ -100,7 +97,7 @@ export class InputSanitizationService {
       sanitized = sanitized.trim();
       if (sanitized !== beforeTrim) {
         wasModified = true;
-        removedPatterns.push('whitespace');
+        removedPatterns.push("whitespace");
       }
     }
 
@@ -110,7 +107,7 @@ export class InputSanitizationService {
       sanitized = this.removeSqlInjectionPatterns(sanitized);
       if (sanitized !== beforeSql) {
         wasModified = true;
-        removedPatterns.push('sql_injection');
+        removedPatterns.push("sql_injection");
       }
     }
 
@@ -120,7 +117,7 @@ export class InputSanitizationService {
       sanitized = this.removeXssPatterns(sanitized, options);
       if (sanitized !== beforeXss) {
         wasModified = true;
-        removedPatterns.push('xss');
+        removedPatterns.push("xss");
       }
     }
 
@@ -130,7 +127,7 @@ export class InputSanitizationService {
       sanitized = this.removeCommandInjectionPatterns(sanitized);
       if (sanitized !== beforeCmd) {
         wasModified = true;
-        removedPatterns.push('command_injection');
+        removedPatterns.push("command_injection");
       }
     }
 
@@ -139,20 +136,18 @@ export class InputSanitizationService {
     sanitized = this.removePathTraversalPatterns(sanitized);
     if (sanitized !== beforePath) {
       wasModified = true;
-      removedPatterns.push('path_traversal');
+      removedPatterns.push("path_traversal");
     }
 
     // Enforce maximum length
     if (options.maxLength && sanitized.length > options.maxLength) {
       sanitized = sanitized.substring(0, options.maxLength);
       wasModified = true;
-      removedPatterns.push('length_limit');
+      removedPatterns.push("length_limit");
     }
 
     if (wasModified) {
-      this.logger.warn(
-        `Input sanitized. Removed patterns: ${removedPatterns.join(', ')}`,
-      );
+      this.logger.warn(`Input sanitized. Removed patterns: ${removedPatterns.join(", ")}`);
     }
 
     return {
@@ -178,25 +173,19 @@ export class InputSanitizationService {
     let wasModified = false;
 
     for (const [key, value] of Object.entries(obj)) {
-      if (typeof value === 'string') {
+      if (typeof value === "string") {
         const result = this.sanitize(value, options);
         sanitized[key] = result.sanitized;
         if (result.wasModified) {
           wasModified = true;
           modifiedFields.push(key);
         }
-      } else if (
-        typeof value === 'object' &&
-        value !== null &&
-        !Array.isArray(value)
-      ) {
+      } else if (typeof value === "object" && value !== null && !Array.isArray(value)) {
         const result = this.sanitizeObject(value, options);
         sanitized[key] = result.sanitized;
         if (result.wasModified) {
           wasModified = true;
-          modifiedFields.push(
-            ...result.modifiedFields.map((field) => `${key}.${field}`),
-          );
+          modifiedFields.push(...result.modifiedFields.map((field) => `${key}.${field}`));
         }
       } else if (Array.isArray(value)) {
         const result = this.sanitizeArray(value, options);
@@ -231,17 +220,13 @@ export class InputSanitizationService {
     let wasModified = false;
 
     for (const item of arr) {
-      if (typeof item === 'string') {
+      if (typeof item === "string") {
         const result = this.sanitize(item, options);
         sanitized.push(result.sanitized);
         if (result.wasModified) {
           wasModified = true;
         }
-      } else if (
-        typeof item === 'object' &&
-        item !== null &&
-        !Array.isArray(item)
-      ) {
+      } else if (typeof item === "object" && item !== null && !Array.isArray(item)) {
         const result = this.sanitizeObject(item, options);
         sanitized.push(result.sanitized);
         if (result.wasModified) {
@@ -277,7 +262,7 @@ export class InputSanitizationService {
    */
   validatePhoneNumber(phone: string): boolean {
     const phoneRegex = /^\+?[1-9]\d{1,14}$/;
-    return phoneRegex.test(phone.replace(/[\s\-(\)]/g, ''));
+    return phoneRegex.test(phone.replace(/[\s\-(\)]/g, ""));
   }
 
   /**
@@ -286,7 +271,7 @@ export class InputSanitizationService {
   validateUrl(url: string): boolean {
     try {
       const urlObj = new URL(url);
-      return ['http:', 'https:'].includes(urlObj.protocol);
+      return ["http:", "https:"].includes(urlObj.protocol);
     } catch {
       return false;
     }
@@ -297,12 +282,12 @@ export class InputSanitizationService {
    */
   escapeHtml(input: string): string {
     const htmlEntities: Record<string, string> = {
-      '&': '&amp;',
-      '<': '&lt;',
-      '>': '&gt;',
-      '"': '&quot;',
-      "'": '&#x27;',
-      '/': '&#x2F;',
+      "&": "&amp;",
+      "<": "&lt;",
+      ">": "&gt;",
+      '"': "&quot;",
+      "'": "&#x27;",
+      "/": "&#x2F;",
     };
 
     return input.replace(/[&<>"'/]/g, (match) => htmlEntities[match]);
@@ -330,39 +315,39 @@ export class InputSanitizationService {
   detectSuspiciousPatterns(input: string): {
     isSuspicious: boolean;
     detectedPatterns: string[];
-    riskLevel: 'low' | 'medium' | 'high';
+    riskLevel: "low" | "medium" | "high";
   } {
     const detectedPatterns: string[] = [];
 
     // Check for SQL injection
     if (this.sqlInjectionPatterns.some((pattern) => pattern.test(input))) {
-      detectedPatterns.push('sql_injection');
+      detectedPatterns.push("sql_injection");
     }
 
     // Check for XSS
     if (this.xssPatterns.some((pattern) => pattern.test(input))) {
-      detectedPatterns.push('xss');
+      detectedPatterns.push("xss");
     }
 
     // Check for command injection
     if (this.commandInjectionPatterns.some((pattern) => pattern.test(input))) {
-      detectedPatterns.push('command_injection');
+      detectedPatterns.push("command_injection");
     }
 
     // Check for path traversal
     if (this.pathTraversalPatterns.some((pattern) => pattern.test(input))) {
-      detectedPatterns.push('path_traversal');
+      detectedPatterns.push("path_traversal");
     }
 
     const isSuspicious = detectedPatterns.length > 0;
-    let riskLevel: 'low' | 'medium' | 'high' = 'low';
+    let riskLevel: "low" | "medium" | "high" = "low";
 
     if (detectedPatterns.length >= 3) {
-      riskLevel = 'high';
+      riskLevel = "high";
     } else if (detectedPatterns.length >= 2) {
-      riskLevel = 'medium';
+      riskLevel = "medium";
     } else if (detectedPatterns.length >= 1) {
-      riskLevel = 'low';
+      riskLevel = "low";
     }
 
     return {
@@ -380,33 +365,30 @@ export class InputSanitizationService {
     let sanitized = input;
 
     this.sqlInjectionPatterns.forEach((pattern) => {
-      sanitized = sanitized.replace(pattern, '');
+      sanitized = sanitized.replace(pattern, "");
     });
 
     return sanitized;
   }
 
-  private removeXssPatterns(
-    input: string,
-    options: SanitizationOptions,
-  ): string {
+  private removeXssPatterns(input: string, options: SanitizationOptions): string {
     let sanitized = input;
 
     if (!options.allowHtml) {
       // Remove all HTML tags if HTML is not allowed
-      sanitized = sanitized.replace(/<[^>]*>/g, '');
+      sanitized = sanitized.replace(/<[^>]*>/g, "");
     } else if (options.allowedTags && options.allowedTags.length > 0) {
       // Remove only non-allowed HTML tags
       const allowedTagsRegex = new RegExp(
-        `<(?!/?(?:${options.allowedTags.join('|')})\\b)[^>]*>`,
-        'gi',
+        `<(?!/?(?:${options.allowedTags.join("|")})\\b)[^>]*>`,
+        "gi",
       );
-      sanitized = sanitized.replace(allowedTagsRegex, '');
+      sanitized = sanitized.replace(allowedTagsRegex, "");
     }
 
     // Remove XSS patterns
     this.xssPatterns.forEach((pattern) => {
-      sanitized = sanitized.replace(pattern, '');
+      sanitized = sanitized.replace(pattern, "");
     });
 
     return sanitized;
@@ -416,7 +398,7 @@ export class InputSanitizationService {
     let sanitized = input;
 
     this.commandInjectionPatterns.forEach((pattern) => {
-      sanitized = sanitized.replace(pattern, '');
+      sanitized = sanitized.replace(pattern, "");
     });
 
     return sanitized;
@@ -426,7 +408,7 @@ export class InputSanitizationService {
     let sanitized = input;
 
     this.pathTraversalPatterns.forEach((pattern) => {
-      sanitized = sanitized.replace(pattern, '');
+      sanitized = sanitized.replace(pattern, "");
     });
 
     return sanitized;

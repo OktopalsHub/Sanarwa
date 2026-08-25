@@ -1,6 +1,6 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import type { WebSocketConfig } from '../../types/websocket';
-import { WebSocketManager } from '../websocket-manager';
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import type { WebSocketConfig } from "../../types/websocket";
+import { WebSocketManager } from "../websocket-manager";
 
 // Mock WebSocket
 class MockWebSocket {
@@ -21,12 +21,12 @@ class MockWebSocket {
 
   constructor(url: string, protocols?: string | string[]) {
     this.url = url;
-    this.protocol = Array.isArray(protocols) ? protocols[0] || '' : protocols || '';
+    this.protocol = Array.isArray(protocols) ? protocols[0] || "" : protocols || "";
 
     // Simulate connection opening
     setTimeout(() => {
       this.readyState = MockWebSocket.OPEN;
-      this.dispatchEvent(new Event('open'));
+      this.dispatchEvent(new Event("open"));
     }, 10);
   }
 
@@ -48,20 +48,20 @@ class MockWebSocket {
 
   dispatchEvent(event: Event) {
     const listeners = this.listeners[event.type] || [];
-    listeners.forEach(listener => listener(event));
+    listeners.forEach((listener) => listener(event));
 
     // Also call direct event handlers
     switch (event.type) {
-      case 'open':
+      case "open":
         this.onopen?.(event);
         break;
-      case 'close':
+      case "close":
         this.onclose?.(event as CloseEvent);
         break;
-      case 'error':
+      case "error":
         this.onerror?.(event);
         break;
-      case 'message':
+      case "message":
         this.onmessage?.(event as MessageEvent);
         break;
     }
@@ -69,14 +69,14 @@ class MockWebSocket {
 
   send(data: string) {
     if (this.readyState !== MockWebSocket.OPEN) {
-      throw new Error('WebSocket is not open');
+      throw new Error("WebSocket is not open");
     }
     // Simulate message sending
   }
 
   close(code?: number, reason?: string) {
     this.readyState = MockWebSocket.CLOSED;
-    const closeEvent = new CloseEvent('close', { code: code || 1000, reason: reason || '' });
+    const closeEvent = new CloseEvent("close", { code: code || 1000, reason: reason || "" });
     setTimeout(() => this.dispatchEvent(closeEvent), 10);
   }
 }
@@ -84,14 +84,14 @@ class MockWebSocket {
 // Mock global WebSocket
 (global as any).WebSocket = MockWebSocket;
 
-describe('WebSocketManager', () => {
+describe("WebSocketManager", () => {
   let manager: WebSocketManager;
   const config: WebSocketConfig = {
-    url: 'ws://localhost:9000/ws',
+    url: "ws://localhost:9000/ws",
     reconnectInterval: 100,
     maxReconnectAttempts: 3,
     heartbeatInterval: 1000,
-    timeout: 1000
+    timeout: 1000,
   };
 
   beforeEach(() => {
@@ -102,96 +102,96 @@ describe('WebSocketManager', () => {
     manager.destroy();
   });
 
-  describe('Connection Management', () => {
-    it('should connect successfully', async () => {
+  describe("Connection Management", () => {
+    it("should connect successfully", async () => {
       const connectPromise = manager.connect();
 
       await expect(connectPromise).resolves.toBeUndefined();
       expect(manager.isConnected()).toBe(true);
-      expect(manager.getConnectionState().status).toBe('connected');
+      expect(manager.getConnectionState().status).toBe("connected");
     });
 
-    it('should handle connection errors', async () => {
+    it("should handle connection errors", async () => {
       // Mock WebSocket constructor to throw error
       const originalWebSocket = (global as any).WebSocket;
       (global as any).WebSocket = class {
         constructor() {
-          throw new Error('Connection failed');
+          throw new Error("Connection failed");
         }
       };
 
-      await expect(manager.connect()).rejects.toThrow('Connection failed');
-      expect(manager.getConnectionState().status).toBe('error');
+      await expect(manager.connect()).rejects.toThrow("Connection failed");
+      expect(manager.getConnectionState().status).toBe("error");
 
       // Restore original WebSocket
       (global as any).WebSocket = originalWebSocket;
     });
 
-    it('should disconnect properly', async () => {
+    it("should disconnect properly", async () => {
       await manager.connect();
       expect(manager.isConnected()).toBe(true);
 
       manager.disconnect();
-      expect(manager.getConnectionState().status).toBe('disconnected');
+      expect(manager.getConnectionState().status).toBe("disconnected");
     });
 
-    it('should emit connection events', async () => {
+    it("should emit connection events", async () => {
       const openSpy = vi.fn();
       const closeSpy = vi.fn();
 
-      manager.on('connection:open', openSpy);
-      manager.on('connection:close', closeSpy);
+      manager.on("connection:open", openSpy);
+      manager.on("connection:close", closeSpy);
 
       await manager.connect();
       expect(openSpy).toHaveBeenCalled();
 
       manager.disconnect();
       // Wait for close event
-      await new Promise(resolve => setTimeout(resolve, 50));
+      await new Promise((resolve) => setTimeout(resolve, 50));
       expect(closeSpy).toHaveBeenCalled();
     });
   });
 
-  describe('Subscription Management', () => {
+  describe("Subscription Management", () => {
     beforeEach(async () => {
       await manager.connect();
     });
 
-    it('should subscribe to channels', () => {
+    it("should subscribe to channels", () => {
       const callback = vi.fn();
-      const subscriptionId = manager.subscribe('notifications', callback);
+      const subscriptionId = manager.subscribe("notifications", callback);
 
       expect(subscriptionId).toBeDefined();
       expect(manager.getSubscriptions()).toHaveLength(1);
-      expect(manager.getSubscriptions()[0]?.channel).toBe('notifications');
+      expect(manager.getSubscriptions()[0]?.channel).toBe("notifications");
     });
 
-    it('should unsubscribe from channels', () => {
+    it("should unsubscribe from channels", () => {
       const callback = vi.fn();
-      const subscriptionId = manager.subscribe('notifications', callback);
+      const subscriptionId = manager.subscribe("notifications", callback);
 
       manager.unsubscribe(subscriptionId);
       expect(manager.getSubscriptions()).toHaveLength(0);
     });
 
-    it('should route messages to subscribers', () => {
+    it("should route messages to subscribers", () => {
       const callback1 = vi.fn();
       const callback2 = vi.fn();
 
-      manager.subscribe('notifications', callback1);
-      manager.subscribe('queue-status', callback2);
+      manager.subscribe("notifications", callback1);
+      manager.subscribe("queue-status", callback2);
 
       // Simulate incoming message
       const mockMessage = {
-        type: 'update',
-        channel: 'notifications',
-        data: { id: '123', status: 'delivered' },
-        timestamp: Date.now()
+        type: "update",
+        channel: "notifications",
+        data: { id: "123", status: "delivered" },
+        timestamp: Date.now(),
       };
 
       // Simulate message reception
-      const messageEvent = new MessageEvent('message', {
-        data: JSON.stringify(mockMessage)
+      const messageEvent = new MessageEvent("message", {
+        data: JSON.stringify(mockMessage),
       });
 
       // Access the private WebSocket instance to trigger message
@@ -202,15 +202,15 @@ describe('WebSocketManager', () => {
       expect(callback2).not.toHaveBeenCalled();
     });
 
-    it('should emit subscription events', () => {
+    it("should emit subscription events", () => {
       const addedSpy = vi.fn();
       const removedSpy = vi.fn();
 
-      manager.on('subscription:added', addedSpy);
-      manager.on('subscription:removed', removedSpy);
+      manager.on("subscription:added", addedSpy);
+      manager.on("subscription:removed", removedSpy);
 
       const callback = vi.fn();
-      const subscriptionId = manager.subscribe('notifications', callback);
+      const subscriptionId = manager.subscribe("notifications", callback);
 
       expect(addedSpy).toHaveBeenCalled();
 
@@ -219,32 +219,32 @@ describe('WebSocketManager', () => {
     });
   });
 
-  describe('Message Handling', () => {
+  describe("Message Handling", () => {
     beforeEach(async () => {
       await manager.connect();
     });
 
-    it('should send messages when connected', () => {
+    it("should send messages when connected", () => {
       const ws = (manager as any).ws as MockWebSocket;
-      const sendSpy = vi.spyOn(ws, 'send');
+      const sendSpy = vi.spyOn(ws, "send");
 
       const message = {
-        type: 'test',
+        type: "test",
         data: { test: true },
-        timestamp: Date.now()
+        timestamp: Date.now(),
       };
 
       manager.sendMessage(message);
       expect(sendSpy).toHaveBeenCalledWith(JSON.stringify(message));
     });
 
-    it('should queue messages when disconnected', () => {
+    it("should queue messages when disconnected", () => {
       manager.disconnect();
 
       const message = {
-        type: 'test',
+        type: "test",
         data: { test: true },
-        timestamp: Date.now()
+        timestamp: Date.now(),
       };
 
       // Should not throw error
@@ -255,81 +255,79 @@ describe('WebSocketManager', () => {
       expect(messageQueue).toContain(message);
     });
 
-    it('should handle ping/pong messages', () => {
+    it("should handle ping/pong messages", () => {
       const ws = (manager as any).ws as MockWebSocket;
-      const sendSpy = vi.spyOn(ws, 'send');
+      const sendSpy = vi.spyOn(ws, "send");
 
       // Simulate ping message
       const pingMessage = {
-        type: 'ping',
+        type: "ping",
         data: { timestamp: Date.now() },
-        timestamp: Date.now()
+        timestamp: Date.now(),
       };
 
-      const messageEvent = new MessageEvent('message', {
-        data: JSON.stringify(pingMessage)
+      const messageEvent = new MessageEvent("message", {
+        data: JSON.stringify(pingMessage),
       });
 
       ws.dispatchEvent(messageEvent);
 
       // Should respond with pong
-      expect(sendSpy).toHaveBeenCalledWith(
-        expect.stringContaining('"type":"pong"')
-      );
+      expect(sendSpy).toHaveBeenCalledWith(expect.stringContaining('"type":"pong"'));
     });
   });
 
-  describe('Reconnection Logic', () => {
-    it('should attempt reconnection on unexpected disconnect', async () => {
+  describe("Reconnection Logic", () => {
+    it("should attempt reconnection on unexpected disconnect", async () => {
       const reconnectingSpy = vi.fn();
-      manager.on('connection:reconnecting', reconnectingSpy);
+      manager.on("connection:reconnecting", reconnectingSpy);
 
       await manager.connect();
 
       // Simulate unexpected disconnect
       const ws = (manager as any).ws as MockWebSocket;
-      ws.close(1006, 'Abnormal closure'); // Abnormal closure code
+      ws.close(1006, "Abnormal closure"); // Abnormal closure code
 
       // Wait for reconnection attempt
-      await new Promise(resolve => setTimeout(resolve, 150));
+      await new Promise((resolve) => setTimeout(resolve, 150));
 
       expect(reconnectingSpy).toHaveBeenCalled();
       expect(manager.getConnectionState().reconnectAttempts).toBeGreaterThan(0);
     });
 
-    it('should not reconnect on manual disconnect', async () => {
+    it("should not reconnect on manual disconnect", async () => {
       const reconnectingSpy = vi.fn();
-      manager.on('connection:reconnecting', reconnectingSpy);
+      manager.on("connection:reconnecting", reconnectingSpy);
 
       await manager.connect();
       manager.disconnect(); // Manual disconnect
 
       // Wait to ensure no reconnection attempt
-      await new Promise(resolve => setTimeout(resolve, 150));
+      await new Promise((resolve) => setTimeout(resolve, 150));
 
       expect(reconnectingSpy).not.toHaveBeenCalled();
     });
 
-    it('should stop reconnecting after max attempts', async () => {
+    it("should stop reconnecting after max attempts", async () => {
       const failedSpy = vi.fn();
-      manager.on('connection:failed', failedSpy);
+      manager.on("connection:failed", failedSpy);
 
       // Mock WebSocket to always fail
       const originalWebSocket = (global as any).WebSocket;
       (global as any).WebSocket = class {
         constructor() {
           setTimeout(() => {
-            const errorEvent = new Event('error');
+            const errorEvent = new Event("error");
             this.dispatchEvent(errorEvent);
           }, 10);
         }
-        addEventListener() { }
+        addEventListener() {}
         dispatchEvent(event: Event) {
-          if (event.type === 'error' && this.onerror) {
+          if (event.type === "error" && this.onerror) {
             this.onerror(event);
           }
         }
-        close() { }
+        close() {}
         readyState = MockWebSocket.CLOSED;
         onerror: ((event: Event) => void) | null = null;
       };
@@ -341,7 +339,7 @@ describe('WebSocketManager', () => {
       }
 
       // Wait for all reconnection attempts
-      await new Promise(resolve => setTimeout(resolve, 500));
+      await new Promise((resolve) => setTimeout(resolve, 500));
 
       expect(manager.getConnectionState().reconnectAttempts).toBe(config.maxReconnectAttempts);
       expect(failedSpy).toHaveBeenCalled();
@@ -351,12 +349,12 @@ describe('WebSocketManager', () => {
     });
   });
 
-  describe('Cleanup', () => {
-    it('should clean up resources on destroy', async () => {
+  describe("Cleanup", () => {
+    it("should clean up resources on destroy", async () => {
       await manager.connect();
 
       const callback = vi.fn();
-      manager.subscribe('notifications', callback);
+      manager.subscribe("notifications", callback);
 
       expect(manager.getSubscriptions()).toHaveLength(1);
       expect(manager.isConnected()).toBe(true);
@@ -364,7 +362,7 @@ describe('WebSocketManager', () => {
       manager.destroy();
 
       expect(manager.getSubscriptions()).toHaveLength(0);
-      expect(manager.getConnectionState().status).toBe('disconnected');
+      expect(manager.getConnectionState().status).toBe("disconnected");
     });
   });
 });

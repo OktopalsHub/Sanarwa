@@ -1,18 +1,18 @@
-'use client';
+"use client";
 
-import { Send } from '@/lib/icons';
+import { Send } from "@/lib/icons";
 
-import { AuthBackLink } from '@/components/auth/auth-back-link';
-import Link from '@/compat/next-link';
-import { SanarwaMark } from '@sanarwa/assets';
-import { formatTokens, WELCOME_SIGNUP_TOKENS } from '@/lib/pricing';
+import { AuthBackLink } from "@/components/auth/auth-back-link";
+import Link from "@/compat/next-link";
+import { SanarwaMark } from "@sanarwa/assets";
+import { formatTokens, WELCOME_SIGNUP_TOKENS } from "@/lib/pricing";
 
 /* Hallmark · macrostructure: Split Panel · tone: utilitarian · anchor: peach · page: register */
 
 const START_STEPS = [
-  'Create your workspace',
-  'Connect a delivery channel',
-  'Send a test notification',
+  "Create your workspace",
+  "Connect a delivery channel",
+  "Send a test notification",
 ] as const;
 
 interface RegisterPageLayoutProps {
@@ -28,7 +28,7 @@ export function RegisterPageLayout({ children }: RegisterPageLayoutProps) {
             className="pointer-events-none absolute inset-0 opacity-[0.07]"
             style={{
               backgroundImage:
-                'repeating-linear-gradient(-12deg, transparent, transparent 11px, var(--color-rule-2) 11px, var(--color-rule-2) 12px)',
+                "repeating-linear-gradient(-12deg, transparent, transparent 11px, var(--color-rule-2) 11px, var(--color-rule-2) 12px)",
             }}
             aria-hidden
           />
@@ -46,12 +46,13 @@ export function RegisterPageLayout({ children }: RegisterPageLayoutProps) {
           <div className="relative z-10 max-w-md space-y-5">
             <h1
               className="font-[family-name:var(--font-display)] text-[length:var(--text-3xl)] font-bold leading-[1.12] tracking-[var(--tracking-display)] text-white"
-              style={{ fontStyle: 'normal' }}
+              style={{ fontStyle: "normal" }}
             >
               Start sending in minutes
             </h1>
             <p className="text-sm leading-relaxed text-white/65">
-              Includes {formatTokens(WELCOME_SIGNUP_TOKENS)} free tokens — enough to test every channel.
+              Includes {formatTokens(WELCOME_SIGNUP_TOKENS)} free tokens — enough to test every
+              channel.
             </p>
             <ol className="space-y-2.5 border-t border-white/10 pt-5">
               {START_STEPS.map((step, index) => (
@@ -69,8 +70,11 @@ export function RegisterPageLayout({ children }: RegisterPageLayoutProps) {
           </div>
 
           <p className="relative z-10 font-mono text-[11px] text-white/40">
-            Already shipping?{' '}
-            <Link href="/login" className="text-[var(--hm-accent)] underline-offset-2 hover:underline">
+            Already shipping?{" "}
+            <Link
+              href="/login"
+              className="text-[var(--hm-accent)] underline-offset-2 hover:underline"
+            >
               Sign in
             </Link>
           </p>
@@ -93,12 +97,18 @@ export function RegisterPageLayout({ children }: RegisterPageLayoutProps) {
           </div>
 
           <p className="mx-auto mt-4 max-w-[22rem] shrink-0 text-center text-[11px] leading-relaxed text-[var(--color-muted)]">
-            By continuing, you agree to our{' '}
-            <Link href="/terms" className="text-[var(--color-ink)] underline-offset-2 hover:text-[var(--hm-accent)] hover:underline">
+            By continuing, you agree to our{" "}
+            <Link
+              href="/terms"
+              className="text-[var(--color-ink)] underline-offset-2 hover:text-[var(--hm-accent)] hover:underline"
+            >
               Terms
-            </Link>{' '}
-            and{' '}
-            <Link href="/privacy" className="text-[var(--color-ink)] underline-offset-2 hover:text-[var(--hm-accent)] hover:underline">
+            </Link>{" "}
+            and{" "}
+            <Link
+              href="/privacy"
+              className="text-[var(--color-ink)] underline-offset-2 hover:text-[var(--hm-accent)] hover:underline"
+            >
               Privacy Policy
             </Link>
             .

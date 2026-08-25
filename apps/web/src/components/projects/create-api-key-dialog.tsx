@@ -1,15 +1,22 @@
-'use client';
+"use client";
 
-import { Send } from '@/lib/icons';
+import { Send } from "@/lib/icons";
 
-import { useState } from 'react';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Checkbox } from '@/components/ui/checkbox';
-import { useForm } from 'react-hook-form';
-import { toast } from 'sonner';
+import { useState } from "react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
+import { useForm } from "react-hook-form";
+import { toast } from "sonner";
 
 interface CreateApiKeyDialogProps {
   projectId: string;
@@ -24,7 +31,7 @@ interface CreateApiKeyForm {
 
 export function CreateApiKeyDialog({ projectId, open, onOpenChange }: CreateApiKeyDialogProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [selectedPermissions, setSelectedPermissions] = useState<string[]>(['read']);
+  const [selectedPermissions, setSelectedPermissions] = useState<string[]>(["read"]);
 
   const {
     register,
@@ -34,35 +41,35 @@ export function CreateApiKeyDialog({ projectId, open, onOpenChange }: CreateApiK
   } = useForm<CreateApiKeyForm>();
 
   const permissions = [
-    { id: 'read', label: 'Read', description: 'View project data and analytics' },
-    { id: 'write', label: 'Write', description: 'Send messages and create campaigns' },
-    { id: 'admin', label: 'Admin', description: 'Manage project settings and members' },
+    { id: "read", label: "Read", description: "View project data and analytics" },
+    { id: "write", label: "Write", description: "Send messages and create campaigns" },
+    { id: "admin", label: "Admin", description: "Manage project settings and members" },
   ];
 
   const handlePermissionChange = (permissionId: string, checked: boolean) => {
     if (checked) {
       setSelectedPermissions([...selectedPermissions, permissionId]);
     } else {
-      setSelectedPermissions(selectedPermissions.filter(p => p !== permissionId));
+      setSelectedPermissions(selectedPermissions.filter((p) => p !== permissionId));
     }
   };
 
   const onSubmit = async (data: CreateApiKeyForm) => {
     if (selectedPermissions.length === 0) {
-      toast.error('Please select at least one permission');
+      toast.error("Please select at least one permission");
       return;
     }
 
     setIsSubmitting(true);
     try {
       // TODO: Implement API key creation
-      await new Promise(resolve => setTimeout(resolve, 1000)); // Mock delay
-      toast.success('API key created successfully');
+      await new Promise((resolve) => setTimeout(resolve, 1000)); // Mock delay
+      toast.success("API key created successfully");
       reset();
-      setSelectedPermissions(['read']);
+      setSelectedPermissions(["read"]);
       onOpenChange(false);
     } catch (error) {
-      toast.error('Failed to create API key');
+      toast.error("Failed to create API key");
     } finally {
       setIsSubmitting(false);
     }
@@ -71,7 +78,7 @@ export function CreateApiKeyDialog({ projectId, open, onOpenChange }: CreateApiK
   const handleClose = () => {
     if (!isSubmitting) {
       reset();
-      setSelectedPermissions(['read']);
+      setSelectedPermissions(["read"]);
       onOpenChange(false);
     }
   };
@@ -92,22 +99,20 @@ export function CreateApiKeyDialog({ projectId, open, onOpenChange }: CreateApiK
             <Input
               id="name"
               placeholder="e.g., Production API Key"
-              {...register('name', {
-                required: 'API key name is required',
+              {...register("name", {
+                required: "API key name is required",
                 minLength: {
                   value: 2,
-                  message: 'Name must be at least 2 characters',
+                  message: "Name must be at least 2 characters",
                 },
                 maxLength: {
                   value: 100,
-                  message: 'Name must be less than 100 characters',
+                  message: "Name must be less than 100 characters",
                 },
               })}
               disabled={isSubmitting}
             />
-            {errors.name && (
-              <p className="text-sm text-destructive">{errors.name.message}</p>
-            )}
+            {errors.name && <p className="text-sm text-destructive">{errors.name.message}</p>}
           </div>
 
           <div className="space-y-3">
@@ -130,9 +135,7 @@ export function CreateApiKeyDialog({ projectId, open, onOpenChange }: CreateApiK
                     >
                       {permission.label}
                     </Label>
-                    <p className="text-xs text-muted-foreground">
-                      {permission.description}
-                    </p>
+                    <p className="text-xs text-muted-foreground">{permission.description}</p>
                   </div>
                 </div>
               ))}
@@ -140,16 +143,11 @@ export function CreateApiKeyDialog({ projectId, open, onOpenChange }: CreateApiK
           </div>
 
           <DialogFooter>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={handleClose}
-              disabled={isSubmitting}
-            >
+            <Button type="button" variant="outline" onClick={handleClose} disabled={isSubmitting}>
               Cancel
             </Button>
             <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? 'Creating...' : 'Create API Key'}
+              {isSubmitting ? "Creating..." : "Create API Key"}
             </Button>
           </DialogFooter>
         </form>

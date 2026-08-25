@@ -1,14 +1,14 @@
-import { TestingModule } from '@nestjs/testing';
-import { getRepositoryToken } from '@nestjs/typeorm';
-import type { Mocked } from 'vitest';
-import { Repository } from 'typeorm';
+import { TestingModule } from "@nestjs/testing";
+import { getRepositoryToken } from "@nestjs/typeorm";
+import type { Mocked } from "vitest";
+import { Repository } from "typeorm";
 
 /**
  * Creates a mock repository with common methods
  */
-export function createMockRepository<
-  T extends Record<string, any> = any,
->(): Partial<Repository<T>> {
+export function createMockRepository<T extends Record<string, any> = any>(): Partial<
+  Repository<T>
+> {
   return {
     create: vi.fn(),
     save: vi.fn(),
@@ -157,10 +157,7 @@ export function sleep(ms: number): Promise<void> {
 /**
  * Creates a mock execution context for guards and interceptors
  */
-export function createMockExecutionContext(
-  request: any = {},
-  response: any = {},
-) {
+export function createMockExecutionContext(request: any = {}, response: any = {}) {
   return {
     switchToHttp: () => ({
       getRequest: () => ({ ...createMockRequest(), ...request }),
@@ -176,10 +173,10 @@ export function createMockExecutionContext(
  */
 export function createMockJwtPayload(overrides: any = {}) {
   return {
-    sub: 'user-123',
-    email: 'test@example.com',
-    tenantId: 'tenant-123',
-    roles: ['user'],
+    sub: "user-123",
+    email: "test@example.com",
+    tenantId: "tenant-123",
+    roles: ["user"],
     iat: Math.floor(Date.now() / 1000),
     exp: Math.floor(Date.now() / 1000) + 3600,
     ...overrides,
@@ -191,8 +188,8 @@ export function createMockJwtPayload(overrides: any = {}) {
  */
 export function createMockProviderResponse(overrides: any = {}) {
   return {
-    messageId: 'mock-message-' + Math.random().toString(36).substring(2, 11),
-    status: 'sent',
+    messageId: "mock-message-" + Math.random().toString(36).substring(2, 11),
+    status: "sent",
     timestamp: new Date(),
     ...overrides,
   };
@@ -203,10 +200,10 @@ export function createMockProviderResponse(overrides: any = {}) {
  */
 export function createMockNotificationPayload(overrides: any = {}) {
   return {
-    to: 'test@example.com',
-    subject: 'Test Subject',
-    content: 'Test Content',
-    channel: 'email',
+    to: "test@example.com",
+    subject: "Test Subject",
+    content: "Test Content",
+    channel: "email",
     ...overrides,
   };
 }
@@ -220,10 +217,10 @@ export async function expectToThrow(
 ): Promise<Error> {
   try {
     await fn();
-    throw new Error('Expected function to throw, but it did not');
+    throw new Error("Expected function to throw, but it did not");
   } catch (error) {
     if (expectedMessage) {
-      if (typeof expectedMessage === 'string') {
+      if (typeof expectedMessage === "string") {
         expect(error.message).toContain(expectedMessage);
       } else {
         expect(error.message).toMatch(expectedMessage);
@@ -238,7 +235,7 @@ export async function expectToThrow(
  */
 export function createMockBullJob(data: any = {}, opts: any = {}) {
   return {
-    id: 'job-' + Math.random().toString(36).substring(2, 11),
+    id: "job-" + Math.random().toString(36).substring(2, 11),
     data,
     opts,
     progress: vi.fn(),
@@ -275,7 +272,7 @@ export function createMockBullQueue() {
  */
 export function expectObjectToMatch(actual: any, expected: any) {
   Object.keys(expected).forEach((key) => {
-    if (typeof expected[key] === 'object' && expected[key] !== null) {
+    if (typeof expected[key] === "object" && expected[key] !== null) {
       expect(actual[key]).toBeDefined();
       expectObjectToMatch(actual[key], expected[key]);
     } else {

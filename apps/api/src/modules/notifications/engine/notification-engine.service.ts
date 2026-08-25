@@ -1,22 +1,22 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { assertSafeWebhookUrl } from '../../../common/security/utils/safe-url';
-import { ProviderOrchestratorService } from '../../provider/provider-orchestrator.service';
-import { SmartPushRouterService } from '../../provider/services/smart-push-router.service';
-import { NotificationStorageService } from '../storage/notification-storage.service';
-import { NotificationStoragePolicy } from '../enums/notification-storage-policy.enum';
+import { Injectable, Logger } from "@nestjs/common";
+import { assertSafeWebhookUrl } from "../../../common/security/utils/safe-url";
+import { ProviderOrchestratorService } from "../../provider/provider-orchestrator.service";
+import { SmartPushRouterService } from "../../provider/services/smart-push-router.service";
+import { NotificationStorageService } from "../storage/notification-storage.service";
+import { NotificationStoragePolicy } from "../enums/notification-storage-policy.enum";
 import {
   MessagingEngineRequest,
   NotificationEngineRequest,
   NotificationEngineResponse,
-} from './notification-engine.types';
-import { NotificationQueueService } from '../../messaging/queue/notification-queue.service';
-import { MessagePriority, MessageStatus } from '../../messaging/message.entity';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { Message } from '../../messaging/message.entity';
+} from "./notification-engine.types";
+import { NotificationQueueService } from "../../messaging/queue/notification-queue.service";
+import { MessagePriority, MessageStatus } from "../../messaging/message.entity";
+import { InjectRepository } from "@nestjs/typeorm";
+import { Repository } from "typeorm";
+import { Message } from "../../messaging/message.entity";
 
 interface ChannelDeliveryResult {
-  status: 'sent' | 'delivered' | 'failed';
+  status: "sent" | "delivered" | "failed";
   externalId?: string;
   error?: string;
   providerId?: string;
@@ -35,9 +35,7 @@ export class NotificationEngineService {
     private readonly messageRepository: Repository<Message>,
   ) {}
 
-  async send(
-    request: NotificationEngineRequest,
-  ): Promise<NotificationEngineResponse> {
+  async send(request: NotificationEngineRequest): Promise<NotificationEngineResponse> {
     const trackingId = request.trackingId ?? this.generateTrackingId();
     const policy = await this.storageService.getStoragePolicy(request.tenantId);
 
@@ -76,30 +74,19 @@ export class NotificationEngineService {
           result,
         );
       } else if (context.log.id) {
-        await this.storageService.updateDeliveryOutcome(
-          undefined,
-          context.log.id,
-          result,
-        );
+        await this.storageService.updateDeliveryOutcome(undefined, context.log.id, result);
       }
 
       if (context.message?.id) {
         await this.messageRepository.update(context.message.id, {
-          status:
-            result.status === 'failed'
-              ? MessageStatus.FAILED
-              : MessageStatus.DELIVERED,
-          deliveredAt:
-            result.status === 'failed' ? undefined : new Date(),
+          status: result.status === "failed" ? MessageStatus.FAILED : MessageStatus.DELIVERED,
+          deliveredAt: result.status === "failed" ? undefined : new Date(),
           errorMessage: result.error,
         });
       }
 
       if (policy === NotificationStoragePolicy.EPHEMERAL && context.message?.id) {
-        await this.storageService.finalizeEphemeral(
-          context.message.id,
-          context.log.id,
-        );
+        await this.storageService.finalizeEphemeral(context.message.id, context.log.id);
       }
 
       return {
@@ -113,17 +100,13 @@ export class NotificationEngineService {
         timestamp: new Date(),
       };
     } catch (error) {
-      this.logger.error(
-        `Notification delivery failed: ${error.message}`,
-        error.stack,
-      );
+      this.logger.error(`Notification delivery failed: ${error.message}`, error.stack);
 
       if (context.delivery?.id) {
-        await this.storageService.updateDeliveryOutcome(
-          context.delivery.id,
-          context.log.id,
-          { status: 'failed', error: error.message },
-        );
+        await this.storageService.updateDeliveryOutcome(context.delivery.id, context.log.id, {
+          status: "failed",
+          error: error.message,
+        });
       }
 
       return {
@@ -131,23 +114,21 @@ export class NotificationEngineService {
         trackingId,
         messageId: context.message?.id,
         deliveryId: context.delivery?.id,
-        status: 'failed',
+        status: "failed",
         error: error.message,
         timestamp: new Date(),
       };
     }
   }
 
-  async sendMessagingRequest(
-    request: MessagingEngineRequest,
-  ): Promise<{
+  async sendMessagingRequest(request: MessagingEngineRequest): Promise<{
     id: string;
     status: MessageStatus;
     channels: string[];
     recipientCount: number;
     deliveries: Array<{
       channel: string;
-      status: 'delivered' | 'failed';
+      status: "delivered" | "failed";
       trackingId?: string;
       error?: string;
     }>;
@@ -160,7 +141,7 @@ export class NotificationEngineService {
 
     const deliveries: Array<{
       channel: string;
-      status: 'delivered' | 'failed';
+      status: "delivered" | "failed";
       trackingId?: string;
       error?: string;
     }> = [];
@@ -177,8 +158,8 @@ export class NotificationEngineService {
         if (!to) {
           deliveries.push({
             channel,
-            status: 'failed',
-            error: 'Missing recipient address for channel',
+            status: "failed",
+            error: "Missing recipient address for channel",
           });
           continue;
         }
@@ -190,13 +171,12 @@ export class NotificationEngineService {
             channel: engineChannel,
             to,
             title: request.subject,
-            message: request.content ?? '',
+            message: request.content ?? "",
             data: request.data,
             templateId: request.templateId,
-            priority: request.priority as NotificationEngineRequest['priority'],
+            priority: request.priority as NotificationEngineRequest["priority"],
             brandId: request.brandId,
-            subscriberId:
-              recipient.subscriberId ?? recipient.userId ?? recipient.id,
+            subscriberId: recipient.subscriberId ?? recipient.userId ?? recipient.id,
             metadata: {
               ...request.metadata,
               recipientId: recipient.id,
@@ -205,22 +185,22 @@ export class NotificationEngineService {
 
           deliveries.push({
             channel,
-            status: result.status === 'failed' ? 'failed' : 'delivered',
+            status: result.status === "failed" ? "failed" : "delivered",
             trackingId: result.trackingId,
             error: result.error,
           });
         } catch (error) {
           deliveries.push({
             channel,
-            status: 'failed',
+            status: "failed",
             error: error.message,
           });
         }
       }
     }
 
-    const hasSuccess = deliveries.some((item) => item.status === 'delivered');
-    const hasFailures = deliveries.some((item) => item.status === 'failed');
+    const hasSuccess = deliveries.some((item) => item.status === "delivered");
+    const hasFailures = deliveries.some((item) => item.status === "failed");
 
     let status = MessageStatus.FAILED;
     if (hasSuccess && !hasFailures) {
@@ -298,7 +278,7 @@ export class NotificationEngineService {
       id: message.id,
       trackingId,
       messageId: message.id,
-      status: 'queued',
+      status: "queued",
       timestamp: new Date(),
     };
   }
@@ -346,40 +326,36 @@ export class NotificationEngineService {
     };
   }
 
-  private async deliver(
-    request: NotificationEngineRequest,
-  ): Promise<ChannelDeliveryResult> {
+  private async deliver(request: NotificationEngineRequest): Promise<ChannelDeliveryResult> {
     switch (request.channel) {
-      case 'email':
+      case "email":
         return this.sendEmail(request);
-      case 'sms':
+      case "sms":
         return this.sendSMS(request);
-      case 'push':
+      case "push":
         return this.sendPush(request);
-      case 'whatsapp':
+      case "whatsapp":
         return this.sendWhatsApp(request);
-      case 'webhook':
+      case "webhook":
         return this.sendWebhook(request);
-      case 'in_app':
+      case "in_app":
         return this.sendInApp(request);
       default:
         throw new Error(`Unsupported channel: ${request.channel}`);
     }
   }
 
-  private async sendEmail(
-    request: NotificationEngineRequest,
-  ): Promise<ChannelDeliveryResult> {
+  private async sendEmail(request: NotificationEngineRequest): Promise<ChannelDeliveryResult> {
     const html = request.message
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;')
-      .replace(/'/g, '&#39;');
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#39;");
     const result = await this.providerOrchestrator.sendEmail(
       {
         to: request.to,
-        subject: request.title ?? 'Notification',
+        subject: request.title ?? "Notification",
         text: request.message,
         html,
         templateId: request.templateId,
@@ -390,15 +366,13 @@ export class NotificationEngineService {
     );
 
     return {
-      status: 'sent',
+      status: "sent",
       externalId: result?.messageId ?? result?.MessageId,
-      providerId: result?.provider ?? 'email',
+      providerId: result?.provider ?? "email",
     };
   }
 
-  private async sendSMS(
-    request: NotificationEngineRequest,
-  ): Promise<ChannelDeliveryResult> {
+  private async sendSMS(request: NotificationEngineRequest): Promise<ChannelDeliveryResult> {
     const result = await this.providerOrchestrator.sendSMS(
       {
         to: request.to,
@@ -409,23 +383,21 @@ export class NotificationEngineService {
     );
 
     return {
-      status: result?.success === false ? 'failed' : 'sent',
+      status: result?.success === false ? "failed" : "sent",
       externalId: result?.messageId,
       error: result?.error,
       providerId: result?.provider,
     };
   }
 
-  private async sendPush(
-    request: NotificationEngineRequest,
-  ): Promise<ChannelDeliveryResult> {
-    const title = request.title ?? 'Notification';
+  private async sendPush(request: NotificationEngineRequest): Promise<ChannelDeliveryResult> {
+    const title = request.title ?? "Notification";
     const pushPayload = {
       deviceTokens: request.to,
       title,
       body: request.message,
       data: request.data,
-      priority: request.priority === 'high' ? ('high' as const) : ('normal' as const),
+      priority: request.priority === "high" ? ("high" as const) : ("normal" as const),
     };
 
     if (this.looksLikeDeviceToken(request.to)) {
@@ -436,7 +408,7 @@ export class NotificationEngineService {
       );
 
       return {
-        status: result?.success === false ? 'failed' : 'sent',
+        status: result?.success === false ? "failed" : "sent",
         externalId: result?.messageId,
         error: result?.error,
         providerId: result?.provider,
@@ -455,8 +427,8 @@ export class NotificationEngineService {
 
     if (routing.routingPlan.length === 0) {
       return {
-        status: 'failed',
-        error: 'No registered devices found for push recipient',
+        status: "failed",
+        error: "No registered devices found for push recipient",
       };
     }
 
@@ -477,46 +449,42 @@ export class NotificationEngineService {
     const success = responses.find((response) => response?.success !== false);
 
     return {
-      status: failed && !success ? 'failed' : 'sent',
+      status: failed && !success ? "failed" : "sent",
       externalId: success?.messageId,
       error: failed?.error,
       providerId: success?.provider ?? routing.routingPlan[0]?.provider,
     };
   }
 
-  private async sendWhatsApp(
-    request: NotificationEngineRequest,
-  ): Promise<ChannelDeliveryResult> {
+  private async sendWhatsApp(request: NotificationEngineRequest): Promise<ChannelDeliveryResult> {
     const result = await this.providerOrchestrator.sendChatMessage(
       {
         channel: request.to,
         message: request.message,
         metadata: request.data,
       },
-      'whatsapp',
+      "whatsapp",
       request.tenantId,
     );
 
     return {
-      status: 'sent',
+      status: "sent",
       externalId: result?.messageId ?? result?.id,
-      providerId: 'whatsapp',
+      providerId: "whatsapp",
     };
   }
 
-  private async sendWebhook(
-    request: NotificationEngineRequest,
-  ): Promise<ChannelDeliveryResult> {
+  private async sendWebhook(request: NotificationEngineRequest): Promise<ChannelDeliveryResult> {
     const webhookUrl = request.webhookUrl ?? request.metadata?.webhookUrl;
     if (!webhookUrl) {
-      return { status: 'failed', error: 'Webhook URL is required' };
+      return { status: "failed", error: "Webhook URL is required" };
     }
 
     assertSafeWebhookUrl(webhookUrl);
 
     const response = await fetch(webhookUrl, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         to: request.to,
         title: request.title,
@@ -529,33 +497,27 @@ export class NotificationEngineService {
 
     if (!response.ok) {
       return {
-        status: 'failed',
+        status: "failed",
         error: `Webhook returned ${response.status}`,
       };
     }
 
     return {
-      status: 'sent',
+      status: "sent",
       externalId: `webhook_${Date.now()}`,
-      providerId: 'webhook',
+      providerId: "webhook",
     };
   }
 
-  private async sendInApp(
-    request: NotificationEngineRequest,
-  ): Promise<ChannelDeliveryResult> {
+  private async sendInApp(request: NotificationEngineRequest): Promise<ChannelDeliveryResult> {
     const result = await this.providerOrchestrator.sendInAppNotification(
       {
         userId: [request.subscriberId ?? request.to],
-        title: request.title ?? 'Notification',
+        title: request.title ?? "Notification",
         message: request.message,
-        type: 'info',
+        type: "info",
         priority:
-          request.priority === 'high'
-            ? 'high'
-            : request.priority === 'low'
-              ? 'low'
-              : 'normal',
+          request.priority === "high" ? "high" : request.priority === "low" ? "low" : "normal",
         data: request.data,
         persistent:
           (await this.storageService.getStoragePolicy(request.tenantId)) ===
@@ -566,28 +528,28 @@ export class NotificationEngineService {
 
     if (result?.success === false) {
       return {
-        status: 'failed',
-        error: result.error ?? 'In-app notification failed',
+        status: "failed",
+        error: result.error ?? "In-app notification failed",
       };
     }
 
     return {
-      status: 'sent',
+      status: "sent",
       externalId: result?.messageId,
-      providerId: 'in_app',
+      providerId: "in_app",
     };
   }
 
   private normalizeChannel(channel: string) {
     const normalized = channel.toLowerCase();
-    if (normalized === 'inapp') return 'in_app' as const;
+    if (normalized === "inapp") return "in_app" as const;
     if (
-      normalized === 'email' ||
-      normalized === 'sms' ||
-      normalized === 'push' ||
-      normalized === 'whatsapp' ||
-      normalized === 'webhook' ||
-      normalized === 'in_app'
+      normalized === "email" ||
+      normalized === "sms" ||
+      normalized === "push" ||
+      normalized === "whatsapp" ||
+      normalized === "webhook" ||
+      normalized === "in_app"
     ) {
       return normalized;
     }
@@ -595,26 +557,21 @@ export class NotificationEngineService {
   }
 
   private resolveRecipientAddress(
-    recipient: MessagingEngineRequest['recipients'][number],
+    recipient: MessagingEngineRequest["recipients"][number],
     channel: string,
   ): string | null {
     switch (channel) {
-      case 'email':
+      case "email":
         return recipient.email ?? null;
-      case 'sms':
+      case "sms":
         return recipient.phone ?? null;
-      case 'whatsapp':
+      case "whatsapp":
         return recipient.whatsappNumber ?? recipient.phone ?? null;
-      case 'push':
-        return (
-          recipient.deviceToken ??
-          recipient.subscriberId ??
-          recipient.userId ??
-          recipient.id
-        );
-      case 'in_app':
+      case "push":
+        return recipient.deviceToken ?? recipient.subscriberId ?? recipient.userId ?? recipient.id;
+      case "in_app":
         return recipient.subscriberId ?? recipient.userId ?? recipient.id;
-      case 'webhook':
+      case "webhook":
         return recipient.id;
       default:
         return recipient.id;
@@ -623,19 +580,17 @@ export class NotificationEngineService {
 
   private looksLikeDeviceToken(value: string): boolean {
     return (
-      value.includes('ExponentPushToken') ||
-      value.length > 80 ||
-      /^[a-f0-9:-]{64,}$/i.test(value)
+      value.includes("ExponentPushToken") || value.length > 80 || /^[a-f0-9:-]{64,}$/i.test(value)
     );
   }
 
   private toMessagePriority(priority?: string): MessagePriority {
     switch (priority) {
-      case 'high':
+      case "high":
         return MessagePriority.HIGH;
-      case 'low':
+      case "low":
         return MessagePriority.LOW;
-      case 'urgent':
+      case "urgent":
         return MessagePriority.URGENT;
       default:
         return MessagePriority.NORMAL;

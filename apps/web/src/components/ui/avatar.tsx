@@ -1,1 +1,1 @@
-export * from '@sanarwa/ui/avatar';
+export * from "@sanarwa/ui/avatar";

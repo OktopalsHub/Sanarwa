@@ -1,7 +1,7 @@
-'use client';
+"use client";
 
-import Link from '@/compat/next-link';
-import { SanarwaMark } from '@sanarwa/assets';
+import Link from "@/compat/next-link";
+import { SanarwaMark } from "@sanarwa/assets";
 
 interface AuthPageShellProps {
   children: React.ReactNode;
@@ -21,12 +21,18 @@ export function AuthPageShell({ children }: AuthPageShellProps) {
         {children}
 
         <p className="text-center text-xs leading-relaxed text-[var(--color-muted)]">
-          By clicking continue, you agree to our{' '}
-          <Link href="/terms" className="text-[var(--hm-accent)] underline-offset-2 hover:underline">
+          By clicking continue, you agree to our{" "}
+          <Link
+            href="/terms"
+            className="text-[var(--hm-accent)] underline-offset-2 hover:underline"
+          >
             Terms of Service
-          </Link>{' '}
-          and{' '}
-          <Link href="/privacy" className="text-[var(--hm-accent)] underline-offset-2 hover:underline">
+          </Link>{" "}
+          and{" "}
+          <Link
+            href="/privacy"
+            className="text-[var(--hm-accent)] underline-offset-2 hover:underline"
+          >
             Privacy Policy
           </Link>
           .
@@ -44,7 +50,7 @@ export function AuthCard({ children }: { children: React.ReactNode }) {
   );
 }
 
-export function AuthDivider({ label = 'Or continue with' }: { label?: string }) {
+export function AuthDivider({ label = "Or continue with" }: { label?: string }) {
   return (
     <div className="relative flex items-center py-1">
       <div className="grow border-t border-[var(--color-rule)]" />

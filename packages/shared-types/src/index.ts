@@ -1,4 +1,4 @@
-export type Environment = 'development' | 'staging' | 'production' | 'test';
+export type Environment = "development" | "staging" | "production" | "test";
 
 export interface PaginationMeta {
   page: number;
@@ -40,16 +40,16 @@ export interface ProjectSummary {
 export interface CampaignStatus {
   id: string;
   name: string;
-  status: 'draft' | 'scheduled' | 'running' | 'paused' | 'completed' | 'cancelled';
+  status: "draft" | "scheduled" | "running" | "paused" | "completed" | "cancelled";
 }
 
 export interface TemplateChannel {
-  type: 'email' | 'sms' | 'push' | 'in_app' | 'voice' | 'whatsapp';
+  type: "email" | "sms" | "push" | "in_app" | "voice" | "whatsapp";
   enabled: boolean;
 }
 
 export interface ProviderType {
-  type: 'email' | 'sms' | 'push' | 'voice' | 'whatsapp';
+  type: "email" | "sms" | "push" | "voice" | "whatsapp";
   name: string;
 }
 

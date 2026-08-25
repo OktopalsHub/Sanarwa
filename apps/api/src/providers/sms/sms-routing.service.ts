@@ -1,5 +1,5 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { ISMSProvider } from './sms-provider.interface';
+import { Injectable, Logger } from "@nestjs/common";
+import { ISMSProvider } from "./sms-provider.interface";
 
 export interface SMSRoutingRule {
   countryCode: string;
@@ -65,7 +65,7 @@ export class SMSRoutingService {
    */
   getProviderForCountry(countryCode: string): ISMSProvider | null {
     if (!countryCode) {
-      this.logger.warn('No country code provided for SMS routing');
+      this.logger.warn("No country code provided for SMS routing");
       return null;
     }
 
@@ -88,9 +88,7 @@ export class SMSRoutingService {
     // Fallback: find any provider that supports this country
     for (const [providerId, mapping] of this.providerMappings) {
       if (mapping.provider.isCountrySupported(upperCountryCode)) {
-        this.logger.debug(
-          `Using fallback provider ${providerId} for country ${countryCode}`,
-        );
+        this.logger.debug(`Using fallback provider ${providerId} for country ${countryCode}`);
         return mapping.provider;
       }
     }
@@ -127,9 +125,7 @@ export class SMSRoutingService {
    * Get all registered providers
    */
   getAllProviders(): ISMSProvider[] {
-    return Array.from(this.providerMappings.values()).map(
-      (mapping) => mapping.provider,
-    );
+    return Array.from(this.providerMappings.values()).map((mapping) => mapping.provider);
   }
 
   /**
@@ -167,74 +163,74 @@ export class SMSRoutingService {
    * Extract country code from phone number
    */
   extractCountryCodeFromPhone(phoneNumber: string): string | null {
-    if (!phoneNumber.startsWith('+')) {
+    if (!phoneNumber.startsWith("+")) {
       return null;
     }
 
     // Common country code mappings
     const countryCodeMap: Record<string, string> = {
       // North America
-      '1': 'US',
+      "1": "US",
       // Europe
-      '44': 'GB',
-      '33': 'FR',
-      '49': 'DE',
-      '39': 'IT',
-      '34': 'ES',
-      '31': 'NL',
-      '32': 'BE',
-      '41': 'CH',
-      '43': 'AT',
-      '45': 'DK',
-      '46': 'SE',
-      '47': 'NO',
-      '358': 'FI',
-      '353': 'IE',
-      '351': 'PT',
+      "44": "GB",
+      "33": "FR",
+      "49": "DE",
+      "39": "IT",
+      "34": "ES",
+      "31": "NL",
+      "32": "BE",
+      "41": "CH",
+      "43": "AT",
+      "45": "DK",
+      "46": "SE",
+      "47": "NO",
+      "358": "FI",
+      "353": "IE",
+      "351": "PT",
       // Asia
-      '86': 'CN',
-      '81': 'JP',
-      '82': 'KR',
-      '91': 'IN',
-      '62': 'ID',
-      '66': 'TH',
-      '84': 'VN',
-      '63': 'PH',
-      '60': 'MY',
-      '65': 'SG',
-      '880': 'BD',
-      '92': 'PK',
-      '94': 'LK',
-      '95': 'MM',
-      '855': 'KH',
+      "86": "CN",
+      "81": "JP",
+      "82": "KR",
+      "91": "IN",
+      "62": "ID",
+      "66": "TH",
+      "84": "VN",
+      "63": "PH",
+      "60": "MY",
+      "65": "SG",
+      "880": "BD",
+      "92": "PK",
+      "94": "LK",
+      "95": "MM",
+      "855": "KH",
       // Africa
-      '234': 'NG',
-      '233': 'GH',
-      '254': 'KE',
-      '256': 'UG',
-      '255': 'TZ',
-      '27': 'ZA',
-      '20': 'EG',
-      '212': 'MA',
-      '213': 'DZ',
-      '216': 'TN',
+      "234": "NG",
+      "233": "GH",
+      "254": "KE",
+      "256": "UG",
+      "255": "TZ",
+      "27": "ZA",
+      "20": "EG",
+      "212": "MA",
+      "213": "DZ",
+      "216": "TN",
       // Middle East
-      '966': 'SA',
-      '971': 'AE',
-      '974': 'QA',
-      '973': 'BH',
-      '965': 'KW',
-      '968': 'OM',
-      '967': 'YE',
-      '962': 'JO',
-      '961': 'LB',
-      '972': 'IL',
+      "966": "SA",
+      "971": "AE",
+      "974": "QA",
+      "973": "BH",
+      "965": "KW",
+      "968": "OM",
+      "967": "YE",
+      "962": "JO",
+      "961": "LB",
+      "972": "IL",
       // Others
-      '61': 'AU',
-      '64': 'NZ',
-      '55': 'BR',
-      '52': 'MX',
-      '54': 'AR',
+      "61": "AU",
+      "64": "NZ",
+      "55": "BR",
+      "52": "MX",
+      "54": "AR",
     };
 
     // Try different lengths of country codes (1-3 digits)
@@ -252,43 +248,43 @@ export class SMSRoutingService {
    * Set default routing rules based on provider capabilities
    */
   setupDefaultRouting(): void {
-    this.logger.log('Setting up default SMS routing rules...');
+    this.logger.log("Setting up default SMS routing rules...");
 
     // African countries -> Termii
     const africanCountries = [
-      'NG',
-      'GH',
-      'KE',
-      'UG',
-      'TZ',
-      'ZA',
-      'EG',
-      'MA',
-      'DZ',
-      'TN',
-      'LY',
-      'SD',
-      'ET',
-      'ZW',
-      'ZM',
-      'MW',
-      'MZ',
-      'BW',
-      'NA',
-      'SZ',
+      "NG",
+      "GH",
+      "KE",
+      "UG",
+      "TZ",
+      "ZA",
+      "EG",
+      "MA",
+      "DZ",
+      "TN",
+      "LY",
+      "SD",
+      "ET",
+      "ZW",
+      "ZM",
+      "MW",
+      "MZ",
+      "BW",
+      "NA",
+      "SZ",
     ];
 
     africanCountries.forEach((country) => {
       this.setCountryRouting(country, [
         {
           countryCode: country,
-          providerId: 'termii',
+          providerId: "termii",
           priority: 1,
           isActive: true,
         },
         {
           countryCode: country,
-          providerId: 'sns',
+          providerId: "sns",
           priority: 2,
           isActive: true,
         },
@@ -297,39 +293,39 @@ export class SMSRoutingService {
 
     // Asian countries -> Asia SMS Provider
     const asianCountries = [
-      'CN',
-      'JP',
-      'KR',
-      'IN',
-      'ID',
-      'TH',
-      'VN',
-      'PH',
-      'MY',
-      'SG',
-      'BD',
-      'PK',
-      'LK',
-      'MM',
-      'KH',
-      'LA',
-      'BN',
-      'MV',
-      'NP',
-      'BT',
+      "CN",
+      "JP",
+      "KR",
+      "IN",
+      "ID",
+      "TH",
+      "VN",
+      "PH",
+      "MY",
+      "SG",
+      "BD",
+      "PK",
+      "LK",
+      "MM",
+      "KH",
+      "LA",
+      "BN",
+      "MV",
+      "NP",
+      "BT",
     ];
 
     asianCountries.forEach((country) => {
       this.setCountryRouting(country, [
         {
           countryCode: country,
-          providerId: 'asia-sms',
+          providerId: "asia-sms",
           priority: 1,
           isActive: true,
         },
         {
           countryCode: country,
-          providerId: 'sns',
+          providerId: "sns",
           priority: 2,
           isActive: true,
         },
@@ -337,31 +333,20 @@ export class SMSRoutingService {
     });
 
     // Other countries -> SNS as primary
-    const otherCountries = [
-      'US',
-      'CA',
-      'GB',
-      'DE',
-      'FR',
-      'IT',
-      'ES',
-      'AU',
-      'BR',
-      'MX',
-    ];
+    const otherCountries = ["US", "CA", "GB", "DE", "FR", "IT", "ES", "AU", "BR", "MX"];
 
     otherCountries.forEach((country) => {
       this.setCountryRouting(country, [
         {
           countryCode: country,
-          providerId: 'sns',
+          providerId: "sns",
           priority: 1,
           isActive: true,
         },
       ]);
     });
 
-    this.logger.log('Default SMS routing rules configured');
+    this.logger.log("Default SMS routing rules configured");
   }
 
   /**
@@ -374,9 +359,7 @@ export class SMSRoutingService {
     for (const [countryCode, rules] of this.routingRules) {
       for (const rule of rules) {
         if (!this.providerMappings.has(rule.providerId)) {
-          errors.push(
-            `Country ${countryCode} references unknown provider: ${rule.providerId}`,
-          );
+          errors.push(`Country ${countryCode} references unknown provider: ${rule.providerId}`);
         }
       }
     }
@@ -384,9 +367,7 @@ export class SMSRoutingService {
     // Check for countries without any provider support
     const allSupportedCountries = new Set<string>();
     for (const [, mapping] of this.providerMappings) {
-      mapping.supportedCountries.forEach((country) =>
-        allSupportedCountries.add(country),
-      );
+      mapping.supportedCountries.forEach((country) => allSupportedCountries.add(country));
     }
 
     const countriesWithRules = new Set(this.routingRules.keys());
@@ -396,7 +377,7 @@ export class SMSRoutingService {
 
     if (unsupportedCountries.length > 0) {
       errors.push(
-        `Countries with routing rules but no provider support: ${unsupportedCountries.join(', ')}`,
+        `Countries with routing rules but no provider support: ${unsupportedCountries.join(", ")}`,
       );
     }
 

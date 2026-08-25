@@ -1,4 +1,4 @@
-import { ForgotPasswordForm } from '@/components/auth/forgot-password-form';
+import { ForgotPasswordForm } from "@/components/auth/forgot-password-form";
 
 export default function ForgotPasswordPage() {
   return (
@@ -11,6 +11,6 @@ export default function ForgotPasswordPage() {
 }
 
 export const metadata = {
-  title: 'Forgot Password - Notifi',
-  description: 'Reset your Notifi account password',
+  title: "Forgot Password - Notifi",
+  description: "Reset your Notifi account password",
 };

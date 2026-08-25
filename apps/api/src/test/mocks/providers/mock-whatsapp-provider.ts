@@ -4,23 +4,23 @@ import {
   ProviderConfig,
   ProviderHealth,
   ProviderResponse,
-} from '../../../providers/types';
+} from "../../../providers/types";
 import {
   IWhatsAppProvider,
   WhatsAppTemplate,
-} from '../../../providers/whatsapp/whatsapp-provider.interface';
+} from "../../../providers/whatsapp/whatsapp-provider.interface";
 
 export class MockWhatsAppProvider implements IWhatsAppProvider {
-  id = 'mock-whatsapp-provider';
-  name = 'Mock WhatsApp Provider';
+  id = "mock-whatsapp-provider";
+  name = "Mock WhatsApp Provider";
   channel = Channel.WHATSAPP;
   config: ProviderConfig;
   isInitialized = true;
 
   private shouldFail = false;
-  private failureMessage = 'Mock WhatsApp provider failure';
+  private failureMessage = "Mock WhatsApp provider failure";
   private responseDelay = 0;
-  private supportedMessageTypes = ['text', 'template', 'media'];
+  private supportedMessageTypes = ["text", "template", "media"];
 
   constructor(config: ProviderConfig) {
     this.config = config;
@@ -36,10 +36,10 @@ export class MockWhatsAppProvider implements IWhatsAppProvider {
     }
 
     return {
-      messageId: 'mock-whatsapp-' + Math.random().toString(36).substr(2, 9),
+      messageId: "mock-whatsapp-" + Math.random().toString(36).substr(2, 9),
       status: DeliveryStatus.SENT,
       timestamp: new Date(),
-      providerMessageId: 'wamid.mock-message-id',
+      providerMessageId: "wamid.mock-message-id",
       metadata: {
         recipientId: payload.recipient,
       },
@@ -56,11 +56,10 @@ export class MockWhatsAppProvider implements IWhatsAppProvider {
     }
 
     return {
-      messageId:
-        'mock-whatsapp-template-' + Math.random().toString(36).substr(2, 9),
+      messageId: "mock-whatsapp-template-" + Math.random().toString(36).substr(2, 9),
       status: DeliveryStatus.SENT,
       timestamp: new Date(),
-      providerMessageId: 'wamid.mock-template-message-id',
+      providerMessageId: "wamid.mock-template-message-id",
       metadata: {
         templateName: template.name,
         recipientId: recipient,
@@ -76,24 +75,24 @@ export class MockWhatsAppProvider implements IWhatsAppProvider {
   async getTemplates(): Promise<WhatsAppTemplate[]> {
     return [
       {
-        name: 'welcome_message',
-        language: 'en',
+        name: "welcome_message",
+        language: "en",
         components: [
           {
-            type: 'body',
-            parameters: [{ type: 'text', text: '{{name}}' }],
+            type: "body",
+            parameters: [{ type: "text", text: "{{name}}" }],
           },
         ],
       },
       {
-        name: 'order_confirmation',
-        language: 'en',
+        name: "order_confirmation",
+        language: "en",
         components: [
           {
-            type: 'body',
+            type: "body",
             parameters: [
-              { type: 'text', text: '{{orderNumber}}' },
-              { type: 'text', text: '{{total}}' },
+              { type: "text", text: "{{orderNumber}}" },
+              { type: "text", text: "{{total}}" },
             ],
           },
         ],
@@ -107,16 +106,12 @@ export class MockWhatsAppProvider implements IWhatsAppProvider {
   }
 
   async validateConfig(config: ProviderConfig): Promise<boolean> {
-    return (
-      config && config.credentials && typeof config.credentials === 'object'
-    );
+    return config && config.credentials && typeof config.credentials === "object";
   }
 
   async checkHealth(): Promise<{ status: ProviderHealth; lastChecked: Date }> {
     return {
-      status: this.shouldFail
-        ? ProviderHealth.UNHEALTHY
-        : ProviderHealth.HEALTHY,
+      status: this.shouldFail ? ProviderHealth.UNHEALTHY : ProviderHealth.HEALTHY,
       lastChecked: new Date(),
     };
   }
@@ -156,8 +151,8 @@ export class MockWhatsAppProvider implements IWhatsAppProvider {
 
   reset(): void {
     this.shouldFail = false;
-    this.failureMessage = 'Mock WhatsApp provider failure';
+    this.failureMessage = "Mock WhatsApp provider failure";
     this.responseDelay = 0;
-    this.supportedMessageTypes = ['text', 'template', 'media'];
+    this.supportedMessageTypes = ["text", "template", "media"];
   }
 }

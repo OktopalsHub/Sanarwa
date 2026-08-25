@@ -1,34 +1,58 @@
-'use client';
+"use client";
 
-import { Filter } from '@/lib/icons';
+import { Filter } from "@/lib/icons";
 
-import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { projectApi } from '@/lib/api/project';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { EllipsisHorizontalIcon, MagnifyingGlassIcon, Cog6ToothIcon, TrashIcon, ArchiveBoxIcon, PlayIcon, PauseIcon } from '@heroicons/react/24/outline'
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { ProjectStatus } from '@/lib/types/project';
-import Link from '@/compat/next-link';
-import { useTenant } from '@/contexts/tenant-context';
+import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { projectApi } from "@/lib/api/project";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  EllipsisHorizontalIcon,
+  MagnifyingGlassIcon,
+  Cog6ToothIcon,
+  TrashIcon,
+  ArchiveBoxIcon,
+  PlayIcon,
+  PauseIcon,
+} from "@heroicons/react/24/outline";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { ProjectStatus } from "@/lib/types/project";
+import Link from "@/compat/next-link";
+import { useTenant } from "@/contexts/tenant-context";
 
 export function ProjectList() {
   const { selectedTenant } = useTenant();
-  const [searchQuery, setSearchQuery] = useState('');
-  const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState<string>("all");
 
-  const { data: projectsData, isLoading, error } = useQuery({
-    queryKey: ['projects', selectedTenant?.id, searchQuery, statusFilter],
-    queryFn: () => projectApi.getProjects({
-      search: searchQuery || undefined,
-      status: statusFilter !== 'all' ? statusFilter as ProjectStatus : undefined,
-      page: 1,
-      limit: 20,
-    }),
+  const {
+    data: projectsData,
+    isLoading,
+    error,
+  } = useQuery({
+    queryKey: ["projects", selectedTenant?.id, searchQuery, statusFilter],
+    queryFn: () =>
+      projectApi.getProjects({
+        search: searchQuery || undefined,
+        status: statusFilter !== "all" ? (statusFilter as ProjectStatus) : undefined,
+        page: 1,
+        limit: 20,
+      }),
     enabled: !!selectedTenant?.id,
   });
 
@@ -37,21 +61,21 @@ export function ProjectList() {
   const getStatusColor = (status: ProjectStatus) => {
     switch (status) {
       case ProjectStatus.ACTIVE:
-        return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300';
+        return "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300";
       case ProjectStatus.INACTIVE:
-        return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300';
+        return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300";
       case ProjectStatus.ARCHIVED:
-        return 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300';
+        return "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300";
       default:
-        return 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300';
+        return "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300";
     }
   };
 
   const formatDate = (date: Date) => {
-    return new Date(date).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
+    return new Date(date).toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
     });
   };
 
@@ -118,9 +142,9 @@ export function ProjectList() {
             <div className="text-center py-8">
               <h3 className="text-lg font-semibold mb-2">No projects found</h3>
               <p className="text-muted-foreground mb-4">
-                {searchQuery || statusFilter !== 'all'
-                  ? 'Try adjusting your search or filters'
-                  : 'Create your first project to get started'}
+                {searchQuery || statusFilter !== "all"
+                  ? "Try adjusting your search or filters"
+                  : "Create your first project to get started"}
               </p>
             </div>
           </CardContent>
@@ -143,9 +167,7 @@ export function ProjectList() {
                     <CardDescription>{project.description}</CardDescription>
                   </div>
                   <div className="flex items-center gap-2">
-                    <Badge className={getStatusColor(project.status)}>
-                      {project.status}
-                    </Badge>
+                    <Badge className={getStatusColor(project.status)}>{project.status}</Badge>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <Button variant="ghost" size="sm">
@@ -154,7 +176,9 @@ export function ProjectList() {
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
                         <DropdownMenuItem asChild>
-                          <Link href={`/${selectedTenant?.slug || selectedTenant?.id}/projects/${project.id}`}>
+                          <Link
+                            href={`/${selectedTenant?.slug || selectedTenant?.id}/projects/${project.id}`}
+                          >
                             <Cog6ToothIcon className="h-4 w-4 mr-2" />
                             Settings
                           </Link>

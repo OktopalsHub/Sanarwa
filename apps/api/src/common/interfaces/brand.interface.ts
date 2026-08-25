@@ -57,7 +57,7 @@ export interface WhiteLabelConfig {
     sesDkimError?: string;
   };
   dmarc?: {
-    policy?: 'none' | 'quarantine' | 'reject';
+    policy?: "none" | "quarantine" | "reject";
     percentage?: number;
     reportEmail?: string;
     verified?: boolean;

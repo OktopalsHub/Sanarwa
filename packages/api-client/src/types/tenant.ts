@@ -1,29 +1,29 @@
 // Enums matching backend
 export enum TenantStatus {
-  ACTIVE = 'active',
-  SUSPENDED = 'suspended',
-  INACTIVE = 'inactive',
+  ACTIVE = "active",
+  SUSPENDED = "suspended",
+  INACTIVE = "inactive",
 }
 
 export enum TenantMemberRole {
-  OWNER = 'owner',
-  ADMIN = 'admin',
-  MEMBER = 'member',
-  VIEWER = 'viewer',
+  OWNER = "owner",
+  ADMIN = "admin",
+  MEMBER = "member",
+  VIEWER = "viewer",
 }
 
 export enum TenantMemberStatus {
-  ACTIVE = 'active',
-  INACTIVE = 'inactive',
-  PENDING = 'pending',
+  ACTIVE = "active",
+  INACTIVE = "inactive",
+  PENDING = "pending",
 }
 
 export enum InviteStatus {
-  PENDING = 'pending',
-  ACCEPTED = 'accepted',
-  DECLINED = 'declined',
-  EXPIRED = 'expired',
-  CANCELLED = 'cancelled',
+  PENDING = "pending",
+  ACCEPTED = "accepted",
+  DECLINED = "declined",
+  EXPIRED = "expired",
+  CANCELLED = "cancelled",
 }
 
 // Core interfaces matching backend entities
@@ -283,15 +283,15 @@ export interface TenantQueryParams {
   page?: number;
   limit?: number;
   sortBy?: string;
-  sortOrder?: 'ASC' | 'DESC';
+  sortOrder?: "ASC" | "DESC";
 }
 
 // Legacy types for backward compatibility
 export type TenantRole = TenantMemberRole;
 export type Permission = string;
-export type SubscriptionPlan = 'free' | 'pro' | 'enterprise';
+export type SubscriptionPlan = "free" | "pro" | "enterprise";
 export type InvitationStatus = InviteStatus;
-export interface TenantInvitation extends Invitation { }
+export interface TenantInvitation extends Invitation {}
 
 // State management
 export interface TenantState {

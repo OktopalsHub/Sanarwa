@@ -1,1 +1,1 @@
-export * from '@sanarwa/ui/dialog';
+export * from "@sanarwa/ui/dialog";

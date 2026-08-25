@@ -1,9 +1,9 @@
-'use client';
+"use client";
 
-import { User } from '@/lib/icons';
+import { User } from "@/lib/icons";
 
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Button } from '@/components/ui/button';
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -12,11 +12,17 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import { useAuth } from '@/contexts/auth-context';
-import { useTenant } from '@/contexts/tenant-context';
-import { usePermissions } from '@/hooks/use-permissions';
-import { CreditCardIcon, QuestionMarkCircleIcon, ArrowRightOnRectangleIcon, Cog6ToothIcon, UserIcon } from '@heroicons/react/24/outline'
+} from "@/components/ui/dropdown-menu";
+import { useAuth } from "@/contexts/auth-context";
+import { useTenant } from "@/contexts/tenant-context";
+import { usePermissions } from "@/hooks/use-permissions";
+import {
+  CreditCardIcon,
+  QuestionMarkCircleIcon,
+  ArrowRightOnRectangleIcon,
+  Cog6ToothIcon,
+  UserIcon,
+} from "@heroicons/react/24/outline";
 
 export function UserProfileDropdown() {
   const { user, logout } = useAuth();
@@ -27,7 +33,7 @@ export function UserProfileDropdown() {
     try {
       await logout();
     } catch (error) {
-      console.error('Logout failed:', error);
+      console.error("Logout failed:", error);
     }
   };
 
@@ -36,18 +42,19 @@ export function UserProfileDropdown() {
   }
 
   const fullName = `${user.firstName} ${user.lastName}`.trim();
-  const initials = fullName
-    ?.split(' ')
-    .map((n: string) => n[0])
-    .join('')
-    .toUpperCase() || 'U';
+  const initials =
+    fullName
+      ?.split(" ")
+      .map((n: string) => n[0])
+      .join("")
+      .toUpperCase() || "U";
 
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" className="relative h-10 w-10 rounded-full">
           <Avatar className="h-10 w-10">
-            <AvatarImage src={user.avatar} alt={fullName || 'User'} />
+            <AvatarImage src={user.avatar} alt={fullName || "User"} />
             <AvatarFallback className="bg-primary text-primary-foreground">
               {initials}
             </AvatarFallback>
@@ -58,14 +65,10 @@ export function UserProfileDropdown() {
         <DropdownMenuLabel className="font-normal">
           <div className="flex flex-col space-y-1">
             <p className="text-sm font-medium leading-none">{fullName}</p>
-            <p className="text-xs leading-none text-muted-foreground">
-              {user.email}
-            </p>
+            <p className="text-xs leading-none text-muted-foreground">{user.email}</p>
             {currentTenant && userRole && (
               <div className="flex items-center gap-2 mt-1">
-                <span className="text-xs text-muted-foreground">
-                  {currentTenant.name}
-                </span>
+                <span className="text-xs text-muted-foreground">{currentTenant.name}</span>
                 <span className="px-1.5 py-0.5 text-xs bg-primary/10 text-primary rounded">
                   {userRole}
                 </span>

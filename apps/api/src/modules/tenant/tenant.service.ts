@@ -1,23 +1,16 @@
-import {
-  ConflictException,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
-import { EventEmitter2, OnEvent } from '@nestjs/event-emitter';
-import * as crypto from 'crypto';
-import {
-  IPaginatedData,
-  getPaginationSummary,
-} from '../../common/dto/pagination.dto';
-import { TenantStatus } from '../../common/enums';
-import { TenantCreatedEvent } from '../../common/events/tenant.event';
-import { UserRegisteredEvent } from '../../common/events/user.event';
-import { UserService } from '../user/user.service';
-import { CreateTenantDto } from './dto/create-tenant.dto';
-import { TenantQueryDto } from './dto/tenant-query.dto';
-import { UpdateTenantDto } from './dto/update-tenant.dto';
-import { Tenant } from './entities/tenant.entity';
-import { TenantRepository } from './tenant.repository';
+import { ConflictException, Injectable, NotFoundException } from "@nestjs/common";
+import { EventEmitter2, OnEvent } from "@nestjs/event-emitter";
+import * as crypto from "crypto";
+import { IPaginatedData, getPaginationSummary } from "../../common/dto/pagination.dto";
+import { TenantStatus } from "../../common/enums";
+import { TenantCreatedEvent } from "../../common/events/tenant.event";
+import { UserRegisteredEvent } from "../../common/events/user.event";
+import { UserService } from "../user/user.service";
+import { CreateTenantDto } from "./dto/create-tenant.dto";
+import { TenantQueryDto } from "./dto/tenant-query.dto";
+import { UpdateTenantDto } from "./dto/update-tenant.dto";
+import { Tenant } from "./entities/tenant.entity";
+import { TenantRepository } from "./tenant.repository";
 
 @Injectable()
 export class TenantService {
@@ -27,7 +20,7 @@ export class TenantService {
     private readonly eventEmitter: EventEmitter2,
   ) {}
 
-  @OnEvent('user.registered')
+  @OnEvent("user.registered")
   async onUserRegistered(event: UserRegisteredEvent) {
     return this.createTenant(event.userId, { name: event.workspaceName });
   }
@@ -35,25 +28,20 @@ export class TenantService {
   /**
    * Create a new tenant
    */
-  async createTenant(
-    creatorId: string,
-    createTenantDto: CreateTenantDto,
-  ): Promise<any> {
+  async createTenant(creatorId: string, createTenantDto: CreateTenantDto): Promise<any> {
     // Provide default name if not provided
-    const tenantName = createTenantDto?.name?.trim() || 'My Workspace';
+    const tenantName = createTenantDto?.name?.trim() || "My Workspace";
     const [user, generatedSlug] = await Promise.all([
       this.userService.getUserById(creatorId),
       this.generateSlug(tenantName),
     ]);
 
     const existingTenant = await this.tenantRepository.findOne({
-      where: [{  subdomain: generatedSlug }],
+      where: [{ subdomain: generatedSlug }],
     });
 
     if (existingTenant) {
-      throw new ConflictException(
-        'Tenant with subdomain already exists',
-      );
+      throw new ConflictException("Tenant with subdomain already exists");
     }
 
     // Create tenant with default quotas and invite code if not provided
@@ -68,10 +56,7 @@ export class TenantService {
     });
 
     // Emit event for tenant creation - this will trigger tenant member creation
-    this.eventEmitter.emit(
-      'tenant.created',
-      new TenantCreatedEvent(savedTenant, user),
-    );
+    this.eventEmitter.emit("tenant.created", new TenantCreatedEvent(savedTenant, user));
 
     return this.sanitizeTenant(savedTenant);
   }
@@ -79,36 +64,33 @@ export class TenantService {
   /**
    * Find all tenants with optional filtering
    */
-  async getTenants(
-    query: TenantQueryDto,
-  ): Promise<IPaginatedData<Partial<Tenant>>> {
+  async getTenants(query: TenantQueryDto): Promise<IPaginatedData<Partial<Tenant>>> {
     const queryBuilder = this.tenantRepository
-      .createQueryBuilder('tenant')
+      .createQueryBuilder("tenant")
       .select([
-        'tenant.id',
-        'tenant.name',
-        'tenant.subdomain',
-        'tenant.inviteCode',
-        'tenant.status',
+        "tenant.id",
+        "tenant.name",
+        "tenant.subdomain",
+        "tenant.inviteCode",
+        "tenant.status",
       ]);
 
     // Apply filters
     if (query.status) {
-      queryBuilder.andWhere('tenant.status = :status', {
+      queryBuilder.andWhere("tenant.status = :status", {
         status: query.status,
       });
     }
 
     if (query.search) {
-      queryBuilder.andWhere(
-        '(tenant.name ILIKE :search OR tenant.subdomain ILIKE :search)',
-        { search: `%${query.search}%` },
-      );
+      queryBuilder.andWhere("(tenant.name ILIKE :search OR tenant.subdomain ILIKE :search)", {
+        search: `%${query.search}%`,
+      });
     }
 
     // Apply sorting
-    const sortField = query.sortBy || 'createdAt';
-    const sortOrder = query.sortOrder || 'DESC';
+    const sortField = query.sortBy || "createdAt";
+    const sortOrder = query.sortOrder || "DESC";
     queryBuilder.orderBy(`tenant.${sortField}`, sortOrder);
 
     // Apply pagination
@@ -129,12 +111,7 @@ export class TenantService {
       status: tenant.status,
     }));
 
-    return getPaginationSummary(
-      sanitizedTenants,
-      total,
-      { page, limit },
-      'tenants',
-    );
+    return getPaginationSummary(sanitizedTenants, total, { page, limit }, "tenants");
   }
 
   /**
@@ -144,7 +121,7 @@ export class TenantService {
     const tenant = await this.tenantRepository.findById(id, false);
 
     if (!tenant) {
-      throw new NotFoundException('Tenant not found');
+      throw new NotFoundException("Tenant not found");
     }
 
     return this.sanitizeTenant(tenant);
@@ -153,35 +130,30 @@ export class TenantService {
   /**
    * Update tenant
    */
-  async updateTenant(
-    id: string,
-    updateTenantDto: UpdateTenantDto,
-  ): Promise<any> {
+  async updateTenant(id: string, updateTenantDto: UpdateTenantDto): Promise<any> {
     await this.getTenantById(id);
 
     // Check for conflicts if updating name or subdomain
     if (updateTenantDto.name || updateTenantDto.subdomain) {
       const tenant = this.tenantRepository
-        .createQueryBuilder('tenant')
-        .where('tenant.id != :id', { id });
+        .createQueryBuilder("tenant")
+        .where("tenant.id != :id", { id });
 
       if (updateTenantDto.name) {
-        tenant.andWhere('tenant.name = :name', {
+        tenant.andWhere("tenant.name = :name", {
           name: updateTenantDto.name,
         });
       }
 
       if (updateTenantDto.subdomain) {
-        tenant.andWhere('tenant.subdomain = :subdomain', {
+        tenant.andWhere("tenant.subdomain = :subdomain", {
           subdomain: updateTenantDto.subdomain,
         });
       }
 
       const conflictingTenant = await tenant.getOne();
       if (conflictingTenant) {
-        throw new ConflictException(
-          'Tenant with this name or subdomain already exists',
-        );
+        throw new ConflictException("Tenant with this name or subdomain already exists");
       }
     }
 
@@ -223,11 +195,7 @@ export class TenantService {
   /**
    * Update tenant usage statistics
    */
-  async updateUsage(
-    tenantId: string,
-    channel: string,
-    count: number = 1,
-  ): Promise<void> {
+  async updateUsage(tenantId: string, channel: string, count: number = 1): Promise<void> {
     const tenant = await this.tenantRepository.findOne({
       where: { id: tenantId },
     });
@@ -243,10 +211,7 @@ export class TenantService {
     currentMonth.notifications = (currentMonth.notifications || 0) + count;
 
     // Update channel-specific count
-    if (
-      channel &&
-      ['email', 'sms', 'push', 'whatsapp', 'inApp'].includes(channel)
-    ) {
+    if (channel && ["email", "sms", "push", "whatsapp", "inApp"].includes(channel)) {
       currentMonth[channel] = (currentMonth[channel] || 0) + count;
     }
 
@@ -341,8 +306,8 @@ export class TenantService {
    * Generate invite code
    */
   private generateInviteCode(): string {
-    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-    let result = '';
+    const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+    let result = "";
     for (let i = 0; i < 6; i++) {
       const randomIndex = crypto.randomInt(0, chars.length);
       result += chars[randomIndex];
@@ -366,15 +331,14 @@ export class TenantService {
   private async generateSlug(slug: string): Promise<string> {
     const baseSlug = this.slugify(slug);
 
-    const existingSlugs =
-      await this.tenantRepository.findSlugsStartingWith(baseSlug);
+    const existingSlugs = await this.tenantRepository.findSlugsStartingWith(baseSlug);
 
     if (!existingSlugs.length) {
       return baseSlug;
     }
 
     const numbers = existingSlugs
-      .map((slug) => slug.replace(`${baseSlug}-`, '')) // Remove base part
+      .map((slug) => slug.replace(`${baseSlug}-`, "")) // Remove base part
       .map((num) => parseInt(num, 10)) // Convert to integer
       .filter((num) => !isNaN(num)) // Filter out NaN values
       .toSorted((a, b) => a - b); // Sort numerically
@@ -389,7 +353,7 @@ export class TenantService {
     return value
       .trim()
       .toLowerCase()
-      .replace(/[^a-z0-9]+/g, '-')
-      .replace(/(^-|-$)/g, '');
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/(^-|-$)/g, "");
   }
 }

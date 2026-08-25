@@ -1,5 +1,5 @@
-import { ApiPropertyOptional } from '@nestjs/swagger';
-import { IsEnum, IsInt, IsOptional, IsString, Max, Min } from 'class-validator';
+import { ApiPropertyOptional } from "@nestjs/swagger";
+import { IsEnum, IsInt, IsOptional, IsString, Max, Min } from "class-validator";
 
 export class CampaignQueryDto {
   @ApiPropertyOptional()
@@ -25,13 +25,13 @@ export class CampaignQueryDto {
   @IsString()
   search?: string;
 
-  @ApiPropertyOptional({ enum: ['name', 'createdAt', 'updatedAt', 'status'] })
+  @ApiPropertyOptional({ enum: ["name", "createdAt", "updatedAt", "status"] })
   @IsOptional()
-  @IsEnum(['name', 'createdAt', 'updatedAt', 'status'])
-  sortBy?: 'name' | 'createdAt' | 'updatedAt' | 'status';
+  @IsEnum(["name", "createdAt", "updatedAt", "status"])
+  sortBy?: "name" | "createdAt" | "updatedAt" | "status";
 
-  @ApiPropertyOptional({ enum: ['asc', 'desc'] })
+  @ApiPropertyOptional({ enum: ["asc", "desc"] })
   @IsOptional()
-  @IsEnum(['asc', 'desc'])
-  sortOrder?: 'asc' | 'desc';
+  @IsEnum(["asc", "desc"])
+  sortOrder?: "asc" | "desc";
 }

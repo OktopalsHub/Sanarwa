@@ -1,19 +1,17 @@
 import {
   MessageDeliveryStatus as DeliveryStatus,
   MessageDelivery as NotificationDelivery,
-} from '../../modules/messaging/message-delivery.entity';
-import { MessageChannel as NotificationChannel } from '../../modules/messaging/message.entity';
+} from "../../modules/messaging/message-delivery.entity";
+import { MessageChannel as NotificationChannel } from "../../modules/messaging/message.entity";
 
 export class DeliveryFactory {
-  static create(
-    overrides: Partial<NotificationDelivery> = {},
-  ): NotificationDelivery {
+  static create(overrides: Partial<NotificationDelivery> = {}): NotificationDelivery {
     const defaultDelivery: NotificationDelivery = {
-      id: 'delivery-' + Math.random().toString(36).substr(2, 9),
-      messageId: 'message-' + Math.random().toString(36).substr(2, 9),
+      id: "delivery-" + Math.random().toString(36).substr(2, 9),
+      messageId: "message-" + Math.random().toString(36).substr(2, 9),
       channel: NotificationChannel.EMAIL,
-      providerId: 'aws_ses',
-      recipient: 'test@example.com',
+      providerId: "aws_ses",
+      recipient: "test@example.com",
       status: DeliveryStatus.PENDING,
       providerMessageId: undefined,
       providerResponse: undefined,
@@ -65,13 +63,11 @@ export class DeliveryFactory {
     });
   }
 
-  static createSuccessful(
-    overrides: Partial<NotificationDelivery> = {},
-  ): NotificationDelivery {
+  static createSuccessful(overrides: Partial<NotificationDelivery> = {}): NotificationDelivery {
     return this.create({
       ...overrides,
       status: DeliveryStatus.DELIVERED,
-      providerMessageId: 'msg-' + Math.random().toString(36).substr(2, 9),
+      providerMessageId: "msg-" + Math.random().toString(36).substr(2, 9),
       sentAt: new Date(Date.now() - 60000), // 1 minute ago
       deliveredAt: new Date(),
     });
@@ -135,29 +131,29 @@ export class DeliveryFactory {
     switch (channel) {
       case NotificationChannel.EMAIL:
         return {
-          providerId: 'aws_ses',
-          recipient: 'test@example.com',
+          providerId: "aws_ses",
+          recipient: "test@example.com",
         };
       case NotificationChannel.SMS:
         return {
-          providerId: 'aws_sns',
-          recipient: '+1234567890',
+          providerId: "aws_sns",
+          recipient: "+1234567890",
         };
       case NotificationChannel.PUSH:
         return {
-          providerId: 'aws_pinpoint',
-          recipient: 'device-token-123',
+          providerId: "aws_pinpoint",
+          recipient: "device-token-123",
         };
       case NotificationChannel.WHATSAPP:
         return {
-          providerId: 'meta_whatsapp',
-          recipient: '+1234567890',
+          providerId: "meta_whatsapp",
+          recipient: "+1234567890",
         };
 
       default:
         return {
-          providerId: 'default_provider',
-          recipient: 'test@example.com',
+          providerId: "default_provider",
+          recipient: "test@example.com",
         };
     }
   }

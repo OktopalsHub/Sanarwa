@@ -1,9 +1,9 @@
-'use client';
+"use client";
 
-import { useAuth } from '@/contexts/auth-context';
-import { tenantApi } from '@/lib/api/tenant';
-import { useNavigate } from '@tanstack/react-router';
-import { useEffect, type ReactNode } from 'react';
+import { useAuth } from "@/contexts/auth-context";
+import { tenantApi } from "@/lib/api/tenant";
+import { useNavigate } from "@tanstack/react-router";
+import { useEffect, type ReactNode } from "react";
 
 interface TenantRouteRedirectProps {
   suffix: string;
@@ -19,7 +19,7 @@ export function TenantRouteRedirect({ suffix, children }: TenantRouteRedirectPro
     if (isLoading) return;
 
     if (!isAuthenticated) {
-      navigate({ to: '/login', search: { redirect: `/${suffix}` } });
+      navigate({ to: "/login", search: { redirect: `/${suffix}` } });
       return;
     }
 
@@ -31,10 +31,10 @@ export function TenantRouteRedirect({ suffix, children }: TenantRouteRedirectPro
           const slug = first.slug || first.subdomain || first.id;
           navigate({ to: `/${slug}/${suffix}` as any });
         } else {
-          navigate({ to: '/onboarding' });
+          navigate({ to: "/onboarding" });
         }
       })
-      .catch(() => navigate({ to: '/onboarding' }));
+      .catch(() => navigate({ to: "/onboarding" }));
   }, [isAuthenticated, isLoading, navigate, suffix]);
 
   if (children) return <>{children}</>;

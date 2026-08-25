@@ -3,22 +3,22 @@
  */
 export class LogSanitizer {
   private static readonly SENSITIVE_FIELDS = [
-    'password',
-    'token',
-    'secret',
-    'apiKey',
-    'api_key',
-    'accessToken',
-    'refreshToken',
-    'authorization',
-    'cookie',
-    'session',
-    'ssn',
-    'creditCard',
-    'credit_card',
-    'cvv',
-    'pin',
-    'otp',
+    "password",
+    "token",
+    "secret",
+    "apiKey",
+    "api_key",
+    "accessToken",
+    "refreshToken",
+    "authorization",
+    "cookie",
+    "session",
+    "ssn",
+    "creditCard",
+    "credit_card",
+    "cvv",
+    "pin",
+    "otp",
   ];
 
   private static readonly SENSITIVE_PATTERNS = [
@@ -34,21 +34,21 @@ export class LogSanitizer {
    * Sanitize an object by removing or masking sensitive fields
    */
   static sanitizeObject(obj: any, maxDepth = 5): any {
-    if (maxDepth <= 0) return '[MAX_DEPTH_REACHED]';
+    if (maxDepth <= 0) return "[MAX_DEPTH_REACHED]";
     if (obj === null || obj === undefined) return obj;
-    if (typeof obj !== 'object') return obj;
+    if (typeof obj !== "object") return obj;
 
     if (Array.isArray(obj)) {
-      return obj.map(item => this.sanitizeObject(item, maxDepth - 1));
+      return obj.map((item) => this.sanitizeObject(item, maxDepth - 1));
     }
 
     const sanitized: any = {};
-    
+
     for (const [key, value] of Object.entries(obj)) {
-      if (this.isSensitiveField(key) && typeof value !== 'object') {
+      if (this.isSensitiveField(key) && typeof value !== "object") {
         // Only mask primitive values, not objects
         sanitized[key] = this.maskValue(value, key);
-      } else if (typeof value === 'object') {
+      } else if (typeof value === "object") {
         // Always sanitize objects recursively, even if the key name is sensitive
         sanitized[key] = this.sanitizeObject(value, maxDepth - 1);
       } else {
@@ -64,15 +64,17 @@ export class LogSanitizer {
    */
   static sanitizeHeaders(headers: Record<string, any>): Record<string, any> {
     const sanitized: Record<string, any> = {};
-    
+
     for (const [key, value] of Object.entries(headers)) {
       const lowerKey = key.toLowerCase();
-      if (lowerKey.includes('authorization') || 
-          lowerKey.includes('cookie') || 
-          lowerKey.includes('token') ||
-          lowerKey.includes('key') ||
-          lowerKey.includes('secret')) {
-        sanitized[key] = '[REDACTED]';
+      if (
+        lowerKey.includes("authorization") ||
+        lowerKey.includes("cookie") ||
+        lowerKey.includes("token") ||
+        lowerKey.includes("key") ||
+        lowerKey.includes("secret")
+      ) {
+        sanitized[key] = "[REDACTED]";
       } else {
         sanitized[key] = value;
       }
@@ -112,15 +114,15 @@ export class LogSanitizer {
    */
   static sanitizeUrl(url: string): string {
     try {
-      const urlObj = new URL(url, 'http://localhost');
-      const sensitiveParams = ['token', 'key', 'secret', 'password', 'auth'];
-      
+      const urlObj = new URL(url, "http://localhost");
+      const sensitiveParams = ["token", "key", "secret", "password", "auth"];
+
       for (const param of sensitiveParams) {
         if (urlObj.searchParams.has(param)) {
-          urlObj.searchParams.set(param, '[REDACTED]');
+          urlObj.searchParams.set(param, "[REDACTED]");
         }
       }
-      
+
       return urlObj.pathname + urlObj.search;
     } catch {
       // If URL parsing fails, just return the original
@@ -133,33 +135,35 @@ export class LogSanitizer {
    */
   private static isSensitiveField(fieldName: string): boolean {
     const lowerFieldName = fieldName.toLowerCase();
-    
+
     // Check exact matches
     if (this.SENSITIVE_FIELDS.includes(lowerFieldName)) {
       return true;
     }
 
     // Check pattern matches
-    return this.SENSITIVE_PATTERNS.some(pattern => pattern.test(fieldName));
+    return this.SENSITIVE_PATTERNS.some((pattern) => pattern.test(fieldName));
   }
 
   /**
    * Mask a sensitive value
    */
   private static maskValue(value: any, fieldName?: string): string {
-    if (typeof value === 'string') {
+    if (typeof value === "string") {
       // For passwords and other highly sensitive fields, completely redact
-      const lowerFieldName = fieldName?.toLowerCase() || '';
-      if (lowerFieldName === 'password' || lowerFieldName.includes('secret')) {
-        return '[REDACTED]';
+      const lowerFieldName = fieldName?.toLowerCase() || "";
+      if (lowerFieldName === "password" || lowerFieldName.includes("secret")) {
+        return "[REDACTED]";
       }
-      
+
       if (value.length <= 4) {
-        return '[REDACTED]';
+        return "[REDACTED]";
       }
-      return value.substring(0, 2) + '*'.repeat(value.length - 4) + value.substring(value.length - 2);
+      return (
+        value.substring(0, 2) + "*".repeat(value.length - 4) + value.substring(value.length - 2)
+      );
     }
-    return '[REDACTED]';
+    return "[REDACTED]";
   }
 
   /**
@@ -169,7 +173,7 @@ export class LogSanitizer {
     if (str.length <= maxLength) {
       return str;
     }
-    return str.substring(0, maxLength) + '... [TRUNCATED]';
+    return str.substring(0, maxLength) + "... [TRUNCATED]";
   }
 
   /**
@@ -180,12 +184,12 @@ export class LogSanitizer {
     if (jsonString.length <= maxSize) {
       return obj;
     }
-    
+
     return {
       ...obj,
       _truncated: true,
       _originalSize: jsonString.length,
-      _note: 'Object truncated due to size limit'
+      _note: "Object truncated due to size limit",
     };
   }
 }

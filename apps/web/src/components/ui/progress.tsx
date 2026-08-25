@@ -1,1 +1,1 @@
-export * from '@sanarwa/ui/progress';
+export * from "@sanarwa/ui/progress";

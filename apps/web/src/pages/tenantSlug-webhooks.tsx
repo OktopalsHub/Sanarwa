@@ -1,38 +1,38 @@
-'use client';
+"use client";
 
-import { AppShell } from '@/components/layout';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Switch } from '@/components/ui/switch';
-import { webhookApi, type WebhookRecord } from '@/lib/api/webhook';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { PlusIcon, TrashIcon } from '@heroicons/react/24/outline';
-import { useState } from 'react';
-import { toast } from 'sonner';
+import { AppShell } from "@/components/layout";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
+import { webhookApi, type WebhookRecord } from "@/lib/api/webhook";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { PlusIcon, TrashIcon } from "@heroicons/react/24/outline";
+import { useState } from "react";
+import { toast } from "sonner";
 
 const EVENT_OPTIONS = [
-  'email.sent',
-  'email.delivered',
-  'email.bounced',
-  'sms.sent',
-  'sms.delivered',
-  'whatsapp.sent',
-  'push.sent',
-  'notification.bulk_completed',
+  "email.sent",
+  "email.delivered",
+  "email.bounced",
+  "sms.sent",
+  "sms.delivered",
+  "whatsapp.sent",
+  "push.sent",
+  "notification.bulk_completed",
 ];
 
 export default function WebhooksPage() {
   const queryClient = useQueryClient();
-  const [url, setUrl] = useState('');
-  const [name, setName] = useState('');
-  const [secret, setSecret] = useState('');
-  const [events, setEvents] = useState<string[]>(['email.delivered', 'email.bounced']);
+  const [url, setUrl] = useState("");
+  const [name, setName] = useState("");
+  const [secret, setSecret] = useState("");
+  const [events, setEvents] = useState<string[]>(["email.delivered", "email.bounced"]);
 
   const { data, isLoading } = useQuery({
-    queryKey: ['webhooks'],
+    queryKey: ["webhooks"],
     queryFn: () => webhookApi.list(),
   });
   const webhooks = Array.isArray(data) ? data : [];
@@ -40,26 +40,26 @@ export default function WebhooksPage() {
   const createMutation = useMutation({
     mutationFn: () => webhookApi.create({ name, url, secret: secret || undefined, events }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['webhooks'] });
-      setUrl('');
-      setName('');
-      setSecret('');
-      toast.success('Webhook created');
+      queryClient.invalidateQueries({ queryKey: ["webhooks"] });
+      setUrl("");
+      setName("");
+      setSecret("");
+      toast.success("Webhook created");
     },
-    onError: (error: Error) => toast.error(error.message || 'Failed to create webhook'),
+    onError: (error: Error) => toast.error(error.message || "Failed to create webhook"),
   });
 
   const toggleMutation = useMutation({
     mutationFn: ({ id, active }: { id: string; active: boolean }) =>
       webhookApi.update(id, { active }),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['webhooks'] }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["webhooks"] }),
   });
 
   const deleteMutation = useMutation({
     mutationFn: (id: string) => webhookApi.remove(id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['webhooks'] });
-      toast.success('Webhook deleted');
+      queryClient.invalidateQueries({ queryKey: ["webhooks"] });
+      toast.success("Webhook deleted");
     },
   });
 
@@ -120,7 +120,7 @@ export default function WebhooksPage() {
                     key={event}
                     type="button"
                     size="sm"
-                    variant={events.includes(event) ? 'default' : 'outline'}
+                    variant={events.includes(event) ? "default" : "outline"}
                     onClick={() => toggleEvent(event, !events.includes(event))}
                   >
                     {event}
@@ -151,7 +151,9 @@ export default function WebhooksPage() {
                       <p className="truncate text-sm text-muted-foreground">{webhook.url}</p>
                       <div className="flex flex-wrap gap-1">
                         {webhook.events.map((event) => (
-                          <Badge key={event} variant="outline">{event}</Badge>
+                          <Badge key={event} variant="outline">
+                            {event}
+                          </Badge>
                         ))}
                       </div>
                     </div>

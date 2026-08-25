@@ -1,4 +1,4 @@
-import * as Sentry from '@sentry/react';
+import * as Sentry from "@sentry/react";
 
 export interface ErrorContext {
   context?: string;
@@ -9,7 +9,7 @@ export interface ErrorContext {
   };
   extra?: Record<string, any>;
   tags?: Record<string, string>;
-  level?: 'error' | 'warning' | 'info' | 'debug';
+  level?: "error" | "warning" | "info" | "debug";
 }
 
 export interface PerformanceMetric {
@@ -36,12 +36,12 @@ class ErrorReporter {
       user: context?.user,
       extra: context?.extra,
       tags: context?.tags,
-      level: context?.level || 'error',
+      level: context?.level || "error",
     });
 
     // Only log critical errors to console in development
-    if (process.env.NODE_ENV === 'development' && context?.level === 'error') {
-      console.error('Critical error reported:', error);
+    if (process.env.NODE_ENV === "development" && context?.level === "error") {
+      console.error("Critical error reported:", error);
     }
 
     return errorId;
@@ -54,12 +54,15 @@ class ErrorReporter {
       user: context?.user,
       extra: context?.extra,
       tags: context?.tags,
-      level: context?.level || 'info',
+      level: context?.level || "info",
     });
 
     // Don't log messages in development unless they're warnings or errors
-    if (process.env.NODE_ENV === 'development' && (context?.level === 'warning' || context?.level === 'error')) {
-      console.log('Message reported:', message);
+    if (
+      process.env.NODE_ENV === "development" &&
+      (context?.level === "warning" || context?.level === "error")
+    ) {
+      console.log("Message reported:", message);
     }
 
     return messageId;
@@ -85,7 +88,7 @@ class ErrorReporter {
 
     Sentry.addBreadcrumb({
       message,
-      category: category || 'custom',
+      category: category || "custom",
       data,
       timestamp: Date.now() / 1000,
     });
@@ -96,7 +99,7 @@ class ErrorReporter {
 
     // Record custom metric
     Sentry.metrics.gauge(metric.name, metric.value, {
-      unit: metric.unit || 'none',
+      unit: metric.unit || "none",
       tags: metric.tags,
     });
 
@@ -106,18 +109,18 @@ class ErrorReporter {
   startTransaction(name: string, operation?: string) {
     this.initialize();
 
-    return Sentry.startSpan({
-      name,
-      op: operation || 'custom',
-    }, (span) => {
-      return span;
-    });
+    return Sentry.startSpan(
+      {
+        name,
+        op: operation || "custom",
+      },
+      (span) => {
+        return span;
+      },
+    );
   }
 
-  withErrorReporting<T extends (...args: any[]) => any>(
-    fn: T,
-    context?: ErrorContext
-  ): T {
+  withErrorReporting<T extends (...args: any[]) => any>(fn: T, context?: ErrorContext): T {
     return ((...args: Parameters<T>) => {
       try {
         const result = fn(...args);
@@ -166,7 +169,7 @@ export const startTransaction = (name: string, operation?: string) =>
 
 export const withErrorReporting = <T extends (...args: any[]) => any>(
   fn: T,
-  context?: ErrorContext
+  context?: ErrorContext,
 ) => errorReporter.withErrorReporting(fn, context);
 
 export default errorReporter;

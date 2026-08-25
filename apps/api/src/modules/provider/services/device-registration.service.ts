@@ -1,10 +1,8 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { DeviceRegistration } from '../entities/device-registration.entity';
-import { DevicePlatform, PushProvider } from '../enums/device-platform.enum';
-
-
+import { Injectable, Logger } from "@nestjs/common";
+import { InjectRepository } from "@nestjs/typeorm";
+import { Repository } from "typeorm";
+import { DeviceRegistration } from "../entities/device-registration.entity";
+import { DevicePlatform, PushProvider } from "../enums/device-platform.enum";
 
 @Injectable()
 export class DeviceRegistrationService {
@@ -13,7 +11,7 @@ export class DeviceRegistrationService {
   constructor(
     @InjectRepository(DeviceRegistration)
     private readonly deviceRepository: Repository<DeviceRegistration>,
-  ) { }
+  ) {}
 
   /**
    * Register a device for push notifications with automatic platform detection
@@ -24,15 +22,14 @@ export class DeviceRegistrationService {
     deviceToken: string;
     userAgent?: string;
     appBundleId?: string;
-    deviceInfo?: Partial<DeviceRegistration['deviceInfo']>;
+    deviceInfo?: Partial<DeviceRegistration["deviceInfo"]>;
     metadata?: Record<string, any>;
   }): Promise<DeviceRegistration> {
-
     // Detect platform and provider automatically
     const { platform, provider } = this.detectPlatformAndProvider(
       request.deviceToken,
       request.userAgent,
-      request.appBundleId
+      request.appBundleId,
     );
 
     // Check if device already exists
@@ -54,7 +51,9 @@ export class DeviceRegistrationService {
       existingDevice.metadata = { ...existingDevice.metadata, ...request.metadata };
 
       const updated = await this.deviceRepository.save(existingDevice);
-      this.logger.log(`Updated device registration: ${platform} - ${provider} for subscriber ${request.subscriberId}`);
+      this.logger.log(
+        `Updated device registration: ${platform} - ${provider} for subscriber ${request.subscriberId}`,
+      );
       return updated;
     }
 
@@ -74,7 +73,9 @@ export class DeviceRegistrationService {
     });
 
     const saved = await this.deviceRepository.save(device);
-    this.logger.log(`Registered new device: ${platform} - ${provider} for subscriber ${request.subscriberId}`);
+    this.logger.log(
+      `Registered new device: ${platform} - ${provider} for subscriber ${request.subscriberId}`,
+    );
     return saved;
   }
 
@@ -84,14 +85,13 @@ export class DeviceRegistrationService {
   private detectPlatformAndProvider(
     deviceToken: string,
     userAgent?: string,
-    appBundleId?: string
+    appBundleId?: string,
   ): { platform: DevicePlatform; provider: PushProvider } {
-
     // iOS APNS Detection
     if (this.isIOSToken(deviceToken)) {
       return {
         platform: DevicePlatform.IOS,
-        provider: PushProvider.APNS
+        provider: PushProvider.APNS,
       };
     }
 
@@ -99,7 +99,7 @@ export class DeviceRegistrationService {
     if (this.isAndroidFCMToken(deviceToken)) {
       return {
         platform: DevicePlatform.ANDROID,
-        provider: PushProvider.FCM
+        provider: PushProvider.FCM,
       };
     }
 
@@ -109,7 +109,7 @@ export class DeviceRegistrationService {
       const platform = this.detectExpoPlatform(userAgent, appBundleId);
       return {
         platform,
-        provider: PushProvider.EXPO
+        provider: PushProvider.EXPO,
       };
     }
 
@@ -117,7 +117,7 @@ export class DeviceRegistrationService {
     if (this.isWebPushToken(deviceToken)) {
       return {
         platform: DevicePlatform.WEB,
-        provider: PushProvider.WEB_PUSH
+        provider: PushProvider.WEB_PUSH,
       };
     }
 
@@ -125,7 +125,7 @@ export class DeviceRegistrationService {
     if (userAgent && this.isDesktopUserAgent(userAgent)) {
       return {
         platform: DevicePlatform.DESKTOP,
-        provider: PushProvider.WEB_PUSH
+        provider: PushProvider.WEB_PUSH,
       };
     }
 
@@ -140,7 +140,7 @@ export class DeviceRegistrationService {
     this.logger.warn(`Could not detect platform for token: ${deviceToken.substring(0, 20)}...`);
     return {
       platform: DevicePlatform.UNKNOWN,
-      provider: PushProvider.SNS // AWS SNS as universal fallback
+      provider: PushProvider.SNS, // AWS SNS as universal fallback
     };
   }
 
@@ -157,10 +157,12 @@ export class DeviceRegistrationService {
    */
   private isAndroidFCMToken(token: string): boolean {
     // FCM tokens are typically longer and contain specific patterns
-    return token.length > 100 &&
-      (token.startsWith('c') || token.startsWith('d') || token.startsWith('e')) &&
-      !token.includes(':') && // Not Expo
-      /^[a-zA-Z0-9_-]+$/.test(token);
+    return (
+      token.length > 100 &&
+      (token.startsWith("c") || token.startsWith("d") || token.startsWith("e")) &&
+      !token.includes(":") && // Not Expo
+      /^[a-zA-Z0-9_-]+$/.test(token)
+    );
   }
 
   /**
@@ -168,9 +170,11 @@ export class DeviceRegistrationService {
    */
   private isExpoToken(token: string): boolean {
     // Expo tokens have format: ExponentPushToken[xxx] or ExpoPushToken[xxx]
-    return token.startsWith('ExponentPushToken[') ||
-      token.startsWith('ExpoPushToken[') ||
-      /^Expo.*\[.*\]$/.test(token);
+    return (
+      token.startsWith("ExponentPushToken[") ||
+      token.startsWith("ExpoPushToken[") ||
+      /^Expo.*\[.*\]$/.test(token)
+    );
   }
 
   /**
@@ -178,9 +182,7 @@ export class DeviceRegistrationService {
    */
   private isWebPushToken(token: string): boolean {
     // Web push tokens are usually very long base64-like strings
-    return token.length > 200 &&
-      /^[a-zA-Z0-9_-]+$/.test(token) &&
-      !this.isAndroidFCMToken(token);
+    return token.length > 200 && /^[a-zA-Z0-9_-]+$/.test(token) && !this.isAndroidFCMToken(token);
   }
 
   /**
@@ -194,11 +196,13 @@ export class DeviceRegistrationService {
       /Linux.*X11/i,
       /Chrome.*Windows/i,
       /Firefox.*Windows/i,
-      /Safari.*Mac/i
+      /Safari.*Mac/i,
     ];
 
-    return desktopPatterns.some(pattern => pattern.test(userAgent)) &&
-      !/Mobile|Android|iPhone|iPad/i.test(userAgent);
+    return (
+      desktopPatterns.some((pattern) => pattern.test(userAgent)) &&
+      !/Mobile|Android|iPhone|iPad/i.test(userAgent)
+    );
   }
 
   /**
@@ -261,7 +265,10 @@ export class DeviceRegistrationService {
   /**
    * Get active devices for a subscriber
    */
-  async getSubscriberDevices(subscriberId: string, tenantId: string): Promise<DeviceRegistration[]> {
+  async getSubscriberDevices(
+    subscriberId: string,
+    tenantId: string,
+  ): Promise<DeviceRegistration[]> {
     return this.deviceRepository.find({
       where: {
         subscriberId,
@@ -269,7 +276,7 @@ export class DeviceRegistrationService {
         isActive: true,
       },
       order: {
-        lastSeen: 'DESC',
+        lastSeen: "DESC",
       },
     });
   }
@@ -280,7 +287,7 @@ export class DeviceRegistrationService {
   async getDevicesByPlatform(
     subscriberId: string,
     tenantId: string,
-    platform: DevicePlatform
+    platform: DevicePlatform,
   ): Promise<DeviceRegistration[]> {
     return this.deviceRepository.find({
       where: {
@@ -295,12 +302,18 @@ export class DeviceRegistrationService {
   /**
    * Deactivate a device
    */
-  async deactivateDevice(deviceToken: string, subscriberId: string, tenantId: string): Promise<void> {
+  async deactivateDevice(
+    deviceToken: string,
+    subscriberId: string,
+    tenantId: string,
+  ): Promise<void> {
     await this.deviceRepository.update(
       { deviceToken, subscriberId, tenantId },
-      { isActive: false }
+      { isActive: false },
     );
-    this.logger.log(`Deactivated device: ${deviceToken.substring(0, 20)}... for subscriber ${subscriberId}`);
+    this.logger.log(
+      `Deactivated device: ${deviceToken.substring(0, 20)}... for subscriber ${subscriberId}`,
+    );
   }
 
   /**
@@ -332,17 +345,23 @@ export class DeviceRegistrationService {
       where: { tenantId },
     });
 
-    const activeDevices = devices.filter(d => d.isActive);
+    const activeDevices = devices.filter((d) => d.isActive);
 
-    const platformBreakdown = devices.reduce((acc, device) => {
-      acc[device.platform] = (acc[device.platform] || 0) + 1;
-      return acc;
-    }, {} as Record<DevicePlatform, number>);
+    const platformBreakdown = devices.reduce(
+      (acc, device) => {
+        acc[device.platform] = (acc[device.platform] || 0) + 1;
+        return acc;
+      },
+      {} as Record<DevicePlatform, number>,
+    );
 
-    const providerBreakdown = devices.reduce((acc, device) => {
-      acc[device.provider] = (acc[device.provider] || 0) + 1;
-      return acc;
-    }, {} as Record<PushProvider, number>);
+    const providerBreakdown = devices.reduce(
+      (acc, device) => {
+        acc[device.provider] = (acc[device.provider] || 0) + 1;
+        return acc;
+      },
+      {} as Record<PushProvider, number>,
+    );
 
     return {
       totalDevices: devices.length,

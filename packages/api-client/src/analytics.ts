@@ -1,14 +1,14 @@
 import {
-    AnalyticsFilters,
-    DeliveryMetrics,
-    EngagementStats,
-    ExportFormat,
-    PerformanceMetrics,
-    RealTimeMetrics,
-    UsageMetrics
-} from './types/analytics';
-import { NotificationChannel } from './types/notification';
-import { ApiClient, createApiClient } from './client';
+  AnalyticsFilters,
+  DeliveryMetrics,
+  EngagementStats,
+  ExportFormat,
+  PerformanceMetrics,
+  RealTimeMetrics,
+  UsageMetrics,
+} from "./types/analytics";
+import { NotificationChannel } from "./types/notification";
+import { ApiClient, createApiClient } from "./client";
 
 /**
  * Analytics API client for handling all analytics and reporting operations
@@ -43,7 +43,7 @@ class AnalyticsApiClient {
     if (params?.status) queryParams.status = params.status;
     if (params?.priority) queryParams.priority = params.priority;
 
-    return this.apiClient.get<DeliveryMetrics>('/analytics/delivery-rates', queryParams);
+    return this.apiClient.get<DeliveryMetrics>("/analytics/delivery-rates", queryParams);
   }
 
   /**
@@ -51,10 +51,7 @@ class AnalyticsApiClient {
    * @param params Query parameters for channel analytics
    * @returns Channel performance analytics
    */
-  async getChannelAnalytics(params?: {
-    startDate?: Date;
-    endDate?: Date;
-  }): Promise<{
+  async getChannelAnalytics(params?: { startDate?: Date; endDate?: Date }): Promise<{
     channels: Array<{
       channel: NotificationChannel;
       sent: number;
@@ -71,7 +68,7 @@ class AnalyticsApiClient {
     if (params?.startDate) queryParams.startDate = params.startDate.toISOString();
     if (params?.endDate) queryParams.endDate = params.endDate.toISOString();
 
-    return this.apiClient.get('/analytics/channels', queryParams);
+    return this.apiClient.get("/analytics/channels", queryParams);
   }
 
   /**
@@ -101,7 +98,7 @@ class AnalyticsApiClient {
     if (params?.endDate) queryParams.endDate = params.endDate.toISOString();
     if (params?.channel) queryParams.channel = params.channel;
 
-    return this.apiClient.get('/analytics/providers', queryParams);
+    return this.apiClient.get("/analytics/providers", queryParams);
   }
 
   /**
@@ -113,7 +110,7 @@ class AnalyticsApiClient {
     startDate?: Date;
     endDate?: Date;
     channel?: NotificationChannel;
-    interval?: 'hour' | 'day' | 'week' | 'month';
+    interval?: "hour" | "day" | "week" | "month";
   }): Promise<{
     data: Array<{
       timestamp: Date;
@@ -131,7 +128,7 @@ class AnalyticsApiClient {
     if (params?.channel) queryParams.channel = params.channel;
     if (params?.interval) queryParams.interval = params.interval;
 
-    return this.apiClient.get('/analytics/time-series', queryParams);
+    return this.apiClient.get("/analytics/time-series", queryParams);
   }
 
   /**
@@ -140,7 +137,10 @@ class AnalyticsApiClient {
    * @param endDate Optional end date
    * @returns Comprehensive tenant analytics
    */
-  async getTenantAnalytics(startDate?: Date, endDate?: Date): Promise<{
+  async getTenantAnalytics(
+    startDate?: Date,
+    endDate?: Date,
+  ): Promise<{
     deliveryMetrics: DeliveryMetrics;
     engagementStats: EngagementStats;
     usageMetrics: UsageMetrics;
@@ -159,7 +159,7 @@ class AnalyticsApiClient {
 
     // Note: The backend expects tenantId in the path, but with tenant-scoped API client,
     // we'll use a different approach or the backend needs to be updated
-    return this.apiClient.get('/analytics/dashboard', queryParams);
+    return this.apiClient.get("/analytics/dashboard", queryParams);
   }
 
   async getDashboard(startDate?: Date, endDate?: Date) {
@@ -171,24 +171,22 @@ class AnalyticsApiClient {
    * @param params Query parameters for top providers
    * @returns Top performing providers
    */
-  async getTopProviders(params?: {
-    limit?: number;
-    startDate?: Date;
-    endDate?: Date;
-  }): Promise<Array<{
-    providerId: string;
-    providerName: string;
-    deliveryRate: number;
-    totalSent: number;
-    averageResponseTime: number;
-    rank: number;
-  }>> {
+  async getTopProviders(params?: { limit?: number; startDate?: Date; endDate?: Date }): Promise<
+    Array<{
+      providerId: string;
+      providerName: string;
+      deliveryRate: number;
+      totalSent: number;
+      averageResponseTime: number;
+      rank: number;
+    }>
+  > {
     const queryParams: Record<string, string> = {};
     if (params?.limit) queryParams.limit = params.limit.toString();
     if (params?.startDate) queryParams.startDate = params.startDate.toISOString();
     if (params?.endDate) queryParams.endDate = params.endDate.toISOString();
 
-    return this.apiClient.get('/analytics/providers/top', queryParams);
+    return this.apiClient.get("/analytics/providers/top", queryParams);
   }
 
   /**
@@ -203,7 +201,7 @@ class AnalyticsApiClient {
     currentPeriodStart: Date,
     currentPeriodEnd: Date,
     previousPeriodStart: Date,
-    previousPeriodEnd: Date
+    previousPeriodEnd: Date,
   ): Promise<{
     currentPeriod: DeliveryMetrics;
     previousPeriod: DeliveryMetrics;
@@ -211,10 +209,10 @@ class AnalyticsApiClient {
       sentChange: number;
       deliveredChange: number;
       deliveryRateChange: number;
-      trend: 'up' | 'down' | 'stable';
+      trend: "up" | "down" | "stable";
     };
   }> {
-    return this.apiClient.get('/analytics/trends', {
+    return this.apiClient.get("/analytics/trends", {
       currentPeriodStart: currentPeriodStart.toISOString(),
       currentPeriodEnd: currentPeriodEnd.toISOString(),
       previousPeriodStart: previousPeriodStart.toISOString(),
@@ -249,7 +247,7 @@ class AnalyticsApiClient {
     if (params?.startDate) queryParams.startDate = params.startDate.toISOString();
     if (params?.endDate) queryParams.endDate = params.endDate.toISOString();
 
-    return this.apiClient.get('/analytics/delivery-stats', queryParams);
+    return this.apiClient.get("/analytics/delivery-stats", queryParams);
   }
 
   /**
@@ -257,15 +255,17 @@ class AnalyticsApiClient {
    * @param notificationId Notification ID
    * @returns Delivery history
    */
-  async getDeliveryHistory(notificationId: string): Promise<Array<{
-    id: string;
-    channel: NotificationChannel;
-    status: string;
-    timestamp: Date;
-    providerId?: string;
-    errorMessage?: string;
-    metadata?: Record<string, any>;
-  }>> {
+  async getDeliveryHistory(notificationId: string): Promise<
+    Array<{
+      id: string;
+      channel: NotificationChannel;
+      status: string;
+      timestamp: Date;
+      providerId?: string;
+      errorMessage?: string;
+      metadata?: Record<string, any>;
+    }>
+  > {
     return this.apiClient.get(`/analytics/delivery-history/${notificationId}`);
   }
 
@@ -274,14 +274,16 @@ class AnalyticsApiClient {
    * @param notificationIds Array of notification IDs
    * @returns Delivery statuses
    */
-  async getMultipleDeliveryStatus(notificationIds: string[]): Promise<Array<{
-    notificationId: string;
-    status: string;
-    deliveredAt?: Date;
-    failedAt?: Date;
-    errorMessage?: string;
-  }>> {
-    return this.apiClient.post('/analytics/delivery-status/batch', {
+  async getMultipleDeliveryStatus(notificationIds: string[]): Promise<
+    Array<{
+      notificationId: string;
+      status: string;
+      deliveredAt?: Date;
+      failedAt?: Date;
+      errorMessage?: string;
+    }>
+  > {
+    return this.apiClient.post("/analytics/delivery-status/batch", {
       notificationIds,
     });
   }
@@ -303,14 +305,14 @@ class AnalyticsApiClient {
     message: string;
     url: string;
   }> {
-    return this.apiClient.post('/analytics/webhooks', config);
+    return this.apiClient.post("/analytics/webhooks", config);
   }
 
   /**
    * Remove webhook configuration
    */
   async removeWebhook(): Promise<void> {
-    return this.apiClient.delete('/analytics/webhooks/current');
+    return this.apiClient.delete("/analytics/webhooks/current");
   }
 
   /**
@@ -321,7 +323,7 @@ class AnalyticsApiClient {
     success: boolean;
     message: string;
   }> {
-    return this.apiClient.post('/analytics/webhooks/current/test', {});
+    return this.apiClient.post("/analytics/webhooks/current/test", {});
   }
 
   /**
@@ -334,7 +336,7 @@ class AnalyticsApiClient {
     retryAttempts?: number;
     timeout?: number;
   }> {
-    return this.apiClient.get('/analytics/webhooks/current');
+    return this.apiClient.get("/analytics/webhooks/current");
   }
 
   // Audit Log Methods
@@ -376,7 +378,7 @@ class AnalyticsApiClient {
     if (params?.limit) queryParams.limit = params.limit.toString();
     if (params?.offset) queryParams.offset = params.offset.toString();
 
-    return this.apiClient.get('/analytics/audit-logs', queryParams);
+    return this.apiClient.get("/analytics/audit-logs", queryParams);
   }
 
   /**
@@ -384,13 +386,15 @@ class AnalyticsApiClient {
    * @param notificationId Notification ID
    * @returns Audit trail
    */
-  async getNotificationAuditTrail(notificationId: string): Promise<Array<{
-    id: string;
-    eventType: string;
-    timestamp: Date;
-    userId: string;
-    details: Record<string, any>;
-  }>> {
+  async getNotificationAuditTrail(notificationId: string): Promise<
+    Array<{
+      id: string;
+      eventType: string;
+      timestamp: Date;
+      userId: string;
+      details: Record<string, any>;
+    }>
+  > {
     return this.apiClient.get(`/analytics/audit-logs/notification/${notificationId}`);
   }
 
@@ -400,7 +404,10 @@ class AnalyticsApiClient {
    * @param endDate Optional end date
    * @returns Audit statistics
    */
-  async getAuditStatistics(startDate?: Date, endDate?: Date): Promise<{
+  async getAuditStatistics(
+    startDate?: Date,
+    endDate?: Date,
+  ): Promise<{
     totalEvents: number;
     eventsByType: Record<string, number>;
     eventsByUser: Record<string, number>;
@@ -414,7 +421,7 @@ class AnalyticsApiClient {
     if (startDate) queryParams.startDate = startDate.toISOString();
     if (endDate) queryParams.endDate = endDate.toISOString();
 
-    return this.apiClient.get('/analytics/audit-logs/statistics', queryParams);
+    return this.apiClient.get("/analytics/audit-logs/statistics", queryParams);
   }
 
   /**
@@ -449,7 +456,7 @@ class AnalyticsApiClient {
     if (params.limit) queryParams.limit = params.limit.toString();
     if (params.offset) queryParams.offset = params.offset.toString();
 
-    return this.apiClient.get('/analytics/audit-logs/export', queryParams);
+    return this.apiClient.get("/analytics/audit-logs/export", queryParams);
   }
 
   // Performance Metrics Methods
@@ -465,7 +472,7 @@ class AnalyticsApiClient {
     if (startDate) queryParams.startDate = startDate.toISOString();
     if (endDate) queryParams.endDate = endDate.toISOString();
 
-    return this.apiClient.get<PerformanceMetrics>('/analytics/performance/system', queryParams);
+    return this.apiClient.get<PerformanceMetrics>("/analytics/performance/system", queryParams);
   }
 
   /**
@@ -478,22 +485,24 @@ class AnalyticsApiClient {
     channel?: NotificationChannel;
     startDate?: Date;
     endDate?: Date;
-  }): Promise<Array<{
-    providerId: string;
-    providerName: string;
-    averageResponseTime: number;
-    successRate: number;
-    errorRate: number;
-    throughput: number;
-    uptime: number;
-  }>> {
+  }): Promise<
+    Array<{
+      providerId: string;
+      providerName: string;
+      averageResponseTime: number;
+      successRate: number;
+      errorRate: number;
+      throughput: number;
+      uptime: number;
+    }>
+  > {
     const queryParams: Record<string, string> = {};
     if (params?.providerId) queryParams.providerId = params.providerId;
     if (params?.channel) queryParams.channel = params.channel;
     if (params?.startDate) queryParams.startDate = params.startDate.toISOString();
     if (params?.endDate) queryParams.endDate = params.endDate.toISOString();
 
-    return this.apiClient.get('/analytics/performance/providers', queryParams);
+    return this.apiClient.get("/analytics/performance/providers", queryParams);
   }
 
   /**
@@ -502,7 +511,10 @@ class AnalyticsApiClient {
    * @param endDate Optional end date
    * @returns Tenant performance metrics
    */
-  async getTenantPerformanceMetrics(startDate?: Date, endDate?: Date): Promise<{
+  async getTenantPerformanceMetrics(
+    startDate?: Date,
+    endDate?: Date,
+  ): Promise<{
     averageProcessingTime: number;
     throughput: number;
     errorRate: number;
@@ -522,7 +534,7 @@ class AnalyticsApiClient {
     if (startDate) queryParams.startDate = startDate.toISOString();
     if (endDate) queryParams.endDate = endDate.toISOString();
 
-    return this.apiClient.get('/analytics/performance/tenant/current', queryParams);
+    return this.apiClient.get("/analytics/performance/tenant/current", queryParams);
   }
 
   /**
@@ -537,7 +549,7 @@ class AnalyticsApiClient {
     metricName: string,
     startDate: Date,
     endDate: Date,
-    interval?: 'hour' | 'day'
+    interval?: "hour" | "day",
   ): Promise<{
     metric: string;
     interval: string;
@@ -545,14 +557,14 @@ class AnalyticsApiClient {
       timestamp: Date;
       value: number;
     }>;
-    trend: 'up' | 'down' | 'stable';
+    trend: "up" | "down" | "stable";
     changePercentage: number;
   }> {
-    return this.apiClient.get('/analytics/performance/trends', {
+    return this.apiClient.get("/analytics/performance/trends", {
       metricName,
       startDate: startDate.toISOString(),
       endDate: endDate.toISOString(),
-      interval: interval || 'hour',
+      interval: interval || "hour",
     });
   }
 
@@ -561,7 +573,7 @@ class AnalyticsApiClient {
    * @returns Real-time metrics
    */
   async getRealTimeMetrics(): Promise<RealTimeMetrics> {
-    return this.apiClient.get<RealTimeMetrics>('/analytics/performance/realtime');
+    return this.apiClient.get<RealTimeMetrics>("/analytics/performance/realtime");
   }
 
   // Project and Brand Analytics Methods
@@ -573,7 +585,11 @@ class AnalyticsApiClient {
    * @param endDate Optional end date
    * @returns Project analytics
    */
-  async getProjectAnalytics(projectId: string, startDate?: Date, endDate?: Date): Promise<{
+  async getProjectAnalytics(
+    projectId: string,
+    startDate?: Date,
+    endDate?: Date,
+  ): Promise<{
     projectId: string;
     projectName: string;
     deliveryMetrics: DeliveryMetrics;
@@ -599,7 +615,11 @@ class AnalyticsApiClient {
    * @param endDate Optional end date
    * @returns Brand analytics
    */
-  async getBrandAnalytics(brandId: string, startDate?: Date, endDate?: Date): Promise<{
+  async getBrandAnalytics(
+    brandId: string,
+    startDate?: Date,
+    endDate?: Date,
+  ): Promise<{
     brandId: string;
     brandName: string;
     deliveryMetrics: DeliveryMetrics;
@@ -623,7 +643,11 @@ class AnalyticsApiClient {
    * @param endDate Optional end date
    * @returns Comparative project analytics
    */
-  async compareProjects(projectIds: string[], startDate?: Date, endDate?: Date): Promise<{
+  async compareProjects(
+    projectIds: string[],
+    startDate?: Date,
+    endDate?: Date,
+  ): Promise<{
     projects: Array<{
       projectId: string;
       projectName: string;
@@ -639,12 +663,12 @@ class AnalyticsApiClient {
     };
   }> {
     const queryParams: Record<string, string> = {
-      projectIds: projectIds.join(','),
+      projectIds: projectIds.join(","),
     };
     if (startDate) queryParams.startDate = startDate.toISOString();
     if (endDate) queryParams.endDate = endDate.toISOString();
 
-    return this.apiClient.get('/analytics/projects/compare', queryParams);
+    return this.apiClient.get("/analytics/projects/compare", queryParams);
   }
 
   /**
@@ -660,19 +684,19 @@ class AnalyticsApiClient {
 
     // Validate date range
     if (filters.dateRange.start >= filters.dateRange.end) {
-      errors.push('Start date must be before end date');
+      errors.push("Start date must be before end date");
     }
 
     const now = new Date();
     if (filters.dateRange.end > now) {
-      errors.push('End date cannot be in the future');
+      errors.push("End date cannot be in the future");
     }
 
     // Validate date range is not too large (e.g., max 1 year)
     const maxRange = 365 * 24 * 60 * 60 * 1000; // 1 year in milliseconds
     const rangeMs = filters.dateRange.end.getTime() - filters.dateRange.start.getTime();
     if (rangeMs > maxRange) {
-      errors.push('Date range cannot exceed 1 year');
+      errors.push("Date range cannot exceed 1 year");
     }
 
     return {
@@ -698,20 +722,23 @@ class AnalyticsApiClient {
    * @param type Type of metric (rate, count, time, etc.)
    * @returns Formatted string
    */
-  formatMetricValue(value: number, type: 'rate' | 'count' | 'time' | 'percentage' | 'bytes'): string {
+  formatMetricValue(
+    value: number,
+    type: "rate" | "count" | "time" | "percentage" | "bytes",
+  ): string {
     switch (type) {
-      case 'rate':
+      case "rate":
         return `${(value * 100).toFixed(1)}%`;
-      case 'count':
+      case "count":
         return value.toLocaleString();
-      case 'time':
+      case "time":
         if (value < 1000) return `${value.toFixed(0)}ms`;
         if (value < 60000) return `${(value / 1000).toFixed(1)}s`;
         return `${(value / 60000).toFixed(1)}m`;
-      case 'percentage':
+      case "percentage":
         return `${value.toFixed(1)}%`;
-      case 'bytes':
-        const units = ['B', 'KB', 'MB', 'GB', 'TB'];
+      case "bytes":
+        const units = ["B", "KB", "MB", "GB", "TB"];
         let size = value;
         let unitIndex = 0;
         while (size >= 1024 && unitIndex < units.length - 1) {
@@ -739,38 +766,38 @@ class AnalyticsApiClient {
 
     return [
       {
-        label: 'Last 24 Hours',
-        value: 'last_24_hours',
+        label: "Last 24 Hours",
+        value: "last_24_hours",
         startDate: new Date(now.getTime() - 24 * 60 * 60 * 1000),
         endDate: now,
       },
       {
-        label: 'Last 7 Days',
-        value: 'last_7_days',
+        label: "Last 7 Days",
+        value: "last_7_days",
         startDate: new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000),
         endDate: now,
       },
       {
-        label: 'Last 30 Days',
-        value: 'last_30_days',
+        label: "Last 30 Days",
+        value: "last_30_days",
         startDate: new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000),
         endDate: now,
       },
       {
-        label: 'Last 90 Days',
-        value: 'last_90_days',
+        label: "Last 90 Days",
+        value: "last_90_days",
         startDate: new Date(today.getTime() - 90 * 24 * 60 * 60 * 1000),
         endDate: now,
       },
       {
-        label: 'This Month',
-        value: 'this_month',
+        label: "This Month",
+        value: "this_month",
         startDate: new Date(now.getFullYear(), now.getMonth(), 1),
         endDate: now,
       },
       {
-        label: 'Last Month',
-        value: 'last_month',
+        label: "Last Month",
+        value: "last_month",
         startDate: new Date(now.getFullYear(), now.getMonth() - 1, 1),
         endDate: new Date(now.getFullYear(), now.getMonth(), 0),
       },

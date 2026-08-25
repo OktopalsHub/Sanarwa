@@ -3,9 +3,9 @@ import type {
   Campaign,
   CommunicationChannel,
   CreateCampaignRequest,
-  UpdateCampaignRequest
-} from './types/campaign';
-import { apiClient } from './client';
+  UpdateCampaignRequest,
+} from "./types/campaign";
+import { apiClient } from "./client";
 
 export interface CampaignListParams {
   page?: number;
@@ -13,8 +13,8 @@ export interface CampaignListParams {
   status?: string;
   type?: string;
   search?: string;
-  sortBy?: 'name' | 'createdAt' | 'updatedAt' | 'status';
-  sortOrder?: 'asc' | 'desc';
+  sortBy?: "name" | "createdAt" | "updatedAt" | "status";
+  sortOrder?: "asc" | "desc";
 }
 
 export interface CampaignListResponse {
@@ -35,7 +35,9 @@ export const campaignApi = {
       }
     });
 
-    return apiClient.get<CampaignListResponse>(`/tenants/:tenantId/campaigns?${searchParams.toString()}`);
+    return apiClient.get<CampaignListResponse>(
+      `/tenants/:tenantId/campaigns?${searchParams.toString()}`,
+    );
   },
 
   async getCampaign(id: string): Promise<Campaign> {
@@ -43,7 +45,7 @@ export const campaignApi = {
   },
 
   async createCampaign(data: CreateCampaignRequest): Promise<Campaign> {
-    return apiClient.post<Campaign>('/tenants/:tenantId/campaigns', data);
+    return apiClient.post<Campaign>("/tenants/:tenantId/campaigns", data);
   },
 
   async updateCampaign(data: UpdateCampaignRequest): Promise<Campaign> {
@@ -80,8 +82,8 @@ export const campaignApi = {
   async getCampaignAnalytics(id: string, dateRange?: { start: Date; end: Date }) {
     const params = new URLSearchParams();
     if (dateRange) {
-      params.append('start', dateRange.start.toISOString());
-      params.append('end', dateRange.end.toISOString());
+      params.append("start", dateRange.start.toISOString());
+      params.append("end", dateRange.end.toISOString());
     }
 
     return apiClient.get(`/campaigns/${id}/analytics?${params.toString()}`);
@@ -89,7 +91,7 @@ export const campaignApi = {
 
   // Audience management
   async getAudienceSegments(): Promise<AudienceSegment[]> {
-    return apiClient.get<AudienceSegment[]>('/audience/segments');
+    return apiClient.get<AudienceSegment[]>("/audience/segments");
   },
 
   async getAudienceSegment(id: string): Promise<AudienceSegment> {
@@ -97,12 +99,12 @@ export const campaignApi = {
   },
 
   async estimateAudienceSize(filters: any[]): Promise<{ size: number }> {
-    return apiClient.post<{ size: number }>('/audience/estimate', { filters });
+    return apiClient.post<{ size: number }>("/audience/estimate", { filters });
   },
 
   // Template management (simplified for campaigns)
   async getTemplates(channel?: CommunicationChannel): Promise<any[]> {
-    const params = channel ? `?channel=${channel}` : '';
+    const params = channel ? `?channel=${channel}` : "";
     return apiClient.get<any[]>(`/templates${params}`);
   },
 
@@ -112,7 +114,7 @@ export const campaignApi = {
 
   // Campaign preview and testing
   async previewCampaign(id: string, recipientEmail?: string) {
-    const params = recipientEmail ? `?email=${recipientEmail}` : '';
+    const params = recipientEmail ? `?email=${recipientEmail}` : "";
     return apiClient.post(`/campaigns/${id}/preview${params}`);
   },
 

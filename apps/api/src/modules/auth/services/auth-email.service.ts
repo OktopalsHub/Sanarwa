@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable } from "@nestjs/common";
 
 @Injectable()
 export class AuthEmailService {
@@ -12,10 +12,16 @@ export class AuthEmailService {
     console.log(`Sending password reset email to ${email} with token ${resetToken}`);
   }
 
-  async sendEmail(options: { to: string | string[]; subject: string; html: string; text?: string; from?: string }): Promise<void> {
+  async sendEmail(options: {
+    to: string | string[];
+    subject: string;
+    html: string;
+    text?: string;
+    from?: string;
+  }): Promise<void> {
     // Generic email sending logic would go here
-    const to = Array.isArray(options.to) ? options.to.join(', ') : options.to;
-    const from = options.from || 'default@system.com';
+    const to = Array.isArray(options.to) ? options.to.join(", ") : options.to;
+    const from = options.from || "default@system.com";
     console.log(`Sending email from ${from} to ${to} with subject ${options.subject}`);
   }
 }

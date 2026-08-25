@@ -1,41 +1,41 @@
-'use client';
+"use client";
 
-import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
-import { useAuth } from '@/contexts/auth-context';
-import { authApi } from '@/lib/api/auth';
-import Link from '@/compat/next-link';
-import { useRouter, useSearchParams } from '@/compat/next-navigation';
-import { useEffect, useState } from 'react';
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { useAuth } from "@/contexts/auth-context";
+import { authApi } from "@/lib/api/auth";
+import Link from "@/compat/next-link";
+import { useRouter, useSearchParams } from "@/compat/next-navigation";
+import { useEffect, useState } from "react";
 
 export function VerifyEmail() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user, refreshUser } = useAuth();
-  const token = searchParams.get('token');
+  const token = searchParams.get("token");
 
-  const [status, setStatus] = useState<'verifying' | 'success' | 'error' | 'resend'>('verifying');
-  const [error, setError] = useState('');
+  const [status, setStatus] = useState<"verifying" | "success" | "error" | "resend">("verifying");
+  const [error, setError] = useState("");
   const [isResending, setIsResending] = useState(false);
 
   useEffect(() => {
     if (token) {
       verifyEmail(token);
     } else {
-      setStatus('error');
-      setError('Invalid verification link');
+      setStatus("error");
+      setError("Invalid verification link");
     }
   }, [token]);
 
   const verifyEmail = async (verificationToken: string) => {
     try {
       await authApi.verifyEmail({ token: verificationToken });
-      setStatus('success');
+      setStatus("success");
       // Refresh user data to update email verification status
       await refreshUser();
     } catch (error) {
-      setStatus('error');
-      setError(error instanceof Error ? error.message : 'Email verification failed');
+      setStatus("error");
+      setError(error instanceof Error ? error.message : "Email verification failed");
     }
   };
 
@@ -43,33 +43,31 @@ export function VerifyEmail() {
     setIsResending(true);
     try {
       await authApi.resendVerificationEmail();
-      setStatus('resend');
+      setStatus("resend");
     } catch (error) {
-      setError(error instanceof Error ? error.message : 'Failed to resend verification email');
+      setError(error instanceof Error ? error.message : "Failed to resend verification email");
     } finally {
       setIsResending(false);
     }
   };
 
   const handleContinue = () => {
-    router.push('/dashboard');
+    router.push("/dashboard");
   };
 
-  if (status === 'verifying') {
+  if (status === "verifying") {
     return (
       <Card className="w-full max-w-md mx-auto p-6">
         <div className="text-center space-y-4">
           <div className="w-12 h-12 mx-auto border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
           <h1 className="text-2xl font-bold">Verifying your email</h1>
-          <p className="text-muted-foreground">
-            Please wait while we verify your email address...
-          </p>
+          <p className="text-muted-foreground">Please wait while we verify your email address...</p>
         </div>
       </Card>
     );
   }
 
-  if (status === 'success') {
+  if (status === "success") {
     return (
       <Card className="w-full max-w-md mx-auto p-6">
         <div className="text-center space-y-4">
@@ -91,7 +89,8 @@ export function VerifyEmail() {
 
           <h1 className="text-2xl font-bold">Email verified!</h1>
           <p className="text-muted-foreground">
-            Your email address has been successfully verified. You can now access all features of your account.
+            Your email address has been successfully verified. You can now access all features of
+            your account.
           </p>
 
           <Button onClick={handleContinue} className="w-full">
@@ -102,7 +101,7 @@ export function VerifyEmail() {
     );
   }
 
-  if (status === 'resend') {
+  if (status === "resend") {
     return (
       <Card className="w-full max-w-md mx-auto p-6">
         <div className="text-center space-y-4">
@@ -124,7 +123,8 @@ export function VerifyEmail() {
 
           <h1 className="text-2xl font-bold">Verification email sent</h1>
           <p className="text-muted-foreground">
-            We've sent a new verification email to your address. Please check your inbox and click the verification link.
+            We've sent a new verification email to your address. Please check your inbox and click
+            the verification link.
           </p>
 
           <Link href="/dashboard">
@@ -158,16 +158,12 @@ export function VerifyEmail() {
 
         <h1 className="text-2xl font-bold">Verification failed</h1>
         <p className="text-muted-foreground">
-          {error || 'We couldn\'t verify your email address. The link may be invalid or expired.'}
+          {error || "We couldn't verify your email address. The link may be invalid or expired."}
         </p>
 
         {user && !user.emailVerified && (
-          <Button
-            onClick={handleResendVerification}
-            disabled={isResending}
-            className="w-full"
-          >
-            {isResending ? 'Sending...' : 'Resend verification email'}
+          <Button onClick={handleResendVerification} disabled={isResending} className="w-full">
+            {isResending ? "Sending..." : "Resend verification email"}
           </Button>
         )}
 

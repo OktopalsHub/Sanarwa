@@ -1,15 +1,15 @@
-'use client';
+"use client";
 
-import { AppShell } from '@/components/layout';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { TeamManagement } from '@/components/tenant/team-management';
-import { BrandAssetManager } from '@/components/branding/brand-asset-manager';
-import { BrandPreview } from '@/components/branding/brand-preview';
-import { BrandTestingTool } from '@/components/branding/brand-testing-tool';
-import { BrandingConfigurator } from '@/components/branding/branding-configurator';
-import { useEnsureTenantFromSlug } from '@/hooks/use-tenant-slug';
-import { useTenant } from '@/contexts/tenant-context';
-import { useBranding } from '@/contexts/branding-context';
+import { AppShell } from "@/components/layout";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { TeamManagement } from "@/components/tenant/team-management";
+import { BrandAssetManager } from "@/components/branding/brand-asset-manager";
+import { BrandPreview } from "@/components/branding/brand-preview";
+import { BrandTestingTool } from "@/components/branding/brand-testing-tool";
+import { BrandingConfigurator } from "@/components/branding/branding-configurator";
+import { useEnsureTenantFromSlug } from "@/hooks/use-tenant-slug";
+import { useTenant } from "@/contexts/tenant-context";
+import { useBranding } from "@/contexts/branding-context";
 
 export default function TenantSettingsPage() {
   const { matchedTenant, isLoading } = useEnsureTenantFromSlug();
@@ -32,9 +32,7 @@ export default function TenantSettingsPage() {
       <div className="mx-auto max-w-5xl space-y-6 p-6">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Settings</h1>
-          <p className="text-muted-foreground">
-            Workspace, team, and brand for {tenant?.name}
-          </p>
+          <p className="text-muted-foreground">Workspace, team, and brand for {tenant?.name}</p>
         </div>
 
         <Tabs defaultValue="workspace">
@@ -46,10 +44,8 @@ export default function TenantSettingsPage() {
 
           <TabsContent value="workspace" className="mt-6 space-y-2">
             <p className="text-sm text-muted-foreground">
-              Slug:{' '}
-              <code className="font-mono">
-                {tenant?.subdomain || tenant?.slug || tenant?.id}
-              </code>
+              Slug:{" "}
+              <code className="font-mono">{tenant?.subdomain || tenant?.slug || tenant?.id}</code>
             </p>
           </TabsContent>
 
@@ -57,7 +53,9 @@ export default function TenantSettingsPage() {
             {selectedTenant ? (
               <TeamManagement tenant={selectedTenant} />
             ) : (
-              <p className="text-sm text-muted-foreground">Select a workspace to manage the team.</p>
+              <p className="text-sm text-muted-foreground">
+                Select a workspace to manage the team.
+              </p>
             )}
           </TabsContent>
 
@@ -82,9 +80,7 @@ export default function TenantSettingsPage() {
                 <TabsContent value="assets" className="mt-4">
                   <BrandAssetManager
                     branding={branding}
-                    onBrandingChange={(updates) =>
-                      applyBranding({ ...branding, ...updates })
-                    }
+                    onBrandingChange={(updates) => applyBranding({ ...branding, ...updates })}
                   />
                 </TabsContent>
               </Tabs>

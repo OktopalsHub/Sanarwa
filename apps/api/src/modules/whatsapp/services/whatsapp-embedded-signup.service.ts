@@ -1,10 +1,10 @@
-import { Injectable, Logger, BadRequestException, ConflictException } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { ConfigService } from '@nestjs/config';
-import axios from 'axios';
-import { WABAConfig } from '../entities/waba-config.entity';
-import { TenantWABAConfig } from '../entities/tenant-waba-config.entity';
+import { Injectable, Logger, BadRequestException, ConflictException } from "@nestjs/common";
+import { InjectRepository } from "@nestjs/typeorm";
+import { Repository } from "typeorm";
+import { ConfigService } from "@nestjs/config";
+import axios from "axios";
+import { WABAConfig } from "../entities/waba-config.entity";
+import { TenantWABAConfig } from "../entities/tenant-waba-config.entity";
 
 export interface EmbeddedSignupRequest {
   tenantId: string;
@@ -27,14 +27,14 @@ export interface WABASetupResult {
   businessAccountId: string;
   phoneNumberId: string;
   accessToken: string;
-  status: 'PENDING' | 'ACTIVE';
+  status: "PENDING" | "ACTIVE";
   verificationRequired: boolean;
 }
 
 @Injectable()
 export class WhatsAppEmbeddedSignupService {
   private readonly logger = new Logger(WhatsAppEmbeddedSignupService.name);
-  private readonly metaApiUrl = 'https://graph.facebook.com/v18.0';
+  private readonly metaApiUrl = "https://graph.facebook.com/v18.0";
 
   constructor(
     @InjectRepository(WABAConfig)
@@ -42,7 +42,7 @@ export class WhatsAppEmbeddedSignupService {
     @InjectRepository(TenantWABAConfig)
     private tenantWabaConfigRepository: Repository<TenantWABAConfig>,
     private configService: ConfigService,
-  ) { }
+  ) {}
 
   /**
    * Generate Embedded Signup URL for tenant to create their own WABA
@@ -56,24 +56,26 @@ export class WhatsAppEmbeddedSignupService {
       });
 
       if (existingConfig) {
-        throw new ConflictException('Tenant already has an active WhatsApp Business Account');
+        throw new ConflictException("Tenant already has an active WhatsApp Business Account");
       }
 
-      const appId = this.configService.get<string>('META_APP_ID');
-      const configId = this.configService.get<string>('META_CONFIG_ID');
+      const appId = this.configService.get<string>("META_APP_ID");
+      const configId = this.configService.get<string>("META_CONFIG_ID");
 
       if (!appId || !configId) {
-        throw new BadRequestException('Meta app configuration is missing. Please configure META_APP_ID and META_CONFIG_ID.');
+        throw new BadRequestException(
+          "Meta app configuration is missing. Please configure META_APP_ID and META_CONFIG_ID.",
+        );
       }
 
       const state = this.generateSecureState(request.tenantId);
 
       // Meta Embedded Signup URL
       const signupUrl = new URL(`${this.metaApiUrl}/${appId}/embedded_signup`);
-      signupUrl.searchParams.set('config_id', configId);
-      signupUrl.searchParams.set('state', state);
-      signupUrl.searchParams.set('redirect_uri', request.redirectUri);
-      signupUrl.searchParams.set('response_type', 'code');
+      signupUrl.searchParams.set("config_id", configId);
+      signupUrl.searchParams.set("state", state);
+      signupUrl.searchParams.set("redirect_uri", request.redirectUri);
+      signupUrl.searchParams.set("response_type", "code");
 
       // Store signup state for verification
       await this.storeSignupState(state, request);
@@ -84,7 +86,7 @@ export class WhatsAppEmbeddedSignupService {
         expiresAt: new Date(Date.now() + 30 * 60 * 1000), // 30 minutes
       };
     } catch (error) {
-      this.logger.error('Failed to generate embedded signup URL', error);
+      this.logger.error("Failed to generate embedded signup URL", error);
       throw error;
     }
   }
@@ -97,7 +99,7 @@ export class WhatsAppEmbeddedSignupService {
       // Verify state and get tenant info
       const signupData = await this.verifySignupState(state);
       if (!signupData) {
-        throw new BadRequestException('Invalid or expired signup state');
+        throw new BadRequestException("Invalid or expired signup state");
       }
 
       // Exchange code for access token
@@ -127,7 +129,7 @@ export class WhatsAppEmbeddedSignupService {
         wabaId: wabaConfig.id,
         accessToken: tokenResponse.access_token,
         phoneNumberId: wabaDetails.phone_number_id,
-        status: wabaDetails.verification_status === 'VERIFIED' ? 'ACTIVE' : 'PENDING',
+        status: wabaDetails.verification_status === "VERIFIED" ? "ACTIVE" : "PENDING",
         verificationStatus: wabaDetails.verification_status,
       });
 
@@ -138,11 +140,11 @@ export class WhatsAppEmbeddedSignupService {
         businessAccountId: wabaDetails.id,
         phoneNumberId: wabaDetails.phone_number_id,
         accessToken: tokenResponse.access_token,
-        status: wabaDetails.verification_status === 'VERIFIED' ? 'ACTIVE' : 'PENDING',
-        verificationRequired: wabaDetails.verification_status !== 'VERIFIED',
+        status: wabaDetails.verification_status === "VERIFIED" ? "ACTIVE" : "PENDING",
+        verificationRequired: wabaDetails.verification_status !== "VERIFIED",
       };
     } catch (error) {
-      this.logger.error('Failed to complete embedded signup', error);
+      this.logger.error("Failed to complete embedded signup", error);
       throw error;
     }
   }
@@ -153,7 +155,7 @@ export class WhatsAppEmbeddedSignupService {
   async getTenantWABA(tenantId: string): Promise<TenantWABAConfig | null> {
     return this.tenantWabaConfigRepository.findOne({
       where: { tenantId, isActive: true },
-      relations: ['waba'],
+      relations: ["waba"],
     });
   }
 
@@ -212,7 +214,7 @@ export class WhatsAppEmbeddedSignupService {
       // Update tenant config
       await this.tenantWabaConfigRepository.update(tenantWaba.id, {
         verificationStatus: wabaDetails.verification_status,
-        status: wabaDetails.verification_status === 'VERIFIED' ? 'ACTIVE' : 'PENDING',
+        status: wabaDetails.verification_status === "VERIFIED" ? "ACTIVE" : "PENDING",
         lastSyncAt: new Date(),
       });
 
@@ -223,8 +225,8 @@ export class WhatsAppEmbeddedSignupService {
   }
 
   private async exchangeCodeForToken(code: string): Promise<{ access_token: string }> {
-    const appId = this.configService.get<string>('META_APP_ID');
-    const appSecret = this.configService.get<string>('META_APP_SECRET');
+    const appId = this.configService.get<string>("META_APP_ID");
+    const appSecret = this.configService.get<string>("META_APP_SECRET");
 
     const response = await axios.post(`${this.metaApiUrl}/oauth/access_token`, {
       client_id: appId,
@@ -238,7 +240,7 @@ export class WhatsAppEmbeddedSignupService {
   private async getWABADetails(accessToken: string): Promise<any> {
     const response = await axios.get(`${this.metaApiUrl}/me`, {
       params: {
-        fields: 'id,name,phone_numbers,business_profile,verification_status',
+        fields: "id,name,phone_numbers,business_profile,verification_status",
         access_token: accessToken,
       },
     });
@@ -251,7 +253,7 @@ export class WhatsAppEmbeddedSignupService {
       name: data.name,
       phone_number_id: phoneNumber?.id,
       display_phone_number: phoneNumber?.display_phone_number,
-      verification_status: data.verification_status || 'UNVERIFIED',
+      verification_status: data.verification_status || "UNVERIFIED",
       business_profile: data.business_profile,
     };
   }
@@ -305,7 +307,7 @@ export class WhatsAppEmbeddedSignupService {
   private generateSecureState(tenantId: string): string {
     const timestamp = Date.now();
     const random = Math.random().toString(36).substring(2);
-    return Buffer.from(`${tenantId}:${timestamp}:${random}`).toString('base64');
+    return Buffer.from(`${tenantId}:${timestamp}:${random}`).toString("base64");
   }
 
   private generateWebhookToken(): string {

@@ -1,31 +1,23 @@
+import { Body, Controller, Get, Param, Post, Query, UseGuards } from "@nestjs/common";
+import { ApiOperation, ApiResponse, ApiTags, ApiHeader } from "@nestjs/swagger";
+import { ApiKeyAuthGuard } from "../../api-key/guards/api-key-auth.guard";
+import { CurrentApiKey } from "../../auth/decorators/current-api-key.decorator";
+import { CurrentProjectId } from "../../auth/decorators/current-project.decorator";
+import { Public } from "../../auth/decorators/public.decorator";
+import { ApiKey } from "../../api-key/entities/api-key.entity";
 import {
-  Body,
-  Controller,
-  Get,
-  Param,
-  Post,
-  Query,
-  UseGuards,
-} from '@nestjs/common';
-import { ApiOperation, ApiResponse, ApiTags, ApiHeader } from '@nestjs/swagger';
-import { ApiKeyAuthGuard } from '../../api-key/guards/api-key-auth.guard';
-import { CurrentApiKey } from '../../auth/decorators/current-api-key.decorator';
-import { CurrentProjectId } from '../../auth/decorators/current-project.decorator';
-import { Public } from '../../auth/decorators/public.decorator';
-import { ApiKey } from '../../api-key/entities/api-key.entity';
-import { 
-  NotificationTransportService, 
-  NotificationRequest, 
-  BulkNotificationRequest 
-} from '../transport/notification-transport.service';
+  NotificationTransportService,
+  NotificationRequest,
+  BulkNotificationRequest,
+} from "../transport/notification-transport.service";
 
 export class SendNotificationDto {
   to: string;
-  channel: 'email' | 'sms' | 'push' | 'whatsapp' | 'webhook' | 'in_app';
+  channel: "email" | "sms" | "push" | "whatsapp" | "webhook" | "in_app";
   title?: string;
   message: string;
   data?: Record<string, any>;
-  priority?: 'low' | 'normal' | 'high';
+  priority?: "low" | "normal" | "high";
   scheduledAt?: string; // ISO date string
   expiresAt?: string; // ISO date string
   templateId?: string;
@@ -39,22 +31,20 @@ export class BulkSendNotificationDto {
   batchId?: string;
 }
 
-@ApiTags('Notification Transport (SDK)')
-@Controller('notifications')
+@ApiTags("Notification Transport (SDK)")
+@Controller("notifications")
 @Public()
 @UseGuards(ApiKeyAuthGuard)
 export class NotificationTransportController {
-  constructor(
-    private readonly transportService: NotificationTransportService,
-  ) {}
+  constructor(private readonly transportService: NotificationTransportService) {}
 
-  @Post('send')
-  @ApiOperation({ summary: 'Send single notification (Transport)' })
+  @Post("send")
+  @ApiOperation({ summary: "Send single notification (Transport)" })
   @ApiResponse({
     status: 201,
-    description: 'Notification queued for delivery',
+    description: "Notification queued for delivery",
   })
-  @ApiHeader({ name: 'X-API-Key', description: 'API Key for authentication', required: true })
+  @ApiHeader({ name: "X-API-Key", description: "API Key for authentication", required: true })
   async sendNotification(
     @Body() sendDto: SendNotificationDto,
     @CurrentApiKey() apiKey: ApiKey,
@@ -80,20 +70,20 @@ export class NotificationTransportController {
     return this.transportService.send(request);
   }
 
-  @Post('send/bulk')
-  @ApiOperation({ summary: 'Send bulk notifications (Transport)' })
+  @Post("send/bulk")
+  @ApiOperation({ summary: "Send bulk notifications (Transport)" })
   @ApiResponse({
     status: 201,
-    description: 'Bulk notifications queued for delivery',
+    description: "Bulk notifications queued for delivery",
   })
-  @ApiHeader({ name: 'X-API-Key', description: 'API Key for authentication', required: true })
+  @ApiHeader({ name: "X-API-Key", description: "API Key for authentication", required: true })
   async sendBulkNotifications(
     @Body() bulkDto: BulkSendNotificationDto,
     @CurrentApiKey() apiKey: ApiKey,
     @CurrentProjectId() projectId: string,
   ) {
     const request: BulkNotificationRequest = {
-      notifications: bulkDto.notifications.map(notification => ({
+      notifications: bulkDto.notifications.map((notification) => ({
         to: notification.to,
         channel: notification.channel,
         title: notification.title,
@@ -115,21 +105,21 @@ export class NotificationTransportController {
     return this.transportService.sendBulk(request);
   }
 
-  @Get('status/:trackingId')
-  @ApiOperation({ summary: 'Get notification delivery status' })
+  @Get("status/:trackingId")
+  @ApiOperation({ summary: "Get notification delivery status" })
   @ApiResponse({
     status: 200,
-    description: 'Delivery status retrieved successfully',
+    description: "Delivery status retrieved successfully",
   })
-  @ApiHeader({ name: 'X-API-Key', description: 'API Key for authentication', required: true })
+  @ApiHeader({ name: "X-API-Key", description: "API Key for authentication", required: true })
   async getDeliveryStatus(
-    @Param('trackingId') trackingId: string,
+    @Param("trackingId") trackingId: string,
     @CurrentApiKey() apiKey: ApiKey,
   ) {
     const log = await this.transportService.getDeliveryStatus(trackingId);
-    
+
     if (!log || log.tenantId !== apiKey.project.tenant.id) {
-      return { error: 'Notification not found' };
+      return { error: "Notification not found" };
     }
 
     return {
@@ -143,18 +133,18 @@ export class NotificationTransportController {
     };
   }
 
-  @Get('analytics')
-  @ApiOperation({ summary: 'Get notification analytics' })
+  @Get("analytics")
+  @ApiOperation({ summary: "Get notification analytics" })
   @ApiResponse({
     status: 200,
-    description: 'Analytics retrieved successfully',
+    description: "Analytics retrieved successfully",
   })
-  @ApiHeader({ name: 'X-API-Key', description: 'API Key for authentication', required: true })
+  @ApiHeader({ name: "X-API-Key", description: "API Key for authentication", required: true })
   async getAnalytics(
     @CurrentApiKey() apiKey: ApiKey,
-    @Query('startDate') startDate?: string,
-    @Query('endDate') endDate?: string,
-    @Query('channel') channel?: string,
+    @Query("startDate") startDate?: string,
+    @Query("endDate") endDate?: string,
+    @Query("channel") channel?: string,
   ) {
     return this.transportService.getAnalytics(apiKey.project.tenant.id, {
       startDate: startDate ? new Date(startDate) : undefined,
@@ -163,23 +153,23 @@ export class NotificationTransportController {
     });
   }
 
-  @Get('health')
-  @ApiOperation({ summary: 'Check transport service health' })
+  @Get("health")
+  @ApiOperation({ summary: "Check transport service health" })
   @ApiResponse({
     status: 200,
-    description: 'Health status retrieved successfully',
+    description: "Health status retrieved successfully",
   })
   async getHealth() {
     return {
-      status: 'healthy',
+      status: "healthy",
       timestamp: new Date().toISOString(),
       services: {
-        email: 'operational',
-        sms: 'operational',
-        push: 'operational',
-        whatsapp: 'operational',
-        webhook: 'operational',
-        in_app: 'operational',
+        email: "operational",
+        sms: "operational",
+        push: "operational",
+        whatsapp: "operational",
+        webhook: "operational",
+        in_app: "operational",
       },
     };
   }

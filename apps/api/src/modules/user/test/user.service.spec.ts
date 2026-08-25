@@ -1,12 +1,12 @@
-import { Test, TestingModule } from '@nestjs/testing';
-import { UserService } from '../user.service';
-import { UserRepository } from '../user.repository';
-import { User } from '../entities/user.entity';
-import { UpdateUserDto } from '../dto/update-user.dto';
-import { UserQueryDto } from '../dto/user-query.dto';
-import type { Mocked } from 'vitest';
+import { Test, TestingModule } from "@nestjs/testing";
+import { UserService } from "../user.service";
+import { UserRepository } from "../user.repository";
+import { User } from "../entities/user.entity";
+import { UpdateUserDto } from "../dto/update-user.dto";
+import { UserQueryDto } from "../dto/user-query.dto";
+import type { Mocked } from "vitest";
 
-describe('UserService', () => {
+describe("UserService", () => {
   let service: UserService;
   let userRepository: Mocked<UserRepository>;
 
@@ -36,18 +36,18 @@ describe('UserService', () => {
     userRepository = module.get(UserRepository);
   });
 
-  it('should be defined', () => {
+  it("should be defined", () => {
     expect(service).toBeDefined();
   });
 
-  describe('findById', () => {
-    it('should return user by id', async () => {
+  describe("findById", () => {
+    it("should return user by id", async () => {
       const mockUser = {
-        id: '1',
-        email: 'test@example.com',
-        firstName: 'John',
-        lastName: 'Doe',
-        tenantId: 'tenant-1',
+        id: "1",
+        email: "test@example.com",
+        firstName: "John",
+        lastName: "Doe",
+        tenantId: "tenant-1",
         isActive: true,
         createdAt: new Date(),
         updatedAt: new Date(),
@@ -55,50 +55,50 @@ describe('UserService', () => {
 
       userRepository.findById.mockResolvedValue(mockUser as User);
 
-      const result = await service.findById('1');
+      const result = await service.findById("1");
 
       expect(result).toEqual(mockUser);
-      expect(userRepository.findById).toHaveBeenCalledWith('1');
+      expect(userRepository.findById).toHaveBeenCalledWith("1");
     });
 
-    it('should throw error if user not found', async () => {
+    it("should throw error if user not found", async () => {
       userRepository.findById.mockResolvedValue(null);
 
-      await expect(service.findById('999')).rejects.toThrow('User not found');
+      await expect(service.findById("999")).rejects.toThrow("User not found");
     });
   });
 
-  describe('findByEmail', () => {
-    it('should return user by email', async () => {
+  describe("findByEmail", () => {
+    it("should return user by email", async () => {
       const mockUser = {
-        id: '1',
-        email: 'test@example.com',
-        firstName: 'John',
-        lastName: 'Doe',
-        tenantId: 'tenant-1',
+        id: "1",
+        email: "test@example.com",
+        firstName: "John",
+        lastName: "Doe",
+        tenantId: "tenant-1",
         isActive: true,
       };
 
       userRepository.findByEmail.mockResolvedValue(mockUser as User);
 
-      const result = await service.findByEmail('test@example.com');
+      const result = await service.findByEmail("test@example.com");
 
       expect(result).toEqual(mockUser);
-      expect(userRepository.findByEmail).toHaveBeenCalledWith('test@example.com');
+      expect(userRepository.findByEmail).toHaveBeenCalledWith("test@example.com");
     });
   });
 
-  describe('create', () => {
-    it('should create new user', async () => {
+  describe("create", () => {
+    it("should create new user", async () => {
       const createUserDto = {
-        email: 'newuser@example.com',
-        firstName: 'Jane',
-        lastName: 'Smith',
-        tenantId: 'tenant-1',
+        email: "newuser@example.com",
+        firstName: "Jane",
+        lastName: "Smith",
+        tenantId: "tenant-1",
       };
 
       const mockCreatedUser = {
-        id: '2',
+        id: "2",
         ...createUserDto,
         isActive: true,
         createdAt: new Date(),
@@ -113,58 +113,60 @@ describe('UserService', () => {
       expect(userRepository.create).toHaveBeenCalledWith(createUserDto);
     });
 
-    it('should throw error if email already exists', async () => {
+    it("should throw error if email already exists", async () => {
       const createUserDto = {
-        email: 'existing@example.com',
-        firstName: 'Jane',
-        lastName: 'Smith',
-        tenantId: 'tenant-1',
+        email: "existing@example.com",
+        firstName: "Jane",
+        lastName: "Smith",
+        tenantId: "tenant-1",
       };
 
       userRepository.findByEmail.mockResolvedValue({} as User);
 
-      await expect(service.create(createUserDto)).rejects.toThrow('User with this email already exists');
+      await expect(service.create(createUserDto)).rejects.toThrow(
+        "User with this email already exists",
+      );
     });
   });
 
-  describe('update', () => {
-    it('should update user', async () => {
+  describe("update", () => {
+    it("should update user", async () => {
       const updateDto: UpdateUserDto = {
-        firstName: 'Updated',
-        lastName: 'Name',
+        firstName: "Updated",
+        lastName: "Name",
       };
 
       const mockUpdatedUser = {
-        id: '1',
-        email: 'test@example.com',
-        firstName: 'Updated',
-        lastName: 'Name',
-        tenantId: 'tenant-1',
+        id: "1",
+        email: "test@example.com",
+        firstName: "Updated",
+        lastName: "Name",
+        tenantId: "tenant-1",
         isActive: true,
         updatedAt: new Date(),
       };
 
       userRepository.update.mockResolvedValue(mockUpdatedUser as User);
 
-      const result = await service.update('1', updateDto);
+      const result = await service.update("1", updateDto);
 
       expect(result).toEqual(mockUpdatedUser);
-      expect(userRepository.update).toHaveBeenCalledWith('1', updateDto);
+      expect(userRepository.update).toHaveBeenCalledWith("1", updateDto);
     });
   });
 
-  describe('findByTenant', () => {
-    it('should return users by tenant', async () => {
+  describe("findByTenant", () => {
+    it("should return users by tenant", async () => {
       const mockUsers = [
         {
-          id: '1',
-          email: 'user1@example.com',
-          tenantId: 'tenant-1',
+          id: "1",
+          email: "user1@example.com",
+          tenantId: "tenant-1",
         },
         {
-          id: '2',
-          email: 'user2@example.com',
-          tenantId: 'tenant-1',
+          id: "2",
+          email: "user2@example.com",
+          tenantId: "tenant-1",
         },
       ];
 
@@ -180,27 +182,27 @@ describe('UserService', () => {
         limit: 10,
       });
 
-      const result = await service.findByTenant('tenant-1', queryDto);
+      const result = await service.findByTenant("tenant-1", queryDto);
 
       expect(result.users).toHaveLength(2);
       expect(result.total).toBe(2);
-      expect(userRepository.findByTenant).toHaveBeenCalledWith('tenant-1', queryDto);
+      expect(userRepository.findByTenant).toHaveBeenCalledWith("tenant-1", queryDto);
     });
   });
 
-  describe('deactivate', () => {
-    it('should deactivate user', async () => {
+  describe("deactivate", () => {
+    it("should deactivate user", async () => {
       const mockUser = {
-        id: '1',
+        id: "1",
         isActive: false,
       };
 
       userRepository.update.mockResolvedValue(mockUser as User);
 
-      const result = await service.deactivate('1');
+      const result = await service.deactivate("1");
 
       expect(result.isActive).toBe(false);
-      expect(userRepository.update).toHaveBeenCalledWith('1', { isActive: false });
+      expect(userRepository.update).toHaveBeenCalledWith("1", { isActive: false });
     });
   });
 });

@@ -1,7 +1,7 @@
-'use client';
+"use client";
 
-import { WorkflowConnection, WorkflowNode } from '@/lib/types/workflow';
-import React, { useMemo } from 'react';
+import { WorkflowConnection, WorkflowNode } from "@/lib/types/workflow";
+import React, { useMemo } from "react";
 
 interface WorkflowConnectionsProps {
   connections: WorkflowConnection[];
@@ -28,8 +28,8 @@ export function WorkflowConnections({
     const paths: ConnectionPath[] = [];
 
     connections.forEach((connection) => {
-      const sourceNode = nodes.find(n => n.id === connection.sourceNodeId);
-      const targetNode = nodes.find(n => n.id === connection.targetNodeId);
+      const sourceNode = nodes.find((n) => n.id === connection.sourceNodeId);
+      const targetNode = nodes.find((n) => n.id === connection.targetNodeId);
 
       if (sourceNode && targetNode) {
         // Calculate connection points
@@ -54,24 +54,11 @@ export function WorkflowConnections({
   }, [connections, nodes]);
 
   return (
-    <svg
-      className="absolute inset-0 pointer-events-none"
-      style={{ zIndex: 1 }}
-    >
+    <svg className="absolute inset-0 pointer-events-none" style={{ zIndex: 1 }}>
       <defs>
         {/* Arrow marker */}
-        <marker
-          id="arrowhead"
-          markerWidth="10"
-          markerHeight="7"
-          refX="9"
-          refY="3.5"
-          orient="auto"
-        >
-          <polygon
-            points="0 0, 10 3.5, 0 7"
-            fill="hsl(var(--muted-foreground))"
-          />
+        <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+          <polygon points="0 0, 10 3.5, 0 7" fill="hsl(var(--muted-foreground))" />
         </marker>
 
         {/* Active arrow marker */}
@@ -83,10 +70,7 @@ export function WorkflowConnections({
           refY="3.5"
           orient="auto"
         >
-          <polygon
-            points="0 0, 10 3.5, 0 7"
-            fill="hsl(var(--primary))"
-          />
+          <polygon points="0 0, 10 3.5, 0 7" fill="hsl(var(--primary))" />
         </marker>
       </defs>
 
@@ -107,10 +91,7 @@ export function WorkflowConnections({
 
       {/* Temporary connection line while connecting */}
       {isConnecting && connectionStart && (
-        <TempConnectionLine
-          sourceNodeId={connectionStart}
-          nodes={nodes}
-        />
+        <TempConnectionLine sourceNodeId={connectionStart} nodes={nodes} />
       )}
     </svg>
   );
@@ -131,22 +112,17 @@ function TempConnectionLine({
       setMousePosition({ x: e.clientX, y: e.clientY });
     };
 
-    document.addEventListener('mousemove', handleMouseMove);
-    return () => document.removeEventListener('mousemove', handleMouseMove);
+    document.addEventListener("mousemove", handleMouseMove);
+    return () => document.removeEventListener("mousemove", handleMouseMove);
   }, []);
 
-  const sourceNode = nodes.find(n => n.id === sourceNodeId);
+  const sourceNode = nodes.find((n) => n.id === sourceNodeId);
   if (!sourceNode) return null;
 
   const sourceX = sourceNode.position.x + 192;
   const sourceY = sourceNode.position.y + 60;
 
-  const path = createCurvedPath(
-    sourceX,
-    sourceY,
-    mousePosition.x,
-    mousePosition.y
-  );
+  const path = createCurvedPath(sourceX, sourceY, mousePosition.x, mousePosition.y);
 
   return (
     <path
@@ -165,7 +141,7 @@ function createCurvedPath(
   sourceX: number,
   sourceY: number,
   targetX: number,
-  targetY: number
+  targetY: number,
 ): string {
   const dx = targetX - sourceX;
   const dy = targetY - sourceY;

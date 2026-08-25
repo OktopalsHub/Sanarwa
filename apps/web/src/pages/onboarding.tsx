@@ -1,7 +1,7 @@
-'use client';
+"use client";
 
-import { ProtectedRoute } from '@/components/auth/protected-route';
-import { TenantOnboarding } from '@/components/tenant/tenant-onboarding';
+import { ProtectedRoute } from "@/components/auth/protected-route";
+import { TenantOnboarding } from "@/components/tenant/tenant-onboarding";
 
 export default function OnboardingPage() {
   return (

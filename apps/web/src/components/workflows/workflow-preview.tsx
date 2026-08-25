@@ -1,21 +1,30 @@
-'use client';
+"use client";
 
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { WorkflowValidator } from '@/lib/services/workflow-validation';
-import { Workflow, WorkflowNode } from '@/lib/types/workflow';
-import { ExclamationTriangleIcon, ArrowRightIcon, CheckCircleIcon, ClockIcon, EyeIcon, PlayIcon, StopIcon, XMarkIcon } from '@heroicons/react/24/outline'
-import { useMemo, useState } from 'react';
+} from "@/components/ui/dialog";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { WorkflowValidator } from "@/lib/services/workflow-validation";
+import { Workflow, WorkflowNode } from "@/lib/types/workflow";
+import {
+  ExclamationTriangleIcon,
+  ArrowRightIcon,
+  CheckCircleIcon,
+  ClockIcon,
+  EyeIcon,
+  PlayIcon,
+  StopIcon,
+  XMarkIcon,
+} from "@heroicons/react/24/outline";
+import { useMemo, useState } from "react";
 
 interface WorkflowPreviewProps {
   workflow: Workflow;
@@ -27,20 +36,15 @@ interface WorkflowPreviewProps {
 interface SimulationStep {
   nodeId: string;
   node: WorkflowNode;
-  status: 'pending' | 'running' | 'completed' | 'failed';
+  status: "pending" | "running" | "completed" | "failed";
   startTime?: Date;
   endTime?: Date;
   output?: any;
   error?: string;
 }
 
-export function WorkflowPreview({
-  workflow,
-  isOpen,
-  onClose,
-  onTest,
-}: WorkflowPreviewProps) {
-  const [activeTab, setActiveTab] = useState('overview');
+export function WorkflowPreview({ workflow, isOpen, onClose, onTest }: WorkflowPreviewProps) {
+  const [activeTab, setActiveTab] = useState("overview");
   const [isSimulating, setIsSimulating] = useState(false);
   const [simulationSteps, setSimulationSteps] = useState<SimulationStep[]>([]);
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
@@ -56,23 +60,23 @@ export function WorkflowPreview({
     const visited = new Set<string>();
 
     // Start with trigger nodes
-    const triggerNodes = workflow.nodes.filter(node => node.type === 'trigger');
+    const triggerNodes = workflow.nodes.filter((node) => node.type === "trigger");
 
     const traverse = (nodeId: string) => {
       if (visited.has(nodeId)) return;
 
-      const node = workflow.nodes.find(n => n.id === nodeId);
+      const node = workflow.nodes.find((n) => n.id === nodeId);
       if (!node) return;
 
       visited.add(nodeId);
       order.push(node);
 
       // Find connected nodes
-      const connections = workflow.connections.filter(c => c.sourceNodeId === nodeId);
-      connections.forEach(conn => traverse(conn.targetNodeId));
+      const connections = workflow.connections.filter((c) => c.sourceNodeId === nodeId);
+      connections.forEach((conn) => traverse(conn.targetNodeId));
     };
 
-    triggerNodes.forEach(trigger => traverse(trigger.id));
+    triggerNodes.forEach((trigger) => traverse(trigger.id));
 
     return order;
   }, [workflow]);
@@ -83,10 +87,10 @@ export function WorkflowPreview({
     setIsSimulating(true);
     setCurrentStepIndex(0);
 
-    const steps: SimulationStep[] = executionOrder.map(node => ({
+    const steps: SimulationStep[] = executionOrder.map((node) => ({
       nodeId: node.id,
       node,
-      status: 'pending',
+      status: "pending",
     }));
 
     setSimulationSteps(steps);
@@ -100,29 +104,31 @@ export function WorkflowPreview({
       setCurrentStepIndex(i);
 
       // Update step to running
-      setSimulationSteps(prev => prev.map((step, index) =>
-        index === i
-          ? { ...step, status: 'running', startTime: new Date() }
-          : step
-      ));
+      setSimulationSteps((prev) =>
+        prev.map((step, index) =>
+          index === i ? { ...step, status: "running", startTime: new Date() } : step,
+        ),
+      );
 
       // Simulate processing time
-      await new Promise(resolve => setTimeout(resolve, 1000 + Math.random() * 2000));
+      await new Promise((resolve) => setTimeout(resolve, 1000 + Math.random() * 2000));
 
       // Simulate success/failure (90% success rate)
       const success = Math.random() > 0.1;
 
-      setSimulationSteps(prev => prev.map((step, index) =>
-        index === i
-          ? {
-            ...step,
-            status: success ? 'completed' : 'failed',
-            endTime: new Date(),
-            output: success ? generateMockOutput(step.node) : undefined,
-            error: success ? undefined : 'Simulated error for testing'
-          }
-          : step
-      ));
+      setSimulationSteps((prev) =>
+        prev.map((step, index) =>
+          index === i
+            ? {
+                ...step,
+                status: success ? "completed" : "failed",
+                endTime: new Date(),
+                output: success ? generateMockOutput(step.node) : undefined,
+                error: success ? undefined : "Simulated error for testing",
+              }
+            : step,
+        ),
+      );
 
       if (!success) break;
     }
@@ -132,17 +138,17 @@ export function WorkflowPreview({
 
   const generateMockOutput = (node: WorkflowNode) => {
     switch (node.type) {
-      case 'trigger':
+      case "trigger":
         return { triggered: true, timestamp: new Date().toISOString() };
-      case 'action':
+      case "action":
         const config = node.data.config as any;
-        if (config.type === 'email') {
+        if (config.type === "email") {
           return { sent: true, messageId: `msg_${Math.random().toString(36).substr(2, 9)}` };
         }
         return { executed: true };
-      case 'condition':
+      case "condition":
         return { result: Math.random() > 0.5, value: Math.random() * 100 };
-      case 'delay':
+      case "delay":
         return { delayed: true, duration: (node.data.config as any).duration };
       default:
         return { processed: true };
@@ -195,9 +201,7 @@ export function WorkflowPreview({
                     <CardHeader>
                       <CardTitle className="text-lg">{workflow.name}</CardTitle>
                       {workflow.description && (
-                        <p className="text-sm text-muted-foreground">
-                          {workflow.description}
-                        </p>
+                        <p className="text-sm text-muted-foreground">{workflow.description}</p>
                       )}
                     </CardHeader>
                     <CardContent>
@@ -216,7 +220,9 @@ export function WorkflowPreview({
                         </div>
                         <div>
                           <p className="text-sm font-medium">Connections</p>
-                          <p className="text-sm text-muted-foreground">{workflow.connections.length}</p>
+                          <p className="text-sm text-muted-foreground">
+                            {workflow.connections.length}
+                          </p>
                         </div>
                       </div>
                     </CardContent>
@@ -228,8 +234,11 @@ export function WorkflowPreview({
                     </CardHeader>
                     <CardContent>
                       <div className="space-y-2">
-                        {workflow.nodes.map(node => (
-                          <div key={node.id} className="flex items-center justify-between p-2 border rounded">
+                        {workflow.nodes.map((node) => (
+                          <div
+                            key={node.id}
+                            className="flex items-center justify-between p-2 border rounded"
+                          >
                             <div className="flex items-center gap-2">
                               <Badge variant="secondary">{node.type}</Badge>
                               <span className="text-sm">{node.data.label}</span>
@@ -263,16 +272,18 @@ export function WorkflowPreview({
                     <CardContent>
                       <p className="text-sm text-muted-foreground mb-4">
                         {validationResult.isValid
-                          ? 'Your workflow is valid and ready to run.'
-                          : 'Your workflow has validation issues that need to be addressed.'
-                        }
+                          ? "Your workflow is valid and ready to run."
+                          : "Your workflow has validation issues that need to be addressed."}
                       </p>
 
                       {validationResult.errors.length > 0 && (
                         <div className="space-y-2 mb-4">
                           <h4 className="text-sm font-medium text-red-600">Errors</h4>
-                          {validationResult.errors.map(error => (
-                            <div key={error.id} className="p-2 border border-red-200 rounded bg-red-50">
+                          {validationResult.errors.map((error) => (
+                            <div
+                              key={error.id}
+                              className="p-2 border border-red-200 rounded bg-red-50"
+                            >
                               <p className="text-sm text-red-800">{error.message}</p>
                             </div>
                           ))}
@@ -282,8 +293,11 @@ export function WorkflowPreview({
                       {validationResult.warnings.length > 0 && (
                         <div className="space-y-2">
                           <h4 className="text-sm font-medium text-yellow-600">Warnings</h4>
-                          {validationResult.warnings.map(warning => (
-                            <div key={warning.id} className="p-2 border border-yellow-200 rounded bg-yellow-50">
+                          {validationResult.warnings.map((warning) => (
+                            <div
+                              key={warning.id}
+                              className="p-2 border border-yellow-200 rounded bg-yellow-50"
+                            >
                               <p className="text-sm text-yellow-800">{warning.message}</p>
                             </div>
                           ))}
@@ -327,12 +341,15 @@ export function WorkflowPreview({
                 <ScrollArea className="flex-1">
                   <div className="space-y-2">
                     {simulationSteps.map((step, index) => (
-                      <Card key={step.nodeId} className={cn(
-                        "transition-colors",
-                        index === currentStepIndex && isSimulating && "border-primary",
-                        step.status === 'completed' && "border-green-500",
-                        step.status === 'failed' && "border-red-500"
-                      )}>
+                      <Card
+                        key={step.nodeId}
+                        className={cn(
+                          "transition-colors",
+                          index === currentStepIndex && isSimulating && "border-primary",
+                          step.status === "completed" && "border-green-500",
+                          step.status === "failed" && "border-red-500",
+                        )}
+                      >
                         <CardContent className="p-4">
                           <div className="flex items-center justify-between">
                             <div className="flex items-center gap-2">
@@ -340,20 +357,26 @@ export function WorkflowPreview({
                               <span className="text-sm font-medium">{step.node.data.label}</span>
                             </div>
                             <div className="flex items-center gap-2">
-                              {step.status === 'running' && (
+                              {step.status === "running" && (
                                 <ClockIcon className="h-4 w-4 animate-spin text-blue-500" />
                               )}
-                              {step.status === 'completed' && (
+                              {step.status === "completed" && (
                                 <CheckCircleIcon className="h-4 w-4 text-green-500" />
                               )}
-                              {step.status === 'failed' && (
+                              {step.status === "failed" && (
                                 <ExclamationTriangleIcon className="h-4 w-4 text-red-500" />
                               )}
-                              <Badge variant={
-                                step.status === 'completed' ? 'default' :
-                                  step.status === 'failed' ? 'destructive' :
-                                    step.status === 'running' ? 'secondary' : 'outline'
-                              }>
+                              <Badge
+                                variant={
+                                  step.status === "completed"
+                                    ? "default"
+                                    : step.status === "failed"
+                                      ? "destructive"
+                                      : step.status === "running"
+                                        ? "secondary"
+                                        : "outline"
+                                }
+                              >
                                 {step.status}
                               </Badge>
                             </div>
@@ -431,5 +454,5 @@ export function WorkflowPreview({
 }
 
 function cn(...classes: (string | undefined | null | false)[]): string {
-  return classes.filter(Boolean).join(' ');
+  return classes.filter(Boolean).join(" ");
 }

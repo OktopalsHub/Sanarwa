@@ -1,45 +1,65 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { providerApi } from '@/lib/api/provider';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Badge } from '@/components/ui/badge';
-import { ArrowTrendingUpIcon, ArrowTrendingDownIcon, SignalIcon, ClockIcon, CheckCircleIcon, XCircleIcon } from '@heroicons/react/24/outline'
+import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { providerApi } from "@/lib/api/provider";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
+import {
+  ArrowTrendingUpIcon,
+  ArrowTrendingDownIcon,
+  SignalIcon,
+  ClockIcon,
+  CheckCircleIcon,
+  XCircleIcon,
+} from "@heroicons/react/24/outline";
 
 interface ProviderMetricsProps {
   providerId: string;
 }
 
 export function ProviderMetrics({ providerId }: ProviderMetricsProps) {
-  const [timeRange, setTimeRange] = useState('7d');
+  const [timeRange, setTimeRange] = useState("7d");
 
   const { data: metrics, isLoading } = useQuery({
-    queryKey: ['provider-metrics', providerId, timeRange],
-    queryFn: () => providerApi.getProviderMetrics(providerId, {
-      startDate: new Date(Date.now() - (timeRange === '24h' ? 24 * 60 * 60 * 1000 :
-        timeRange === '7d' ? 7 * 24 * 60 * 60 * 1000 :
-          timeRange === '30d' ? 30 * 24 * 60 * 60 * 1000 :
-            90 * 24 * 60 * 60 * 1000)),
-      endDate: new Date(),
-      groupBy: timeRange === '24h' ? 'hour' : 'day',
-    }),
+    queryKey: ["provider-metrics", providerId, timeRange],
+    queryFn: () =>
+      providerApi.getProviderMetrics(providerId, {
+        startDate: new Date(
+          Date.now() -
+            (timeRange === "24h"
+              ? 24 * 60 * 60 * 1000
+              : timeRange === "7d"
+                ? 7 * 24 * 60 * 60 * 1000
+                : timeRange === "30d"
+                  ? 30 * 24 * 60 * 60 * 1000
+                  : 90 * 24 * 60 * 60 * 1000),
+        ),
+        endDate: new Date(),
+        groupBy: timeRange === "24h" ? "hour" : "day",
+      }),
   });
 
   const formatNumber = (num: number) => {
-    if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M';
-    if (num >= 1000) return (num / 1000).toFixed(1) + 'K';
+    if (num >= 1000000) return (num / 1000000).toFixed(1) + "M";
+    if (num >= 1000) return (num / 1000).toFixed(1) + "K";
     return num.toString();
   };
 
   const formatPercentage = (num: number) => {
-    return (num * 100).toFixed(1) + '%';
+    return (num * 100).toFixed(1) + "%";
   };
 
   const formatDuration = (ms: number) => {
-    if (ms < 1000) return ms.toFixed(0) + 'ms';
-    return (ms / 1000).toFixed(1) + 's';
+    if (ms < 1000) return ms.toFixed(0) + "ms";
+    return (ms / 1000).toFixed(1) + "s";
   };
 
   if (isLoading) {
@@ -111,7 +131,9 @@ export function ProviderMetrics({ providerId }: ProviderMetricsProps) {
                 ) : (
                   <ArrowTrendingDownIcon className="h-4 w-4 text-red-500" />
                 )}
-                <span className={`text-sm ${(metrics.requestsTrend ?? 0) > 0 ? 'text-green-500' : 'text-red-500'}`}>
+                <span
+                  className={`text-sm ${(metrics.requestsTrend ?? 0) > 0 ? "text-green-500" : "text-red-500"}`}
+                >
                   {Math.abs(metrics.requestsTrend ?? 0).toFixed(1)}%
                 </span>
               </div>
@@ -161,14 +183,15 @@ export function ProviderMetrics({ providerId }: ProviderMetricsProps) {
         <Card>
           <CardHeader>
             <CardTitle>Error Breakdown</CardTitle>
-            <CardDescription>
-              Most common errors encountered by this provider
-            </CardDescription>
+            <CardDescription>Most common errors encountered by this provider</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
               {metrics.errorBreakdown.map((error, index) => (
-                <div key={index} className="flex items-center justify-between p-3 border rounded-lg">
+                <div
+                  key={index}
+                  className="flex items-center justify-between p-3 border rounded-lg"
+                >
                   <div className="space-y-1">
                     <p className="font-medium">{error.type ?? error.error}</p>
                     <p className="text-sm text-muted-foreground">{error.message ?? error.error}</p>
@@ -205,9 +228,7 @@ export function ProviderMetrics({ providerId }: ProviderMetricsProps) {
       <Card>
         <CardHeader>
           <CardTitle>Usage Distribution</CardTitle>
-          <CardDescription>
-            Request volume distribution over time
-          </CardDescription>
+          <CardDescription>Request volume distribution over time</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="text-center py-8 text-muted-foreground">

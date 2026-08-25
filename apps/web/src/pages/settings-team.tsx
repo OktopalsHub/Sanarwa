@@ -1,10 +1,9 @@
-'use client';
+"use client";
 
-import { TeamManagement } from '@/components/tenant/team-management';
-import { Card, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { useTenant } from '@/contexts/tenant-context';
-import { ArrowPathIcon } from '@heroicons/react/24/outline'
-
+import { TeamManagement } from "@/components/tenant/team-management";
+import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { useTenant } from "@/contexts/tenant-context";
+import { ArrowPathIcon } from "@heroicons/react/24/outline";
 
 export default function TeamManagementPage() {
   const { currentTenant, isLoading } = useTenant();
@@ -22,9 +21,7 @@ export default function TeamManagementPage() {
       <Card>
         <CardHeader>
           <CardTitle>No Tenant Selected</CardTitle>
-          <CardDescription>
-            Please select a tenant to manage team members.
-          </CardDescription>
+          <CardDescription>Please select a tenant to manage team members.</CardDescription>
         </CardHeader>
       </Card>
     );

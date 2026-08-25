@@ -1,6 +1,6 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import { IPushProvider, PushPayload, PushResponse } from '../push-provider.interface';
+import { Injectable, Logger } from "@nestjs/common";
+import { ConfigService } from "@nestjs/config";
+import { IPushProvider, PushPayload, PushResponse } from "../push-provider.interface";
 
 interface FCMResponse {
   success: number;
@@ -17,13 +17,15 @@ export class FCMProvider implements IPushProvider {
   private readonly projectId: string;
 
   constructor(private configService: ConfigService) {
-    this.serverKey = this.configService.get('FCM_SERVER_KEY') || '';
-    this.projectId = this.configService.get('FCM_PROJECT_ID') || '';
+    this.serverKey = this.configService.get("FCM_SERVER_KEY") || "";
+    this.projectId = this.configService.get("FCM_PROJECT_ID") || "";
   }
 
   async sendPushNotification(payload: PushPayload): Promise<PushResponse> {
     try {
-      const tokens = Array.isArray(payload.deviceTokens) ? payload.deviceTokens : [payload.deviceTokens];
+      const tokens = Array.isArray(payload.deviceTokens)
+        ? payload.deviceTokens
+        : [payload.deviceTokens];
 
       // Build FCM payload with deep linking support
       const fcmPayload: any = {
@@ -32,7 +34,7 @@ export class FCMProvider implements IPushProvider {
           title: payload.title,
           body: payload.body,
           image: payload.imageUrl,
-          sound: payload.sound || 'default',
+          sound: payload.sound || "default",
           badge: payload.badge,
           click_action: payload.clickAction || payload.deepLink?.url,
         },
@@ -46,7 +48,7 @@ export class FCMProvider implements IPushProvider {
             ios_category: payload.deepLink.iosCategory,
           }),
         },
-        priority: payload.priority || 'high',
+        priority: payload.priority || "high",
         time_to_live: payload.ttl || 3600,
       };
 
@@ -61,11 +63,13 @@ export class FCMProvider implements IPushProvider {
             tag: payload.android.tag,
             sticky: payload.android.sticky,
             vibrate_timings: payload.android.vibrate,
-            light_settings: payload.android.lights ? {
-              color: payload.android.lights.color,
-              light_on_duration: `${payload.android.lights.onMs}ms`,
-              light_off_duration: `${payload.android.lights.offMs}ms`,
-            } : undefined,
+            light_settings: payload.android.lights
+              ? {
+                  color: payload.android.lights.color,
+                  light_on_duration: `${payload.android.lights.onMs}ms`,
+                  light_off_duration: `${payload.android.lights.offMs}ms`,
+                }
+              : undefined,
           },
           data: fcmPayload.data,
         };
@@ -80,14 +84,14 @@ export class FCMProvider implements IPushProvider {
                 title: payload.title,
                 body: payload.body,
                 subtitle: payload.ios.subtitle,
-                'launch-image': payload.ios.launchImage,
+                "launch-image": payload.ios.launchImage,
               },
               badge: payload.badge,
-              sound: payload.sound || 'default',
-              'thread-id': payload.ios.threadId,
-              'mutable-content': payload.ios.mutableContent ? 1 : 0,
-              'content-available': payload.ios.contentAvailable ? 1 : 0,
-              'interruption-level': payload.ios.interruptionLevel || 'active',
+              sound: payload.sound || "default",
+              "thread-id": payload.ios.threadId,
+              "mutable-content": payload.ios.mutableContent ? 1 : 0,
+              "content-available": payload.ios.contentAvailable ? 1 : 0,
+              "interruption-level": payload.ios.interruptionLevel || "active",
               category: payload.category || payload.ios.threadId,
             },
             // Custom data
@@ -101,24 +105,25 @@ export class FCMProvider implements IPushProvider {
         fcmPayload.data.actions = JSON.stringify(payload.actions);
       }
 
-      const response = await fetch('https://fcm.googleapis.com/fcm/send', {
-        method: 'POST',
+      const response = await fetch("https://fcm.googleapis.com/fcm/send", {
+        method: "POST",
         headers: {
-          'Authorization': `key=${this.serverKey}`,
-          'Content-Type': 'application/json',
+          Authorization: `key=${this.serverKey}`,
+          "Content-Type": "application/json",
         },
         body: JSON.stringify(fcmPayload),
       });
 
-      const result = await response.json() as FCMResponse;
+      const result = (await response.json()) as FCMResponse;
 
       if (!response.ok) {
         throw new Error(`FCM API error: ${result.error || response.statusText}`);
       }
 
-      const failedTokens = result.results
-        ?.map((res: any, index: number) => res.error ? tokens[index] : null)
-        .filter((token): token is string => token !== null) || [];
+      const failedTokens =
+        result.results
+          ?.map((res: any, index: number) => (res.error ? tokens[index] : null))
+          .filter((token): token is string => token !== null) || [];
 
       this.logger.log(`FCM push sent - Success: ${result.success}, Failure: ${result.failure}`);
 
@@ -128,14 +133,14 @@ export class FCMProvider implements IPushProvider {
         successCount: result.success,
         failureCount: result.failure,
         failedTokens,
-        provider: 'fcm',
+        provider: "fcm",
       };
     } catch (error) {
       this.logger.error(`Failed to send FCM push: ${error.message}`, error.stack);
       return {
         success: false,
         error: error.message,
-        provider: 'fcm',
+        provider: "fcm",
       };
     }
   }
@@ -145,6 +150,6 @@ export class FCMProvider implements IPushProvider {
   }
 
   getProviderName(): string {
-    return 'fcm';
+    return "fcm";
   }
 }

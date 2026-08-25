@@ -1,24 +1,36 @@
-import { ErrorScenarios } from '@/components/docs/error-scenarios';
-import { FeedbackSystem } from '@/components/docs/feedback-system';
-import { TroubleshootingGuide } from '@/components/docs/troubleshooting-guide';
-import { Badge } from '@/components/ui/badge';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { troubleshootingItems } from '@/lib/data/troubleshooting-data';
-import { ExclamationTriangleIcon, BugAntIcon, ArrowTopRightOnSquareIcon, QuestionMarkCircleIcon, ChatBubbleLeftRightIcon } from '@heroicons/react/24/outline'
+import { ErrorScenarios } from "@/components/docs/error-scenarios";
+import { FeedbackSystem } from "@/components/docs/feedback-system";
+import { TroubleshootingGuide } from "@/components/docs/troubleshooting-guide";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { troubleshootingItems } from "@/lib/data/troubleshooting-data";
+import {
+  ExclamationTriangleIcon,
+  BugAntIcon,
+  ArrowTopRightOnSquareIcon,
+  QuestionMarkCircleIcon,
+  ChatBubbleLeftRightIcon,
+} from "@heroicons/react/24/outline";
 
-import Link from '@/compat/next-link';
+import Link from "@/compat/next-link";
 
 export default function TroubleshootingPage() {
-  const categoryStats = troubleshootingItems.reduce((acc, item) => {
-    acc[item.category] = (acc[item.category] || 0) + 1;
-    return acc;
-  }, {} as Record<string, number>);
+  const categoryStats = troubleshootingItems.reduce(
+    (acc, item) => {
+      acc[item.category] = (acc[item.category] || 0) + 1;
+      return acc;
+    },
+    {} as Record<string, number>,
+  );
 
-  const severityStats = troubleshootingItems.reduce((acc, item) => {
-    acc[item.severity] = (acc[item.severity] || 0) + 1;
-    return acc;
-  }, {} as Record<string, number>);
+  const severityStats = troubleshootingItems.reduce(
+    (acc, item) => {
+      acc[item.severity] = (acc[item.severity] || 0) + 1;
+      return acc;
+    },
+    {} as Record<string, number>,
+  );
 
   return (
     <div className="space-y-8">
@@ -29,8 +41,8 @@ export default function TroubleshootingPage() {
           <h1 className="text-4xl font-bold tracking-tight">Troubleshooting Guide</h1>
         </div>
         <p className="text-xl text-muted-foreground max-w-3xl">
-          Find solutions to common issues, error messages, and integration problems.
-          Search by category, severity, or keywords to quickly find the help you need.
+          Find solutions to common issues, error messages, and integration problems. Search by
+          category, severity, or keywords to quickly find the help you need.
         </p>
       </div>
 
@@ -43,9 +55,7 @@ export default function TroubleshootingPage() {
               <h3 className="font-medium">Total Issues</h3>
             </div>
             <p className="text-2xl font-bold">{troubleshootingItems.length}</p>
-            <p className="text-sm text-muted-foreground">
-              Common problems and solutions
-            </p>
+            <p className="text-sm text-muted-foreground">Common problems and solutions</p>
           </CardContent>
         </Card>
 
@@ -58,9 +68,7 @@ export default function TroubleshootingPage() {
               <h3 className="font-medium">Critical Issues</h3>
             </div>
             <p className="text-2xl font-bold">{severityStats.critical || 0}</p>
-            <p className="text-sm text-muted-foreground">
-              High-priority problems
-            </p>
+            <p className="text-sm text-muted-foreground">High-priority problems</p>
           </CardContent>
         </Card>
 
@@ -73,9 +81,7 @@ export default function TroubleshootingPage() {
               <h3 className="font-medium">Categories</h3>
             </div>
             <p className="text-2xl font-bold">{Object.keys(categoryStats).length}</p>
-            <p className="text-sm text-muted-foreground">
-              Different problem areas
-            </p>
+            <p className="text-sm text-muted-foreground">Different problem areas</p>
           </CardContent>
         </Card>
 
@@ -88,9 +94,7 @@ export default function TroubleshootingPage() {
             <p className="text-2xl font-bold">
               {troubleshootingItems.reduce((acc, item) => acc + item.solutions.length, 0)}
             </p>
-            <p className="text-sm text-muted-foreground">
-              Step-by-step solutions
-            </p>
+            <p className="text-sm text-muted-foreground">Step-by-step solutions</p>
           </CardContent>
         </Card>
       </div>
@@ -106,9 +110,12 @@ export default function TroubleshootingPage() {
         <CardContent>
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             {Object.entries(categoryStats).map(([category, count]) => (
-              <div key={category} className="flex items-center justify-between p-3 border rounded-lg">
+              <div
+                key={category}
+                className="flex items-center justify-between p-3 border rounded-lg"
+              >
                 <div>
-                  <h4 className="font-medium capitalize">{category.replace('-', ' ')}</h4>
+                  <h4 className="font-medium capitalize">{category.replace("-", " ")}</h4>
                   <p className="text-sm text-muted-foreground">{count} issues</p>
                 </div>
                 <Badge variant="secondary">{count}</Badge>
@@ -134,7 +141,9 @@ export default function TroubleshootingPage() {
             >
               <div>
                 <h4 className="font-medium">Invalid API Key Error</h4>
-                <p className="text-sm text-muted-foreground">Authentication issues and 401 errors</p>
+                <p className="text-sm text-muted-foreground">
+                  Authentication issues and 401 errors
+                </p>
               </div>
               <Badge variant="destructive">High</Badge>
             </Link>
@@ -167,7 +176,9 @@ export default function TroubleshootingPage() {
             >
               <div>
                 <h4 className="font-medium">SDK Installation Problems</h4>
-                <p className="text-sm text-muted-foreground">Package installation and import issues</p>
+                <p className="text-sm text-muted-foreground">
+                  Package installation and import issues
+                </p>
               </div>
               <Badge variant="outline">Medium</Badge>
             </Link>
@@ -197,8 +208,8 @@ export default function TroubleshootingPage() {
             <div>
               <h3 className="text-xl font-semibold mb-2">Common Error Scenarios</h3>
               <p className="text-muted-foreground">
-                Detailed error scenarios with HTTP status codes, error messages, and step-by-step solutions.
-                Each scenario includes code examples and prevention strategies.
+                Detailed error scenarios with HTTP status codes, error messages, and step-by-step
+                solutions. Each scenario includes code examples and prevention strategies.
               </p>
             </div>
             <ErrorScenarios />
@@ -210,9 +221,7 @@ export default function TroubleshootingPage() {
       <Card>
         <CardHeader>
           <CardTitle>Additional Resources</CardTitle>
-          <CardDescription>
-            More ways to get help and support
-          </CardDescription>
+          <CardDescription>More ways to get help and support</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
@@ -302,10 +311,7 @@ export default function TroubleshootingPage() {
       </Card>
 
       {/* Feedback */}
-      <FeedbackSystem
-        page="troubleshooting"
-        category="support"
-      />
+      <FeedbackSystem page="troubleshooting" category="support" />
     </div>
   );
 }

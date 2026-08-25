@@ -8,9 +8,9 @@ import {
   PasswordResetRequest,
   RegisterData,
   TokenResponse,
-  User
-} from './types/auth';
-import { ApiClient, createApiClient } from './client';
+  User,
+} from "./types/auth";
+import { ApiClient, createApiClient } from "./client";
 
 type RawAuthPayload = {
   accessToken?: string;
@@ -21,34 +21,34 @@ type RawAuthPayload = {
   id?: string;
   email?: string;
   name?: string;
-  tenant?: AuthResponse['tenant'];
+  tenant?: AuthResponse["tenant"];
   tenantSlug?: string;
 };
 
 function pickTokens(raw: RawAuthPayload) {
   return {
-    accessToken: raw.accessToken || raw.access_token || '',
-    refreshToken: raw.refreshToken || raw.refresh_token || '',
+    accessToken: raw.accessToken || raw.access_token || "",
+    refreshToken: raw.refreshToken || raw.refresh_token || "",
   };
 }
 
 function toAuthUser(raw: RawAuthPayload): User {
   if (raw.user) {
-    const nameParts = (raw.user.name || '').split(' ');
+    const nameParts = (raw.user.name || "").split(" ");
     return {
       ...raw.user,
-      firstName: raw.user.firstName || nameParts[0] || 'User',
-      lastName: raw.user.lastName || nameParts.slice(1).join(' ') || 'Account',
+      firstName: raw.user.firstName || nameParts[0] || "User",
+      lastName: raw.user.lastName || nameParts.slice(1).join(" ") || "Account",
     } as User;
   }
 
-  const nameParts = (raw.name || '').split(' ');
+  const nameParts = (raw.name || "").split(" ");
   return {
-    id: raw.id || '',
-    email: raw.email || '',
-    firstName: nameParts[0] || 'User',
-    lastName: nameParts.slice(1).join(' ') || 'Account',
-    name: raw.name || '',
+    id: raw.id || "",
+    email: raw.email || "",
+    firstName: nameParts[0] || "User",
+    lastName: nameParts.slice(1).join(" ") || "Account",
+    name: raw.name || "",
   } as unknown as User;
 }
 
@@ -59,7 +59,7 @@ function toAuthResponse(raw: RawAuthPayload): AuthResponse {
     accessToken: tokens.accessToken,
     refreshToken: tokens.refreshToken,
     expiresIn: 3600,
-    tokenType: 'Bearer',
+    tokenType: "Bearer",
     tenant: raw.tenant,
     tenantSlug: raw.tenantSlug || raw.tenant?.subdomain || raw.tenant?.slug,
   };
@@ -91,11 +91,9 @@ class AuthApiClient {
       ...(credentials.tenantId && { tenantId: credentials.tenantId }),
     };
 
-    const response = await this.apiClient.post<RawAuthPayload>(
-      '/auth/login',
-      loginData,
-      { tenantScoped: false },
-    );
+    const response = await this.apiClient.post<RawAuthPayload>("/auth/login", loginData, {
+      tenantScoped: false,
+    });
 
     const authResponse = toAuthResponse(response);
 
@@ -119,18 +117,16 @@ class AuthApiClient {
     const registerData = {
       email: userData.email,
       password: userData.password,
-      name: [userData.firstName, userData.lastName].filter(Boolean).join(' ').trim() || undefined,
+      name: [userData.firstName, userData.lastName].filter(Boolean).join(" ").trim() || undefined,
       ...(userData.authProvider && { authProvider: userData.authProvider }),
       ...(userData.googleId && { googleId: userData.googleId }),
       ...(userData.githubId && { githubId: userData.githubId }),
       ...(userData.avatar && { avatar: userData.avatar }),
     };
 
-    const response = await this.apiClient.post<RawAuthPayload>(
-      '/auth/register',
-      registerData,
-      { tenantScoped: false },
-    );
+    const response = await this.apiClient.post<RawAuthPayload>("/auth/register", registerData, {
+      tenantScoped: false,
+    });
 
     const authResponse = toAuthResponse(response);
 
@@ -163,23 +159,23 @@ class AuthApiClient {
    * @returns New token response
    */
   async refreshToken(): Promise<TokenResponse> {
-    const refreshToken = this.apiClient['tokenStorage'].getRefreshToken();
+    const refreshToken = this.apiClient["tokenStorage"].getRefreshToken();
 
     if (!refreshToken) {
-      throw new Error('No refresh token available');
+      throw new Error("No refresh token available");
     }
 
     const response = await this.apiClient.post<{ access_token: string; refresh_token: string }>(
-      '/auth/refresh',
+      "/auth/refresh",
       { refreshToken },
-      { tenantScoped: false }
+      { tenantScoped: false },
     );
 
     const tokenResponse: TokenResponse = {
       accessToken: response.access_token,
       refreshToken: response.refresh_token,
       expiresIn: 3600,
-      tokenType: 'Bearer'
+      tokenType: "Bearer",
     };
 
     // Update stored tokens
@@ -199,7 +195,7 @@ class AuthApiClient {
    */
   async getCurrentUser(): Promise<User> {
     // Backend has profile endpoint implemented
-    return this.apiClient.get<User>('/auth/profile', {}, { tenantScoped: false });
+    return this.apiClient.get<User>("/auth/profile", {}, { tenantScoped: false });
   }
 
   // Password Management Methods
@@ -209,11 +205,7 @@ class AuthApiClient {
    * @param data Password reset request data (email)
    */
   async requestPasswordReset(data: PasswordResetRequest): Promise<void> {
-    return this.apiClient.post<void>(
-      '/auth/forgot-password',
-      data,
-      { tenantScoped: false }
-    );
+    return this.apiClient.post<void>("/auth/forgot-password", data, { tenantScoped: false });
   }
 
   /**
@@ -222,12 +214,12 @@ class AuthApiClient {
    */
   async confirmPasswordReset(data: PasswordResetConfirm): Promise<void> {
     return this.apiClient.post<void>(
-      '/auth/reset-password',
+      "/auth/reset-password",
       {
         token: data.token,
-        newPassword: data.password
+        newPassword: data.password,
       },
-      { tenantScoped: false }
+      { tenantScoped: false },
     );
   }
 
@@ -236,11 +228,7 @@ class AuthApiClient {
    * @param data Change password request data
    */
   async changePassword(data: ChangePasswordRequest): Promise<void> {
-    return this.apiClient.put<void>(
-      '/auth/change-password',
-      data,
-      { tenantScoped: false }
-    );
+    return this.apiClient.put<void>("/auth/change-password", data, { tenantScoped: false });
   }
 
   // Email Verification Methods
@@ -251,11 +239,7 @@ class AuthApiClient {
    */
   async verifyEmail(data: EmailVerificationRequest): Promise<void> {
     // Note: Backend doesn't have verify-email endpoint implemented yet
-    return this.apiClient.post<void>(
-      '/auth/verify-email',
-      data,
-      { tenantScoped: false }
-    );
+    return this.apiClient.post<void>("/auth/verify-email", data, { tenantScoped: false });
   }
 
   /**
@@ -263,11 +247,7 @@ class AuthApiClient {
    */
   async resendVerificationEmail(): Promise<void> {
     // Note: Backend doesn't have resend verification endpoint implemented yet
-    return this.apiClient.post<void>(
-      '/auth/verify-email/resend',
-      {},
-      { tenantScoped: false }
-    );
+    return this.apiClient.post<void>("/auth/verify-email/resend", {}, { tenantScoped: false });
   }
 
   // OAuth Methods
@@ -277,8 +257,8 @@ class AuthApiClient {
    * @param provider OAuth provider name (google, github)
    * @returns Authorization URL to redirect user to
    */
-  getOAuthUrl(provider: 'google' | 'github'): string {
-    const baseUrl = this.apiClient['axiosInstance'].defaults.baseURL;
+  getOAuthUrl(provider: "google" | "github"): string {
+    const baseUrl = this.apiClient["axiosInstance"].defaults.baseURL;
     return `${baseUrl}/auth/oauth/${provider}`;
   }
 
@@ -294,17 +274,17 @@ class AuthApiClient {
       {
         code: data.code,
         state: data.state,
-        redirectUri: data.redirectUri
+        redirectUri: data.redirectUri,
       },
-      { tenantScoped: false }
+      { tenantScoped: false },
     );
 
     const authResponse: AuthResponse = {
-      user: response.user || {} as User,
+      user: response.user || ({} as User),
       accessToken: response.access_token,
-      refreshToken: '',
+      refreshToken: "",
       expiresIn: 3600,
-      tokenType: 'Bearer'
+      tokenType: "Bearer",
     };
 
     // Store tokens after successful OAuth login
@@ -322,7 +302,7 @@ class AuthApiClient {
    * @returns True if user has valid token
    */
   isAuthenticated(): boolean {
-    const token = this.apiClient['tokenStorage'].getAccessToken();
+    const token = this.apiClient["tokenStorage"].getAccessToken();
     return !!token;
   }
 
@@ -331,7 +311,7 @@ class AuthApiClient {
    * @returns Current access token or null
    */
   getAccessToken(): string | null {
-    return this.apiClient['tokenStorage'].getAccessToken();
+    return this.apiClient["tokenStorage"].getAccessToken();
   }
 
   /**
@@ -339,7 +319,7 @@ class AuthApiClient {
    * @returns Current refresh token or null
    */
   getRefreshToken(): string | null {
-    return this.apiClient['tokenStorage'].getRefreshToken();
+    return this.apiClient["tokenStorage"].getRefreshToken();
   }
 
   /**

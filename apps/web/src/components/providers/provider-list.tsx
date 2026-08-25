@@ -1,35 +1,60 @@
-'use client';
+"use client";
 
-import { Filter } from '@/lib/icons';
+import { Filter } from "@/lib/icons";
 
-import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { providerApi } from '@/lib/api/provider';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { EllipsisHorizontalIcon, MagnifyingGlassIcon, Cog6ToothIcon, TrashIcon, PlayIcon, PauseIcon, StarIcon, BeakerIcon } from '@heroicons/react/24/outline'
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { ProviderType } from '@/lib/types/provider';
-import Link from '@/compat/next-link';
-import { useTenant } from '@/contexts/tenant-context';
-import { toast } from 'sonner';
+import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { providerApi } from "@/lib/api/provider";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  EllipsisHorizontalIcon,
+  MagnifyingGlassIcon,
+  Cog6ToothIcon,
+  TrashIcon,
+  PlayIcon,
+  PauseIcon,
+  StarIcon,
+  BeakerIcon,
+} from "@heroicons/react/24/outline";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { ProviderType } from "@/lib/types/provider";
+import Link from "@/compat/next-link";
+import { useTenant } from "@/contexts/tenant-context";
+import { toast } from "sonner";
 
 export function ProviderList() {
   const { selectedTenant } = useTenant();
-  const [searchQuery, setSearchQuery] = useState('');
-  const [typeFilter, setTypeFilter] = useState<string>('all');
+  const [searchQuery, setSearchQuery] = useState("");
+  const [typeFilter, setTypeFilter] = useState<string>("all");
 
-  const { data: providersData, isLoading, error } = useQuery({
-    queryKey: ['providers', selectedTenant?.id, searchQuery, typeFilter],
-    queryFn: () => providerApi.getProviders({
-      search: searchQuery || undefined,
-      type: typeFilter !== 'all' ? typeFilter as ProviderType : undefined,
-      page: 1,
-      limit: 20,
-    }),
+  const {
+    data: providersData,
+    isLoading,
+    error,
+  } = useQuery({
+    queryKey: ["providers", selectedTenant?.id, searchQuery, typeFilter],
+    queryFn: () =>
+      providerApi.getProviders({
+        search: searchQuery || undefined,
+        type: typeFilter !== "all" ? (typeFilter as ProviderType) : undefined,
+        page: 1,
+        limit: 20,
+      }),
     enabled: !!selectedTenant?.id,
   });
 
@@ -37,29 +62,29 @@ export function ProviderList() {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'active':
-        return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300';
-      case 'inactive':
-        return 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300';
-      case 'testing':
-        return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300';
-      case 'error':
-        return 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300';
+      case "active":
+        return "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300";
+      case "inactive":
+        return "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300";
+      case "testing":
+        return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300";
+      case "error":
+        return "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300";
       default:
-        return 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300';
+        return "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300";
     }
   };
 
   const getHealthColor = (health: string) => {
     switch (health) {
-      case 'healthy':
-        return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300';
-      case 'degraded':
-        return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300';
-      case 'unhealthy':
-        return 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300';
+      case "healthy":
+        return "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300";
+      case "degraded":
+        return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300";
+      case "unhealthy":
+        return "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300";
       default:
-        return 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300';
+        return "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300";
     }
   };
 
@@ -73,7 +98,11 @@ export function ProviderList() {
     }
   };
 
-  const handleToggleProvider = async (providerId: string, providerName: string, isActive: boolean) => {
+  const handleToggleProvider = async (
+    providerId: string,
+    providerName: string,
+    isActive: boolean,
+  ) => {
     try {
       if (isActive) {
         await providerApi.deactivateProvider(providerId);
@@ -83,15 +112,15 @@ export function ProviderList() {
         toast.success(`${providerName} activated`);
       }
     } catch (error: any) {
-      toast.error(`Failed to ${isActive ? 'deactivate' : 'activate'} ${providerName}`);
+      toast.error(`Failed to ${isActive ? "deactivate" : "activate"} ${providerName}`);
     }
   };
 
   const formatDate = (date: Date) => {
-    return new Date(date).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
+    return new Date(date).toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
     });
   };
 
@@ -160,9 +189,9 @@ export function ProviderList() {
             <div className="text-center py-8">
               <h3 className="text-lg font-semibold mb-2">No providers found</h3>
               <p className="text-muted-foreground mb-4">
-                {searchQuery || typeFilter !== 'all'
-                  ? 'Try adjusting your search or filters'
-                  : 'Add your first provider to start sending notifications'}
+                {searchQuery || typeFilter !== "all"
+                  ? "Try adjusting your search or filters"
+                  : "Add your first provider to start sending notifications"}
               </p>
             </div>
           </CardContent>
@@ -192,9 +221,7 @@ export function ProviderList() {
                     </CardDescription>
                   </div>
                   <div className="flex items-center gap-2">
-                    <Badge className={getStatusColor(provider.status)}>
-                      {provider.status}
-                    </Badge>
+                    <Badge className={getStatusColor(provider.status)}>{provider.status}</Badge>
                     <Badge className={getHealthColor(provider.healthStatus)}>
                       {provider.healthStatus}
                     </Badge>
@@ -206,7 +233,9 @@ export function ProviderList() {
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
                         <DropdownMenuItem asChild>
-                          <Link href={`/${selectedTenant?.slug || selectedTenant?.id}/providers/${provider.id}`}>
+                          <Link
+                            href={`/${selectedTenant?.slug || selectedTenant?.id}/providers/${provider.id}`}
+                          >
                             <Cog6ToothIcon className="h-4 w-4 mr-2" />
                             Configure
                           </Link>
@@ -218,9 +247,15 @@ export function ProviderList() {
                           Test
                         </DropdownMenuItem>
                         <DropdownMenuItem
-                          onClick={() => handleToggleProvider(provider.id, provider.name, provider.status === 'active')}
+                          onClick={() =>
+                            handleToggleProvider(
+                              provider.id,
+                              provider.name,
+                              provider.status === "active",
+                            )
+                          }
                         >
-                          {provider.status === 'active' ? (
+                          {provider.status === "active" ? (
                             <>
                               <PauseIcon className="h-4 w-4 mr-2" />
                               Deactivate
@@ -245,9 +280,7 @@ export function ProviderList() {
                 <div className="flex items-center justify-between text-sm text-muted-foreground">
                   <div className="flex items-center gap-4">
                     <span>Created {formatDate(provider.createdAt)}</span>
-                    {provider.lastUsed && (
-                      <span>Last used {formatDate(provider.lastUsed)}</span>
-                    )}
+                    {provider.lastUsed && <span>Last used {formatDate(provider.lastUsed)}</span>}
                   </div>
                   <div className="flex items-center gap-4">
                     <span>Success rate: {(provider.successRate * 100).toFixed(1)}%</span>

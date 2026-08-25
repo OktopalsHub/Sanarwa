@@ -1,12 +1,12 @@
-'use client';
+"use client";
 
-import { ProviderList } from '@/components/providers/provider-list';
-import { CreateProviderDialog } from '@/components/providers/create-provider-dialog';
-import { AppShell } from '@/components/layout';
-import { Button } from '@/components/ui/button';
-import { PlusIcon } from '@heroicons/react/24/outline'
+import { ProviderList } from "@/components/providers/provider-list";
+import { CreateProviderDialog } from "@/components/providers/create-provider-dialog";
+import { AppShell } from "@/components/layout";
+import { Button } from "@/components/ui/button";
+import { PlusIcon } from "@heroicons/react/24/outline";
 
-import { useState } from 'react';
+import { useState } from "react";
 
 export default function ProvidersPage() {
   const [showCreateDialog, setShowCreateDialog] = useState(false);
@@ -30,10 +30,7 @@ export default function ProvidersPage() {
 
           <ProviderList />
 
-          <CreateProviderDialog
-            open={showCreateDialog}
-            onOpenChange={setShowCreateDialog}
-          />
+          <CreateProviderDialog open={showCreateDialog} onOpenChange={setShowCreateDialog} />
         </div>
       </div>
     </AppShell>

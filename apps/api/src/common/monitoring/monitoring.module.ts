@@ -1,14 +1,14 @@
-import { Global, Module } from '@nestjs/common';
-import { ConfigModule } from '@nestjs/config';
-import { TerminusModule } from '@nestjs/terminus';
-import { HttpModule } from '@nestjs/axios';
-import { MetricsService as RootMetricsService } from './metrics.service';
-import { MetricsInterceptor } from './interceptors/metrics.interceptor';
-import { MetricsController } from './metrics.controller';
-import { AlertingService } from './services/alerting.service';
-import { LoggingService } from './services/logging.service';
-import { MetricsService } from './services/metrics.service';
-import { ProviderHealthService } from './services/provider-health.service';
+import { Global, Module } from "@nestjs/common";
+import { ConfigModule } from "@nestjs/config";
+import { TerminusModule } from "@nestjs/terminus";
+import { HttpModule } from "@nestjs/axios";
+import { MetricsService as RootMetricsService } from "./metrics.service";
+import { MetricsInterceptor } from "./interceptors/metrics.interceptor";
+import { MetricsController } from "./metrics.controller";
+import { AlertingService } from "./services/alerting.service";
+import { LoggingService } from "./services/logging.service";
+import { MetricsService } from "./services/metrics.service";
+import { ProviderHealthService } from "./services/provider-health.service";
 
 @Global()
 @Module({
@@ -16,17 +16,17 @@ import { ProviderHealthService } from './services/provider-health.service';
   controllers: [MetricsController],
   providers: [
     RootMetricsService,
-    MetricsService, 
-    MetricsInterceptor, 
-    AlertingService, 
+    MetricsService,
+    MetricsInterceptor,
+    AlertingService,
     LoggingService,
     ProviderHealthService,
   ],
   exports: [
     RootMetricsService,
-    MetricsService, 
-    MetricsInterceptor, 
-    AlertingService, 
+    MetricsService,
+    MetricsInterceptor,
+    AlertingService,
     LoggingService,
     ProviderHealthService,
   ],

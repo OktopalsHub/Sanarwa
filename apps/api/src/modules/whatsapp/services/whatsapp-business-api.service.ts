@@ -1,18 +1,18 @@
-import { Injectable, Logger, HttpException, HttpStatus } from '@nestjs/common';
-import { HttpService } from '@nestjs/axios';
-import { ConfigService } from '@nestjs/config';
-import { firstValueFrom } from 'rxjs';
+import { Injectable, Logger, HttpException, HttpStatus } from "@nestjs/common";
+import { HttpService } from "@nestjs/axios";
+import { ConfigService } from "@nestjs/config";
+import { firstValueFrom } from "rxjs";
 
 export interface WhatsAppTemplateComponent {
-  type: 'HEADER' | 'BODY' | 'FOOTER' | 'BUTTONS';
-  format?: 'TEXT' | 'IMAGE' | 'VIDEO' | 'DOCUMENT';
+  type: "HEADER" | "BODY" | "FOOTER" | "BUTTONS";
+  format?: "TEXT" | "IMAGE" | "VIDEO" | "DOCUMENT";
   text?: string;
   parameters?: Array<{
-    type: 'text' | 'currency' | 'date_time' | 'image' | 'document' | 'video';
+    type: "text" | "currency" | "date_time" | "image" | "document" | "video";
     text?: string;
   }>;
   buttons?: Array<{
-    type: 'QUICK_REPLY' | 'URL' | 'PHONE_NUMBER';
+    type: "QUICK_REPLY" | "URL" | "PHONE_NUMBER";
     text: string;
     url?: string;
     phone_number?: string;
@@ -21,15 +21,15 @@ export interface WhatsAppTemplateComponent {
 
 export interface WhatsAppTemplateRequest {
   name: string;
-  category: 'AUTHENTICATION' | 'MARKETING' | 'UTILITY';
+  category: "AUTHENTICATION" | "MARKETING" | "UTILITY";
   language: string;
   components: WhatsAppTemplateComponent[];
 }
 
 export interface WhatsAppMessageRequest {
-  messaging_product: 'whatsapp';
+  messaging_product: "whatsapp";
   to: string;
-  type: 'template' | 'text';
+  type: "template" | "text";
   template?: {
     name: string;
     language: { code: string };
@@ -56,46 +56,53 @@ export class WhatsAppBusinessAPIService {
 
   constructor(
     private readonly httpService: HttpService,
-    private readonly configService: ConfigService
+    private readonly configService: ConfigService,
   ) {
-    this.baseUrl = this.configService.get<string>('WHATSAPP_API_BASE_URL', 'https://graph.facebook.com/v18.0');
-    this.accessToken = this.configService.get<string>('WHATSAPP_ACCESS_TOKEN');
-    this.phoneNumberId = this.configService.get<string>('WHATSAPP_PHONE_NUMBER_ID');
-    this.businessAccountId = this.configService.get<string>('WHATSAPP_BUSINESS_ACCOUNT_ID');
+    this.baseUrl = this.configService.get<string>(
+      "WHATSAPP_API_BASE_URL",
+      "https://graph.facebook.com/v18.0",
+    );
+    this.accessToken = this.configService.get<string>("WHATSAPP_ACCESS_TOKEN");
+    this.phoneNumberId = this.configService.get<string>("WHATSAPP_PHONE_NUMBER_ID");
+    this.businessAccountId = this.configService.get<string>("WHATSAPP_BUSINESS_ACCOUNT_ID");
 
     if (!this.accessToken || !this.phoneNumberId || !this.businessAccountId) {
-      this.logger.warn('WhatsApp Business API credentials not configured');
+      this.logger.warn("WhatsApp Business API credentials not configured");
     }
   }
 
   /**
    * Create a new WhatsApp message template
    */
-  async createTemplate(templateRequest: WhatsAppTemplateRequest): Promise<{ id: string; status: string }> {
+  async createTemplate(
+    templateRequest: WhatsAppTemplateRequest,
+  ): Promise<{ id: string; status: string }> {
     try {
       this.logger.log(`Creating WhatsApp template: ${templateRequest.name}`);
 
       const url = `${this.baseUrl}/${this.businessAccountId}/message_templates`;
       const headers = {
-        'Authorization': `Bearer ${this.accessToken}`,
-        'Content-Type': 'application/json'
+        Authorization: `Bearer ${this.accessToken}`,
+        "Content-Type": "application/json",
       };
 
       const response = await firstValueFrom(
-        this.httpService.post(url, templateRequest, { headers })
+        this.httpService.post(url, templateRequest, { headers }),
       );
 
       this.logger.log(`WhatsApp template created successfully: ${response.data.id}`);
       return {
         id: response.data.id,
-        status: response.data.status || 'PENDING'
+        status: response.data.status || "PENDING",
       };
-
     } catch (error) {
-      this.logger.error(`Failed to create WhatsApp template: ${templateRequest.name}`, error.response?.data || error.message);
+      this.logger.error(
+        `Failed to create WhatsApp template: ${templateRequest.name}`,
+        error.response?.data || error.message,
+      );
       throw new HttpException(
         `Failed to create WhatsApp template: ${error.response?.data?.error?.message || error.message}`,
-        HttpStatus.BAD_REQUEST
+        HttpStatus.BAD_REQUEST,
       );
     }
   }
@@ -106,46 +113,50 @@ export class WhatsAppBusinessAPIService {
   async sendTemplateMessage(
     phoneNumber: string,
     templateName: string,
-    languageCode: string = 'en',
-    components?: Array<{ type: string; parameters: Array<{ type: string; text: string }> }>
+    languageCode: string = "en",
+    components?: Array<{ type: string; parameters: Array<{ type: string; text: string }> }>,
   ): Promise<{ messageId: string }> {
     try {
-      this.logger.log(`Sending WhatsApp template message to ${phoneNumber} using template ${templateName}`);
+      this.logger.log(
+        `Sending WhatsApp template message to ${phoneNumber} using template ${templateName}`,
+      );
 
       // Clean phone number (remove any non-numeric characters except +)
-      const cleanPhoneNumber = phoneNumber.replace(/[^\d+]/g, '');
-      
+      const cleanPhoneNumber = phoneNumber.replace(/[^\d+]/g, "");
+
       const messageRequest: WhatsAppMessageRequest = {
-        messaging_product: 'whatsapp',
+        messaging_product: "whatsapp",
         to: cleanPhoneNumber,
-        type: 'template',
+        type: "template",
         template: {
           name: templateName,
           language: { code: languageCode },
-          components: components || []
-        }
+          components: components || [],
+        },
       };
 
       const url = `${this.baseUrl}/${this.phoneNumberId}/messages`;
       const headers = {
-        'Authorization': `Bearer ${this.accessToken}`,
-        'Content-Type': 'application/json'
+        Authorization: `Bearer ${this.accessToken}`,
+        "Content-Type": "application/json",
       };
 
       const response = await firstValueFrom(
-        this.httpService.post(url, messageRequest, { headers })
+        this.httpService.post(url, messageRequest, { headers }),
       );
 
       this.logger.log(`WhatsApp message sent successfully: ${response.data.messages[0].id}`);
       return {
-        messageId: response.data.messages[0].id
+        messageId: response.data.messages[0].id,
       };
-
     } catch (error) {
-      this.logger.error(`Failed to send WhatsApp message to ${phoneNumber}`, error.response?.data || error.message);
+      this.logger.error(
+        `Failed to send WhatsApp message to ${phoneNumber}`,
+        error.response?.data || error.message,
+      );
       throw new HttpException(
         `Failed to send WhatsApp message: ${error.response?.data?.error?.message || error.message}`,
-        HttpStatus.BAD_REQUEST
+        HttpStatus.BAD_REQUEST,
       );
     }
   }
@@ -157,37 +168,39 @@ export class WhatsAppBusinessAPIService {
     try {
       this.logger.log(`Sending WhatsApp text message to ${phoneNumber}`);
 
-      const cleanPhoneNumber = phoneNumber.replace(/[^\d+]/g, '');
-      
+      const cleanPhoneNumber = phoneNumber.replace(/[^\d+]/g, "");
+
       const messageRequest: WhatsAppMessageRequest = {
-        messaging_product: 'whatsapp',
+        messaging_product: "whatsapp",
         to: cleanPhoneNumber,
-        type: 'text',
+        type: "text",
         text: {
-          body: message
-        }
+          body: message,
+        },
       };
 
       const url = `${this.baseUrl}/${this.phoneNumberId}/messages`;
       const headers = {
-        'Authorization': `Bearer ${this.accessToken}`,
-        'Content-Type': 'application/json'
+        Authorization: `Bearer ${this.accessToken}`,
+        "Content-Type": "application/json",
       };
 
       const response = await firstValueFrom(
-        this.httpService.post(url, messageRequest, { headers })
+        this.httpService.post(url, messageRequest, { headers }),
       );
 
       this.logger.log(`WhatsApp text message sent successfully: ${response.data.messages[0].id}`);
       return {
-        messageId: response.data.messages[0].id
+        messageId: response.data.messages[0].id,
       };
-
     } catch (error) {
-      this.logger.error(`Failed to send WhatsApp text message to ${phoneNumber}`, error.response?.data || error.message);
+      this.logger.error(
+        `Failed to send WhatsApp text message to ${phoneNumber}`,
+        error.response?.data || error.message,
+      );
       throw new HttpException(
         `Failed to send WhatsApp text message: ${error.response?.data?.error?.message || error.message}`,
-        HttpStatus.BAD_REQUEST
+        HttpStatus.BAD_REQUEST,
       );
     }
   }
@@ -199,23 +212,23 @@ export class WhatsAppBusinessAPIService {
     try {
       const url = `${this.baseUrl}/${templateId}`;
       const headers = {
-        'Authorization': `Bearer ${this.accessToken}`
+        Authorization: `Bearer ${this.accessToken}`,
       };
 
-      const response = await firstValueFrom(
-        this.httpService.get(url, { headers })
-      );
+      const response = await firstValueFrom(this.httpService.get(url, { headers }));
 
       return {
         status: response.data.status,
-        reason: response.data.reason
+        reason: response.data.reason,
       };
-
     } catch (error) {
-      this.logger.error(`Failed to get template status for ${templateId}`, error.response?.data || error.message);
+      this.logger.error(
+        `Failed to get template status for ${templateId}`,
+        error.response?.data || error.message,
+      );
       throw new HttpException(
         `Failed to get template status: ${error.response?.data?.error?.message || error.message}`,
-        HttpStatus.BAD_REQUEST
+        HttpStatus.BAD_REQUEST,
       );
     }
   }
@@ -223,29 +236,28 @@ export class WhatsAppBusinessAPIService {
   /**
    * List all templates for the business account
    */
-  async listTemplates(): Promise<Array<{ id: string; name: string; status: string; category: string }>> {
+  async listTemplates(): Promise<
+    Array<{ id: string; name: string; status: string; category: string }>
+  > {
     try {
       const url = `${this.baseUrl}/${this.businessAccountId}/message_templates`;
       const headers = {
-        'Authorization': `Bearer ${this.accessToken}`
+        Authorization: `Bearer ${this.accessToken}`,
       };
 
-      const response = await firstValueFrom(
-        this.httpService.get(url, { headers })
-      );
+      const response = await firstValueFrom(this.httpService.get(url, { headers }));
 
       return response.data.data.map((template: any) => ({
         id: template.id,
         name: template.name,
         status: template.status,
-        category: template.category
+        category: template.category,
       }));
-
     } catch (error) {
-      this.logger.error('Failed to list WhatsApp templates', error.response?.data || error.message);
+      this.logger.error("Failed to list WhatsApp templates", error.response?.data || error.message);
       throw new HttpException(
         `Failed to list templates: ${error.response?.data?.error?.message || error.message}`,
-        HttpStatus.BAD_REQUEST
+        HttpStatus.BAD_REQUEST,
       );
     }
   }
@@ -257,24 +269,26 @@ export class WhatsAppBusinessAPIService {
     try {
       const url = `${this.baseUrl}/${this.businessAccountId}/message_templates`;
       const headers = {
-        'Authorization': `Bearer ${this.accessToken}`
+        Authorization: `Bearer ${this.accessToken}`,
       };
 
       await firstValueFrom(
         this.httpService.delete(url, {
           headers,
-          data: { hsm_id: templateId }
-        })
+          data: { hsm_id: templateId },
+        }),
       );
 
       this.logger.log(`WhatsApp template deleted successfully: ${templateId}`);
       return { success: true };
-
     } catch (error) {
-      this.logger.error(`Failed to delete WhatsApp template ${templateId}`, error.response?.data || error.message);
+      this.logger.error(
+        `Failed to delete WhatsApp template ${templateId}`,
+        error.response?.data || error.message,
+      );
       throw new HttpException(
         `Failed to delete template: ${error.response?.data?.error?.message || error.message}`,
-        HttpStatus.BAD_REQUEST
+        HttpStatus.BAD_REQUEST,
       );
     }
   }
@@ -282,52 +296,60 @@ export class WhatsAppBusinessAPIService {
   /**
    * Validate phone number format
    */
-  validatePhoneNumber(phoneNumber: string): { isValid: boolean; cleanNumber?: string; error?: string } {
+  validatePhoneNumber(phoneNumber: string): {
+    isValid: boolean;
+    cleanNumber?: string;
+    error?: string;
+  } {
     // Remove all non-numeric characters except +
-    const cleaned = phoneNumber.replace(/[^\d+]/g, '');
-    
+    const cleaned = phoneNumber.replace(/[^\d+]/g, "");
+
     // Check if it starts with + and has at least 10 digits
-    if (!cleaned.startsWith('+')) {
-      return { isValid: false, error: 'Phone number must start with country code (+)' };
+    if (!cleaned.startsWith("+")) {
+      return { isValid: false, error: "Phone number must start with country code (+)" };
     }
-    
+
     // Remove + for length check
     const digits = cleaned.substring(1);
-    
+
     if (digits.length < 10 || digits.length > 15) {
-      return { isValid: false, error: 'Phone number must be between 10-15 digits' };
+      return { isValid: false, error: "Phone number must be between 10-15 digits" };
     }
-    
+
     return { isValid: true, cleanNumber: cleaned };
   }
 
   /**
    * Get WhatsApp Business API health status
    */
-  async getHealthStatus(): Promise<{ status: string; phoneNumberId: string | undefined; businessAccountId: string | undefined }> {
+  async getHealthStatus(): Promise<{
+    status: string;
+    phoneNumberId: string | undefined;
+    businessAccountId: string | undefined;
+  }> {
     try {
       // Try to get phone number info as a health check
       const url = `${this.baseUrl}/${this.phoneNumberId}`;
       const headers = {
-        'Authorization': `Bearer ${this.accessToken}`
+        Authorization: `Bearer ${this.accessToken}`,
       };
 
-      const response = await firstValueFrom(
-        this.httpService.get(url, { headers })
-      );
+      const response = await firstValueFrom(this.httpService.get(url, { headers }));
 
       return {
-        status: 'healthy',
+        status: "healthy",
         phoneNumberId: this.phoneNumberId,
-        businessAccountId: this.businessAccountId
+        businessAccountId: this.businessAccountId,
       };
-
     } catch (error) {
-      this.logger.error('WhatsApp Business API health check failed', error.response?.data || error.message);
+      this.logger.error(
+        "WhatsApp Business API health check failed",
+        error.response?.data || error.message,
+      );
       return {
-        status: 'unhealthy',
+        status: "unhealthy",
         phoneNumberId: this.phoneNumberId,
-        businessAccountId: this.businessAccountId
+        businessAccountId: this.businessAccountId,
       };
     }
   }

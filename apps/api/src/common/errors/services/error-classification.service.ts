@@ -1,21 +1,18 @@
-import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
-import { randomUUID } from 'node:crypto';
-import { QueryFailedError } from 'typeorm';
-import { BaseException } from '../exceptions/base.exception';
+import { HttpException, HttpStatus, Injectable } from "@nestjs/common";
+import { randomUUID } from "node:crypto";
+import { QueryFailedError } from "typeorm";
+import { BaseException } from "../exceptions/base.exception";
 import {
   ClassifiedError,
   ErrorCategory,
   ErrorCode,
   ErrorContext,
   ErrorSeverity,
-} from '../types/error.types';
+} from "../types/error.types";
 
 @Injectable()
 export class ErrorClassificationService {
-  classifyError(
-    error: any,
-    context: Partial<ErrorContext> = {},
-  ): ClassifiedError {
+  classifyError(error: any, context: Partial<ErrorContext> = {}): ClassifiedError {
     const fullContext: ErrorContext = {
       correlationId: context.correlationId || randomUUID(),
       tenantId: context.tenantId,
@@ -74,10 +71,7 @@ export class ErrorClassificationService {
     return this.classifyUnknownError(error, fullContext);
   }
 
-  private classifyHttpException(
-    error: HttpException,
-    context: ErrorContext,
-  ): ClassifiedError {
+  private classifyHttpException(error: HttpException, context: ErrorContext): ClassifiedError {
     const status = error.getStatus();
     const message = error.message;
 
@@ -102,7 +96,7 @@ export class ErrorClassificationService {
         category: ErrorCategory.SYSTEM,
         severity: ErrorSeverity.CRITICAL,
         message,
-        userMessage: 'An internal server error occurred',
+        userMessage: "An internal server error occurred",
         statusCode: status,
         context,
         originalError: error,
@@ -114,48 +108,45 @@ export class ErrorClassificationService {
     return this.classifyUnknownError(error, context);
   }
 
-  private classifyDatabaseError(
-    error: QueryFailedError,
-    context: ErrorContext,
-  ): ClassifiedError {
+  private classifyDatabaseError(error: QueryFailedError, context: ErrorContext): ClassifiedError {
     const message = error.message;
 
     // PostgreSQL specific error codes
     if ((error.driverError as any)?.code) {
       switch ((error.driverError as any).code) {
-        case '23505': // unique_violation
+        case "23505": // unique_violation
           return {
             code: ErrorCode.DUPLICATE_RESOURCE,
             category: ErrorCategory.BUSINESS_LOGIC,
             severity: ErrorSeverity.LOW,
-            message: 'Duplicate resource',
-            userMessage: 'A resource with this information already exists',
+            message: "Duplicate resource",
+            userMessage: "A resource with this information already exists",
             statusCode: HttpStatus.CONFLICT,
             context,
             originalError: error,
             retryable: false,
             recoverable: false,
           };
-        case '23503': // foreign_key_violation
+        case "23503": // foreign_key_violation
           return {
             code: ErrorCode.VALIDATION_ERROR,
             category: ErrorCategory.VALIDATION,
             severity: ErrorSeverity.LOW,
-            message: 'Foreign key constraint violation',
-            userMessage: 'Referenced resource does not exist',
+            message: "Foreign key constraint violation",
+            userMessage: "Referenced resource does not exist",
             statusCode: HttpStatus.BAD_REQUEST,
             context,
             originalError: error,
             retryable: false,
             recoverable: false,
           };
-        case '23502': // not_null_violation
+        case "23502": // not_null_violation
           return {
             code: ErrorCode.MISSING_REQUIRED_FIELD,
             category: ErrorCategory.VALIDATION,
             severity: ErrorSeverity.LOW,
-            message: 'Required field missing',
-            userMessage: 'Required information is missing',
+            message: "Required field missing",
+            userMessage: "Required information is missing",
             statusCode: HttpStatus.BAD_REQUEST,
             context,
             originalError: error,
@@ -170,7 +161,7 @@ export class ErrorClassificationService {
       category: ErrorCategory.SYSTEM,
       severity: ErrorSeverity.CRITICAL,
       message: `Database error: ${message}`,
-      userMessage: 'A database error occurred',
+      userMessage: "A database error occurred",
       statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
       context,
       originalError: error,
@@ -179,11 +170,8 @@ export class ErrorClassificationService {
     };
   }
 
-  private classifyProviderError(
-    error: any,
-    context: ErrorContext,
-  ): ClassifiedError {
-    const message = error.message || 'Provider error';
+  private classifyProviderError(error: any, context: ErrorContext): ClassifiedError {
+    const message = error.message || "Provider error";
 
     if (this.isProviderTimeoutError(error)) {
       return {
@@ -191,7 +179,7 @@ export class ErrorClassificationService {
         category: ErrorCategory.PROVIDER,
         severity: ErrorSeverity.HIGH,
         message: `Provider timeout: ${message}`,
-        userMessage: 'External service is taking too long to respond',
+        userMessage: "External service is taking too long to respond",
         statusCode: HttpStatus.GATEWAY_TIMEOUT,
         context,
         originalError: error,
@@ -206,7 +194,7 @@ export class ErrorClassificationService {
         category: ErrorCategory.PROVIDER,
         severity: ErrorSeverity.HIGH,
         message: `Provider authentication failed: ${message}`,
-        userMessage: 'External service authentication failed',
+        userMessage: "External service authentication failed",
         statusCode: HttpStatus.BAD_GATEWAY,
         context,
         originalError: error,
@@ -221,7 +209,7 @@ export class ErrorClassificationService {
         category: ErrorCategory.PROVIDER,
         severity: ErrorSeverity.MEDIUM,
         message: `Provider rate limited: ${message}`,
-        userMessage: 'External service rate limit exceeded',
+        userMessage: "External service rate limit exceeded",
         statusCode: HttpStatus.TOO_MANY_REQUESTS,
         context,
         originalError: error,
@@ -235,7 +223,7 @@ export class ErrorClassificationService {
       category: ErrorCategory.PROVIDER,
       severity: ErrorSeverity.HIGH,
       message: `Provider error: ${message}`,
-      userMessage: 'External service is temporarily unavailable',
+      userMessage: "External service is temporarily unavailable",
       statusCode: HttpStatus.BAD_GATEWAY,
       context,
       originalError: error,
@@ -244,16 +232,13 @@ export class ErrorClassificationService {
     };
   }
 
-  private classifyValidationError(
-    error: any,
-    context: ErrorContext,
-  ): ClassifiedError {
+  private classifyValidationError(error: any, context: ErrorContext): ClassifiedError {
     return {
       code: ErrorCode.VALIDATION_ERROR,
       category: ErrorCategory.VALIDATION,
       severity: ErrorSeverity.LOW,
-      message: error.message || 'Validation failed',
-      userMessage: 'Invalid data provided',
+      message: error.message || "Validation failed",
+      userMessage: "Invalid data provided",
       statusCode: HttpStatus.BAD_REQUEST,
       context,
       originalError: error,
@@ -262,16 +247,13 @@ export class ErrorClassificationService {
     };
   }
 
-  private classifyTimeoutError(
-    error: any,
-    context: ErrorContext,
-  ): ClassifiedError {
+  private classifyTimeoutError(error: any, context: ErrorContext): ClassifiedError {
     return {
       code: ErrorCode.PROVIDER_TIMEOUT,
       category: ErrorCategory.SYSTEM,
       severity: ErrorSeverity.HIGH,
       message: `Timeout error: ${error.message}`,
-      userMessage: 'Request timed out',
+      userMessage: "Request timed out",
       statusCode: HttpStatus.REQUEST_TIMEOUT,
       context,
       originalError: error,
@@ -280,16 +262,13 @@ export class ErrorClassificationService {
     };
   }
 
-  private classifyNetworkError(
-    error: any,
-    context: ErrorContext,
-  ): ClassifiedError {
+  private classifyNetworkError(error: any, context: ErrorContext): ClassifiedError {
     return {
       code: ErrorCode.PROVIDER_UNAVAILABLE,
       category: ErrorCategory.PROVIDER,
       severity: ErrorSeverity.HIGH,
       message: `Network error: ${error.message}`,
-      userMessage: 'Network connectivity issue',
+      userMessage: "Network connectivity issue",
       statusCode: HttpStatus.BAD_GATEWAY,
       context,
       originalError: error,
@@ -298,16 +277,13 @@ export class ErrorClassificationService {
     };
   }
 
-  private classifyUnknownError(
-    error: any,
-    context: ErrorContext,
-  ): ClassifiedError {
+  private classifyUnknownError(error: any, context: ErrorContext): ClassifiedError {
     return {
       code: ErrorCode.INTERNAL_SERVER_ERROR,
       category: ErrorCategory.SYSTEM,
       severity: ErrorSeverity.CRITICAL,
-      message: error.message || 'Unknown error occurred',
-      userMessage: 'An unexpected error occurred',
+      message: error.message || "Unknown error occurred",
+      userMessage: "An unexpected error occurred",
       statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
       context,
       originalError: error,
@@ -348,21 +324,18 @@ export class ErrorClassificationService {
     }
   }
 
-  private getUserFriendlyMessage(
-    status: number,
-    originalMessage: string,
-  ): string {
+  private getUserFriendlyMessage(status: number, originalMessage: string): string {
     switch (status) {
       case HttpStatus.BAD_REQUEST:
-        return 'Invalid request data';
+        return "Invalid request data";
       case HttpStatus.UNAUTHORIZED:
-        return 'Authentication required';
+        return "Authentication required";
       case HttpStatus.FORBIDDEN:
-        return 'Access denied';
+        return "Access denied";
       case HttpStatus.NOT_FOUND:
-        return 'Resource not found';
+        return "Resource not found";
       case HttpStatus.TOO_MANY_REQUESTS:
-        return 'Too many requests, please try again later';
+        return "Too many requests, please try again later";
       default:
         return originalMessage;
     }
@@ -370,9 +343,9 @@ export class ErrorClassificationService {
 
   private isProviderError(error: any): boolean {
     return (
-      error.name?.includes('Provider') ||
-      error.message?.includes('provider') ||
-      error.code?.startsWith('PROVIDER_') ||
+      error.name?.includes("Provider") ||
+      error.message?.includes("provider") ||
+      error.code?.startsWith("PROVIDER_") ||
       this.isAxiosError(error) ||
       this.isFetchError(error)
     );
@@ -380,10 +353,10 @@ export class ErrorClassificationService {
 
   private isProviderTimeoutError(error: any): boolean {
     return (
-      error.code === 'ECONNABORTED' ||
-      error.code === 'ETIMEDOUT' ||
-      error.message?.includes('timeout') ||
-      error.message?.includes('TIMEOUT')
+      error.code === "ECONNABORTED" ||
+      error.code === "ETIMEDOUT" ||
+      error.message?.includes("timeout") ||
+      error.message?.includes("TIMEOUT")
     );
   }
 
@@ -391,41 +364,39 @@ export class ErrorClassificationService {
     return (
       error.response?.status === 401 ||
       error.response?.status === 403 ||
-      error.message?.includes('authentication') ||
-      error.message?.includes('unauthorized')
+      error.message?.includes("authentication") ||
+      error.message?.includes("unauthorized")
     );
   }
 
   private isProviderRateLimitError(error: any): boolean {
     return (
       error.response?.status === 429 ||
-      error.message?.includes('rate limit') ||
-      error.message?.includes('too many requests')
+      error.message?.includes("rate limit") ||
+      error.message?.includes("too many requests")
     );
   }
 
   private isValidationError(error: any): boolean {
     return (
-      error.name === 'ValidationError' ||
-      error.name === 'ValidatorError' ||
-      error.message?.includes('validation')
+      error.name === "ValidationError" ||
+      error.name === "ValidatorError" ||
+      error.message?.includes("validation")
     );
   }
 
   private isTimeoutError(error: any): boolean {
     return (
-      error.code === 'ETIMEDOUT' ||
-      error.code === 'ECONNABORTED' ||
-      error.name === 'TimeoutError'
+      error.code === "ETIMEDOUT" || error.code === "ECONNABORTED" || error.name === "TimeoutError"
     );
   }
 
   private isNetworkError(error: any): boolean {
     return (
-      error.code === 'ECONNREFUSED' ||
-      error.code === 'ENOTFOUND' ||
-      error.code === 'ECONNRESET' ||
-      error.name === 'NetworkError'
+      error.code === "ECONNREFUSED" ||
+      error.code === "ENOTFOUND" ||
+      error.code === "ECONNRESET" ||
+      error.name === "NetworkError"
     );
   }
 
@@ -434,6 +405,6 @@ export class ErrorClassificationService {
   }
 
   private isFetchError(error: any): boolean {
-    return error.name === 'FetchError' || error.type === 'system';
+    return error.name === "FetchError" || error.type === "system";
   }
 }

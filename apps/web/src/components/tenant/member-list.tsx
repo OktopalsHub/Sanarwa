@@ -1,10 +1,10 @@
-'use client';
+"use client";
 
-import { Shield, ShieldCheck, User, UserCheck, UserX, Users } from '@/lib/icons';
+import { Shield, ShieldCheck, User, UserCheck, UserX, Users } from "@/lib/icons";
 
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -12,7 +12,7 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+} from "@/components/ui/dropdown-menu";
 import {
   Table,
   TableBody,
@@ -20,14 +20,19 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/table';
-import { useAuth } from '@/contexts/auth-context';
-import { useTenant } from '@/contexts/tenant-context';
-import { Tenant, TenantMember, TenantRole } from '@/lib/types/tenant';
-import { EllipsisHorizontalIcon, ShieldCheckIcon, UserIcon, UserMinusIcon } from '@heroicons/react/24/outline'
-import { useState } from 'react';
-import { toast } from 'sonner';
-import { EditMemberDialog } from './edit-member-dialog';
+} from "@/components/ui/table";
+import { useAuth } from "@/contexts/auth-context";
+import { useTenant } from "@/contexts/tenant-context";
+import { Tenant, TenantMember, TenantRole } from "@/lib/types/tenant";
+import {
+  EllipsisHorizontalIcon,
+  ShieldCheckIcon,
+  UserIcon,
+  UserMinusIcon,
+} from "@heroicons/react/24/outline";
+import { useState } from "react";
+import { toast } from "sonner";
+import { EditMemberDialog } from "./edit-member-dialog";
 
 interface MemberListProps {
   members: TenantMember[];
@@ -36,34 +41,34 @@ interface MemberListProps {
 
 const roleConfig = {
   owner: {
-    label: 'Owner',
+    label: "Owner",
     icon: ShieldCheck,
-    color: 'bg-purple-100 text-purple-800 hover:bg-purple-200',
-    description: 'Full access to all features and settings',
+    color: "bg-purple-100 text-purple-800 hover:bg-purple-200",
+    description: "Full access to all features and settings",
   },
   admin: {
-    label: 'Admin',
+    label: "Admin",
     icon: Shield,
-    color: 'bg-red-100 text-red-800 hover:bg-red-200',
-    description: 'Manage members, settings, and all features',
+    color: "bg-red-100 text-red-800 hover:bg-red-200",
+    description: "Manage members, settings, and all features",
   },
   manager: {
-    label: 'Manager',
+    label: "Manager",
     icon: UserCheck,
-    color: 'bg-blue-100 text-blue-800 hover:bg-blue-200',
-    description: 'Manage campaigns and workflows',
+    color: "bg-blue-100 text-blue-800 hover:bg-blue-200",
+    description: "Manage campaigns and workflows",
   },
   member: {
-    label: 'Member',
+    label: "Member",
     icon: User,
-    color: 'bg-green-100 text-green-800 hover:bg-green-200',
-    description: 'Create and edit campaigns',
+    color: "bg-green-100 text-green-800 hover:bg-green-200",
+    description: "Create and edit campaigns",
   },
   viewer: {
-    label: 'Viewer',
+    label: "Viewer",
     icon: UserX,
-    color: 'bg-gray-100 text-gray-800 hover:bg-gray-200',
-    description: 'View-only access',
+    color: "bg-gray-100 text-gray-800 hover:bg-gray-200",
+    description: "View-only access",
   },
 };
 
@@ -75,10 +80,10 @@ export function MemberList({ members, tenant }: MemberListProps) {
   const handleRoleChange = async (memberId: string, newRole: TenantRole) => {
     try {
       await updateMember(memberId, { role: newRole });
-      toast.success('Member role updated successfully');
+      toast.success("Member role updated successfully");
     } catch (error) {
-      toast.error('Failed to update member role');
-      console.error('Role update error:', error);
+      toast.error("Failed to update member role");
+      console.error("Role update error:", error);
     }
   };
 
@@ -89,29 +94,29 @@ export function MemberList({ members, tenant }: MemberListProps) {
 
     try {
       await removeMember(memberId);
-      toast.success('Member removed successfully');
+      toast.success("Member removed successfully");
     } catch (error) {
-      toast.error('Failed to remove member');
-      console.error('Remove member error:', error);
+      toast.error("Failed to remove member");
+      console.error("Remove member error:", error);
     }
   };
 
   const canEditMember = (member: TenantMember) => {
     // Users can't edit themselves or owners
-    if (member.userId === user?.id || member.role === 'owner') {
+    if (member.userId === user?.id || member.role === "owner") {
       return false;
     }
 
     // Only owners and admins can edit members
-    const currentUserMembership = members.find(m => m.userId === user?.id);
-    return currentUserMembership?.role === 'owner' || currentUserMembership?.role === 'admin';
+    const currentUserMembership = members.find((m) => m.userId === user?.id);
+    return currentUserMembership?.role === "owner" || currentUserMembership?.role === "admin";
   };
 
   const getInitials = (name: string) => {
     return name
-      .split(' ')
-      .map(part => part.charAt(0))
-      .join('')
+      .split(" ")
+      .map((part) => part.charAt(0))
+      .join("")
       .toUpperCase()
       .slice(0, 2);
   };
@@ -152,9 +157,7 @@ export function MemberList({ members, tenant }: MemberListProps) {
                   <div className="flex items-center gap-3">
                     <Avatar className="h-8 w-8">
                       <AvatarImage src={`https://avatar.vercel.sh/${member.userId}`} />
-                      <AvatarFallback>
-                        {getInitials(member.userId || 'Unknown')}
-                      </AvatarFallback>
+                      <AvatarFallback>{getInitials(member.userId || "Unknown")}</AvatarFallback>
                     </Avatar>
                     <div>
                       <div className="font-medium">
@@ -178,27 +181,25 @@ export function MemberList({ members, tenant }: MemberListProps) {
                 </TableCell>
                 <TableCell>
                   <div className="text-sm">
-                    {member.joinedAt ? (
-                      new Date(member.joinedAt).toLocaleDateString('en-US', {
-                        year: 'numeric',
-                        month: 'short',
-                        day: 'numeric',
-                      })
-                    ) : (
-                      'Pending'
-                    )}
+                    {member.joinedAt
+                      ? new Date(member.joinedAt).toLocaleDateString("en-US", {
+                          year: "numeric",
+                          month: "short",
+                          day: "numeric",
+                        })
+                      : "Pending"}
                   </div>
                 </TableCell>
                 <TableCell>
                   <Badge
-                    variant={member.status === 'active' ? 'default' : 'secondary'}
+                    variant={member.status === "active" ? "default" : "secondary"}
                     className={
-                      member.status === 'active'
-                        ? 'bg-green-100 text-green-800 hover:bg-green-200'
-                        : 'bg-yellow-100 text-yellow-800 hover:bg-yellow-200'
+                      member.status === "active"
+                        ? "bg-green-100 text-green-800 hover:bg-green-200"
+                        : "bg-yellow-100 text-yellow-800 hover:bg-yellow-200"
                     }
                   >
-                    {member.status === 'active' ? 'Active' : 'Invited'}
+                    {member.status === "active" ? "Active" : "Invited"}
                   </Badge>
                 </TableCell>
                 <TableCell>
@@ -211,14 +212,12 @@ export function MemberList({ members, tenant }: MemberListProps) {
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
                         <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                        <DropdownMenuItem
-                          onClick={() => setEditingMember(member)}
-                        >
+                        <DropdownMenuItem onClick={() => setEditingMember(member)}>
                           Edit Role
                         </DropdownMenuItem>
                         <DropdownMenuSeparator />
                         <DropdownMenuItem
-                          onClick={() => handleRemoveMember(member.id, member.userId || '')}
+                          onClick={() => handleRemoveMember(member.id, member.userId || "")}
                           className="text-destructive"
                         >
                           Remove Member

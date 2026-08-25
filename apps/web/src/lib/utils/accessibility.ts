@@ -4,31 +4,31 @@
  * screen reader compatibility, and WCAG 2.1 AA compliance
  */
 
-'use client';
+"use client";
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState } from "react";
 
 // Keyboard navigation constants
 export const KEYBOARD_KEYS = {
-  ENTER: 'Enter',
-  SPACE: ' ',
-  ESCAPE: 'Escape',
-  TAB: 'Tab',
-  ARROW_UP: 'ArrowUp',
-  ARROW_DOWN: 'ArrowDown',
-  ARROW_LEFT: 'ArrowLeft',
-  ARROW_RIGHT: 'ArrowRight',
-  HOME: 'Home',
-  END: 'End',
-  PAGE_UP: 'PageUp',
-  PAGE_DOWN: 'PageDown',
+  ENTER: "Enter",
+  SPACE: " ",
+  ESCAPE: "Escape",
+  TAB: "Tab",
+  ARROW_UP: "ArrowUp",
+  ARROW_DOWN: "ArrowDown",
+  ARROW_LEFT: "ArrowLeft",
+  ARROW_RIGHT: "ArrowRight",
+  HOME: "Home",
+  END: "End",
+  PAGE_UP: "PageUp",
+  PAGE_DOWN: "PageDown",
 } as const;
 
 // ARIA live region types
 export const LIVE_REGIONS = {
-  POLITE: 'polite',
-  ASSERTIVE: 'assertive',
-  OFF: 'off',
+  POLITE: "polite",
+  ASSERTIVE: "assertive",
+  OFF: "off",
 } as const;
 
 // Focus management utilities
@@ -72,14 +72,14 @@ export class FocusManager {
 
   static getFocusableElements(container: HTMLElement): HTMLElement[] {
     const focusableSelectors = [
-      'button:not([disabled])',
-      'input:not([disabled])',
-      'select:not([disabled])',
-      'textarea:not([disabled])',
-      'a[href]',
+      "button:not([disabled])",
+      "input:not([disabled])",
+      "select:not([disabled])",
+      "textarea:not([disabled])",
+      "a[href]",
       '[tabindex]:not([tabindex="-1"])',
       '[contenteditable="true"]',
-    ].join(', ');
+    ].join(", ");
 
     return Array.from(container.querySelectorAll(focusableSelectors));
   }
@@ -87,16 +87,17 @@ export class FocusManager {
   static getNextFocusableElement(
     container: HTMLElement,
     currentElement: HTMLElement,
-    direction: 'next' | 'previous' = 'next'
+    direction: "next" | "previous" = "next",
   ): HTMLElement | null {
     const focusableElements = this.getFocusableElements(container);
     const currentIndex = focusableElements.indexOf(currentElement);
 
     if (currentIndex === -1) return null;
 
-    const nextIndex = direction === 'next'
-      ? (currentIndex + 1) % focusableElements.length
-      : (currentIndex - 1 + focusableElements.length) % focusableElements.length;
+    const nextIndex =
+      direction === "next"
+        ? (currentIndex + 1) % focusableElements.length
+        : (currentIndex - 1 + focusableElements.length) % focusableElements.length;
 
     return focusableElements[nextIndex] || null;
   }
@@ -106,29 +107,29 @@ export class FocusManager {
 export class ScreenReaderUtils {
   private static liveRegion: HTMLElement | null = null;
 
-  static announce(message: string, priority: keyof typeof LIVE_REGIONS = 'POLITE') {
+  static announce(message: string, priority: keyof typeof LIVE_REGIONS = "POLITE") {
     if (!this.liveRegion) {
       this.createLiveRegion();
     }
 
     if (this.liveRegion) {
-      this.liveRegion.setAttribute('aria-live', LIVE_REGIONS[priority]);
+      this.liveRegion.setAttribute("aria-live", LIVE_REGIONS[priority]);
       this.liveRegion.textContent = message;
 
       // Clear after announcement to allow repeated messages
       setTimeout(() => {
         if (this.liveRegion) {
-          this.liveRegion.textContent = '';
+          this.liveRegion.textContent = "";
         }
       }, 1000);
     }
   }
 
   private static createLiveRegion() {
-    this.liveRegion = document.createElement('div');
-    this.liveRegion.setAttribute('aria-live', 'polite');
-    this.liveRegion.setAttribute('aria-atomic', 'true');
-    this.liveRegion.className = 'sr-only';
+    this.liveRegion = document.createElement("div");
+    this.liveRegion.setAttribute("aria-live", "polite");
+    this.liveRegion.setAttribute("aria-atomic", "true");
+    this.liveRegion.className = "sr-only";
     document.body.appendChild(this.liveRegion);
   }
 
@@ -137,9 +138,9 @@ export class ScreenReaderUtils {
 
     // Create description element if it doesn't exist
     if (!document.getElementById(descriptionId)) {
-      const descElement = document.createElement('div');
+      const descElement = document.createElement("div");
       descElement.id = descriptionId;
-      descElement.className = 'sr-only';
+      descElement.className = "sr-only";
       descElement.textContent = description;
       document.body.appendChild(descElement);
     }
@@ -152,13 +153,13 @@ export class ScreenReaderUtils {
 export function useKeyboardNavigation(
   containerRef: React.RefObject<HTMLElement>,
   options: {
-    orientation?: 'horizontal' | 'vertical' | 'both';
+    orientation?: "horizontal" | "vertical" | "both";
     wrap?: boolean;
     onEscape?: () => void;
     onEnter?: (element: HTMLElement) => void;
-  } = {}
+  } = {},
 ) {
-  const { orientation = 'both', wrap = true, onEscape, onEnter } = options;
+  const { orientation = "both", wrap = true, onEscape, onEnter } = options;
 
   useEffect(() => {
     const container = containerRef.current;
@@ -178,7 +179,10 @@ export function useKeyboardNavigation(
 
         case KEYBOARD_KEYS.ENTER:
         case KEYBOARD_KEYS.SPACE:
-          if (currentElement.tagName === 'BUTTON' || currentElement.getAttribute('role') === 'button') {
+          if (
+            currentElement.tagName === "BUTTON" ||
+            currentElement.getAttribute("role") === "button"
+          ) {
             event.preventDefault();
             onEnter?.(currentElement);
             currentElement.click();
@@ -186,30 +190,30 @@ export function useKeyboardNavigation(
           break;
 
         case KEYBOARD_KEYS.ARROW_DOWN:
-          if (orientation === 'vertical' || orientation === 'both') {
+          if (orientation === "vertical" || orientation === "both") {
             event.preventDefault();
-            navigateToNext(container, currentElement, 'next', wrap);
+            navigateToNext(container, currentElement, "next", wrap);
           }
           break;
 
         case KEYBOARD_KEYS.ARROW_UP:
-          if (orientation === 'vertical' || orientation === 'both') {
+          if (orientation === "vertical" || orientation === "both") {
             event.preventDefault();
-            navigateToNext(container, currentElement, 'previous', wrap);
+            navigateToNext(container, currentElement, "previous", wrap);
           }
           break;
 
         case KEYBOARD_KEYS.ARROW_RIGHT:
-          if (orientation === 'horizontal' || orientation === 'both') {
+          if (orientation === "horizontal" || orientation === "both") {
             event.preventDefault();
-            navigateToNext(container, currentElement, 'next', wrap);
+            navigateToNext(container, currentElement, "next", wrap);
           }
           break;
 
         case KEYBOARD_KEYS.ARROW_LEFT:
-          if (orientation === 'horizontal' || orientation === 'both') {
+          if (orientation === "horizontal" || orientation === "both") {
             event.preventDefault();
-            navigateToNext(container, currentElement, 'previous', wrap);
+            navigateToNext(container, currentElement, "previous", wrap);
           }
           break;
 
@@ -225,23 +229,24 @@ export function useKeyboardNavigation(
       }
     };
 
-    container.addEventListener('keydown', handleKeyDown);
-    return () => container.removeEventListener('keydown', handleKeyDown);
+    container.addEventListener("keydown", handleKeyDown);
+    return () => container.removeEventListener("keydown", handleKeyDown);
   }, [containerRef, orientation, wrap, onEscape, onEnter]);
 }
 
 function navigateToNext(
   container: HTMLElement,
   currentElement: HTMLElement,
-  direction: 'next' | 'previous',
-  wrap: boolean
+  direction: "next" | "previous",
+  wrap: boolean,
 ) {
   const nextElement = FocusManager.getNextFocusableElement(container, currentElement, direction);
   if (nextElement) {
     nextElement.focus();
   } else if (wrap) {
     const focusableElements = FocusManager.getFocusableElements(container);
-    const targetElement = direction === 'next' ? focusableElements[0] : focusableElements[focusableElements.length - 1];
+    const targetElement =
+      direction === "next" ? focusableElements[0] : focusableElements[focusableElements.length - 1];
     targetElement?.focus();
   }
 }
@@ -259,27 +264,27 @@ function navigateToLast(container: HTMLElement) {
 // Skip link utilities
 export function useSkipLinks() {
   useEffect(() => {
-    const skipLinks = document.querySelectorAll('[data-skip-link]');
+    const skipLinks = document.querySelectorAll("[data-skip-link]");
 
-    skipLinks.forEach(link => {
+    skipLinks.forEach((link) => {
       const handleClick = (event: Event) => {
         event.preventDefault();
-        const target = (event.target as HTMLElement).getAttribute('href');
+        const target = (event.target as HTMLElement).getAttribute("href");
         if (target) {
           const targetElement = document.querySelector(target);
           if (targetElement) {
             (targetElement as HTMLElement).focus();
-            targetElement.scrollIntoView({ behavior: 'smooth' });
+            targetElement.scrollIntoView({ behavior: "smooth" });
           }
         }
       };
 
-      link.addEventListener('click', handleClick);
+      link.addEventListener("click", handleClick);
     });
 
     return () => {
-      skipLinks.forEach(link => {
-        link.removeEventListener('click', () => { });
+      skipLinks.forEach((link) => {
+        link.removeEventListener("click", () => {});
       });
     };
   }, []);
@@ -290,15 +295,15 @@ export function useReducedMotion() {
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
 
   useEffect(() => {
-    const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const mediaQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
     setPrefersReducedMotion(mediaQuery.matches);
 
     const handleChange = (event: MediaQueryListEvent) => {
       setPrefersReducedMotion(event.matches);
     };
 
-    mediaQuery.addEventListener('change', handleChange);
-    return () => mediaQuery.removeEventListener('change', handleChange);
+    mediaQuery.addEventListener("change", handleChange);
+    return () => mediaQuery.removeEventListener("change", handleChange);
   }, []);
 
   return prefersReducedMotion;
@@ -309,15 +314,15 @@ export function useHighContrast() {
   const [prefersHighContrast, setPrefersHighContrast] = useState(false);
 
   useEffect(() => {
-    const mediaQuery = window.matchMedia('(prefers-contrast: high)');
+    const mediaQuery = window.matchMedia("(prefers-contrast: high)");
     setPrefersHighContrast(mediaQuery.matches);
 
     const handleChange = (event: MediaQueryListEvent) => {
       setPrefersHighContrast(event.matches);
     };
 
-    mediaQuery.addEventListener('change', handleChange);
-    return () => mediaQuery.removeEventListener('change', handleChange);
+    mediaQuery.addEventListener("change", handleChange);
+    return () => mediaQuery.removeEventListener("change", handleChange);
   }, []);
 
   return prefersHighContrast;
@@ -325,44 +330,44 @@ export function useHighContrast() {
 
 // ARIA utilities
 export const AriaUtils = {
-  generateId: (prefix: string = 'aria') => `${prefix}-${Math.random().toString(36).substr(2, 9)}`,
+  generateId: (prefix: string = "aria") => `${prefix}-${Math.random().toString(36).substr(2, 9)}`,
 
   setExpanded: (element: HTMLElement, expanded: boolean) => {
-    element.setAttribute('aria-expanded', expanded.toString());
+    element.setAttribute("aria-expanded", expanded.toString());
   },
 
   setSelected: (element: HTMLElement, selected: boolean) => {
-    element.setAttribute('aria-selected', selected.toString());
+    element.setAttribute("aria-selected", selected.toString());
   },
 
   setPressed: (element: HTMLElement, pressed: boolean) => {
-    element.setAttribute('aria-pressed', pressed.toString());
+    element.setAttribute("aria-pressed", pressed.toString());
   },
 
-  setChecked: (element: HTMLElement, checked: boolean | 'mixed') => {
-    element.setAttribute('aria-checked', checked.toString());
+  setChecked: (element: HTMLElement, checked: boolean | "mixed") => {
+    element.setAttribute("aria-checked", checked.toString());
   },
 
   setDisabled: (element: HTMLElement, disabled: boolean) => {
     if (disabled) {
-      element.setAttribute('aria-disabled', 'true');
-      element.setAttribute('tabindex', '-1');
+      element.setAttribute("aria-disabled", "true");
+      element.setAttribute("tabindex", "-1");
     } else {
-      element.removeAttribute('aria-disabled');
-      element.removeAttribute('tabindex');
+      element.removeAttribute("aria-disabled");
+      element.removeAttribute("tabindex");
     }
   },
 
   setLabel: (element: HTMLElement, label: string) => {
-    element.setAttribute('aria-label', label);
+    element.setAttribute("aria-label", label);
   },
 
   setLabelledBy: (element: HTMLElement, labelId: string) => {
-    element.setAttribute('aria-labelledby', labelId);
+    element.setAttribute("aria-labelledby", labelId);
   },
 
   setDescribedBy: (element: HTMLElement, descriptionId: string) => {
-    element.setAttribute('aria-describedby', descriptionId);
+    element.setAttribute("aria-describedby", descriptionId);
   },
 };
 
@@ -370,13 +375,13 @@ export const AriaUtils = {
 export function getContrastRatio(color1: string, color2: string): number {
   const getLuminance = (color: string): number => {
     // Convert hex to RGB
-    const hex = color.replace('#', '');
+    const hex = color.replace("#", "");
     const r = parseInt(hex.substr(0, 2), 16) / 255;
     const g = parseInt(hex.substr(2, 2), 16) / 255;
     const b = parseInt(hex.substr(4, 2), 16) / 255;
 
     // Calculate relative luminance
-    const sRGB = [r, g, b].map(c => {
+    const sRGB = [r, g, b].map((c) => {
       return c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
     });
 
@@ -394,15 +399,15 @@ export function getContrastRatio(color1: string, color2: string): number {
 export function meetsWCAGContrast(
   foreground: string,
   background: string,
-  level: 'AA' | 'AAA' = 'AA',
-  size: 'normal' | 'large' = 'normal'
+  level: "AA" | "AAA" = "AA",
+  size: "normal" | "large" = "normal",
 ): boolean {
   const ratio = getContrastRatio(foreground, background);
 
-  if (level === 'AAA') {
-    return size === 'large' ? ratio >= 4.5 : ratio >= 7;
+  if (level === "AAA") {
+    return size === "large" ? ratio >= 4.5 : ratio >= 7;
   } else {
-    return size === 'large' ? ratio >= 3 : ratio >= 4.5;
+    return size === "large" ? ratio >= 3 : ratio >= 4.5;
   }
 }
 
@@ -410,18 +415,19 @@ export function meetsWCAGContrast(
 export const A11yTesting = {
   checkFocusableElements: (container: HTMLElement) => {
     const focusableElements = FocusManager.getFocusableElements(container);
-    console.log('Focusable elements:', focusableElements);
+    console.log("Focusable elements:", focusableElements);
     return focusableElements;
   },
 
   checkAriaLabels: (container: HTMLElement) => {
-    const elementsNeedingLabels = container.querySelectorAll('button, input, select, textarea');
+    const elementsNeedingLabels = container.querySelectorAll("button, input, select, textarea");
     const unlabeledElements: HTMLElement[] = [];
 
-    elementsNeedingLabels.forEach(element => {
-      const hasLabel = element.getAttribute('aria-label') ||
-        element.getAttribute('aria-labelledby') ||
-        element.querySelector('label');
+    elementsNeedingLabels.forEach((element) => {
+      const hasLabel =
+        element.getAttribute("aria-label") ||
+        element.getAttribute("aria-labelledby") ||
+        element.querySelector("label");
 
       if (!hasLabel) {
         unlabeledElements.push(element as HTMLElement);
@@ -429,7 +435,7 @@ export const A11yTesting = {
     });
 
     if (unlabeledElements.length > 0) {
-      console.warn('Elements missing accessibility labels:', unlabeledElements);
+      console.warn("Elements missing accessibility labels:", unlabeledElements);
     }
 
     return unlabeledElements;
@@ -441,6 +447,6 @@ export const A11yTesting = {
     const backgroundColor = styles.backgroundColor;
 
     // This is a simplified check - in production, you'd want more robust color parsing
-    console.log('Color contrast check:', { color, backgroundColor });
+    console.log("Color contrast check:", { color, backgroundColor });
   },
 };

@@ -1,5 +1,5 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { Channel } from '../../providers/types';
+import { Injectable, Logger } from "@nestjs/common";
+import { Channel } from "../../providers/types";
 
 export interface ProviderMetrics {
   providerId: string;
@@ -54,14 +54,8 @@ interface ProviderPerformanceRecord {
 @Injectable()
 export class ProviderPerformanceTracker {
   private readonly logger = new Logger(ProviderPerformanceTracker.name);
-  private readonly performanceData = new Map<
-    string,
-    ProviderPerformanceRecord[]
-  >();
-  private readonly metricsCache = new Map<
-    string,
-    { metrics: ProviderMetrics; timestamp: Date }
-  >();
+  private readonly performanceData = new Map<string, ProviderPerformanceRecord[]>();
+  private readonly metricsCache = new Map<string, { metrics: ProviderMetrics; timestamp: Date }>();
   private readonly CACHE_TTL = 60000; // 1 minute
   private readonly MAX_RECORDS_PER_PROVIDER = 10000;
 
@@ -87,9 +81,7 @@ export class ProviderPerformanceTracker {
     this.addRecord(providerId, channel, record);
     this.invalidateCache(providerId, channel);
 
-    this.logger.debug(
-      `Recorded success for ${providerId} (${channel}): ${responseTime}ms`,
-    );
+    this.logger.debug(`Recorded success for ${providerId} (${channel}): ${responseTime}ms`);
   }
 
   /**
@@ -115,18 +107,13 @@ export class ProviderPerformanceTracker {
     this.addRecord(providerId, channel, record);
     this.invalidateCache(providerId, channel);
 
-    this.logger.debug(
-      `Recorded failure for ${providerId} (${channel}): ${errorMessage}`,
-    );
+    this.logger.debug(`Recorded failure for ${providerId} (${channel}): ${errorMessage}`);
   }
 
   /**
    * Get current metrics for a provider
    */
-  async getMetrics(
-    providerId: string,
-    channel: Channel,
-  ): Promise<ProviderMetrics> {
+  async getMetrics(providerId: string, channel: Channel): Promise<ProviderMetrics> {
     const cacheKey = this.getCacheKey(providerId, channel);
     const cached = this.metricsCache.get(cacheKey);
 
@@ -149,12 +136,7 @@ export class ProviderPerformanceTracker {
     startDate: Date,
     endDate: Date,
   ): Promise<PerformanceAnalytics> {
-    const records = this.getRecordsInRange(
-      providerId,
-      channel,
-      startDate,
-      endDate,
-    );
+    const records = this.getRecordsInRange(providerId, channel, startDate, endDate);
 
     if (records.length === 0) {
       return this.getEmptyAnalytics(providerId, channel, startDate, endDate);
@@ -169,8 +151,7 @@ export class ProviderPerformanceTracker {
     const errorRate = (failedRequests.length / totalRequests) * 100;
     const averageResponseTime =
       responseTimes.length > 0
-        ? responseTimes.reduce((sum, time) => sum + time, 0) /
-          responseTimes.length
+        ? responseTimes.reduce((sum, time) => sum + time, 0) / responseTimes.length
         : 0;
 
     // Calculate percentiles
@@ -202,10 +183,7 @@ export class ProviderPerformanceTracker {
       previousAnalytics.metrics.averageResponseTime,
       averageResponseTime,
     );
-    const throughputTrend = this.calculateTrend(
-      previousAnalytics.metrics.throughput,
-      throughput,
-    );
+    const throughputTrend = this.calculateTrend(previousAnalytics.metrics.throughput, throughput);
 
     return {
       providerId,
@@ -233,14 +211,11 @@ export class ProviderPerformanceTracker {
   /**
    * Get top performing providers for a channel
    */
-  async getTopPerformers(
-    channel: Channel,
-    limit: number = 10,
-  ): Promise<ProviderMetrics[]> {
+  async getTopPerformers(channel: Channel, limit: number = 10): Promise<ProviderMetrics[]> {
     const allMetrics: ProviderMetrics[] = [];
 
     for (const [key] of this.performanceData) {
-      const [providerId, providerChannel] = key.split(':');
+      const [providerId, providerChannel] = key.split(":");
       if (providerChannel === channel) {
         const metrics = await this.getMetrics(providerId, channel);
         allMetrics.push(metrics);
@@ -268,9 +243,7 @@ export class ProviderPerformanceTracker {
     let totalRemoved = 0;
 
     for (const [key, records] of this.performanceData) {
-      const filteredRecords = records.filter(
-        (record) => record.timestamp > cutoffDate,
-      );
+      const filteredRecords = records.filter((record) => record.timestamp > cutoffDate);
 
       const removedCount = records.length - filteredRecords.length;
       totalRemoved += removedCount;
@@ -299,30 +272,20 @@ export class ProviderPerformanceTracker {
     const comparisons: PerformanceAnalytics[] = [];
 
     for (const [key] of this.performanceData) {
-      const [providerId, providerChannel] = key.split(':');
+      const [providerId, providerChannel] = key.split(":");
       if (providerChannel === channel) {
-        const analytics = await this.getAnalytics(
-          providerId,
-          channel,
-          startDate,
-          endDate,
-        );
+        const analytics = await this.getAnalytics(providerId, channel, startDate, endDate);
         comparisons.push(analytics);
       }
     }
 
-    return comparisons.toSorted(
-      (a, b) => b.metrics.successRate - a.metrics.successRate,
-    );
+    return comparisons.toSorted((a, b) => b.metrics.successRate - a.metrics.successRate);
   }
 
   /**
    * Calculate current metrics for a provider
    */
-  private async calculateMetrics(
-    providerId: string,
-    channel: Channel,
-  ): Promise<ProviderMetrics> {
+  private async calculateMetrics(providerId: string, channel: Channel): Promise<ProviderMetrics> {
     const key = this.getDataKey(providerId, channel);
     const records = this.performanceData.get(key) || [];
 
@@ -350,8 +313,7 @@ export class ProviderPerformanceTracker {
     const responseTimes = successfulRequests.map((r) => r.responseTime);
     const averageResponseTime =
       responseTimes.length > 0
-        ? responseTimes.reduce((sum, time) => sum + time, 0) /
-          responseTimes.length
+        ? responseTimes.reduce((sum, time) => sum + time, 0) / responseTimes.length
         : 0;
 
     // Calculate requests per minute for last hour
@@ -361,16 +323,12 @@ export class ProviderPerformanceTracker {
 
     const lastSuccessfulRequest =
       successfulRequests.length > 0
-        ? new Date(
-            Math.max(...successfulRequests.map((r) => r.timestamp.getTime())),
-          )
+        ? new Date(Math.max(...successfulRequests.map((r) => r.timestamp.getTime())))
         : undefined;
 
     const lastFailedRequest =
       failedRequests.length > 0
-        ? new Date(
-            Math.max(...failedRequests.map((r) => r.timestamp.getTime())),
-          )
+        ? new Date(Math.max(...failedRequests.map((r) => r.timestamp.getTime())))
         : undefined;
 
     return {
@@ -391,11 +349,7 @@ export class ProviderPerformanceTracker {
   /**
    * Add a performance record
    */
-  private addRecord(
-    providerId: string,
-    channel: Channel,
-    record: ProviderPerformanceRecord,
-  ): void {
+  private addRecord(providerId: string, channel: Channel, record: ProviderPerformanceRecord): void {
     const key = this.getDataKey(providerId, channel);
     const records = this.performanceData.get(key) || [];
 
@@ -421,18 +375,13 @@ export class ProviderPerformanceTracker {
     const key = this.getDataKey(providerId, channel);
     const records = this.performanceData.get(key) || [];
 
-    return records.filter(
-      (record) => record.timestamp >= startDate && record.timestamp <= endDate,
-    );
+    return records.filter((record) => record.timestamp >= startDate && record.timestamp <= endDate);
   }
 
   /**
    * Calculate percentile from sorted array
    */
-  private calculatePercentile(
-    sortedArray: number[],
-    percentile: number,
-  ): number {
+  private calculatePercentile(sortedArray: number[], percentile: number): number {
     if (sortedArray.length === 0) return 0;
 
     const index = Math.ceil((percentile / 100) * sortedArray.length) - 1;

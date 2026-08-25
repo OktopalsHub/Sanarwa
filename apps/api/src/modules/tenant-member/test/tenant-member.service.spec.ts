@@ -1,15 +1,15 @@
-import { Test, TestingModule } from '@nestjs/testing';
-import { getRepositoryToken } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { TenantFactory } from '../../test/factories/tenant.factory';
-import { UserFactory } from '../../test/factories/user.factory';
-import { Role } from '../role/role.entity';
-import { User } from '../user/user.entity';
-import { MemberStatus, TenantMember } from './tenant-member.entity';
-import { TenantMemberService } from './tenant-member.service';
-import { TENANT_MEMBER_REPO } from '../tenant-member.tokens';
+import { Test, TestingModule } from "@nestjs/testing";
+import { getRepositoryToken } from "@nestjs/typeorm";
+import { Repository } from "typeorm";
+import { TenantFactory } from "../../test/factories/tenant.factory";
+import { UserFactory } from "../../test/factories/user.factory";
+import { Role } from "../role/role.entity";
+import { User } from "../user/user.entity";
+import { MemberStatus, TenantMember } from "./tenant-member.entity";
+import { TenantMemberService } from "./tenant-member.service";
+import { TENANT_MEMBER_REPO } from "../tenant-member.tokens";
 
-describe('TenantMemberService', () => {
+describe("TenantMemberService", () => {
   let service: TenantMemberService;
   let tenantMemberRepository: Repository<TenantMember>;
   let userRepository: Repository<User>;
@@ -68,31 +68,31 @@ describe('TenantMemberService', () => {
     vi.clearAllMocks();
   });
 
-  it('should be defined', () => {
+  it("should be defined", () => {
     expect(service).toBeDefined();
   });
 
-  describe('addMember', () => {
-    it('should add a new member successfully', async () => {
+  describe("addMember", () => {
+    it("should add a new member successfully", async () => {
       const tenant = TenantFactory.create();
       const user = UserFactory.create();
       const memberData = {
         userId: user.id,
-        roleId: 'role-1',
-        invitedBy: 'admin-user-id',
+        roleId: "role-1",
+        invitedBy: "admin-user-id",
       };
 
       const mockRole = {
-        id: 'role-1',
-        name: 'Member',
+        id: "role-1",
+        name: "Member",
         tenantId: tenant.id,
       };
 
       const mockMember = {
-        id: 'member-1',
+        id: "member-1",
         tenantId: tenant.id,
         userId: user.id,
-        roleId: 'role-1',
+        roleId: "role-1",
         status: MemberStatus.ACTIVE,
         invitedBy: memberData.invitedBy,
         invitedAt: new Date(),
@@ -113,7 +113,7 @@ describe('TenantMemberService', () => {
         where: { id: user.id },
       });
       expect(mockRoleRepository.findOne).toHaveBeenCalledWith({
-        where: { id: 'role-1', tenantId: tenant.id },
+        where: { id: "role-1", tenantId: tenant.id },
       });
       expect(mockTenantMemberRepository.findOne).toHaveBeenCalledWith({
         where: { tenantId: tenant.id, userId: user.id },
@@ -121,50 +121,46 @@ describe('TenantMemberService', () => {
       expect(result).toEqual(mockMember);
     });
 
-    it('should throw error when user not found', async () => {
+    it("should throw error when user not found", async () => {
       const tenant = TenantFactory.create();
       const memberData = {
-        userId: 'non-existent-user',
-        roleId: 'role-1',
-        invitedBy: 'admin-user-id',
+        userId: "non-existent-user",
+        roleId: "role-1",
+        invitedBy: "admin-user-id",
       };
 
       mockUserRepository.findOne.mockResolvedValue(null);
 
-      await expect(service.addMember(tenant.id, memberData)).rejects.toThrow(
-        'User not found',
-      );
+      await expect(service.addMember(tenant.id, memberData)).rejects.toThrow("User not found");
     });
 
-    it('should throw error when role not found', async () => {
+    it("should throw error when role not found", async () => {
       const tenant = TenantFactory.create();
       const user = UserFactory.create();
       const memberData = {
         userId: user.id,
-        roleId: 'non-existent-role',
-        invitedBy: 'admin-user-id',
+        roleId: "non-existent-role",
+        invitedBy: "admin-user-id",
       };
 
       mockUserRepository.findOne.mockResolvedValue(user);
       mockRoleRepository.findOne.mockResolvedValue(null);
 
-      await expect(service.addMember(tenant.id, memberData)).rejects.toThrow(
-        'Role not found',
-      );
+      await expect(service.addMember(tenant.id, memberData)).rejects.toThrow("Role not found");
     });
 
-    it('should throw error when user is already a member', async () => {
+    it("should throw error when user is already a member", async () => {
       const tenant = TenantFactory.create();
       const user = UserFactory.create();
       const memberData = {
         userId: user.id,
-        roleId: 'role-1',
-        invitedBy: 'admin-user-id',
+        roleId: "role-1",
+        invitedBy: "admin-user-id",
       };
 
-      const mockRole = { id: 'role-1', name: 'Member', tenantId: tenant.id };
+      const mockRole = { id: "role-1", name: "Member", tenantId: tenant.id };
       const existingMember = {
-        id: 'member-1',
+        id: "member-1",
         tenantId: tenant.id,
         userId: user.id,
       };
@@ -174,17 +170,17 @@ describe('TenantMemberService', () => {
       mockTenantMemberRepository.findOne.mockResolvedValue(existingMember);
 
       await expect(service.addMember(tenant.id, memberData)).rejects.toThrow(
-        'User is already a member of this tenant',
+        "User is already a member of this tenant",
       );
     });
   });
 
-  describe('getMembers', () => {
-    it('should return all members for a tenant', async () => {
+  describe("getMembers", () => {
+    it("should return all members for a tenant", async () => {
       const tenant = TenantFactory.create();
       const mockMembers = [
-        { id: 'member-1', tenantId: tenant.id, status: MemberStatus.ACTIVE },
-        { id: 'member-2', tenantId: tenant.id, status: MemberStatus.ACTIVE },
+        { id: "member-1", tenantId: tenant.id, status: MemberStatus.ACTIVE },
+        { id: "member-2", tenantId: tenant.id, status: MemberStatus.ACTIVE },
       ];
 
       const mockQueryBuilder = {
@@ -193,36 +189,23 @@ describe('TenantMemberService', () => {
         getMany: vi.fn().mockResolvedValue(mockMembers),
       };
 
-      mockTenantMemberRepository.createQueryBuilder.mockReturnValue(
-        mockQueryBuilder,
-      );
+      mockTenantMemberRepository.createQueryBuilder.mockReturnValue(mockQueryBuilder);
 
       const result = await service.getMembers(tenant.id);
 
-      expect(
-        mockTenantMemberRepository.createQueryBuilder,
-      ).toHaveBeenCalledWith('member');
-      expect(mockQueryBuilder.leftJoinAndSelect).toHaveBeenCalledWith(
-        'member.user',
-        'user',
-      );
-      expect(mockQueryBuilder.leftJoinAndSelect).toHaveBeenCalledWith(
-        'member.role',
-        'role',
-      );
-      expect(mockQueryBuilder.where).toHaveBeenCalledWith(
-        'member.tenantId = :tenantId',
-        { tenantId: tenant.id },
-      );
+      expect(mockTenantMemberRepository.createQueryBuilder).toHaveBeenCalledWith("member");
+      expect(mockQueryBuilder.leftJoinAndSelect).toHaveBeenCalledWith("member.user", "user");
+      expect(mockQueryBuilder.leftJoinAndSelect).toHaveBeenCalledWith("member.role", "role");
+      expect(mockQueryBuilder.where).toHaveBeenCalledWith("member.tenantId = :tenantId", {
+        tenantId: tenant.id,
+      });
       expect(result).toEqual(mockMembers);
     });
 
-    it('should filter members by status when provided', async () => {
+    it("should filter members by status when provided", async () => {
       const tenant = TenantFactory.create();
       const status = MemberStatus.PENDING;
-      const mockMembers = [
-        { id: 'member-1', tenantId: tenant.id, status: MemberStatus.PENDING },
-      ];
+      const mockMembers = [{ id: "member-1", tenantId: tenant.id, status: MemberStatus.PENDING }];
 
       const mockQueryBuilder = {
         leftJoinAndSelect: vi.fn().mockReturnThis(),
@@ -231,36 +214,31 @@ describe('TenantMemberService', () => {
         getMany: vi.fn().mockResolvedValue(mockMembers),
       };
 
-      mockTenantMemberRepository.createQueryBuilder.mockReturnValue(
-        mockQueryBuilder,
-      );
+      mockTenantMemberRepository.createQueryBuilder.mockReturnValue(mockQueryBuilder);
 
       const result = await service.getMembers(tenant.id, status);
 
-      expect(mockQueryBuilder.andWhere).toHaveBeenCalledWith(
-        'member.status = :status',
-        { status },
-      );
+      expect(mockQueryBuilder.andWhere).toHaveBeenCalledWith("member.status = :status", { status });
       expect(result).toEqual(mockMembers);
     });
   });
 
-  describe('updateMemberRole', () => {
-    it('should update member role successfully', async () => {
+  describe("updateMemberRole", () => {
+    it("should update member role successfully", async () => {
       const tenant = TenantFactory.create();
-      const memberId = 'member-1';
-      const newRoleId = 'role-2';
+      const memberId = "member-1";
+      const newRoleId = "role-2";
 
       const existingMember = {
         id: memberId,
         tenantId: tenant.id,
-        roleId: 'role-1',
+        roleId: "role-1",
         status: MemberStatus.ACTIVE,
       };
 
       const newRole = {
         id: newRoleId,
-        name: 'Admin',
+        name: "Admin",
         tenantId: tenant.id,
       };
 
@@ -270,11 +248,7 @@ describe('TenantMemberService', () => {
       mockRoleRepository.findOne.mockResolvedValue(newRole);
       mockTenantMemberRepository.save.mockResolvedValue(updatedMember);
 
-      const result = await service.updateMemberRole(
-        tenant.id,
-        memberId,
-        newRoleId,
-      );
+      const result = await service.updateMemberRole(tenant.id, memberId, newRoleId);
 
       expect(mockTenantMemberRepository.findOne).toHaveBeenCalledWith({
         where: { id: memberId, tenantId: tenant.id },
@@ -285,42 +259,42 @@ describe('TenantMemberService', () => {
       expect(result).toEqual(updatedMember);
     });
 
-    it('should throw error when member not found', async () => {
+    it("should throw error when member not found", async () => {
       const tenant = TenantFactory.create();
-      const memberId = 'non-existent';
-      const newRoleId = 'role-2';
+      const memberId = "non-existent";
+      const newRoleId = "role-2";
 
       mockTenantMemberRepository.findOne.mockResolvedValue(null);
 
-      await expect(
-        service.updateMemberRole(tenant.id, memberId, newRoleId),
-      ).rejects.toThrow('Member not found');
+      await expect(service.updateMemberRole(tenant.id, memberId, newRoleId)).rejects.toThrow(
+        "Member not found",
+      );
     });
 
-    it('should throw error when new role not found', async () => {
+    it("should throw error when new role not found", async () => {
       const tenant = TenantFactory.create();
-      const memberId = 'member-1';
-      const newRoleId = 'non-existent-role';
+      const memberId = "member-1";
+      const newRoleId = "non-existent-role";
 
       const existingMember = {
         id: memberId,
         tenantId: tenant.id,
-        roleId: 'role-1',
+        roleId: "role-1",
       };
 
       mockTenantMemberRepository.findOne.mockResolvedValue(existingMember);
       mockRoleRepository.findOne.mockResolvedValue(null);
 
-      await expect(
-        service.updateMemberRole(tenant.id, memberId, newRoleId),
-      ).rejects.toThrow('Role not found');
+      await expect(service.updateMemberRole(tenant.id, memberId, newRoleId)).rejects.toThrow(
+        "Role not found",
+      );
     });
   });
 
-  describe('removeMember', () => {
-    it('should remove member successfully', async () => {
+  describe("removeMember", () => {
+    it("should remove member successfully", async () => {
       const tenant = TenantFactory.create();
-      const memberId = 'member-1';
+      const memberId = "member-1";
 
       const existingMember = {
         id: memberId,
@@ -339,25 +313,23 @@ describe('TenantMemberService', () => {
       expect(mockTenantMemberRepository.delete).toHaveBeenCalledWith(memberId);
     });
 
-    it('should throw error when member not found', async () => {
+    it("should throw error when member not found", async () => {
       const tenant = TenantFactory.create();
-      const memberId = 'non-existent';
+      const memberId = "non-existent";
 
       mockTenantMemberRepository.findOne.mockResolvedValue(null);
 
-      await expect(service.removeMember(tenant.id, memberId)).rejects.toThrow(
-        'Member not found',
-      );
+      await expect(service.removeMember(tenant.id, memberId)).rejects.toThrow("Member not found");
     });
   });
 
-  describe('getMemberByUser', () => {
-    it('should return member for user in tenant', async () => {
+  describe("getMemberByUser", () => {
+    it("should return member for user in tenant", async () => {
       const tenant = TenantFactory.create();
       const user = UserFactory.create();
 
       const mockMember = {
-        id: 'member-1',
+        id: "member-1",
         tenantId: tenant.id,
         userId: user.id,
         status: MemberStatus.ACTIVE,
@@ -370,24 +342,20 @@ describe('TenantMemberService', () => {
         getOne: vi.fn().mockResolvedValue(mockMember),
       };
 
-      mockTenantMemberRepository.createQueryBuilder.mockReturnValue(
-        mockQueryBuilder,
-      );
+      mockTenantMemberRepository.createQueryBuilder.mockReturnValue(mockQueryBuilder);
 
       const result = await service.getMemberByUser(tenant.id, user.id);
 
-      expect(mockQueryBuilder.where).toHaveBeenCalledWith(
-        'member.tenantId = :tenantId',
-        { tenantId: tenant.id },
-      );
-      expect(mockQueryBuilder.andWhere).toHaveBeenCalledWith(
-        'member.userId = :userId',
-        { userId: user.id },
-      );
+      expect(mockQueryBuilder.where).toHaveBeenCalledWith("member.tenantId = :tenantId", {
+        tenantId: tenant.id,
+      });
+      expect(mockQueryBuilder.andWhere).toHaveBeenCalledWith("member.userId = :userId", {
+        userId: user.id,
+      });
       expect(result).toEqual(mockMember);
     });
 
-    it('should return null when member not found', async () => {
+    it("should return null when member not found", async () => {
       const tenant = TenantFactory.create();
       const user = UserFactory.create();
 
@@ -398,9 +366,7 @@ describe('TenantMemberService', () => {
         getOne: vi.fn().mockResolvedValue(null),
       };
 
-      mockTenantMemberRepository.createQueryBuilder.mockReturnValue(
-        mockQueryBuilder,
-      );
+      mockTenantMemberRepository.createQueryBuilder.mockReturnValue(mockQueryBuilder);
 
       const result = await service.getMemberByUser(tenant.id, user.id);
 

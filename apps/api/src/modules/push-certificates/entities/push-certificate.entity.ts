@@ -1,25 +1,25 @@
-import { Column, Entity, ManyToOne } from 'typeorm';
-import { BaseEntity } from '../../../database/entities/base.entity';
-import { Project } from '../../project/entities/project.entity';
-import { TenantMember } from '../../tenant-member/entities/tenant-member.entity';
-import { Tenant } from '../../tenant/entities/tenant.entity';
+import { Column, Entity, ManyToOne } from "typeorm";
+import { BaseEntity } from "../../../database/entities/base.entity";
+import { Project } from "../../project/entities/project.entity";
+import { TenantMember } from "../../tenant-member/entities/tenant-member.entity";
+import { Tenant } from "../../tenant/entities/tenant.entity";
 
 export enum CertificateType {
-  IOS = 'ios',
-  ANDROID = 'android',
+  IOS = "ios",
+  ANDROID = "android",
 }
 
 export enum CertificateStatus {
-  ACTIVE = 'active',
-  INACTIVE = 'inactive',
-  EXPIRED = 'expired',
-  REVOKED = 'revoked',
-  PENDING_VALIDATION = 'pending_validation',
+  ACTIVE = "active",
+  INACTIVE = "inactive",
+  EXPIRED = "expired",
+  REVOKED = "revoked",
+  PENDING_VALIDATION = "pending_validation",
 }
 
 export enum CertificateEnvironment {
-  DEVELOPMENT = 'development',
-  PRODUCTION = 'production',
+  DEVELOPMENT = "development",
+  PRODUCTION = "production",
 }
 
 export interface IOSCertificateData {
@@ -38,36 +38,36 @@ export interface AndroidCertificateData {
   serverKey?: string; // Legacy FCM server key
 }
 
-@Entity('push_certificates')
+@Entity("push_certificates")
 export class PushCertificate extends BaseEntity {
   @Column()
   name: string;
 
-  @Column({ type: 'text', nullable: true })
+  @Column({ type: "text", nullable: true })
   description?: string;
 
   @Column({
-    type: 'enum',
+    type: "enum",
     enum: CertificateType,
   })
   type: CertificateType;
 
   @Column({
-    type: 'enum',
+    type: "enum",
     enum: CertificateStatus,
     default: CertificateStatus.PENDING_VALIDATION,
   })
   status: CertificateStatus;
 
   @Column({
-    type: 'enum',
+    type: "enum",
     enum: CertificateEnvironment,
     default: CertificateEnvironment.DEVELOPMENT,
   })
   environment: CertificateEnvironment;
 
   // Certificate data (encrypted in production)
-  @Column({ type: 'json' })
+  @Column({ type: "json" })
   certificateData: IOSCertificateData | AndroidCertificateData;
 
   // Certificate metadata
@@ -83,17 +83,17 @@ export class PushCertificate extends BaseEntity {
   @Column({ nullable: true })
   subject?: string;
 
-  @Column({ type: 'text', nullable: true })
+  @Column({ type: "text", nullable: true })
   fingerprint?: string;
 
   // Validation and testing
-  @Column({ type: 'timestamp', nullable: true })
+  @Column({ type: "timestamp", nullable: true })
   lastValidatedAt?: Date;
 
-  @Column({ type: 'timestamp', nullable: true })
+  @Column({ type: "timestamp", nullable: true })
   lastTestedAt?: Date;
 
-  @Column({ type: 'json', nullable: true })
+  @Column({ type: "json", nullable: true })
   validationResult?: {
     isValid: boolean;
     errors?: string[];
@@ -101,7 +101,7 @@ export class PushCertificate extends BaseEntity {
     lastChecked: Date;
   };
 
-  @Column({ type: 'json', nullable: true })
+  @Column({ type: "json", nullable: true })
   testResult?: {
     success: boolean;
     messageId?: string;
@@ -111,14 +111,14 @@ export class PushCertificate extends BaseEntity {
   };
 
   // Usage statistics
-  @Column({ type: 'int', default: 0 })
+  @Column({ type: "int", default: 0 })
   totalNotificationsSent: number;
 
-  @Column({ type: 'timestamp', nullable: true })
+  @Column({ type: "timestamp", nullable: true })
   lastUsedAt?: Date;
 
   // Rotation and renewal
-  @Column({ type: 'json', nullable: true })
+  @Column({ type: "json", nullable: true })
   rotationConfig?: {
     autoRotate: boolean;
     rotationDaysBeforeExpiry: number;
@@ -126,14 +126,14 @@ export class PushCertificate extends BaseEntity {
     webhookUrl?: string;
   };
 
-  @Column({ type: 'timestamp', nullable: true })
+  @Column({ type: "timestamp", nullable: true })
   nextRotationAt?: Date;
 
   // Security and access control
-  @Column({ type: 'simple-array', nullable: true })
+  @Column({ type: "simple-array", nullable: true })
   allowedProjects?: string[]; // Project IDs that can use this certificate
 
-  @Column({ type: 'json', nullable: true })
+  @Column({ type: "json", nullable: true })
   accessControl?: {
     allowedRoles?: string[];
     allowedUsers?: string[];
@@ -141,26 +141,23 @@ export class PushCertificate extends BaseEntity {
   };
 
   // Tags and metadata
-  @Column({ type: 'simple-array', nullable: true })
+  @Column({ type: "simple-array", nullable: true })
   tags?: string[];
 
-  @Column({ type: 'json', nullable: true })
+  @Column({ type: "json", nullable: true })
   metadata?: Record<string, any>;
 
   // Relationships
   @ManyToOne(() => Tenant, (tenant) => tenant.pushCertificates)
   tenant: Tenant;
 
-  @Column({ type: 'uuid', name: 'tenant_id' })
+  @Column({ type: "uuid", name: "tenant_id" })
   tenantId: string;
 
-  @ManyToOne(
-    () => TenantMember,
-    (tenantMember) => tenantMember.createdPushCertificates,
-  )
+  @ManyToOne(() => TenantMember, (tenantMember) => tenantMember.createdPushCertificates)
   createdBy: TenantMember;
 
-  @Column({ type: 'uuid', name: 'created_by_id' })
+  @Column({ type: "uuid", name: "created_by_id" })
   createdById: string;
 
   @ManyToOne(() => Project, (project) => project.pushCertificates, {
@@ -168,7 +165,7 @@ export class PushCertificate extends BaseEntity {
   })
   project: Project;
 
-  @Column({ type: 'uuid', name: 'project_id', nullable: true })
+  @Column({ type: "uuid", name: "project_id", nullable: true })
   projectId?: string;
 
   // Helper methods
@@ -188,9 +185,7 @@ export class PushCertificate extends BaseEntity {
   }
 
   needsRotation(): boolean {
-    return this.isExpiringSoon(
-      this.rotationConfig?.rotationDaysBeforeExpiry || 30,
-    );
+    return this.isExpiringSoon(this.rotationConfig?.rotationDaysBeforeExpiry || 30);
   }
 
   canUseForProject(projectId: string): boolean {
@@ -210,30 +205,30 @@ export class PushCertificate extends BaseEntity {
 
     // Check expiry
     if (this.isExpired()) {
-      errors.push('Certificate has expired');
+      errors.push("Certificate has expired");
     } else if (this.isExpiringSoon(7)) {
-      warnings.push('Certificate expires within 7 days');
+      warnings.push("Certificate expires within 7 days");
     }
 
     // Check required fields based on type
     if (this.type === CertificateType.IOS) {
       const iosData = this.certificateData as IOSCertificateData;
       if (!iosData.certificateData) {
-        errors.push('iOS certificate data is required');
+        errors.push("iOS certificate data is required");
       }
       if (!iosData.bundleId) {
-        errors.push('Bundle ID is required for iOS certificates');
+        errors.push("Bundle ID is required for iOS certificates");
       }
       if (!iosData.teamId) {
-        errors.push('Team ID is required for iOS certificates');
+        errors.push("Team ID is required for iOS certificates");
       }
     } else if (this.type === CertificateType.ANDROID) {
       const androidData = this.certificateData as AndroidCertificateData;
       if (!androidData.serviceAccountKey && !androidData.serverKey) {
-        errors.push('Android service account key or server key is required');
+        errors.push("Android service account key or server key is required");
       }
       if (!androidData.packageName) {
-        errors.push('Package name is required for Android certificates');
+        errors.push("Package name is required for Android certificates");
       }
     }
 
@@ -242,7 +237,7 @@ export class PushCertificate extends BaseEntity {
       this.environment === CertificateEnvironment.PRODUCTION &&
       this.status === CertificateStatus.PENDING_VALIDATION
     ) {
-      warnings.push('Production certificates should be validated before use');
+      warnings.push("Production certificates should be validated before use");
     }
 
     return { isValid: errors.length === 0, errors, warnings };

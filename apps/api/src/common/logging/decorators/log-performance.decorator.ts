@@ -1,6 +1,6 @@
-import { SetMetadata } from '@nestjs/common';
+import { SetMetadata } from "@nestjs/common";
 
-export const LOG_PERFORMANCE_KEY = 'log_performance';
+export const LOG_PERFORMANCE_KEY = "log_performance";
 
 export interface LogPerformanceOptions {
   operation: string;

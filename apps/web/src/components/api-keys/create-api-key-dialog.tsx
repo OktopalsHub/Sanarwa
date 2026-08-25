@@ -1,22 +1,35 @@
-'use client';
+"use client";
 
-import { Send } from '@/lib/icons';
+import { Send } from "@/lib/icons";
 
-import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { useForm, Controller } from 'react-hook-form';
-import { toast } from 'sonner';
-import { projectApi } from '@/lib/api/project';
-import { apiKeyApi } from '@/lib/api/api-key';
-import { apiClient } from '@/lib/api/client';
-import { useTenant } from '@/contexts/tenant-context';
-import { DocumentDuplicateIcon, EyeIcon, EyeSlashIcon } from '@heroicons/react/24/outline'
+import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { useForm, Controller } from "react-hook-form";
+import { toast } from "sonner";
+import { projectApi } from "@/lib/api/project";
+import { apiKeyApi } from "@/lib/api/api-key";
+import { apiClient } from "@/lib/api/client";
+import { useTenant } from "@/contexts/tenant-context";
+import { DocumentDuplicateIcon, EyeIcon, EyeSlashIcon } from "@heroicons/react/24/outline";
 
 interface CreateApiKeyDialogProps {
   open: boolean;
@@ -32,7 +45,7 @@ interface CreateApiKeyForm {
 export function CreateApiKeyDialog({ open, onOpenChange }: CreateApiKeyDialogProps) {
   const { selectedTenant } = useTenant();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [selectedPermissions, setSelectedPermissions] = useState<string[]>(['read']);
+  const [selectedPermissions, setSelectedPermissions] = useState<string[]>(["read"]);
   const [createdApiKey, setCreatedApiKey] = useState<string | null>(null);
   const [showApiKey, setShowApiKey] = useState(false);
 
@@ -46,7 +59,7 @@ export function CreateApiKeyDialog({ open, onOpenChange }: CreateApiKeyDialogPro
 
   // Fetch projects for selection
   const { data: projectsData } = useQuery({
-    queryKey: ['projects', selectedTenant?.id],
+    queryKey: ["projects", selectedTenant?.id],
     queryFn: () => projectApi.getProjects({ limit: 100 }),
     enabled: !!selectedTenant?.id && open,
   });
@@ -54,22 +67,22 @@ export function CreateApiKeyDialog({ open, onOpenChange }: CreateApiKeyDialogPro
   const projects = projectsData?.data || [];
 
   const permissions = [
-    { id: 'read', label: 'Read', description: 'View data and analytics' },
-    { id: 'write', label: 'Write', description: 'Send messages and create campaigns' },
-    { id: 'admin', label: 'Admin', description: 'Manage settings and configurations' },
+    { id: "read", label: "Read", description: "View data and analytics" },
+    { id: "write", label: "Write", description: "Send messages and create campaigns" },
+    { id: "admin", label: "Admin", description: "Manage settings and configurations" },
   ];
 
   const handlePermissionChange = (permissionId: string, checked: boolean) => {
     if (checked) {
       setSelectedPermissions([...selectedPermissions, permissionId]);
     } else {
-      setSelectedPermissions(selectedPermissions.filter(p => p !== permissionId));
+      setSelectedPermissions(selectedPermissions.filter((p) => p !== permissionId));
     }
   };
 
   const onSubmit = async (data: CreateApiKeyForm) => {
     if (selectedPermissions.length === 0) {
-      toast.error('Please select at least one permission');
+      toast.error("Please select at least one permission");
       return;
     }
 
@@ -85,9 +98,9 @@ export function CreateApiKeyDialog({ open, onOpenChange }: CreateApiKeyDialogPro
       });
 
       setCreatedApiKey(result.key || null);
-      toast.success('API key created');
+      toast.success("API key created");
     } catch (error) {
-      toast.error('Failed to create API key');
+      toast.error("Failed to create API key");
     } finally {
       setIsSubmitting(false);
     }
@@ -96,7 +109,7 @@ export function CreateApiKeyDialog({ open, onOpenChange }: CreateApiKeyDialogPro
   const handleClose = () => {
     if (!isSubmitting) {
       reset();
-      setSelectedPermissions(['read']);
+      setSelectedPermissions(["read"]);
       setCreatedApiKey(null);
       setShowApiKey(false);
       onOpenChange(false);
@@ -106,29 +119,26 @@ export function CreateApiKeyDialog({ open, onOpenChange }: CreateApiKeyDialogPro
   const copyToClipboard = async (text: string) => {
     try {
       await navigator.clipboard.writeText(text);
-      toast.success('API key copied to clipboard');
+      toast.success("API key copied to clipboard");
     } catch (error) {
-      toast.error('Failed to copy API key');
+      toast.error("Failed to copy API key");
     }
   };
 
   const maskApiKey = (key: string) => {
     if (key.length <= 12) return key;
-    return key.substring(0, 12) + '•'.repeat(key.length - 16) + key.substring(key.length - 4);
+    return key.substring(0, 12) + "•".repeat(key.length - 16) + key.substring(key.length - 4);
   };
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
-          <DialogTitle>
-            {createdApiKey ? 'API Key Created' : 'Create API Key'}
-          </DialogTitle>
+          <DialogTitle>{createdApiKey ? "API Key Created" : "Create API Key"}</DialogTitle>
           <DialogDescription>
             {createdApiKey
-              ? 'Your API key has been created. Make sure to copy it now as you won\'t be able to see it again.'
-              : 'Create a new API key for accessing the Sanarwa API.'
-            }
+              ? "Your API key has been created. Make sure to copy it now as you won't be able to see it again."
+              : "Create a new API key for accessing the Sanarwa API."}
           </DialogDescription>
         </DialogHeader>
 
@@ -143,18 +153,14 @@ export function CreateApiKeyDialog({ open, onOpenChange }: CreateApiKeyDialogPro
                   readOnly
                   className="font-mono text-sm"
                 />
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setShowApiKey(!showApiKey)}
-                >
-                  {showApiKey ? <EyeSlashIcon className="h-4 w-4" /> : <EyeIcon className="h-4 w-4" />}
+                <Button variant="outline" size="sm" onClick={() => setShowApiKey(!showApiKey)}>
+                  {showApiKey ? (
+                    <EyeSlashIcon className="h-4 w-4" />
+                  ) : (
+                    <EyeIcon className="h-4 w-4" />
+                  )}
                 </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => copyToClipboard(createdApiKey)}
-                >
+                <Button variant="outline" size="sm" onClick={() => copyToClipboard(createdApiKey)}>
                   <DocumentDuplicateIcon className="h-4 w-4" />
                 </Button>
               </div>
@@ -166,17 +172,15 @@ export function CreateApiKeyDialog({ open, onOpenChange }: CreateApiKeyDialogPro
                 <div className="text-sm">
                   <p className="font-medium text-yellow-800 dark:text-yellow-200">Important!</p>
                   <p className="text-yellow-700 dark:text-yellow-300">
-                    This is the only time you'll be able to see this API key.
-                    Make sure to copy it and store it securely.
+                    This is the only time you'll be able to see this API key. Make sure to copy it
+                    and store it securely.
                   </p>
                 </div>
               </div>
             </div>
 
             <DialogFooter>
-              <Button onClick={handleClose}>
-                Done
-              </Button>
+              <Button onClick={handleClose}>Done</Button>
             </DialogFooter>
           </div>
         ) : (
@@ -187,22 +191,20 @@ export function CreateApiKeyDialog({ open, onOpenChange }: CreateApiKeyDialogPro
               <Input
                 id="name"
                 placeholder="e.g., Production API Key"
-                {...register('name', {
-                  required: 'API key name is required',
+                {...register("name", {
+                  required: "API key name is required",
                   minLength: {
                     value: 2,
-                    message: 'Name must be at least 2 characters',
+                    message: "Name must be at least 2 characters",
                   },
                   maxLength: {
                     value: 100,
-                    message: 'Name must be less than 100 characters',
+                    message: "Name must be less than 100 characters",
                   },
                 })}
                 disabled={isSubmitting}
               />
-              {errors.name && (
-                <p className="text-sm text-destructive">{errors.name.message}</p>
-              )}
+              {errors.name && <p className="text-sm text-destructive">{errors.name.message}</p>}
             </div>
 
             <div className="space-y-2">
@@ -210,9 +212,13 @@ export function CreateApiKeyDialog({ open, onOpenChange }: CreateApiKeyDialogPro
               <Controller
                 name="projectId"
                 control={control}
-                rules={{ required: 'Please select a project' }}
+                rules={{ required: "Please select a project" }}
                 render={({ field }) => (
-                  <Select onValueChange={field.onChange} value={field.value} disabled={isSubmitting}>
+                  <Select
+                    onValueChange={field.onChange}
+                    value={field.value}
+                    disabled={isSubmitting}
+                  >
                     <SelectTrigger>
                       <SelectValue placeholder="Select a project" />
                     </SelectTrigger>
@@ -251,9 +257,7 @@ export function CreateApiKeyDialog({ open, onOpenChange }: CreateApiKeyDialogPro
                       >
                         {permission.label}
                       </Label>
-                      <p className="text-xs text-muted-foreground">
-                        {permission.description}
-                      </p>
+                      <p className="text-xs text-muted-foreground">{permission.description}</p>
                     </div>
                   </div>
                 ))}
@@ -261,16 +265,11 @@ export function CreateApiKeyDialog({ open, onOpenChange }: CreateApiKeyDialogPro
             </div>
 
             <DialogFooter>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={handleClose}
-                disabled={isSubmitting}
-              >
+              <Button type="button" variant="outline" onClick={handleClose} disabled={isSubmitting}>
                 Cancel
               </Button>
               <Button type="submit" disabled={isSubmitting}>
-                {isSubmitting ? 'Creating...' : 'Create API Key'}
+                {isSubmitting ? "Creating..." : "Create API Key"}
               </Button>
             </DialogFooter>
           </form>

@@ -1,9 +1,9 @@
-'use client';
+"use client";
 
-import { TenantProvider } from '@/contexts/tenant-context';
-import { useAuth } from '@/contexts/auth-context';
-import { useNavigate, useParams } from '@tanstack/react-router';
-import { useEffect, type ReactNode } from 'react';
+import { TenantProvider } from "@/contexts/tenant-context";
+import { useAuth } from "@/contexts/auth-context";
+import { useNavigate, useParams } from "@tanstack/react-router";
+import { useEffect, type ReactNode } from "react";
 
 export function TenantLayoutGuard({ children }: { children: ReactNode }) {
   const { isAuthenticated, isLoading } = useAuth();
@@ -13,8 +13,8 @@ export function TenantLayoutGuard({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
       navigate({
-        to: '/login',
-        search: { redirect: `/${tenantSlug ?? ''}/dashboard` },
+        to: "/login",
+        search: { redirect: `/${tenantSlug ?? ""}/dashboard` },
       });
     }
   }, [isAuthenticated, isLoading, navigate, tenantSlug]);

@@ -1,13 +1,13 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import { InjectRedis } from '@nestjs-modules/ioredis';
-import { InjectDataSource } from '@nestjs/typeorm';
-import { DataSource } from 'typeorm';
-import Redis from 'ioredis';
-import { AlertService } from '../alerts/alert.service';
+import { Injectable, Logger } from "@nestjs/common";
+import { ConfigService } from "@nestjs/config";
+import { InjectRedis } from "@nestjs-modules/ioredis";
+import { InjectDataSource } from "@nestjs/typeorm";
+import { DataSource } from "typeorm";
+import Redis from "ioredis";
+import { AlertService } from "../alerts/alert.service";
 
 export interface HealthStatus {
-  status: 'healthy' | 'degraded' | 'unhealthy';
+  status: "healthy" | "degraded" | "unhealthy";
   timestamp: Date;
   uptime: number;
   version: string;
@@ -22,7 +22,7 @@ export interface HealthStatus {
 }
 
 export interface HealthCheckResult {
-  status: 'healthy' | 'degraded' | 'unhealthy';
+  status: "healthy" | "degraded" | "unhealthy";
   responseTime: number;
   message?: string;
   details?: any;
@@ -38,7 +38,7 @@ export class HealthCheckService {
     @InjectRedis() private readonly redis: Redis,
     private readonly configService: ConfigService,
     private readonly alertService: AlertService,
-  ) { }
+  ) {}
 
   async getHealthStatus(): Promise<HealthStatus> {
     const checks = await Promise.allSettled([
@@ -51,7 +51,8 @@ export class HealthCheckService {
     ]);
 
     const [database, redis, memory, cache, connectionPools, batchProcessing] = checks.map(
-      (result) => (result.status === 'fulfilled' ? result.value : this.createUnhealthyResult('Check failed'))
+      (result) =>
+        result.status === "fulfilled" ? result.value : this.createUnhealthyResult("Check failed"),
     );
 
     const overallStatus = this.determineOverallStatus([
@@ -67,7 +68,7 @@ export class HealthCheckService {
       status: overallStatus,
       timestamp: new Date(),
       uptime: Date.now() - this.startTime,
-      version: this.configService.get('APP_VERSION', '1.0.0'),
+      version: this.configService.get("APP_VERSION", "1.0.0"),
       checks: {
         database,
         redis,
@@ -79,7 +80,7 @@ export class HealthCheckService {
     };
 
     // Send alert if system is unhealthy
-    if (overallStatus === 'unhealthy') {
+    if (overallStatus === "unhealthy") {
       await this.sendHealthAlert(healthStatus);
     }
 
@@ -90,20 +91,20 @@ export class HealthCheckService {
     const startTime = Date.now();
 
     try {
-      await this.dataSource.query('SELECT 1');
+      await this.dataSource.query("SELECT 1");
 
       return {
-        status: 'healthy',
+        status: "healthy",
         responseTime: Date.now() - startTime,
-        message: 'Database connection successful',
+        message: "Database connection successful",
       };
     } catch (error) {
-      this.logger.error('Database health check failed', error);
+      this.logger.error("Database health check failed", error);
 
       return {
-        status: 'unhealthy',
+        status: "unhealthy",
         responseTime: Date.now() - startTime,
-        message: 'Database connection failed',
+        message: "Database connection failed",
         details: { error: error.message },
       };
     }
@@ -116,17 +117,17 @@ export class HealthCheckService {
       await this.redis.ping();
 
       return {
-        status: 'healthy',
+        status: "healthy",
         responseTime: Date.now() - startTime,
-        message: 'Redis connection successful',
+        message: "Redis connection successful",
       };
     } catch (error) {
-      this.logger.error('Redis health check failed', error);
+      this.logger.error("Redis health check failed", error);
 
       return {
-        status: 'unhealthy',
+        status: "unhealthy",
         responseTime: Date.now() - startTime,
-        message: 'Redis connection failed',
+        message: "Redis connection failed",
         details: { error: error.message },
       };
     }
@@ -140,20 +141,20 @@ export class HealthCheckService {
       const heapUsedMB = memoryUsage.heapUsed / 1024 / 1024;
       const rssUsedMB = memoryUsage.rss / 1024 / 1024;
 
-      const heapWarningMB = this.configService.get<number>('MEMORY_HEAP_WARNING_MB', 512);
-      const heapCriticalMB = this.configService.get<number>('MEMORY_HEAP_CRITICAL_MB', 1024);
-      const rssWarningMB = this.configService.get<number>('MEMORY_RSS_WARNING_MB', 1024);
-      const rssCriticalMB = this.configService.get<number>('MEMORY_RSS_CRITICAL_MB', 2048);
+      const heapWarningMB = this.configService.get<number>("MEMORY_HEAP_WARNING_MB", 512);
+      const heapCriticalMB = this.configService.get<number>("MEMORY_HEAP_CRITICAL_MB", 1024);
+      const rssWarningMB = this.configService.get<number>("MEMORY_RSS_WARNING_MB", 1024);
+      const rssCriticalMB = this.configService.get<number>("MEMORY_RSS_CRITICAL_MB", 2048);
 
-      let status: 'healthy' | 'degraded' | 'unhealthy' = 'healthy';
-      let message = 'Memory usage normal';
+      let status: "healthy" | "degraded" | "unhealthy" = "healthy";
+      let message = "Memory usage normal";
 
       if (heapUsedMB > heapCriticalMB || rssUsedMB > rssCriticalMB) {
-        status = 'unhealthy';
-        message = 'Critical memory usage detected';
+        status = "unhealthy";
+        message = "Critical memory usage detected";
       } else if (heapUsedMB > heapWarningMB || rssUsedMB > rssWarningMB) {
-        status = 'degraded';
-        message = 'High memory usage detected';
+        status = "degraded";
+        message = "High memory usage detected";
       }
 
       return {
@@ -168,12 +169,12 @@ export class HealthCheckService {
         },
       };
     } catch (error) {
-      this.logger.error('Memory health check failed', error);
+      this.logger.error("Memory health check failed", error);
 
       return {
-        status: 'unhealthy',
+        status: "unhealthy",
         responseTime: Date.now() - startTime,
-        message: 'Memory check failed',
+        message: "Memory check failed",
         details: { error: error.message },
       };
     }
@@ -183,11 +184,11 @@ export class HealthCheckService {
     const startTime = Date.now();
 
     try {
-      const testKey = 'health-check-' + Date.now();
+      const testKey = "health-check-" + Date.now();
       const testValue = JSON.stringify({ test: true, timestamp: new Date() });
 
       // Test cache write
-      await this.redis.set(testKey, testValue, 'EX', 60);
+      await this.redis.set(testKey, testValue, "EX", 60);
 
       // Test cache read
       const retrieved = await this.redis.get(testKey);
@@ -196,24 +197,24 @@ export class HealthCheckService {
       await this.redis.del(testKey);
 
       if (!retrieved) {
-        throw new Error('Cache read/write test failed');
+        throw new Error("Cache read/write test failed");
       }
 
       return {
-        status: 'healthy',
+        status: "healthy",
         responseTime: Date.now() - startTime,
-        message: 'Cache operations successful',
+        message: "Cache operations successful",
         details: {
           connected: true,
         },
       };
     } catch (error) {
-      this.logger.error('Cache health check failed', error);
+      this.logger.error("Cache health check failed", error);
 
       return {
-        status: 'unhealthy',
+        status: "unhealthy",
         responseTime: Date.now() - startTime,
-        message: 'Cache check failed',
+        message: "Cache check failed",
         details: { error: error.message },
       };
     }
@@ -224,21 +225,21 @@ export class HealthCheckService {
 
     try {
       // Simple check using the existing database connection
-      const result = await this.dataSource.query('SELECT 1');
+      const result = await this.dataSource.query("SELECT 1");
 
       return {
-        status: 'healthy',
+        status: "healthy",
         responseTime: Date.now() - startTime,
-        message: 'Database connection pool healthy',
+        message: "Database connection pool healthy",
         details: { connected: true },
       };
     } catch (error) {
-      this.logger.error('Connection pool health check failed', error);
+      this.logger.error("Connection pool health check failed", error);
 
       return {
-        status: 'unhealthy',
+        status: "unhealthy",
         responseTime: Date.now() - startTime,
-        message: 'Connection pool check failed',
+        message: "Connection pool check failed",
         details: { error: error.message },
       };
     }
@@ -250,41 +251,43 @@ export class HealthCheckService {
     try {
       // Simple check - just return healthy since we don't have complex batch processing
       return {
-        status: 'healthy',
+        status: "healthy",
         responseTime: Date.now() - startTime,
-        message: 'Batch processing healthy',
-        details: { status: 'operational' },
+        message: "Batch processing healthy",
+        details: { status: "operational" },
       };
     } catch (error) {
-      this.logger.error('Batch processing health check failed', error);
+      this.logger.error("Batch processing health check failed", error);
 
       return {
-        status: 'unhealthy',
+        status: "unhealthy",
         responseTime: Date.now() - startTime,
-        message: 'Batch processing check failed',
+        message: "Batch processing check failed",
         details: { error: error.message },
       };
     }
   }
 
-  private determineOverallStatus(checks: HealthCheckResult[]): 'healthy' | 'degraded' | 'unhealthy' {
-    const unhealthyCount = checks.filter(check => check.status === 'unhealthy').length;
-    const degradedCount = checks.filter(check => check.status === 'degraded').length;
+  private determineOverallStatus(
+    checks: HealthCheckResult[],
+  ): "healthy" | "degraded" | "unhealthy" {
+    const unhealthyCount = checks.filter((check) => check.status === "unhealthy").length;
+    const degradedCount = checks.filter((check) => check.status === "degraded").length;
 
     if (unhealthyCount > 0) {
-      return 'unhealthy';
+      return "unhealthy";
     }
 
     if (degradedCount > 0) {
-      return 'degraded';
+      return "degraded";
     }
 
-    return 'healthy';
+    return "healthy";
   }
 
   private createUnhealthyResult(message: string): HealthCheckResult {
     return {
-      status: 'unhealthy',
+      status: "unhealthy",
       responseTime: 0,
       message,
     };
@@ -293,22 +296,22 @@ export class HealthCheckService {
   private async sendHealthAlert(healthStatus: HealthStatus): Promise<void> {
     try {
       const unhealthyChecks = Object.entries(healthStatus.checks)
-        .filter(([, check]) => check.status === 'unhealthy')
+        .filter(([, check]) => check.status === "unhealthy")
         .map(([name]) => name);
 
       await this.alertService.sendSystemAlert(
-        '🚨 System Health Alert',
-        `System is unhealthy. Failed checks: ${unhealthyChecks.join(', ')}`,
-        'critical',
+        "🚨 System Health Alert",
+        `System is unhealthy. Failed checks: ${unhealthyChecks.join(", ")}`,
+        "critical",
         {
           status: healthStatus.status,
           failedChecks: unhealthyChecks,
           uptime: healthStatus.uptime,
           timestamp: healthStatus.timestamp,
-        }
+        },
       );
     } catch (error) {
-      this.logger.error('Failed to send health alert', error);
+      this.logger.error("Failed to send health alert", error);
     }
   }
 }

@@ -1,43 +1,44 @@
-'use client';
+"use client";
 
-import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { authApi } from '@/lib/api/auth';
-import Link from '@/compat/next-link';
-import { useRouter, useSearchParams } from '@/compat/next-navigation';
-import { useState } from 'react';
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { authApi } from "@/lib/api/auth";
+import Link from "@/compat/next-link";
+import { useRouter, useSearchParams } from "@/compat/next-navigation";
+import { useState } from "react";
 
 export function ResetPasswordForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const token = searchParams.get('token');
+  const token = searchParams.get("token");
 
   const [formData, setFormData] = useState({
-    password: '',
-    confirmPassword: '',
+    password: "",
+    confirmPassword: "",
   });
 
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
 
   const validateForm = (): boolean => {
     const errors: Record<string, string> = {};
 
     if (!formData.password) {
-      errors.password = 'Password is required';
+      errors.password = "Password is required";
     } else if (formData.password.length < 8) {
-      errors.password = 'Password must be at least 8 characters';
+      errors.password = "Password must be at least 8 characters";
     } else if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(formData.password)) {
-      errors.password = 'Password must contain at least one uppercase letter, one lowercase letter, and one number';
+      errors.password =
+        "Password must contain at least one uppercase letter, one lowercase letter, and one number";
     }
 
     if (!formData.confirmPassword) {
-      errors.confirmPassword = 'Please confirm your password';
+      errors.confirmPassword = "Please confirm your password";
     } else if (formData.password !== formData.confirmPassword) {
-      errors.confirmPassword = 'Passwords do not match';
+      errors.confirmPassword = "Passwords do not match";
     }
 
     setFormErrors(errors);
@@ -48,7 +49,7 @@ export function ResetPasswordForm() {
     e.preventDefault();
 
     if (!token) {
-      setError('Invalid or missing reset token');
+      setError("Invalid or missing reset token");
       return;
     }
 
@@ -57,7 +58,7 @@ export function ResetPasswordForm() {
     }
 
     setIsLoading(true);
-    setError('');
+    setError("");
 
     try {
       await authApi.confirmPasswordReset({
@@ -66,9 +67,9 @@ export function ResetPasswordForm() {
         confirmPassword: formData.confirmPassword,
       });
 
-      router.push('/login?message=Password reset successful');
+      router.push("/login?message=Password reset successful");
     } catch (error) {
-      setError(error instanceof Error ? error.message : 'Failed to reset password');
+      setError(error instanceof Error ? error.message : "Failed to reset password");
     } finally {
       setIsLoading(false);
     }
@@ -76,16 +77,16 @@ export function ResetPasswordForm() {
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
       [name]: value,
     }));
 
     // Clear field error when user starts typing
     if (formErrors[name]) {
-      setFormErrors(prev => ({
+      setFormErrors((prev) => ({
         ...prev,
-        [name]: '',
+        [name]: "",
       }));
     }
   };
@@ -99,9 +100,7 @@ export function ResetPasswordForm() {
             This password reset link is invalid or has expired.
           </p>
           <Link href="/forgot-password">
-            <Button className="w-full">
-              Request new reset link
-            </Button>
+            <Button className="w-full">Request new reset link</Button>
           </Link>
         </div>
       </Card>
@@ -113,9 +112,7 @@ export function ResetPasswordForm() {
       <div className="space-y-6">
         <div className="text-center">
           <h1 className="text-2xl font-bold">Reset your password</h1>
-          <p className="text-muted-foreground">
-            Enter your new password below
-          </p>
+          <p className="text-muted-foreground">Enter your new password below</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -130,7 +127,7 @@ export function ResetPasswordForm() {
               placeholder="Enter your new password"
               disabled={isLoading}
               aria-invalid={!!formErrors.password}
-              aria-describedby={formErrors.password ? 'password-error' : undefined}
+              aria-describedby={formErrors.password ? "password-error" : undefined}
             />
             {formErrors.password && (
               <p id="password-error" className="text-sm text-destructive">
@@ -150,7 +147,7 @@ export function ResetPasswordForm() {
               placeholder="Confirm your new password"
               disabled={isLoading}
               aria-invalid={!!formErrors.confirmPassword}
-              aria-describedby={formErrors.confirmPassword ? 'confirm-password-error' : undefined}
+              aria-describedby={formErrors.confirmPassword ? "confirm-password-error" : undefined}
             />
             {formErrors.confirmPassword && (
               <p id="confirm-password-error" className="text-sm text-destructive">
@@ -160,17 +157,11 @@ export function ResetPasswordForm() {
           </div>
 
           {error && (
-            <div className="p-3 text-sm text-destructive bg-destructive/10 rounded-md">
-              {error}
-            </div>
+            <div className="p-3 text-sm text-destructive bg-destructive/10 rounded-md">{error}</div>
           )}
 
-          <Button
-            type="submit"
-            className="w-full"
-            disabled={isLoading}
-          >
-            {isLoading ? 'Resetting password...' : 'Reset password'}
+          <Button type="submit" className="w-full" disabled={isLoading}>
+            {isLoading ? "Resetting password..." : "Reset password"}
           </Button>
         </form>
 

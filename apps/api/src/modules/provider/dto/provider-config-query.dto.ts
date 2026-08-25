@@ -1,16 +1,7 @@
-import { Type } from 'class-transformer';
-import {
-  IsBoolean,
-  IsEnum,
-  IsInt,
-  IsOptional,
-  IsString,
-  IsUUID,
-  Max,
-  Min,
-} from 'class-validator';
-import { NotificationChannel } from '../../../common/enums/notification-channel.enum';
-import { ProviderType } from '../provider-config.entity';
+import { Type } from "class-transformer";
+import { IsBoolean, IsEnum, IsInt, IsOptional, IsString, IsUUID, Max, Min } from "class-validator";
+import { NotificationChannel } from "../../../common/enums/notification-channel.enum";
+import { ProviderType } from "../provider-config.entity";
 
 export class ProviderConfigQueryDto {
   @IsOptional()
@@ -54,9 +45,9 @@ export class ProviderConfigQueryDto {
 
   @IsOptional()
   @IsString()
-  sortBy?: string = 'createdAt';
+  sortBy?: string = "createdAt";
 
   @IsOptional()
-  @IsEnum(['ASC', 'DESC'])
-  sortOrder?: 'ASC' | 'DESC' = 'DESC';
+  @IsEnum(["ASC", "DESC"])
+  sortOrder?: "ASC" | "DESC" = "DESC";
 }

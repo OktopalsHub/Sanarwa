@@ -1,7 +1,7 @@
 "use client";
 
-import { cn } from '@/lib/utils';
-import { useEffect, useState } from 'react';
+import { cn } from "@/lib/utils";
+import { useEffect, useState } from "react";
 
 interface SkipLink {
   href: string;
@@ -9,10 +9,10 @@ interface SkipLink {
 }
 
 const defaultSkipLinks: SkipLink[] = [
-  { href: '#main-content', label: 'Skip to main content' },
-  { href: '#navigation', label: 'Skip to navigation' },
-  { href: '#search', label: 'Skip to search' },
-  { href: '#footer', label: 'Skip to footer' },
+  { href: "#main-content", label: "Skip to main content" },
+  { href: "#navigation", label: "Skip to navigation" },
+  { href: "#search", label: "Skip to search" },
+  { href: "#footer", label: "Skip to footer" },
 ];
 
 interface SkipLinksProps {
@@ -26,25 +26,25 @@ export function SkipLinks({ links = defaultSkipLinks, className }: SkipLinksProp
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       // Show skip links when Tab is pressed
-      if (event.key === 'Tab' && !event.shiftKey) {
+      if (event.key === "Tab" && !event.shiftKey) {
         setIsVisible(true);
       }
     };
 
     const handleFocusOut = (event: FocusEvent) => {
       // Hide skip links when focus moves away from them
-      const skipLinksContainer = document.getElementById('skip-links');
+      const skipLinksContainer = document.getElementById("skip-links");
       if (skipLinksContainer && !skipLinksContainer.contains(event.relatedTarget as Node)) {
         setIsVisible(false);
       }
     };
 
-    document.addEventListener('keydown', handleKeyDown);
-    document.addEventListener('focusout', handleFocusOut);
+    document.addEventListener("keydown", handleKeyDown);
+    document.addEventListener("focusout", handleFocusOut);
 
     return () => {
-      document.removeEventListener('keydown', handleKeyDown);
-      document.removeEventListener('focusout', handleFocusOut);
+      document.removeEventListener("keydown", handleKeyDown);
+      document.removeEventListener("focusout", handleFocusOut);
     };
   }, []);
 
@@ -52,21 +52,21 @@ export function SkipLinks({ links = defaultSkipLinks, className }: SkipLinksProp
     const target = document.querySelector(href);
     if (target) {
       // Make the target focusable if it isn't already
-      const originalTabIndex = target.getAttribute('tabindex');
-      target.setAttribute('tabindex', '-1');
+      const originalTabIndex = target.getAttribute("tabindex");
+      target.setAttribute("tabindex", "-1");
 
       // Focus the target
       (target as HTMLElement).focus();
 
       // Scroll to the target
-      target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      target.scrollIntoView({ behavior: "smooth", block: "start" });
 
       // Restore original tabindex after a short delay
       setTimeout(() => {
         if (originalTabIndex !== null) {
-          target.setAttribute('tabindex', originalTabIndex);
+          target.setAttribute("tabindex", originalTabIndex);
         } else {
-          target.removeAttribute('tabindex');
+          target.removeAttribute("tabindex");
         }
       }, 100);
     }
@@ -81,7 +81,7 @@ export function SkipLinks({ links = defaultSkipLinks, className }: SkipLinksProp
         "fixed top-0 left-0 z-[9999] bg-primary text-primary-foreground shadow-lg",
         "transform transition-transform duration-200 ease-in-out",
         isVisible ? "translate-y-0" : "-translate-y-full",
-        className
+        className,
       )}
       aria-label="Skip navigation links"
     >
@@ -95,7 +95,7 @@ export function SkipLinks({ links = defaultSkipLinks, className }: SkipLinksProp
                 "bg-primary-foreground text-primary",
                 "hover:bg-primary-foreground/90 focus:bg-primary-foreground/90",
                 "focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2",
-                "transition-colors duration-200"
+                "transition-colors duration-200",
               )}
               tabIndex={isVisible ? 0 : -1}
             >
@@ -113,7 +113,7 @@ export function useSkipLinkTarget(id: string, label?: string) {
   useEffect(() => {
     const element = document.getElementById(id);
     if (element && label) {
-      element.setAttribute('aria-label', label);
+      element.setAttribute("aria-label", label);
     }
   }, [id, label]);
 }

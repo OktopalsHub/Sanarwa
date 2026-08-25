@@ -1,6 +1,12 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import { ISMSProvider, SMSPayload, SMSResponse, BulkSMSPayload, BulkSMSResponse } from '../sms-provider.interface';
+import { Injectable, Logger } from "@nestjs/common";
+import { ConfigService } from "@nestjs/config";
+import {
+  ISMSProvider,
+  SMSPayload,
+  SMSResponse,
+  BulkSMSPayload,
+  BulkSMSResponse,
+} from "../sms-provider.interface";
 
 @Injectable()
 export class TwilioProvider implements ISMSProvider {
@@ -11,25 +17,25 @@ export class TwilioProvider implements ISMSProvider {
 
   // Twilio pricing per country (approximate, in USD)
   private readonly countryPricing: Record<string, number> = {
-    'US': 0.0075,
-    'CA': 0.0075,
-    'GB': 0.04,
-    'DE': 0.075,
-    'FR': 0.075,
-    'AU': 0.05,
-    'IN': 0.0065,
-    'BR': 0.025,
-    'MX': 0.025,
-    'JP': 0.08,
-    'KR': 0.045,
-    'CN': 0.05,
-    '*': 0.05, // Default for unsupported countries
+    US: 0.0075,
+    CA: 0.0075,
+    GB: 0.04,
+    DE: 0.075,
+    FR: 0.075,
+    AU: 0.05,
+    IN: 0.0065,
+    BR: 0.025,
+    MX: 0.025,
+    JP: 0.08,
+    KR: 0.045,
+    CN: 0.05,
+    "*": 0.05, // Default for unsupported countries
   };
 
   constructor(private configService: ConfigService) {
-    this.accountSid = this.configService.get('TWILIO_ACCOUNT_SID') || '';
-    this.authToken = this.configService.get('TWILIO_AUTH_TOKEN') || '';
-    this.fromNumber = this.configService.get('TWILIO_FROM_NUMBER') || '';
+    this.accountSid = this.configService.get("TWILIO_ACCOUNT_SID") || "";
+    this.authToken = this.configService.get("TWILIO_AUTH_TOKEN") || "";
+    this.fromNumber = this.configService.get("TWILIO_FROM_NUMBER") || "";
   }
 
   async sendSMS(payload: SMSPayload): Promise<SMSResponse> {
@@ -43,16 +49,16 @@ export class TwilioProvider implements ISMSProvider {
       const response = await fetch(
         `https://api.twilio.com/2010-04-01/Accounts/${this.accountSid}/Messages.json`,
         {
-          method: 'POST',
+          method: "POST",
           headers: {
-            'Authorization': `Basic ${Buffer.from(`${this.accountSid}:${this.authToken}`).toString('base64')}`,
-            'Content-Type': 'application/x-www-form-urlencoded',
+            Authorization: `Basic ${Buffer.from(`${this.accountSid}:${this.authToken}`).toString("base64")}`,
+            "Content-Type": "application/x-www-form-urlencoded",
           },
           body: new URLSearchParams(twilioPayload).toString(),
-        }
+        },
       );
 
-      const result = await response.json() as { message?: string; sid?: string; price?: string };
+      const result = (await response.json()) as { message?: string; sid?: string; price?: string };
 
       if (!response.ok) {
         throw new Error(`Twilio API error: ${result.message || response.statusText}`);
@@ -64,14 +70,14 @@ export class TwilioProvider implements ISMSProvider {
         success: true,
         messageId: result.sid!,
         cost: parseFloat(result.price!) || 0,
-        provider: 'twilio',
+        provider: "twilio",
       };
     } catch (error) {
       this.logger.error(`Failed to send SMS via Twilio: ${error.message}`, error.stack);
       return {
         success: false,
         error: error.message,
-        provider: 'twilio',
+        provider: "twilio",
       };
     }
   }
@@ -81,7 +87,7 @@ export class TwilioProvider implements ISMSProvider {
   }
 
   getProviderName(): string {
-    return 'twilio';
+    return "twilio";
   }
 
   getSupportedCountries(): string[] {
@@ -89,12 +95,12 @@ export class TwilioProvider implements ISMSProvider {
   }
 
   getCostPerMessage(countryCode: string): number {
-    return this.countryPricing[countryCode] || this.countryPricing['*'];
+    return this.countryPricing[countryCode] || this.countryPricing["*"];
   }
 
   async sendBulkSMS(payload: BulkSMSPayload): Promise<BulkSMSResponse> {
     try {
-      const results: BulkSMSResponse['results'] = [];
+      const results: BulkSMSResponse["results"] = [];
       let totalCost = 0;
 
       // Twilio doesn't have native bulk SMS, so we send individual messages
@@ -126,7 +132,7 @@ export class TwilioProvider implements ISMSProvider {
         }
       }
 
-      const successCount = results.filter(r => r.success).length;
+      const successCount = results.filter((r) => r.success).length;
       const failureCount = results.length - successCount;
 
       this.logger.log(`Bulk SMS sent via Twilio: ${successCount} success, ${failureCount} failed`);
@@ -137,12 +143,12 @@ export class TwilioProvider implements ISMSProvider {
         totalCost,
         successCount,
         failureCount,
-        provider: 'twilio',
+        provider: "twilio",
       };
     } catch (error) {
       this.logger.error(`Failed to send bulk SMS via Twilio: ${error.message}`, error.stack);
 
-      const results = payload.recipients.map(recipient => ({
+      const results = payload.recipients.map((recipient) => ({
         recipient,
         success: false,
         error: error.message,
@@ -154,7 +160,7 @@ export class TwilioProvider implements ISMSProvider {
         totalCost: 0,
         successCount: 0,
         failureCount: payload.recipients.length,
-        provider: 'twilio',
+        provider: "twilio",
       };
     }
   }

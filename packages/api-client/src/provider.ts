@@ -8,9 +8,9 @@ import {
   ProviderTestData,
   ProviderTestResult,
   ProviderType,
-  UpdateProviderRequest
-} from './types/provider';
-import { ApiClient, createApiClient } from './client';
+  UpdateProviderRequest,
+} from "./types/provider";
+import { ApiClient, createApiClient } from "./client";
 
 /**
  * Provider Management API client for handling all provider-related operations
@@ -32,7 +32,7 @@ class ProviderApiClient {
    * @returns Created provider configuration
    */
   async createProvider(data: CreateProviderRequest): Promise<Provider> {
-    return this.apiClient.post<Provider>('/provider-configs', data);
+    return this.apiClient.post<Provider>("/provider-configs", data);
   }
 
   /**
@@ -51,7 +51,7 @@ class ProviderApiClient {
       hasPrev: boolean;
     };
   }> {
-    return this.apiClient.get('/provider-configs', params);
+    return this.apiClient.get("/provider-configs", params);
   }
 
   /**
@@ -60,7 +60,10 @@ class ProviderApiClient {
    * @param params Query parameters for filtering
    * @returns List of provider configurations for the project
    */
-  async getProvidersByProject(projectId: string, params?: ProviderQueryParams): Promise<{
+  async getProvidersByProject(
+    projectId: string,
+    params?: ProviderQueryParams,
+  ): Promise<{
     data: Provider[];
     pagination?: {
       page: number;
@@ -120,8 +123,13 @@ class ProviderApiClient {
    * @param testData Test data specific to provider type
    * @returns Test result
    */
-  async testProviderWithData(providerId: string, testData: ProviderTestData): Promise<ProviderTestResult> {
-    return this.apiClient.post<ProviderTestResult>(`/provider-configs/${providerId}/test`, { testData });
+  async testProviderWithData(
+    providerId: string,
+    testData: ProviderTestData,
+  ): Promise<ProviderTestResult> {
+    return this.apiClient.post<ProviderTestResult>(`/provider-configs/${providerId}/test`, {
+      testData,
+    });
   }
 
   // Provider Status Management Methods
@@ -169,7 +177,7 @@ class ProviderApiClient {
    * @returns List of health statuses for all providers
    */
   async getAllProviderHealth(): Promise<ProviderHealthCheck[]> {
-    return this.apiClient.get<ProviderHealthCheck[]>('/provider-configs/health');
+    return this.apiClient.get<ProviderHealthCheck[]>("/provider-configs/health");
   }
 
   /**
@@ -178,7 +186,10 @@ class ProviderApiClient {
    * @returns Updated health status
    */
   async triggerHealthCheck(providerId: string): Promise<ProviderHealthCheck> {
-    return this.apiClient.post<ProviderHealthCheck>(`/provider-configs/${providerId}/health/check`, {});
+    return this.apiClient.post<ProviderHealthCheck>(
+      `/provider-configs/${providerId}/health/check`,
+      {},
+    );
   }
 
   /**
@@ -187,17 +198,23 @@ class ProviderApiClient {
    * @param params Query parameters for filtering
    * @returns Historical health check data
    */
-  async getProviderHealthHistory(providerId: string, params?: {
-    startDate?: Date;
-    endDate?: Date;
-    limit?: number;
-  }): Promise<ProviderHealthCheck[]> {
+  async getProviderHealthHistory(
+    providerId: string,
+    params?: {
+      startDate?: Date;
+      endDate?: Date;
+      limit?: number;
+    },
+  ): Promise<ProviderHealthCheck[]> {
     const queryParams: Record<string, string> = {};
     if (params?.startDate) queryParams.startDate = params.startDate.toISOString();
     if (params?.endDate) queryParams.endDate = params.endDate.toISOString();
     if (params?.limit) queryParams.limit = params.limit.toString();
 
-    return this.apiClient.get<ProviderHealthCheck[]>(`/provider-configs/${providerId}/health/history`, queryParams);
+    return this.apiClient.get<ProviderHealthCheck[]>(
+      `/provider-configs/${providerId}/health/history`,
+      queryParams,
+    );
   }
 
   // Provider Metrics and Analytics Methods
@@ -208,17 +225,23 @@ class ProviderApiClient {
    * @param params Query parameters for metrics
    * @returns Provider usage metrics and analytics
    */
-  async getProviderMetrics(providerId: string, params?: {
-    startDate?: Date;
-    endDate?: Date;
-    groupBy?: 'hour' | 'day' | 'week' | 'month';
-  }): Promise<ProviderMetrics> {
+  async getProviderMetrics(
+    providerId: string,
+    params?: {
+      startDate?: Date;
+      endDate?: Date;
+      groupBy?: "hour" | "day" | "week" | "month";
+    },
+  ): Promise<ProviderMetrics> {
     const queryParams: Record<string, string> = {};
     if (params?.startDate) queryParams.startDate = params.startDate.toISOString();
     if (params?.endDate) queryParams.endDate = params.endDate.toISOString();
     if (params?.groupBy) queryParams.groupBy = params.groupBy;
 
-    return this.apiClient.get<ProviderMetrics>(`/provider-configs/${providerId}/metrics`, queryParams);
+    return this.apiClient.get<ProviderMetrics>(
+      `/provider-configs/${providerId}/metrics`,
+      queryParams,
+    );
   }
 
   /**
@@ -230,7 +253,7 @@ class ProviderApiClient {
     type?: ProviderType;
     startDate?: Date;
     endDate?: Date;
-    groupBy?: 'hour' | 'day' | 'week' | 'month';
+    groupBy?: "hour" | "day" | "week" | "month";
   }): Promise<ProviderMetrics[]> {
     const queryParams: Record<string, string> = {};
     if (params?.type) queryParams.type = params.type;
@@ -238,7 +261,7 @@ class ProviderApiClient {
     if (params?.endDate) queryParams.endDate = params.endDate.toISOString();
     if (params?.groupBy) queryParams.groupBy = params.groupBy;
 
-    return this.apiClient.get<ProviderMetrics[]>('/provider-configs/metrics', queryParams);
+    return this.apiClient.get<ProviderMetrics[]>("/provider-configs/metrics", queryParams);
   }
 
   /**
@@ -247,11 +270,14 @@ class ProviderApiClient {
    * @param params Query parameters for comparison
    * @returns Comparative metrics for specified providers
    */
-  async compareProviders(providerIds: string[], params?: {
-    startDate?: Date;
-    endDate?: Date;
-    metrics?: ('success_rate' | 'response_time' | 'usage_count')[];
-  }): Promise<{
+  async compareProviders(
+    providerIds: string[],
+    params?: {
+      startDate?: Date;
+      endDate?: Date;
+      metrics?: ("success_rate" | "response_time" | "usage_count")[];
+    },
+  ): Promise<{
     providers: ProviderMetrics[];
     comparison: {
       bestPerforming: string;
@@ -261,13 +287,13 @@ class ProviderApiClient {
     };
   }> {
     const queryParams: Record<string, any> = {
-      providerIds: providerIds.join(','),
+      providerIds: providerIds.join(","),
     };
     if (params?.startDate) queryParams.startDate = params.startDate.toISOString();
     if (params?.endDate) queryParams.endDate = params.endDate.toISOString();
-    if (params?.metrics) queryParams.metrics = params.metrics.join(',');
+    if (params?.metrics) queryParams.metrics = params.metrics.join(",");
 
-    return this.apiClient.get('/provider-configs/compare', queryParams);
+    return this.apiClient.get("/provider-configs/compare", queryParams);
   }
 
   // Provider Failover Management Methods
@@ -287,8 +313,14 @@ class ProviderApiClient {
    * @param config Failover configuration
    * @returns Updated failover configuration
    */
-  async updateFailoverConfig(channel: ProviderType, config: Partial<ProviderFailoverConfig>): Promise<ProviderFailoverConfig> {
-    return this.apiClient.put<ProviderFailoverConfig>(`/provider-configs/failover/${channel}`, config);
+  async updateFailoverConfig(
+    channel: ProviderType,
+    config: Partial<ProviderFailoverConfig>,
+  ): Promise<ProviderFailoverConfig> {
+    return this.apiClient.put<ProviderFailoverConfig>(
+      `/provider-configs/failover/${channel}`,
+      config,
+    );
   }
 
   /**
@@ -298,7 +330,11 @@ class ProviderApiClient {
    * @param toProviderId Target provider ID
    * @returns Failover result
    */
-  async triggerFailover(channel: ProviderType, fromProviderId: string, toProviderId: string): Promise<{
+  async triggerFailover(
+    channel: ProviderType,
+    fromProviderId: string,
+    toProviderId: string,
+  ): Promise<{
     success: boolean;
     message: string;
     timestamp: Date;
@@ -323,24 +359,24 @@ class ProviderApiClient {
     const errors: string[] = [];
 
     // Validate name
-    if ('name' in data && data.name) {
+    if ("name" in data && data.name) {
       if (data.name.length < 2) {
-        errors.push('Provider name must be at least 2 characters long');
+        errors.push("Provider name must be at least 2 characters long");
       }
       if (data.name.length > 100) {
-        errors.push('Provider name must be less than 100 characters');
+        errors.push("Provider name must be less than 100 characters");
       }
     }
 
     // Validate priority
-    if ('priority' in data && data.priority !== undefined) {
+    if ("priority" in data && data.priority !== undefined) {
       if (data.priority < 0 || data.priority > 100) {
-        errors.push('Priority must be between 0 and 100');
+        errors.push("Priority must be between 0 and 100");
       }
     }
 
     // Validate configuration
-    if ('config' in data && data.config) {
+    if ("config" in data && data.config) {
       const configErrors = this.validateProviderCredentials(data.config);
       errors.push(...configErrors);
     }
@@ -360,35 +396,36 @@ class ProviderApiClient {
     const errors: string[] = [];
 
     if (!config.credentials) {
-      errors.push('Provider credentials are required');
+      errors.push("Provider credentials are required");
       return errors;
     }
 
     const { credentials } = config;
 
     switch (credentials.type) {
-      case 'aws_ses':
-        if (!credentials.config.region) errors.push('AWS SES region is required');
-        if (!credentials.config.accessKeyId) errors.push('AWS SES access key ID is required');
-        if (!credentials.config.secretAccessKey) errors.push('AWS SES secret access key is required');
-        if (!credentials.config.fromEmail) errors.push('AWS SES from email is required');
+      case "aws_ses":
+        if (!credentials.config.region) errors.push("AWS SES region is required");
+        if (!credentials.config.accessKeyId) errors.push("AWS SES access key ID is required");
+        if (!credentials.config.secretAccessKey)
+          errors.push("AWS SES secret access key is required");
+        if (!credentials.config.fromEmail) errors.push("AWS SES from email is required");
         break;
 
-      case 'sendgrid':
-        if (!credentials.config.apiKey) errors.push('SendGrid API key is required');
-        if (!credentials.config.fromEmail) errors.push('SendGrid from email is required');
+      case "sendgrid":
+        if (!credentials.config.apiKey) errors.push("SendGrid API key is required");
+        if (!credentials.config.fromEmail) errors.push("SendGrid from email is required");
         break;
 
-      case 'twilio':
-        if (!credentials.config.accountSid) errors.push('Twilio account SID is required');
-        if (!credentials.config.authToken) errors.push('Twilio auth token is required');
-        if (!credentials.config.fromNumber) errors.push('Twilio from number is required');
+      case "twilio":
+        if (!credentials.config.accountSid) errors.push("Twilio account SID is required");
+        if (!credentials.config.authToken) errors.push("Twilio auth token is required");
+        if (!credentials.config.fromNumber) errors.push("Twilio from number is required");
         break;
 
-      case 'firebase':
-        if (!credentials.config.projectId) errors.push('Firebase project ID is required');
-        if (!credentials.config.privateKey) errors.push('Firebase private key is required');
-        if (!credentials.config.clientEmail) errors.push('Firebase client email is required');
+      case "firebase":
+        if (!credentials.config.projectId) errors.push("Firebase project ID is required");
+        if (!credentials.config.privateKey) errors.push("Firebase private key is required");
+        if (!credentials.config.clientEmail) errors.push("Firebase client email is required");
         break;
 
       // Add more provider type validations as needed
@@ -422,7 +459,10 @@ class ProviderApiClient {
    * @param feature Feature to check
    * @returns True if feature is supported
    */
-  async checkProviderFeatureSupport(providerId: string, feature: string): Promise<{
+  async checkProviderFeatureSupport(
+    providerId: string,
+    feature: string,
+  ): Promise<{
     supported: boolean;
     details?: string;
     alternatives?: string[];
@@ -436,7 +476,10 @@ class ProviderApiClient {
    * @param subtype Provider subtype
    * @returns Configuration template with required fields
    */
-  getProviderConfigTemplate(type: ProviderType, subtype: string): {
+  getProviderConfigTemplate(
+    type: ProviderType,
+    subtype: string,
+  ): {
     requiredFields: string[];
     optionalFields: string[];
     example: any;
@@ -444,47 +487,49 @@ class ProviderApiClient {
   } {
     // This is a client-side helper method
     const templates: Record<string, any> = {
-      'email.aws_ses': {
-        requiredFields: ['region', 'accessKeyId', 'secretAccessKey', 'fromEmail'],
-        optionalFields: ['fromName', 'replyToEmail', 'configurationSet'],
+      "email.aws_ses": {
+        requiredFields: ["region", "accessKeyId", "secretAccessKey", "fromEmail"],
+        optionalFields: ["fromName", "replyToEmail", "configurationSet"],
         example: {
-          region: 'us-east-1',
-          accessKeyId: 'YOUR_ACCESS_KEY_ID',
-          secretAccessKey: 'YOUR_SECRET_ACCESS_KEY',
-          fromEmail: 'noreply@yourdomain.com',
-          fromName: 'Your App Name',
+          region: "us-east-1",
+          accessKeyId: "YOUR_ACCESS_KEY_ID",
+          secretAccessKey: "YOUR_SECRET_ACCESS_KEY",
+          fromEmail: "noreply@yourdomain.com",
+          fromName: "Your App Name",
         },
-        documentation: 'https://docs.aws.amazon.com/ses/',
+        documentation: "https://docs.aws.amazon.com/ses/",
       },
-      'email.sendgrid': {
-        requiredFields: ['apiKey', 'fromEmail'],
-        optionalFields: ['fromName', 'replyToEmail', 'templateId'],
+      "email.sendgrid": {
+        requiredFields: ["apiKey", "fromEmail"],
+        optionalFields: ["fromName", "replyToEmail", "templateId"],
         example: {
-          apiKey: 'SG.YOUR_API_KEY',
-          fromEmail: 'noreply@yourdomain.com',
-          fromName: 'Your App Name',
+          apiKey: "SG.YOUR_API_KEY",
+          fromEmail: "noreply@yourdomain.com",
+          fromName: "Your App Name",
         },
-        documentation: 'https://docs.sendgrid.com/',
+        documentation: "https://docs.sendgrid.com/",
       },
-      'sms.twilio': {
-        requiredFields: ['accountSid', 'authToken', 'fromNumber'],
-        optionalFields: ['messagingServiceSid'],
+      "sms.twilio": {
+        requiredFields: ["accountSid", "authToken", "fromNumber"],
+        optionalFields: ["messagingServiceSid"],
         example: {
-          accountSid: 'AC_YOUR_ACCOUNT_SID',
-          authToken: 'YOUR_AUTH_TOKEN',
-          fromNumber: '+1234567890',
+          accountSid: "AC_YOUR_ACCOUNT_SID",
+          authToken: "YOUR_AUTH_TOKEN",
+          fromNumber: "+1234567890",
         },
-        documentation: 'https://www.twilio.com/docs/',
+        documentation: "https://www.twilio.com/docs/",
       },
       // Add more templates as needed
     };
 
     const key = `${type}.${subtype}`;
-    return templates[key] || {
-      requiredFields: [],
-      optionalFields: [],
-      example: {},
-    };
+    return (
+      templates[key] || {
+        requiredFields: [],
+        optionalFields: [],
+        example: {},
+      }
+    );
   }
 
   /**
@@ -504,35 +549,46 @@ class ProviderApiClient {
     healthColor: string;
   } {
     const formatDate = (date?: Date) => {
-      if (!date) return 'Never';
+      if (!date) return "Never";
       const now = new Date();
       const diffMs = now.getTime() - new Date(date).getTime();
       const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
 
-      if (diffDays === 0) return 'Today';
-      if (diffDays === 1) return 'Yesterday';
+      if (diffDays === 0) return "Today";
+      if (diffDays === 1) return "Yesterday";
       if (diffDays < 7) return `${diffDays} days ago`;
       return new Date(date).toLocaleDateString();
     };
 
     const getStatusColor = (status: string) => {
       switch (status) {
-        case 'active': return 'green';
-        case 'inactive': return 'gray';
-        case 'testing': return 'yellow';
-        case 'error': return 'red';
-        case 'maintenance': return 'orange';
-        default: return 'gray';
+        case "active":
+          return "green";
+        case "inactive":
+          return "gray";
+        case "testing":
+          return "yellow";
+        case "error":
+          return "red";
+        case "maintenance":
+          return "orange";
+        default:
+          return "gray";
       }
     };
 
     const getHealthColor = (health: string) => {
       switch (health) {
-        case 'healthy': return 'green';
-        case 'degraded': return 'yellow';
-        case 'unhealthy': return 'red';
-        case 'unknown': return 'gray';
-        default: return 'gray';
+        case "healthy":
+          return "green";
+        case "degraded":
+          return "yellow";
+        case "unhealthy":
+          return "red";
+        case "unknown":
+          return "gray";
+        default:
+          return "gray";
       }
     };
 

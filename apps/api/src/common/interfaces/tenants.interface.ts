@@ -90,7 +90,7 @@ export interface TenantBillingInfo {
   subscription?: {
     id: string;
     plan: string;
-    status: 'active' | 'canceled' | 'past_due' | 'unpaid';
+    status: "active" | "canceled" | "past_due" | "unpaid";
     currentPeriodStart: Date;
     currentPeriodEnd: Date;
     stripeSubscriptionId?: string;

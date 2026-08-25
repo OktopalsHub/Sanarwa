@@ -1,24 +1,31 @@
-'use client';
+"use client";
 
-import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
-import { DateRange, DateRangePicker } from '@/components/ui/date-range-picker';
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { DateRange, DateRangePicker } from "@/components/ui/date-range-picker";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
-import { ChartBarIcon, ArrowDownTrayIcon, FunnelIcon, ChatBubbleLeftRightIcon, ArrowTrendingUpIcon, UsersIcon } from '@heroicons/react/24/outline'
-import { useState } from 'react';
-import { CampaignAnalytics } from './campaign-analytics';
-import { ChannelAnalytics } from './channel-analytics';
+} from "@/components/ui/select";
+import {
+  ChartBarIcon,
+  ArrowDownTrayIcon,
+  FunnelIcon,
+  ChatBubbleLeftRightIcon,
+  ArrowTrendingUpIcon,
+  UsersIcon,
+} from "@heroicons/react/24/outline";
+import { useState } from "react";
+import { CampaignAnalytics } from "./campaign-analytics";
+import { ChannelAnalytics } from "./channel-analytics";
 
-type AnalyticsView = 'overview' | 'campaigns' | 'channels' | 'audience';
+type AnalyticsView = "overview" | "campaigns" | "channels" | "audience";
 
 export function AnalyticsDashboard() {
-  const [currentView, setCurrentView] = useState<AnalyticsView>('overview');
+  const [currentView, setCurrentView] = useState<AnalyticsView>("overview");
   const [dateRange, setDateRange] = useState<DateRange>({
     from: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
     to: new Date(),
@@ -26,16 +33,16 @@ export function AnalyticsDashboard() {
 
   const handleExportAll = () => {
     // TODO: Implement data export functionality
-    alert('Export functionality will be implemented soon');
+    alert("Export functionality will be implemented soon");
   };
 
   const renderViewContent = () => {
     switch (currentView) {
-      case 'campaigns':
+      case "campaigns":
         return <CampaignAnalytics />;
-      case 'channels':
+      case "channels":
         return <ChannelAnalytics />;
-      case 'audience':
+      case "audience":
         return (
           <Card className="p-6">
             <h3 className="text-lg font-semibold mb-4">Audience Analytics</h3>
@@ -77,36 +84,36 @@ export function AnalyticsDashboard() {
       <Card className="p-1">
         <div className="flex space-x-1">
           <Button
-            variant={currentView === 'overview' ? 'default' : 'ghost'}
+            variant={currentView === "overview" ? "default" : "ghost"}
             size="sm"
-            onClick={() => setCurrentView('overview')}
+            onClick={() => setCurrentView("overview")}
             className="flex items-center space-x-2"
           >
             <ChartBarIcon className="h-4 w-4" />
             <span>Overview</span>
           </Button>
           <Button
-            variant={currentView === 'campaigns' ? 'default' : 'ghost'}
+            variant={currentView === "campaigns" ? "default" : "ghost"}
             size="sm"
-            onClick={() => setCurrentView('campaigns')}
+            onClick={() => setCurrentView("campaigns")}
             className="flex items-center space-x-2"
           >
             <ArrowTrendingUpIcon className="h-4 w-4" />
             <span>Campaigns</span>
           </Button>
           <Button
-            variant={currentView === 'channels' ? 'default' : 'ghost'}
+            variant={currentView === "channels" ? "default" : "ghost"}
             size="sm"
-            onClick={() => setCurrentView('channels')}
+            onClick={() => setCurrentView("channels")}
             className="flex items-center space-x-2"
           >
             <ChatBubbleLeftRightIcon className="h-4 w-4" />
             <span>Channels</span>
           </Button>
           <Button
-            variant={currentView === 'audience' ? 'default' : 'ghost'}
+            variant={currentView === "audience" ? "default" : "ghost"}
             size="sm"
-            onClick={() => setCurrentView('audience')}
+            onClick={() => setCurrentView("audience")}
             className="flex items-center space-x-2"
           >
             <UsersIcon className="h-4 w-4" />
@@ -116,7 +123,7 @@ export function AnalyticsDashboard() {
       </Card>
 
       {/* Global Filters (only show for overview) */}
-      {currentView === 'overview' && (
+      {currentView === "overview" && (
         <Card className="p-6">
           <div className="flex flex-col space-y-4 md:flex-row md:space-y-0 md:space-x-4 md:items-end">
             <div className="flex-1">

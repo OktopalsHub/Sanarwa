@@ -1,6 +1,6 @@
-import { Injectable, NestMiddleware } from '@nestjs/common';
-import { NextFunction, Request, Response } from 'express';
-import { Tenant } from '../entities/tenant.entity';
+import { Injectable, NestMiddleware } from "@nestjs/common";
+import { NextFunction, Request, Response } from "express";
+import { Tenant } from "../entities/tenant.entity";
 
 // Extend Express Request interface to include tenant
 declare global {

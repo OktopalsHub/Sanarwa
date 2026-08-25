@@ -1,10 +1,5 @@
-import { HttpException, HttpStatus } from '@nestjs/common';
-import {
-  ErrorCategory,
-  ErrorCode,
-  ErrorContext,
-  ErrorSeverity,
-} from '../types/error.types';
+import { HttpException, HttpStatus } from "@nestjs/common";
+import { ErrorCategory, ErrorCode, ErrorContext, ErrorSeverity } from "../types/error.types";
 
 export abstract class BaseException extends HttpException {
   public readonly code: ErrorCode;
@@ -58,7 +53,7 @@ export class ValidationException extends BaseException {
       ErrorCategory.VALIDATION,
       ErrorSeverity.LOW,
       message,
-      userMessage || 'Invalid request data provided',
+      userMessage || "Invalid request data provided",
       HttpStatus.BAD_REQUEST,
       context,
       false,
@@ -74,7 +69,7 @@ export class AuthenticationException extends BaseException {
       ErrorCategory.AUTHENTICATION,
       ErrorSeverity.MEDIUM,
       message,
-      userMessage || 'Authentication required',
+      userMessage || "Authentication required",
       HttpStatus.UNAUTHORIZED,
       context,
       false,
@@ -90,7 +85,7 @@ export class AuthorizationException extends BaseException {
       ErrorCategory.AUTHORIZATION,
       ErrorSeverity.MEDIUM,
       message,
-      userMessage || 'Access denied',
+      userMessage || "Access denied",
       HttpStatus.FORBIDDEN,
       context,
       false,
@@ -128,7 +123,7 @@ export class BusinessLogicException extends BaseException {
       ErrorCategory.BUSINESS_LOGIC,
       ErrorSeverity.MEDIUM,
       message,
-      userMessage || 'Business rule violation',
+      userMessage || "Business rule violation",
       HttpStatus.BAD_REQUEST,
       context,
       retryable,
@@ -150,7 +145,7 @@ export class ProviderException extends BaseException {
       ErrorCategory.PROVIDER,
       ErrorSeverity.HIGH,
       message,
-      userMessage || 'External service temporarily unavailable',
+      userMessage || "External service temporarily unavailable",
       HttpStatus.SERVICE_UNAVAILABLE,
       context,
       retryable,
@@ -172,7 +167,7 @@ export class SystemException extends BaseException {
       ErrorCategory.SYSTEM,
       ErrorSeverity.CRITICAL,
       message,
-      userMessage || 'Internal system error occurred',
+      userMessage || "Internal system error occurred",
       HttpStatus.INTERNAL_SERVER_ERROR,
       context,
       retryable,
@@ -188,7 +183,7 @@ export class CircuitBreakerException extends BaseException {
       ErrorCategory.CIRCUIT_BREAKER,
       ErrorSeverity.HIGH,
       `Circuit breaker is open for service: ${service}`,
-      'Service is temporarily unavailable due to high failure rate',
+      "Service is temporarily unavailable due to high failure rate",
       HttpStatus.SERVICE_UNAVAILABLE,
       context,
       true,

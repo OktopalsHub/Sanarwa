@@ -1,18 +1,18 @@
-import { apiClient } from '@/lib/api/client';
+import { apiClient } from "@/lib/api/client";
 import type {
   CreateTenantRequest,
   Tenant,
   TenantMember,
-  UpdateTenantRequest
-} from '@/lib/types/tenant';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { invalidateQueries, queryKeys } from '../query-client';
+  UpdateTenantRequest,
+} from "@/lib/types/tenant";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { invalidateQueries, queryKeys } from "../query-client";
 
 // Query hook for user's tenants
 export function useUserTenants() {
   return useQuery({
     queryKey: queryKeys.tenants.all(),
-    queryFn: () => apiClient.get<Tenant[]>('/tenants', { tenantScoped: false }),
+    queryFn: () => apiClient.get<Tenant[]>("/tenants", { tenantScoped: false }),
     staleTime: 2 * 60 * 1000, // 2 minutes
   });
 }
@@ -49,7 +49,7 @@ export function useTenantSettings(tenantId: string) {
     queryFn: () => {
       const client = apiClient;
       client.setTenant(tenantId);
-      return client.get('/tenant/settings');
+      return client.get("/tenant/settings");
     },
     enabled: !!tenantId,
     staleTime: 5 * 60 * 1000, // 5 minutes
@@ -63,7 +63,7 @@ export function useTenantBranding(tenantId: string) {
     queryFn: () => {
       const client = apiClient;
       client.setTenant(tenantId);
-      return client.get('/tenant/branding');
+      return client.get("/tenant/branding");
     },
     enabled: !!tenantId,
     staleTime: 10 * 60 * 1000, // 10 minutes - branding changes less frequently
@@ -76,13 +76,13 @@ export function useCreateTenant() {
 
   return useMutation({
     mutationFn: (data: CreateTenantRequest) =>
-      apiClient.post<Tenant>('/tenants', data, { tenantScoped: false }),
+      apiClient.post<Tenant>("/tenants", data, { tenantScoped: false }),
     onSuccess: () => {
       // Invalidate tenants list to show new tenant
       queryClient.invalidateQueries({ queryKey: queryKeys.tenants.all() });
     },
     onError: (error) => {
-      console.error('Create tenant failed:', error);
+      console.error("Create tenant failed:", error);
     },
   });
 }
@@ -95,7 +95,7 @@ export function useUpdateTenant(tenantId: string) {
     mutationFn: (data: UpdateTenantRequest) => {
       const client = apiClient;
       client.setTenant(tenantId);
-      return client.patch<Tenant>('/tenant', data);
+      return client.patch<Tenant>("/tenant", data);
     },
     onSuccess: () => {
       // Invalidate tenant-related queries
@@ -103,7 +103,7 @@ export function useUpdateTenant(tenantId: string) {
       queryClient.invalidateQueries({ queryKey: queryKeys.tenants.all() });
     },
     onError: (error) => {
-      console.error('Update tenant failed:', error);
+      console.error("Update tenant failed:", error);
     },
   });
 }
@@ -120,7 +120,7 @@ export function useDeleteTenant() {
       queryClient.invalidateQueries({ queryKey: queryKeys.tenants.all() });
     },
     onError: (error) => {
-      console.error('Delete tenant failed:', error);
+      console.error("Delete tenant failed:", error);
     },
   });
 }
@@ -133,14 +133,14 @@ export function useInviteMember(tenantId: string) {
     mutationFn: (data: { email: string; role: string }) => {
       const client = apiClient;
       client.setTenant(tenantId);
-      return client.post('/tenant/members/invite', data);
+      return client.post("/tenant/members/invite", data);
     },
     onSuccess: () => {
       // Invalidate members list
       queryClient.invalidateQueries({ queryKey: queryKeys.tenants.members(tenantId) });
     },
     onError: (error) => {
-      console.error('Invite member failed:', error);
+      console.error("Invite member failed:", error);
     },
   });
 }
@@ -160,7 +160,7 @@ export function useUpdateMemberRole(tenantId: string) {
       queryClient.invalidateQueries({ queryKey: queryKeys.tenants.members(tenantId) });
     },
     onError: (error) => {
-      console.error('Update member role failed:', error);
+      console.error("Update member role failed:", error);
     },
   });
 }
@@ -180,7 +180,7 @@ export function useRemoveMember(tenantId: string) {
       queryClient.invalidateQueries({ queryKey: queryKeys.tenants.members(tenantId) });
     },
     onError: (error) => {
-      console.error('Remove member failed:', error);
+      console.error("Remove member failed:", error);
     },
   });
 }
@@ -193,7 +193,7 @@ export function useUpdateTenantBranding(tenantId: string) {
     mutationFn: (data: any) => {
       const client = apiClient;
       client.setTenant(tenantId);
-      return client.patch('/tenant/branding', data);
+      return client.patch("/tenant/branding", data);
     },
     onSuccess: () => {
       // Invalidate branding query
@@ -218,7 +218,7 @@ export function useUpdateTenantBranding(tenantId: string) {
     },
     // Rollback on error
     onError: (error, newBranding, context) => {
-      console.error('Update tenant branding failed:', error);
+      console.error("Update tenant branding failed:", error);
       if (context?.previousBranding) {
         queryClient.setQueryData(queryKeys.tenants.branding(tenantId), context.previousBranding);
       }
@@ -229,7 +229,7 @@ export function useUpdateTenantBranding(tenantId: string) {
 // Query hook for tenant invitations
 export function useTenantInvitations(tenantId: string) {
   return useQuery({
-    queryKey: ['tenants', tenantId, 'invitations'],
+    queryKey: ["tenants", tenantId, "invitations"],
     queryFn: () => {
       const client = apiClient;
       client.setTenant(tenantId);
@@ -243,7 +243,7 @@ export function useTenantInvitations(tenantId: string) {
 // Query hook for invitation details by token (public)
 export function useInvitationByToken(token: string) {
   return useQuery({
-    queryKey: ['invitations', 'token', token],
+    queryKey: ["invitations", "token", token],
     queryFn: () => Promise.resolve(null),
     enabled: !!token,
     staleTime: 5 * 60 * 1000, // 5 minutes
@@ -258,16 +258,16 @@ export function useCreateInvitation(tenantId: string) {
     mutationFn: (data: any) => {
       const client = apiClient;
       client.setTenant(tenantId);
-      return Promise.resolve({ id: 'invite-' + Date.now(), ...data });
+      return Promise.resolve({ id: "invite-" + Date.now(), ...data });
     },
     onSuccess: () => {
       // Invalidate invitations list
-      queryClient.invalidateQueries({ queryKey: ['tenants', tenantId, 'invitations'] });
+      queryClient.invalidateQueries({ queryKey: ["tenants", tenantId, "invitations"] });
       // Also invalidate members list as invitation might affect it
       queryClient.invalidateQueries({ queryKey: queryKeys.tenants.members(tenantId) });
     },
     onError: (error) => {
-      console.error('Create invitation failed:', error);
+      console.error("Create invitation failed:", error);
     },
   });
 }
@@ -280,11 +280,11 @@ export function useAcceptInvitation() {
     mutationFn: (data: any) => Promise.resolve({ accepted: true }),
     onSuccess: () => {
       // Invalidate all tenant-related queries as user now has access
-      queryClient.invalidateQueries({ queryKey: ['tenants'] });
-      queryClient.invalidateQueries({ queryKey: ['auth'] });
+      queryClient.invalidateQueries({ queryKey: ["tenants"] });
+      queryClient.invalidateQueries({ queryKey: ["auth"] });
     },
     onError: (error) => {
-      console.error('Accept invitation failed:', error);
+      console.error("Accept invitation failed:", error);
     },
   });
 }
@@ -294,7 +294,7 @@ export function useDeclineInvitation() {
   return useMutation({
     mutationFn: (token: string) => Promise.resolve({ declined: true }),
     onError: (error) => {
-      console.error('Decline invitation failed:', error);
+      console.error("Decline invitation failed:", error);
     },
   });
 }
@@ -311,10 +311,10 @@ export function useCancelInvitation(tenantId: string) {
     },
     onSuccess: () => {
       // Invalidate invitations list
-      queryClient.invalidateQueries({ queryKey: ['tenants', tenantId, 'invitations'] });
+      queryClient.invalidateQueries({ queryKey: ["tenants", tenantId, "invitations"] });
     },
     onError: (error) => {
-      console.error('Cancel invitation failed:', error);
+      console.error("Cancel invitation failed:", error);
     },
   });
 }
@@ -327,14 +327,14 @@ export function useUpdateTenantSettings(tenantId: string) {
     mutationFn: (data: any) => {
       const client = apiClient;
       client.setTenant(tenantId);
-      return client.patch('/tenant/settings', data);
+      return client.patch("/tenant/settings", data);
     },
     onSuccess: () => {
       // Invalidate settings query
       queryClient.invalidateQueries({ queryKey: queryKeys.tenants.settings(tenantId) });
     },
     onError: (error) => {
-      console.error('Update tenant settings failed:', error);
+      console.error("Update tenant settings failed:", error);
     },
   });
 }
@@ -347,14 +347,14 @@ export function useUpdateTenantBilling(tenantId: string) {
     mutationFn: (data: any) => {
       const client = apiClient;
       client.setTenant(tenantId);
-      return client.patch('/tenant/billing', data);
+      return client.patch("/tenant/billing", data);
     },
     onSuccess: () => {
       // Invalidate tenant details to refresh billing info
       queryClient.invalidateQueries({ queryKey: queryKeys.tenants.detail(tenantId) });
     },
     onError: (error) => {
-      console.error('Update tenant billing failed:', error);
+      console.error("Update tenant billing failed:", error);
     },
   });
 }

@@ -1,19 +1,15 @@
-import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import { InjectRepository } from '@nestjs/typeorm';
-import * as argon2 from 'argon2';
-import * as crypto from 'crypto';
-import { Repository } from 'typeorm';
-import { TenantMember } from '../tenant-member/entities/tenant-member.entity';
-import { Tenant } from '../tenant/entities/tenant.entity';
-import { CreateApiKeyDto } from './dto/create-api-key.dto';
-import {
-  ApiKey,
-  ApiKeyEnvironment,
-  ApiKeyStatus,
-} from './entities/api-key.entity';
-import { ApiKeyRepository } from './api-key.repository';
-import { UpdateApiKeyDto } from './dto/update-api-key.dto';
+import { Injectable, NotFoundException, ConflictException } from "@nestjs/common";
+import { ConfigService } from "@nestjs/config";
+import { InjectRepository } from "@nestjs/typeorm";
+import * as argon2 from "argon2";
+import * as crypto from "crypto";
+import { Repository } from "typeorm";
+import { TenantMember } from "../tenant-member/entities/tenant-member.entity";
+import { Tenant } from "../tenant/entities/tenant.entity";
+import { CreateApiKeyDto } from "./dto/create-api-key.dto";
+import { ApiKey, ApiKeyEnvironment, ApiKeyStatus } from "./entities/api-key.entity";
+import { ApiKeyRepository } from "./api-key.repository";
+import { UpdateApiKeyDto } from "./dto/update-api-key.dto";
 
 export interface ApiKeyResponse {
   id: string;
@@ -32,7 +28,7 @@ export interface ApiKeyResponse {
   rateLimitPerHour: number;
   rateLimitPerDay: number;
   metadata?: Record<string, any>;
-  project: {id: string, name: string};
+  project: { id: string; name: string };
   createdById: string;
   createdAt: Date;
   updatedAt: Date;
@@ -89,12 +85,11 @@ export class ApiKeyService {
    * Generate a secure project-level API key
    */
   private generateApiKey(): string {
-  const part1 = crypto.randomBytes(8).toString('base64url').slice(0, 8);
-  const part2 = crypto.randomBytes(18).toString('base64url').slice(0, 24);
+    const part1 = crypto.randomBytes(8).toString("base64url").slice(0, 8);
+    const part2 = crypto.randomBytes(18).toString("base64url").slice(0, 24);
 
-  return `sa_${part1}_${part2}`;
-}
-
+    return `sa_${part1}_${part2}`;
+  }
 
   /**
    * Hash an API key
@@ -117,12 +112,14 @@ export class ApiKeyService {
   /**
    * Create a new API key
    */
-  async createApiKey(tenantId: string, projectId: string, createdBy: string, createDto: CreateApiKeyDto): Promise<ApiKeyResponse> {
+  async createApiKey(
+    tenantId: string,
+    projectId: string,
+    createdBy: string,
+    createDto: CreateApiKeyDto,
+  ): Promise<ApiKeyResponse> {
     // Check if an API key with the same name already exists in this project
-    const exists = await this.apiKeyRepository.existsByNameAndProject(
-      createDto.name,
-      projectId,
-    );
+    const exists = await this.apiKeyRepository.existsByNameAndProject(createDto.name, projectId);
 
     if (exists) {
       throw new ConflictException(
@@ -146,11 +143,11 @@ export class ApiKeyService {
     // Reload with relations to get project and createdBy details
     const apiKeyWithRelations = await this.apiKeyRepository.findOne({
       where: { id: savedApiKey.id },
-      relations: ['project', 'createdBy'],
+      relations: ["project", "createdBy"],
     });
 
     if (!apiKeyWithRelations) {
-      throw new NotFoundException('API key not found after creation');
+      throw new NotFoundException("API key not found after creation");
     }
 
     return {
@@ -170,24 +167,18 @@ export class ApiKeyService {
       rateLimitPerHour: apiKeyWithRelations.rateLimitPerHour,
       rateLimitPerDay: apiKeyWithRelations.rateLimitPerDay,
       metadata: apiKeyWithRelations.metadata,
-      project: {id: apiKeyWithRelations.project.id, name: apiKeyWithRelations.project.name},
+      project: { id: apiKeyWithRelations.project.id, name: apiKeyWithRelations.project.name },
       createdById: apiKeyWithRelations.createdBy.id,
       createdAt: apiKeyWithRelations.createdAt,
-      updatedAt: apiKeyWithRelations.updatedAt
+      updatedAt: apiKeyWithRelations.updatedAt,
     };
   }
 
   /**
    * Get API keys for a tenant (through projects)
    */
-  async getApiKeys(
-    tenantId: string,
-    projectId: string,
-  ): Promise<ApiKeyResponse[]> {
-    const apiKeys = await this.apiKeyRepository.findByTenantId(
-      tenantId,
-      projectId,
-    );
+  async getApiKeys(tenantId: string, projectId: string): Promise<ApiKeyResponse[]> {
+    const apiKeys = await this.apiKeyRepository.findByTenantId(tenantId, projectId);
 
     return apiKeys.map((apiKey) => ({
       id: apiKey.id,
@@ -205,10 +196,10 @@ export class ApiKeyService {
       rateLimitPerHour: apiKey.rateLimitPerHour,
       rateLimitPerDay: apiKey.rateLimitPerDay,
       metadata: apiKey.metadata,
-      project: {id: apiKey.project.id, name: apiKey.project.name},
+      project: { id: apiKey.project.id, name: apiKey.project.name },
       createdById: apiKey.createdBy.id,
       createdAt: apiKey.createdAt,
-      updatedAt: apiKey.updatedAt
+      updatedAt: apiKey.updatedAt,
     }));
   }
 
@@ -224,7 +215,7 @@ export class ApiKeyService {
     const apiKey = await this.apiKeyRepository.findByIdAndTenant(id, tenantId, projectId);
 
     if (!apiKey) {
-      throw new NotFoundException('API key not found');
+      throw new NotFoundException("API key not found");
     }
 
     // Check if updating the name would create a duplicate
@@ -245,7 +236,7 @@ export class ApiKeyService {
     const updatedApiKey = await this.apiKeyRepository.update(id, updateData);
 
     if (!updatedApiKey) {
-      throw new NotFoundException('API key not found');
+      throw new NotFoundException("API key not found");
     }
 
     return {
@@ -264,10 +255,10 @@ export class ApiKeyService {
       rateLimitPerHour: updatedApiKey.rateLimitPerHour,
       rateLimitPerDay: updatedApiKey.rateLimitPerDay,
       metadata: updatedApiKey.metadata,
-      project: {id: updatedApiKey.project.id, name: updatedApiKey.project.name},
+      project: { id: updatedApiKey.project.id, name: updatedApiKey.project.name },
       createdById: updatedApiKey.createdBy.id,
       createdAt: updatedApiKey.createdAt,
-      updatedAt: updatedApiKey.updatedAt
+      updatedAt: updatedApiKey.updatedAt,
     };
   }
 
@@ -278,7 +269,7 @@ export class ApiKeyService {
     const apiKey = await this.apiKeyRepository.findByIdAndTenant(id, tenantId, projectId);
 
     if (!apiKey) {
-      throw new NotFoundException('API key not found');
+      throw new NotFoundException("API key not found");
     }
 
     await this.apiKeyRepository.update(id, {

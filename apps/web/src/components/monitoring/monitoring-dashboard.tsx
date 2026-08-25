@@ -1,33 +1,42 @@
-'use client';
+"use client";
 
-import { Activity, User, Users } from '@/lib/icons';
+import { Activity, User, Users } from "@/lib/icons";
 
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Progress } from '@/components/ui/progress';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { SignalIcon, ExclamationTriangleIcon, CheckCircleIcon, ServerIcon, ArrowTrendingDownIcon, ArrowTrendingUpIcon, UsersIcon, BoltIcon } from '@heroicons/react/24/outline'
-import { useEffect, useState } from 'react';
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Progress } from "@/components/ui/progress";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  SignalIcon,
+  ExclamationTriangleIcon,
+  CheckCircleIcon,
+  ServerIcon,
+  ArrowTrendingDownIcon,
+  ArrowTrendingUpIcon,
+  UsersIcon,
+  BoltIcon,
+} from "@heroicons/react/24/outline";
+import { useEffect, useState } from "react";
 
 interface MonitoringMetrics {
   errors: {
     total: number;
     rate: number;
     critical: number;
-    trend: 'up' | 'down' | 'stable';
+    trend: "up" | "down" | "stable";
   };
   performance: {
     avgResponseTime: number;
     p95ResponseTime: number;
     slowRequests: number;
-    trend: 'up' | 'down' | 'stable';
+    trend: "up" | "down" | "stable";
   };
   users: {
     activeUsers: number;
     sessionDuration: number;
     bounceRate: number;
-    trend: 'up' | 'down' | 'stable';
+    trend: "up" | "down" | "stable";
   };
   availability: {
     uptime: number;
@@ -39,7 +48,7 @@ interface MonitoringMetrics {
 interface Alert {
   id: string;
   type: string;
-  severity: 'low' | 'medium' | 'high' | 'critical';
+  severity: "low" | "medium" | "high" | "critical";
   message: string;
   timestamp: number;
   resolved: boolean;
@@ -69,41 +78,41 @@ export default function MonitoringDashboard() {
           total: Math.floor(Math.random() * 50),
           rate: Math.random() * 0.05,
           critical: Math.floor(Math.random() * 5),
-          trend: ['up', 'down', 'stable'][Math.floor(Math.random() * 3)] as any,
+          trend: ["up", "down", "stable"][Math.floor(Math.random() * 3)] as any,
         },
         performance: {
           avgResponseTime: 200 + Math.random() * 300,
           p95ResponseTime: 500 + Math.random() * 1000,
           slowRequests: Math.floor(Math.random() * 20),
-          trend: ['up', 'down', 'stable'][Math.floor(Math.random() * 3)] as any,
+          trend: ["up", "down", "stable"][Math.floor(Math.random() * 3)] as any,
         },
         users: {
           activeUsers: 150 + Math.floor(Math.random() * 100),
           sessionDuration: 5 + Math.random() * 10,
           bounceRate: 0.2 + Math.random() * 0.3,
-          trend: ['up', 'down', 'stable'][Math.floor(Math.random() * 3)] as any,
+          trend: ["up", "down", "stable"][Math.floor(Math.random() * 3)] as any,
         },
         availability: {
           uptime: 99.5 + Math.random() * 0.5,
           incidents: Math.floor(Math.random() * 3),
-          lastIncident: Math.random() > 0.5 ? '2 hours ago' : undefined,
+          lastIncident: Math.random() > 0.5 ? "2 hours ago" : undefined,
         },
       };
 
       const mockAlerts: Alert[] = [
         {
-          id: '1',
-          type: 'performance',
-          severity: 'medium',
-          message: 'API response time above threshold',
+          id: "1",
+          type: "performance",
+          severity: "medium",
+          message: "API response time above threshold",
           timestamp: Date.now() - 300000,
           resolved: false,
         },
         {
-          id: '2',
-          type: 'error',
-          severity: 'high',
-          message: 'High error rate in campaign builder',
+          id: "2",
+          type: "error",
+          severity: "high",
+          message: "High error rate in campaign builder",
           timestamp: Date.now() - 600000,
           resolved: true,
         },
@@ -113,7 +122,7 @@ export default function MonitoringDashboard() {
       setAlerts(mockAlerts);
       setLastUpdated(new Date());
     } catch (error) {
-      console.error('Failed to load monitoring data:', error);
+      console.error("Failed to load monitoring data:", error);
     } finally {
       setIsLoading(false);
     }
@@ -121,19 +130,27 @@ export default function MonitoringDashboard() {
 
   const getSeverityColor = (severity: string) => {
     switch (severity) {
-      case 'critical': return 'destructive';
-      case 'high': return 'destructive';
-      case 'medium': return 'secondary';
-      case 'low': return 'outline';
-      default: return 'outline';
+      case "critical":
+        return "destructive";
+      case "high":
+        return "destructive";
+      case "medium":
+        return "secondary";
+      case "low":
+        return "outline";
+      default:
+        return "outline";
     }
   };
 
   const getTrendIcon = (trend: string) => {
     switch (trend) {
-      case 'up': return <ArrowTrendingUpIcon className="h-4 w-4 text-red-500" />;
-      case 'down': return <ArrowTrendingDownIcon className="h-4 w-4 text-green-500" />;
-      default: return <SignalIcon className="h-4 w-4 text-gray-500" />;
+      case "up":
+        return <ArrowTrendingUpIcon className="h-4 w-4 text-red-500" />;
+      case "down":
+        return <ArrowTrendingDownIcon className="h-4 w-4 text-green-500" />;
+      default:
+        return <SignalIcon className="h-4 w-4 text-gray-500" />;
     }
   };
 
@@ -162,9 +179,7 @@ export default function MonitoringDashboard() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold">System Monitoring</h1>
-          <p className="text-muted-foreground">
-            Real-time monitoring and alerting dashboard
-          </p>
+          <p className="text-muted-foreground">Real-time monitoring and alerting dashboard</p>
         </div>
         <div className="text-right">
           <p className="text-sm text-muted-foreground">
@@ -184,9 +199,7 @@ export default function MonitoringDashboard() {
             <ExclamationTriangleIcon className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
-              {(metrics.errors.rate * 100).toFixed(2)}%
-            </div>
+            <div className="text-2xl font-bold">{(metrics.errors.rate * 100).toFixed(2)}%</div>
             <div className="flex items-center space-x-2 text-xs text-muted-foreground">
               {getTrendIcon(metrics.errors.trend)}
               <span>{metrics.errors.total} total errors</span>
@@ -252,9 +265,7 @@ export default function MonitoringDashboard() {
           <Card>
             <CardHeader>
               <CardTitle>Active Alerts</CardTitle>
-              <CardDescription>
-                Current system alerts and their status
-              </CardDescription>
+              <CardDescription>Current system alerts and their status</CardDescription>
             </CardHeader>
             <CardContent>
               {alerts.length === 0 ? (

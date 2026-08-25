@@ -1,21 +1,21 @@
-import { IEmailProvider } from '../../../providers/email/email-provider.interface';
+import { IEmailProvider } from "../../../providers/email/email-provider.interface";
 import {
   Channel,
   DeliveryStatus,
   ProviderConfig,
   ProviderHealth,
   ProviderResponse,
-} from '../../../providers/types';
+} from "../../../providers/types";
 
 export class MockEmailProvider implements IEmailProvider {
-  id = 'mock-email-provider';
-  name = 'Mock Email Provider';
+  id = "mock-email-provider";
+  name = "Mock Email Provider";
   channel = Channel.EMAIL;
   config: ProviderConfig;
   isInitialized = true;
 
   private shouldFail = false;
-  private failureMessage = 'Mock provider failure';
+  private failureMessage = "Mock provider failure";
   private responseDelay = 0;
 
   constructor(config: ProviderConfig) {
@@ -32,23 +32,19 @@ export class MockEmailProvider implements IEmailProvider {
     }
 
     return {
-      messageId: 'mock-email-' + Math.random().toString(36).substring(2, 11),
+      messageId: "mock-email-" + Math.random().toString(36).substring(2, 11),
       status: DeliveryStatus.SENT,
       timestamp: new Date(),
     };
   }
 
   async validateConfig(config: ProviderConfig): Promise<boolean> {
-    return (
-      config && config.credentials && typeof config.credentials === 'object'
-    );
+    return config && config.credentials && typeof config.credentials === "object";
   }
 
   async checkHealth(): Promise<{ status: ProviderHealth; lastChecked: Date }> {
     return {
-      status: this.shouldFail
-        ? ProviderHealth.UNHEALTHY
-        : ProviderHealth.HEALTHY,
+      status: this.shouldFail ? ProviderHealth.UNHEALTHY : ProviderHealth.HEALTHY,
       lastChecked: new Date(),
     };
   }
@@ -75,7 +71,7 @@ export class MockEmailProvider implements IEmailProvider {
 
   reset(): void {
     this.shouldFail = false;
-    this.failureMessage = 'Mock provider failure';
+    this.failureMessage = "Mock provider failure";
     this.responseDelay = 0;
   }
 }

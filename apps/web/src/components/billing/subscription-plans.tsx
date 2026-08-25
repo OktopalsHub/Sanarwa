@@ -1,11 +1,11 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { useCheckoutCurrency } from '@/hooks/use-checkout-currency';
-import { billingApi } from '@/lib/api';
+import { useState } from "react";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useCheckoutCurrency } from "@/hooks/use-checkout-currency";
+import { billingApi } from "@/lib/api";
 import {
   type CurrencyCode,
   formatMoney,
@@ -13,15 +13,15 @@ import {
   packagesForCurrency,
   packPrice,
   sendsFromTokens,
-} from '@/lib/pricing';
-import { toast } from 'sonner';
+} from "@/lib/pricing";
+import { toast } from "sonner";
 
 /** Pay-as-you-go token packs — not subscription plans. */
 export function TokenPacks() {
   const { currency, setCurrency, availableCurrencies, isReady } = useCheckoutCurrency();
   const [pendingPackId, setPendingPackId] = useState<string | null>(null);
 
-  const activeCurrency = (isReady ? currency : 'USD') as CurrencyCode;
+  const activeCurrency = (isReady ? currency : "USD") as CurrencyCode;
   const packs = packagesForCurrency(activeCurrency);
 
   const handlePurchase = async (packageId: string) => {
@@ -33,13 +33,13 @@ export function TokenPacks() {
       });
 
       if (!result.checkoutUrl) {
-        throw new Error('Checkout URL missing from server response');
+        throw new Error("Checkout URL missing from server response");
       }
 
       window.location.href = result.checkoutUrl;
     } catch (error) {
-      console.error('Token purchase failed:', error);
-      toast.error('Could not start checkout. Please try again.');
+      console.error("Token purchase failed:", error);
+      toast.error("Could not start checkout. Please try again.");
       setPendingPackId(null);
     }
   };
@@ -56,12 +56,10 @@ export function TokenPacks() {
         {availableCurrencies.length > 1 ? (
           <button
             type="button"
-            onClick={() =>
-              setCurrency(activeCurrency === 'NGN' ? 'USD' : 'NGN')
-            }
+            onClick={() => setCurrency(activeCurrency === "NGN" ? "USD" : "NGN")}
             className="text-sm text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
           >
-            Switch to {activeCurrency === 'NGN' ? 'USD' : 'NGN'}
+            Switch to {activeCurrency === "NGN" ? "USD" : "NGN"}
           </button>
         ) : null}
       </div>
@@ -72,17 +70,19 @@ export function TokenPacks() {
           return (
             <Card
               key={pkg.id}
-              className={pkg.savingsPercent >= 20 ? 'border-primary shadow-md h-full' : 'h-full'}
+              className={pkg.savingsPercent >= 20 ? "border-primary shadow-md h-full" : "h-full"}
             >
               {pkg.savingsPercent > 0 ? (
                 <div className="px-6 pt-4">
                   <Badge variant="secondary">Save {pkg.savingsPercent}%</Badge>
                 </div>
               ) : null}
-              <CardHeader className={pkg.savingsPercent > 0 ? 'pt-2' : undefined}>
-                <CardTitle className="font-mono text-xl">{formatTokens(pkg.tokens)} tokens</CardTitle>
+              <CardHeader className={pkg.savingsPercent > 0 ? "pt-2" : undefined}>
+                <CardTitle className="font-mono text-xl">
+                  {formatTokens(pkg.tokens)} tokens
+                </CardTitle>
                 <p className="text-sm text-muted-foreground">
-                  ≈ {formatTokens(sendsFromTokens('email', pkg.tokens))} emails
+                  ≈ {formatTokens(sendsFromTokens("email", pkg.tokens))} emails
                 </p>
               </CardHeader>
               <CardContent className="space-y-4">
@@ -95,7 +95,7 @@ export function TokenPacks() {
                   disabled={Boolean(pendingPackId)}
                   onClick={() => handlePurchase(pkg.id)}
                 >
-                  {isPending ? 'Redirecting…' : 'Buy pack'}
+                  {isPending ? "Redirecting…" : "Buy pack"}
                 </Button>
               </CardContent>
             </Card>

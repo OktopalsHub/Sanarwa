@@ -1,7 +1,7 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import { TelnyxVoiceProvider } from '../providers/voice/providers/telnyx-voice.provider';
-import { VoiceCallTrackingService } from './voice-call-tracking.service';
+import { Injectable, Logger } from "@nestjs/common";
+import { ConfigService } from "@nestjs/config";
+import { TelnyxVoiceProvider } from "../providers/voice/providers/telnyx-voice.provider";
+import { VoiceCallTrackingService } from "./voice-call-tracking.service";
 
 export interface OutboundCallRequest {
   phoneNumber: string;
@@ -32,18 +32,26 @@ export class VoiceService {
     private readonly configService: ConfigService,
     private readonly voiceCallTrackingService: VoiceCallTrackingService,
   ) {
-    this.logger.log('Using Telnyx voice provider with built-in TTS');
+    this.logger.log("Using Telnyx voice provider with built-in TTS");
   }
 
   /**
    * Create an outbound voice call with TTS message using Telnyx
    */
-  async createOutboundCall(request: OutboundCallRequest, tenantId: string): Promise<OutboundCallResponse> {
+  async createOutboundCall(
+    request: OutboundCallRequest,
+    tenantId: string,
+  ): Promise<OutboundCallResponse> {
     try {
-      this.logger.log(`Creating outbound call to ${request.phoneNumber} with message: "${request.message}"`);
+      this.logger.log(
+        `Creating outbound call to ${request.phoneNumber} with message: "${request.message}"`,
+      );
 
       // Create the call using Telnyx
-      const result = await this.telnyxVoiceProvider.createCall(request.phoneNumber, request.message);
+      const result = await this.telnyxVoiceProvider.createCall(
+        request.phoneNumber,
+        request.message,
+      );
 
       if (!result.success) {
         return {
@@ -63,7 +71,7 @@ export class VoiceService {
             voice: request.voice,
             maxDuration: request.maxDuration,
             recordCall: request.recordCall,
-            fromNumber: this.configService.get('TELNYX_FROM_NUMBER') || '',
+            fromNumber: this.configService.get("TELNYX_FROM_NUMBER") || "",
           },
         });
       }
@@ -96,8 +104,8 @@ export class VoiceService {
       return {
         success: true,
         callId,
-        status: 'active',
-        message: 'Call status - use Telnyx webhooks for real-time status updates',
+        status: "active",
+        message: "Call status - use Telnyx webhooks for real-time status updates",
       };
     } catch (error) {
       this.logger.error(`Failed to get call status for ${callId}: ${error.message}`, error.stack);
@@ -114,15 +122,15 @@ export class VoiceService {
   async endCall(callControlId: string): Promise<{ success: boolean; error?: string }> {
     try {
       this.logger.log(`Ending call: ${callControlId}`);
-      
+
       const result = await this.telnyxVoiceProvider.endCall(callControlId);
-      
+
       if (result.success) {
         this.logger.log(`Call ${callControlId} ended successfully`);
       } else {
         this.logger.error(`Failed to end call ${callControlId}: ${result.error}`);
       }
-      
+
       return result;
     } catch (error) {
       this.logger.error(`Failed to end call ${callControlId}: ${error.message}`, error.stack);
@@ -136,14 +144,18 @@ export class VoiceService {
   /**
    * Send additional TTS message to active call
    */
-  async sendTTSToCall(callControlId: string, message: string, voiceSettings?: OutboundCallRequest['voice']) {
+  async sendTTSToCall(
+    callControlId: string,
+    message: string,
+    voiceSettings?: OutboundCallRequest["voice"],
+  ) {
     try {
       this.logger.log(`Sending TTS message to call ${callControlId}: ${message}`);
 
       const result = await this.telnyxVoiceProvider.sendTTS(
-        callControlId, 
-        message, 
-        voiceSettings?.voice || 'Telnyx.Natural.abbie'
+        callControlId,
+        message,
+        voiceSettings?.voice || "Telnyx.Natural.abbie",
       );
 
       if (result.success) {
@@ -154,7 +166,10 @@ export class VoiceService {
 
       return result;
     } catch (error) {
-      this.logger.error(`Failed to send TTS to call ${callControlId}: ${error.message}`, error.stack);
+      this.logger.error(
+        `Failed to send TTS to call ${callControlId}: ${error.message}`,
+        error.stack,
+      );
       return {
         success: false,
         error: error.message,
@@ -198,8 +213,8 @@ export class VoiceService {
     overall: boolean;
   }> {
     const telnyxValid = await this.telnyxVoiceProvider.validateConfig();
-    
-    this.logger.log(`Telnyx Voice Provider: ${telnyxValid ? '✅' : '❌'}`);
+
+    this.logger.log(`Telnyx Voice Provider: ${telnyxValid ? "✅" : "❌"}`);
 
     return {
       telnyx: telnyxValid,

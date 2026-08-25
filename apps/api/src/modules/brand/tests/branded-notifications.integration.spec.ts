@@ -78,7 +78,6 @@ describe('Branded Notifications Integration', () => {
           },
         },
         {
-          {
           provide: ResendVerificationService,
           useValue: {},
         },
@@ -86,7 +85,8 @@ describe('Branded Notifications Integration', () => {
           provide: CloudflareDNSService,
           useValue: {},
         },
-        provide: BrandedPushService,
+        {
+          provide: BrandedPushService,
           useValue: {
             enhancePushWithBrand: vi.fn(),
             getPushRecommendations: vi.fn(),

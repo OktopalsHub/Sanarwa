@@ -1,28 +1,25 @@
-import { NotFoundException } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import { Test, TestingModule } from '@nestjs/testing';
-import { getRepositoryToken } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { EncryptionService } from '../../../common/security/services/encryption.service';
+import { NotFoundException } from "@nestjs/common";
+import { ConfigService } from "@nestjs/config";
+import { Test, TestingModule } from "@nestjs/testing";
+import { getRepositoryToken } from "@nestjs/typeorm";
+import { Repository } from "typeorm";
+import { EncryptionService } from "../../../common/security/services/encryption.service";
+import type { Mocked } from "vitest";
 import {
-import type { Mocked } from 'vitest';
   CreateConfigurationDto,
   RollbackConfigurationDto,
   UpdateConfigurationDto,
-} from '../../dto/configuration.dto';
-import {
-  ConfigurationVersion,
-  VersionAction,
-} from '../../entities/configuration-version.entity';
+} from "../../dto/configuration.dto";
+import { ConfigurationVersion, VersionAction } from "../../entities/configuration-version.entity";
 import {
   Configuration,
   ConfigurationScope,
   ConfigurationStatus,
-} from '../../entities/configuration.entity';
-import { ConfigurationValidationService } from '../configuration-validation.service';
-import { ConfigurationService } from '../configuration.service';
+} from "../../entities/configuration.entity";
+import { ConfigurationValidationService } from "../configuration-validation.service";
+import { ConfigurationService } from "../configuration.service";
 
-describe('ConfigurationService', () => {
+describe("ConfigurationService", () => {
   let service: ConfigurationService;
   let configRepository: Mocked<Repository<Configuration>>;
   let versionRepository: Mocked<Repository<ConfigurationVersion>>;
@@ -31,11 +28,11 @@ describe('ConfigurationService', () => {
   let configService: Mocked<ConfigService>;
 
   const mockConfiguration: Configuration = {
-    id: 'test-id',
-    key: 'test.key',
-    value: 'test-value',
+    id: "test-id",
+    key: "test.key",
+    value: "test-value",
     scope: ConfigurationScope.GLOBAL,
-    environment: 'test',
+    environment: "test",
     status: ConfigurationStatus.ACTIVE,
     isEncrypted: false,
     isSecret: false,
@@ -44,11 +41,11 @@ describe('ConfigurationService', () => {
   } as Configuration;
 
   const mockEncryptionResult = {
-    encryptedData: 'encrypted-data',
-    iv: 'test-iv',
-    tag: 'test-tag',
-    algorithm: 'aes-256-gcm',
-    keyVersion: 'v1',
+    encryptedData: "encrypted-data",
+    iv: "test-iv",
+    tag: "test-tag",
+    algorithm: "aes-256-gcm",
+    keyVersion: "v1",
   };
 
   beforeEach(async () => {
@@ -125,19 +122,19 @@ describe('ConfigurationService', () => {
     configService = module.get(ConfigService);
   });
 
-  it('should be defined', () => {
+  it("should be defined", () => {
     expect(service).toBeDefined();
   });
 
-  describe('create', () => {
+  describe("create", () => {
     const createDto: CreateConfigurationDto = {
-      key: 'test.key',
-      value: 'test-value',
+      key: "test.key",
+      value: "test-value",
       scope: ConfigurationScope.GLOBAL,
-      environment: 'test',
+      environment: "test",
     };
 
-    it('should create a configuration successfully', async () => {
+    it("should create a configuration successfully", async () => {
       validationService.validateValue.mockResolvedValue({ isValid: true });
       mockQueryBuilder.getOne.mockResolvedValue(null);
       configRepository.create.mockReturnValue(mockConfiguration);
@@ -145,7 +142,7 @@ describe('ConfigurationService', () => {
       versionRepository.create.mockReturnValue({} as ConfigurationVersion);
       versionRepository.save.mockResolvedValue({} as ConfigurationVersion);
 
-      const result = await service.create(createDto, 'user-id');
+      const result = await service.create(createDto, "user-id");
 
       expect(result.configuration).toEqual(mockConfiguration);
       expect(result.validationResult?.isValid).toBe(true);
@@ -153,7 +150,7 @@ describe('ConfigurationService', () => {
       expect(versionRepository.save).toHaveBeenCalled();
     });
 
-    it('should encrypt value when isSecret is true', async () => {
+    it("should encrypt value when isSecret is true", async () => {
       const secretDto = { ...createDto, isSecret: true };
       validationService.validateValue.mockResolvedValue({ isValid: true });
       mockQueryBuilder.getOne.mockResolvedValue(null);
@@ -163,9 +160,9 @@ describe('ConfigurationService', () => {
       versionRepository.create.mockReturnValue({} as ConfigurationVersion);
       versionRepository.save.mockResolvedValue({} as ConfigurationVersion);
 
-      await service.create(secretDto, 'user-id');
+      await service.create(secretDto, "user-id");
 
-      expect(encryptionService.encrypt).toHaveBeenCalledWith('test-value');
+      expect(encryptionService.encrypt).toHaveBeenCalledWith("test-value");
       expect(configRepository.create).toHaveBeenCalledWith(
         expect.objectContaining({
           value: JSON.stringify(mockEncryptionResult),
@@ -173,10 +170,10 @@ describe('ConfigurationService', () => {
       );
     });
 
-    it('should return validation errors when validation fails', async () => {
+    it("should return validation errors when validation fails", async () => {
       const validationResult = {
         isValid: false,
-        errors: ['Invalid value'],
+        errors: ["Invalid value"],
       };
       validationService.validateValue.mockResolvedValue(validationResult);
 
@@ -186,7 +183,7 @@ describe('ConfigurationService', () => {
       expect(result.validationResult).toEqual(validationResult);
     });
 
-    it('should throw error when configuration already exists', async () => {
+    it("should throw error when configuration already exists", async () => {
       validationService.validateValue.mockResolvedValue({ isValid: true });
       mockQueryBuilder.getOne.mockResolvedValue(mockConfiguration);
 
@@ -196,45 +193,40 @@ describe('ConfigurationService', () => {
     });
   });
 
-  describe('update', () => {
+  describe("update", () => {
     const updateDto: UpdateConfigurationDto = {
-      value: 'updated-value',
+      value: "updated-value",
     };
 
-    it('should update configuration successfully', async () => {
+    it("should update configuration successfully", async () => {
       validationService.validateValue.mockResolvedValue({ isValid: true });
       configRepository.findOne.mockResolvedValue(mockConfiguration);
-      encryptionService.decrypt.mockResolvedValue('original-value');
+      encryptionService.decrypt.mockResolvedValue("original-value");
       configRepository.update.mockResolvedValue({} as any);
       versionRepository.find.mockResolvedValue([]);
       versionRepository.create.mockReturnValue({} as ConfigurationVersion);
       versionRepository.save.mockResolvedValue({} as ConfigurationVersion);
 
-      const updatedConfig = { ...mockConfiguration, value: 'updated-value' };
+      const updatedConfig = { ...mockConfiguration, value: "updated-value" };
       configRepository.findOne
         .mockResolvedValueOnce(mockConfiguration)
         .mockResolvedValueOnce(updatedConfig);
 
-      const result = await service.update('test-id', updateDto, 'user-id');
+      const result = await service.update("test-id", updateDto, "user-id");
 
       expect(result.configuration).toEqual(updatedConfig);
-      expect(configRepository.update).toHaveBeenCalledWith(
-        'test-id',
-        expect.any(Object),
-      );
+      expect(configRepository.update).toHaveBeenCalledWith("test-id", expect.any(Object));
     });
 
-    it('should throw NotFoundException when configuration not found', async () => {
+    it("should throw NotFoundException when configuration not found", async () => {
       configRepository.findOne.mockResolvedValue(null);
 
-      await expect(service.update('non-existent', updateDto)).rejects.toThrow(
-        NotFoundException,
-      );
+      await expect(service.update("non-existent", updateDto)).rejects.toThrow(NotFoundException);
     });
   });
 
-  describe('getValue', () => {
-    it('should return decrypted value for encrypted configuration', async () => {
+  describe("getValue", () => {
+    it("should return decrypted value for encrypted configuration", async () => {
       const encryptedConfig = {
         ...mockConfiguration,
         isEncrypted: true,
@@ -242,65 +234,63 @@ describe('ConfigurationService', () => {
       };
 
       mockQueryBuilder.getOne.mockResolvedValue(encryptedConfig);
-      encryptionService.decrypt.mockResolvedValue('decrypted-value');
+      encryptionService.decrypt.mockResolvedValue("decrypted-value");
 
-      const result = await service.getValue('test.key');
+      const result = await service.getValue("test.key");
 
-      expect(result).toBe('decrypted-value');
-      expect(encryptionService.decrypt).toHaveBeenCalledWith(
-        mockEncryptionResult,
-      );
+      expect(result).toBe("decrypted-value");
+      expect(encryptionService.decrypt).toHaveBeenCalledWith(mockEncryptionResult);
     });
 
-    it('should return plain value for non-encrypted configuration', async () => {
+    it("should return plain value for non-encrypted configuration", async () => {
       mockQueryBuilder.getOne.mockResolvedValue(mockConfiguration);
 
-      const result = await service.getValue('test.key');
+      const result = await service.getValue("test.key");
 
-      expect(result).toBe('test-value');
+      expect(result).toBe("test-value");
       expect(encryptionService.decrypt).not.toHaveBeenCalled();
     });
 
-    it('should return null for inactive configuration', async () => {
+    it("should return null for inactive configuration", async () => {
       const inactiveConfig = {
         ...mockConfiguration,
         status: ConfigurationStatus.INACTIVE,
       };
       mockQueryBuilder.getOne.mockResolvedValue(inactiveConfig);
 
-      const result = await service.getValue('test.key');
+      const result = await service.getValue("test.key");
 
       expect(result).toBeNull();
     });
 
-    it('should return null when configuration not found', async () => {
+    it("should return null when configuration not found", async () => {
       mockQueryBuilder.getOne.mockResolvedValue(null);
 
-      const result = await service.getValue('non-existent');
+      const result = await service.getValue("non-existent");
 
       expect(result).toBeNull();
     });
   });
 
-  describe('rollback', () => {
+  describe("rollback", () => {
     const rollbackDto: RollbackConfigurationDto = {
-      versionId: 'version-id',
-      reason: 'Test rollback',
+      versionId: "version-id",
+      reason: "Test rollback",
     };
 
     const mockVersion: ConfigurationVersion = {
-      id: 'version-id',
-      configurationId: 'test-id',
+      id: "version-id",
+      configurationId: "test-id",
       version: 1,
-      newValue: 'previous-value',
+      newValue: "previous-value",
       action: VersionAction.CREATE,
       createdAt: new Date(),
     } as ConfigurationVersion;
 
-    it('should rollback configuration successfully', async () => {
+    it("should rollback configuration successfully", async () => {
       configRepository.findOne.mockResolvedValue(mockConfiguration);
       versionRepository.findOne.mockResolvedValue(mockVersion);
-      encryptionService.decrypt.mockResolvedValue('current-value');
+      encryptionService.decrypt.mockResolvedValue("current-value");
       encryptionService.encrypt.mockResolvedValue(mockEncryptionResult);
       configRepository.update.mockResolvedValue({} as any);
       versionRepository.find.mockResolvedValue([]);
@@ -309,66 +299,66 @@ describe('ConfigurationService', () => {
 
       const rolledBackConfig = {
         ...mockConfiguration,
-        value: 'previous-value',
+        value: "previous-value",
       };
       configRepository.findOne
         .mockResolvedValueOnce(mockConfiguration)
         .mockResolvedValueOnce(rolledBackConfig);
 
-      const result = await service.rollback('test-id', rollbackDto, 'user-id');
+      const result = await service.rollback("test-id", rollbackDto, "user-id");
 
       expect(result).toEqual(rolledBackConfig);
       expect(configRepository.update).toHaveBeenCalled();
       expect(versionRepository.save).toHaveBeenCalled();
     });
 
-    it('should throw error when version does not belong to configuration', async () => {
-      const wrongVersion = { ...mockVersion, configurationId: 'wrong-id' };
+    it("should throw error when version does not belong to configuration", async () => {
+      const wrongVersion = { ...mockVersion, configurationId: "wrong-id" };
       configRepository.findOne.mockResolvedValue(mockConfiguration);
       versionRepository.findOne.mockResolvedValue(wrongVersion);
 
-      await expect(service.rollback('test-id', rollbackDto)).rejects.toThrow(
-        'Version does not belong to this configuration',
+      await expect(service.rollback("test-id", rollbackDto)).rejects.toThrow(
+        "Version does not belong to this configuration",
       );
     });
   });
 
-  describe('delete', () => {
-    it('should delete configuration successfully', async () => {
+  describe("delete", () => {
+    it("should delete configuration successfully", async () => {
       configRepository.findOne.mockResolvedValue(mockConfiguration);
       versionRepository.find.mockResolvedValue([]);
       versionRepository.create.mockReturnValue({} as ConfigurationVersion);
       versionRepository.save.mockResolvedValue({} as ConfigurationVersion);
       configRepository.delete.mockResolvedValue({} as any);
 
-      await service.delete('test-id', 'user-id');
+      await service.delete("test-id", "user-id");
 
-      expect(configRepository.delete).toHaveBeenCalledWith('test-id');
+      expect(configRepository.delete).toHaveBeenCalledWith("test-id");
       expect(versionRepository.save).toHaveBeenCalled();
     });
   });
 
-  describe('bulkOperation', () => {
+  describe("bulkOperation", () => {
     const bulkDto = {
       configurations: [
         {
-          key: 'bulk.key1',
-          value: 'value1',
+          key: "bulk.key1",
+          value: "value1",
           scope: ConfigurationScope.GLOBAL,
         },
         {
-          key: 'bulk.key2',
-          value: 'value2',
+          key: "bulk.key2",
+          value: "value2",
           scope: ConfigurationScope.GLOBAL,
         },
       ],
       validateAll: true,
     };
 
-    it('should process bulk operations successfully', async () => {
+    it("should process bulk operations successfully", async () => {
       validationService.validateConfigurations.mockResolvedValue({
-        'bulk.key1': { isValid: true },
-        'bulk.key2': { isValid: true },
+        "bulk.key1": { isValid: true },
+        "bulk.key2": { isValid: true },
       });
 
       mockQueryBuilder.getOne.mockResolvedValue(null);
@@ -377,23 +367,23 @@ describe('ConfigurationService', () => {
       versionRepository.create.mockReturnValue({} as ConfigurationVersion);
       versionRepository.save.mockResolvedValue({} as ConfigurationVersion);
 
-      const result = await service.bulkOperation(bulkDto, 'user-id');
+      const result = await service.bulkOperation(bulkDto, "user-id");
 
       expect(result.successful).toHaveLength(2);
       expect(result.failed).toHaveLength(0);
     });
 
-    it('should handle validation failures in bulk operation', async () => {
+    it("should handle validation failures in bulk operation", async () => {
       validationService.validateConfigurations.mockResolvedValue({
-        'bulk.key1': { isValid: false, errors: ['Invalid value'] },
-        'bulk.key2': { isValid: true },
+        "bulk.key1": { isValid: false, errors: ["Invalid value"] },
+        "bulk.key2": { isValid: true },
       });
 
-      const result = await service.bulkOperation(bulkDto, 'user-id');
+      const result = await service.bulkOperation(bulkDto, "user-id");
 
       expect(result.successful).toHaveLength(0);
       expect(result.failed).toHaveLength(2);
-      expect(result.failed[0].error).toContain('Validation failed');
+      expect(result.failed[0].error).toContain("Validation failed");
     });
   });
 });

@@ -2,22 +2,27 @@
   "name": "sanarwa",
   "version": "0.1.0",
   "private": true,
-  "packageManager": "pnpm@10.25.0",
   "scripts": {
     "dev": "concurrently \"pnpm --filter @sanarwa/web dev\" \"pnpm --filter @sanarwa/api start:dev\"",
     "build": "pnpm -r --filter './packages/*' build && pnpm --filter @sanarwa/web build && pnpm --filter @sanarwa/api build",
     "test": "pnpm -r test",
     "lint": "oxlint -c oxlint.json apps packages --quiet",
     "lint:all": "oxlint -c oxlint.json apps packages",
+    "lint:fix": "oxlint -c oxlint.json apps packages --fix && oxfmt .",
+    "fmt": "oxfmt --check .",
+    "fmt:fix": "oxfmt .",
     "type-check": "pnpm -r type-check",
     "deploy:local": "docker compose up --build",
-    "lint:fix": "oxlint -c oxlint.json apps packages --fix",
-    "deps:circular": "node scripts/check-circular.mjs"
+    "deps:circular": "node scripts/check-circular.mjs",
+    "fallow": "fallow"
   },
   "devDependencies": {
     "concurrently": "^9.1.2",
+    "fallow": "^3.18.0",
     "madge": "^8.0.0",
+    "oxfmt": "^0.64.0",
     "oxlint": "^1.74.0",
     "typescript": "^5.9.3"
-  }
+  },
+  "packageManager": "pnpm@10.25.0"
 }

@@ -1,26 +1,20 @@
-import {
-  Column,
-  CreateDateColumn,
-  Entity,
-  Index,
-  PrimaryGeneratedColumn,
-} from 'typeorm';
+import { Column, CreateDateColumn, Entity, Index, PrimaryGeneratedColumn } from "typeorm";
 
-@Entity('webhook_events')
-@Index(['provider', 'eventId'], { unique: true })
+@Entity("webhook_events")
+@Index(["provider", "eventId"], { unique: true })
 export class WebhookEvent {
-  @PrimaryGeneratedColumn('uuid')
+  @PrimaryGeneratedColumn("uuid")
   id: string;
 
   @Column({ length: 32 })
   provider: string;
 
-  @Column({ name: 'event_id', length: 255 })
+  @Column({ name: "event_id", length: 255 })
   eventId: string;
 
-  @Column({ name: 'payload_hash', length: 64, nullable: true })
+  @Column({ name: "payload_hash", length: 64, nullable: true })
   payloadHash?: string;
 
-  @CreateDateColumn({ name: 'processed_at' })
+  @CreateDateColumn({ name: "processed_at" })
   processedAt: Date;
 }

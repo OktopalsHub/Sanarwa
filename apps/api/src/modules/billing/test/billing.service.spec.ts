@@ -1,16 +1,16 @@
-import { Test, TestingModule } from '@nestjs/testing';
-import { getRepositoryToken } from '@nestjs/typeorm';
-import { BillingService } from '../services/billing.service';
-import { PolarService } from '../services/polar.service';
-import { TokenManagementService } from '../../token-management/services/token-management.service';
-import { Subscription } from '../entities/subscription.entity';
-import { TokenPurchase } from '../entities/token-purchase.entity';
-import { AutoTopupConfig } from '../entities/auto-topup-config.entity';
-import { TokenBalance, TokenTransaction } from '../entities/token-balance.entity';
-import { ConfigService } from '@nestjs/config';
-import { TenantService } from '../../tenant/tenant.service';
+import { Test, TestingModule } from "@nestjs/testing";
+import { getRepositoryToken } from "@nestjs/typeorm";
+import { BillingService } from "../services/billing.service";
+import { PolarService } from "../services/polar.service";
+import { TokenManagementService } from "../../token-management/services/token-management.service";
+import { Subscription } from "../entities/subscription.entity";
+import { TokenPurchase } from "../entities/token-purchase.entity";
+import { AutoTopupConfig } from "../entities/auto-topup-config.entity";
+import { TokenBalance, TokenTransaction } from "../entities/token-balance.entity";
+import { ConfigService } from "@nestjs/config";
+import { TenantService } from "../../tenant/tenant.service";
 
-describe('BillingService', () => {
+describe("BillingService", () => {
   let service: BillingService;
 
   beforeEach(async () => {
@@ -32,7 +32,7 @@ describe('BillingService', () => {
     service = module.get<BillingService>(BillingService);
   });
 
-  it('should be defined', () => {
+  it("should be defined", () => {
     expect(service).toBeDefined();
   });
 });

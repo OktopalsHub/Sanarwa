@@ -1,5 +1,5 @@
-import { createHmac, timingSafeEqual } from 'node:crypto';
-import { parseNotifiPaymentMethodSetupReference } from '../constants/token-packages';
+import { createHmac, timingSafeEqual } from "node:crypto";
+import { parseNotifiPaymentMethodSetupReference } from "../constants/token-packages";
 
 const TIMESTAMP_SKEW_SECONDS = 300;
 
@@ -19,7 +19,7 @@ export interface PolarWebhookVerifyResult {
   paymentMethodId?: string;
   providerReference?: string;
   amount?: number;
-  outcome: 'success' | 'failed' | 'ignored';
+  outcome: "success" | "failed" | "ignored";
 }
 
 type PolarWebhookPayload = {
@@ -37,9 +37,9 @@ export function verifyPolarWebhook(
   input: PolarWebhookVerifyInput,
   webhookSecret: string,
 ): PolarWebhookVerifyResult | null {
-  const webhookId = getHeader(input.headers, 'webhook-id');
-  const timestamp = getHeader(input.headers, 'webhook-timestamp');
-  const signature = getHeader(input.headers, 'webhook-signature');
+  const webhookId = getHeader(input.headers, "webhook-id");
+  const timestamp = getHeader(input.headers, "webhook-timestamp");
+  const signature = getHeader(input.headers, "webhook-signature");
 
   if (!webhookId || !timestamp || !signature || !webhookSecret) return null;
 
@@ -51,11 +51,11 @@ export function verifyPolarWebhook(
   }
 
   const signedContent = `${webhookId}.${timestamp}.${input.rawBody}`;
-  const expected = createHmac('sha256', webhookSecret).update(signedContent).digest('base64');
+  const expected = createHmac("sha256", webhookSecret).update(signedContent).digest("base64");
 
-  const signatures = signature.split(' ');
+  const signatures = signature.split(" ");
   const isValid = signatures.some((part) => {
-    const [, value] = part.split(',');
+    const [, value] = part.split(",");
     if (!value) return false;
     return safeEqual(value, expected);
   });
@@ -63,20 +63,18 @@ export function verifyPolarWebhook(
   if (!isValid) return null;
 
   const body = JSON.parse(input.rawBody) as PolarWebhookPayload;
-  const eventType = body.type ?? '';
+  const eventType = body.type ?? "";
   const metadata = body.data?.metadata ?? {};
   const purchaseIdRaw = metadata.purchaseId ?? metadata.purchase_id;
   const purchaseId =
-    purchaseIdRaw !== undefined && purchaseIdRaw !== null
-      ? String(purchaseIdRaw)
-      : undefined;
+    purchaseIdRaw !== undefined && purchaseIdRaw !== null ? String(purchaseIdRaw) : undefined;
   const setupReferenceRaw = metadata.setup_reference ?? metadata.setupReference;
   const setupReference =
     setupReferenceRaw !== undefined && setupReferenceRaw !== null
       ? String(setupReferenceRaw)
-      : parseNotifiPaymentMethodSetupReference(
-          typeof metadata.reference === 'string' ? metadata.reference : undefined,
-        ) ?? undefined;
+      : (parseNotifiPaymentMethodSetupReference(
+          typeof metadata.reference === "string" ? metadata.reference : undefined,
+        ) ?? undefined);
   const tenantIdRaw = metadata.tenant_id ?? metadata.tenantId;
   const tenantId =
     tenantIdRaw !== undefined && tenantIdRaw !== null ? String(tenantIdRaw) : undefined;
@@ -91,14 +89,14 @@ export function verifyPolarWebhook(
   const paymentMethodIdRaw = (body.data as { payment_method_id?: string })?.payment_method_id;
   const amountRaw = body.data?.amount ?? body.data?.total_amount;
   const amount =
-    typeof amountRaw === 'number'
+    typeof amountRaw === "number"
       ? amountRaw / 100
-      : typeof amountRaw === 'string' && Number.isFinite(Number(amountRaw))
+      : typeof amountRaw === "string" && Number.isFinite(Number(amountRaw))
         ? Number(amountRaw) / 100
         : undefined;
 
-  if (purpose === 'payment_method_setup' || setupReference) {
-    if (status === 'failed' || status === 'expired' || status === 'canceled') {
+  if (purpose === "payment_method_setup" || setupReference) {
+    if (status === "failed" || status === "expired" || status === "canceled") {
       return {
         eventId: webhookId,
         eventType,
@@ -109,11 +107,11 @@ export function verifyPolarWebhook(
         paymentMethodId: paymentMethodIdRaw,
         providerReference,
         amount,
-        outcome: 'failed',
+        outcome: "failed",
       };
     }
 
-    if (status === 'succeeded' || status === 'paid') {
+    if (status === "succeeded" || status === "paid") {
       return {
         eventId: webhookId,
         eventType,
@@ -124,35 +122,35 @@ export function verifyPolarWebhook(
         paymentMethodId: paymentMethodIdRaw,
         providerReference,
         amount,
-        outcome: 'success',
+        outcome: "success",
       };
     }
   }
 
   if (
-    eventType === 'checkout.updated' ||
-    eventType === 'order.paid' ||
-    eventType === 'payment_intent.succeeded'
+    eventType === "checkout.updated" ||
+    eventType === "order.paid" ||
+    eventType === "payment_intent.succeeded"
   ) {
-    if (status === 'failed' || status === 'expired' || status === 'canceled') {
+    if (status === "failed" || status === "expired" || status === "canceled") {
       return {
         eventId: webhookId,
         eventType,
         purchaseId,
         providerReference,
         amount,
-        outcome: 'failed',
+        outcome: "failed",
       };
     }
 
-    if (status === 'succeeded' || status === 'paid' || eventType === 'payment_intent.succeeded') {
+    if (status === "succeeded" || status === "paid" || eventType === "payment_intent.succeeded") {
       return {
         eventId: webhookId,
         eventType,
         purchaseId,
         providerReference,
         amount,
-        outcome: 'success',
+        outcome: "success",
       };
     }
   }
@@ -163,7 +161,7 @@ export function verifyPolarWebhook(
     purchaseId,
     providerReference,
     amount,
-    outcome: 'ignored',
+    outcome: "ignored",
   };
 }
 

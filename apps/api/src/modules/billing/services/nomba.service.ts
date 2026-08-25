@@ -1,6 +1,6 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import { BillingCurrency } from '../constants/token-packages';
+import { Injectable, Logger } from "@nestjs/common";
+import { ConfigService } from "@nestjs/config";
+import { BillingCurrency } from "../constants/token-packages";
 
 interface NombaTokenResponse {
   code?: string;
@@ -47,18 +47,18 @@ export class NombaService {
   isConfigured(): boolean {
     return Boolean(
       this.getClientId() &&
-        this.getClientSecret() &&
-        this.getParentAccountId() &&
-        this.getSubAccountId(),
+      this.getClientSecret() &&
+      this.getParentAccountId() &&
+      this.getSubAccountId(),
     );
   }
 
   getWebOrigin(): string {
     return (
-      this.configService.get<string>('WEB_ORIGIN') ||
-      this.configService.get<string>('FRONTEND_URL') ||
-      'http://localhost:3001'
-    ).replace(/\/$/, '');
+      this.configService.get<string>("WEB_ORIGIN") ||
+      this.configService.get<string>("FRONTEND_URL") ||
+      "http://localhost:3001"
+    ).replace(/\/$/, "");
   }
 
   buildCheckoutUrls(
@@ -67,7 +67,7 @@ export class NombaService {
   ): { successUrl: string; cancelUrl: string } {
     const origin = this.getWebOrigin();
     const base = `${origin}/${tenantSlug}/billing`;
-    const purchaseQuery = purchaseId ? `&purchase_id=${encodeURIComponent(purchaseId)}` : '';
+    const purchaseQuery = purchaseId ? `&purchase_id=${encodeURIComponent(purchaseId)}` : "";
     return {
       successUrl: `${base}?checkout=success${purchaseQuery}`,
       cancelUrl: `${base}?checkout=cancel`,
@@ -88,12 +88,12 @@ export class NombaService {
   }
 
   getWebhookSecret(): string {
-    return this.configService.get<string>('NOMBA_WEBHOOK_SECRET') || '';
+    return this.configService.get<string>("NOMBA_WEBHOOK_SECRET") || "";
   }
 
   getCardSetupAmount(): number {
-    const raw = this.configService.get<string | number>('NOMBA_CARD_SETUP_AMOUNT');
-    const parsed = raw === undefined || raw === null || raw === '' ? NaN : Number(raw);
+    const raw = this.configService.get<string | number>("NOMBA_CARD_SETUP_AMOUNT");
+    const parsed = raw === undefined || raw === null || raw === "" ? NaN : Number(raw);
     return Number.isFinite(parsed) && parsed > 0 ? parsed : 100;
   }
 
@@ -115,20 +115,20 @@ export class NombaService {
         currency: input.currency,
         callbackUrl: input.callbackUrl,
         accountId: this.getSubAccountId(),
-        allowedPaymentMethods: input.allowedPaymentMethods ?? ['Card'],
+        allowedPaymentMethods: input.allowedPaymentMethods ?? ["Card"],
         orderMetaData: input.orderMetaData,
       },
       tokenizeCard: input.tokenizeCard ?? false,
     };
 
     const response = await this.request<NombaCheckoutResponse>(
-      '/v1/checkout/order',
-      'POST',
+      "/v1/checkout/order",
+      "POST",
       payload,
     );
 
     if (!response.data?.checkoutLink || !response.data?.orderReference) {
-      throw new Error(response.description ?? 'nomba_checkout_failed');
+      throw new Error(response.description ?? "nomba_checkout_failed");
     }
 
     return {
@@ -145,7 +145,11 @@ export class NombaService {
     customerEmail: string;
     callbackUrl: string;
     orderMetaData?: Record<string, string>;
-  }): Promise<{ status: 'success' | 'pending' | 'failed'; providerReference?: string; errorCode?: string }> {
+  }): Promise<{
+    status: "success" | "pending" | "failed";
+    providerReference?: string;
+    errorCode?: string;
+  }> {
     const payload = {
       tokenKey: input.tokenKey,
       order: {
@@ -161,70 +165,65 @@ export class NombaService {
 
     try {
       const response = await this.request<NombaChargeResponse>(
-        '/v1/checkout/tokenized-card-payment',
-        'POST',
+        "/v1/checkout/tokenized-card-payment",
+        "POST",
         payload,
       );
 
       if (response.data?.status) {
-        return { status: 'success', providerReference: input.orderReference };
+        return { status: "success", providerReference: input.orderReference };
       }
 
       return {
-        status: 'failed',
+        status: "failed",
         providerReference: input.orderReference,
-        errorCode: response.description ?? 'nomba_charge_failed',
+        errorCode: response.description ?? "nomba_charge_failed",
       };
     } catch (error) {
-      this.logger.warn('Nomba tokenized charge failed', error);
+      this.logger.warn("Nomba tokenized charge failed", error);
       return {
-        status: 'failed',
-        errorCode: 'nomba_off_session_failed',
+        status: "failed",
+        errorCode: "nomba_off_session_failed",
       };
     }
   }
 
   async verifyOrder(
     orderReference: string,
-  ): Promise<import('../types/payment-verify-result').PaymentVerifyResult> {
+  ): Promise<import("../types/payment-verify-result").PaymentVerifyResult> {
     try {
       const response = await this.request<NombaVerifyResponse>(
         `/v1/transactions/accounts/single?orderReference=${encodeURIComponent(orderReference)}`,
-        'GET',
+        "GET",
       );
 
       const status = response.data?.status?.toUpperCase();
       const amountRaw = response.data?.amount;
-      const amount =
-        amountRaw === undefined || amountRaw === null ? undefined : Number(amountRaw);
+      const amount = amountRaw === undefined || amountRaw === null ? undefined : Number(amountRaw);
       const currency = response.data?.currency;
 
-      if (status === 'SUCCESS') {
+      if (status === "SUCCESS") {
         return {
-          status: 'success',
+          status: "success",
           amount: Number.isFinite(amount) ? amount : undefined,
           currency,
         };
       }
-      if (status === 'FAILED' || status === 'CANCELLED' || status === 'REVERSED_BY_VENDOR') {
+      if (status === "FAILED" || status === "CANCELLED" || status === "REVERSED_BY_VENDOR") {
         return {
-          status: 'failed',
+          status: "failed",
           amount: Number.isFinite(amount) ? amount : undefined,
           currency,
         };
       }
-      return { status: 'pending' };
+      return { status: "pending" };
     } catch (error) {
       this.logger.warn(`Nomba verify failed for ${orderReference}`, error);
-      return { status: 'pending' };
+      return { status: "pending" };
     }
   }
 
-  private async request<T>(
-    path: string,
-    method: 'GET' | 'POST',
-    body?: unknown,
-  ): Promise<T> {
+  private async request<T>(path: string, method: "GET" | "POST", body?: unknown): Promise<T> {
     const token = await this.getAccessToken();
     const baseUrl = this.getBaseUrl();
 
@@ -232,11 +231,11 @@ export class NombaService {
       method,
       headers: {
         Authorization: `Bearer ${token}`,
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
         accountId: this.getParentAccountId(),
       },
     };
-    if (method !== 'GET' && body !== undefined) {
+    if (method !== "GET" && body !== undefined) {
       init.body = JSON.stringify(body);
     }
 
@@ -247,7 +246,9 @@ export class NombaService {
     };
 
     if (!response.ok) {
-      throw new Error((payload as { description?: string }).description ?? `nomba_${response.status}`);
+      throw new Error(
+        (payload as { description?: string }).description ?? `nomba_${response.status}`,
+      );
     }
 
     return payload;
@@ -259,13 +260,13 @@ export class NombaService {
     }
 
     const response = await fetch(`${this.getBaseUrl()}/v1/auth/token/issue`, {
-      method: 'POST',
+      method: "POST",
       headers: {
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
         accountId: this.getParentAccountId(),
       },
       body: JSON.stringify({
-        grant_type: 'client_credentials',
+        grant_type: "client_credentials",
         client_id: this.getClientId(),
         client_secret: this.getClientSecret(),
       }),
@@ -275,7 +276,7 @@ export class NombaService {
     const accessToken = payload.data?.access_token;
 
     if (!response.ok || !accessToken) {
-      throw new Error('nomba_auth_failed');
+      throw new Error("nomba_auth_failed");
     }
 
     const expiresAt = payload.data?.expiresAt
@@ -287,26 +288,26 @@ export class NombaService {
   }
 
   private getBaseUrl(): string {
-    const configured = this.configService.get<string>('NOMBA_BASE_URL')?.trim().replace(/\/$/, '');
+    const configured = this.configService.get<string>("NOMBA_BASE_URL")?.trim().replace(/\/$/, "");
     if (configured) {
-      return configured.startsWith('http') ? configured : `https://${configured}`;
+      return configured.startsWith("http") ? configured : `https://${configured}`;
     }
-    return 'https://sandbox.nomba.com';
+    return "https://sandbox.nomba.com";
   }
 
   private getClientId(): string {
-    return this.configService.get<string>('NOMBA_CLIENT_ID') || '';
+    return this.configService.get<string>("NOMBA_CLIENT_ID") || "";
   }
 
   private getClientSecret(): string {
-    return this.configService.get<string>('NOMBA_CLIENT_SECRET') || '';
+    return this.configService.get<string>("NOMBA_CLIENT_SECRET") || "";
   }
 
   getParentAccountId(): string {
-    return this.configService.get<string>('NOMBA_PARENT_ACCOUNT_ID') || '';
+    return this.configService.get<string>("NOMBA_PARENT_ACCOUNT_ID") || "";
   }
 
   getSubAccountId(): string {
-    return this.configService.get<string>('NOMBA_SUB_ACCOUNT_ID') || '';
+    return this.configService.get<string>("NOMBA_SUB_ACCOUNT_ID") || "";
   }
 }

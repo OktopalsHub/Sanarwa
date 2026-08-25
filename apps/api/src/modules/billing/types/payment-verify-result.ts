@@ -1,4 +1,4 @@
-export type PaymentVerifyStatus = 'success' | 'failed' | 'pending';
+export type PaymentVerifyStatus = "success" | "failed" | "pending";
 
 export type PaymentVerifyResult = {
   status: PaymentVerifyStatus;

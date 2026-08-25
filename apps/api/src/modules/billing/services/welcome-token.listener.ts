@@ -1,13 +1,13 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { OnEvent } from '@nestjs/event-emitter';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { TenantCreatedEvent } from '../../../common/events/tenant.event';
-import { WELCOME_SIGNUP_TOKENS } from '../constants/token-pricing';
-import { TokenTransaction, TokenTransactionType } from '../entities/token-balance.entity';
-import { TokenManagementService } from '../../token-management/services/token-management.service';
+import { Injectable, Logger } from "@nestjs/common";
+import { OnEvent } from "@nestjs/event-emitter";
+import { InjectRepository } from "@nestjs/typeorm";
+import { Repository } from "typeorm";
+import { TenantCreatedEvent } from "../../../common/events/tenant.event";
+import { WELCOME_SIGNUP_TOKENS } from "../constants/token-pricing";
+import { TokenTransaction, TokenTransactionType } from "../entities/token-balance.entity";
+import { TokenManagementService } from "../../token-management/services/token-management.service";
 
-const WELCOME_REFERENCE = 'welcome-signup';
+const WELCOME_REFERENCE = "welcome-signup";
 
 @Injectable()
 export class WelcomeTokenListener {
@@ -19,7 +19,7 @@ export class WelcomeTokenListener {
     private readonly tokenTransactionRepository: Repository<TokenTransaction>,
   ) {}
 
-  @OnEvent('tenant.created')
+  @OnEvent("tenant.created")
   async handleTenantCreated(event: TenantCreatedEvent): Promise<void> {
     const tenantId = event.tenant.id;
 
@@ -36,8 +36,8 @@ export class WelcomeTokenListener {
         tenantId,
         WELCOME_SIGNUP_TOKENS,
         TokenTransactionType.BONUS,
-        'Welcome bonus — 3,000 tokens',
-        { source: 'signup' },
+        "Welcome bonus — 3,000 tokens",
+        { source: "signup" },
         WELCOME_REFERENCE,
       );
 

@@ -1,6 +1,6 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import axios, { AxiosInstance } from 'axios';
+import { Injectable, Logger } from "@nestjs/common";
+import { ConfigService } from "@nestjs/config";
+import axios, { AxiosInstance } from "axios";
 
 export interface PolarCustomer {
   id: string;
@@ -14,7 +14,7 @@ export interface PolarSubscription {
   customer_id: string;
   product_id: string;
   price_id: string;
-  status: 'active' | 'canceled' | 'incomplete' | 'past_due' | 'trialing' | 'unpaid';
+  status: "active" | "canceled" | "incomplete" | "past_due" | "trialing" | "unpaid";
   current_period_start: string;
   current_period_end: string;
   trial_end?: string;
@@ -36,7 +36,7 @@ export interface PolarPrice {
   amount: number;
   currency: string;
   recurring?: {
-    interval: 'month' | 'year';
+    interval: "month" | "year";
     interval_count: number;
   };
 }
@@ -45,7 +45,13 @@ export interface PolarPaymentIntent {
   id: string;
   amount: number;
   currency: string;
-  status: 'requires_payment_method' | 'requires_confirmation' | 'requires_action' | 'processing' | 'succeeded' | 'canceled';
+  status:
+    | "requires_payment_method"
+    | "requires_confirmation"
+    | "requires_action"
+    | "processing"
+    | "succeeded"
+    | "canceled";
   client_secret: string;
   metadata?: Record<string, any>;
 }
@@ -67,23 +73,23 @@ export class PolarService {
   }
 
   constructor(private configService: ConfigService) {
-    this.apiKey = this.configService.get<string>('POLAR_API_KEY') || '';
-    this.baseUrl = this.configService.get<string>('POLAR_BASE_URL', 'https://api.polar.sh');
-    
+    this.apiKey = this.configService.get<string>("POLAR_API_KEY") || "";
+    this.baseUrl = this.configService.get<string>("POLAR_BASE_URL", "https://api.polar.sh");
+
     this.client = axios.create({
       baseURL: this.baseUrl,
       headers: {
-        'Authorization': `Bearer ${this.apiKey}`,
-        'Content-Type': 'application/json',
+        Authorization: `Bearer ${this.apiKey}`,
+        "Content-Type": "application/json",
       },
     });
 
     this.client.interceptors.response.use(
       (response) => response,
       (error) => {
-        this.logger.error('Polar API Error:', error.response?.data || error.message);
+        this.logger.error("Polar API Error:", error.response?.data || error.message);
         throw error;
-      }
+      },
     );
   }
 
@@ -93,11 +99,11 @@ export class PolarService {
     metadata?: Record<string, any>;
   }): Promise<PolarCustomer> {
     try {
-      const response = await this.client.post('/customers', data);
+      const response = await this.client.post("/customers", data);
       return response.data;
     } catch (error) {
-      this.logPolarError('Failed to create Polar customer:', error);
-      throw new Error('Failed to create customer', { cause: error });
+      this.logPolarError("Failed to create Polar customer:", error);
+      throw new Error("Failed to create customer", { cause: error });
     }
   }
 
@@ -106,8 +112,8 @@ export class PolarService {
       const response = await this.client.get(`/customers/${customerId}`);
       return response.data;
     } catch (error) {
-      this.logPolarError('Failed to get Polar customer:', error);
-      throw new Error('Failed to get customer', { cause: error });
+      this.logPolarError("Failed to get Polar customer:", error);
+      throw new Error("Failed to get customer", { cause: error });
     }
   }
 
@@ -116,8 +122,8 @@ export class PolarService {
       const response = await this.client.patch(`/customers/${customerId}`, data);
       return response.data;
     } catch (error) {
-      this.logPolarError('Failed to update Polar customer:', error);
-      throw new Error('Failed to update customer', { cause: error });
+      this.logPolarError("Failed to update Polar customer:", error);
+      throw new Error("Failed to update customer", { cause: error });
     }
   }
 
@@ -128,11 +134,11 @@ export class PolarService {
     metadata?: Record<string, any>;
   }): Promise<PolarSubscription> {
     try {
-      const response = await this.client.post('/subscriptions', data);
+      const response = await this.client.post("/subscriptions", data);
       return response.data;
     } catch (error) {
-      this.logPolarError('Failed to create Polar subscription:', error);
-      throw new Error('Failed to create subscription', { cause: error });
+      this.logPolarError("Failed to create Polar subscription:", error);
+      throw new Error("Failed to create subscription", { cause: error });
     }
   }
 
@@ -141,40 +147,46 @@ export class PolarService {
       const response = await this.client.get(`/subscriptions/${subscriptionId}`);
       return response.data;
     } catch (error) {
-      this.logPolarError('Failed to get Polar subscription:', error);
-      throw new Error('Failed to get subscription', { cause: error });
+      this.logPolarError("Failed to get Polar subscription:", error);
+      throw new Error("Failed to get subscription", { cause: error });
     }
   }
 
-  async updateSubscription(subscriptionId: string, data: Partial<PolarSubscription>): Promise<PolarSubscription> {
+  async updateSubscription(
+    subscriptionId: string,
+    data: Partial<PolarSubscription>,
+  ): Promise<PolarSubscription> {
     try {
       const response = await this.client.patch(`/subscriptions/${subscriptionId}`, data);
       return response.data;
     } catch (error) {
-      this.logPolarError('Failed to update Polar subscription:', error);
-      throw new Error('Failed to update subscription', { cause: error });
+      this.logPolarError("Failed to update Polar subscription:", error);
+      throw new Error("Failed to update subscription", { cause: error });
     }
   }
 
-  async cancelSubscription(subscriptionId: string, cancelAtPeriodEnd = true): Promise<PolarSubscription> {
+  async cancelSubscription(
+    subscriptionId: string,
+    cancelAtPeriodEnd = true,
+  ): Promise<PolarSubscription> {
     try {
       const response = await this.client.delete(`/subscriptions/${subscriptionId}`, {
-        data: { cancel_at_period_end: cancelAtPeriodEnd }
+        data: { cancel_at_period_end: cancelAtPeriodEnd },
       });
       return response.data;
     } catch (error) {
-      this.logPolarError('Failed to cancel Polar subscription:', error);
-      throw new Error('Failed to cancel subscription', { cause: error });
+      this.logPolarError("Failed to cancel Polar subscription:", error);
+      throw new Error("Failed to cancel subscription", { cause: error });
     }
   }
 
   async getProducts(): Promise<PolarProduct[]> {
     try {
-      const response = await this.client.get('/products');
+      const response = await this.client.get("/products");
       return response.data.data || response.data;
     } catch (error) {
-      this.logPolarError('Failed to get Polar products:', error);
-      throw new Error('Failed to get products', { cause: error });
+      this.logPolarError("Failed to get Polar products:", error);
+      throw new Error("Failed to get products", { cause: error });
     }
   }
 
@@ -185,11 +197,11 @@ export class PolarService {
     metadata?: Record<string, any>;
   }): Promise<PolarPaymentIntent> {
     try {
-      const response = await this.client.post('/payment_intents', data);
+      const response = await this.client.post("/payment_intents", data);
       return response.data;
     } catch (error) {
-      this.logPolarError('Failed to create Polar payment intent:', error);
-      throw new Error('Failed to create payment intent', { cause: error });
+      this.logPolarError("Failed to create Polar payment intent:", error);
+      throw new Error("Failed to create payment intent", { cause: error });
     }
   }
 
@@ -198,8 +210,8 @@ export class PolarService {
       const response = await this.client.post(`/payment_intents/${paymentIntentId}/confirm`);
       return response.data;
     } catch (error) {
-      this.logPolarError('Failed to confirm Polar payment intent:', error);
-      throw new Error('Failed to confirm payment intent', { cause: error });
+      this.logPolarError("Failed to confirm Polar payment intent:", error);
+      throw new Error("Failed to confirm payment intent", { cause: error });
     }
   }
 
@@ -208,8 +220,8 @@ export class PolarService {
       const response = await this.client.get(`/payment_intents/${paymentIntentId}`);
       return response.data;
     } catch (error) {
-      this.logPolarError('Failed to get Polar payment intent:', error);
-      throw new Error('Failed to get payment intent', { cause: error });
+      this.logPolarError("Failed to get Polar payment intent:", error);
+      throw new Error("Failed to get payment intent", { cause: error });
     }
   }
 
@@ -222,7 +234,7 @@ export class PolarService {
     metadata?: Record<string, any>;
   }): Promise<{ checkoutUrl: string; checkoutId: string }> {
     if (!this.apiKey) {
-      throw new Error('polar_not_configured');
+      throw new Error("polar_not_configured");
     }
 
     const requestBody: Record<string, unknown> = {
@@ -233,7 +245,7 @@ export class PolarService {
       prices: {
         [data.productId]: [
           {
-            amount_type: 'fixed',
+            amount_type: "fixed",
             price_amount: data.amountMinor,
             price_currency: data.currency.toLowerCase(),
           },
@@ -242,23 +254,25 @@ export class PolarService {
     };
 
     try {
-      const response = await this.client.post('/checkouts/', requestBody);
+      const response = await this.client.post("/checkouts/", requestBody);
       const payload = response.data as { url?: string; id?: string };
 
       if (!payload.url || !payload.id) {
-        throw new Error('polar_checkout_failed');
+        throw new Error("polar_checkout_failed");
       }
 
       return { checkoutUrl: payload.url, checkoutId: payload.id };
     } catch (error) {
-      this.logPolarError('Failed to create Polar checkout:', error);
-      throw new Error('Failed to create Polar checkout', { cause: error });
+      this.logPolarError("Failed to create Polar checkout:", error);
+      throw new Error("Failed to create Polar checkout", { cause: error });
     }
   }
 
-  async verifyCheckout(checkoutId: string): Promise<import('../types/payment-verify-result').PaymentVerifyResult> {
+  async verifyCheckout(
+    checkoutId: string,
+  ): Promise<import("../types/payment-verify-result").PaymentVerifyResult> {
     if (!this.apiKey) {
-      throw new Error('polar_not_configured');
+      throw new Error("polar_not_configured");
     }
 
     try {
@@ -271,19 +285,18 @@ export class PolarService {
       };
       const status = data?.status?.toLowerCase();
       const amountRaw = data?.amount ?? data?.total_amount;
-      const amount =
-        typeof amountRaw === 'number' ? amountRaw / 100 : undefined;
+      const amount = typeof amountRaw === "number" ? amountRaw / 100 : undefined;
 
-      if (status === 'succeeded' || status === 'paid') {
-        return { status: 'success', amount, currency: data?.currency };
+      if (status === "succeeded" || status === "paid") {
+        return { status: "success", amount, currency: data?.currency };
       }
-      if (status === 'failed' || status === 'expired' || status === 'canceled') {
-        return { status: 'failed', amount, currency: data?.currency };
+      if (status === "failed" || status === "expired" || status === "canceled") {
+        return { status: "failed", amount, currency: data?.currency };
       }
-      return { status: 'pending' };
+      return { status: "pending" };
     } catch (error) {
-      this.logPolarError('Failed to verify Polar checkout:', error);
-      throw new Error('Failed to verify Polar checkout', { cause: error });
+      this.logPolarError("Failed to verify Polar checkout:", error);
+      throw new Error("Failed to verify Polar checkout", { cause: error });
     }
   }
 
@@ -292,19 +305,19 @@ export class PolarService {
   }
 
   getProductId(): string | undefined {
-    return this.configService.get<string>('POLAR_PRODUCT_ID')?.trim() || undefined;
+    return this.configService.get<string>("POLAR_PRODUCT_ID")?.trim() || undefined;
   }
 
   getWebOrigin(): string {
     return (
-      this.configService.get<string>('WEB_ORIGIN') ||
-      this.configService.get<string>('FRONTEND_URL') ||
-      'http://localhost:3001'
-    ).replace(/\/$/, '');
+      this.configService.get<string>("WEB_ORIGIN") ||
+      this.configService.get<string>("FRONTEND_URL") ||
+      "http://localhost:3001"
+    ).replace(/\/$/, "");
   }
 
   buildSuccessUrl(tenantSlug: string, purchaseId?: string): string {
-    const purchaseQuery = purchaseId ? `&purchase_id=${encodeURIComponent(purchaseId)}` : '';
+    const purchaseQuery = purchaseId ? `&purchase_id=${encodeURIComponent(purchaseId)}` : "";
     return `${this.getWebOrigin()}/${tenantSlug}/billing?checkout=success${purchaseQuery}`;
   }
 
@@ -313,7 +326,7 @@ export class PolarService {
   }
 
   getCardSetupAmountCents(): number {
-    const raw = this.configService.get<string>('POLAR_CARD_SETUP_AMOUNT_CENTS');
+    const raw = this.configService.get<string>("POLAR_CARD_SETUP_AMOUNT_CENTS");
     const parsed = raw ? Number(raw) : NaN;
     return Number.isFinite(parsed) && parsed > 0 ? Math.round(parsed) : 100;
   }
@@ -331,7 +344,7 @@ export class PolarService {
     amountMinor?: number;
   }): Promise<{ checkoutUrl: string; checkoutId: string }> {
     if (!this.apiKey) {
-      throw new Error('polar_not_configured');
+      throw new Error("polar_not_configured");
     }
 
     const amountMinor = data.amountMinor ?? this.getCardSetupAmountCents();
@@ -345,9 +358,9 @@ export class PolarService {
       prices: {
         [data.productId]: [
           {
-            amount_type: 'fixed',
+            amount_type: "fixed",
             price_amount: amountMinor,
-            price_currency: 'usd',
+            price_currency: "usd",
           },
         ],
       },
@@ -358,17 +371,17 @@ export class PolarService {
     }
 
     try {
-      const response = await this.client.post('/checkouts/', requestBody);
+      const response = await this.client.post("/checkouts/", requestBody);
       const payload = response.data as { url?: string; id?: string };
 
       if (!payload.url || !payload.id) {
-        throw new Error('polar_checkout_failed');
+        throw new Error("polar_checkout_failed");
       }
 
       return { checkoutUrl: payload.url, checkoutId: payload.id };
     } catch (error) {
-      this.logPolarError('Failed to create Polar payment method setup checkout:', error);
-      throw new Error('Failed to create Polar payment method setup checkout', { cause: error });
+      this.logPolarError("Failed to create Polar payment method setup checkout:", error);
+      throw new Error("Failed to create Polar payment method setup checkout", { cause: error });
     }
   }
 
@@ -379,13 +392,17 @@ export class PolarService {
     currency: string;
     paymentMethodId?: string;
     metadata?: Record<string, unknown>;
-  }): Promise<{ status: 'success' | 'pending' | 'failed'; providerReference?: string; errorCode?: string }> {
+  }): Promise<{
+    status: "success" | "pending" | "failed";
+    providerReference?: string;
+    errorCode?: string;
+  }> {
     if (!this.apiKey) {
-      throw new Error('polar_not_configured');
+      throw new Error("polar_not_configured");
     }
 
     try {
-      const createResponse = await this.client.post('/orders/', {
+      const createResponse = await this.client.post("/orders/", {
         customer_id: data.customerId,
         product_id: data.productId,
         amount: data.amountMinor,
@@ -395,7 +412,7 @@ export class PolarService {
 
       const orderId = createResponse.data?.id as string | undefined;
       if (!orderId) {
-        return { status: 'failed', errorCode: 'polar_order_create_failed' };
+        return { status: "failed", errorCode: "polar_order_create_failed" };
       }
 
       const finalizeBody: Record<string, unknown> = {};
@@ -409,22 +426,22 @@ export class PolarService {
       );
 
       const status = (finalizeResponse.data?.status as string | undefined)?.toLowerCase();
-      if (status === 'paid' || status === 'succeeded') {
-        return { status: 'success', providerReference: orderId };
+      if (status === "paid" || status === "succeeded") {
+        return { status: "success", providerReference: orderId };
       }
 
-      return { status: 'pending', providerReference: orderId };
+      return { status: "pending", providerReference: orderId };
     } catch (error: unknown) {
       const axiosError = error as { response?: { status?: number; data?: { detail?: string } } };
       const statusCode = axiosError.response?.status;
       this.logger.warn(
-        `Polar off-session charge failed (${statusCode ?? 'unknown'}): ${
-          axiosError.response?.data?.detail ?? 'charge_failed'
+        `Polar off-session charge failed (${statusCode ?? "unknown"}): ${
+          axiosError.response?.data?.detail ?? "charge_failed"
         }`,
       );
       return {
-        status: 'failed',
-        errorCode: statusCode === 402 ? 'payment_declined' : 'polar_off_session_failed',
+        status: "failed",
+        errorCode: statusCode === 402 ? "payment_declined" : "polar_off_session_failed",
       };
     }
   }
@@ -435,7 +452,7 @@ export class PolarService {
     status?: string;
   }> {
     if (!this.apiKey) {
-      throw new Error('polar_not_configured');
+      throw new Error("polar_not_configured");
     }
 
     try {
@@ -453,21 +470,21 @@ export class PolarService {
         paymentMethodId: payload.payment_method_id,
       };
     } catch (error) {
-      this.logPolarError('Failed to get Polar checkout details:', error);
+      this.logPolarError("Failed to get Polar checkout details:", error);
       return {};
     }
   }
 
   async handleWebhook(rawBody: string, headers: Record<string, string | string[] | undefined>) {
-    const webhookSecret = this.configService.get<string>('POLAR_WEBHOOK_SECRET');
+    const webhookSecret = this.configService.get<string>("POLAR_WEBHOOK_SECRET");
     if (!webhookSecret) {
-      throw new Error('Polar webhook secret not configured');
+      throw new Error("Polar webhook secret not configured");
     }
 
-    const { verifyPolarWebhook } = await import('../utils/polar-webhook.util');
+    const { verifyPolarWebhook } = await import("../utils/polar-webhook.util");
     const verified = verifyPolarWebhook({ rawBody, headers }, webhookSecret);
     if (!verified) {
-      throw new Error('Invalid Polar webhook signature');
+      throw new Error("Invalid Polar webhook signature");
     }
 
     this.logger.log(`Received Polar webhook: ${verified.eventType}`);

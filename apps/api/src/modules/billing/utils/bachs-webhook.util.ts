@@ -1,38 +1,26 @@
-import { createHmac, timingSafeEqual } from 'node:crypto';
+import { createHmac, timingSafeEqual } from "node:crypto";
 
 import {
-
   parseNotifiPaymentMethodSetupReference,
-
   parseNotifiPurchaseReference,
-
-} from '../constants/token-packages';
-
-
+} from "../constants/token-packages";
 
 const TIMESTAMP_SKEW_SECONDS = 300;
 
-const SUCCESS_STATUSES = new Set(['succeeded', 'accepted']);
-
-
+const SUCCESS_STATUSES = new Set(["succeeded", "accepted"]);
 
 export interface BachsWebhookVerifyInput {
-
   rawBody: string;
 
   headers: Record<string, string | string[] | undefined>;
-
 }
 
-
-
 export interface BachsWebhookVerifyResult {
-
   eventId?: string;
 
   eventType: string;
 
-  outcome: 'success' | 'failed' | 'ignored';
+  outcome: "success" | "failed" | "ignored";
 
   purchaseId: string | null;
 
@@ -55,19 +43,14 @@ export interface BachsWebhookVerifyResult {
   subscriptionId?: string;
 
   metadata?: Record<string, unknown>;
-
 }
 
-
-
 type BachsWebhookPayload = {
-
   id?: string;
 
   type?: string;
 
   data?: {
-
     charge_id?: string | null;
 
     checkout_id?: string | null;
@@ -83,32 +66,21 @@ type BachsWebhookPayload = {
     subscription?: { subscription_id?: string; id?: string };
 
     payment_method_id?: string;
-
   };
-
 };
 
-
-
 export function verifyBachsWebhook(
-
   input: BachsWebhookVerifyInput,
 
   webhookSecret: string,
-
 ): BachsWebhookVerifyResult | null {
-
   if (!verifyBachsSignature(input, webhookSecret)) {
-
     return null;
-
   }
-
-
 
   const body = JSON.parse(input.rawBody) as BachsWebhookPayload;
 
-  const eventType = body.type ?? '';
+  const eventType = body.type ?? "";
 
   const merchantReference = body.data?.reference ?? undefined;
 
@@ -117,55 +89,35 @@ export function verifyBachsWebhook(
   const purchaseId = parseNotifiPurchaseReference(merchantReference);
 
   const setupReference =
-
     parseNotifiPaymentMethodSetupReference(merchantReference) ??
-
     (metadata.setup_reference ? String(metadata.setup_reference) : null);
 
-  const tenantId =
+  const tenantId = metadata.tenant_id !== undefined ? String(metadata.tenant_id) : undefined;
 
-    metadata.tenant_id !== undefined ? String(metadata.tenant_id) : undefined;
+  const currency = metadata.currency !== undefined ? String(metadata.currency) : undefined;
 
-  const currency =
-
-    metadata.currency !== undefined ? String(metadata.currency) : undefined;
-
-
-
-  if (eventType === 'collection.abandoned' || eventType === 'collection.underpaid') {
-
+  if (eventType === "collection.abandoned" || eventType === "collection.underpaid") {
     return null;
-
   }
 
-
-
   if (
-
-    eventType === 'customer.subscription.created' ||
-
-    eventType === 'customer.subscription.updated'
-
+    eventType === "customer.subscription.created" ||
+    eventType === "customer.subscription.updated"
   ) {
-
     const purpose = metadata.purpose ? String(metadata.purpose) : undefined;
 
-    if (purpose !== 'payment_method_setup' && !setupReference) {
-
+    if (purpose !== "payment_method_setup" && !setupReference) {
       return {
-
         eventId: body.id,
 
         eventType,
 
-        outcome: 'ignored',
+        outcome: "ignored",
 
         purchaseId: null,
 
         setupReference: null,
-
       };
-
     }
 
     const setupStatus = body.data?.status?.toLowerCase();
@@ -173,9 +125,10 @@ export function verifyBachsWebhook(
       return {
         eventId: body.id,
         eventType,
-        outcome: setupStatus === 'failed' || setupStatus === 'canceled' || setupStatus === 'cancelled'
-          ? 'failed'
-          : 'ignored',
+        outcome:
+          setupStatus === "failed" || setupStatus === "canceled" || setupStatus === "cancelled"
+            ? "failed"
+            : "ignored",
         purchaseId: null,
         setupReference,
         tenantId,
@@ -185,12 +138,11 @@ export function verifyBachsWebhook(
     }
 
     return {
-
       eventId: body.id,
 
       eventType,
 
-      outcome: 'success',
+      outcome: "success",
 
       purchaseId: null,
 
@@ -202,71 +154,48 @@ export function verifyBachsWebhook(
 
       currency,
 
-      customerId:
-
-        body.data?.customer?.customer_id ?? body.data?.customer?.id ?? undefined,
+      customerId: body.data?.customer?.customer_id ?? body.data?.customer?.id ?? undefined,
 
       paymentMethodId: body.data?.payment_method_id,
 
       subscriptionId:
-
-        body.data?.subscription?.subscription_id ??
-
-        body.data?.subscription?.id ??
-
-        undefined,
+        body.data?.subscription?.subscription_id ?? body.data?.subscription?.id ?? undefined,
 
       metadata,
-
     };
-
   }
 
-
-
-  if (eventType !== 'collection.succeeded' && eventType !== 'collection.failed') {
-
+  if (eventType !== "collection.succeeded" && eventType !== "collection.failed") {
     return {
-
       eventId: body.id,
 
       eventType,
 
-      outcome: 'ignored',
+      outcome: "ignored",
 
       purchaseId,
 
       setupReference,
 
       merchantReference,
-
     };
-
   }
-
-
 
   const checkoutId = body.data?.checkout_id ?? undefined;
 
   const chargeId = body.data?.charge_id ?? undefined;
 
-
-
-  if (eventType === 'collection.failed') {
-
+  if (eventType === "collection.failed") {
     const providerReference = chargeId ?? checkoutId ?? merchantReference;
 
     if (!providerReference) return null;
 
-
-
     return {
-
       eventId: body.id,
 
       eventType,
 
-      outcome: 'failed',
+      outcome: "failed",
 
       purchaseId,
 
@@ -283,34 +212,23 @@ export function verifyBachsWebhook(
       currency,
 
       metadata,
-
     };
-
   }
-
-
 
   const status = body.data?.status?.toLowerCase();
 
   if (!status || !SUCCESS_STATUSES.has(status)) {
-
     return null;
-
   }
-
-
 
   if (!chargeId && !setupReference) return null;
 
-
-
   return {
-
     eventId: body.id,
 
     eventType,
 
-    outcome: 'success',
+    outcome: "success",
 
     purchaseId,
 
@@ -331,85 +249,54 @@ export function verifyBachsWebhook(
     paymentMethodId: body.data?.payment_method_id,
 
     subscriptionId:
-
       body.data?.subscription?.subscription_id ?? body.data?.subscription?.id ?? undefined,
 
     metadata,
-
   };
-
 }
 
-
-
 function verifyBachsSignature(
-
   input: BachsWebhookVerifyInput,
 
   webhookSecret: string,
-
 ): boolean {
+  const signature = getHeader(input.headers, "x-bachs-signature");
 
-  const signature = getHeader(input.headers, 'x-bachs-signature');
-
-  const timestamp = getHeader(input.headers, 'x-bachs-timestamp');
-
-
+  const timestamp = getHeader(input.headers, "x-bachs-timestamp");
 
   if (!signature || !timestamp || !webhookSecret) return false;
-
-
 
   const timestampSeconds = Number(timestamp);
 
   if (!Number.isFinite(timestampSeconds)) return false;
 
-
-
   const nowSeconds = Math.floor(Date.now() / 1000);
 
   if (Math.abs(nowSeconds - timestampSeconds) > TIMESTAMP_SKEW_SECONDS) {
-
     return false;
-
   }
 
-
-
-  const expected = createHmac('sha256', webhookSecret)
-
+  const expected = createHmac("sha256", webhookSecret)
     .update(`${timestamp}.${input.rawBody}`)
 
-    .digest('hex');
-
-
+    .digest("hex");
 
   return safeEqual(signature, expected);
-
 }
 
-
-
 function getHeader(
-
   headers: Record<string, string | string[] | undefined>,
 
   name: string,
-
 ): string | null {
-
   const value = headers[name] ?? headers[name.toLowerCase()];
 
   if (!value) return null;
 
   return Array.isArray(value) ? (value[0] ?? null) : value;
-
 }
 
-
-
 function safeEqual(a: string, b: string): boolean {
-
   const bufA = Buffer.from(a);
 
   const bufB = Buffer.from(b);
@@ -417,6 +304,4 @@ function safeEqual(a: string, b: string): boolean {
   if (bufA.length !== bufB.length) return false;
 
   return timingSafeEqual(bufA, bufB);
-
 }
-

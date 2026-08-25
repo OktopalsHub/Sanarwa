@@ -1,29 +1,29 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { TokenManagementService } from '../../token-management/services/token-management.service';
-import { TokenTransactionType } from '../entities/token-balance.entity';
-import {
-  BillingMode,
-  normalizeBillingChannel,
-  resolveTokenCost,
-} from '../constants/token-pricing';
+import { Injectable, Logger } from "@nestjs/common";
+import { TokenManagementService } from "../../token-management/services/token-management.service";
+import { TokenTransactionType } from "../entities/token-balance.entity";
+import { BillingMode, normalizeBillingChannel, resolveTokenCost } from "../constants/token-pricing";
 
 @Injectable()
 export class BillingIntegrationService {
   private readonly logger = new Logger(BillingIntegrationService.name);
 
-  constructor(
-    private tokenManagementService: TokenManagementService,
-  ) {}
+  constructor(private tokenManagementService: TokenManagementService) {}
 
   calculateEventBilling(
     eventType: string,
     billingMode: BillingMode,
     metadata?: Record<string, unknown>,
     eventCount = 1,
-  ): { charged: boolean; amount: number; currency: string; reason: string; billingMode: BillingMode } {
+  ): {
+    charged: boolean;
+    amount: number;
+    currency: string;
+    reason: string;
+    billingMode: BillingMode;
+  } {
     const channel = normalizeBillingChannel(eventType);
     const units =
-      channel === 'voice'
+      channel === "voice"
         ? Math.ceil(Number(metadata?.durationMinutes ?? metadata?.voiceMinutes ?? eventCount) || 1)
         : eventCount;
     const tokensRequired = resolveTokenCost(channel, billingMode, units);
@@ -31,7 +31,7 @@ export class BillingIntegrationService {
     return {
       charged: true,
       amount: tokensRequired,
-      currency: 'tokens',
+      currency: "tokens",
       billingMode,
       reason: `${billingMode} ${channel} requires ${tokensRequired} token(s)`,
     };
@@ -105,7 +105,7 @@ export class BillingIntegrationService {
     await this.tokenManagementService.releaseReservedTokens(tenantId, billing.amount, consume);
 
     this.logger.log(
-      `${consume ? 'Consumed' : 'Released'} ${billing.amount} reserved ${billingMode} tokens for tenant ${tenantId}`,
+      `${consume ? "Consumed" : "Released"} ${billing.amount} reserved ${billingMode} tokens for tenant ${tenantId}`,
     );
   }
 

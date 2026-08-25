@@ -1,7 +1,7 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { Queue } from 'bull';
-import { InjectQueue } from '@nestjs/bull';
-import { WEBHOOK_RETRY_QUEUE } from './webhook-queue.constants';
+import { Injectable, Logger } from "@nestjs/common";
+import { Queue } from "bull";
+import { InjectQueue } from "@nestjs/bull";
+import { WEBHOOK_RETRY_QUEUE } from "./webhook-queue.constants";
 
 export interface WebhookRetryJob {
   tenantId: string;
@@ -39,10 +39,7 @@ export class WebhookQueueService {
         `Queued webhook retry for ${job.webhookUrl} (attempt ${job.attempt}/${job.maxRetries})`,
       );
     } catch (error) {
-      this.logger.error(
-        `Failed to queue webhook retry: ${error.message}`,
-        error.stack,
-      );
+      this.logger.error(`Failed to queue webhook retry: ${error.message}`, error.stack);
       throw error;
     }
   }

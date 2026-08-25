@@ -1,10 +1,10 @@
-import { Process, Processor } from '@nestjs/bull';
-import { Logger } from '@nestjs/common';
-import { Job } from 'bull';
-import axios, { AxiosResponse } from 'axios';
-import { WEBHOOK_RETRY_QUEUE } from './webhook-queue.constants';
-import { WebhookRetryJob } from './webhook-queue.service';
-import * as crypto from 'crypto';
+import { Process, Processor } from "@nestjs/bull";
+import { Logger } from "@nestjs/common";
+import { Job } from "bull";
+import axios, { AxiosResponse } from "axios";
+import { WEBHOOK_RETRY_QUEUE } from "./webhook-queue.constants";
+import { WebhookRetryJob } from "./webhook-queue.service";
+import * as crypto from "crypto";
 
 @Processor(WEBHOOK_RETRY_QUEUE)
 export class WebhookRetryProcessor {
@@ -12,7 +12,17 @@ export class WebhookRetryProcessor {
 
   @Process()
   async handleWebhookRetry(job: Job<WebhookRetryJob>): Promise<void> {
-    const { tenantId, webhookUrl, payload, secret, headers, timeout, idempotencyKey, attempt, maxRetries } = job.data;
+    const {
+      tenantId,
+      webhookUrl,
+      payload,
+      secret,
+      headers,
+      timeout,
+      idempotencyKey,
+      attempt,
+      maxRetries,
+    } = job.data;
 
     try {
       this.logger.log(
@@ -20,11 +30,11 @@ export class WebhookRetryProcessor {
       );
 
       const webhookHeaders = {
-        'Content-Type': 'application/json',
-        'X-Webhook-Signature': this.generateSignature(payload, secret),
-        'X-Idempotency-Key': idempotencyKey,
-        'X-Attempt': attempt.toString(),
-        'X-Tenant-Id': tenantId,
+        "Content-Type": "application/json",
+        "X-Webhook-Signature": this.generateSignature(payload, secret),
+        "X-Idempotency-Key": idempotencyKey,
+        "X-Attempt": attempt.toString(),
+        "X-Tenant-Id": tenantId,
         ...headers,
       };
 
@@ -53,7 +63,9 @@ export class WebhookRetryProcessor {
         this.logger.error(
           `Webhook failed after ${maxRetries} attempts for ${webhookUrl}: ${errorMessage}`,
         );
-        throw new Error(`Webhook delivery failed after ${maxRetries} attempts: ${errorMessage}`, { cause: error });
+        throw new Error(`Webhook delivery failed after ${maxRetries} attempts: ${errorMessage}`, {
+          cause: error,
+        });
       }
 
       // For non-final attempts, throw to trigger retry with backoff
@@ -66,13 +78,10 @@ export class WebhookRetryProcessor {
    */
   private generateSignature(payload: any, secret?: string): string {
     if (!secret) {
-      return '';
+      return "";
     }
 
     const payloadString = JSON.stringify(payload);
-    return crypto
-      .createHmac('sha256', secret)
-      .update(payloadString)
-      .digest('hex');
+    return crypto.createHmac("sha256", secret).update(payloadString).digest("hex");
   }
 }

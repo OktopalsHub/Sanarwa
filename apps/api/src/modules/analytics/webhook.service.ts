@@ -1,11 +1,11 @@
-import { Injectable, Logger, Optional } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import axios, { AxiosResponse } from 'axios';
-import { assertSafeWebhookUrl } from '../../common/security/utils/safe-url';
-import { MessageDeliveryStatus as DeliveryStatus } from '../messaging/message-delivery.entity';
-import { MessageChannel as NotificationChannel } from '../messaging/message.entity';
-import { WebhookService as DatabaseWebhookService } from '../webhook/webhook.service';
-import { WebhookQueueService } from './queue/webhook-queue.service';
+import { Injectable, Logger, Optional } from "@nestjs/common";
+import { ConfigService } from "@nestjs/config";
+import axios, { AxiosResponse } from "axios";
+import { assertSafeWebhookUrl } from "../../common/security/utils/safe-url";
+import { MessageDeliveryStatus as DeliveryStatus } from "../messaging/message-delivery.entity";
+import { MessageChannel as NotificationChannel } from "../messaging/message.entity";
+import { WebhookService as DatabaseWebhookService } from "../webhook/webhook.service";
+import { WebhookQueueService } from "./queue/webhook-queue.service";
 
 export interface WebhookConfig {
   url: string;
@@ -34,7 +34,7 @@ export interface DeliveryStatusWebhookPayload {
 export interface DeliveryEventWebhookPayload {
   deliveryId: string;
   notificationId: string;
-  eventType: 'opened' | 'clicked' | 'unsubscribed';
+  eventType: "opened" | "clicked" | "unsubscribed";
   timestamp: Date;
   metadata?: Record<string, any>;
   // Context information
@@ -81,9 +81,14 @@ export class WebhookService {
     }
 
     // Find active webhooks for this event
-    const webhooks = await this.databaseWebhookService.findActiveWebhooksForEvent(tenantId, 'email.delivered');
+    const webhooks = await this.databaseWebhookService.findActiveWebhooksForEvent(
+      tenantId,
+      "email.delivered",
+    );
     if (webhooks.length === 0) {
-      this.logger.debug(`No active webhooks configured for tenant ${tenantId} and event email.delivered`);
+      this.logger.debug(
+        `No active webhooks configured for tenant ${tenantId} and event email.delivered`,
+      );
       return;
     }
 
@@ -97,7 +102,7 @@ export class WebhookService {
       };
 
       const webhookPayload = {
-        type: 'delivery_status_update',
+        type: "delivery_status_update",
         timestamp: new Date().toISOString(),
         data: {
           ...payload,
@@ -127,9 +132,14 @@ export class WebhookService {
     }
 
     // Find active webhooks for this event
-    const webhooks = await this.databaseWebhookService.findActiveWebhooksForEvent(tenantId, `email.${payload.eventType}`);
+    const webhooks = await this.databaseWebhookService.findActiveWebhooksForEvent(
+      tenantId,
+      `email.${payload.eventType}`,
+    );
     if (webhooks.length === 0) {
-      this.logger.debug(`No active webhooks configured for tenant ${tenantId} and event email.${payload.eventType}`);
+      this.logger.debug(
+        `No active webhooks configured for tenant ${tenantId} and event email.${payload.eventType}`,
+      );
       return;
     }
 
@@ -143,7 +153,7 @@ export class WebhookService {
       };
 
       const webhookPayload = {
-        type: 'delivery_event',
+        type: "delivery_event",
         timestamp: new Date().toISOString(),
         data: {
           ...payload,
@@ -179,9 +189,14 @@ export class WebhookService {
     }
 
     // Find active webhooks for bulk notifications
-    const webhooks = await this.databaseWebhookService.findActiveWebhooksForEvent(tenantId, 'notification.bulk_completed');
+    const webhooks = await this.databaseWebhookService.findActiveWebhooksForEvent(
+      tenantId,
+      "notification.bulk_completed",
+    );
     if (webhooks.length === 0) {
-      this.logger.debug(`No active webhooks configured for tenant ${tenantId} and event notification.bulk_completed`);
+      this.logger.debug(
+        `No active webhooks configured for tenant ${tenantId} and event notification.bulk_completed`,
+      );
       return;
     }
 
@@ -195,7 +210,7 @@ export class WebhookService {
       };
 
       const webhookPayload = {
-        type: 'bulk_notification_complete',
+        type: "bulk_notification_complete",
         timestamp: new Date().toISOString(),
         data: {
           ...payload,
@@ -247,10 +262,10 @@ export class WebhookService {
     try {
       // First attempt - try immediate delivery
       const headers = {
-        'Content-Type': 'application/json',
-        'X-Webhook-Signature': this.generateSignature(payload, config.secret),
-        'X-Idempotency-Key': idempotencyKey,
-        'X-Attempt': '1',
+        "Content-Type": "application/json",
+        "X-Webhook-Signature": this.generateSignature(payload, config.secret),
+        "X-Idempotency-Key": idempotencyKey,
+        "X-Attempt": "1",
         ...config.headers,
       };
 
@@ -260,9 +275,7 @@ export class WebhookService {
         validateStatus: (status) => status >= 200 && status < 300,
       });
 
-      this.logger.log(
-        `Webhook sent successfully to ${config.url} (attempt 1): ${response.status}`,
-      );
+      this.logger.log(`Webhook sent successfully to ${config.url} (attempt 1): ${response.status}`);
       return;
     } catch (error) {
       const errorMessage = error.response?.data?.message || error.message;
@@ -276,7 +289,7 @@ export class WebhookService {
       if (this.webhookQueueService) {
         try {
           await this.webhookQueueService.queueWebhookRetry({
-            tenantId: tenantId || 'default',
+            tenantId: tenantId || "default",
             webhookUrl: config.url,
             payload,
             secret: config.secret,
@@ -292,9 +305,7 @@ export class WebhookService {
           );
           return;
         } catch (queueError) {
-          this.logger.error(
-            `Failed to queue webhook retry: ${queueError.message}`,
-          );
+          this.logger.error(`Failed to queue webhook retry: ${queueError.message}`);
         }
       }
 
@@ -319,10 +330,10 @@ export class WebhookService {
     for (let attempt = 2; attempt <= maxRetries; attempt++) {
       try {
         const headers = {
-          'Content-Type': 'application/json',
-          'X-Webhook-Signature': this.generateSignature(payload, config.secret),
-          'X-Idempotency-Key': idempotencyKey,
-          'X-Attempt': attempt.toString(),
+          "Content-Type": "application/json",
+          "X-Webhook-Signature": this.generateSignature(payload, config.secret),
+          "X-Idempotency-Key": idempotencyKey,
+          "X-Attempt": attempt.toString(),
           ...config.headers,
         };
 
@@ -364,15 +375,12 @@ export class WebhookService {
    */
   private generateSignature(payload: any, secret?: string): string {
     if (!secret) {
-      return '';
+      return "";
     }
 
-    const crypto = require('crypto');
+    const crypto = require("crypto");
     const payloadString = JSON.stringify(payload);
-    return crypto
-      .createHmac('sha256', secret)
-      .update(payloadString)
-      .digest('hex');
+    return crypto.createHmac("sha256", secret).update(payloadString).digest("hex");
   }
 
   /**
@@ -388,7 +396,7 @@ export class WebhookService {
   validateWebhookUrl(url: string): boolean {
     try {
       const parsedUrl = new URL(url);
-      return parsedUrl.protocol === 'https:' || parsedUrl.protocol === 'http:';
+      return parsedUrl.protocol === "https:" || parsedUrl.protocol === "http:";
     } catch {
       return false;
     }

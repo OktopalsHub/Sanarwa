@@ -1,14 +1,14 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Injectable, Logger } from "@nestjs/common";
+import { InjectRepository } from "@nestjs/typeorm";
+import { Repository } from "typeorm";
 import {
   MessageDeliveryStatus as DeliveryStatus,
   MessageDelivery as NotificationDelivery,
-} from '../messaging/message-delivery.entity';
+} from "../messaging/message-delivery.entity";
 import {
   Message as Notification,
   MessageChannel as NotificationChannel,
-} from '../messaging/message.entity';
+} from "../messaging/message.entity";
 
 export interface PerformanceMetric {
   name: string;
@@ -90,12 +90,7 @@ export class PerformanceMetricsService {
   /**
    * Record a performance metric
    */
-  recordMetric(
-    name: string,
-    value: number,
-    unit: string,
-    tags?: Record<string, string>,
-  ): void {
+  recordMetric(name: string, value: number, unit: string, tags?: Record<string, string>): void {
     const metric: PerformanceMetric = {
       name,
       value,
@@ -123,7 +118,7 @@ export class PerformanceMetricsService {
     tenantId: string,
     channel: NotificationChannel,
   ): void {
-    this.recordMetric('notification.processing_time', processingTimeMs, 'ms', {
+    this.recordMetric("notification.processing_time", processingTimeMs, "ms", {
       notificationId,
       tenantId,
       channel,
@@ -139,13 +134,13 @@ export class PerformanceMetricsService {
     responseTimeMs: number,
     success: boolean,
   ): void {
-    this.recordMetric('provider.response_time', responseTimeMs, 'ms', {
+    this.recordMetric("provider.response_time", responseTimeMs, "ms", {
       providerId,
       channel,
       success: success.toString(),
     });
 
-    this.recordMetric('provider.request_count', 1, 'count', {
+    this.recordMetric("provider.request_count", 1, "count", {
       providerId,
       channel,
       success: success.toString(),
@@ -155,14 +150,10 @@ export class PerformanceMetricsService {
   /**
    * Record queue metrics
    */
-  recordQueueMetrics(
-    queueName: string,
-    depth: number,
-    processingRate: number,
-  ): void {
-    this.recordMetric('queue.depth', depth, 'count', { queueName });
+  recordQueueMetrics(queueName: string, depth: number, processingRate: number): void {
+    this.recordMetric("queue.depth", depth, "count", { queueName });
 
-    this.recordMetric('queue.processing_rate', processingRate, 'jobs/sec', {
+    this.recordMetric("queue.processing_rate", processingRate, "jobs/sec", {
       queueName,
     });
   }
@@ -175,13 +166,13 @@ export class PerformanceMetricsService {
     status: DeliveryStatus,
     deliveryTimeMs?: number,
   ): void {
-    this.recordMetric('delivery.count', 1, 'count', {
+    this.recordMetric("delivery.count", 1, "count", {
       channel,
       status,
     });
 
     if (deliveryTimeMs !== undefined) {
-      this.recordMetric('delivery.time', deliveryTimeMs, 'ms', {
+      this.recordMetric("delivery.time", deliveryTimeMs, "ms", {
         channel,
         status,
       });
@@ -201,16 +192,16 @@ export class PerformanceMetricsService {
 
     // Get notifications in time range
     const notifications = await this.notificationRepository
-      .createQueryBuilder('notification')
-      .where('notification.createdAt >= :start', { start })
-      .andWhere('notification.createdAt <= :end', { end })
+      .createQueryBuilder("notification")
+      .where("notification.createdAt >= :start", { start })
+      .andWhere("notification.createdAt <= :end", { end })
       .getMany();
 
     // Get deliveries in time range
     const deliveries = await this.deliveryRepository
-      .createQueryBuilder('delivery')
-      .where('delivery.createdAt >= :start', { start })
-      .andWhere('delivery.createdAt <= :end', { end })
+      .createQueryBuilder("delivery")
+      .where("delivery.createdAt >= :start", { start })
+      .andWhere("delivery.createdAt <= :end", { end })
       .getMany();
 
     // Calculate throughput
@@ -219,11 +210,7 @@ export class PerformanceMetricsService {
     const deliveriesPerSecond = deliveries.length / timeRangeSeconds;
 
     // Calculate processing times
-    const processingTimes = this.getMetricValues(
-      'notification.processing_time',
-      start,
-      end,
-    );
+    const processingTimes = this.getMetricValues("notification.processing_time", start, end);
 
     const deliveryTimes = deliveries
       .filter((d) => d.sentAt && d.deliveredAt)
@@ -233,24 +220,16 @@ export class PerformanceMetricsService {
     const successfulDeliveries = deliveries.filter(
       (d) => d.status === DeliveryStatus.DELIVERED,
     ).length;
-    const failedDeliveries = deliveries.filter(
-      (d) => d.status === DeliveryStatus.FAILED,
-    ).length;
+    const failedDeliveries = deliveries.filter((d) => d.status === DeliveryStatus.FAILED).length;
     const totalDeliveries = deliveries.length;
 
-    const successRate =
-      totalDeliveries > 0 ? (successfulDeliveries / totalDeliveries) * 100 : 0;
-    const errorRate =
-      totalDeliveries > 0 ? (failedDeliveries / totalDeliveries) * 100 : 0;
+    const successRate = totalDeliveries > 0 ? (successfulDeliveries / totalDeliveries) * 100 : 0;
+    const errorRate = totalDeliveries > 0 ? (failedDeliveries / totalDeliveries) * 100 : 0;
 
     // Calculate retry rate
-    const retriedNotifications = notifications.filter(
-      (n) => n.retryCount > 0,
-    ).length;
+    const retriedNotifications = notifications.filter((n) => n.retryCount > 0).length;
     const retryRate =
-      notifications.length > 0
-        ? (retriedNotifications / notifications.length) * 100
-        : 0;
+      notifications.length > 0 ? (retriedNotifications / notifications.length) * 100 : 0;
 
     // Calculate uptime (simplified - time since service start)
     const uptimeMs = Date.now() - this.startTime;
@@ -275,11 +254,10 @@ export class PerformanceMetricsService {
         uptime: Math.min(uptime, 100),
       },
       resource: {
-        queueDepth: this.getLatestMetricValue('queue.depth') || 0,
-        activeConnections:
-          this.getLatestMetricValue('system.active_connections') || 0,
-        memoryUsage: this.getLatestMetricValue('system.memory_usage') || 0,
-        cpuUsage: this.getLatestMetricValue('system.cpu_usage') || 0,
+        queueDepth: this.getLatestMetricValue("queue.depth") || 0,
+        activeConnections: this.getLatestMetricValue("system.active_connections") || 0,
+        memoryUsage: this.getLatestMetricValue("system.memory_usage") || 0,
+        cpuUsage: this.getLatestMetricValue("system.cpu_usage") || 0,
       },
     };
   }
@@ -299,18 +277,18 @@ export class PerformanceMetricsService {
 
     // Get deliveries for the provider/channel
     const queryBuilder = this.deliveryRepository
-      .createQueryBuilder('delivery')
-      .where('delivery.createdAt >= :start', { start })
-      .andWhere('delivery.createdAt <= :end', { end });
+      .createQueryBuilder("delivery")
+      .where("delivery.createdAt >= :start", { start })
+      .andWhere("delivery.createdAt <= :end", { end });
 
     if (providerId) {
-      queryBuilder.andWhere('delivery.providerId = :providerId', {
+      queryBuilder.andWhere("delivery.providerId = :providerId", {
         providerId,
       });
     }
 
     if (channel) {
-      queryBuilder.andWhere('delivery.channel = :channel', { channel });
+      queryBuilder.andWhere("delivery.channel = :channel", { channel });
     }
 
     const deliveries = await queryBuilder.getMany();
@@ -342,37 +320,26 @@ export class PerformanceMetricsService {
     const providerMetrics: ProviderPerformanceMetrics[] = [];
 
     for (const group of Object.values(providerGroups)) {
-      const {
-        providerId: pid,
-        channel: ch,
-        deliveries: providerDeliveries,
-      } = group;
+      const { providerId: pid, channel: ch, deliveries: providerDeliveries } = group;
 
       // Get response times from metrics
-      const responseTimes = this.getMetricValues(
-        'provider.response_time',
-        start,
-        end,
-        { providerId: pid, channel: ch },
-      );
+      const responseTimes = this.getMetricValues("provider.response_time", start, end, {
+        providerId: pid,
+        channel: ch,
+      });
 
       // Calculate metrics
       const totalRequests = providerDeliveries.length;
       const successfulRequests = providerDeliveries.filter(
-        (d) =>
-          d.status === DeliveryStatus.DELIVERED ||
-          d.status === DeliveryStatus.SENT,
+        (d) => d.status === DeliveryStatus.DELIVERED || d.status === DeliveryStatus.SENT,
       ).length;
       const failedRequests = providerDeliveries.filter(
         (d) => d.status === DeliveryStatus.FAILED,
       ).length;
 
-      const successRate =
-        totalRequests > 0 ? (successfulRequests / totalRequests) * 100 : 0;
-      const errorRate =
-        totalRequests > 0 ? (failedRequests / totalRequests) * 100 : 0;
-      const throughput =
-        totalRequests / ((end.getTime() - start.getTime()) / 1000);
+      const successRate = totalRequests > 0 ? (successfulRequests / totalRequests) * 100 : 0;
+      const errorRate = totalRequests > 0 ? (failedRequests / totalRequests) * 100 : 0;
+      const throughput = totalRequests / ((end.getTime() - start.getTime()) / 1000);
       const averageResponseTime = this.calculateAverage(responseTimes);
 
       // Simplified availability calculation
@@ -392,9 +359,7 @@ export class PerformanceMetricsService {
       });
     }
 
-    return providerMetrics.toSorted(
-      (a, b) => b.metrics.throughput - a.metrics.throughput,
-    );
+    return providerMetrics.toSorted((a, b) => b.metrics.throughput - a.metrics.throughput);
   }
 
   /**
@@ -411,28 +376,26 @@ export class PerformanceMetricsService {
 
     // Get notifications for tenant
     const notifications = await this.notificationRepository
-      .createQueryBuilder('notification')
-      .where('notification.tenantId = :tenantId', { tenantId })
-      .andWhere('notification.createdAt >= :start', { start })
-      .andWhere('notification.createdAt <= :end', { end })
+      .createQueryBuilder("notification")
+      .where("notification.tenantId = :tenantId", { tenantId })
+      .andWhere("notification.createdAt >= :start", { start })
+      .andWhere("notification.createdAt <= :end", { end })
       .getMany();
 
     // Get deliveries for tenant
     const deliveries = await this.deliveryRepository
-      .createQueryBuilder('delivery')
-      .innerJoin('delivery.notification', 'notification')
-      .where('notification.tenantId = :tenantId', { tenantId })
-      .andWhere('delivery.createdAt >= :start', { start })
-      .andWhere('delivery.createdAt <= :end', { end })
+      .createQueryBuilder("delivery")
+      .innerJoin("delivery.notification", "notification")
+      .where("notification.tenantId = :tenantId", { tenantId })
+      .andWhere("delivery.createdAt >= :start", { start })
+      .andWhere("delivery.createdAt <= :end", { end })
       .getMany();
 
     const totalNotifications = notifications.length;
     const successfulDeliveries = deliveries.filter(
       (d) => d.status === DeliveryStatus.DELIVERED,
     ).length;
-    const failedDeliveries = deliveries.filter(
-      (d) => d.status === DeliveryStatus.FAILED,
-    ).length;
+    const failedDeliveries = deliveries.filter((d) => d.status === DeliveryStatus.FAILED).length;
 
     // Calculate average delivery time
     const deliveryTimes = deliveries
@@ -466,7 +429,7 @@ export class PerformanceMetricsService {
     metricName: string,
     startDate: Date,
     endDate: Date,
-    interval: 'hour' | 'day' = 'hour',
+    interval: "hour" | "day" = "hour",
   ): Promise<Array<{ timestamp: Date; value: number }>> {
     const metrics = this.getMetricValues(metricName, startDate, endDate);
 
@@ -475,10 +438,7 @@ export class PerformanceMetricsService {
 
     metrics.forEach((value, index) => {
       const metric = this.metrics.find(
-        (m) =>
-          m.name === metricName &&
-          m.timestamp >= startDate &&
-          m.timestamp <= endDate,
+        (m) => m.name === metricName && m.timestamp >= startDate && m.timestamp <= endDate,
       );
 
       if (metric) {
@@ -516,40 +476,27 @@ export class PerformanceMetricsService {
     const fiveMinutesAgo = new Date(now.getTime() - 5 * 60 * 1000);
 
     const recentProcessingTimes = this.getMetricValues(
-      'notification.processing_time',
+      "notification.processing_time",
       fiveMinutesAgo,
       now,
     );
 
-    const recentDeliveries = this.getMetricValues(
-      'delivery.count',
-      fiveMinutesAgo,
-      now,
-    );
+    const recentDeliveries = this.getMetricValues("delivery.count", fiveMinutesAgo, now);
 
-    const recentErrors = this.getMetricValues(
-      'delivery.count',
-      fiveMinutesAgo,
-      now,
-      { status: DeliveryStatus.FAILED },
-    );
+    const recentErrors = this.getMetricValues("delivery.count", fiveMinutesAgo, now, {
+      status: DeliveryStatus.FAILED,
+    });
 
     const currentThroughput = recentDeliveries.length / (5 * 60); // per second
     const averageLatency = this.calculateAverage(recentProcessingTimes);
     const errorRate =
-      recentDeliveries.length > 0
-        ? (recentErrors.length / recentDeliveries.length) * 100
-        : 0;
-    const queueDepth = this.getLatestMetricValue('queue.depth') || 0;
+      recentDeliveries.length > 0 ? (recentErrors.length / recentDeliveries.length) * 100 : 0;
+    const queueDepth = this.getLatestMetricValue("queue.depth") || 0;
 
     // Count unique providers from recent metrics
     const activeProviders = new Set(
       this.metrics
-        .filter(
-          (m) =>
-            m.name === 'provider.response_time' &&
-            m.timestamp >= fiveMinutesAgo,
-        )
+        .filter((m) => m.name === "provider.response_time" && m.timestamp >= fiveMinutesAgo)
         .map((m) => m.tags?.providerId)
         .filter(Boolean),
     ).size;
@@ -589,13 +536,9 @@ export class PerformanceMetricsService {
 
   private collectSystemMetrics(): void {
     // In a real implementation, these would collect actual system metrics
-    this.recordMetric('system.memory_usage', Math.random() * 100, 'percent');
-    this.recordMetric('system.cpu_usage', Math.random() * 100, 'percent');
-    this.recordMetric(
-      'system.active_connections',
-      Math.floor(Math.random() * 100),
-      'count',
-    );
+    this.recordMetric("system.memory_usage", Math.random() * 100, "percent");
+    this.recordMetric("system.cpu_usage", Math.random() * 100, "percent");
+    this.recordMetric("system.active_connections", Math.floor(Math.random() * 100), "count");
   }
 
   private getMetricValues(
@@ -607,8 +550,7 @@ export class PerformanceMetricsService {
     return this.metrics
       .filter((metric) => {
         if (metric.name !== name) return false;
-        if (metric.timestamp < startDate || metric.timestamp > endDate)
-          return false;
+        if (metric.timestamp < startDate || metric.timestamp > endDate) return false;
 
         if (tags) {
           for (const [key, value] of Object.entries(tags)) {
@@ -621,10 +563,7 @@ export class PerformanceMetricsService {
       .map((metric) => metric.value);
   }
 
-  private getLatestMetricValue(
-    name: string,
-    tags?: Record<string, string>,
-  ): number | undefined {
+  private getLatestMetricValue(name: string, tags?: Record<string, string>): number | undefined {
     const filteredMetrics = this.metrics
       .filter((metric) => {
         if (metric.name !== name) return false;
@@ -655,29 +594,29 @@ export class PerformanceMetricsService {
     return sorted[Math.max(0, index)];
   }
 
-  private getTimeKey(date: Date, interval: 'hour' | 'day'): string {
+  private getTimeKey(date: Date, interval: "hour" | "day"): string {
     const year = date.getFullYear();
     const month = date.getMonth();
     const day = date.getDate();
     const hour = date.getHours();
 
     switch (interval) {
-      case 'hour':
+      case "hour":
         return `${year}-${month}-${day}-${hour}`;
-      case 'day':
+      case "day":
         return `${year}-${month}-${day}`;
       default:
         return `${year}-${month}-${day}`;
     }
   }
 
-  private parseTimeKey(timeKey: string, interval: 'hour' | 'day'): Date {
-    const parts = timeKey.split('-').map(Number);
+  private parseTimeKey(timeKey: string, interval: "hour" | "day"): Date {
+    const parts = timeKey.split("-").map(Number);
 
     switch (interval) {
-      case 'hour':
+      case "hour":
         return new Date(parts[0], parts[1], parts[2], parts[3]);
-      case 'day':
+      case "day":
         return new Date(parts[0], parts[1], parts[2]);
       default:
         return new Date(parts[0], parts[1], parts[2]);

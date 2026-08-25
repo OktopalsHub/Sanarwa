@@ -1,40 +1,35 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Injectable, Logger } from "@nestjs/common";
+import { InjectRepository } from "@nestjs/typeorm";
+import { Repository } from "typeorm";
 import {
   MessageDeliveryStatus as DeliveryStatus,
   MessageDelivery as NotificationDelivery,
-} from '../messaging/message-delivery.entity';
+} from "../messaging/message-delivery.entity";
 import {
   Message as Notification,
   MessageChannel as NotificationChannel,
   MessageStatus as NotificationStatus,
-} from '../messaging/message.entity';
+} from "../messaging/message.entity";
 
 export enum AuditEventType {
-  NOTIFICATION_CREATED = 'notification_created',
-  NOTIFICATION_SENT = 'notification_sent',
-  NOTIFICATION_FAILED = 'notification_failed',
-  NOTIFICATION_CANCELLED = 'notification_cancelled',
-  DELIVERY_STATUS_CHANGED = 'delivery_status_changed',
-  DELIVERY_EVENT = 'delivery_event',
-  PROVIDER_FAILOVER = 'provider_failover',
-  WEBHOOK_SENT = 'webhook_sent',
-  WEBHOOK_FAILED = 'webhook_failed',
-  TEMPLATE_RENDERED = 'template_rendered',
-  BULK_OPERATION = 'bulk_operation',
+  NOTIFICATION_CREATED = "notification_created",
+  NOTIFICATION_SENT = "notification_sent",
+  NOTIFICATION_FAILED = "notification_failed",
+  NOTIFICATION_CANCELLED = "notification_cancelled",
+  DELIVERY_STATUS_CHANGED = "delivery_status_changed",
+  DELIVERY_EVENT = "delivery_event",
+  PROVIDER_FAILOVER = "provider_failover",
+  WEBHOOK_SENT = "webhook_sent",
+  WEBHOOK_FAILED = "webhook_failed",
+  TEMPLATE_RENDERED = "template_rendered",
+  BULK_OPERATION = "bulk_operation",
 }
 
 export interface AuditLogEntry {
   id?: string;
   tenantId: string;
   eventType: AuditEventType;
-  resourceType:
-    | 'notification'
-    | 'delivery'
-    | 'provider'
-    | 'webhook'
-    | 'template';
+  resourceType: "notification" | "delivery" | "provider" | "webhook" | "template";
   resourceId: string;
   userId?: string;
   details: Record<string, any>;
@@ -81,20 +76,18 @@ export class AuditLogService {
     await this.createAuditLog({
       tenantId,
       eventType: AuditEventType.NOTIFICATION_CREATED,
-      resourceType: 'notification',
+      resourceType: "notification",
       resourceId: notificationId,
       details: {
         channels,
         recipientCount,
-        action: 'created',
+        action: "created",
       },
       metadata,
       timestamp: new Date(),
     });
 
-    this.logger.log(
-      `Audit: Notification ${notificationId} created for tenant ${tenantId}`,
-    );
+    this.logger.log(`Audit: Notification ${notificationId} created for tenant ${tenantId}`);
   }
 
   /**
@@ -112,12 +105,12 @@ export class AuditLogService {
     await this.createAuditLog({
       tenantId,
       eventType,
-      resourceType: 'notification',
+      resourceType: "notification",
       resourceId: notificationId,
       details: {
         oldStatus,
         newStatus,
-        action: 'status_changed',
+        action: "status_changed",
       },
       metadata,
       timestamp: new Date(),
@@ -141,12 +134,12 @@ export class AuditLogService {
     await this.createAuditLog({
       tenantId,
       eventType: AuditEventType.DELIVERY_STATUS_CHANGED,
-      resourceType: 'delivery',
+      resourceType: "delivery",
       resourceId: deliveryId,
       details: {
         oldStatus,
         newStatus,
-        action: 'status_changed',
+        action: "status_changed",
       },
       metadata,
       timestamp: new Date(),
@@ -162,26 +155,24 @@ export class AuditLogService {
    */
   async logDeliveryEvent(
     deliveryId: string,
-    eventType: 'opened' | 'clicked' | 'unsubscribed',
+    eventType: "opened" | "clicked" | "unsubscribed",
     tenantId: string,
     metadata?: Record<string, any>,
   ): Promise<void> {
     await this.createAuditLog({
       tenantId,
       eventType: AuditEventType.DELIVERY_EVENT,
-      resourceType: 'delivery',
+      resourceType: "delivery",
       resourceId: deliveryId,
       details: {
         eventType,
-        action: 'event_tracked',
+        action: "event_tracked",
       },
       metadata,
       timestamp: new Date(),
     });
 
-    this.logger.log(
-      `Audit: Delivery event ${eventType} tracked for delivery ${deliveryId}`,
-    );
+    this.logger.log(`Audit: Delivery event ${eventType} tracked for delivery ${deliveryId}`);
   }
 
   /**
@@ -199,14 +190,14 @@ export class AuditLogService {
     await this.createAuditLog({
       tenantId,
       eventType: AuditEventType.PROVIDER_FAILOVER,
-      resourceType: 'provider',
+      resourceType: "provider",
       resourceId: notificationId,
       details: {
         fromProviderId,
         toProviderId,
         channel,
         reason,
-        action: 'failover',
+        action: "failover",
       },
       metadata,
       timestamp: new Date(),
@@ -229,28 +220,26 @@ export class AuditLogService {
     errorMessage?: string,
     metadata?: Record<string, any>,
   ): Promise<void> {
-    const auditEventType = success
-      ? AuditEventType.WEBHOOK_SENT
-      : AuditEventType.WEBHOOK_FAILED;
+    const auditEventType = success ? AuditEventType.WEBHOOK_SENT : AuditEventType.WEBHOOK_FAILED;
 
     await this.createAuditLog({
       tenantId,
       eventType: auditEventType,
-      resourceType: 'webhook',
+      resourceType: "webhook",
       resourceId: webhookUrl,
       details: {
         eventType,
         success,
         responseStatus,
         errorMessage,
-        action: success ? 'sent' : 'failed',
+        action: success ? "sent" : "failed",
       },
       metadata,
       timestamp: new Date(),
     });
 
     this.logger.log(
-      `Audit: Webhook ${success ? 'sent' : 'failed'} to ${webhookUrl} for tenant ${tenantId}`,
+      `Audit: Webhook ${success ? "sent" : "failed"} to ${webhookUrl} for tenant ${tenantId}`,
     );
   }
 
@@ -268,20 +257,20 @@ export class AuditLogService {
     await this.createAuditLog({
       tenantId,
       eventType: AuditEventType.TEMPLATE_RENDERED,
-      resourceType: 'template',
+      resourceType: "template",
       resourceId: templateId,
       details: {
         success,
         renderTime,
         errorMessage,
-        action: 'rendered',
+        action: "rendered",
       },
       metadata,
       timestamp: new Date(),
     });
 
     this.logger.log(
-      `Audit: Template ${templateId} ${success ? 'rendered successfully' : 'failed to render'}`,
+      `Audit: Template ${templateId} ${success ? "rendered successfully" : "failed to render"}`,
     );
   }
 
@@ -290,7 +279,7 @@ export class AuditLogService {
    */
   async logBulkOperation(
     tenantId: string,
-    operationType: 'send' | 'cancel' | 'retry',
+    operationType: "send" | "cancel" | "retry",
     totalCount: number,
     successCount: number,
     failureCount: number,
@@ -299,14 +288,14 @@ export class AuditLogService {
     await this.createAuditLog({
       tenantId,
       eventType: AuditEventType.BULK_OPERATION,
-      resourceType: 'notification',
+      resourceType: "notification",
       resourceId: `bulk-${operationType}-${Date.now()}`,
       details: {
         operationType,
         totalCount,
         successCount,
         failureCount,
-        action: 'bulk_operation',
+        action: "bulk_operation",
       },
       metadata,
       timestamp: new Date(),
@@ -326,27 +315,19 @@ export class AuditLogService {
     page: number;
     limit: number;
   }> {
-    let filteredLogs = this.auditLogs.filter(
-      (log) => log.tenantId === query.tenantId,
-    );
+    let filteredLogs = this.auditLogs.filter((log) => log.tenantId === query.tenantId);
 
     // Apply filters
     if (query.eventType) {
-      filteredLogs = filteredLogs.filter(
-        (log) => log.eventType === query.eventType,
-      );
+      filteredLogs = filteredLogs.filter((log) => log.eventType === query.eventType);
     }
 
     if (query.resourceType) {
-      filteredLogs = filteredLogs.filter(
-        (log) => log.resourceType === query.resourceType,
-      );
+      filteredLogs = filteredLogs.filter((log) => log.resourceType === query.resourceType);
     }
 
     if (query.resourceId) {
-      filteredLogs = filteredLogs.filter(
-        (log) => log.resourceId === query.resourceId,
-      );
+      filteredLogs = filteredLogs.filter((log) => log.resourceId === query.resourceId);
     }
 
     if (query.userId) {
@@ -354,15 +335,11 @@ export class AuditLogService {
     }
 
     if (query.startDate) {
-      filteredLogs = filteredLogs.filter(
-        (log) => log.timestamp >= query.startDate!,
-      );
+      filteredLogs = filteredLogs.filter((log) => log.timestamp >= query.startDate!);
     }
 
     if (query.endDate) {
-      filteredLogs = filteredLogs.filter(
-        (log) => log.timestamp <= query.endDate!,
-      );
+      filteredLogs = filteredLogs.filter((log) => log.timestamp <= query.endDate!);
     }
 
     // Sort by timestamp (newest first)
@@ -394,7 +371,7 @@ export class AuditLogService {
       (log) =>
         log.tenantId === tenantId &&
         log.resourceId === notificationId &&
-        log.resourceType === 'notification',
+        log.resourceType === "notification",
     );
 
     // Get delivery-related logs for this notification
@@ -407,14 +384,12 @@ export class AuditLogService {
       (log) =>
         log.tenantId === tenantId &&
         deliveryIds.includes(log.resourceId) &&
-        log.resourceType === 'delivery',
+        log.resourceType === "delivery",
     );
 
     // Combine and sort by timestamp
     const allLogs = [...notificationLogs, ...deliveryLogs];
-    return allLogs.toSorted(
-      (a, b) => a.timestamp.getTime() - b.timestamp.getTime(),
-    );
+    return allLogs.toSorted((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
   }
 
   /**
@@ -463,7 +438,7 @@ export class AuditLogService {
     // Events over time (daily)
     const eventsOverTime = logs.reduce(
       (acc, log) => {
-        const date = log.timestamp.toISOString().split('T')[0];
+        const date = log.timestamp.toISOString().split("T")[0];
         const existing = acc.find((item) => item.date === date);
         if (existing) {
           existing.count++;
@@ -488,13 +463,10 @@ export class AuditLogService {
   /**
    * Export audit logs
    */
-  async exportAuditLogs(
-    query: AuditQuery,
-    format: 'json' | 'csv' = 'json',
-  ): Promise<string> {
+  async exportAuditLogs(query: AuditQuery, format: "json" | "csv" = "json"): Promise<string> {
     const { logs } = await this.getAuditLogs(query);
 
-    if (format === 'csv') {
+    if (format === "csv") {
       return this.convertToCSV(logs);
     }
 
@@ -539,23 +511,23 @@ export class AuditLogService {
 
   private convertToCSV(logs: AuditLogEntry[]): string {
     if (logs.length === 0) {
-      return '';
+      return "";
     }
 
     const headers = [
-      'id',
-      'tenantId',
-      'eventType',
-      'resourceType',
-      'resourceId',
-      'userId',
-      'timestamp',
-      'details',
-      'metadata',
+      "id",
+      "tenantId",
+      "eventType",
+      "resourceType",
+      "resourceId",
+      "userId",
+      "timestamp",
+      "details",
+      "metadata",
     ];
 
     const csvRows = [
-      headers.join(','),
+      headers.join(","),
       ...logs.map((log) =>
         [
           log.id,
@@ -563,16 +535,16 @@ export class AuditLogService {
           log.eventType,
           log.resourceType,
           log.resourceId,
-          log.userId || '',
+          log.userId || "",
           log.timestamp.toISOString(),
           JSON.stringify(log.details).replace(/"/g, '""'),
           JSON.stringify(log.metadata || {}).replace(/"/g, '""'),
         ]
           .map((field) => `"${field}"`)
-          .join(','),
+          .join(","),
       ),
     ];
 
-    return csvRows.join('\n');
+    return csvRows.join("\n");
   }
 }

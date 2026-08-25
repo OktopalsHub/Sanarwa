@@ -1,7 +1,7 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, Between, MoreThanOrEqual, LessThanOrEqual } from 'typeorm';
-import { NotificationLog } from '../notifications/entities/notification-log.entity';
+import { Injectable, Logger } from "@nestjs/common";
+import { InjectRepository } from "@nestjs/typeorm";
+import { Repository, Between, MoreThanOrEqual, LessThanOrEqual } from "typeorm";
+import { NotificationLog } from "../notifications/entities/notification-log.entity";
 
 export interface CohortAnalysis {
   cohort: string; // e.g., "2024-W01", "Jan-2024"
@@ -62,7 +62,7 @@ export class AdvancedAnalyticsService {
    */
   async getCohortAnalysis(
     query: AdvancedAnalyticsQuery,
-    cohortType: 'weekly' | 'monthly' = 'monthly'
+    cohortType: "weekly" | "monthly" = "monthly",
   ): Promise<CohortAnalysis[]> {
     const startDate = query.startDate || new Date(Date.now() - 90 * 24 * 60 * 60 * 1000); // 90 days ago
     const endDate = query.endDate || new Date();
@@ -73,17 +73,20 @@ export class AdvancedAnalyticsService {
         tenantId: query.tenantId,
         createdAt: Between(startDate, endDate),
       },
-      order: { createdAt: 'ASC' },
+      order: { createdAt: "ASC" },
     });
 
     // Group by cohort (first activity month/week)
-    const cohorts = new Map<string, {
-      users: Set<string>;
-      firstActivity: Date;
-      totalNotifications: number;
-    }>();
+    const cohorts = new Map<
+      string,
+      {
+        users: Set<string>;
+        firstActivity: Date;
+        totalNotifications: number;
+      }
+    >();
 
-    logs.forEach(log => {
+    logs.forEach((log) => {
       const cohortKey = this.getCohortKey(log.createdAt, cohortType);
       const userKey = `${log.channel}:${log.to}`;
 
@@ -106,19 +109,19 @@ export class AdvancedAnalyticsService {
     for (const [cohortKey, data] of cohorts) {
       // Check activity in the last 30 days for retention
       const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
-      const recentLogs = logs.filter(log =>
-        log.createdAt >= thirtyDaysAgo &&
-        data.users.has(`${log.channel}:${log.to}`)
+      const recentLogs = logs.filter(
+        (log) => log.createdAt >= thirtyDaysAgo && data.users.has(`${log.channel}:${log.to}`),
       );
 
-      const activeUsers = new Set(recentLogs.map(log => `${log.channel}:${log.to}`)).size;
+      const activeUsers = new Set(recentLogs.map((log) => `${log.channel}:${log.to}`)).size;
 
       result.push({
         cohort: cohortKey,
         totalUsers: data.users.size,
         activeUsers,
         retentionRate: data.users.size > 0 ? (activeUsers / data.users.size) * 100 : 0,
-        averageNotificationsPerUser: data.users.size > 0 ? data.totalNotifications / data.users.size : 0,
+        averageNotificationsPerUser:
+          data.users.size > 0 ? data.totalNotifications / data.users.size : 0,
         conversionRate: this.calculateConversionRate(logs, data.users),
       });
     }
@@ -132,21 +135,22 @@ export class AdvancedAnalyticsService {
   async getUserJourney(
     tenantId: string,
     userIdentifier: string, // email, phone, or device token
-    limit: number = 50
+    limit: number = 50,
   ): Promise<UserJourneyStep[]> {
     const logs = await this.notificationLogRepository.find({
       where: {
         tenantId,
         to: userIdentifier,
       },
-      order: { createdAt: 'ASC' },
+      order: { createdAt: "ASC" },
       take: limit,
     });
 
     const journey: UserJourneyStep[] = logs.map((log, index) => {
       const nextLog = logs[index + 1];
-      const timeToNextStep = nextLog ?
-        nextLog.createdAt.getTime() - log.createdAt.getTime() : undefined;
+      const timeToNextStep = nextLog
+        ? nextLog.createdAt.getTime() - log.createdAt.getTime()
+        : undefined;
 
       return {
         step: index + 1,
@@ -164,28 +168,30 @@ export class AdvancedAnalyticsService {
   /**
    * Optimal Send Time Prediction
    */
-  async getOptimalSendTimes(
-    query: AdvancedAnalyticsQuery
-  ): Promise<OptimalSendTime[]> {
+  async getOptimalSendTimes(query: AdvancedAnalyticsQuery): Promise<OptimalSendTime[]> {
     const logs = await this.notificationLogRepository.find({
       where: {
         tenantId: query.tenantId,
-        createdAt: query.startDate && query.endDate ?
-          Between(query.startDate, query.endDate) :
-          MoreThanOrEqual(new Date(Date.now() - 90 * 24 * 60 * 60 * 1000)),
-        status: 'delivered',
+        createdAt:
+          query.startDate && query.endDate
+            ? Between(query.startDate, query.endDate)
+            : MoreThanOrEqual(new Date(Date.now() - 90 * 24 * 60 * 60 * 1000)),
+        status: "delivered",
       },
     });
 
     // Analyze performance by hour and day of week
-    const performance = new Map<string, {
-      sent: number;
-      delivered: number;
-      opened: number;
-      clicked: number;
-    }>();
+    const performance = new Map<
+      string,
+      {
+        sent: number;
+        delivered: number;
+        opened: number;
+        clicked: number;
+      }
+    >();
 
-    logs.forEach(log => {
+    logs.forEach((log) => {
       const hour = log.sentAt?.getHours() || log.createdAt.getHours();
       const dayOfWeek = log.sentAt?.getDay() || log.createdAt.getDay();
       const key = `${dayOfWeek}-${hour}`;
@@ -199,9 +205,10 @@ export class AdvancedAnalyticsService {
     const optimalTimes: OptimalSendTime[] = [];
 
     for (const [key, stats] of performance) {
-      const [dayOfWeek, hour] = key.split('-').map(Number);
+      const [dayOfWeek, hour] = key.split("-").map(Number);
 
-      if (stats.sent >= 10) { // Minimum sample size
+      if (stats.sent >= 10) {
+        // Minimum sample size
         optimalTimes.push({
           hour,
           dayOfWeek,
@@ -213,9 +220,7 @@ export class AdvancedAnalyticsService {
       }
     }
 
-    return optimalTimes
-      .toSorted((a, b) => b.deliveryRate - a.deliveryRate)
-      .slice(0, 10); // Top 10 optimal times
+    return optimalTimes.toSorted((a, b) => b.deliveryRate - a.deliveryRate).slice(0, 10); // Top 10 optimal times
   }
 
   // /**
@@ -244,8 +249,6 @@ export class AdvancedAnalyticsService {
   //   return attributions;
   // }
 
-
-
   /**
    * Predictive Analytics - Churn Risk
    */
@@ -263,7 +266,7 @@ export class AdvancedAnalyticsService {
 
     const userActivity = new Map<string, Date[]>();
 
-    recentLogs.forEach(log => {
+    recentLogs.forEach((log) => {
       const userKey = `${log.channel}:${log.to}`;
       const dates = userActivity.get(userKey) || [];
       dates.push(log.createdAt);
@@ -273,15 +276,15 @@ export class AdvancedAnalyticsService {
     const churnRisk: any[] = [];
 
     for (const [userKey, dates] of userActivity) {
-      const lastActivity = Math.max(...dates.map(d => d.getTime()));
+      const lastActivity = Math.max(...dates.map((d) => d.getTime()));
       const daysSinceLastActivity = (Date.now() - lastActivity) / (24 * 60 * 60 * 1000);
 
       const activityFrequency = dates.length / 60; // activities per day over 60 days
       const recencyScore = Math.max(0, 30 - daysSinceLastActivity) / 30; // 0-1 scale
 
-      let riskLevel = 'low';
-      if (daysSinceLastActivity > 14) riskLevel = 'medium';
-      if (daysSinceLastActivity > 21) riskLevel = 'high';
+      let riskLevel = "low";
+      if (daysSinceLastActivity > 14) riskLevel = "medium";
+      if (daysSinceLastActivity > 21) riskLevel = "high";
 
       churnRisk.push({
         userKey,
@@ -299,13 +302,13 @@ export class AdvancedAnalyticsService {
 
   // Helper methods
 
-  private getCohortKey(date: Date, type: 'weekly' | 'monthly'): string {
-    if (type === 'weekly') {
+  private getCohortKey(date: Date, type: "weekly" | "monthly"): string {
+    if (type === "weekly") {
       const year = date.getFullYear();
       const week = Math.ceil((date.getDate() - date.getDay() + 1) / 7);
-      return `${year}-W${week.toString().padStart(2, '0')}`;
+      return `${year}-W${week.toString().padStart(2, "0")}`;
     } else {
-      return `${date.toLocaleString('en-US', { month: 'short' })}-${date.getFullYear()}`;
+      return `${date.toLocaleString("en-US", { month: "short" })}-${date.getFullYear()}`;
     }
   }
 
@@ -314,9 +317,9 @@ export class AdvancedAnalyticsService {
     // In real implementation, this would track actual conversions
     const convertedUsers = new Set<string>();
 
-    logs.forEach(log => {
+    logs.forEach((log) => {
       const userKey = `${log.channel}:${log.to}`;
-      if (users.has(userKey) && log.status === 'delivered') {
+      if (users.has(userKey) && log.status === "delivered") {
         convertedUsers.add(userKey);
       }
     });
@@ -325,21 +328,21 @@ export class AdvancedAnalyticsService {
   }
 
   // private matchesSegment(log: NotificationLog, segment: Segment): boolean {
-    // Simplified segment matching
-    // In real implementation, this would evaluate segment criteria
+  // Simplified segment matching
+  // In real implementation, this would evaluate segment criteria
   //   return true; // Placeholder
   // }
 
   private getChurnAction(riskLevel: string): string {
     switch (riskLevel) {
-      case 'high':
-        return 'Send re-engagement campaign immediately';
-      case 'medium':
-        return 'Send reminder notification';
-      case 'low':
-        return 'Monitor activity';
+      case "high":
+        return "Send re-engagement campaign immediately";
+      case "medium":
+        return "Send reminder notification";
+      case "low":
+        return "Monitor activity";
       default:
-        return 'No action needed';
+        return "No action needed";
     }
   }
 }

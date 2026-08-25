@@ -1,16 +1,16 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Injectable, Logger } from "@nestjs/common";
+import { InjectRepository } from "@nestjs/typeorm";
+import { Repository } from "typeorm";
 import {
   MessageDeliveryStatus as DeliveryStatus,
   MessageDelivery as NotificationDelivery,
-} from '../messaging/message-delivery.entity';
+} from "../messaging/message-delivery.entity";
 import {
   Message as Notification,
   MessageChannel as NotificationChannel,
   MessageStatus as NotificationStatus,
   MessagePriority as Priority,
-} from '../messaging/message.entity';
+} from "../messaging/message.entity";
 
 export interface AnalyticsQuery {
   tenantId: string;
@@ -57,12 +57,12 @@ export interface ProviderAnalytics {
 
 /**
  * TRANSPORT MODE Analytics Service
- * 
+ *
  * NOTE: In transport mode, we don't store immediate sends in the database.
  * Analytics are limited to:
  * 1. Scheduled messages only (stored in DB)
  * 2. Provider-level metrics (from provider webhooks)
- * 
+ *
  * For comprehensive analytics, integrate with:
  * - Provider dashboards (SendGrid, Twilio, etc.)
  * - External analytics services (Segment, Mixpanel)
@@ -82,35 +82,33 @@ export class AnalyticsService {
   /**
    * Get delivery rate analytics - SCHEDULED MESSAGES ONLY
    */
-  async getDeliveryRateAnalytics(
-    query: AnalyticsQuery,
-  ): Promise<DeliveryRateAnalytics> {
-    this.logger.warn('Analytics only available for scheduled messages. Immediate sends are not tracked.');
+  async getDeliveryRateAnalytics(query: AnalyticsQuery): Promise<DeliveryRateAnalytics> {
+    this.logger.warn(
+      "Analytics only available for scheduled messages. Immediate sends are not tracked.",
+    );
 
     const notificationQueryBuilder = this.notificationRepository
-      .createQueryBuilder('notification')
-      .where('notification.tenantId = :tenantId', {
+      .createQueryBuilder("notification")
+      .where("notification.tenantId = :tenantId", {
         tenantId: query.tenantId,
       });
 
     if (query.startDate) {
-      notificationQueryBuilder.andWhere(
-        'notification.createdAt >= :startDate',
-        { startDate: query.startDate },
-      );
+      notificationQueryBuilder.andWhere("notification.createdAt >= :startDate", {
+        startDate: query.startDate,
+      });
     }
 
     if (query.endDate) {
-      notificationQueryBuilder.andWhere('notification.createdAt <= :endDate', {
+      notificationQueryBuilder.andWhere("notification.createdAt <= :endDate", {
         endDate: query.endDate,
       });
     }
 
     if (query.channel) {
-      notificationQueryBuilder.andWhere(
-        'notification.channels @> :channel',
-        { channel: JSON.stringify([query.channel]) },
-      );
+      notificationQueryBuilder.andWhere("notification.channels @> :channel", {
+        channel: JSON.stringify([query.channel]),
+      });
     }
 
     const notifications = await notificationQueryBuilder.getMany();
@@ -119,9 +117,7 @@ export class AnalyticsService {
     const deliveredCount = notifications.filter(
       (n) => n.status === NotificationStatus.DELIVERED,
     ).length;
-    const failedCount = notifications.filter(
-      (n) => n.status === NotificationStatus.FAILED,
-    ).length;
+    const failedCount = notifications.filter((n) => n.status === NotificationStatus.FAILED).length;
     const pendingCount = notifications.filter(
       (n) => n.status === NotificationStatus.PENDING,
     ).length;
@@ -146,27 +142,32 @@ export class AnalyticsService {
   /**
    * Get channel analytics - SCHEDULED MESSAGES ONLY
    */
-  async getChannelAnalytics(
-    query: AnalyticsQuery,
-  ): Promise<ChannelAnalytics[]> {
-    this.logger.warn('Channel analytics only available for scheduled messages.');
+  async getChannelAnalytics(query: AnalyticsQuery): Promise<ChannelAnalytics[]> {
+    this.logger.warn("Channel analytics only available for scheduled messages.");
 
     const notifications = await this.notificationRepository
-      .createQueryBuilder('notification')
-      .where('notification.tenantId = :tenantId', {
+      .createQueryBuilder("notification")
+      .where("notification.tenantId = :tenantId", {
         tenantId: query.tenantId,
       })
-      .andWhere(query.startDate ? 'notification.createdAt >= :startDate' : '1=1', 
-        query.startDate ? { startDate: query.startDate } : {})
-      .andWhere(query.endDate ? 'notification.createdAt <= :endDate' : '1=1',
-        query.endDate ? { endDate: query.endDate } : {})
+      .andWhere(
+        query.startDate ? "notification.createdAt >= :startDate" : "1=1",
+        query.startDate ? { startDate: query.startDate } : {},
+      )
+      .andWhere(
+        query.endDate ? "notification.createdAt <= :endDate" : "1=1",
+        query.endDate ? { endDate: query.endDate } : {},
+      )
       .getMany();
 
-    const channelMap = new Map<NotificationChannel, {
-      totalSent: number;
-      delivered: number;
-      failed: number;
-    }>();
+    const channelMap = new Map<
+      NotificationChannel,
+      {
+        totalSent: number;
+        delivered: number;
+        failed: number;
+      }
+    >();
 
     notifications.forEach((notification) => {
       notification.channels.forEach((channel) => {
@@ -200,44 +201,50 @@ export class AnalyticsService {
   /**
    * Get provider analytics - LIMITED DATA
    */
-  async getProviderAnalytics(
-    query: AnalyticsQuery,
-  ): Promise<ProviderAnalytics[]> {
-    this.logger.warn('Provider analytics limited in transport mode. Use provider dashboards for detailed metrics.');
+  async getProviderAnalytics(query: AnalyticsQuery): Promise<ProviderAnalytics[]> {
+    this.logger.warn(
+      "Provider analytics limited in transport mode. Use provider dashboards for detailed metrics.",
+    );
 
-    return [{
-      providerId: 'transport-mode',
-      totalSent: 0,
-      delivered: 0,
-      failed: 0,
-      deliveryRate: 0,
-      averageCost: 0,
-    }];
+    return [
+      {
+        providerId: "transport-mode",
+        totalSent: 0,
+        delivered: 0,
+        failed: 0,
+        deliveryRate: 0,
+        averageCost: 0,
+      },
+    ];
   }
 
   /**
    * Get time-series analytics - SCHEDULED MESSAGES ONLY
    */
   async getTimeSeriesAnalytics(query: AnalyticsQuery): Promise<any[]> {
-    this.logger.warn('Time-series analytics only available for scheduled messages.');
+    this.logger.warn("Time-series analytics only available for scheduled messages.");
 
     const notifications = await this.notificationRepository
-      .createQueryBuilder('notification')
-      .where('notification.tenantId = :tenantId', {
+      .createQueryBuilder("notification")
+      .where("notification.tenantId = :tenantId", {
         tenantId: query.tenantId,
       })
-      .andWhere(query.startDate ? 'notification.createdAt >= :startDate' : '1=1',
-        query.startDate ? { startDate: query.startDate } : {})
-      .andWhere(query.endDate ? 'notification.createdAt <= :endDate' : '1=1',
-        query.endDate ? { endDate: query.endDate } : {})
-      .orderBy('notification.createdAt', 'ASC')
+      .andWhere(
+        query.startDate ? "notification.createdAt >= :startDate" : "1=1",
+        query.startDate ? { startDate: query.startDate } : {},
+      )
+      .andWhere(
+        query.endDate ? "notification.createdAt <= :endDate" : "1=1",
+        query.endDate ? { endDate: query.endDate } : {},
+      )
+      .orderBy("notification.createdAt", "ASC")
       .getMany();
 
     // Group by day
     const dailyStats = new Map<string, { sent: number; delivered: number; failed: number }>();
 
     notifications.forEach((notification) => {
-      const date = notification.createdAt.toISOString().split('T')[0];
+      const date = notification.createdAt.toISOString().split("T")[0];
       const stats = dailyStats.get(date) || { sent: 0, delivered: 0, failed: 0 };
 
       stats.sent++;
@@ -264,24 +271,24 @@ export class AnalyticsService {
     last30Days.setDate(last30Days.getDate() - 30);
 
     const notifications = await this.notificationRepository
-      .createQueryBuilder('notification')
-      .where('notification.tenantId = :tenantId', { tenantId })
-      .andWhere('notification.createdAt >= :startDate', { startDate: last30Days })
+      .createQueryBuilder("notification")
+      .where("notification.tenantId = :tenantId", { tenantId })
+      .andWhere("notification.createdAt >= :startDate", { startDate: last30Days })
       .getMany();
 
     const total = notifications.length;
-    const delivered = notifications.filter(n => n.status === NotificationStatus.DELIVERED).length;
-    const failed = notifications.filter(n => n.status === NotificationStatus.FAILED).length;
-    const pending = notifications.filter(n => n.status === NotificationStatus.PENDING).length;
+    const delivered = notifications.filter((n) => n.status === NotificationStatus.DELIVERED).length;
+    const failed = notifications.filter((n) => n.status === NotificationStatus.FAILED).length;
+    const pending = notifications.filter((n) => n.status === NotificationStatus.PENDING).length;
 
     return {
-      period: 'Last 30 days',
+      period: "Last 30 days",
       scheduledMessages: total,
       delivered,
       failed,
       pending,
       deliveryRate: total > 0 ? (delivered / total) * 100 : 0,
-      note: 'Analytics only include scheduled messages. For immediate sends, use provider dashboards.',
+      note: "Analytics only include scheduled messages. For immediate sends, use provider dashboards.",
     };
   }
 
@@ -298,14 +305,14 @@ export class AnalyticsService {
   }
 
   async getTopProviders(tenantId: string, ...args: any[]): Promise<any[]> {
-    this.logger.warn('Provider rankings not available in transport mode.');
+    this.logger.warn("Provider rankings not available in transport mode.");
     return [];
   }
 
   async getDeliveryTrends(tenantId: string, ...args: any[]): Promise<any> {
     const startDate = new Date();
     startDate.setDate(startDate.getDate() - 30);
-    
+
     return this.getTimeSeriesAnalytics({
       tenantId,
       startDate,
@@ -314,36 +321,36 @@ export class AnalyticsService {
   }
 
   async getProjectAnalytics(projectId: string, ...args: any[]): Promise<any> {
-    this.logger.warn('Project analytics not available in transport mode.');
+    this.logger.warn("Project analytics not available in transport mode.");
     return {
       projectId,
-      note: 'Analytics limited in transport mode. Use provider dashboards.',
+      note: "Analytics limited in transport mode. Use provider dashboards.",
     };
   }
 
   async getBrandAnalytics(brandId: string, ...args: any[]): Promise<any> {
-    this.logger.warn('Brand analytics not available in transport mode.');
+    this.logger.warn("Brand analytics not available in transport mode.");
     return {
       brandId,
-      note: 'Analytics limited in transport mode. Use provider dashboards.',
+      note: "Analytics limited in transport mode. Use provider dashboards.",
     };
   }
 
   async compareProjects(tenantId: string, projectIds: string[], ...args: any[]): Promise<any> {
-    this.logger.warn('Project comparison not available in transport mode.');
+    this.logger.warn("Project comparison not available in transport mode.");
     return {
       tenantId,
       projects: projectIds,
-      note: 'Comparison not available in transport mode.',
+      note: "Comparison not available in transport mode.",
     };
   }
 
   async compareBrands(tenantId: string, brandIds: string[], ...args: any[]): Promise<any> {
-    this.logger.warn('Brand comparison not available in transport mode.');
+    this.logger.warn("Brand comparison not available in transport mode.");
     return {
       tenantId,
       brands: brandIds,
-      note: 'Comparison not available in transport mode.',
+      note: "Comparison not available in transport mode.",
     };
   }
 }

@@ -1,14 +1,28 @@
 // Core types based on the OpenAPI specification
 
-export type NotificationChannel = 'email' | 'sms' | 'push' | 'whatsapp' | 'in_app' | 'voice';
+export type NotificationChannel = "email" | "sms" | "push" | "whatsapp" | "in_app" | "voice";
 
-export type NotificationPriority = 'low' | 'normal' | 'high' | 'urgent';
+export type NotificationPriority = "low" | "normal" | "high" | "urgent";
 
-export type NotificationStatus = 'pending' | 'processing' | 'sent' | 'delivered' | 'failed' | 'cancelled' | 'scheduled';
+export type NotificationStatus =
+  | "pending"
+  | "processing"
+  | "sent"
+  | "delivered"
+  | "failed"
+  | "cancelled"
+  | "scheduled";
 
-export type RecipientStatus = 'pending' | 'sent' | 'delivered' | 'failed' | 'bounced' | 'opened' | 'clicked';
+export type RecipientStatus =
+  | "pending"
+  | "sent"
+  | "delivered"
+  | "failed"
+  | "bounced"
+  | "opened"
+  | "clicked";
 
-export type DeliveryStatus = 'pending' | 'sent' | 'delivered' | 'failed' | 'bounced';
+export type DeliveryStatus = "pending" | "sent" | "delivered" | "failed" | "bounced";
 
 export interface Recipient {
   email?: string;
@@ -157,8 +171,6 @@ export interface ApiError {
   details?: Record<string, any>;
 }
 
-
-
 export interface ListNotificationsParams {
   page?: number;
   limit?: number;
@@ -203,7 +215,7 @@ export interface ScheduleOptions {
 }
 
 export interface RecurringSchedule {
-  frequency: 'daily' | 'weekly' | 'monthly' | 'yearly';
+  frequency: "daily" | "weekly" | "monthly" | "yearly";
   interval?: number; // Every N frequency units (e.g., every 2 weeks)
   daysOfWeek?: number[]; // For weekly frequency
   dayOfMonth?: number; // For monthly frequency
@@ -217,11 +229,11 @@ export interface InAppNotification {
   id: string;
   title: string;
   message: string;
-  type: 'info' | 'success' | 'warning' | 'error';
+  type: "info" | "success" | "warning" | "error";
   category?: string;
   actionUrl?: string;
   data?: Record<string, any>;
-  status: 'read' | 'unread';
+  status: "read" | "unread";
   createdAt: string;
   readAt?: string;
   expiresAt?: string;
@@ -247,13 +259,13 @@ export interface PushNotification {
   title: string;
   body: string;
   data?: Record<string, any>;
-  status: 'pending' | 'sent' | 'delivered' | 'failed';
-  platform?: 'ios' | 'android' | 'web';
+  status: "pending" | "sent" | "delivered" | "failed";
+  platform?: "ios" | "android" | "web";
   sentAt?: string;
   deliveredAt?: string;
   failedAt?: string;
   error?: string;
-  priority: 'normal' | 'high';
+  priority: "normal" | "high";
   badge?: number;
   sound?: string;
   category?: string;
@@ -282,7 +294,7 @@ export interface PushStats {
 // Device Registration Types
 export interface DeviceRegistration {
   deviceToken: string;
-  platform: 'ios' | 'android' | 'web';
+  platform: "ios" | "android" | "web";
   userId?: string;
   metadata?: Record<string, any>;
 }

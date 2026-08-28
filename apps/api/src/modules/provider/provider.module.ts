@@ -7,9 +7,15 @@ import { ProviderConfigValidator } from "./provider-config-validator";
 import { ProviderConfig } from "./provider-config.entity";
 import { ProviderEncryptionService } from "./provider-encryption.service";
 import { ProviderPerformanceTracker } from "./provider-performance-tracker";
+import { ProviderConfigLifecycleService } from "./provider-config-lifecycle.service";
+import { ProviderConfigQueryService } from "./provider-config-query.service";
+import { ProviderRuntimeService } from "./provider-runtime.service";
 import { ProviderService } from "./provider.service";
 
 // Import BYOP services and new orchestrator
+import { ProviderOrchestratorDeliveryService } from "./provider-orchestrator-delivery.service";
+import { ProviderOrchestratorRegistry } from "./provider-orchestrator.registry";
+import { ProviderOrchestratorSupportService } from "./provider-orchestrator.support.service";
 import { ProviderOrchestratorService } from "./provider-orchestrator.service";
 import { QuotaAwareOrchestratorService } from "./services/quota-aware-orchestrator.service";
 import { BillingModule } from "../billing/billing.module";
@@ -97,6 +103,9 @@ import { TenantMemberModule } from "../tenant-member/tenant-member.module";
   ],
   providers: [
     ProviderService,
+    ProviderRuntimeService,
+    ProviderConfigQueryService,
+    ProviderConfigLifecycleService,
     ProviderPerformanceTracker,
     ProviderConfigValidator,
     ProviderEncryptionService,
@@ -108,6 +117,9 @@ import { TenantMemberModule } from "../tenant-member/tenant-member.module";
     ProviderWebhookService,
     RoutingOptimizerService,
     // Orchestrator services
+    ProviderOrchestratorRegistry,
+    ProviderOrchestratorSupportService,
+    ProviderOrchestratorDeliveryService,
     ProviderOrchestratorService,
     // QuotaAwareOrchestratorService,
     ProviderConfigRepository,

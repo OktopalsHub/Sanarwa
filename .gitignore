@@ -47,13 +47,16 @@ skills-lock.json
 .DS_Store
 Thumbs.db
 
-*coverage*
-*logs*
-*temp*
-*cache*
-*backup*
+# Local scratch dirs (do not use *temp*/*cache*/*logs* — those match source names like template.ts)
+**/tmp/
+**/temp/
+**/.cache/
+**/logs/
+*.tmp
+*.bak
+**/backup/
 
-# Mintlify docs (must follow *temp* — that pattern matches "template" filenames)
+# Mintlify docs
 !docs/
 !docs/**
 

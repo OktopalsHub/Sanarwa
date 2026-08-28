@@ -1,19 +1,34 @@
-'use client';
+"use client";
 
-import { Filter, Send, Target, User, Users } from '@/lib/icons';
+import { Filter, Send, Target, User, Users } from "@/lib/icons";
 
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Separator } from '@/components/ui/separator';
-import { campaignApi } from '@/lib/api/campaigns';
-import type { AudienceConfig, AudienceFilter } from '@/lib/types/campaign';
-import { useQuery } from '@tanstack/react-query';
-import { ChevronDownIcon, ChevronUpIcon, FunnelIcon, InformationCircleIcon, PlusIcon, CursorArrowRaysIcon, UsersIcon, XMarkIcon } from '@heroicons/react/24/outline'
-import { useEffect, useState } from 'react';
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Separator } from "@/components/ui/separator";
+import { campaignApi } from "@/lib/api/campaigns";
+import type { AudienceConfig, AudienceFilter } from "@/lib/types/campaign";
+import { useQuery } from "@tanstack/react-query";
+import {
+  ChevronDownIcon,
+  ChevronUpIcon,
+  FunnelIcon,
+  InformationCircleIcon,
+  PlusIcon,
+  CursorArrowRaysIcon,
+  UsersIcon,
+  XMarkIcon,
+} from "@heroicons/react/24/outline";
+import { useEffect, useState } from "react";
 
 interface AudienceTargetingStepProps {
   data?: AudienceConfig;
@@ -22,82 +37,86 @@ interface AudienceTargetingStepProps {
 
 const AUDIENCE_TYPES = [
   {
-    value: 'all' as const,
-    label: 'All Users',
-    description: 'Send to your entire audience',
+    value: "all" as const,
+    label: "All Users",
+    description: "Send to your entire audience",
     icon: Users,
   },
   {
-    value: 'segment' as const,
-    label: 'Saved Segments',
-    description: 'Use pre-defined audience segments',
+    value: "segment" as const,
+    label: "Saved Segments",
+    description: "Use pre-defined audience segments",
     icon: Target,
   },
   {
-    value: 'custom' as const,
-    label: 'Custom Filters',
-    description: 'Create custom audience filters',
+    value: "custom" as const,
+    label: "Custom Filters",
+    description: "Create custom audience filters",
     icon: Filter,
   },
 ];
 
 const FILTER_FIELDS = [
-  { value: 'email', label: 'Email', type: 'text' },
-  { value: 'name', label: 'Name', type: 'text' },
-  { value: 'country', label: 'Country', type: 'text' },
-  { value: 'city', label: 'City', type: 'text' },
-  { value: 'age', label: 'Age', type: 'number' },
-  { value: 'signup_date', label: 'Signup Date', type: 'date' },
-  { value: 'last_active', label: 'Last Active', type: 'date' },
-  { value: 'subscription_status', label: 'Subscription Status', type: 'select', options: ['active', 'inactive', 'trial'] },
-  { value: 'user_type', label: 'User Type', type: 'select', options: ['free', 'premium', 'enterprise'] },
+  { value: "email", label: "Email", type: "text" },
+  { value: "name", label: "Name", type: "text" },
+  { value: "country", label: "Country", type: "text" },
+  { value: "city", label: "City", type: "text" },
+  { value: "age", label: "Age", type: "number" },
+  { value: "signup_date", label: "Signup Date", type: "date" },
+  { value: "last_active", label: "Last Active", type: "date" },
+  {
+    value: "subscription_status",
+    label: "Subscription Status",
+    type: "select",
+    options: ["active", "inactive", "trial"],
+  },
+  {
+    value: "user_type",
+    label: "User Type",
+    type: "select",
+    options: ["free", "premium", "enterprise"],
+  },
 ];
 
 const OPERATORS = [
-  { value: 'equals', label: 'Equals', types: ['text', 'number', 'select'] },
-  { value: 'not_equals', label: 'Not Equals', types: ['text', 'number', 'select'] },
-  { value: 'contains', label: 'Contains', types: ['text'] },
-  { value: 'not_contains', label: 'Does Not Contain', types: ['text'] },
-  { value: 'greater_than', label: 'Greater Than', types: ['number', 'date'] },
-  { value: 'less_than', label: 'Less Than', types: ['number', 'date'] },
-  { value: 'in', label: 'In List', types: ['text', 'select'] },
-  { value: 'not_in', label: 'Not In List', types: ['text', 'select'] },
+  { value: "equals", label: "Equals", types: ["text", "number", "select"] },
+  { value: "not_equals", label: "Not Equals", types: ["text", "number", "select"] },
+  { value: "contains", label: "Contains", types: ["text"] },
+  { value: "not_contains", label: "Does Not Contain", types: ["text"] },
+  { value: "greater_than", label: "Greater Than", types: ["number", "date"] },
+  { value: "less_than", label: "Less Than", types: ["number", "date"] },
+  { value: "in", label: "In List", types: ["text", "select"] },
+  { value: "not_in", label: "Not In List", types: ["text", "select"] },
 ];
 
 export function AudienceTargetingStep({ data, onUpdate }: AudienceTargetingStepProps) {
-  const [audienceType, setAudienceType] = useState<'all' | 'segment' | 'custom'>(
-    data?.type || 'all'
+  const [audienceType, setAudienceType] = useState<"all" | "segment" | "custom">(
+    data?.type || "all",
   );
-  const [selectedSegments, setSelectedSegments] = useState<string[]>(
-    data?.segmentIds || []
-  );
-  const [customFilters, setCustomFilters] = useState<AudienceFilter[]>(
-    data?.customFilters || []
-  );
-  const [estimatedSize, setEstimatedSize] = useState<number | undefined>(
-    data?.estimatedSize
-  );
+  const [selectedSegments, setSelectedSegments] = useState<string[]>(data?.segmentIds || []);
+  const [customFilters, setCustomFilters] = useState<AudienceFilter[]>(data?.customFilters || []);
+  const [estimatedSize, setEstimatedSize] = useState<number | undefined>(data?.estimatedSize);
   const [showAdvanced, setShowAdvanced] = useState(false);
 
   // Fetch audience segments
   const { data: segments, isLoading: segmentsLoading } = useQuery({
-    queryKey: ['audience-segments'],
+    queryKey: ["audience-segments"],
     queryFn: campaignApi.getAudienceSegments,
-    enabled: audienceType === 'segment',
+    enabled: audienceType === "segment",
   });
 
   // Estimate audience size for custom filters
   const { data: sizeEstimate, refetch: refetchEstimate } = useQuery({
-    queryKey: ['audience-estimate', customFilters],
+    queryKey: ["audience-estimate", customFilters],
     queryFn: () => campaignApi.estimateAudienceSize(customFilters),
-    enabled: audienceType === 'custom' && customFilters.length > 0,
+    enabled: audienceType === "custom" && customFilters.length > 0,
   });
 
   useEffect(() => {
     const config: AudienceConfig = {
       type: audienceType,
-      ...(audienceType === 'segment' && { segmentIds: selectedSegments }),
-      ...(audienceType === 'custom' && { customFilters }),
+      ...(audienceType === "segment" && { segmentIds: selectedSegments }),
+      ...(audienceType === "custom" && { customFilters }),
       ...(estimatedSize && { estimatedSize }),
     };
     onUpdate(config);
@@ -109,7 +128,7 @@ export function AudienceTargetingStep({ data, onUpdate }: AudienceTargetingStepP
     }
   }, [sizeEstimate]);
 
-  const handleAudienceTypeChange = (type: 'all' | 'segment' | 'custom') => {
+  const handleAudienceTypeChange = (type: "all" | "segment" | "custom") => {
     setAudienceType(type);
     setSelectedSegments([]);
     setCustomFilters([]);
@@ -118,16 +137,16 @@ export function AudienceTargetingStep({ data, onUpdate }: AudienceTargetingStepP
 
   const handleSegmentToggle = (segmentId: string) => {
     const newSegments = selectedSegments.includes(segmentId)
-      ? selectedSegments.filter(id => id !== segmentId)
+      ? selectedSegments.filter((id) => id !== segmentId)
       : [...selectedSegments, segmentId];
     setSelectedSegments(newSegments);
   };
 
   const addCustomFilter = () => {
     const newFilter: AudienceFilter = {
-      field: 'email',
-      operator: 'equals',
-      value: '',
+      field: "email",
+      operator: "equals",
+      value: "",
     };
     setCustomFilters([...customFilters, newFilter]);
   };
@@ -143,13 +162,13 @@ export function AudienceTargetingStep({ data, onUpdate }: AudienceTargetingStepP
   };
 
   const getAvailableOperators = (fieldType: string) => {
-    return OPERATORS.filter(op => op.types.includes(fieldType));
+    return OPERATORS.filter((op) => op.types.includes(fieldType));
   };
 
   const renderFilterValue = (filter: AudienceFilter, index: number) => {
-    const field = FILTER_FIELDS.find(f => f.value === filter.field);
+    const field = FILTER_FIELDS.find((f) => f.value === filter.field);
 
-    if (field?.type === 'select' && field.options) {
+    if (field?.type === "select" && field.options) {
       return (
         <Select
           value={filter.value}
@@ -169,7 +188,7 @@ export function AudienceTargetingStep({ data, onUpdate }: AudienceTargetingStepP
       );
     }
 
-    if (field?.type === 'date') {
+    if (field?.type === "date") {
       return (
         <Input
           type="date"
@@ -179,7 +198,7 @@ export function AudienceTargetingStep({ data, onUpdate }: AudienceTargetingStepP
       );
     }
 
-    if (field?.type === 'number') {
+    if (field?.type === "number") {
       return (
         <Input
           type="number"
@@ -212,16 +231,20 @@ export function AudienceTargetingStep({ data, onUpdate }: AudienceTargetingStepP
             return (
               <Card
                 key={type.value}
-                className={`cursor-pointer transition-all hover:shadow-md ${isSelected
-                  ? 'ring-2 ring-primary border-primary bg-primary/5'
-                  : 'hover:border-primary/50'
-                  }`}
+                className={`cursor-pointer transition-all hover:shadow-md ${
+                  isSelected
+                    ? "ring-2 ring-primary border-primary bg-primary/5"
+                    : "hover:border-primary/50"
+                }`}
                 onClick={() => handleAudienceTypeChange(type.value)}
               >
                 <CardHeader className="pb-3">
                   <div className="flex items-center gap-3">
-                    <div className={`p-2 rounded-lg ${isSelected ? 'bg-primary text-primary-foreground' : 'bg-muted'
-                      }`}>
+                    <div
+                      className={`p-2 rounded-lg ${
+                        isSelected ? "bg-primary text-primary-foreground" : "bg-muted"
+                      }`}
+                    >
                       <Icon className="w-4 h-4" />
                     </div>
                     <div>
@@ -237,7 +260,7 @@ export function AudienceTargetingStep({ data, onUpdate }: AudienceTargetingStepP
       </div>
 
       {/* Segment Selection */}
-      {audienceType === 'segment' && (
+      {audienceType === "segment" && (
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <Label className="text-base font-medium">Select Segments</Label>
@@ -248,18 +271,17 @@ export function AudienceTargetingStep({ data, onUpdate }: AudienceTargetingStepP
           </div>
 
           {segmentsLoading ? (
-            <div className="text-center py-8 text-muted-foreground">
-              Loading segments...
-            </div>
+            <div className="text-center py-8 text-muted-foreground">Loading segments...</div>
           ) : segments && segments.length > 0 ? (
             <div className="grid gap-3">
               {segments.map((segment) => (
                 <Card
                   key={segment.id}
-                  className={`cursor-pointer transition-all ${selectedSegments.includes(segment.id)
-                    ? 'ring-2 ring-primary border-primary bg-primary/5'
-                    : 'hover:border-primary/50'
-                    }`}
+                  className={`cursor-pointer transition-all ${
+                    selectedSegments.includes(segment.id)
+                      ? "ring-2 ring-primary border-primary bg-primary/5"
+                      : "hover:border-primary/50"
+                  }`}
                   onClick={() => handleSegmentToggle(segment.id)}
                 >
                   <CardContent className="pt-4">
@@ -272,9 +294,7 @@ export function AudienceTargetingStep({ data, onUpdate }: AudienceTargetingStepP
                           </p>
                         )}
                       </div>
-                      <Badge variant="outline">
-                        {segment.size.toLocaleString()} users
-                      </Badge>
+                      <Badge variant="outline">{segment.size.toLocaleString()} users</Badge>
                     </div>
                   </CardContent>
                 </Card>
@@ -295,7 +315,7 @@ export function AudienceTargetingStep({ data, onUpdate }: AudienceTargetingStepP
       )}
 
       {/* Custom Filters */}
-      {audienceType === 'custom' && (
+      {audienceType === "custom" && (
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <Label className="text-base font-medium">Custom Filters</Label>
@@ -318,8 +338,8 @@ export function AudienceTargetingStep({ data, onUpdate }: AudienceTargetingStepP
           ) : (
             <div className="space-y-3">
               {customFilters.map((filter, index) => {
-                const field = FILTER_FIELDS.find(f => f.value === filter.field);
-                const availableOperators = getAvailableOperators(field?.type || 'text');
+                const field = FILTER_FIELDS.find((f) => f.value === filter.field);
+                const availableOperators = getAvailableOperators(field?.type || "text");
 
                 return (
                   <Card key={index}>
@@ -329,11 +349,13 @@ export function AudienceTargetingStep({ data, onUpdate }: AudienceTargetingStepP
                           <Label className="text-xs">Field</Label>
                           <Select
                             value={filter.field}
-                            onValueChange={(value) => updateCustomFilter(index, {
-                              field: value,
-                              operator: 'equals',
-                              value: ''
-                            })}
+                            onValueChange={(value) =>
+                              updateCustomFilter(index, {
+                                field: value,
+                                operator: "equals",
+                                value: "",
+                              })
+                            }
                           >
                             <SelectTrigger>
                               <SelectValue />
@@ -352,10 +374,12 @@ export function AudienceTargetingStep({ data, onUpdate }: AudienceTargetingStepP
                           <Label className="text-xs">Operator</Label>
                           <Select
                             value={filter.operator}
-                            onValueChange={(value) => updateCustomFilter(index, {
-                              operator: value as any,
-                              value: ''
-                            })}
+                            onValueChange={(value) =>
+                              updateCustomFilter(index, {
+                                operator: value as any,
+                                value: "",
+                              })
+                            }
                           >
                             <SelectTrigger>
                               <SelectValue />
@@ -420,7 +444,11 @@ export function AudienceTargetingStep({ data, onUpdate }: AudienceTargetingStepP
           className="w-full justify-between"
         >
           <span>Advanced Options</span>
-          {showAdvanced ? <ChevronUpIcon className="w-4 h-4" /> : <ChevronDownIcon className="w-4 h-4" />}
+          {showAdvanced ? (
+            <ChevronUpIcon className="w-4 h-4" />
+          ) : (
+            <ChevronDownIcon className="w-4 h-4" />
+          )}
         </Button>
 
         {showAdvanced && (

@@ -1,7 +1,7 @@
 "use client";
 
-import { Skeleton } from '@/components/ui/skeleton';
-import { Suspense, lazy } from 'react';
+import { Skeleton } from "@/components/ui/skeleton";
+import { Suspense, lazy } from "react";
 
 // Loading fallback components
 export function ComponentSkeleton({ className }: { className?: string }) {
@@ -67,45 +67,33 @@ export function FormSkeleton() {
 
 // Lazy-loaded components with proper fallbacks
 export const LazyCampaignBuilder = lazy(() =>
-  import('@/components/campaigns/campaign-wizard').then(module => ({
-    default: module.CampaignWizard
-  }))
+  import("@/components/campaigns/campaign-wizard").then((module) => ({
+    default: module.CampaignWizard,
+  })),
 );
 
 export const LazyWorkflowCanvas = lazy(() =>
-  import('@/components/workflows/workflow-canvas').then(module => ({
-    default: module.WorkflowCanvas
-  }))
+  import("@/components/workflows/workflow-canvas").then((module) => ({
+    default: module.WorkflowCanvas,
+  })),
 );
 
 export const LazyAnalyticsDashboard = lazy(() =>
-  import('@/components/analytics/analytics-dashboard').then(module => ({
-    default: module.AnalyticsDashboard
-  }))
-);
-
-export const LazyTemplateEditor = lazy(() =>
-  import('@/components/templates/template-editor').then(module => ({
-    default: module.TemplateEditor
-  }))
-);
-
-export const LazyRichTextEditor = lazy(() =>
-  import('@/components/templates/rich-text-editor').then(module => ({
-    default: module.RichTextEditor
-  }))
+  import("@/components/analytics/analytics-dashboard").then((module) => ({
+    default: module.AnalyticsDashboard,
+  })),
 );
 
 export const LazyBrandingConfigurator = lazy(() =>
-  import('@/components/branding/branding-configurator').then(module => ({
-    default: module.BrandingConfigurator
-  }))
+  import("@/components/branding/branding-configurator").then((module) => ({
+    default: module.BrandingConfigurator,
+  })),
 );
 
 export const LazyTeamManagement = lazy(() =>
-  import('@/components/tenant/team-management').then(module => ({
-    default: module.TeamManagement
-  }))
+  import("@/components/tenant/team-management").then((module) => ({
+    default: module.TeamManagement,
+  })),
 );
 
 // Wrapper components with Suspense
@@ -144,22 +132,6 @@ export function LazyAnalyticsDashboardWrapper(props: any) {
   return (
     <LazyWrapper fallback={<DashboardSkeleton />}>
       <LazyAnalyticsDashboard {...props} />
-    </LazyWrapper>
-  );
-}
-
-export function LazyTemplateEditorWrapper(props: any) {
-  return (
-    <LazyWrapper fallback={<FormSkeleton />}>
-      <LazyTemplateEditor {...props} />
-    </LazyWrapper>
-  );
-}
-
-export function LazyRichTextEditorWrapper(props: any) {
-  return (
-    <LazyWrapper fallback={<Skeleton className="h-64 w-full" />}>
-      <LazyRichTextEditor {...props} />
     </LazyWrapper>
   );
 }

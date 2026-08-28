@@ -12,8 +12,8 @@ pnpm install
 pnpm dev
 ```
 
-- App: http://localhost:3000  
-- API: http://localhost:9000  
+- App: http://localhost:3000
+- API: http://localhost:9000
 
 ## Build for production
 
@@ -23,12 +23,12 @@ pnpm build
 
 ## What you need configured
 
-| Setting | Purpose |
-|---------|---------|
-| `DATABASE_URL` | Postgres connection |
-| `REDIS_URL` | Cache / queues |
+| Setting                                  | Purpose                                            |
+| ---------------------------------------- | -------------------------------------------------- |
+| `DATABASE_URL`                           | Postgres connection                                |
+| `REDIS_URL`                              | Cache / queues                                     |
 | `JWT_AUTH_SECRET` / `JWT_REFRESH_SECRET` | JWT access + refresh signing (long random strings) |
-| `PROVIDER_ENCRYPTION_KEY` | Encrypts provider credentials |
-| Provider keys (Telnyx, SES, etc.) | Only for channels you actually use |
+| `PROVIDER_ENCRYPTION_KEY`                | Encrypts provider credentials                      |
+| Provider keys (Telnyx, SES, etc.)        | Only for channels you actually use                 |
 
 Optional: `SENTRY_DSN` for error reporting in production.

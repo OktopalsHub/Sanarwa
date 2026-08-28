@@ -33,6 +33,7 @@ import { BrandSesService } from "./services/brand-ses.service";
   ],
   exports: [
     BrandService,
+    BrandMessagingConfigService,
     BRAND_REPO,
     DnsVerificationService,
     SESVerificationService,

@@ -1,7 +1,7 @@
 "use client";
 
-import { PerformanceMonitor, reportWebVitals } from '@/lib/utils/performance';
-import { useEffect } from 'react';
+import { PerformanceMonitor, reportWebVitals } from "@/lib/utils/performance";
+import { useEffect } from "react";
 
 interface PerformanceMonitorProps {
   enableWebVitals?: boolean;
@@ -12,7 +12,7 @@ interface PerformanceMonitorProps {
 export function PerformanceMonitorComponent({
   enableWebVitals = true,
   enableCustomMetrics = true,
-  reportingEndpoint
+  reportingEndpoint,
 }: PerformanceMonitorProps) {
   useEffect(() => {
     if (!enableWebVitals && !enableCustomMetrics) return;
@@ -24,7 +24,7 @@ export function PerformanceMonitorComponent({
       // Monitor Core Web Vitals
       PerformanceMonitor.observeLCP((entry) => {
         const metric = {
-          name: 'LCP',
+          name: "LCP",
           value: entry.startTime,
           id: `lcp-${Date.now()}`,
           entries: [entry],
@@ -39,7 +39,7 @@ export function PerformanceMonitorComponent({
       PerformanceMonitor.observeFID((entry) => {
         const fidEntry = entry as any; // Type assertion for FID entry
         const metric = {
-          name: 'FID',
+          name: "FID",
           value: (fidEntry.processingStart || entry.startTime) - entry.startTime,
           id: `fid-${Date.now()}`,
           entries: [entry],
@@ -54,7 +54,7 @@ export function PerformanceMonitorComponent({
       PerformanceMonitor.observeCLS((entry) => {
         const clsEntry = entry as any; // Type assertion for CLS entry
         const metric = {
-          name: 'CLS',
+          name: "CLS",
           value: clsEntry.value || 0,
           id: `cls-${Date.now()}`,
           entries: [entry],
@@ -74,52 +74,55 @@ export function PerformanceMonitorComponent({
       const originalReplaceState = history.replaceState;
 
       history.pushState = function (...args) {
-        PerformanceMonitor.startMeasure('route-change');
+        PerformanceMonitor.startMeasure("route-change");
         originalPushState.apply(history, args);
 
         // End measurement after a short delay to capture rendering
         setTimeout(() => {
-          PerformanceMonitor.endMeasure('route-change');
+          PerformanceMonitor.endMeasure("route-change");
         }, 100);
       };
 
       history.replaceState = function (...args) {
-        PerformanceMonitor.startMeasure('route-change');
+        PerformanceMonitor.startMeasure("route-change");
         originalReplaceState.apply(history, args);
 
         setTimeout(() => {
-          PerformanceMonitor.endMeasure('route-change');
+          PerformanceMonitor.endMeasure("route-change");
         }, 100);
       };
 
       // Monitor resource loading
       const observer = new PerformanceObserver((list) => {
         list.getEntries().forEach((entry) => {
-          if (entry.entryType === 'resource') {
+          if (entry.entryType === "resource") {
             const resourceEntry = entry as PerformanceResourceTiming;
 
             // Report slow resources
             if (resourceEntry.duration > 1000) {
-              console.warn('Slow resource detected:', {
+              console.warn("Slow resource detected:", {
                 name: resourceEntry.name,
                 duration: resourceEntry.duration,
                 size: resourceEntry.transferSize,
               });
 
               if (reportingEndpoint) {
-                sendMetricToEndpoint({
-                  name: 'slow-resource',
-                  value: resourceEntry.duration,
-                  resource: resourceEntry.name,
-                  size: resourceEntry.transferSize,
-                }, reportingEndpoint);
+                sendMetricToEndpoint(
+                  {
+                    name: "slow-resource",
+                    value: resourceEntry.duration,
+                    resource: resourceEntry.name,
+                    size: resourceEntry.transferSize,
+                  },
+                  reportingEndpoint,
+                );
               }
             }
           }
         });
       });
 
-      observer.observe({ entryTypes: ['resource'] });
+      observer.observe({ entryTypes: ["resource"] });
 
       // Cleanup function
       cleanup = () => {
@@ -141,9 +144,9 @@ export function PerformanceMonitorComponent({
 async function sendMetricToEndpoint(metric: any, endpoint: string) {
   try {
     await fetch(endpoint, {
-      method: 'POST',
+      method: "POST",
       headers: {
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
       },
       body: JSON.stringify({
         ...metric,
@@ -153,7 +156,7 @@ async function sendMetricToEndpoint(metric: any, endpoint: string) {
       }),
     });
   } catch (error) {
-    console.error('Failed to send metric to endpoint:', error);
+    console.error("Failed to send metric to endpoint:", error);
   }
 }
 
@@ -172,7 +175,7 @@ export function useComponentPerformance(componentName: string) {
 export function useAsyncPerformance() {
   const measureAsync = async function <T>(
     operationName: string,
-    asyncOperation: () => Promise<T>
+    asyncOperation: () => Promise<T>,
   ): Promise<T> {
     PerformanceMonitor.startMeasure(operationName);
 
@@ -192,7 +195,7 @@ export function useAsyncPerformance() {
 // Component for displaying performance metrics (development only)
 export function PerformanceDebugger() {
   useEffect(() => {
-    if (process.env.NODE_ENV !== 'development') return;
+    if (process.env.NODE_ENV !== "development") return;
 
     const interval = setInterval(() => {
       const metrics = PerformanceMonitor.getAllMetrics();
@@ -204,7 +207,7 @@ export function PerformanceDebugger() {
     return () => clearInterval(interval);
   }, []);
 
-  if (process.env.NODE_ENV !== 'development') {
+  if (process.env.NODE_ENV !== "development") {
     return null;
   }
 

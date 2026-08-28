@@ -9,7 +9,7 @@ import {
   MessageDelivery,
 } from "../message-delivery.entity";
 import { Message, MessageStatus, MessagePriority as Priority } from "../message.entity";
-import { NOTIFICATION_DELIVERY_QUEUE, NOTIFICATION_QUEUE } from "./notification-queue.module";
+import { NOTIFICATION_DELIVERY_QUEUE, NOTIFICATION_QUEUE } from "./notification-queue.constants";
 import {
   AlertJobData,
   DeadLetterJobData,

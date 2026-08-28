@@ -1,8 +1,8 @@
 "use client";
 
-import { cn } from '@/lib/utils';
-import { calculateVisibleItems, throttle } from '@/lib/utils/performance';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { cn } from "@/lib/utils";
+import { calculateVisibleItems, throttle } from "@/lib/utils/performance";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 interface VirtualScrollProps<T> {
   items: T[];
@@ -27,13 +27,7 @@ export function VirtualScroll<T>({
   const containerRef = useRef<HTMLDivElement>(null);
 
   const { start, end } = useMemo(() => {
-    return calculateVisibleItems(
-      containerHeight,
-      itemHeight,
-      scrollTop,
-      items.length,
-      overscan
-    );
+    return calculateVisibleItems(containerHeight, itemHeight, scrollTop, items.length, overscan);
   }, [containerHeight, itemHeight, scrollTop, items.length, overscan]);
 
   const visibleItems = useMemo(() => {
@@ -59,22 +53,18 @@ export function VirtualScroll<T>({
       style={{ height: containerHeight }}
       onScroll={handleScroll}
     >
-      <div style={{ height: totalHeight, position: 'relative' }}>
+      <div style={{ height: totalHeight, position: "relative" }}>
         <div
           style={{
             transform: `translateY(${offsetY}px)`,
-            position: 'absolute',
+            position: "absolute",
             top: 0,
             left: 0,
             right: 0,
           }}
         >
           {visibleItems.map(({ item, index }) => (
-            <div
-              key={index}
-              style={{ height: itemHeight }}
-              className="flex items-center"
-            >
+            <div key={index} style={{ height: itemHeight }} className="flex items-center">
               {renderItem(item, index)}
             </div>
           ))}
@@ -123,7 +113,7 @@ export function useVirtualScroll<T>({
     // Binary search for start index
     for (let i = 0; i < positions.length; i++) {
       const position = positions[i];
-      if (typeof position === 'number' && position >= scrollTop) {
+      if (typeof position === "number" && position >= scrollTop) {
         start = Math.max(0, i - 1);
         break;
       }
@@ -132,7 +122,7 @@ export function useVirtualScroll<T>({
     // Find end index
     for (let i = start; i < positions.length; i++) {
       const position = positions[i];
-      if (typeof position === 'number' && position > scrollTop + containerHeight) {
+      if (typeof position === "number" && position > scrollTop + containerHeight) {
         end = i;
         break;
       }
@@ -150,7 +140,7 @@ export function useVirtualScroll<T>({
   }, 16);
 
   const measureItem = (index: number, height: number) => {
-    setItemHeights(prev => {
+    setItemHeights((prev) => {
       const newHeights = [...prev];
       newHeights[index] = height;
       return newHeights;
@@ -178,7 +168,7 @@ interface LazyLoadProps {
 export function LazyLoad({
   children,
   placeholder,
-  rootMargin = '50px',
+  rootMargin = "50px",
   threshold = 0.1,
   className,
 }: LazyLoadProps) {
@@ -201,7 +191,7 @@ export function LazyLoad({
       {
         rootMargin,
         threshold,
-      }
+      },
     );
 
     observer.observe(element);
@@ -240,7 +230,10 @@ export function OptimizedList<T>({
 }: OptimizedListProps<T>) {
   if (items.length === 0) {
     return (
-      <div className={cn("flex items-center justify-center", className)} style={{ height: containerHeight }}>
+      <div
+        className={cn("flex items-center justify-center", className)}
+        style={{ height: containerHeight }}
+      >
         {emptyPlaceholder || <div className="text-muted-foreground">No items to display</div>}
       </div>
     );

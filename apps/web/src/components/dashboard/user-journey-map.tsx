@@ -1,9 +1,18 @@
 "use client";
 
-import { User } from '@/lib/icons';
+import { User } from "@/lib/icons";
 
 import { Card } from "@/components/ui/card";
-import { SignalIcon, ArrowRightIcon, EnvelopeIcon, ChatBubbleLeftRightIcon, DevicePhoneMobileIcon, UserIcon, CheckCircleIcon, XCircleIcon } from '@heroicons/react/24/outline'
+import {
+  SignalIcon,
+  ArrowRightIcon,
+  EnvelopeIcon,
+  ChatBubbleLeftRightIcon,
+  DevicePhoneMobileIcon,
+  UserIcon,
+  CheckCircleIcon,
+  XCircleIcon,
+} from "@heroicons/react/24/outline";
 
 interface JourneyStep {
   id: string;
@@ -42,9 +51,7 @@ export function UserJourneyMap({ steps, userIdentifier }: UserJourneyMapProps) {
       <div className="mb-8 flex items-center justify-between">
         <div>
           <h3 className="text-lg font-semibold">User Journey</h3>
-          <p className="text-muted-foreground text-sm">
-            Timeline for {userIdentifier}
-          </p>
+          <p className="text-muted-foreground text-sm">Timeline for {userIdentifier}</p>
         </div>
         <div className="bg-primary/10 text-primary rounded-full px-3 py-1 text-xs font-medium">
           {steps.length} Interactions
@@ -61,7 +68,7 @@ export function UserJourneyMap({ steps, userIdentifier }: UserJourneyMapProps) {
               {/* Icon bubble */}
               <div
                 className={`relative z-10 flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full border bg-background shadow-sm ${getStatusColor(
-                  step.status
+                  step.status,
                 )}`}
               >
                 {getIcon(step.type, step.channel)}
@@ -81,9 +88,7 @@ export function UserJourneyMap({ steps, userIdentifier }: UserJourneyMapProps) {
               <div className="glass border-border/50 flex-1 rounded-lg border p-4 transition-all hover:shadow-md">
                 <div className="flex flex-col justify-between gap-2 sm:flex-row sm:items-center">
                   <div>
-                    <h4 className="font-medium capitalize">
-                      {step.type.replace(/_/g, " ")}
-                    </h4>
+                    <h4 className="font-medium capitalize">{step.type.replace(/_/g, " ")}</h4>
                     <p className="text-muted-foreground text-sm">
                       {new Date(step.timestamp).toLocaleString()}
                     </p>
@@ -100,12 +105,8 @@ export function UserJourneyMap({ steps, userIdentifier }: UserJourneyMapProps) {
                     <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
                       {Object.entries(step.details).map(([key, value]) => (
                         <div key={key} className="flex flex-col">
-                          <span className="text-muted-foreground text-xs uppercase">
-                            {key}
-                          </span>
-                          <span className="truncate font-medium">
-                            {String(value)}
-                          </span>
+                          <span className="text-muted-foreground text-xs uppercase">{key}</span>
+                          <span className="truncate font-medium">{String(value)}</span>
                         </div>
                       ))}
                     </div>

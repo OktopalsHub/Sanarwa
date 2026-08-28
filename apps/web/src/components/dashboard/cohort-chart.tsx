@@ -1,14 +1,9 @@
 "use client";
 
-import { User, Users } from '@/lib/icons';
+import { User, Users } from "@/lib/icons";
 
 import { Card } from "@/components/ui/card";
-import {
-    Tooltip,
-    TooltipContent,
-    TooltipProvider,
-    TooltipTrigger,
-} from "@/components/ui/tooltip";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface CohortData {
   date: string;
@@ -28,9 +23,9 @@ export function CohortChart({
   description = "Percentage of users returning over time",
 }: CohortChartProps) {
   // Get all unique periods (keys from retention objects)
-  const periods = Array.from(
-    new Set(data.flatMap((item) => Object.keys(item.retention)))
-  ).sort((a, b) => parseInt(a) - parseInt(b));
+  const periods = Array.from(new Set(data.flatMap((item) => Object.keys(item.retention)))).sort(
+    (a, b) => parseInt(a) - parseInt(b),
+  );
 
   const getRetentionColor = (percentage: number) => {
     // Gradient from red (low) to green (high)
@@ -53,15 +48,10 @@ export function CohortChart({
           {/* Header */}
           <div className="mb-2 flex">
             <div className="w-32 flex-shrink-0 text-sm font-medium">Cohort</div>
-            <div className="w-24 flex-shrink-0 text-center text-sm font-medium">
-              Users
-            </div>
+            <div className="w-24 flex-shrink-0 text-center text-sm font-medium">Users</div>
             <div className="flex flex-1">
               {periods.map((period) => (
-                <div
-                  key={period}
-                  className="flex-1 text-center text-sm font-medium"
-                >
+                <div key={period} className="flex-1 text-center text-sm font-medium">
                   {period === "0" ? "Month 0" : `Month ${period}`}
                 </div>
               ))}
@@ -92,19 +82,14 @@ export function CohortChart({
                               <TooltipTrigger asChild>
                                 <div
                                   className={`flex h-8 w-full items-center justify-center rounded text-xs font-medium transition-colors ${getRetentionColor(
-                                    value
+                                    value,
                                   )}`}
                                 >
                                   {value}%
                                 </div>
                               </TooltipTrigger>
                               <TooltipContent>
-                                <p>
-                                  {Math.round(
-                                    (cohort.totalUsers * value) / 100
-                                  )}{" "}
-                                  users
-                                </p>
+                                <p>{Math.round((cohort.totalUsers * value) / 100)} users</p>
                               </TooltipContent>
                             </Tooltip>
                           </TooltipProvider>

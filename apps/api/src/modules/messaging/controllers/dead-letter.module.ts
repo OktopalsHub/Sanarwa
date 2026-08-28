@@ -1,6 +1,7 @@
 import { BullModule } from "@nestjs/bull";
 import { Module } from "@nestjs/common";
-import { NotificationQueueModule, NOTIFICATION_QUEUE } from "../queue/notification-queue.module";
+import { NOTIFICATION_QUEUE } from "../queue/notification-queue.constants";
+import { NotificationQueueModule } from "../queue/notification-queue.module";
 import { DeadLetterProcessor } from "../queue/dead-letter.processor";
 import { DeadLetterController } from "./dead-letter.controller";
 

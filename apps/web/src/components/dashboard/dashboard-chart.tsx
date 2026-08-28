@@ -1,7 +1,7 @@
-'use client';
+"use client";
 
-import { Card } from '@/components/ui/card';
-import { useTheme } from 'next-themes';
+import { Card } from "@/components/ui/card";
+import { useTheme } from "next-themes";
 import {
   Bar,
   BarChart,
@@ -15,7 +15,7 @@ import {
   Tooltip,
   XAxis,
   YAxis,
-} from 'recharts';
+} from "recharts";
 
 interface ChartData {
   name?: string;
@@ -26,7 +26,7 @@ interface ChartData {
 interface DashboardChartProps {
   title: string;
   data: ChartData[];
-  type: 'line' | 'bar' | 'pie';
+  type: "line" | "bar" | "pie";
   dataKey?: string;
   xAxisKey?: string;
   className?: string;
@@ -35,25 +35,25 @@ interface DashboardChartProps {
 }
 
 const COLORS = [
-  'hsl(var(--primary))',
-  'hsl(var(--accent))',
-  'hsl(var(--chart-3))',
-  'hsl(var(--chart-4))',
-  'hsl(var(--chart-5))',
+  "hsl(var(--primary))",
+  "hsl(var(--accent))",
+  "hsl(var(--chart-3))",
+  "hsl(var(--chart-4))",
+  "hsl(var(--chart-5))",
 ];
 
 export function DashboardChart({
   title,
   data,
   type,
-  dataKey = 'value',
-  xAxisKey = 'name',
+  dataKey = "value",
+  xAxisKey = "name",
   className,
   height = 300,
   colors,
 }: DashboardChartProps) {
   const { theme } = useTheme();
-  const isDark = theme === 'dark';
+  const isDark = theme === "dark";
 
   // Use provided colors or fall back to default colors
   const chartColors = colors && colors.length > 0 ? colors : COLORS;
@@ -65,24 +65,17 @@ export function DashboardChart({
 
   const renderChart = (): React.ReactElement | null => {
     switch (type) {
-      case 'line':
+      case "line":
         return (
           <LineChart {...chartProps}>
-            <CartesianGrid
-              strokeDasharray="3 3"
-              stroke={isDark ? '#374151' : '#e5e7eb'}
-            />
-            <XAxis
-              dataKey={xAxisKey}
-              stroke={isDark ? '#9ca3af' : '#6b7280'}
-              fontSize={12}
-            />
-            <YAxis stroke={isDark ? '#9ca3af' : '#6b7280'} fontSize={12} />
+            <CartesianGrid strokeDasharray="3 3" stroke={isDark ? "#374151" : "#e5e7eb"} />
+            <XAxis dataKey={xAxisKey} stroke={isDark ? "#9ca3af" : "#6b7280"} fontSize={12} />
+            <YAxis stroke={isDark ? "#9ca3af" : "#6b7280"} fontSize={12} />
             <Tooltip
               contentStyle={{
-                backgroundColor: isDark ? '#1f2937' : '#ffffff',
-                border: `1px solid ${isDark ? '#374151' : '#e5e7eb'}`,
-                borderRadius: '6px',
+                backgroundColor: isDark ? "#1f2937" : "#ffffff",
+                border: `1px solid ${isDark ? "#374151" : "#e5e7eb"}`,
+                borderRadius: "6px",
               }}
             />
             <Line
@@ -96,31 +89,24 @@ export function DashboardChart({
           </LineChart>
         );
 
-      case 'bar':
+      case "bar":
         return (
           <BarChart {...chartProps}>
-            <CartesianGrid
-              strokeDasharray="3 3"
-              stroke={isDark ? '#374151' : '#e5e7eb'}
-            />
-            <XAxis
-              dataKey={xAxisKey}
-              stroke={isDark ? '#9ca3af' : '#6b7280'}
-              fontSize={12}
-            />
-            <YAxis stroke={isDark ? '#9ca3af' : '#6b7280'} fontSize={12} />
+            <CartesianGrid strokeDasharray="3 3" stroke={isDark ? "#374151" : "#e5e7eb"} />
+            <XAxis dataKey={xAxisKey} stroke={isDark ? "#9ca3af" : "#6b7280"} fontSize={12} />
+            <YAxis stroke={isDark ? "#9ca3af" : "#6b7280"} fontSize={12} />
             <Tooltip
               contentStyle={{
-                backgroundColor: isDark ? '#1f2937' : '#ffffff',
-                border: `1px solid ${isDark ? '#374151' : '#e5e7eb'}`,
-                borderRadius: '6px',
+                backgroundColor: isDark ? "#1f2937" : "#ffffff",
+                border: `1px solid ${isDark ? "#374151" : "#e5e7eb"}`,
+                borderRadius: "6px",
               }}
             />
             <Bar dataKey={dataKey} fill={chartColors[0]} radius={[8, 8, 0, 0]} />
           </BarChart>
         );
 
-      case 'pie':
+      case "pie":
         return (
           <PieChart>
             <Pie
@@ -128,18 +114,13 @@ export function DashboardChart({
               cx="50%"
               cy="50%"
               labelLine={false}
-              label={(entry: any) =>
-                `${entry.name} ${(entry.percent * 100).toFixed(0)}%`
-              }
+              label={(entry: any) => `${entry.name} ${(entry.percent * 100).toFixed(0)}%`}
               outerRadius={80}
               fill="#8884d8"
               dataKey={dataKey}
             >
               {data.map((entry, index) => (
-                <Cell
-                  key={`cell-${index}`}
-                  fill={chartColors[index % chartColors.length]}
-                />
+                <Cell key={`cell-${index}`} fill={chartColors[index % chartColors.length]} />
               ))}
             </Pie>
             <Tooltip />

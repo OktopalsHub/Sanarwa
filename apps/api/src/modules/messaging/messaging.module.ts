@@ -10,6 +10,7 @@ import { NotificationLog } from "../notifications/entities/notification-log.enti
 import { AuthEmailService } from "../auth/services/auth-email.service";
 
 import { DeadLetterProcessor } from "./queue/dead-letter.processor";
+import { DeadLetterAlertService } from "./queue/dead-letter-alert.service";
 import { NotificationQueueModule } from "./queue/notification-queue.module";
 import { MessagingEntitiesModule } from "./shared/messaging-entities.module";
 import { MessagingServicesModule } from "./services/messaging-services.module";
@@ -17,6 +18,9 @@ import { MessagingController } from "./messaging.controller";
 import { MessagesController } from "./messages.controller";
 import { NotificationController } from "./notification.controller";
 import { MessagingService } from "./messaging.service";
+import { MessagingLogService } from "./services/messaging-log.service";
+import { MessagingScheduledService } from "./services/messaging-scheduled.service";
+import { MessagingSendService } from "./services/messaging-send.service";
 import { NotificationService } from "./notification.service";
 import { MessageRepository, MessageDeliveryRepository, DeadLetterRepository } from "./repositories";
 
@@ -35,12 +39,16 @@ import { MessageRepository, MessageDeliveryRepository, DeadLetterRepository } fr
   ],
   controllers: [MessagingController, MessagesController, NotificationController],
   providers: [
+    MessagingSendService,
+    MessagingLogService,
+    MessagingScheduledService,
     MessagingService,
     NotificationService,
     MessageRepository,
     MessageDeliveryRepository,
     DeadLetterRepository,
     DeadLetterProcessor,
+    DeadLetterAlertService,
     AuthEmailService,
   ],
   exports: [

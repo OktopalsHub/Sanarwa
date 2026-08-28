@@ -14,14 +14,17 @@ import {
   StatsQuery,
 } from "../interfaces/messaging-sdk.interface";
 import { MessageDeliveryStatus } from "../message-delivery.entity";
-import { MessageChannel, MessageStatus } from "../message.entity";
+import { MessageStatus } from "../message.entity";
 import { MessagingService } from "../messaging.service";
 import { MessageDeliveryRepository, MessageRepository } from "../repositories";
+import {
+  calculateChannelStats,
+  calculateCompletedAt,
+  calculateEstimatedDelivery,
+  calculateTimeSeriesData,
+  mapToDeliveryReport,
+} from "./messaging-sdk.helpers";
 
-/**
- * SDK Service for External Developer Integration
- * Provides a clean, tenant-aware API for SaaS applications
- */
 @Injectable()
 export class MessagingSDKService implements IMessagingSDK {
   private readonly logger = new Logger(MessagingSDKService.name);
@@ -47,9 +50,7 @@ export class MessagingSDKService implements IMessagingSDK {
       status: request.scheduledAt ? MessageStatus.PENDING : MessageStatus.PROCESSING,
     });
 
-    // If not scheduled, process immediately
     if (!request.scheduledAt) {
-      // Queue for processing (this would typically be done via a job queue)
       await this.messagingService.processMessage(message.id);
     }
 
@@ -60,7 +61,7 @@ export class MessagingSDKService implements IMessagingSDK {
       recipientCount: message.recipients.length,
       scheduledAt: message.scheduledAt,
       createdAt: message.createdAt,
-      estimatedDelivery: this.calculateEstimatedDelivery(message.channels, message.scheduledAt),
+      estimatedDelivery: calculateEstimatedDelivery(message.channels, message.scheduledAt),
     };
   }
 
@@ -81,7 +82,6 @@ export class MessagingSDKService implements IMessagingSDK {
         successCount++;
       } catch (error) {
         failedCount++;
-        // Log error but continue processing other messages
         this.logger.error(`Failed to send message in batch ${batchId}:`, error.message, {
           error: error.stack,
           batchId,
@@ -116,16 +116,15 @@ export class MessagingSDKService implements IMessagingSDK {
       status: message.status,
       channels: message.channels,
       recipients: message.recipients,
-      deliveries: deliveries.map(this.mapToDeliveryReport),
+      deliveries: deliveries.map(mapToDeliveryReport),
       createdAt: message.createdAt,
       sentAt: deliveries.find((d) => d.sentAt)?.sentAt,
-      completedAt: this.calculateCompletedAt(deliveries),
+      completedAt: calculateCompletedAt(deliveries),
       errorMessage: message.errorMessage,
     };
   }
 
   async getDeliveryReports(messageId: string, tenantId?: string): Promise<DeliveryReport[]> {
-    // Verify message belongs to tenant (if tenant ID provided)
     if (tenantId) {
       const message = await this.messageRepository.findById(messageId, false, {
         tenantId,
@@ -136,7 +135,7 @@ export class MessagingSDKService implements IMessagingSDK {
     }
 
     const deliveries = await this.messageDeliveryRepository.findByMessageId(messageId);
-    return deliveries.map(this.mapToDeliveryReport);
+    return deliveries.map(mapToDeliveryReport);
   }
 
   async getMessages(query: MessageQuery, tenantId?: string): Promise<PaginatedMessageResponse> {
@@ -165,7 +164,6 @@ export class MessagingSDKService implements IMessagingSDK {
       createdAt: message.createdAt,
     }));
 
-    // Use new pagination internally but convert to old format for interface compatibility
     const paginatedData = await getPaginationSummary(
       mappedData,
       result.total,
@@ -200,7 +198,6 @@ export class MessagingSDKService implements IMessagingSDK {
   }
 
   async getDeliveryStats(query: StatsQuery, tenantId?: string): Promise<DeliveryStats> {
-    // This would typically use a more optimized query or aggregation
     const whereCondition: any = {
       createdAt: {
         gte: query.startDate,
@@ -220,127 +217,13 @@ export class MessagingSDKService implements IMessagingSDK {
     ).length;
     const failedMessages = messages.filter((m) => m.status === MessageStatus.FAILED).length;
 
-    const channelStats = this.calculateChannelStats(messages, query.channel);
-    const timeSeriesData = this.calculateTimeSeriesData(messages, query.groupBy || "day");
-
     return {
       totalMessages,
       deliveredMessages,
       failedMessages,
       deliveryRate: totalMessages > 0 ? (deliveredMessages / totalMessages) * 100 : 0,
-      channelStats,
-      timeSeriesData,
+      channelStats: calculateChannelStats(messages, query.channel),
+      timeSeriesData: calculateTimeSeriesData(messages, query.groupBy || "day"),
     };
-  }
-
-  private mapToDeliveryReport(delivery: any): DeliveryReport {
-    return {
-      id: delivery.id,
-      channel: delivery.channel,
-      recipient: delivery.recipient,
-      status: delivery.status,
-      providerId: delivery.providerId,
-      providerMessageId: delivery.providerMessageId,
-      sentAt: delivery.sentAt,
-      deliveredAt: delivery.deliveredAt,
-      openedAt: delivery.openedAt,
-      clickedAt: delivery.clickedAt,
-      errorMessage: delivery.errorMessage,
-      retryCount: delivery.retryCount,
-    };
-  }
-
-  private calculateEstimatedDelivery(channels: MessageChannel[], scheduledAt?: Date): Date {
-    const baseTime = scheduledAt || new Date();
-    // Add estimated processing time based on channels
-    const processingTime = channels.includes(MessageChannel.EMAIL) ? 30000 : 5000; // 30s for email, 5s for others
-    return new Date(baseTime.getTime() + processingTime);
-  }
-
-  private calculateCompletedAt(deliveries: any[]): Date | undefined {
-    const lastDelivery = deliveries
-      .filter(
-        (d) =>
-          d.status === MessageDeliveryStatus.DELIVERED || d.status === MessageDeliveryStatus.FAILED,
-      )
-      .toSorted((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())[0];
-
-    return lastDelivery?.deliveredAt || lastDelivery?.createdAt;
-  }
-
-  private calculateChannelStats(messages: any[], filterChannel?: MessageChannel) {
-    const channelMap = new Map();
-
-    messages.forEach((message) => {
-      message.channels.forEach((channel: MessageChannel) => {
-        if (filterChannel && channel !== filterChannel) return;
-
-        if (!channelMap.has(channel)) {
-          channelMap.set(channel, { sent: 0, delivered: 0, failed: 0 });
-        }
-
-        const stats = channelMap.get(channel);
-        stats.sent++;
-
-        const channelDeliveries = message.deliveries.filter((d: any) => d.channel === channel);
-        if (channelDeliveries.some((d: any) => d.status === MessageDeliveryStatus.DELIVERED)) {
-          stats.delivered++;
-        } else if (channelDeliveries.some((d: any) => d.status === MessageDeliveryStatus.FAILED)) {
-          stats.failed++;
-        }
-      });
-    });
-
-    return Array.from(channelMap.entries()).map(([channel, stats]) => ({
-      channel,
-      sent: stats.sent,
-      delivered: stats.delivered,
-      failed: stats.failed,
-      deliveryRate: stats.sent > 0 ? (stats.delivered / stats.sent) * 100 : 0,
-    }));
-  }
-
-  private calculateTimeSeriesData(messages: any[], groupBy: "day" | "week" | "month") {
-    // Implementation would group messages by time period and calculate stats
-    // This is a simplified version
-    const timeMap = new Map();
-
-    messages.forEach((message) => {
-      const date = this.formatDateByGrouping(message.createdAt, groupBy);
-      if (!timeMap.has(date)) {
-        timeMap.set(date, { sent: 0, delivered: 0, failed: 0 });
-      }
-
-      const stats = timeMap.get(date);
-      stats.sent++;
-
-      if (message.deliveries.some((d: any) => d.status === MessageDeliveryStatus.DELIVERED)) {
-        stats.delivered++;
-      } else if (message.status === MessageStatus.FAILED) {
-        stats.failed++;
-      }
-    });
-
-    return Array.from(timeMap.entries()).map(([date, stats]) => ({
-      date,
-      sent: stats.sent,
-      delivered: stats.delivered,
-      failed: stats.failed,
-    }));
-  }
-
-  private formatDateByGrouping(date: Date, groupBy: "day" | "week" | "month"): string {
-    const d = new Date(date);
-    switch (groupBy) {
-      case "day":
-        return d.toISOString().split("T")[0];
-      case "week":
-        const week = Math.ceil(d.getDate() / 7);
-        return `${d.getFullYear()}-${d.getMonth() + 1}-W${week}`;
-      case "month":
-        return `${d.getFullYear()}-${d.getMonth() + 1}`;
-      default:
-        return d.toISOString().split("T")[0];
-    }
   }
 }

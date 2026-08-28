@@ -23,6 +23,7 @@ export default defineConfig({
       "src/modules/billing/test/token-packages.spec.ts",
       "src/modules/billing/test/confirm-token-purchase.spec.ts",
       "src/modules/messaging/test/messaging-log.spec.ts",
+      "src/modules/auth/auth-profile.spec.ts",
     ],
     exclude: ["**/node_modules/**", "**/dist/**"],
     // Never load developer .env that points at real Postgres

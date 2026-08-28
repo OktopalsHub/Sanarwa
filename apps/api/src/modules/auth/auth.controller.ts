@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Get,
   HttpCode,
   HttpStatus,
   Post,
@@ -23,6 +24,16 @@ import { AuthGuard } from "./guards/jwt-auth.guard";
 @Controller("auth")
 export class AuthController {
   constructor(private authService: AuthService) {}
+
+  @Get("profile")
+  @UseGuards(AuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: "Get current user profile" })
+  @ApiResponse({ status: 200, description: "User profile retrieved successfully" })
+  @ApiResponse({ status: 401, description: "Unauthorized - Invalid or missing token" })
+  async getProfile(@Request() req: { user: { sub: string } }) {
+    return this.authService.getProfile(req.user.sub);
+  }
 
   @Post("register")
   @Public()

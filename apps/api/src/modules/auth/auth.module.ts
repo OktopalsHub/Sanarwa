@@ -7,6 +7,8 @@ import { json } from "express";
 import { User } from "../user/entities/user.entity";
 import { AuthController } from "./auth.controller";
 import { AuthService } from "./auth.service";
+import { AuthPasswordService } from "./auth-password.service";
+import { AuthSessionService } from "./auth-session.service";
 import { Account, Session, Verification } from "./entities";
 import { AuthGuard } from "./guards/jwt-auth.guard";
 import { OAuthController } from "./oauth.controller";
@@ -40,7 +42,7 @@ const oauthProviders: Provider[] = [
     }),
   ],
   controllers: [AuthController, OAuthController],
-  providers: [AuthService, AuthGuard, ...oauthProviders],
+  providers: [AuthService, AuthPasswordService, AuthSessionService, AuthGuard, ...oauthProviders],
   exports: [AuthService, AuthGuard, JwtModule, PassportModule],
 })
 export class AuthModule implements NestModule {

@@ -1,13 +1,14 @@
 "use client";
 
-import { User } from "@/lib/icons";
-
 import { AuthDivider } from "@/components/auth/auth-page-shell";
 import { AuthOAuthButtons } from "@/components/auth/auth-oauth-buttons";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/contexts/auth-context";
+import { redirectAfterAuth } from "@/lib/auth/post-auth-redirect";
+import { getTenantPathSegment } from "@/lib/tenant-path";
 import { RegisterCredentials } from "@/lib/types/auth";
+import { toastApiError } from "@/lib/utils/api-error-message";
 import { formatTokens, WELCOME_SIGNUP_TOKENS } from "@/lib/pricing";
 import Link from "@/compat/next-link";
 import { useRouter } from "@/compat/next-navigation";
@@ -24,9 +25,9 @@ function FieldLabel({ htmlFor, children }: { htmlFor: string; children: React.Re
   );
 }
 
-export function RegisterForm() {
+export function RegisterForm({ variant = "standalone" }: { variant?: "standalone" | "dual" }) {
   const router = useRouter();
-  const { register, isLoading, error } = useAuth();
+  const { register, isLoading } = useAuth();
 
   const [formData, setFormData] = useState<RegisterCredentials>({
     firstName: "",
@@ -56,15 +57,15 @@ export function RegisterForm() {
     }
 
     setFormErrors(errors);
+    if (Object.keys(errors).length > 0) {
+      toastApiError(new Error(Object.values(errors)[0]!), "Check the highlighted fields");
+    }
     return Object.keys(errors).length === 0;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
-    if (!validateForm()) {
-      return;
-    }
+    if (!validateForm()) return;
 
     try {
       const registrationData = {
@@ -75,24 +76,19 @@ export function RegisterForm() {
 
       const response = await register(registrationData);
 
-      const tenantSlug = response.tenantSlug || response.tenant?.subdomain || response.tenant?.slug;
-
-      if (tenantSlug) {
-        router.push(`/${tenantSlug}/dashboard`);
+      if (response.tenant) {
+        router.push(`/${getTenantPathSegment(response.tenant)}/dashboard`);
         return;
       }
 
-      const { tenantApi } = await import("@/lib/api/tenant");
-      const tenants = await tenantApi.getTenants();
-      const firstTenant = tenants[0];
-      if (firstTenant) {
-        const slug = firstTenant.slug || firstTenant.subdomain || firstTenant.id;
-        router.push(`/${slug}/dashboard`);
-      } else {
-        router.push("/onboarding");
+      if (response.tenantSlug) {
+        router.push(`/${response.tenantSlug}/dashboard`);
+        return;
       }
+
+      await redirectAfterAuth(router);
     } catch (err) {
-      console.error("Registration failed:", err);
+      toastApiError(err, "Could not create your account");
     }
   };
 
@@ -173,15 +169,6 @@ export function RegisterForm() {
               </p>
             )}
           </div>
-
-          {error && !formErrors.email && !formErrors.password && (
-            <p
-              className="rounded-[var(--radius-input)] border border-[var(--color-danger)]/25 bg-[var(--color-danger)]/5 px-3 py-2 text-sm text-[var(--color-danger)]"
-              role="alert"
-            >
-              {error.message}
-            </p>
-          )}
         </div>
 
         <Button
@@ -194,15 +181,17 @@ export function RegisterForm() {
         </Button>
       </form>
 
-      <p className="hidden text-center text-sm text-[var(--color-muted)] lg:block">
-        Have an account?{" "}
-        <Link
-          href="/login"
-          className="font-medium text-[var(--color-ink)] underline-offset-2 hover:text-[var(--hm-accent)] hover:underline"
-        >
-          Sign in
-        </Link>
-      </p>
+      {variant === "standalone" && (
+        <p className="hidden text-center text-sm text-[var(--color-muted)] lg:block">
+          Have an account?{" "}
+          <Link
+            href="/login"
+            className="font-medium text-[var(--color-ink)] underline-offset-2 hover:text-[var(--hm-accent)] hover:underline"
+          >
+            Sign in
+          </Link>
+        </p>
+      )}
     </div>
   );
 }

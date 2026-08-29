@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Get,
   HttpCode,
   HttpStatus,
   Post,
@@ -68,6 +69,23 @@ export class AuthController {
     const result = await this.authService.login(loginDto);
     this.setAuthCookies(res, result.accessToken, result.refreshToken);
     return res.json(result);
+  }
+
+  @Get("profile")
+  @UseGuards(AuthGuard)
+  @ApiBearerAuth()
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: "Get current user profile" })
+  @ApiResponse({
+    status: 200,
+    description: "User profile retrieved successfully",
+  })
+  @ApiResponse({
+    status: 401,
+    description: "Unauthorized - Invalid or missing token",
+  })
+  async getProfile(@Request() req: any) {
+    return this.authService.getProfile(req.user.id);
   }
 
   @Post("change-password")

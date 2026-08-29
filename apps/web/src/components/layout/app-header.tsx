@@ -26,9 +26,6 @@ export function AppHeader() {
           {/* Notifications */}
           <Button variant="ghost" size="icon" className="relative">
             <BellIcon className="h-5 w-5" />
-            <span className="absolute -top-1 -right-1 h-3 w-3 rounded-full bg-red-500 text-[10px] font-medium text-white flex items-center justify-center">
-              3
-            </span>
             <span className="sr-only">Notifications</span>
           </Button>
 

@@ -39,6 +39,12 @@ export class TenantMemberGuard implements CanActivate {
       throw new ForbiddenException("Tenant ID not found in route parameters");
     }
 
+    const uuidPattern =
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+    if (!uuidPattern.test(tenantId)) {
+      throw new ForbiddenException("Invalid tenant ID");
+    }
+
     try {
       // Get the tenant member for this user and tenant
       const tenantMember = await this.tenantMemberService.getMemberByUserId(

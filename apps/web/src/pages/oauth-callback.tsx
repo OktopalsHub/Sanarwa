@@ -1,21 +1,23 @@
 "use client";
 
-import { useAuth } from "@/contexts/auth-context";
+import { redirectAfterAuth } from "@/lib/auth/post-auth-redirect";
+import { authApi } from "@/lib/api/auth";
+import { toastApiError } from "@/lib/utils/api-error-message";
 import { useRouter, useSearchParams } from "@/compat/next-navigation";
 import { useEffect, useState } from "react";
 
 export default function OAuthCallbackPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { login } = useAuth();
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const handleOAuthCallback = async () => {
       try {
-        const accessToken = searchParams.get("access_token");
-        const refreshToken = searchParams.get("refresh_token");
-        const userStr = searchParams.get("user");
+        const accessToken =
+          searchParams.get("accessToken") || searchParams.get("access_token");
+        const refreshToken =
+          searchParams.get("refreshToken") || searchParams.get("refresh_token");
         const errorParam = searchParams.get("error");
 
         if (errorParam) {
@@ -24,51 +26,45 @@ export default function OAuthCallbackPage() {
           return;
         }
 
-        if (!accessToken || !userStr) {
-          setError("Invalid OAuth callback parameters");
+        if (!accessToken) {
+          setError("Invalid OAuth callback — missing access token");
           setTimeout(() => router.push("/login"), 3000);
           return;
         }
 
-        const user = JSON.parse(decodeURIComponent(userStr));
-
-        // Store tokens manually since OAuth flow bypasses normal login
-        if (typeof window !== "undefined") {
-          localStorage.setItem("notifi_access_token", accessToken);
-          if (refreshToken) {
-            localStorage.setItem("notifi_refresh_token", refreshToken);
-          }
+        authApi.setAuthToken(accessToken);
+        if (refreshToken) {
+          authApi.setRefreshToken(refreshToken);
         }
 
-        // Redirect to dashboard
-        router.push("/dashboard");
-      } catch (error) {
-        console.error("OAuth callback error:", error);
+        await redirectAfterAuth(router);
+      } catch (err) {
+        toastApiError(err, "OAuth sign-in failed");
         setError("Failed to process OAuth callback");
         setTimeout(() => router.push("/login"), 3000);
       }
     };
 
-    handleOAuthCallback();
-  }, [searchParams, router, login]);
+    void handleOAuthCallback();
+  }, [searchParams, router]);
 
   if (error) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background px-4">
-        <div className="text-center space-y-4">
-          <div className="text-destructive text-lg font-medium">Authentication Error</div>
-          <p className="text-muted-foreground">{error}</p>
-          <p className="text-sm text-muted-foreground">Redirecting to login page...</p>
+      <div className="flex min-h-screen items-center justify-center bg-[var(--color-paper)] px-4">
+        <div className="space-y-4 text-center">
+          <div className="text-lg font-medium text-[var(--color-danger)]">Authentication error</div>
+          <p className="text-[var(--color-muted)]">{error}</p>
+          <p className="text-sm text-[var(--color-muted)]">Redirecting to sign in…</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background px-4">
-      <div className="text-center space-y-4">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
-        <p className="text-muted-foreground">Completing authentication...</p>
+    <div className="flex min-h-screen items-center justify-center bg-[var(--color-paper)] px-4">
+      <div className="space-y-4 text-center">
+        <div className="mx-auto size-8 animate-spin rounded-full border-2 border-[var(--color-rule)] border-t-[var(--hm-accent)]" />
+        <p className="text-[var(--color-muted)]">Completing sign in…</p>
       </div>
     </div>
   );

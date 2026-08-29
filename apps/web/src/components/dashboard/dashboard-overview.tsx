@@ -80,7 +80,7 @@ export function DashboardOverview() {
         <DashboardEmpty basePath={basePath} />
       ) : (
         <>
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             <MetricCard
               title="Messages Sent"
               value={(metrics?.totalMessages ?? 0).toLocaleString()}
@@ -107,8 +107,8 @@ export function DashboardOverview() {
             />
           </div>
 
-          <div className="grid gap-6 lg:grid-cols-3">
-            <div className="lg:col-span-2">
+          <div className="grid min-w-0 gap-4 lg:grid-cols-3">
+            <div className="min-w-0 lg:col-span-2">
               <DashboardChart
                 title="Channel Distribution"
                 data={data?.channelDistribution ?? []}
@@ -116,8 +116,9 @@ export function DashboardOverview() {
                 height={300}
               />
             </div>
-            <Card className="p-6">
-              <h3 className="mb-4 text-lg font-semibold">Quick actions</h3>
+            <Card className="border-border bg-card p-6">
+              <h3 className="mb-1 text-base font-semibold">Quick actions</h3>
+              <p className="mb-4 text-sm text-muted-foreground">Common workspace tasks</p>
               <div className="flex flex-col gap-2">
                 <Button asChild variant="outline" className="w-full justify-start">
                   <Link href={`${basePath}/messages`}>

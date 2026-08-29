@@ -158,6 +158,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
   }, []);
 
   const refreshUser = useCallback(async () => {
+    if (!authApi.isAuthenticated()) {
+      dispatch({ type: "AUTH_LOGOUT" });
+      return;
+    }
+
     try {
       dispatch({ type: "AUTH_START" });
       const user = await authApi.getCurrentUser();
@@ -167,6 +172,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       };
       dispatch({ type: "AUTH_SUCCESS", payload: authUser });
     } catch {
+      authApi.clearTokens();
       dispatch({ type: "AUTH_LOGOUT" });
     }
   }, []);

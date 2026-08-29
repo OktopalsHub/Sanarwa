@@ -3,8 +3,11 @@ import {
   Controller,
   Delete,
   Get,
+  Headers,
   HttpCode,
   HttpStatus,
+  NotFoundException,
+  ForbiddenException,
   Patch,
   Post,
   Query,
@@ -128,6 +131,52 @@ export class TenantController {
     @Query() query: UserTenantsQueryDto,
   ): Promise<IPaginatedData<TenantMemberResponseDto>> {
     return this.tenantMemberService.getUserTenantsPaginated(req.user.id, query);
+  }
+
+  @Get("current")
+  @ApiOperation({
+    summary: "Get current tenant",
+    description:
+      "Returns the tenant from X-Tenant-ID when set, otherwise the user's most recently joined tenant",
+  })
+  @ApiResponse({
+    status: 200,
+    description: "Current tenant retrieved successfully",
+    type: TenantResponseDto,
+  })
+  @ApiResponse({
+    status: 401,
+    description: "Unauthorized",
+  })
+  @ApiResponse({
+    status: 403,
+    description: "Forbidden - User is not a member of the requested tenant",
+  })
+  @ApiResponse({
+    status: 404,
+    description: "No tenant found for user",
+  })
+  async getCurrentTenant(
+    @CurrentUser() req: AuthenticatedRequest,
+    @Headers("x-tenant-id") tenantIdHeader?: string,
+  ) {
+    const userId = req.user.id;
+
+    if (tenantIdHeader) {
+      const member = await this.tenantMemberService.getMemberByUserId(tenantIdHeader, userId);
+      if (!member) {
+        throw new ForbiddenException("User is not a member of this tenant");
+      }
+      return this.tenantService.getTenantById(tenantIdHeader);
+    }
+
+    const memberships = await this.tenantMemberService.getUserTenants(userId);
+    const first = memberships[0];
+    if (!first?.tenant?.id) {
+      throw new NotFoundException("No tenant found for user");
+    }
+
+    return this.tenantService.getTenantById(first.tenant.id);
   }
 
   @Get(":tenantId")

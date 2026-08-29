@@ -1,12 +1,12 @@
 import { LoginForm } from "@/components/auth/login-form";
-import { AuthPageShell } from "@/components/auth/auth-page-shell";
+import { LoginPageLayout } from "@/components/auth/login-page-layout";
 import { Suspense } from "react";
 
 function LoginPageContent() {
   return (
-    <AuthPageShell>
+    <LoginPageLayout>
       <LoginForm />
-    </AuthPageShell>
+    </LoginPageLayout>
   );
 }
 

@@ -1,6 +1,8 @@
 "use client";
 
 import { tenantApi } from "@/lib/api/tenant";
+import { getApiErrorMessage } from "@/lib/utils/api-error-message";
+import { toast } from "@/lib/utils/toast";
 import {
   CreateTenantRequest,
   InviteMemberRequest,
@@ -129,34 +131,27 @@ export function TenantProvider({ children }: TenantProviderProps) {
     try {
       dispatch({ type: "TENANT_LOADING" });
 
-      const [tenants, currentTenant] = await Promise.all([
-        tenantApi.getTenants(),
-        tenantApi.getCurrentTenant(),
+      const [membershipsResponse, currentTenant] = await Promise.all([
+        tenantApi.getMyTenants({ limit: 50 }),
+        tenantApi.getCurrentTenant().catch(() => null),
       ]);
 
-      // Get memberships for all tenants
-      const memberships: TenantMember[] = [];
-      for (const tenant of tenants) {
-        try {
-          const tenantMembers = await tenantApi.getTenantMembers(tenant.id);
-          memberships.push(...tenantMembers);
-        } catch (error) {
-          console.error(`Failed to load members for tenant ${tenant.id}:`, error);
-        }
-      }
+      const tenants = membershipsResponse;
 
       dispatch({
         type: "TENANTS_LOADED",
-        payload: { tenants, memberships },
+        payload: { tenants, memberships: [] },
       });
 
       if (currentTenant) {
         dispatch({ type: "CURRENT_TENANT_SET", payload: currentTenant });
       }
     } catch (error) {
+      const message = getApiErrorMessage(error, "Failed to load workspaces");
+      toast.error(message);
       dispatch({
         type: "TENANT_ERROR",
-        payload: error instanceof Error ? error.message : "Failed to load tenants",
+        payload: message,
       });
     }
   }, [isAuthenticated]);
@@ -178,9 +173,11 @@ export function TenantProvider({ children }: TenantProviderProps) {
         console.error("Failed to log tenant switch audit entry:", auditError);
       }
     } catch (error) {
+      const message = getApiErrorMessage(error, "Failed to switch workspace");
+      toast.error(message);
       dispatch({
         type: "TENANT_ERROR",
-        payload: error instanceof Error ? error.message : "Failed to switch tenant",
+        payload: message,
       });
       throw error;
     }
@@ -190,14 +187,26 @@ export function TenantProvider({ children }: TenantProviderProps) {
     try {
       dispatch({ type: "TENANT_LOADING" });
 
-      const tenant = await tenantApi.createTenant(data);
+      const { name, subdomain, slug, description, quotas, settings, billingInfo, contactInfo } =
+        data;
+      const tenant = await tenantApi.createTenant({
+        name,
+        description,
+        subdomain: subdomain || slug,
+        quotas,
+        settings,
+        billingInfo,
+        contactInfo,
+      });
       dispatch({ type: "TENANT_CREATED", payload: tenant });
 
       return tenant;
     } catch (error) {
+      const message = getApiErrorMessage(error, "Failed to create workspace");
+      toast.error(message);
       dispatch({
         type: "TENANT_ERROR",
-        payload: error instanceof Error ? error.message : "Failed to create tenant",
+        payload: message,
       });
       throw error;
     }

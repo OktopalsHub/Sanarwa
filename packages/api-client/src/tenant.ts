@@ -27,6 +27,25 @@ class TenantApiClient {
   // Core Tenant Management Methods
 
   /**
+   * Get tenants the current user belongs to
+   */
+  async getMyTenants(params?: { page?: number; limit?: number }): Promise<Tenant[]> {
+    const response = await this.apiClient.get<
+      | Tenant[]
+      | { records: Array<{ tenant?: Tenant; role?: string; id?: string; status?: string }> }
+    >("/tenants/me", params, { tenantScoped: false });
+
+    if (Array.isArray(response)) {
+      return response;
+    }
+
+    const records = response.records ?? [];
+    return records
+      .map((record) => record.tenant)
+      .filter((tenant): tenant is Tenant => Boolean(tenant?.id));
+  }
+
+  /**
    * Get all tenants with optional filtering and pagination
    * @param params Query parameters for filtering and pagination
    * @returns List of tenants

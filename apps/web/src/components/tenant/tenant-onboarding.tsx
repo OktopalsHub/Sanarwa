@@ -1,14 +1,25 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { useTenant } from "@/contexts/tenant-context";
+import { getTenantPathSegment } from "@/lib/tenant-path";
 import { CreateTenantRequest } from "@/lib/types/tenant";
-import { ArrowRightIcon, BuildingOfficeIcon } from "@heroicons/react/24/outline";
+import { toastApiError } from "@/lib/utils/api-error-message";
+import { IconArrowRight, IconBuilding } from "@tabler/icons-react";
 import { useRouter } from "@/compat/next-navigation";
 import { useState } from "react";
+
+function FieldLabel({ htmlFor, children }: { htmlFor: string; children: React.ReactNode }) {
+  return (
+    <label
+      htmlFor={htmlFor}
+      className="font-mono text-[11px] font-medium uppercase tracking-[var(--tracking-label)] text-[var(--color-muted)]"
+    >
+      {children}
+    </label>
+  );
+}
 
 interface TenantOnboardingProps {
   onComplete?: () => void;
@@ -20,9 +31,12 @@ export function TenantOnboarding({ onComplete }: TenantOnboardingProps) {
   const [step, setStep] = useState<"select" | "create">("select");
   const [formData, setFormData] = useState<CreateTenantRequest>({
     name: "",
-    slug: "",
+    subdomain: "",
   });
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
+
+  const inputClass =
+    "h-11 rounded-[var(--radius-input)] border-[var(--color-rule)] bg-[var(--color-paper-2)] text-[var(--color-ink)] shadow-[var(--shadow-card)] transition-[border-color,box-shadow] duration-[var(--dur-micro)] ease-[var(--ease-out)] placeholder:text-[var(--color-muted)] focus-visible:border-[var(--color-focus)] focus-visible:ring-2 focus-visible:ring-[var(--color-focus)]/25";
 
   const handleSelectExisting = async (tenantId: string) => {
     try {
@@ -30,10 +44,10 @@ export function TenantOnboarding({ onComplete }: TenantOnboardingProps) {
       onComplete?.();
       const selected = tenants.find((t) => t.id === tenantId);
       if (selected) {
-        router.push(`/${selected.slug || selected.subdomain || selected.id}/dashboard`);
+        router.push(`/${getTenantPathSegment(selected)}/dashboard`);
       }
     } catch (error) {
-      console.error("Failed to select tenant:", error);
+      toastApiError(error, "Could not open that workspace");
     }
   };
 
@@ -41,195 +55,208 @@ export function TenantOnboarding({ onComplete }: TenantOnboardingProps) {
     const errors: Record<string, string> = {};
 
     if (!formData.name.trim()) {
-      errors.name = "Organization name is required";
+      errors.name = "Workspace name is required";
     } else if (formData.name.trim().length < 2) {
-      errors.name = "Organization name must be at least 2 characters";
+      errors.name = "Use at least 2 characters";
     }
 
-    if (formData.slug && !/^[a-z0-9-]+$/.test(formData.slug)) {
-      errors.slug = "Slug can only contain lowercase letters, numbers, and hyphens";
+    if (formData.subdomain && !/^[a-z0-9-]+$/.test(formData.subdomain)) {
+      errors.subdomain = "Use lowercase letters, numbers, and hyphens only";
+    } else if (formData.subdomain && formData.subdomain.length < 3) {
+      errors.subdomain = "URL slug must be at least 3 characters";
     }
 
     setFormErrors(errors);
+    if (Object.keys(errors).length > 0) {
+      toastApiError(new Error(Object.values(errors)[0]!), "Check the highlighted fields");
+    }
     return Object.keys(errors).length === 0;
   };
 
   const handleCreateTenant = async (e: React.FormEvent) => {
     e.preventDefault();
-
-    if (!validateForm()) {
-      return;
-    }
+    if (!validateForm()) return;
 
     try {
-      const tenant = await createTenant(formData);
+      const payload: CreateTenantRequest = {
+        name: formData.name.trim(),
+        ...(formData.subdomain?.trim() ? { subdomain: formData.subdomain.trim() } : {}),
+      };
+      const tenant = await createTenant(payload);
       await switchTenant(tenant.id);
       onComplete?.();
-      router.push(`/${tenant.slug || tenant.subdomain || tenant.id}/dashboard`);
+      router.push(`/${getTenantPathSegment(tenant)}/dashboard`);
     } catch (error) {
-      console.error("Failed to create tenant:", error);
+      toastApiError(error, "Could not create workspace");
     }
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
+    setFormData((prev) => ({ ...prev, [name]: value }));
 
-    // Auto-generate slug from name
-    if (name === "name" && !formData.slug) {
-      const slug = value
+    if (name === "name" && !formData.subdomain) {
+      const subdomain = value
         .toLowerCase()
         .replace(/[^a-z0-9\s-]/g, "")
         .replace(/\s+/g, "-")
         .replace(/-+/g, "-")
         .replace(/^-|-$/g, "");
 
-      setFormData((prev) => ({
-        ...prev,
-        slug,
-      }));
+      setFormData((prev) => ({ ...prev, subdomain }));
     }
 
-    // Clear field error when user starts typing
     if (formErrors[name]) {
-      setFormErrors((prev) => ({
-        ...prev,
-        [name]: "",
-      }));
+      setFormErrors((prev) => ({ ...prev, [name]: "" }));
     }
   };
 
   if (step === "select" && tenants.length > 0) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background px-4">
-        <Card className="w-full max-w-md p-6">
-          <div className="space-y-6">
-            <div className="text-center">
-              <BuildingOfficeIcon className="w-12 h-12 mx-auto mb-4 text-primary" />
-              <h1 className="text-2xl font-bold">Welcome to Sanarwa</h1>
-              <p className="text-muted-foreground">
-                Select an organization to continue or create a new one
-              </p>
-            </div>
+      <div className="flex flex-col gap-6">
+        <header className="space-y-1.5">
+          <h2
+            className="font-[family-name:var(--font-display)] text-[length:var(--text-2xl)] font-bold leading-tight tracking-[var(--tracking-display)] text-[var(--color-ink)]"
+            style={{ fontStyle: "normal" }}
+          >
+            Choose a workspace
+          </h2>
+          <p className="text-sm leading-relaxed text-[var(--color-muted)]">
+            Open an existing team or create a new workspace.
+          </p>
+        </header>
 
-            <div className="space-y-3">
-              {tenants.map((tenant) => (
-                <button
-                  key={tenant.id}
-                  onClick={() => handleSelectExisting(tenant.id)}
-                  disabled={isLoading}
-                  className="w-full p-4 text-left border rounded-lg hover:bg-accent hover:text-accent-foreground transition-colors disabled:opacity-50"
-                >
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <div className="font-medium">{tenant.name}</div>
-                      <div className="text-sm text-muted-foreground">{tenant.slug}</div>
-                    </div>
-                    <ArrowRightIcon className="h-4 w-4" />
-                  </div>
-                </button>
-              ))}
-            </div>
+        <ul className="flex flex-col gap-2">
+          {tenants.map((tenant) => (
+            <li key={tenant.id}>
+              <button
+                type="button"
+                onClick={() => handleSelectExisting(tenant.id)}
+                disabled={isLoading}
+                className="flex w-full min-h-11 items-center justify-between gap-3 rounded-[var(--radius-input)] border border-[var(--color-rule)] bg-[var(--color-paper-2)] px-4 py-3 text-left shadow-[var(--shadow-card)] transition-colors duration-[var(--dur-micro)] ease-[var(--ease-out)] hover:border-[var(--color-rule-2)] hover:bg-[var(--color-paper-3)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-focus)] disabled:opacity-50"
+              >
+                <span className="flex min-w-0 items-center gap-3">
+                  <span className="flex size-9 shrink-0 items-center justify-center rounded-[var(--radius-input)] border border-[var(--color-rule)] bg-[var(--color-paper)]">
+                    <IconBuilding className="size-4 text-[var(--color-muted)]" aria-hidden />
+                  </span>
+                  <span className="min-w-0">
+                    <span className="block truncate font-medium text-[var(--color-ink)]">
+                      {tenant.name}
+                    </span>
+                    <span className="block truncate font-mono text-xs text-[var(--color-muted)]">
+                      /{getTenantPathSegment(tenant)}
+                    </span>
+                  </span>
+                </span>
+                <IconArrowRight className="size-4 shrink-0 text-[var(--color-muted)]" aria-hidden />
+              </button>
+            </li>
+          ))}
+        </ul>
 
-            <div className="relative">
-              <div className="absolute inset-0 flex items-center">
-                <span className="w-full border-t" />
-              </div>
-              <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-background px-2 text-muted-foreground">Or</span>
-              </div>
-            </div>
-
-            <Button
-              onClick={() => setStep("create")}
-              variant="outline"
-              className="w-full"
-              disabled={isLoading}
-            >
-              Create new organization
-            </Button>
+        <div className="relative py-1">
+          <div className="absolute inset-0 flex items-center">
+            <div className="w-full border-t border-[var(--color-rule)]" />
           </div>
-        </Card>
+          <div className="relative flex justify-center">
+            <span className="bg-[var(--color-paper)] px-3 text-xs text-[var(--color-muted)]">
+              Or
+            </span>
+          </div>
+        </div>
+
+        <Button
+          type="button"
+          variant="outline"
+          className="h-11 w-full rounded-[var(--radius-input)] border-[var(--color-rule)]"
+          onClick={() => setStep("create")}
+          disabled={isLoading}
+        >
+          Create new workspace
+        </Button>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background px-4">
-      <Card className="w-full max-w-md p-6">
-        <div className="space-y-6">
-          <div className="text-center">
-            <BuildingOfficeIcon className="w-12 h-12 mx-auto mb-4 text-primary" />
-            <h1 className="text-2xl font-bold">Create your organization</h1>
-            <p className="text-muted-foreground">
-              Set up your organization to start managing communications
+    <div className="flex flex-col gap-6">
+      <header className="space-y-1.5">
+        <h2
+          className="font-[family-name:var(--font-display)] text-[length:var(--text-2xl)] font-bold leading-tight tracking-[var(--tracking-display)] text-[var(--color-ink)]"
+          style={{ fontStyle: "normal" }}
+        >
+          Create workspace
+        </h2>
+        <p className="text-sm leading-relaxed text-[var(--color-muted)]">
+          This name and URL slug identify your team inside Sanarwa.
+        </p>
+      </header>
+
+      <form onSubmit={handleCreateTenant} className="flex flex-col gap-4" noValidate>
+        <div className="flex flex-col gap-1.5">
+          <FieldLabel htmlFor="name">Workspace name</FieldLabel>
+          <Input
+            id="name"
+            name="name"
+            type="text"
+            value={formData.name}
+            onChange={handleInputChange}
+            placeholder="Acme Inc"
+            disabled={isLoading}
+            aria-invalid={!!formErrors.name}
+            className={inputClass}
+          />
+          {formErrors.name && (
+            <p className="text-sm text-[var(--color-danger)]" role="alert">
+              {formErrors.name}
             </p>
-          </div>
-
-          <form onSubmit={handleCreateTenant} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="name">Organization Name</Label>
-              <Input
-                id="name"
-                name="name"
-                type="text"
-                value={formData.name}
-                onChange={handleInputChange}
-                placeholder="Enter your organization name"
-                disabled={isLoading}
-                aria-invalid={!!formErrors.name}
-                aria-describedby={formErrors.name ? "name-error" : undefined}
-              />
-              {formErrors.name && (
-                <p id="name-error" className="text-sm text-destructive">
-                  {formErrors.name}
-                </p>
-              )}
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="slug">Organization Slug</Label>
-              <Input
-                id="slug"
-                name="slug"
-                type="text"
-                value={formData.slug}
-                onChange={handleInputChange}
-                placeholder="organization-slug"
-                disabled={isLoading}
-                aria-invalid={!!formErrors.slug}
-                aria-describedby={formErrors.slug ? "slug-error" : undefined}
-              />
-              {formErrors.slug && (
-                <p id="slug-error" className="text-sm text-destructive">
-                  {formErrors.slug}
-                </p>
-              )}
-              <p className="text-xs text-muted-foreground">
-                This will be used in your organization's URL
-              </p>
-            </div>
-
-            <Button type="submit" className="w-full" disabled={isLoading}>
-              {isLoading ? "Creating..." : "Create organization"}
-            </Button>
-          </form>
-
-          {tenants.length > 0 && (
-            <Button
-              onClick={() => setStep("select")}
-              variant="ghost"
-              className="w-full"
-              disabled={isLoading}
-            >
-              Back to organization selection
-            </Button>
           )}
         </div>
-      </Card>
+
+        <div className="flex flex-col gap-1.5">
+          <FieldLabel htmlFor="subdomain">Workspace URL</FieldLabel>
+          <Input
+            id="subdomain"
+            name="subdomain"
+            type="text"
+            value={formData.subdomain}
+            onChange={handleInputChange}
+            placeholder="acme"
+            disabled={isLoading}
+            aria-invalid={!!formErrors.subdomain}
+            className={inputClass}
+          />
+          {formErrors.subdomain && (
+            <p className="text-sm text-[var(--color-danger)]" role="alert">
+              {formErrors.subdomain}
+            </p>
+          )}
+          <p className="text-[11px] text-[var(--color-muted)]">
+            Opens at /{formData.subdomain || "your-workspace"}/dashboard
+          </p>
+        </div>
+
+        <Button
+          type="submit"
+          size="lg"
+          disabled={isLoading}
+          className="h-11 w-full rounded-[var(--radius-input)] bg-[var(--hm-accent)] font-semibold text-[var(--color-accent-ink)] shadow-[var(--shadow-card)] transition-opacity duration-[var(--dur-micro)] ease-[var(--ease-out)] hover:opacity-90 focus-visible:ring-2 focus-visible:ring-[var(--color-focus)] focus-visible:ring-offset-2 active:translate-y-px disabled:opacity-50"
+        >
+          {isLoading ? "Creating…" : "Create workspace"}
+        </Button>
+      </form>
+
+      {tenants.length > 0 && (
+        <Button
+          type="button"
+          variant="ghost"
+          className="h-11 w-full"
+          onClick={() => setStep("select")}
+          disabled={isLoading}
+        >
+          Back to workspace list
+        </Button>
+      )}
     </div>
   );
 }

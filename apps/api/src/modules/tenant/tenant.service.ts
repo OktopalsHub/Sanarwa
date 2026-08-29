@@ -29,30 +29,30 @@ export class TenantService {
    * Create a new tenant
    */
   async createTenant(creatorId: string, createTenantDto: CreateTenantDto): Promise<any> {
-    // Provide default name if not provided
     const tenantName = createTenantDto?.name?.trim() || "My Workspace";
+    const requestedSubdomain = createTenantDto.subdomain?.trim();
     const [user, generatedSlug] = await Promise.all([
       this.userService.getUserById(creatorId),
-      this.generateSlug(tenantName),
+      requestedSubdomain ? Promise.resolve(requestedSubdomain) : this.generateSlug(tenantName),
     ]);
 
+    const subdomain = requestedSubdomain || generatedSlug;
+
     const existingTenant = await this.tenantRepository.findOne({
-      where: [{ subdomain: generatedSlug }],
+      where: [{ subdomain }],
     });
 
     if (existingTenant) {
       throw new ConflictException("Tenant with subdomain already exists");
     }
 
-    // Create tenant with default quotas and invite code if not provided
     const savedTenant = await this.tenantRepository.create({
-      ...createTenantDto,
       name: tenantName,
       quotas: this.getDefaultQuotas() as any,
       inviteCode: this.generateInviteCode(),
-      subdomain: generatedSlug,
+      subdomain,
       status: TenantStatus.ACTIVE,
-      ownerId: creatorId, // Set the user who created this tenant
+      ownerId: creatorId,
     });
 
     // Emit event for tenant creation - this will trigger tenant member creation

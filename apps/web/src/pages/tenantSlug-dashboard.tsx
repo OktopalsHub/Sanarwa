@@ -1,24 +1,28 @@
 "use client";
 
 import { DashboardOverview } from "@/components/dashboard";
-import { AdvancedDashboard } from "@/components/dashboard/advanced-dashboard";
 import { AppShell } from "@/components/layout";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useEnsureTenantFromSlug } from "@/hooks/use-tenant-slug";
+import { Button } from "@/components/ui/button";
+import { useEnsureTenantFromSlug, useTenantBasePath } from "@/hooks/use-tenant-slug";
 import { useTenant } from "@/contexts/tenant-context";
-import { ChartBarIcon, Squares2X2Icon } from "@heroicons/react/24/outline";
+import Link from "@/compat/next-link";
 import { useNavigate } from "@tanstack/react-router";
 
 export default function TenantDashboardPage() {
   const navigate = useNavigate();
+  const basePath = useTenantBasePath();
   const { matchedTenant, isLoading } = useEnsureTenantFromSlug();
   const { selectedTenant } = useTenant();
 
   if (isLoading) {
     return (
       <AppShell>
-        <div className="flex items-center justify-center min-h-screen">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto" />
+        <div className="flex min-h-[50vh] items-center justify-center">
+          <div
+            className="h-8 w-8 animate-spin rounded-full border-2 border-muted border-t-primary"
+            role="status"
+            aria-label="Loading dashboard"
+          />
         </div>
       </AppShell>
     );
@@ -27,16 +31,15 @@ export default function TenantDashboardPage() {
   if (!matchedTenant && !selectedTenant) {
     return (
       <AppShell>
-        <div className="flex items-center justify-center min-h-screen">
-          <div className="text-center space-y-4">
-            <h1 className="text-2xl font-bold">Tenant not found</h1>
-            <button
-              type="button"
-              onClick={() => navigate({ to: "/onboarding" })}
-              className="px-4 py-2 bg-primary text-primary-foreground rounded-md"
-            >
+        <div className="flex min-h-[50vh] items-center justify-center px-4">
+          <div className="max-w-md space-y-4 text-center">
+            <h1 className="text-2xl font-semibold tracking-tight">Workspace not found</h1>
+            <p className="text-sm text-muted-foreground">
+              This URL does not match any workspace you can access.
+            </p>
+            <Button type="button" onClick={() => navigate({ to: "/onboarding" })}>
               Set up workspace
-            </button>
+            </Button>
           </div>
         </div>
       </AppShell>
@@ -47,40 +50,26 @@ export default function TenantDashboardPage() {
 
   return (
     <AppShell>
-      <div className="p-6">
-        <div className="max-w-7xl mx-auto space-y-6">
-          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-            <div className="space-y-1">
-              <h1 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
-                {tenant?.name} Dashboard
-              </h1>
-              <p className="text-muted-foreground">
-                Sends, delivery, and setup for this workspace.
-              </p>
-            </div>
+      <div className="mx-auto max-w-7xl px-4 py-6 md:px-6 md:py-8">
+        <header className="mb-8 flex flex-col gap-4 border-b border-border pb-6 sm:flex-row sm:items-end sm:justify-between">
+          <div className="min-w-0 space-y-1">
+            <p className="text-sm font-medium text-muted-foreground">{tenant?.name}</p>
+            <h1 className="text-2xl font-semibold tracking-tight text-foreground md:text-3xl">
+              Dashboard
+            </h1>
+            <p className="text-sm text-muted-foreground">Delivery and sending activity · last 30 days</p>
           </div>
+          <div className="flex shrink-0 flex-wrap gap-2">
+            <Button asChild variant="outline" size="sm">
+              <Link href={`${basePath}/messages`}>Messages</Link>
+            </Button>
+            <Button asChild size="sm">
+              <Link href={`${basePath}/analytics`}>Analytics</Link>
+            </Button>
+          </div>
+        </header>
 
-          <Tabs defaultValue="overview" className="space-y-6">
-            <TabsList className="bg-muted/50 p-1">
-              <TabsTrigger value="overview" className="gap-2">
-                <Squares2X2Icon className="h-4 w-4" />
-                Overview
-              </TabsTrigger>
-              <TabsTrigger value="advanced" className="gap-2">
-                <ChartBarIcon className="h-4 w-4" />
-                Advanced
-              </TabsTrigger>
-            </TabsList>
-
-            <TabsContent value="overview" className="space-y-6">
-              <DashboardOverview />
-            </TabsContent>
-
-            <TabsContent value="advanced" className="space-y-6">
-              <AdvancedDashboard />
-            </TabsContent>
-          </Tabs>
-        </div>
+        <DashboardOverview />
       </div>
     </AppShell>
   );

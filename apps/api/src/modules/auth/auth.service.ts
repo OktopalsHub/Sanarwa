@@ -285,6 +285,31 @@ export class AuthService {
     return { message: "Logged out successfully" };
   }
 
+  async getProfile(userId: string) {
+    const user = await this.userRepository.findOne({ where: { id: userId } });
+    if (!user) {
+      throw new UnauthorizedException("User not found");
+    }
+
+    const nameParts = (user.name || "").trim().split(/\s+/);
+    const firstName = nameParts[0] || "User";
+    const lastName = nameParts.slice(1).join(" ") || "Account";
+
+    return {
+      id: user.id,
+      email: user.email,
+      firstName,
+      lastName,
+      fullName: user.name,
+      name: user.name,
+      emailVerified: user.emailVerified,
+      isActive: !user.deletedAt,
+      avatar: user.image ?? undefined,
+      createdAt: user.createdAt,
+      updatedAt: user.updatedAt,
+    };
+  }
+
   async getSession(accessToken: string) {
     try {
       const payload = this.jwtService.verify(accessToken);

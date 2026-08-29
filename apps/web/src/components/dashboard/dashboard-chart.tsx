@@ -1,6 +1,7 @@
 "use client";
 
 import { Card } from "@/components/ui/card";
+import { cn } from "@/lib/utils";
 import { useTheme } from "next-themes";
 import {
   Bar,
@@ -133,9 +134,9 @@ export function DashboardChart({
   };
 
   return (
-    <Card className={`glass border-border/50 ${className}`}>
+    <Card className={cn("border-border bg-card", className)}>
       <div className="p-6">
-        <h3 className="text-lg font-semibold mb-6 text-foreground">{title}</h3>
+        <h3 className="mb-4 text-base font-semibold text-foreground">{title}</h3>
         <div style={{ height }}>
           <ResponsiveContainer width="100%" height="100%">
             {renderChart() || <div>No chart available</div>}

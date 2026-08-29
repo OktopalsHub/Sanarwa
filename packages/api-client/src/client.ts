@@ -241,7 +241,7 @@ export class ApiClient {
 
     try {
       const response = await axios.post(
-        `${this.axiosInstance.defaults.baseURL}/auth/refresh`,
+        `${this.axiosInstance.defaults.baseURL}/auth/refresh-token`,
         { refreshToken },
         {
           headers: { "Content-Type": "application/json" },
@@ -272,6 +272,30 @@ export class ApiClient {
     }
   }
 
+  private extractResponseMessage(responseData: unknown): string | undefined {
+    if (!responseData || typeof responseData !== "object") return undefined;
+
+    const data = responseData as Record<string, unknown>;
+    const nested = data.error as Record<string, unknown> | undefined;
+    const raw = nested?.message ?? data.message;
+
+    if (Array.isArray(raw)) {
+      const parts = raw.filter(
+        (part): part is string => typeof part === "string" && part.trim().length > 0,
+      );
+      return parts.length > 0 ? parts.join(". ") : undefined;
+    }
+
+    if (typeof raw === "string" && raw.trim()) {
+      if (raw === "Bad Request Exception" || raw === "Bad Request") {
+        return "The request was invalid. Check your input and try again.";
+      }
+      return raw;
+    }
+
+    return undefined;
+  }
+
   private transformError(error: AxiosError): ApiError {
     const apiError = new Error() as ApiError;
     apiError.isAxiosError = true;
@@ -282,12 +306,17 @@ export class ApiClient {
 
       apiError.status = error.response.status;
       apiError.message =
-        responseData?.message || error.message || `HTTP error! status: ${error.response.status}`;
-      apiError.code = responseData?.code;
-      apiError.details = responseData?.details;
+        this.extractResponseMessage(responseData) ||
+        error.message ||
+        `HTTP error! status: ${error.response.status}`;
+      apiError.code = responseData?.error?.code ?? responseData?.code;
+      apiError.details = responseData?.error?.details ?? responseData?.details;
 
       // Handle specific error types
       switch (error.response.status) {
+        case 401:
+          apiError.message = "Invalid email or password";
+          break;
         case 403:
           if (responseData?.code === "TENANT_ACCESS_DENIED") {
             apiError.message = "You do not have access to this tenant";
@@ -297,6 +326,11 @@ export class ApiClient {
           if (responseData?.code === "TENANT_NOT_FOUND") {
             apiError.message = "Tenant not found";
           }
+          break;
+        case 409:
+          apiError.message =
+            this.extractResponseMessage(responseData) ||
+            "That workspace URL is already taken. Try another.";
           break;
         case 429:
           apiError.message = "Too many requests. Please try again later.";

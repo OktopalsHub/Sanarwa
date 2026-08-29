@@ -165,15 +165,16 @@ class AuthApiClient {
       throw new Error("No refresh token available");
     }
 
-    const response = await this.apiClient.post<{ access_token: string; refresh_token: string }>(
-      "/auth/refresh",
+    const response = await this.apiClient.post<RawAuthPayload>(
+      "/auth/refresh-token",
       { refreshToken },
       { tenantScoped: false },
     );
 
+    const tokens = pickTokens(response);
     const tokenResponse: TokenResponse = {
-      accessToken: response.access_token,
-      refreshToken: response.refresh_token,
+      accessToken: tokens.accessToken,
+      refreshToken: tokens.refreshToken,
       expiresIn: 3600,
       tokenType: "Bearer",
     };
@@ -194,8 +195,20 @@ class AuthApiClient {
    * @returns Current user data
    */
   async getCurrentUser(): Promise<User> {
-    // Backend has profile endpoint implemented
-    return this.apiClient.get<User>("/auth/profile", {}, { tenantScoped: false });
+    const profile = await this.apiClient.get<
+      User & { name?: string; firstName?: string; lastName?: string }
+    >("/auth/profile", {}, { tenantScoped: false });
+
+    if (profile.firstName && profile.lastName) {
+      return profile;
+    }
+
+    const nameParts = (profile.name || "").trim().split(/\s+/);
+    return {
+      ...profile,
+      firstName: profile.firstName || nameParts[0] || "User",
+      lastName: profile.lastName || nameParts.slice(1).join(" ") || "Account",
+    } as User;
   }
 
   // Password Management Methods

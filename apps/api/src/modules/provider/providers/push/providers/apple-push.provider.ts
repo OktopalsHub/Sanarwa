@@ -1,5 +1,6 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
+import * as jwt from "jsonwebtoken";
 import { IPushProvider, PushPayload, PushResponse } from "../../push/push-provider.interface";
 
 @Injectable()
@@ -133,21 +134,21 @@ export class ApplePushProvider implements IPushProvider {
   }
 
   private async generateJWTToken(): Promise<string> {
-    // In production, use a proper JWT library like 'jsonwebtoken'
-    // This is a simplified version for demonstration
-    const header = {
-      alg: "ES256",
-      kid: this.apnsKeyId,
-    };
-
-    const payload = {
-      iss: this.apnsTeamId,
-      iat: Math.floor(Date.now() / 1000),
-      exp: Math.floor(Date.now() / 1000) + 3600, // 1 hour
-    };
-
-    // In production, properly sign this JWT with the APNS private key
-    return `apns_jwt_token_${Date.now()}`;
+    // Proper ES256 JWT for APNS - world-class fix (was stub apns_jwt_token_${Date.now()})
+    const privateKey = this.apnsPrivateKey.replace(/\\n/g, "\n");
+    const token = jwt.sign(
+      {
+        iss: this.apnsTeamId,
+        iat: Math.floor(Date.now() / 1000),
+      },
+      privateKey,
+      {
+        algorithm: "ES256",
+        header: { alg: "ES256", kid: this.apnsKeyId } as any,
+        expiresIn: "1h",
+      },
+    );
+    return token;
   }
 
   private mapPriorityToAPNSPriority(priority?: string): string {

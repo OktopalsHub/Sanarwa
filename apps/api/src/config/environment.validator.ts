@@ -221,27 +221,27 @@ export class EnvironmentVariables {
   @IsOptional()
   @IsNumber()
   @Transform(({ value }) => parseInt(value, 10))
-  BATCH_MAX_SIZE?: number = 100;
+  BATCH_MAX_SIZE?: number = 250; // Minimal 250 plan for ZeptoMail (was 100)
 
   @IsOptional()
   @IsNumber()
   @Transform(({ value }) => parseInt(value, 10))
-  BATCH_MAX_WAIT_TIME?: number = 5000;
+  BATCH_MAX_WAIT_TIME?: number = 2000; // Faster flush for low latency (was 5000)
 
   @IsOptional()
   @IsNumber()
   @Transform(({ value }) => parseInt(value, 10))
-  BATCH_MAX_CONCURRENCY?: number = 10;
+  BATCH_MAX_CONCURRENCY?: number = 5; // 4GB shared box safe (was 10)
 
   @IsOptional()
   @IsNumber()
   @Transform(({ value }) => parseInt(value, 10))
-  HTTP_POOL_MAX_SOCKETS?: number = 50;
+  HTTP_POOL_MAX_SOCKETS?: number = 20; // Shared box safe (was 50)
 
   @IsOptional()
   @IsNumber()
   @Transform(({ value }) => parseInt(value, 10))
-  HTTP_POOL_MAX_FREE_SOCKETS?: number = 10;
+  HTTP_POOL_MAX_FREE_SOCKETS?: number = 5; // Shared box safe (was 10)
 
   @IsOptional()
   @IsNumber()

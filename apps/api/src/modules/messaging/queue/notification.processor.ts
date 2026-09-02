@@ -124,7 +124,7 @@ export class NotificationProcessor {
             type: "exponential",
             delay: 1000,
           },
-          delay: index * 100, // Stagger jobs slightly
+          delay: index * 20, // Minimal 250 plan (was 100)
         },
       }));
 
@@ -149,9 +149,9 @@ export class NotificationProcessor {
   }
 
   /**
-   * Process delivery job
+   * Process delivery job - minimal 250 plan: 5 concurrency for 4GB shared box
    */
-  @Process({ name: "process-delivery", concurrency: 10 })
+  @Process({ name: "process-delivery", concurrency: 5 })
   async processDelivery(job: Job<DeliveryJobData>): Promise<void> {
     const {
       notificationId,

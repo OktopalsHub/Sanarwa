@@ -155,7 +155,7 @@ export class NotificationQueueService {
           type: "exponential",
           delay: 1000,
         },
-        delay: index * 100, // Stagger jobs slightly to avoid overwhelming providers
+        delay: index * 20, // Minimal 250 plan: 20ms stagger for ZeptoMail 500 burst (was 100)
       } as JobOptions,
     }));
 

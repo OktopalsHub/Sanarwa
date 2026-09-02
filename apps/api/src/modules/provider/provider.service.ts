@@ -115,8 +115,9 @@ export class ProviderService {
   ): Promise<ProviderSendResult[]> {
     const results: ProviderSendResult[] = [];
 
-    // Process in batches to avoid overwhelming providers
-    const batchSize = this.configService.get<number>("PROVIDER_BULK_BATCH_SIZE", 100);
+    // Process in batches to avoid overwhelming providers - voice 10 for Telnyx cost/rate (minimal)
+    const defaultBatch = this.configService.get<number>("PROVIDER_BULK_BATCH_SIZE", 250);
+    const batchSize = options.channel === "voice" ? 10 : defaultBatch;
 
     for (let i = 0; i < payloads.length; i += batchSize) {
       const batch = payloads.slice(i, i + batchSize);

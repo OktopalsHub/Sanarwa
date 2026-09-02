@@ -13,6 +13,7 @@ import { ProviderConfigRepository } from "./provider-config.repository";
 import { BrandMessagingConfigService } from "../brand/services/brand-messaging-config.service";
 import { BrandedPushService } from "./services/branded-push.service";
 import { BillingIntegrationService } from "../billing/services/billing-integration.service";
+import { VoiceService } from "./services/voice.service";
 import { BillingMode, BillingChannel } from "../billing/constants/token-pricing";
 import { randomUUID } from "crypto";
 
@@ -33,6 +34,7 @@ export class ProviderOrchestratorService {
     private brandService: BrandMessagingConfigService,
     private brandedPushService: BrandedPushService,
     private billingIntegrationService: BillingIntegrationService,
+    private voiceService: VoiceService,
   ) {}
 
   // Register providers
@@ -372,26 +374,30 @@ export class ProviderOrchestratorService {
     }
   }
 
-  // Voice call orchestration with Telnyx
+  // Voice call orchestration with Telnyx - real via VoiceService (was stub voice_call_${Date.now()})
   async sendVoiceCall(
     payload: { to: string[]; message?: string; templateId?: string; templateData?: any },
     tenantId?: string,
   ): Promise<any> {
     try {
-      this.logger.log(`Voice call requested for tenant: ${tenantId || "system"}`);
-
       const phoneNumber = payload.to[0];
-      this.logger.log(`Voice call to ${phoneNumber} would be initiated via Telnyx`);
+      if (!phoneNumber) throw new Error("Voice call requires 'to' phone number");
+      this.logger.log(`Voice call via Telnyx to ${phoneNumber} tenant:${tenantId || "system"}`);
 
-      const result = {
-        success: true,
-        callId: `voice_call_${Date.now()}`,
-        provider: "telnyx",
-        message: "Voice call initiated (Telnyx integration ready)",
-      };
+      // BYOK check: if tenant has voice provider config, they manage own Telnyx; still use VoiceService which validates per-tenant creds
+      const result = await this.voiceService.createOutboundCall(
+        {
+          phoneNumber,
+          message: payload.message || "Sanarwa voice notification",
+          voice: { voice: "Telnyx.Natural.abbie", language: "en-US" },
+        },
+        tenantId || "system",
+      );
 
-      await this.chargeForSend(tenantId, "voice", "managed", { durationMinutes: 1 });
-      return result;
+      if (!result.success) throw new Error(result.error || "Telnyx voice call failed");
+
+      await this.chargeForSend(tenantId, "voice", "managed", { durationMinutes: 1, callControlId: result.callControlId });
+      return { success: true, callId: result.callId, callControlId: result.callControlId, provider: "telnyx" };
     } catch (error) {
       this.logger.error(`Voice call failed: ${error.message}`, error.stack);
       throw error;

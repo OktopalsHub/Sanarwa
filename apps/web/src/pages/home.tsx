@@ -1,6 +1,7 @@
 "use client";
 
 import { Send } from "@/lib/icons";
+import { motion } from "framer-motion";
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "@/compat/next-link";
@@ -26,25 +27,18 @@ const COMMANDS = [
 ] as const;
 
 const CHANNELS = [
-  { name: "Email", detail: "Transactional + campaigns via one send call", icon: EnvelopeIcon },
-  {
-    name: "SMS & WhatsApp",
-    detail: "Routed delivery with fallback paths",
-    icon: ChatBubbleLeftRightIcon,
-  },
-  { name: "Push", detail: "iOS, Android, and web from one payload", icon: BellIcon },
-  {
-    name: "In-app",
-    detail: "Contextual banners and onboarding flows",
-    icon: DevicePhoneMobileIcon,
-  },
-  { name: "Voice", detail: "Alerts with TTS when inbox is not enough", icon: PhoneIcon },
+  { name: "Email", detail: "Transactional email", icon: EnvelopeIcon },
+  { name: "SMS", detail: "Global SMS", icon: ChatBubbleLeftRightIcon },
+  { name: "WhatsApp", detail: "Business templates", icon: ChatBubbleLeftRightIcon },
+  { name: "Push", detail: "Mobile + web", icon: BellIcon },
+  { name: "In-app", detail: "Banners & feeds", icon: DevicePhoneMobileIcon },
+  { name: "Voice", detail: "TTS alerts", icon: PhoneIcon },
 ] as const;
 
 type QuickstartLang = "curl" | "typescript" | "python" | "go" | "rust";
 
 const QUICKSTART_SNIPPETS: Record<QuickstartLang, string> = {
-  curl: `curl -X POST https://api.sanarwa.dev/v1/messages \\
+  curl: `curl -X POST https://api.sanarwa.dev/api/v1/notifications \\
   -H "Authorization: Bearer $SANARWA_KEY" \\
   -H "Content-Type: application/json" \\
   -d '{
@@ -56,9 +50,7 @@ const QUICKSTART_SNIPPETS: Record<QuickstartLang, string> = {
   }'`,
   typescript: `import { Sanarwa } from "@sanarwa/sdk";
 
-const sanarwa = new Sanarwa({
-  apiKey: process.env.SANARWA_KEY!,
-});
+const sanarwa = new Sanarwa({ apiKey: process.env.SANARWA_KEY! });
 
 await sanarwa.messages.send({
   channel: "email",
@@ -69,47 +61,12 @@ await sanarwa.messages.send({
 });`,
   python: `from sanarwa import Sanarwa
 import os
-
 sanarwa = Sanarwa(api_key=os.environ["SANARWA_KEY"])
-
-sanarwa.messages.send(
-    channel="email",
-    from_="PayLink <receipts@paylink.ng>",
-    to="amaka@halo.ng",
-    subject="Receipt for ₦45,000",
-    html="<p>Payment received. Thank you, Amaka.</p>",
-)`,
-  go: `package main
-
-import (
-  "os"
-  "github.com/sanarwa/sanarwa-go"
-)
-
-func main() {
-  client := sanarwa.New(os.Getenv("SANARWA_KEY"))
-  client.Messages.Send(sanarwa.SendParams{
-    Channel: "email",
-    From:    "PayLink <receipts@paylink.ng>",
-    To:      "amaka@halo.ng",
-    Subject: "Receipt for ₦45,000",
-    HTML:    "<p>Payment received. Thank you, Amaka.</p>",
-  })
-}`,
-  rust: `use sanarwa::Client;
-
-#[tokio::main]
-async fn main() -> Result<(), Box<dyn std::error::Error>> {
-  let client = Client::new(std::env::var("SANARWA_KEY")?);
-  client.messages().send(sanarwa::SendRequest {
-    channel: "email",
-    from: "PayLink <receipts@paylink.ng>",
-    to: "amaka@halo.ng",
-    subject: "Receipt for ₦45,000",
-    html: "<p>Payment received. Thank you, Amaka.</p>",
-  }).await?;
-  Ok(())
-}`,
+sanarwa.messages.send(channel="email", from_="PayLink <receipts@paylink.ng>", to="amaka@halo.ng", subject="Receipt for ₦45,000", html="<p>Payment received. Thank you, Amaka.</p>")`,
+  go: `client := sanarwa.New(os.Getenv("SANARWA_KEY"))
+client.Messages.Send(sanarwa.SendParams{Channel:"email", From:"PayLink <receipts@paylink.ng>", To:"amaka@halo.ng", Subject:"Receipt for ₦45,000", HTML:"<p>Payment received. Thank you, Amaka.</p>"})`,
+  rust: `let client = Client::new(std::env::var("SANARWA_KEY")?);
+client.messages().send(SendRequest{ channel:"email", from:"PayLink <receipts@paylink.ng>", to:"amaka@halo.ng", subject:"Receipt for ₦45,000", html:"<p>Payment received. Thank you, Amaka.</p>" }).await?;`,
 };
 
 const QUICKSTART_TABS: { id: QuickstartLang; label: string }[] = [
@@ -356,11 +313,11 @@ export default function Home() {
             <Link href="/" className="font-medium text-[var(--hm-accent)]">
               Home
             </Link>
-            <Link
-              href="/pricing"
-              className="text-[var(--color-ink-2)] transition-colors hover:text-[var(--hm-accent)]"
-            >
+            <Link href="/pricing" className="text-[var(--color-ink-2)] hover:text-[var(--hm-accent)]">
               Pricing
+            </Link>
+            <Link href="/docs" className="text-[var(--color-ink-2)] hover:text-[var(--hm-accent)]">
+              Docs
             </Link>
           </nav>
 
@@ -391,81 +348,57 @@ export default function Home() {
 
       <main>
         <section className="mx-auto flex max-w-6xl flex-col gap-10 px-4 py-16 lg:flex-row lg:items-center lg:py-24">
-          <div className="reveal w-full flex-1 basis-0">
-            <p className="mono-label mb-4 flex items-center gap-2">
-              <span
-                className="inline-block size-1.5 rounded-full bg-[var(--hm-accent)]"
-                aria-hidden
-              />
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, ease: "easeOut" }} className="w-full flex-1 basis-0">
+            <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.2 }} className="mono-label mb-4 flex items-center gap-2">
+              <span className="inline-block size-1.5 rounded-full bg-[var(--hm-accent)] motion-safe:animate-pulse" aria-hidden />
               Multi-channel API
-            </p>
-            <h1 className="mb-5 text-4xl font-bold leading-[1.1] tracking-tight text-[var(--color-ink)] sm:text-5xl lg:text-6xl">
+            </motion.p>
+            <motion.h1 initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1, duration: 0.6 }} className="mb-5 text-4xl font-bold leading-[1.1] tracking-tight text-[var(--color-ink)] sm:text-5xl lg:text-6xl">
               One API. Every channel.
-            </h1>
-            <p className="mb-8 max-w-lg text-lg leading-relaxed text-[var(--color-ink-2)]">
-              Send email, SMS, push, in-app, and voice from a single typed SDK. Start with{" "}
-              {formatTokens(WELCOME_SIGNUP_TOKENS)} free tokens.
-            </p>
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-              <Button
-                asChild
-                size="lg"
-                className="rounded-[var(--radius)] bg-[var(--hm-accent)] text-[var(--color-accent-ink)] hover:opacity-90"
-              >
-                <Link href="/register">
-                  Get API keys
-                  <ArrowRightIcon className="size-4" />
-                </Link>
+            </motion.h1>
+            <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3 }} className="mb-8 max-w-lg text-lg leading-relaxed text-[var(--color-ink-2)]">
+              Send email, SMS, push, in-app, and voice from a single typed SDK. Start with {formatTokens(WELCOME_SIGNUP_TOKENS)} free tokens.
+            </motion.p>
+            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }} className="flex flex-col gap-3 sm:flex-row sm:items-center">
+              <Button asChild size="lg" className="rounded-[var(--radius)] bg-[var(--hm-accent)] text-[var(--color-accent-ink)] hover:opacity-90">
+                <Link href="/register">Get API keys <ArrowRightIcon className="size-4" /></Link>
               </Button>
-              <Link
-                href="/pricing"
-                className="inline-flex h-10 items-center justify-center px-2 text-sm font-medium text-[var(--color-ink)] underline-offset-4 hover:underline"
-              >
-                See token pricing
-              </Link>
-            </div>
-          </div>
+              <Link href="/pricing" className="inline-flex h-10 items-center justify-center px-2 text-sm font-medium text-[var(--color-ink)] underline-offset-4 hover:underline">See token pricing</Link>
+            </motion.div>
+          </motion.div>
 
-          <SdkSnippetPlayground variant="hero" />
+          <motion.div initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.2, duration: 0.7 }} className="w-full flex-1 basis-0">
+            <SdkSnippetPlayground variant="hero" />
+          </motion.div>
         </section>
 
         <section className="border-y border-[var(--color-rule)] bg-[var(--color-paper-2)]">
           <div className="mx-auto max-w-6xl px-4 py-16">
             <div className="reveal mb-10 w-full max-w-2xl">
               <h2 className="mb-3 text-3xl font-bold tracking-tight text-[var(--color-ink)]">
-                Channels that share one contract
+                One SDK, per-channel payloads
               </h2>
               <p className="text-base leading-relaxed text-[var(--color-ink-2)]">
-                Same payload shape, same webhooks, same delivery receipts — swap the channel, not
-                your integration.
+                Same SDK, receipts and webhooks - payload varies per channel.
               </p>
             </div>
-            <ul className="grid grid-cols-1 gap-px overflow-hidden rounded-[var(--radius-card)] border border-[var(--color-rule)] bg-[var(--color-rule)] sm:grid-cols-2 lg:grid-cols-3">
+            <motion.ul initial="hidden" whileInView="show" viewport={{ once: true }} variants={{ hidden: {}, show: { transition: { staggerChildren: 0.06 } } }} className="grid grid-cols-1 gap-px overflow-hidden rounded-[var(--radius-card)] border border-[var(--color-rule)] bg-[var(--color-rule)] sm:grid-cols-2 lg:grid-cols-3">
               {CHANNELS.map(({ name, detail, icon: Icon }) => (
-                <li key={name} className="reveal bg-[var(--color-paper)] p-5">
+                <motion.li key={name} variants={{ hidden: { opacity: 0, y: 12 }, show: { opacity: 1, y: 0 } }} whileHover={{ y: -2 }} className="bg-[var(--color-paper)] p-5 transition-shadow hover:shadow-[var(--shadow-card)]">
                   <Icon className="mb-3 size-5 text-[var(--hm-accent)]" aria-hidden />
                   <h3 className="mb-1 text-base font-semibold text-[var(--color-ink)]">{name}</h3>
                   <p className="text-sm leading-relaxed text-[var(--color-muted)]">{detail}</p>
-                </li>
+                </motion.li>
               ))}
-              <li className="reveal flex flex-col justify-between bg-[var(--color-paper)] p-5 sm:col-span-2 lg:col-span-1">
+              <motion.li variants={{ hidden: { opacity: 0, y: 12 }, show: { opacity: 1, y: 0 } }} className="flex flex-col justify-between bg-[var(--color-paper)] p-5 sm:col-span-2 lg:col-span-1">
                 <div>
                   <p className="mono-label mb-2">SDK</p>
-                  <h3 className="mb-1 text-base font-semibold text-[var(--color-ink)]">
-                    Type-safe clients
-                  </h3>
-                  <p className="text-sm text-[var(--color-muted)]">
-                    TypeScript, Python, Go, Rust, and cURL — same API surface.
-                  </p>
+                  <h3 className="mb-1 text-base font-semibold text-[var(--color-ink)]">Type-safe clients</h3>
+                  <p className="text-sm text-[var(--color-muted)]">TypeScript, Python, Go, Rust, and cURL — same surface.</p>
                 </div>
-                <Link
-                  href="/pricing"
-                  className="mt-4 inline-flex items-center gap-1 text-sm font-medium text-[var(--hm-accent)] hover:underline"
-                >
-                  See pricing <ArrowRightIcon className="size-3.5" />
-                </Link>
-              </li>
-            </ul>
+                <Link href="/pricing" className="mt-4 inline-flex items-center gap-1 text-sm font-medium text-[var(--hm-accent)] hover:underline">See pricing <ArrowRightIcon className="size-3.5" /></Link>
+              </motion.li>
+            </motion.ul>
           </div>
         </section>
 
@@ -473,11 +406,10 @@ export default function Home() {
           <div className="reveal mb-8 max-w-2xl">
             <p className="mono-label mb-3">Templates</p>
             <h2 className="mb-3 text-3xl font-bold tracking-tight text-[var(--color-ink)]">
-              Design once. Personalize every send.
+              Design per channel. Share variables.
             </h2>
             <p className="text-base leading-relaxed text-[var(--color-ink-2)]">
-              Write templates with variables, preview the rendered design, and ship the same layout
-              across email, SMS, and push.
+              Variables handlebars `{"{{name}}"}`, preview per channel.
             </p>
           </div>
           <TemplateDesignerDemo />

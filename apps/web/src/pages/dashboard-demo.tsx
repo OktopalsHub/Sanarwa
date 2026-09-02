@@ -84,10 +84,8 @@ export default function DashboardDemo() {
       <div className="max-w-7xl mx-auto space-y-8">
         {/* Header */}
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold mb-2">Notifi Dashboard Demo</h1>
-          <p className="text-muted-foreground">
-            This is a demo dashboard with sample data - no authentication required!
-          </p>
+          <h1 className="text-3xl font-bold mb-2">Sanarwa Demo</h1>
+          <p className="text-muted-foreground">Demo data</p>
         </div>
 
         {/* Metrics */}

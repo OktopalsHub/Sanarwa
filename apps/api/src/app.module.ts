@@ -43,6 +43,7 @@ import { MessagingModule } from "./modules/messaging/messaging.module";
 import { NotificationsModule } from "./modules/notifications/notifications.module";
 import { ProjectModule } from "./modules/project/project.module";
 import { ProviderModule } from "./modules/provider/provider.module";
+import { InAppModule } from "./modules/in-app/in-app.module";
 import { PushCertificatesModule } from "./modules/push-certificates/push-certificates.module";
 import { TemplateModule } from "./modules/template";
 import { TenantMemberModule } from "./modules/tenant-member/tenant-member.module";
@@ -118,6 +119,7 @@ import { SecurityModule } from "./common/security/security.module";
     AnalyticsModule,
     CampaignModule,
     ProviderModule,
+    InAppModule,
     NotificationsModule,
     WhatsAppModule,
     SecurityModule,

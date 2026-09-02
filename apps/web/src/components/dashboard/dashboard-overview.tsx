@@ -107,42 +107,32 @@ export function DashboardOverview() {
             />
           </div>
 
+          {/* F-Shape: Left 2/3 Template Editors + Channel, Right 1/3 Quick actions sticky */}
           <div className="grid min-w-0 gap-4 lg:grid-cols-3">
-            <div className="min-w-0 lg:col-span-2">
-              <DashboardChart
-                title="Channel Distribution"
-                data={data?.channelDistribution ?? []}
-                type="pie"
-                height={300}
-              />
+            <div className="min-w-0 space-y-4 lg:col-span-2">
+              <Card className="border-border bg-card p-6">
+                <h3 className="mb-1 text-base font-semibold">Template studio</h3>
+                <p className="mb-3 text-sm text-muted-foreground">Edit per channel - email/sms/whatsapp/push/in-app/voice with handlebars</p>
+                <div className="flex flex-wrap gap-2">
+                  <Button asChild size="sm"><Link href={`${basePath}/campaigns`}>Open campaign wizard</Link></Button>
+                  <Button asChild variant="outline" size="sm"><Link href={`${basePath}/providers`}>Providers</Link></Button>
+                </div>
+                <p className="mt-3 text-xs text-muted-foreground">F-pattern: left editors scan first, right actions sticky.</p>
+              </Card>
+              <DashboardChart title="Channel Distribution" data={data?.channelDistribution ?? []} type="pie" height={300} />
             </div>
-            <Card className="border-border bg-card p-6">
-              <h3 className="mb-1 text-base font-semibold">Quick actions</h3>
-              <p className="mb-4 text-sm text-muted-foreground">Common workspace tasks</p>
-              <div className="flex flex-col gap-2">
-                <Button asChild variant="outline" className="w-full justify-start">
-                  <Link href={`${basePath}/messages`}>
-                    <IconInbox data-icon="inline-start" />
-                    View messages
-                  </Link>
-                </Button>
-                <Button asChild variant="outline" className="w-full justify-start">
-                  <Link href={`${basePath}/providers`}>
-                    <IconBolt data-icon="inline-start" />
-                    Manage providers
-                  </Link>
-                </Button>
-                <Button asChild variant="outline" className="w-full justify-start">
-                  <Link href={`${basePath}/api-keys`}>
-                    <IconKey data-icon="inline-start" />
-                    API keys
-                  </Link>
-                </Button>
-                <Button asChild variant="outline" className="w-full justify-start">
-                  <Link href={`${basePath}/analytics`}>View analytics</Link>
-                </Button>
-              </div>
-            </Card>
+            <div className="space-y-4">
+              <Card className="border-border bg-card p-6 lg:sticky lg:top-20">
+                <h3 className="mb-1 text-base font-semibold">Quick actions</h3>
+                <p className="mb-4 text-sm text-muted-foreground">Common workspace tasks</p>
+                <div className="flex flex-col gap-2">
+                  <Button asChild variant="outline" className="w-full justify-start"><Link href={`${basePath}/messages`}><IconInbox data-icon="inline-start" />View messages</Link></Button>
+                  <Button asChild variant="outline" className="w-full justify-start"><Link href={`${basePath}/providers`}><IconBolt data-icon="inline-start" />Manage providers</Link></Button>
+                  <Button asChild variant="outline" className="w-full justify-start"><Link href={`${basePath}/api-keys`}><IconKey data-icon="inline-start" />API keys</Link></Button>
+                  <Button asChild variant="outline" className="w-full justify-start"><Link href={`${basePath}/analytics`}>View analytics</Link></Button>
+                </div>
+              </Card>
+            </div>
           </div>
         </>
       )}

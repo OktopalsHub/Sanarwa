@@ -14,6 +14,7 @@ export { NOTIFICATION_DELIVERY_QUEUE, NOTIFICATION_QUEUE } from "./notification-
     BullModule.registerQueue(
       {
         name: NOTIFICATION_QUEUE,
+        limiter: { max: 50, duration: 1000 }, // Minimal 250 plan: 50/sec global - fits 4GB shared
         defaultJobOptions: {
           removeOnComplete: 100,
           removeOnFail: 50,
@@ -26,6 +27,7 @@ export { NOTIFICATION_DELIVERY_QUEUE, NOTIFICATION_QUEUE } from "./notification-
       },
       {
         name: NOTIFICATION_DELIVERY_QUEUE,
+        limiter: { max: 30, duration: 1000 }, // Minimal: 30/sec delivery - safe for ZeptoMail 500 burst + SMS carriers 10-30/sec
         defaultJobOptions: {
           removeOnComplete: 100,
           removeOnFail: 50,

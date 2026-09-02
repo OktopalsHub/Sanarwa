@@ -2,11 +2,11 @@
 
 import { User } from "@/lib/icons";
 
+import { NotificationBell } from "@/components/in-app/notification-bell";
 import { TenantSwitcher } from "@/components/tenant/tenant-switcher";
 import { ThemeToggle } from "@/components/theme-toggle";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { BellIcon, MagnifyingGlassIcon } from "@heroicons/react/24/outline";
+import { MagnifyingGlassIcon } from "@heroicons/react/24/outline";
 import { UserProfileDropdown } from "./user-profile-dropdown";
 
 export function AppHeader() {
@@ -23,11 +23,8 @@ export function AppHeader() {
 
         {/* Right side actions */}
         <div className="flex items-center gap-2">
-          {/* Notifications */}
-          <Button variant="ghost" size="icon" className="relative">
-            <BellIcon className="h-5 w-5" />
-            <span className="sr-only">Notifications</span>
-          </Button>
+          {/* Notifications - world-class in-app bell (API feeding + gateway) */}
+          <NotificationBell />
 
           {/* Theme toggle */}
           <ThemeToggle />

@@ -17,6 +17,7 @@ import { BasicInfoStep } from "./wizard-steps/basic-info-step";
 import { ChannelSelectionStep } from "./wizard-steps/channel-selection-step";
 import { ReviewStep } from "./wizard-steps/review-step";
 import { SchedulingStep } from "./wizard-steps/scheduling-step";
+import { TemplateEditorStep, type TemplatePerChannel } from "./wizard-steps/template-editor-step";
 
 interface CampaignWizardProps {
   onClose?: () => void;
@@ -27,6 +28,7 @@ const WIZARD_STEPS = [
   { id: "basic", title: "Basic Information", description: "Campaign name, type, and description" },
   { id: "channels", title: "Channel Selection", description: "Choose communication channels" },
   { id: "audience", title: "Audience Targeting", description: "Define your target audience" },
+  { id: "templates", title: "Templates", description: "Content per channel (email, SMS, WhatsApp, push, in-app, voice)" },
   { id: "schedule", title: "Scheduling", description: "Set campaign timing and schedule" },
   { id: "review", title: "Review & Launch", description: "Review and launch your campaign" },
 ];
@@ -76,8 +78,10 @@ export function CampaignWizard({ onClose, initialData }: CampaignWizardProps) {
         : wizardData.step === 3
           ? Boolean(data.audience?.type)
           : wizardData.step === 4
-            ? Boolean(data.schedule?.type)
-            : true;
+            ? Boolean((data.templates as any) || data.channels?.selectedChannels?.length) // templates step can proceed even if not all filled
+            : wizardData.step === 5
+              ? Boolean(data.schedule?.type)
+              : true;
 
   const canCreate = Boolean(
     data.basic?.name &&
@@ -125,6 +129,12 @@ export function CampaignWizard({ onClose, initialData }: CampaignWizardProps) {
       key="audience"
       data={data.audience}
       onUpdate={(audience) => updateWizardData({ audience })}
+    />,
+    <TemplateEditorStep
+      key="templates"
+      selectedChannels={(data.channels?.selectedChannels as any) || []}
+      templates={(data.templates as TemplatePerChannel) || ({} as TemplatePerChannel)}
+      onChange={(templates) => updateWizardData({ templates: templates as any })}
     />,
     <SchedulingStep
       key="schedule"

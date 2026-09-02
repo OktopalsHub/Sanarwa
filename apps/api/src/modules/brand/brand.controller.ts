@@ -158,7 +158,7 @@ export class BrandController {
 
   // SES-specific endpoints
   @Get("/:brandId/ses-domain-verification-instructions")
-  @ApiOperation({ summary: "Get SES domain verification instructions" })
+  @ApiOperation({ summary: "Get SES domain verification instructions - generic custom domain + optional Cloudflare auto" })
   @ApiParam({ name: "brandId", description: "Brand ID" })
   @ApiResponse({ status: 200, description: "SES verification instructions retrieved" })
   @ApiResponse({ status: 401, description: "Unauthorized" })
@@ -166,12 +166,13 @@ export class BrandController {
     @CurrentTenantId() tenantId: string,
     @Param("brandId") brandId: string,
     @Query("domain") domain?: string,
+    @Query("cloudflareApiToken") cloudflareApiToken?: string,
   ) {
-    return this.brandSesService.getSESDomainVerificationInstructions(tenantId, brandId, domain);
+    return this.brandSesService.getSESDomainVerificationInstructions(tenantId, brandId, domain, cloudflareApiToken);
   }
 
   @Post("/:brandId/verify-ses-domain")
-  @ApiOperation({ summary: "Verify domain with AWS SES" })
+  @ApiOperation({ summary: "Verify domain with AWS SES - generic custom domain + optional Cloudflare auto" })
   @ApiParam({ name: "brandId", description: "Brand ID" })
   @ApiResponse({ status: 200, description: "SES domain verification initiated" })
   @ApiResponse({ status: 400, description: "Bad Request" })
@@ -179,18 +180,22 @@ export class BrandController {
   async verifySESDomain(
     @CurrentTenantId() tenantId: string,
     @Param("brandId") brandId: string,
-    @Body("domain") domain: string,
+    @Body() body: { domain: string; cloudflareApiToken?: string },
   ) {
-    return this.brandSesService.verifySESDomain(tenantId, brandId, domain);
+    return this.brandSesService.verifySESDomain(tenantId, brandId, body.domain, body.cloudflareApiToken);
   }
 
   @Post("/:brandId/setup-ses-dkim")
-  @ApiOperation({ summary: "Setup DKIM with AWS SES" })
+  @ApiOperation({ summary: "Setup DKIM with AWS SES - generic custom domain + optional Cloudflare auto" })
   @ApiParam({ name: "brandId", description: "Brand ID" })
   @ApiResponse({ status: 200, description: "SES DKIM setup initiated" })
   @ApiResponse({ status: 401, description: "Unauthorized" })
-  async setupSESDKIM(@CurrentTenantId() tenantId: string, @Param("brandId") brandId: string) {
-    return this.brandSesService.setupSESDKIM(tenantId, brandId);
+  async setupSESDKIM(
+    @CurrentTenantId() tenantId: string,
+    @Param("brandId") brandId: string,
+    @Body() body: { cloudflareApiToken?: string } = {},
+  ) {
+    return this.brandSesService.setupSESDKIM(tenantId, brandId, body.cloudflareApiToken);
   }
 
   @Get("/:brandId/ses-dkim-status")

@@ -7,6 +7,7 @@ import { BrandController } from "./brand.controller";
 import { BrandService } from "./brand.service";
 import { BRAND_REPO } from "./brand.tokens";
 import { Brand } from "./entities/brand.entity";
+import { ProviderConfig } from "../provider/provider-config.entity";
 import { DnsVerificationService } from "./services/dns-verification.service";
 import { SESVerificationService } from "./services/ses-verification.service";
 import { ResendVerificationService } from "./services/resend-verification.service";
@@ -17,7 +18,7 @@ import { BrandResendService } from "./services/brand-resend.service";
 import { BrandSesService } from "./services/brand-ses.service";
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Brand]), AuthModule, TenantMemberModule],
+  imports: [TypeOrmModule.forFeature([Brand, ProviderConfig]), AuthModule, TenantMemberModule],
   controllers: [BrandController],
   providers: [
     BrandService,

@@ -1,5 +1,6 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
+import { GoogleAuth } from "google-auth-library";
 import { IPushProvider, PushPayload, PushResponse } from "../push-provider.interface";
 
 interface FCMResponse {
@@ -15,10 +16,12 @@ export class FCMProvider implements IPushProvider {
   private readonly logger = new Logger(FCMProvider.name);
   private readonly serverKey: string;
   private readonly projectId: string;
+  private readonly serviceAccountJson: string;
 
   constructor(private configService: ConfigService) {
     this.serverKey = this.configService.get("FCM_SERVER_KEY") || "";
     this.projectId = this.configService.get("FCM_PROJECT_ID") || "";
+    this.serviceAccountJson = this.configService.get("FCM_SERVICE_ACCOUNT_JSON") || this.configService.get("FCM_SERVICE_ACCOUNT") || "";
   }
 
   async sendPushNotification(payload: PushPayload): Promise<PushResponse> {
@@ -26,6 +29,11 @@ export class FCMProvider implements IPushProvider {
       const tokens = Array.isArray(payload.deviceTokens)
         ? payload.deviceTokens
         : [payload.deviceTokens];
+
+      // Prefer HTTP v1 if service account available (world-class, not legacy serverKey)
+      if (this.serviceAccountJson && this.projectId) {
+        return this.sendViaHttpV1(tokens, payload);
+      }
 
       // Build FCM payload with deep linking support
       const fcmPayload: any = {
@@ -145,7 +153,54 @@ export class FCMProvider implements IPushProvider {
     }
   }
 
+  private async sendViaHttpV1(tokens: string[], payload: PushPayload): Promise<PushResponse> {
+    const serviceAccount = JSON.parse(this.serviceAccountJson);
+    const auth = new GoogleAuth({
+      credentials: serviceAccount,
+      scopes: ["https://www.googleapis.com/auth/firebase.messaging"],
+    });
+    const client = await auth.getClient();
+    const accessToken = await client.getAccessToken();
+    const token = accessToken.token || "";
+
+    let successCount = 0;
+    let failureCount = 0;
+    const failedTokens: string[] = [];
+
+    for (const deviceToken of tokens) {
+      const message: any = {
+        message: {
+          token: deviceToken,
+          notification: { title: payload.title, body: payload.body, image: payload.imageUrl },
+          data: payload.data ? Object.fromEntries(Object.entries(payload.data).map(([k, v]) => [k, String(v)])) : undefined,
+          android: payload.android
+            ? { notification: { channel_id: payload.android.channelId, color: payload.android.color, icon: payload.android.icon, tag: payload.android.tag } }
+            : undefined,
+          apns: payload.ios
+            ? { payload: { aps: { alert: { title: payload.title, body: payload.body }, badge: payload.badge, sound: payload.sound || "default" } } }
+            : undefined,
+        },
+      };
+
+      const res = await fetch(`https://fcm.googleapis.com/v1/projects/${this.projectId}/messages:send`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+        body: JSON.stringify(message),
+      });
+      if (res.ok) successCount++;
+      else {
+        failureCount++;
+        failedTokens.push(deviceToken);
+        this.logger.warn(`FCM v1 failed for ${deviceToken.slice(0, 8)}: ${res.status} ${await res.text()}`);
+      }
+    }
+
+    this.logger.log(`FCM v1 push sent - Success: ${successCount}, Failure: ${failureCount}`);
+    return { success: failureCount === 0, successCount, failureCount, failedTokens, provider: "fcm" };
+  }
+
   async validateConfig(): Promise<boolean> {
+    if (this.serviceAccountJson && this.projectId) return true;
     return !!(this.serverKey && this.projectId);
   }
 

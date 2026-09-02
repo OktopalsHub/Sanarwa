@@ -2,6 +2,10 @@
 
 import { ProviderList } from "@/components/providers/provider-list";
 import { CreateProviderDialog } from "@/components/providers/create-provider-dialog";
+import { WhatsAppEmbeddedSignup } from "@/components/whatsapp/whatsapp-embedded-signup";
+import { WhatsAppTemplateManager } from "@/components/whatsapp/whatsapp-template-manager";
+import { PushProviderSetup } from "@/components/push/push-provider-setup";
+import { SMSSenderSetup } from "@/components/sms/sms-sender-setup";
 import { AppShell } from "@/components/layout";
 import { Button } from "@/components/ui/button";
 import { PlusIcon } from "@heroicons/react/24/outline";
@@ -29,6 +33,18 @@ export default function ProvidersPage() {
           </div>
 
           <ProviderList />
+
+          {/* WhatsApp Embedded Signup - managed WABA, dedicated 6k templates */}
+          <div className="grid gap-6 lg:grid-cols-2">
+            <WhatsAppEmbeddedSignup />
+            <WhatsAppTemplateManager />
+          </div>
+
+          {/* Push - managed SNS fallback + BYOK FCM v1 / APNS ES256 */}
+          <PushProviderSetup />
+
+          {/* SMS - managed Africastalking+Telnyx routing + BYOK Termii/AT/Twilio */}
+          <SMSSenderSetup />
 
           <CreateProviderDialog open={showCreateDialog} onOpenChange={setShowCreateDialog} />
         </div>

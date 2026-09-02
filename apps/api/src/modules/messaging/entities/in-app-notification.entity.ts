@@ -35,6 +35,9 @@ export enum InAppNotificationStatus {
 @Index(["userId", "status"])
 @Index(["tenantId", "createdAt"])
 @Index(["type", "status"])
+@Index(["tenantId", "feedId"])
+@Index(["subscriberId", "seen"])
+@Index(["transactionId", "tenantId"])
 export class InAppNotification {
   @PrimaryGeneratedColumn("uuid")
   id: string;
@@ -97,6 +100,34 @@ export class InAppNotification {
 
   @Column({ type: "timestamp", nullable: true, name: "expires_at" })
   expiresAt?: Date;
+
+  // World-class Novu parity fields
+  @Column({ type: "uuid", nullable: true, name: "transaction_id" })
+  transactionId?: string;
+
+  @Column({ type: "varchar", default: "default", name: "feed_id" })
+  feedId: string;
+
+  @Column({ type: "boolean", default: false })
+  seen: boolean;
+
+  @Column({ type: "timestamp", nullable: true, name: "seen_at" })
+  seenAt?: Date;
+
+  @Column({ type: "boolean", default: false })
+  archived: boolean;
+
+  @Column({ type: "timestamp", nullable: true, name: "archived_at" })
+  archivedAt?: Date;
+
+  @Column({ type: "varchar", nullable: true, name: "subscriber_id" })
+  subscriberId?: string;
+
+  @Column({ type: "varchar", nullable: true, name: "priority" })
+  priority?: string;
+
+  @Column({ type: "varchar", nullable: true, name: "avatar" })
+  avatar?: string;
 
   @ManyToOne(() => User, { nullable: true })
   @JoinColumn({ name: "user_id" })

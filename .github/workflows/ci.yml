@@ -9,10 +9,6 @@ on:
 permissions:
   contents: read
 
-concurrency:
-  group: sanarwa-ci-${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
 env:
   PNPM_VERSION: 10.25.0
   NODE_VERSION: 22

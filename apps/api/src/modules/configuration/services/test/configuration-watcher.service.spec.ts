@@ -1,17 +1,14 @@
-import { ConfigService } from '@nestjs/config';
-import { EventEmitter2 } from '@nestjs/event-emitter';
-import { Test, TestingModule } from '@nestjs/testing';
-import { getRepositoryToken } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import {
-import type { Mock, Mocked } from 'vitest';
-  Configuration,
-  ConfigurationScope,
-} from '../../entities/configuration.entity';
-import { ConfigurationCacheService } from '../configuration-cache.service';
-import { ConfigurationWatcherService } from '../configuration-watcher.service';
+import { ConfigService } from "@nestjs/config";
+import { EventEmitter2 } from "@nestjs/event-emitter";
+import { Test, TestingModule } from "@nestjs/testing";
+import { getRepositoryToken } from "@nestjs/typeorm";
+import type { Mock, Mocked } from "vitest";
+import { Repository } from "typeorm";
+import { Configuration, ConfigurationScope } from "../../entities/configuration.entity";
+import { ConfigurationCacheService } from "../configuration-cache.service";
+import { ConfigurationWatcherService } from "../configuration-watcher.service";
 
-describe('ConfigurationWatcherService', () => {
+describe("ConfigurationWatcherService", () => {
   let service: ConfigurationWatcherService;
   let configRepository: Mocked<Repository<Configuration>>;
   let cacheService: Mocked<ConfigurationCacheService>;
@@ -19,11 +16,11 @@ describe('ConfigurationWatcherService', () => {
   let configService: Mocked<ConfigService>;
 
   const mockConfiguration: Configuration = {
-    id: 'test-id',
-    key: 'test.key',
-    value: 'test-value',
+    id: "test-id",
+    key: "test.key",
+    value: "test-value",
     scope: ConfigurationScope.GLOBAL,
-    environment: 'test',
+    environment: "test",
     createdAt: new Date(),
     updatedAt: new Date(),
   } as Configuration;
@@ -55,8 +52,8 @@ describe('ConfigurationWatcherService', () => {
         const values: Record<string, any> = {
           CONFIG_WATCH_INTERVAL: 30000,
           CONFIG_HOT_RELOAD_ENABLED: true,
-          CONFIG_WATCH_PATTERNS: '*',
-          NODE_ENV: 'test',
+          CONFIG_WATCH_PATTERNS: "*",
+          NODE_ENV: "test",
         };
         return values[key] || defaultValue;
       }),
@@ -84,9 +81,7 @@ describe('ConfigurationWatcherService', () => {
       ],
     }).compile();
 
-    service = module.get<ConfigurationWatcherService>(
-      ConfigurationWatcherService,
-    );
+    service = module.get<ConfigurationWatcherService>(ConfigurationWatcherService);
     configRepository = module.get(getRepositoryToken(Configuration));
     cacheService = module.get(ConfigurationCacheService);
     eventEmitter = module.get(EventEmitter2);
@@ -100,12 +95,12 @@ describe('ConfigurationWatcherService', () => {
     await service.onModuleDestroy();
   });
 
-  it('should be defined', () => {
+  it("should be defined", () => {
     expect(service).toBeDefined();
   });
 
-  describe('onModuleInit', () => {
-    it('should start watching when hot reload is enabled', async () => {
+  describe("onModuleInit", () => {
+    it("should start watching when hot reload is enabled", async () => {
       mockQueryBuilder.getMany.mockResolvedValue([mockConfiguration]);
 
       await service.onModuleInit();
@@ -114,13 +109,11 @@ describe('ConfigurationWatcherService', () => {
       expect(status.isWatching).toBe(true);
     });
 
-    it('should not start watching when hot reload is disabled', async () => {
-      configService.get.mockImplementation(
-        (key: string, defaultValue?: any) => {
-          if (key === 'CONFIG_HOT_RELOAD_ENABLED') return false;
-          return defaultValue;
-        },
-      );
+    it("should not start watching when hot reload is disabled", async () => {
+      configService.get.mockImplementation((key: string, defaultValue?: any) => {
+        if (key === "CONFIG_HOT_RELOAD_ENABLED") return false;
+        return defaultValue;
+      });
 
       await service.onModuleInit();
 
@@ -129,8 +122,8 @@ describe('ConfigurationWatcherService', () => {
     });
   });
 
-  describe('startWatching', () => {
-    it('should start watching successfully', async () => {
+  describe("startWatching", () => {
+    it("should start watching successfully", async () => {
       mockQueryBuilder.getMany.mockResolvedValue([mockConfiguration]);
 
       await service.startWatching();
@@ -140,7 +133,7 @@ describe('ConfigurationWatcherService', () => {
       expect(status.watchedCount).toBe(1);
     });
 
-    it('should not start if already watching', async () => {
+    it("should not start if already watching", async () => {
       mockQueryBuilder.getMany.mockResolvedValue([mockConfiguration]);
 
       await service.startWatching();
@@ -151,11 +144,9 @@ describe('ConfigurationWatcherService', () => {
     });
   });
 
-  describe('stopWatching', () => {
-    it('should stop watching successfully', async () => {
-      configRepository
-        .createQueryBuilder()
-        .getMany.mockResolvedValue([mockConfiguration]);
+  describe("stopWatching", () => {
+    it("should stop watching successfully", async () => {
+      configRepository.createQueryBuilder().getMany.mockResolvedValue([mockConfiguration]);
 
       await service.startWatching();
       await service.stopWatching();
@@ -165,7 +156,7 @@ describe('ConfigurationWatcherService', () => {
       expect(status.watchedCount).toBe(0);
     });
 
-    it('should handle stop when not watching', async () => {
+    it("should handle stop when not watching", async () => {
       await service.stopWatching();
 
       const status = service.getStatus();
@@ -173,43 +164,43 @@ describe('ConfigurationWatcherService', () => {
     });
   });
 
-  describe('watchConfiguration', () => {
-    it('should add configuration to watch list', async () => {
+  describe("watchConfiguration", () => {
+    it("should add configuration to watch list", async () => {
       configRepository.find.mockResolvedValue([mockConfiguration]);
 
-      await service.watchConfiguration('test.key');
+      await service.watchConfiguration("test.key");
 
       const watchedKeys = service.getWatchedConfigurations();
-      expect(watchedKeys).toContain('test.key:global');
+      expect(watchedKeys).toContain("test.key:global");
     });
 
-    it('should handle non-existent configuration', async () => {
+    it("should handle non-existent configuration", async () => {
       configRepository.find.mockResolvedValue([]);
 
-      await service.watchConfiguration('non-existent');
+      await service.watchConfiguration("non-existent");
 
       const watchedKeys = service.getWatchedConfigurations();
-      expect(watchedKeys).not.toContain('non-existent:global');
+      expect(watchedKeys).not.toContain("non-existent:global");
     });
   });
 
-  describe('unwatchConfiguration', () => {
-    it('should remove configuration from watch list', async () => {
+  describe("unwatchConfiguration", () => {
+    it("should remove configuration from watch list", async () => {
       configRepository.find.mockResolvedValue([mockConfiguration]);
 
-      await service.watchConfiguration('test.key');
-      service.unwatchConfiguration('test.key');
+      await service.watchConfiguration("test.key");
+      service.unwatchConfiguration("test.key");
 
       const watchedKeys = service.getWatchedConfigurations();
-      expect(watchedKeys).not.toContain('test.key:global');
+      expect(watchedKeys).not.toContain("test.key:global");
     });
   });
 
-  describe('forceCheck', () => {
-    it('should check for changes and return results', async () => {
+  describe("forceCheck", () => {
+    it("should check for changes and return results", async () => {
       const updatedConfig = {
         ...mockConfiguration,
-        value: 'updated-value',
+        value: "updated-value",
         updatedAt: new Date(Date.now() + 1000),
       };
 
@@ -220,27 +211,21 @@ describe('ConfigurationWatcherService', () => {
       await service.startWatching();
 
       // Simulate configuration being watched
-      (service as any).watchedConfigurations.set(
-        'test.key:global:test',
-        mockConfiguration,
-      );
+      (service as any).watchedConfigurations.set("test.key:global:test", mockConfiguration);
 
       const changes = await service.forceCheck();
 
       expect(changes).toHaveLength(1);
-      expect(changes[0].action).toBe('update');
-      expect(changes[0].newValue).toBe('updated-value');
+      expect(changes[0].action).toBe("update");
+      expect(changes[0].newValue).toBe("updated-value");
       expect(cacheService.invalidate).toHaveBeenCalled();
-      expect(eventEmitter.emit).toHaveBeenCalledWith(
-        'configuration.changed',
-        expect.any(Object),
-      );
+      expect(eventEmitter.emit).toHaveBeenCalledWith("configuration.changed", expect.any(Object));
     });
 
-    it('should detect new configurations', async () => {
+    it("should detect new configurations", async () => {
       const newConfig = {
         ...mockConfiguration,
-        key: 'new.key',
+        key: "new.key",
         createdAt: new Date(),
       };
 
@@ -253,17 +238,14 @@ describe('ConfigurationWatcherService', () => {
       const changes = await service.forceCheck();
 
       expect(changes).toHaveLength(1);
-      expect(changes[0].action).toBe('create');
-      expect(eventEmitter.emit).toHaveBeenCalledWith(
-        'configuration.created',
-        expect.any(Object),
-      );
+      expect(changes[0].action).toBe("create");
+      expect(eventEmitter.emit).toHaveBeenCalledWith("configuration.created", expect.any(Object));
     });
 
-    it('should handle errors gracefully', async () => {
+    it("should handle errors gracefully", async () => {
       mockQueryBuilder.getMany
         .mockResolvedValueOnce([mockConfiguration])
-        .mockRejectedValueOnce(new Error('Database error'));
+        .mockRejectedValueOnce(new Error("Database error"));
 
       await service.startWatching();
 
@@ -273,22 +255,19 @@ describe('ConfigurationWatcherService', () => {
     });
   });
 
-  describe('reload', () => {
-    it('should reload watched configurations', async () => {
+  describe("reload", () => {
+    it("should reload watched configurations", async () => {
       mockQueryBuilder.getMany.mockResolvedValue([mockConfiguration]);
 
       await service.reload();
 
       expect(cacheService.clear).toHaveBeenCalled();
-      expect(eventEmitter.emit).toHaveBeenCalledWith(
-        'configuration.reloaded',
-        expect.any(Object),
-      );
+      expect(eventEmitter.emit).toHaveBeenCalledWith("configuration.reloaded", expect.any(Object));
     });
   });
 
-  describe('getStatus', () => {
-    it('should return correct status information', async () => {
+  describe("getStatus", () => {
+    it("should return correct status information", async () => {
       mockQueryBuilder.getMany.mockResolvedValue([mockConfiguration]);
 
       await service.startWatching();
@@ -298,30 +277,24 @@ describe('ConfigurationWatcherService', () => {
       expect(status.isWatching).toBe(true);
       expect(status.watchedCount).toBe(1);
       expect(status.pollInterval).toBe(30000);
-      expect(status.watchPatterns).toEqual(['*']);
+      expect(status.watchPatterns).toEqual(["*"]);
       expect(status.lastCheck).toBeInstanceOf(Date);
     });
   });
 
-  describe('pattern matching', () => {
-    it('should match wildcard patterns', () => {
-      const shouldWatch = (service as any).shouldWatchConfiguration('any.key');
+  describe("pattern matching", () => {
+    it("should match wildcard patterns", () => {
+      const shouldWatch = (service as any).shouldWatchConfiguration("any.key");
       expect(shouldWatch).toBe(true);
     });
 
-    it('should match specific patterns', () => {
+    it("should match specific patterns", () => {
       // Mock specific patterns
-      (service as any).options.watchPatterns = ['app.*', 'db.*'];
+      (service as any).options.watchPatterns = ["app.*", "db.*"];
 
-      const shouldWatchApp = (service as any).shouldWatchConfiguration(
-        'app.config',
-      );
-      const shouldWatchDb = (service as any).shouldWatchConfiguration(
-        'db.host',
-      );
-      const shouldNotWatch = (service as any).shouldWatchConfiguration(
-        'other.config',
-      );
+      const shouldWatchApp = (service as any).shouldWatchConfiguration("app.config");
+      const shouldWatchDb = (service as any).shouldWatchConfiguration("db.host");
+      const shouldNotWatch = (service as any).shouldWatchConfiguration("other.config");
 
       expect(shouldWatchApp).toBe(true);
       expect(shouldWatchDb).toBe(true);
@@ -329,25 +302,22 @@ describe('ConfigurationWatcherService', () => {
     });
   });
 
-  describe('buildWatchKey', () => {
-    it('should build correct watch key', () => {
+  describe("buildWatchKey", () => {
+    it("should build correct watch key", () => {
       const watchKey = (service as any).buildWatchKey(
-        'test.key',
+        "test.key",
         ConfigurationScope.TENANT,
-        'tenant-1',
-        'production',
+        "tenant-1",
+        "production",
       );
 
-      expect(watchKey).toBe('test.key:tenant:tenant-1:production');
+      expect(watchKey).toBe("test.key:tenant:tenant-1:production");
     });
 
-    it('should build watch key without optional parameters', () => {
-      const watchKey = (service as any).buildWatchKey(
-        'test.key',
-        ConfigurationScope.GLOBAL,
-      );
+    it("should build watch key without optional parameters", () => {
+      const watchKey = (service as any).buildWatchKey("test.key", ConfigurationScope.GLOBAL);
 
-      expect(watchKey).toBe('test.key:global');
+      expect(watchKey).toBe("test.key:global");
     });
   });
 });

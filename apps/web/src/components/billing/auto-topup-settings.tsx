@@ -1,39 +1,33 @@
-'use client';
+"use client";
 
-import { useEffect, useMemo, useRef, useState } from 'react';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { billingApi } from '@/lib/api';
-import { apiClient } from '@/lib/api/client';
-import { useTenant } from '@/contexts/tenant-context';
-import { useCheckoutCurrency } from '@/hooks/use-checkout-currency';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { billingApi } from "@/lib/api";
+import { apiClient } from "@/lib/api/client";
+import { useTenant } from "@/contexts/tenant-context";
+import { useCheckoutCurrency } from "@/hooks/use-checkout-currency";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
-import { Switch } from '@/components/ui/switch';
+} from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
 
 export function AutoTopupSettings() {
   const { selectedTenant } = useTenant();
   const queryClient = useQueryClient();
   const { currency } = useCheckoutCurrency();
-  const [selectedCurrency, setSelectedCurrency] = useState<'USD' | 'NGN'>(currency);
+  const [selectedCurrency, setSelectedCurrency] = useState<"USD" | "NGN">(currency);
   const [enabled, setEnabled] = useState(false);
-  const [thresholdAmount, setThresholdAmount] = useState('1000');
-  const [packageId, setPackageId] = useState('');
-  const [paymentMethodId, setPaymentMethodId] = useState('');
+  const [thresholdAmount, setThresholdAmount] = useState("1000");
+  const [packageId, setPackageId] = useState("");
+  const [paymentMethodId, setPaymentMethodId] = useState("");
   const configInitialized = useRef(false);
 
   useEffect(() => {
@@ -45,23 +39,24 @@ export function AutoTopupSettings() {
   }, [currency]);
 
   const { data: tokenCatalog } = useQuery({
-    queryKey: ['token-packages'],
+    queryKey: ["token-packages"],
     queryFn: () => billingApi.getTokenPackages(),
   });
 
   const managedPackages = useMemo(() => {
     const shelf = tokenCatalog?.shelves.managed[selectedCurrency] ?? [];
-    return shelf.filter((pkg) => pkg.kind !== 'byo');
+    return shelf.filter((pkg) => pkg.kind !== "byo");
   }, [tokenCatalog, selectedCurrency]);
 
   useEffect(() => {
-    if (!packageId && managedPackages.length > 0) {
-      setPackageId(managedPackages[0].id);
+    const firstPackage = managedPackages[0];
+    if (!packageId && firstPackage) {
+      setPackageId(firstPackage.id);
     }
   }, [managedPackages, packageId]);
 
   const { data: config, isLoading: configLoading } = useQuery({
-    queryKey: ['auto-topup-config', selectedTenant?.id],
+    queryKey: ["auto-topup-config", selectedTenant?.id],
     queryFn: async () => {
       if (selectedTenant?.id) {
         apiClient.setTenant(selectedTenant.id);
@@ -72,7 +67,7 @@ export function AutoTopupSettings() {
   });
 
   const { data: paymentMethods, isLoading: methodsLoading } = useQuery({
-    queryKey: ['payment-methods', selectedTenant?.id],
+    queryKey: ["payment-methods", selectedTenant?.id],
     queryFn: async () => {
       if (selectedTenant?.id) {
         apiClient.setTenant(selectedTenant.id);
@@ -94,14 +89,14 @@ export function AutoTopupSettings() {
     if (config.paymentMethodId) setPaymentMethodId(config.paymentMethodId);
   }, [config]);
 
-  const methods = (paymentMethods?.data ?? []).filter(
-    (method) => method.provider !== 'bachs',
-  );
+  const methods = (paymentMethods?.data ?? []).filter((method) => method.provider !== "bachs");
 
   useEffect(() => {
     if (!paymentMethodId && methods.length > 0) {
       const defaultMethod = methods.find((method) => method.isDefault) ?? methods[0];
-      setPaymentMethodId(defaultMethod.id);
+      if (defaultMethod) {
+        setPaymentMethodId(defaultMethod.id);
+      }
     }
   }, [methods, paymentMethodId]);
 
@@ -115,7 +110,7 @@ export function AutoTopupSettings() {
         paymentMethodId,
       }),
     onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: ['auto-topup-config'] });
+      void queryClient.invalidateQueries({ queryKey: ["auto-topup-config"] });
     },
   });
 
@@ -142,7 +137,8 @@ export function AutoTopupSettings() {
           <div>
             <p className="font-medium">Enable auto top-up</p>
             <p className="text-sm text-muted-foreground">
-              Requires a saved card (Nomba for NGN, Polar for USD). Bachs cards cannot be charged off-session.
+              Requires a saved card (Nomba for NGN, Polar for USD). Bachs cards cannot be charged
+              off-session.
             </p>
           </div>
           <Switch checked={enabled} onCheckedChange={setEnabled} disabled={isLoading} />
@@ -165,7 +161,7 @@ export function AutoTopupSettings() {
             <Label htmlFor="currency">Billing currency</Label>
             <Select
               value={selectedCurrency}
-              onValueChange={(value) => setSelectedCurrency(value as 'USD' | 'NGN')}
+              onValueChange={(value) => setSelectedCurrency(value as "USD" | "NGN")}
               disabled={!enabled || isLoading}
             >
               <SelectTrigger id="currency">
@@ -191,8 +187,8 @@ export function AutoTopupSettings() {
               <SelectContent>
                 {managedPackages.map((pkg) => (
                   <SelectItem key={pkg.id} value={pkg.id}>
-                    {pkg.tokens.toLocaleString()} tokens —{' '}
-                    {pkg.currency === 'NGN' ? `₦${pkg.price.toLocaleString()}` : `$${pkg.price}`}
+                    {pkg.tokens.toLocaleString()} tokens —{" "}
+                    {pkg.currency === "NGN" ? `₦${pkg.price.toLocaleString()}` : `$${pkg.price}`}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -214,7 +210,7 @@ export function AutoTopupSettings() {
               onClick={() => setupCardMutation.mutate()}
               disabled={setupCardMutation.isPending}
             >
-              {setupCardMutation.isPending ? 'Redirecting…' : 'Add card'}
+              {setupCardMutation.isPending ? "Redirecting…" : "Add card"}
             </Button>
           </div>
 
@@ -232,8 +228,8 @@ export function AutoTopupSettings() {
               <SelectContent>
                 {methods.map((method) => (
                   <SelectItem key={method.id} value={method.id}>
-                    {(method.cardBrand ?? method.provider).toUpperCase()} ••••{' '}
-                    {method.cardLast4 ?? '****'} ({method.currency})
+                    {(method.cardBrand ?? method.provider).toUpperCase()} ••••{" "}
+                    {method.cardLast4 ?? "****"} ({method.currency})
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -246,7 +242,7 @@ export function AutoTopupSettings() {
           onClick={() => saveMutation.mutate()}
           disabled={saveMutation.isPending || isLoading || (enabled && !paymentMethodId)}
         >
-          {saveMutation.isPending ? 'Saving…' : 'Save auto top-up settings'}
+          {saveMutation.isPending ? "Saving…" : "Save auto top-up settings"}
         </Button>
       </CardContent>
     </Card>

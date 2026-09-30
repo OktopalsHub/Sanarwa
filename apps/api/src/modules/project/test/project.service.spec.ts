@@ -1,15 +1,12 @@
-import { Test, TestingModule } from '@nestjs/testing';
-import { getRepositoryToken } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import {
-import type { Mock } from 'vitest';
-  Project,
-  ProjectStatus,
-} from '../../../database/entities/project.entity';
-import { TenantFactory } from '../../test/factories/tenant.factory';
-import { ProjectService } from './project.service';
+import { Test, TestingModule } from "@nestjs/testing";
+import { getRepositoryToken } from "@nestjs/typeorm";
+import type { Mock } from "vitest";
+import { Repository } from "typeorm";
+import { Project, ProjectStatus } from "../../../database/entities/project.entity";
+import { TenantFactory } from "../../test/factories/tenant.factory";
+import { ProjectService } from "./project.service";
 
-describe('ProjectService', () => {
+describe("ProjectService", () => {
   let service: ProjectService;
   let projectRepository: Repository<Project>;
 
@@ -45,33 +42,31 @@ describe('ProjectService', () => {
     }).compile();
 
     service = module.get<ProjectService>(ProjectService);
-    projectRepository = module.get<Repository<Project>>(
-      getRepositoryToken(Project),
-    );
+    projectRepository = module.get<Repository<Project>>(getRepositoryToken(Project));
   });
 
   afterEach(() => {
     vi.clearAllMocks();
   });
 
-  it('should be defined', () => {
+  it("should be defined", () => {
     expect(service).toBeDefined();
   });
 
-  describe('createProject', () => {
-    it('should create a new project successfully', async () => {
+  describe("createProject", () => {
+    it("should create a new project successfully", async () => {
       const tenant = TenantFactory.create();
       const projectData = {
-        name: 'Test Project',
-        description: 'Test project description',
+        name: "Test Project",
+        description: "Test project description",
         settings: {
-          defaultFromEmail: 'noreply@testproject.com',
-          defaultFromName: 'Test Project',
+          defaultFromEmail: "noreply@testproject.com",
+          defaultFromName: "Test Project",
         },
       };
 
       const mockProject = {
-        id: 'project-1',
+        id: "project-1",
         tenantId: tenant.id,
         name: projectData.name,
         description: projectData.description,
@@ -97,15 +92,15 @@ describe('ProjectService', () => {
       expect(result).toEqual(mockProject);
     });
 
-    it('should create project with default settings when not provided', async () => {
+    it("should create project with default settings when not provided", async () => {
       const tenant = TenantFactory.create();
       const projectData = {
-        name: 'Test Project',
-        description: 'Test project description',
+        name: "Test Project",
+        description: "Test project description",
       };
 
       const mockProject = {
-        id: 'project-1',
+        id: "project-1",
         tenantId: tenant.id,
         name: projectData.name,
         description: projectData.description,
@@ -131,12 +126,12 @@ describe('ProjectService', () => {
     });
   });
 
-  describe('getProjectsByTenant', () => {
-    it('should return all projects for a tenant', async () => {
+  describe("getProjectsByTenant", () => {
+    it("should return all projects for a tenant", async () => {
       const tenant = TenantFactory.create();
       const mockProjects = [
-        { id: 'project-1', name: 'Project 1', tenantId: tenant.id },
-        { id: 'project-2', name: 'Project 2', tenantId: tenant.id },
+        { id: "project-1", name: "Project 1", tenantId: tenant.id },
+        { id: "project-2", name: "Project 2", tenantId: tenant.id },
       ];
 
       mockProjectRepository.find.mockResolvedValue(mockProjects);
@@ -145,17 +140,15 @@ describe('ProjectService', () => {
 
       expect(mockProjectRepository.find).toHaveBeenCalledWith({
         where: { tenantId: tenant.id },
-        order: { createdAt: 'DESC' },
+        order: { createdAt: "DESC" },
       });
       expect(result).toEqual(mockProjects);
     });
 
-    it('should filter projects by status when provided', async () => {
+    it("should filter projects by status when provided", async () => {
       const tenant = TenantFactory.create();
       const status = ProjectStatus.ACTIVE;
-      const mockProjects = [
-        { id: 'project-1', name: 'Project 1', tenantId: tenant.id, status },
-      ];
+      const mockProjects = [{ id: "project-1", name: "Project 1", tenantId: tenant.id, status }];
 
       mockProjectRepository.find.mockResolvedValue(mockProjects);
 
@@ -163,19 +156,19 @@ describe('ProjectService', () => {
 
       expect(mockProjectRepository.find).toHaveBeenCalledWith({
         where: { tenantId: tenant.id, status },
-        order: { createdAt: 'DESC' },
+        order: { createdAt: "DESC" },
       });
       expect(result).toEqual(mockProjects);
     });
   });
 
-  describe('getProjectById', () => {
-    it('should return project when found', async () => {
+  describe("getProjectById", () => {
+    it("should return project when found", async () => {
       const tenant = TenantFactory.create();
-      const projectId = 'project-1';
+      const projectId = "project-1";
       const mockProject = {
         id: projectId,
-        name: 'Test Project',
+        name: "Test Project",
         tenantId: tenant.id,
       };
 
@@ -189,9 +182,9 @@ describe('ProjectService', () => {
       expect(result).toEqual(mockProject);
     });
 
-    it('should return null when project not found', async () => {
+    it("should return null when project not found", async () => {
       const tenant = TenantFactory.create();
-      const projectId = 'non-existent';
+      const projectId = "non-existent";
 
       mockProjectRepository.findOne.mockResolvedValue(null);
 
@@ -201,22 +194,22 @@ describe('ProjectService', () => {
     });
   });
 
-  describe('updateProject', () => {
-    it('should update project successfully', async () => {
+  describe("updateProject", () => {
+    it("should update project successfully", async () => {
       const tenant = TenantFactory.create();
-      const projectId = 'project-1';
+      const projectId = "project-1";
       const updateData = {
-        name: 'Updated Project',
-        description: 'Updated description',
+        name: "Updated Project",
+        description: "Updated description",
         settings: {
-          defaultFromEmail: 'updated@test.com',
+          defaultFromEmail: "updated@test.com",
         },
       };
 
       const existingProject = {
         id: projectId,
         tenantId: tenant.id,
-        name: 'Old Project',
+        name: "Old Project",
         status: ProjectStatus.ACTIVE,
       };
 
@@ -225,11 +218,7 @@ describe('ProjectService', () => {
       mockProjectRepository.findOne.mockResolvedValue(existingProject);
       mockProjectRepository.save.mockResolvedValue(updatedProject);
 
-      const result = await service.updateProject(
-        tenant.id,
-        projectId,
-        updateData,
-      );
+      const result = await service.updateProject(tenant.id, projectId, updateData);
 
       expect(mockProjectRepository.findOne).toHaveBeenCalledWith({
         where: { id: projectId, tenantId: tenant.id },
@@ -238,23 +227,23 @@ describe('ProjectService', () => {
       expect(result).toEqual(updatedProject);
     });
 
-    it('should throw error when project not found', async () => {
+    it("should throw error when project not found", async () => {
       const tenant = TenantFactory.create();
-      const projectId = 'non-existent';
-      const updateData = { name: 'Updated Project' };
+      const projectId = "non-existent";
+      const updateData = { name: "Updated Project" };
 
       mockProjectRepository.findOne.mockResolvedValue(null);
 
-      await expect(
-        service.updateProject(tenant.id, projectId, updateData),
-      ).rejects.toThrow('Project not found');
+      await expect(service.updateProject(tenant.id, projectId, updateData)).rejects.toThrow(
+        "Project not found",
+      );
     });
   });
 
-  describe('deleteProject', () => {
-    it('should delete project successfully', async () => {
+  describe("deleteProject", () => {
+    it("should delete project successfully", async () => {
       const tenant = TenantFactory.create();
-      const projectId = 'project-1';
+      const projectId = "project-1";
 
       const existingProject = {
         id: projectId,
@@ -273,22 +262,22 @@ describe('ProjectService', () => {
       expect(mockProjectRepository.delete).toHaveBeenCalledWith(projectId);
     });
 
-    it('should throw error when project not found', async () => {
+    it("should throw error when project not found", async () => {
       const tenant = TenantFactory.create();
-      const projectId = 'non-existent';
+      const projectId = "non-existent";
 
       mockProjectRepository.findOne.mockResolvedValue(null);
 
       await expect(service.deleteProject(tenant.id, projectId)).rejects.toThrow(
-        'Project not found',
+        "Project not found",
       );
     });
   });
 
-  describe('getProjectStats', () => {
-    it('should return project statistics', async () => {
+  describe("getProjectStats", () => {
+    it("should return project statistics", async () => {
       const tenant = TenantFactory.create();
-      const projectId = 'project-1';
+      const projectId = "project-1";
 
       const existingProject = {
         id: projectId,
@@ -323,15 +312,13 @@ describe('ProjectService', () => {
         select: vi.fn().mockReturnThis(),
         groupBy: vi.fn().mockReturnThis(),
         getRawMany: vi.fn().mockResolvedValue([
-          { channel: 'email', count: '60' },
-          { channel: 'sms', count: '30' },
-          { channel: 'push', count: '10' },
+          { channel: "email", count: "60" },
+          { channel: "sms", count: "30" },
+          { channel: "push", count: "10" },
         ]),
       };
 
-      mockProjectRepository.createQueryBuilder.mockReturnValue(
-        mockQueryBuilder,
-      );
+      mockProjectRepository.createQueryBuilder.mockReturnValue(mockQueryBuilder);
 
       const result = await service.getProjectStats(tenant.id, projectId);
 
@@ -342,22 +329,22 @@ describe('ProjectService', () => {
       expect(result.project).toEqual(existingProject);
     });
 
-    it('should throw error when project not found', async () => {
+    it("should throw error when project not found", async () => {
       const tenant = TenantFactory.create();
-      const projectId = 'non-existent';
+      const projectId = "non-existent";
 
       mockProjectRepository.findOne.mockResolvedValue(null);
 
-      await expect(
-        service.getProjectStats(tenant.id, projectId),
-      ).rejects.toThrow('Project not found');
+      await expect(service.getProjectStats(tenant.id, projectId)).rejects.toThrow(
+        "Project not found",
+      );
     });
   });
 
-  describe('archiveProject', () => {
-    it('should archive project successfully', async () => {
+  describe("archiveProject", () => {
+    it("should archive project successfully", async () => {
       const tenant = TenantFactory.create();
-      const projectId = 'project-1';
+      const projectId = "project-1";
 
       const existingProject = {
         id: projectId,
@@ -382,20 +369,20 @@ describe('ProjectService', () => {
       expect(result.status).toBe(ProjectStatus.ARCHIVED);
     });
 
-    it('should throw error when project not found', async () => {
+    it("should throw error when project not found", async () => {
       const tenant = TenantFactory.create();
-      const projectId = 'non-existent';
+      const projectId = "non-existent";
 
       mockProjectRepository.findOne.mockResolvedValue(null);
 
-      await expect(
-        service.archiveProject(tenant.id, projectId),
-      ).rejects.toThrow('Project not found');
+      await expect(service.archiveProject(tenant.id, projectId)).rejects.toThrow(
+        "Project not found",
+      );
     });
 
-    it('should throw error when project is already archived', async () => {
+    it("should throw error when project is already archived", async () => {
       const tenant = TenantFactory.create();
-      const projectId = 'project-1';
+      const projectId = "project-1";
 
       const archivedProject = {
         id: projectId,
@@ -405,9 +392,9 @@ describe('ProjectService', () => {
 
       mockProjectRepository.findOne.mockResolvedValue(archivedProject);
 
-      await expect(
-        service.archiveProject(tenant.id, projectId),
-      ).rejects.toThrow('Project is already archived');
+      await expect(service.archiveProject(tenant.id, projectId)).rejects.toThrow(
+        "Project is already archived",
+      );
     });
   });
 });

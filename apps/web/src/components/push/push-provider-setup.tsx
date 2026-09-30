@@ -26,19 +26,46 @@ export function PushProviderSetup() {
   const [apns, setApns] = useState({ keyId: "", teamId: "", bundleId: "", privateKey: "" });
   const [testToken, setTestToken] = useState("");
 
-  const handleFCM = () => {
-    if (!tenantId) return toast.error("Select tenant");
-    try { JSON.parse(fcmJson); } catch { return toast.error("Invalid service account JSON"); }
-    create.mutate({ tenantId, providerId: "fcm", config: { serviceAccountJson: fcmJson, projectId: JSON.parse(fcmJson).project_id } }, { onSuccess: ()=> toast.success("FCM BYOK saved (v1)"), onError:(e:any)=> toast.error(e.message) });
+  const handleFCM = (): void => {
+    if (!tenantId) {
+      toast.error("Select tenant");
+      return;
+    }
+    try {
+      const serviceAccount = JSON.parse(fcmJson);
+      create.mutate(
+        { tenantId, providerId: "fcm", config: { serviceAccountJson: fcmJson, projectId: serviceAccount.project_id } },
+        { onSuccess: () => toast.success("FCM BYOK saved (v1)"), onError: (e: any) => toast.error(e.message) },
+      );
+    } catch {
+      toast.error("Invalid service account JSON");
+    }
   };
-  const handleAPNS = () => {
-    if (!tenantId) return toast.error("Select tenant");
-    if (!apns.keyId || !apns.teamId || !apns.bundleId || !apns.privateKey) return toast.error("Fill all APNS fields");
-    create.mutate({ tenantId, providerId: "apple-push", config: { apnsKeyId: apns.keyId, apnsTeamId: apns.teamId, apnsBundleId: apns.bundleId, apnsPrivateKey: apns.privateKey, apnsEnvironment: "production" } }, { onSuccess: ()=> toast.success("APNS BYOK saved (ES256)"), onError:(e:any)=> toast.error(e.message) });
+
+  const handleAPNS = (): void => {
+    if (!tenantId) {
+      toast.error("Select tenant");
+      return;
+    }
+    if (!apns.keyId || !apns.teamId || !apns.bundleId || !apns.privateKey) {
+      toast.error("Fill all APNS fields");
+      return;
+    }
+    create.mutate(
+      { tenantId, providerId: "apple-push", config: { apnsKeyId: apns.keyId, apnsTeamId: apns.teamId, apnsBundleId: apns.bundleId, apnsPrivateKey: apns.privateKey, apnsEnvironment: "production" } },
+      { onSuccess: () => toast.success("APNS BYOK saved (ES256)"), onError: (e: any) => toast.error(e.message) },
+    );
   };
-  const handleTest = (providerId: string) => {
-    if (!testToken) return toast.error("Enter device token");
-    test.mutate({ providerId, deviceToken: testToken, title: "Sanarwa test", body: "Push works!" }, { onSuccess: ()=> toast.success("Test sent"), onError:(e:any)=> toast.error(e.message) });
+
+  const handleTest = (providerId: string): void => {
+    if (!testToken) {
+      toast.error("Enter device token");
+      return;
+    }
+    test.mutate(
+      { providerId, deviceToken: testToken, title: "Sanarwa test", body: "Push works!" },
+      { onSuccess: () => toast.success("Test sent"), onError: (e: any) => toast.error(e.message) },
+    );
   };
 
   return (
@@ -64,7 +91,7 @@ export function PushProviderSetup() {
             <textarea className="w-full rounded-md border p-2 text-xs font-mono h-28" value={fcmJson} onChange={(e)=>setFcmJson(e.target.value)} placeholder='{"type":"service_account","project_id":"...","private_key":"..."}' />
             <Button onClick={handleFCM} disabled={create.isPending}>Save FCM BYOK</Button>
             <div className="flex gap-2"><Input placeholder="FCM device token" value={testToken} onChange={(e)=>setTestToken(e.target.value)} /><Button size="sm" variant="outline" onClick={()=>handleTest("fcm")}>Test FCM</Button></div>
-            <p className="text-xs text-muted-foreground">Uses `FCM_SERVICE_ACCOUNT_JSON` `project_id` + `google-auth-library` `HTTP v1` `fcm.provider.ts:1` - world-class, not legacy `serverKey`.</p>
+            <p className="text-xs text-muted-foreground">Uses `FCM_SERVICE_ACCOUNT_JSON` `project_id` + `google-auth-library` `HTTP v1` - world-class, not legacy `serverKey`.</p>
           </TabsContent>
           <TabsContent value="apns" className="space-y-2 pt-4">
             <div className="grid gap-2 md:grid-cols-2"><div><Label>Key ID</Label><Input value={apns.keyId} onChange={(e)=>setApns({...apns, keyId:e.target.value})} /></div><div><Label>Team ID</Label><Input value={apns.teamId} onChange={(e)=>setApns({...apns, teamId:e.target.value})} /></div></div>

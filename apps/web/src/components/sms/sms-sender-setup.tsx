@@ -29,24 +29,60 @@ export function SMSSenderSetup() {
   const [testPhone, setTestPhone] = useState("");
   const [testMsg, setTestMsg] = useState("Sanarwa SMS test");
 
-  const handleTermii = () => {
-    if (!tenantId) return toast.error("Select tenant");
-    if (!termii.apiKey || !termii.senderId) return toast.error("Fill Termii API key + Sender ID");
-    create.mutate({ tenantId, providerId: "termii", config: { apiKey: termii.apiKey, senderId: termii.senderId } }, { onSuccess: ()=> toast.success("Termii BYOK saved"), onError:(e:any)=> toast.error(e.message) });
+  const handleTermii = (): void => {
+    if (!tenantId) {
+      toast.error("Select tenant");
+      return;
+    }
+    if (!termii.apiKey || !termii.senderId) {
+      toast.error("Fill Termii API key + Sender ID");
+      return;
+    }
+    create.mutate(
+      { tenantId, providerId: "termii", config: { apiKey: termii.apiKey, senderId: termii.senderId } },
+      { onSuccess: () => toast.success("Termii BYOK saved"), onError: (e: any) => toast.error(e.message) },
+    );
   };
-  const handleAT = () => {
-    if (!tenantId) return toast.error("Select tenant");
-    if (!at.apiKey || !at.username) return toast.error("Fill AT API key + Username");
-    create.mutate({ tenantId, providerId: "africastalking", config: { apiKey: at.apiKey, username: at.username, senderId: at.senderId } }, { onSuccess: ()=> toast.success("Africa's Talking BYOK saved"), onError:(e:any)=> toast.error(e.message) });
+
+  const handleAT = (): void => {
+    if (!tenantId) {
+      toast.error("Select tenant");
+      return;
+    }
+    if (!at.apiKey || !at.username) {
+      toast.error("Fill AT API key + Username");
+      return;
+    }
+    create.mutate(
+      { tenantId, providerId: "africastalking", config: { apiKey: at.apiKey, username: at.username, senderId: at.senderId } },
+      { onSuccess: () => toast.success("Africa's Talking BYOK saved"), onError: (e: any) => toast.error(e.message) },
+    );
   };
-  const handleTwilio = () => {
-    if (!tenantId) return toast.error("Select tenant");
-    if (!twilio.accountSid || !twilio.authToken || !twilio.fromNumber) return toast.error("Fill Twilio SID/Token/From");
-    create.mutate({ tenantId, providerId: "twilio", config: { accountSid: twilio.accountSid, authToken: twilio.authToken, fromNumber: twilio.fromNumber } }, { onSuccess: ()=> toast.success("Twilio BYOK saved"), onError:(e:any)=> toast.error(e.message) });
+
+  const handleTwilio = (): void => {
+    if (!tenantId) {
+      toast.error("Select tenant");
+      return;
+    }
+    if (!twilio.accountSid || !twilio.authToken || !twilio.fromNumber) {
+      toast.error("Fill Twilio SID/Token/From");
+      return;
+    }
+    create.mutate(
+      { tenantId, providerId: "twilio", config: { accountSid: twilio.accountSid, authToken: twilio.authToken, fromNumber: twilio.fromNumber } },
+      { onSuccess: () => toast.success("Twilio BYOK saved"), onError: (e: any) => toast.error(e.message) },
+    );
   };
-  const handleTest = (providerId: string) => {
-    if (!testPhone) return toast.error("Enter phone E.164");
-    test.mutate({ providerId, phone: testPhone, message: testMsg }, { onSuccess: ()=> toast.success(`Test via ${providerId} sent`), onError:(e:any)=> toast.error(e.message) });
+
+  const handleTest = (providerId: string): void => {
+    if (!testPhone) {
+      toast.error("Enter phone E.164");
+      return;
+    }
+    test.mutate(
+      { providerId, phone: testPhone, message: testMsg },
+      { onSuccess: () => toast.success(`Test via ${providerId} sent`), onError: (e: any) => toast.error(e.message) },
+    );
   };
 
   return (

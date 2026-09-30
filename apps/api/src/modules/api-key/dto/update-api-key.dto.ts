@@ -1,4 +1,4 @@
-import { ApiPropertyOptional } from '@nestjs/swagger';
+import { ApiPropertyOptional } from "@nestjs/swagger";
 import {
   IsArray,
   IsDateString,
@@ -7,13 +7,13 @@ import {
   IsOptional,
   IsString,
   Min,
-} from 'class-validator';
-import { ApiKeyStatus } from '../entities/api-key.entity';
+} from "class-validator";
+import { ApiKeyStatus } from "../entities/api-key.entity";
 
 export class UpdateApiKeyDto {
   @ApiPropertyOptional({
-    description: 'New name for the API key',
-    example: 'Updated API Key Name',
+    description: "New name for the API key",
+    example: "Updated API Key Name",
     type: String,
   })
   @IsString()
@@ -21,7 +21,7 @@ export class UpdateApiKeyDto {
   name?: string;
 
   @ApiPropertyOptional({
-    description: 'New status for the API key',
+    description: "New status for the API key",
     enum: ApiKeyStatus,
     example: ApiKeyStatus.ACTIVE,
     type: String,
@@ -31,26 +31,26 @@ export class UpdateApiKeyDto {
   status?: ApiKeyStatus;
 
   @ApiPropertyOptional({
-    description: 'Updated list of permissions',
+    description: "Updated list of permissions",
     type: [String],
-    example: ['notifications:send', 'templates:read', 'templates:write'],
+    example: ["notifications:send", "templates:read", "templates:write"],
   })
   @IsArray()
   @IsOptional()
   permissions?: string[];
 
   @ApiPropertyOptional({
-    description: 'Updated list of IP addresses allowed to use this API key',
+    description: "Updated list of IP addresses allowed to use this API key",
     type: [String],
-    example: ['192.168.1.1', '10.0.0.1', '172.16.0.1'],
+    example: ["192.168.1.1", "10.0.0.1", "172.16.0.1"],
   })
   @IsArray()
   @IsOptional()
   ipWhitelist?: string[];
 
   @ApiPropertyOptional({
-    description: 'New expiration date for the API key',
-    example: '2025-12-31T23:59:59.000Z',
+    description: "New expiration date for the API key",
+    example: "2025-12-31T23:59:59.000Z",
     type: String,
   })
   @IsDateString()
@@ -58,7 +58,7 @@ export class UpdateApiKeyDto {
   expiresAt?: string;
 
   @ApiPropertyOptional({
-    description: 'Updated maximum number of requests per minute',
+    description: "Updated maximum number of requests per minute",
     example: 2000,
     type: Number,
     minimum: 1,
@@ -69,7 +69,7 @@ export class UpdateApiKeyDto {
   rateLimitPerMinute?: number;
 
   @ApiPropertyOptional({
-    description: 'Updated maximum number of requests per hour',
+    description: "Updated maximum number of requests per hour",
     example: 20000,
     type: Number,
     minimum: 1,
@@ -80,7 +80,7 @@ export class UpdateApiKeyDto {
   rateLimitPerHour?: number;
 
   @ApiPropertyOptional({
-    description: 'Updated maximum number of requests per day',
+    description: "Updated maximum number of requests per day",
     example: 200000,
     type: Number,
     minimum: 1,
@@ -91,7 +91,7 @@ export class UpdateApiKeyDto {
   rateLimitPerDay?: number;
 
   @ApiPropertyOptional({
-    description: 'Updated metadata',
+    description: "Updated metadata",
     type: Object,
   })
   @IsOptional()

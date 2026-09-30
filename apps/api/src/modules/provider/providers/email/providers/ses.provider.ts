@@ -1,7 +1,13 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { NotificationChannel } from '../../../../../common/enums/notification-channel.enum';
-import { SESClient, SendEmailCommand, GetSendQuotaCommand } from '@aws-sdk/client-ses';
-import { BaseEmailProvider, EmailDeliveryResult, EmailMessage, EmailProviderConfig, EmailProviderStats } from '../email-provider.interface';
+import { Injectable, Logger } from "@nestjs/common";
+import { NotificationChannel } from "../../../../../common/enums/notification-channel.enum";
+import { SESClient, SendEmailCommand, GetSendQuotaCommand } from "@aws-sdk/client-ses";
+import {
+  BaseEmailProvider,
+  EmailDeliveryResult,
+  EmailMessage,
+  EmailProviderConfig,
+  EmailProviderStats,
+} from "../email-provider.interface";
 
 interface SESConfig {
   accessKeyId: string;
@@ -13,8 +19,8 @@ interface SESConfig {
 
 @Injectable()
 export class SESProvider extends BaseEmailProvider {
-  readonly providerId = 'aws_ses';
-  readonly name = 'Amazon SES';
+  readonly providerId = "aws_ses";
+  readonly name = "Amazon SES";
   readonly channel = NotificationChannel.EMAIL;
 
   private readonly logger = new Logger(SESProvider.name);
@@ -30,7 +36,7 @@ export class SESProvider extends BaseEmailProvider {
       const sesConfig = this.config.config as SESConfig;
 
       this.sesClient = new SESClient({
-        region: sesConfig.region || 'us-east-1',
+        region: sesConfig.region || "us-east-1",
         credentials: {
           accessKeyId: sesConfig.accessKeyId,
           secretAccessKey: sesConfig.secretAccessKey,
@@ -38,9 +44,9 @@ export class SESProvider extends BaseEmailProvider {
       });
 
       this.isInitialized = true;
-      this.logger.log('SES provider initialized successfully');
+      this.logger.log("SES provider initialized successfully");
     } catch (error) {
-      this.logger.error('Failed to initialize SES provider', error);
+      this.logger.error("Failed to initialize SES provider", error);
       throw new Error(`SES initialization failed: ${error.message}`, { cause: error });
     }
   }
@@ -65,7 +71,7 @@ export class SESProvider extends BaseEmailProvider {
         sourceEmail = `${message.brandConfig.defaultFromName} <${message.brandConfig.defaultFromEmail}>`;
       } else {
         // Fallback to provider config
-        sourceEmail = `${sesConfig.fromName || 'Notification'} <${sesConfig.fromEmail}>`;
+        sourceEmail = `${sesConfig.fromName || "Notification"} <${sesConfig.fromEmail}>`;
       }
 
       const command = new SendEmailCommand({
@@ -78,17 +84,21 @@ export class SESProvider extends BaseEmailProvider {
         Message: {
           Subject: {
             Data: message.subject,
-            Charset: 'UTF-8',
+            Charset: "UTF-8",
           },
           Body: {
-            Html: message.html ? {
-              Data: message.html,
-              Charset: 'UTF-8',
-            } : undefined,
-            Text: message.text ? {
-              Data: message.text,
-              Charset: 'UTF-8',
-            } : undefined,
+            Html: message.html
+              ? {
+                  Data: message.html,
+                  Charset: "UTF-8",
+                }
+              : undefined,
+            Text: message.text
+              ? {
+                  Data: message.text,
+                  Charset: "UTF-8",
+                }
+              : undefined,
           },
         },
         ReplyToAddresses: message.replyTo ? [message.replyTo] : undefined,
@@ -101,7 +111,7 @@ export class SESProvider extends BaseEmailProvider {
 
       return {
         messageId: result.MessageId || `ses_${Date.now()}`,
-        status: 'sent',
+        status: "sent",
         providerId: this.providerId,
         timestamp: new Date(),
         cost: await this.calculateCost(Array.isArray(message.to) ? message.to.length : 1),
@@ -109,8 +119,8 @@ export class SESProvider extends BaseEmailProvider {
           latency,
           region: sesConfig.region,
           sourceEmail,
-          branded: !!message.brandConfig
-        }
+          branded: !!message.brandConfig,
+        },
       };
     } catch (error) {
       const latency = Date.now() - startTime;
@@ -119,41 +129,49 @@ export class SESProvider extends BaseEmailProvider {
 
       return {
         messageId: `ses_failed_${Date.now()}`,
-        status: 'failed',
+        status: "failed",
         providerId: this.providerId,
         timestamp: new Date(),
         error: error.message,
         metadata: {
           latency,
           errorCode: error.name,
-          sourceEmail: message.from || `${sesConfig.fromName || 'Notification'} <${sesConfig.fromEmail}>`
-        }
+          sourceEmail:
+            message.from || `${sesConfig.fromName || "Notification"} <${sesConfig.fromEmail}>`,
+        },
       };
     }
   }
 
-  async validateConfig(config: Record<string, any>): Promise<{ isValid: boolean; errors: string[] }> {
+  async validateConfig(
+    config: Record<string, any>,
+  ): Promise<{ isValid: boolean; errors: string[] }> {
     const errors: string[] = [];
     const sesConfig = config as SESConfig;
 
     if (!sesConfig.accessKeyId) {
-      errors.push('AWS Access Key ID is required');
+      errors.push("AWS Access Key ID is required");
     }
 
     if (!sesConfig.secretAccessKey) {
-      errors.push('AWS Secret Access Key is required');
+      errors.push("AWS Secret Access Key is required");
     }
 
     if (!sesConfig.region) {
-      errors.push('AWS Region is required');
+      errors.push("AWS Region is required");
     }
 
     if (sesConfig.fromEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(sesConfig.fromEmail)) {
-      errors.push('Invalid from email format');
+      errors.push("Invalid from email format");
     }
 
     // Test credentials if provided
-    if (sesConfig.accessKeyId && sesConfig.secretAccessKey && sesConfig.region && errors.length === 0) {
+    if (
+      sesConfig.accessKeyId &&
+      sesConfig.secretAccessKey &&
+      sesConfig.region &&
+      errors.length === 0
+    ) {
       try {
         const testClient = new SESClient({
           region: sesConfig.region,
@@ -166,12 +184,12 @@ export class SESProvider extends BaseEmailProvider {
         // Test by getting sending quota
         await testClient.send(new GetSendQuotaCommand({}));
       } catch (error) {
-        if (error.name === 'InvalidClientTokenId') {
-          errors.push('Invalid AWS Access Key ID');
-        } else if (error.name === 'SignatureDoesNotMatch') {
-          errors.push('Invalid AWS Secret Access Key');
-        } else if (error.name === 'UnauthorizedOperation') {
-          errors.push('AWS credentials do not have SES permissions');
+        if (error.name === "InvalidClientTokenId") {
+          errors.push("Invalid AWS Access Key ID");
+        } else if (error.name === "SignatureDoesNotMatch") {
+          errors.push("Invalid AWS Secret Access Key");
+        } else if (error.name === "UnauthorizedOperation") {
+          errors.push("AWS credentials do not have SES permissions");
         } else {
           errors.push(`AWS SES configuration test failed: ${error.message}`);
         }
@@ -180,7 +198,7 @@ export class SESProvider extends BaseEmailProvider {
 
     return {
       isValid: errors.length === 0,
-      errors
+      errors,
     };
   }
 
@@ -197,17 +215,17 @@ export class SESProvider extends BaseEmailProvider {
         averageLatency: 0,
         deliveryRate: 0,
         lastUsed: new Date(),
-        costToDate: 0
+        costToDate: 0,
       };
     } catch (error) {
-      this.logger.error('Failed to fetch SES stats', error);
+      this.logger.error("Failed to fetch SES stats", error);
       return {
         totalSent: 0,
         totalFailed: 0,
         averageLatency: 0,
         deliveryRate: 0,
         lastUsed: new Date(),
-        costToDate: 0
+        costToDate: 0,
       };
     }
   }
@@ -225,13 +243,13 @@ export class SESProvider extends BaseEmailProvider {
 
       return {
         healthy: true,
-        latency: Date.now() - startTime
+        latency: Date.now() - startTime,
       };
     } catch (error) {
       return {
         healthy: false,
         latency: Date.now() - startTime,
-        error: error.message
+        error: error.message,
       };
     }
   }

@@ -1,18 +1,18 @@
-'use client';
+"use client";
 
-import { apiClient } from '@/lib/api/client';
-import { billingApi } from '@/lib/api';
-import { useTenant } from '@/contexts/tenant-context';
-import { useQuery } from '@tanstack/react-query';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Progress } from '@/components/ui/progress';
-import { CurrencyDollarIcon } from '@heroicons/react/24/outline';
+import { apiClient } from "@/lib/api/client";
+import { billingApi } from "@/lib/api";
+import { useTenant } from "@/contexts/tenant-context";
+import { useQuery } from "@tanstack/react-query";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Progress } from "@/components/ui/progress";
+import { CurrencyDollarIcon } from "@heroicons/react/24/outline";
 
 export function BillingOverview() {
   const { selectedTenant } = useTenant();
 
   const { data: balance, isLoading } = useQuery({
-    queryKey: ['billing-balance', selectedTenant?.id],
+    queryKey: ["billing-balance", selectedTenant?.id],
     queryFn: async () => {
       if (selectedTenant?.id) {
         apiClient.setTenant(selectedTenant.id);
@@ -26,13 +26,11 @@ export function BillingOverview() {
     (balance as { availableTokens?: number })?.availableTokens ??
     (balance as { balance?: number })?.balance ??
     0;
-  const total =
-    (balance as { totalTokens?: number })?.totalTokens ?? available;
+  const total = (balance as { totalTokens?: number })?.totalTokens ?? available;
   const used = (balance as { usedTokens?: number })?.usedTokens ?? 0;
   const usagePct = total > 0 ? (used / total) * 100 : 0;
 
-  const formatNumber = (num: number) =>
-    new Intl.NumberFormat('en-US').format(num);
+  const formatNumber = (num: number) => new Intl.NumberFormat("en-US").format(num);
 
   if (isLoading) {
     return (

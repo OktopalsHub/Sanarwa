@@ -1,45 +1,46 @@
 import {
   Body,
   Controller,
+  Get,
   HttpCode,
   HttpStatus,
   Post,
   Request,
   Response,
   UseGuards,
-} from '@nestjs/common';
-import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { AuthService } from './auth.service';
-import { Public } from './decorators/public.decorator';
-import { ChangePasswordDto, ChangePasswordResponseDto } from './dto/change-password.dto';
-import { ForgotPasswordDto, ForgotPasswordResponseDto } from './dto/forgot-password.dto';
-import { LoginDto, LoginResponseDto } from './dto/login.dto';
-import { RefreshTokenDto, RefreshTokenResponseDto } from './dto/refresh-token.dto';
-import { RegisterDto, RegisterResponseDto } from './dto/register.dto';
-import { ResetPasswordDto, ResetPasswordResponseDto } from './dto/reset-password.dto';
-import { AuthGuard } from './guards/jwt-auth.guard';
+} from "@nestjs/common";
+import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from "@nestjs/swagger";
+import { AuthService } from "./auth.service";
+import { Public } from "./decorators/public.decorator";
+import { ChangePasswordDto, ChangePasswordResponseDto } from "./dto/change-password.dto";
+import { ForgotPasswordDto, ForgotPasswordResponseDto } from "./dto/forgot-password.dto";
+import { LoginDto, LoginResponseDto } from "./dto/login.dto";
+import { RefreshTokenDto, RefreshTokenResponseDto } from "./dto/refresh-token.dto";
+import { RegisterDto, RegisterResponseDto } from "./dto/register.dto";
+import { ResetPasswordDto, ResetPasswordResponseDto } from "./dto/reset-password.dto";
+import { AuthGuard } from "./guards/jwt-auth.guard";
 
-@ApiTags('Auth')
-@Controller('auth')
+@ApiTags("Auth")
+@Controller("auth")
 export class AuthController {
-  constructor(private authService: AuthService) { }
+  constructor(private authService: AuthService) {}
 
-  @Post('register')
+  @Post("register")
   @Public()
   @HttpCode(HttpStatus.CREATED)
-  @ApiOperation({ summary: 'Register new user' })
+  @ApiOperation({ summary: "Register new user" })
   @ApiResponse({
     status: 201,
-    description: 'User successfully registered',
-    type: RegisterResponseDto
+    description: "User successfully registered",
+    type: RegisterResponseDto,
   })
   @ApiResponse({
     status: 400,
-    description: 'Bad Request - Invalid input data'
+    description: "Bad Request - Invalid input data",
   })
   @ApiResponse({
     status: 409,
-    description: 'Conflict - Email already registered'
+    description: "Conflict - Email already registered",
   })
   async register(@Body() registerDto: RegisterDto, @Response() res: any) {
     const result = await this.authService.register(registerDto);
@@ -47,22 +48,22 @@ export class AuthController {
     return res.json(result);
   }
 
-  @Post('login')
+  @Post("login")
   @Public()
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Login user' })
+  @ApiOperation({ summary: "Login user" })
   @ApiResponse({
     status: 200,
-    description: 'User successfully logged in',
-    type: LoginResponseDto
+    description: "User successfully logged in",
+    type: LoginResponseDto,
   })
   @ApiResponse({
     status: 400,
-    description: 'Bad Request - Invalid input data'
+    description: "Bad Request - Invalid input data",
   })
   @ApiResponse({
     status: 401,
-    description: 'Unauthorized - Invalid credentials'
+    description: "Unauthorized - Invalid credentials",
   })
   async login(@Body() loginDto: LoginDto, @Response() res: any) {
     const result = await this.authService.login(loginDto);
@@ -70,81 +71,95 @@ export class AuthController {
     return res.json(result);
   }
 
-  @Post('change-password')
+  @Get("profile")
   @UseGuards(AuthGuard)
   @ApiBearerAuth()
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Change password' })
+  @ApiOperation({ summary: "Get current user profile" })
   @ApiResponse({
     status: 200,
-    description: 'Password successfully changed',
-    type: ChangePasswordResponseDto
-  })
-  @ApiResponse({
-    status: 400,
-    description: 'Bad Request - Invalid input data'
+    description: "User profile retrieved successfully",
   })
   @ApiResponse({
     status: 401,
-    description: 'Unauthorized - Invalid or missing token'
+    description: "Unauthorized - Invalid or missing token",
   })
-  async changePassword(
-    @Request() req: any,
-    @Body() changePasswordDto: ChangePasswordDto,
-  ) {
-    return this.authService.changePassword(req.user.sub, changePasswordDto);
+  async getProfile(@Request() req: any) {
+    return this.authService.getProfile(req.user.id);
   }
 
-  @Post('forgot-password')
-  @Public()
+  @Post("change-password")
+  @UseGuards(AuthGuard)
+  @ApiBearerAuth()
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Request password reset' })
+  @ApiOperation({ summary: "Change password" })
   @ApiResponse({
     status: 200,
-    description: 'Password reset email sent',
-    type: ForgotPasswordResponseDto
+    description: "Password successfully changed",
+    type: ChangePasswordResponseDto,
   })
   @ApiResponse({
     status: 400,
-    description: 'Bad Request - Invalid email format'
+    description: "Bad Request - Invalid input data",
+  })
+  @ApiResponse({
+    status: 401,
+    description: "Unauthorized - Invalid or missing token",
+  })
+  async changePassword(@Request() req: any, @Body() changePasswordDto: ChangePasswordDto) {
+    return this.authService.changePassword(req.user.sub, changePasswordDto);
+  }
+
+  @Post("forgot-password")
+  @Public()
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: "Request password reset" })
+  @ApiResponse({
+    status: 200,
+    description: "Password reset email sent",
+    type: ForgotPasswordResponseDto,
+  })
+  @ApiResponse({
+    status: 400,
+    description: "Bad Request - Invalid email format",
   })
   async forgotPassword(@Body() forgotPasswordDto: ForgotPasswordDto) {
     return this.authService.forgotPassword(forgotPasswordDto);
   }
 
-  @Post('reset-password')
+  @Post("reset-password")
   @Public()
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Reset password with token' })
+  @ApiOperation({ summary: "Reset password with token" })
   @ApiResponse({
     status: 200,
-    description: 'Password successfully reset',
-    type: ResetPasswordResponseDto
+    description: "Password successfully reset",
+    type: ResetPasswordResponseDto,
   })
   @ApiResponse({
     status: 400,
-    description: 'Bad Request - Invalid or expired token'
+    description: "Bad Request - Invalid or expired token",
   })
   async resetPassword(@Body() resetPasswordDto: ResetPasswordDto) {
     return this.authService.resetPassword(resetPasswordDto);
   }
 
-  @Post('refresh-token')
+  @Post("refresh-token")
   @Public()
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Refresh access token' })
+  @ApiOperation({ summary: "Refresh access token" })
   @ApiResponse({
     status: 200,
-    description: 'Tokens successfully refreshed',
-    type: RefreshTokenResponseDto
+    description: "Tokens successfully refreshed",
+    type: RefreshTokenResponseDto,
   })
   @ApiResponse({
     status: 400,
-    description: 'Bad Request - Invalid refresh token'
+    description: "Bad Request - Invalid refresh token",
   })
   @ApiResponse({
     status: 401,
-    description: 'Unauthorized - Expired or invalid refresh token'
+    description: "Unauthorized - Expired or invalid refresh token",
   })
   async refreshToken(@Body() refreshTokenDto: RefreshTokenDto, @Response() res: any) {
     const result = await this.authService.refreshToken(refreshTokenDto.refreshToken);
@@ -152,17 +167,17 @@ export class AuthController {
     return res.json(result);
   }
 
-  @Post('get-session')
+  @Post("get-session")
   @Public()
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Get current session' })
+  @ApiOperation({ summary: "Get current session" })
   @ApiResponse({
     status: 200,
-    description: 'Session information retrieved'
+    description: "Session information retrieved",
   })
   @ApiResponse({
     status: 401,
-    description: 'Unauthorized - No valid session found'
+    description: "Unauthorized - No valid session found",
   })
   async getSession(@Request() req: any) {
     const accessToken = req.cookies?.accessToken;
@@ -172,18 +187,18 @@ export class AuthController {
     return this.authService.getSession(accessToken);
   }
 
-  @Post('logout')
+  @Post("logout")
   @UseGuards(AuthGuard)
   @ApiBearerAuth()
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Logout user' })
+  @ApiOperation({ summary: "Logout user" })
   @ApiResponse({
     status: 200,
-    description: 'User successfully logged out'
+    description: "User successfully logged out",
   })
   @ApiResponse({
     status: 401,
-    description: 'Unauthorized - Invalid or missing token'
+    description: "Unauthorized - Invalid or missing token",
   })
   async logout(@Request() req: any, @Response() res: any) {
     const result = await this.authService.logout(req.user.sub);
@@ -192,27 +207,27 @@ export class AuthController {
   }
 
   private setAuthCookies(res: any, accessToken: string, refreshToken: string) {
-    const isProduction = process.env.NODE_ENV === 'production';
+    const isProduction = process.env.NODE_ENV === "production";
     const cookieOptions = {
       httpOnly: true,
       secure: isProduction,
-      sameSite: 'lax' as const,
-      path: '/',
+      sameSite: "lax" as const,
+      path: "/",
     };
 
-    res.cookie('accessToken', accessToken, {
+    res.cookie("accessToken", accessToken, {
       ...cookieOptions,
       maxAge: 15 * 60 * 1000, // 15 minutes
     });
 
-    res.cookie('refreshToken', refreshToken, {
+    res.cookie("refreshToken", refreshToken, {
       ...cookieOptions,
       maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
     });
   }
 
   private clearAuthCookies(res: any) {
-    res.clearCookie('accessToken', { path: '/' });
-    res.clearCookie('refreshToken', { path: '/' });
+    res.clearCookie("accessToken", { path: "/" });
+    res.clearCookie("refreshToken", { path: "/" });
   }
 }

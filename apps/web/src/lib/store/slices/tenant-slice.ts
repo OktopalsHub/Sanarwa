@@ -1,11 +1,6 @@
-import { tenantApi } from '@/lib/api/tenant';
-import type {
-  Invitation,
-  Tenant,
-  TenantMember,
-  TenantSettings
-} from '@/lib/types/tenant';
-import { createAsyncThunk, createSlice, PayloadAction } from '@reduxjs/toolkit';
+import { tenantApi } from "@/lib/api/tenant";
+import type { Invitation, Tenant, TenantMember, TenantSettings } from "@/lib/types/tenant";
+import { createAsyncThunk, createSlice, PayloadAction } from "@reduxjs/toolkit";
 
 export interface TenantState {
   // Current tenant context
@@ -70,87 +65,87 @@ const initialState: TenantState = {
 
 // Async thunks
 export const fetchUserTenants = createAsyncThunk(
-  'tenant/fetchUserTenants',
+  "tenant/fetchUserTenants",
   async (_, { rejectWithValue }) => {
     try {
       const tenants = await tenantApi.getTenants();
       return tenants;
     } catch (error: any) {
-      return rejectWithValue(error.message || 'Failed to fetch user tenants');
+      return rejectWithValue(error.message || "Failed to fetch user tenants");
     }
-  }
+  },
 );
 
 export const switchTenant = createAsyncThunk(
-  'tenant/switchTenant',
+  "tenant/switchTenant",
   async (tenantId: string, { rejectWithValue }) => {
     try {
       const tenant = await tenantApi.getTenant(tenantId);
       const membership = await tenantApi.getCurrentUserMembership(tenantId);
       return { tenant, membership };
     } catch (error: any) {
-      return rejectWithValue(error.message || 'Failed to switch tenant');
+      return rejectWithValue(error.message || "Failed to switch tenant");
     }
-  }
+  },
 );
 
 export const fetchTenantMembers = createAsyncThunk(
-  'tenant/fetchTenantMembers',
+  "tenant/fetchTenantMembers",
   async (tenantId: string, { rejectWithValue }) => {
     try {
       const members = await tenantApi.getTenantMembers();
       return { tenantId, members };
     } catch (error: any) {
-      return rejectWithValue(error.message || 'Failed to fetch tenant members');
+      return rejectWithValue(error.message || "Failed to fetch tenant members");
     }
-  }
+  },
 );
 
 export const fetchPendingInvitations = createAsyncThunk(
-  'tenant/fetchPendingInvitations',
+  "tenant/fetchPendingInvitations",
   async (_, { rejectWithValue }) => {
     try {
       const invitations = await tenantApi.getTenantInvitations();
       return invitations;
     } catch (error: any) {
-      return rejectWithValue(error.message || 'Failed to fetch pending invitations');
+      return rejectWithValue(error.message || "Failed to fetch pending invitations");
     }
-  }
+  },
 );
 
 export const acceptInvitation = createAsyncThunk(
-  'tenant/acceptInvitation',
+  "tenant/acceptInvitation",
   async (invitationId: string, { rejectWithValue }) => {
     try {
       const result = await tenantApi.acceptInvitation({ token: invitationId });
       return { invitationId, ...result };
     } catch (error: any) {
-      return rejectWithValue(error.message || 'Failed to accept invitation');
+      return rejectWithValue(error.message || "Failed to accept invitation");
     }
-  }
+  },
 );
 
 export const fetchTenantSettings = createAsyncThunk(
-  'tenant/fetchTenantSettings',
+  "tenant/fetchTenantSettings",
   async (tenantId: string, { rejectWithValue }) => {
     try {
       const settings = await tenantApi.getTenantSettings(tenantId);
       return { tenantId, settings };
     } catch (error: any) {
-      return rejectWithValue(error.message || 'Failed to fetch tenant settings');
+      return rejectWithValue(error.message || "Failed to fetch tenant settings");
     }
-  }
+  },
 );
 
 export const tenantSlice = createSlice({
-  name: 'tenant',
+  name: "tenant",
   initialState,
   selectors: {
     selectCurrentTenant: (state) => state.currentTenant,
-    selectUserTenants: (state) => state.userTenants.map(id => state.tenants[id]).filter(Boolean),
+    selectUserTenants: (state) => state.userTenants.map((id) => state.tenants[id]).filter(Boolean),
     selectCanManageMembers: (state) => {
       const membership = state.currentUserMembership;
-      return membership && ['owner', 'admin'].includes(membership.role);
+      return membership && ["owner", "admin"].includes(membership.role);
     },
   },
   reducers: {
@@ -162,7 +157,7 @@ export const tenantSlice = createSlice({
 
       if (tenantId) {
         // Add to recent tenants
-        state.recentTenants = state.recentTenants.filter(id => id !== tenantId);
+        state.recentTenants = state.recentTenants.filter((id) => id !== tenantId);
         state.recentTenants.unshift(tenantId);
         state.recentTenants = state.recentTenants.slice(0, 5);
 
@@ -179,7 +174,7 @@ export const tenantSlice = createSlice({
     setTenants: (state, action: PayloadAction<Tenant[]>) => {
       state.tenants = {};
       state.userTenants = [];
-      action.payload.forEach(tenant => {
+      action.payload.forEach((tenant) => {
         state.tenants[tenant.id] = tenant;
         state.userTenants.push(tenant.id);
       });
@@ -210,8 +205,8 @@ export const tenantSlice = createSlice({
       delete state.invitations[tenantId];
       delete state.tenantSettings[tenantId];
 
-      state.userTenants = state.userTenants.filter(id => id !== tenantId);
-      state.recentTenants = state.recentTenants.filter(id => id !== tenantId);
+      state.userTenants = state.userTenants.filter((id) => id !== tenantId);
+      state.recentTenants = state.recentTenants.filter((id) => id !== tenantId);
 
       if (state.currentTenantId === tenantId) {
         state.currentTenantId = null;
@@ -221,7 +216,10 @@ export const tenantSlice = createSlice({
     },
 
     // Member management
-    setTenantMembers: (state, action: PayloadAction<{ tenantId: string; members: TenantMember[] }>) => {
+    setTenantMembers: (
+      state,
+      action: PayloadAction<{ tenantId: string; members: TenantMember[] }>,
+    ) => {
       const { tenantId, members } = action.payload;
       state.members[tenantId] = members;
     },
@@ -235,13 +233,19 @@ export const tenantSlice = createSlice({
       state.pendingInvitations = action.payload;
     },
 
-    setTenantInvitations: (state, action: PayloadAction<{ tenantId: string; invitations: Invitation[] }>) => {
+    setTenantInvitations: (
+      state,
+      action: PayloadAction<{ tenantId: string; invitations: Invitation[] }>,
+    ) => {
       const { tenantId, invitations } = action.payload;
       state.invitations[tenantId] = invitations;
     },
 
     // Tenant settings
-    setTenantSettings: (state, action: PayloadAction<{ tenantId: string; settings: TenantSettings }>) => {
+    setTenantSettings: (
+      state,
+      action: PayloadAction<{ tenantId: string; settings: TenantSettings }>,
+    ) => {
       const { tenantId, settings } = action.payload;
       state.tenantSettings[tenantId] = settings;
     },
@@ -365,7 +369,7 @@ export const tenantSlice = createSlice({
         state.currentUserMembership = membership;
 
         // Update recent tenants
-        state.recentTenants = state.recentTenants.filter(id => id !== tenant.id);
+        state.recentTenants = state.recentTenants.filter((id) => id !== tenant.id);
         state.recentTenants.unshift(tenant.id);
         state.recentTenants = state.recentTenants.slice(0, 5);
 
@@ -427,7 +431,9 @@ export const tenantSlice = createSlice({
         const { invitationId } = action.payload;
 
         // Remove from pending invitations
-        state.pendingInvitations = state.pendingInvitations.filter(inv => inv.id !== invitationId);
+        state.pendingInvitations = state.pendingInvitations.filter(
+          (inv) => inv.id !== invitationId,
+        );
 
         state.invitationError = null;
       })
@@ -481,17 +487,21 @@ export const {
 
 // Selectors
 export const selectTenantState = (state: { tenant: TenantState }) => state.tenant;
-export const selectCurrentTenantId = (state: { tenant: TenantState }) => state.tenant.currentTenantId;
+export const selectCurrentTenantId = (state: { tenant: TenantState }) =>
+  state.tenant.currentTenantId;
 export const selectCurrentTenant = (state: { tenant: TenantState }) => state.tenant.currentTenant;
-export const selectTenants = (state: { tenant: TenantState }) => Object.values(state.tenant.tenants);
+export const selectTenants = (state: { tenant: TenantState }) =>
+  Object.values(state.tenant.tenants);
 export const selectUserTenants = (state: { tenant: TenantState }) =>
-  state.tenant.userTenants.map(id => state.tenant.tenants[id]).filter(Boolean);
+  state.tenant.userTenants.map((id) => state.tenant.tenants[id]).filter(Boolean);
 export const selectTenantById = (tenantId: string) => (state: { tenant: TenantState }) =>
   state.tenant.tenants[tenantId];
 export const selectTenantMembers = (tenantId: string) => (state: { tenant: TenantState }) =>
   state.tenant.members[tenantId] || [];
-export const selectCurrentUserMembership = (state: { tenant: TenantState }) => state.tenant.currentUserMembership;
-export const selectPendingInvitations = (state: { tenant: TenantState }) => state.tenant.pendingInvitations;
+export const selectCurrentUserMembership = (state: { tenant: TenantState }) =>
+  state.tenant.currentUserMembership;
+export const selectPendingInvitations = (state: { tenant: TenantState }) =>
+  state.tenant.pendingInvitations;
 export const selectTenantSettings = (tenantId: string) => (state: { tenant: TenantState }) =>
   state.tenant.tenantSettings[tenantId];
 export const selectCurrentTenantSettings = (state: { tenant: TenantState }) => {
@@ -499,34 +509,42 @@ export const selectCurrentTenantSettings = (state: { tenant: TenantState }) => {
   return currentTenantId ? tenantSettings[currentTenantId] : null;
 };
 export const selectRecentTenants = (state: { tenant: TenantState }) => state.tenant.recentTenants;
-export const selectTenantSwitchHistory = (state: { tenant: TenantState }) => state.tenant.tenantSwitchHistory;
+export const selectTenantSwitchHistory = (state: { tenant: TenantState }) =>
+  state.tenant.tenantSwitchHistory;
 export const selectTenantLoading = (state: { tenant: TenantState }) => state.tenant.isLoading;
-export const selectMembersLoading = (state: { tenant: TenantState }) => state.tenant.isLoadingMembers;
-export const selectInvitationsLoading = (state: { tenant: TenantState }) => state.tenant.isLoadingInvitations;
-export const selectSettingsLoading = (state: { tenant: TenantState }) => state.tenant.isLoadingSettings;
-export const selectIsSwitchingTenant = (state: { tenant: TenantState }) => state.tenant.isSwitchingTenant;
+export const selectMembersLoading = (state: { tenant: TenantState }) =>
+  state.tenant.isLoadingMembers;
+export const selectInvitationsLoading = (state: { tenant: TenantState }) =>
+  state.tenant.isLoadingInvitations;
+export const selectSettingsLoading = (state: { tenant: TenantState }) =>
+  state.tenant.isLoadingSettings;
+export const selectIsSwitchingTenant = (state: { tenant: TenantState }) =>
+  state.tenant.isSwitchingTenant;
 export const selectTenantError = (state: { tenant: TenantState }) => state.tenant.error;
 export const selectMemberError = (state: { tenant: TenantState }) => state.tenant.memberError;
-export const selectInvitationError = (state: { tenant: TenantState }) => state.tenant.invitationError;
+export const selectInvitationError = (state: { tenant: TenantState }) =>
+  state.tenant.invitationError;
 export const selectSettingsError = (state: { tenant: TenantState }) => state.tenant.settingsError;
 
 // Computed selectors
 export const selectCanManageMembers = (state: { tenant: TenantState }) => {
   const membership = state.tenant.currentUserMembership;
-  return membership && ['owner', 'admin'].includes(membership.role);
+  return membership && ["owner", "admin"].includes(membership.role);
 };
 
 export const selectCanInviteMembers = (state: { tenant: TenantState }) => {
   const membership = state.tenant.currentUserMembership;
   const tenant = state.tenant.currentTenant;
-  return membership &&
-    ['owner', 'admin'].includes(membership.role) &&
-    tenant?.settings?.allowMemberInvites !== false;
+  return (
+    membership &&
+    ["owner", "admin"].includes(membership.role) &&
+    tenant?.settings?.allowMemberInvites !== false
+  );
 };
 
 export const selectCanManageSettings = (state: { tenant: TenantState }) => {
   const membership = state.tenant.currentUserMembership;
-  return membership && membership.role === 'owner';
+  return membership && membership.role === "owner";
 };
 
 export default tenantSlice.reducer;

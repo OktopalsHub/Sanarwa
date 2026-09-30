@@ -1,5 +1,5 @@
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
-import { getPaginationSummary } from 'src/common/dto/pagination.dto';
+import { Injectable, Logger, NotFoundException } from "@nestjs/common";
+import { getPaginationSummary } from "src/common/dto/pagination.dto";
 import {
   BulkMessageRequest,
   BulkMessageResponse,
@@ -12,11 +12,11 @@ import {
   PaginatedMessageResponse,
   SendMessageRequest,
   StatsQuery,
-} from '../interfaces/messaging-sdk.interface';
-import { MessageDeliveryStatus } from '../message-delivery.entity';
-import { MessageChannel, MessageStatus } from '../message.entity';
-import { MessagingService } from '../messaging.service';
-import { MessageDeliveryRepository, MessageRepository } from '../repositories';
+} from "../interfaces/messaging-sdk.interface";
+import { MessageDeliveryStatus } from "../message-delivery.entity";
+import { MessageChannel, MessageStatus } from "../message.entity";
+import { MessagingService } from "../messaging.service";
+import { MessageDeliveryRepository, MessageRepository } from "../repositories";
 
 /**
  * SDK Service for External Developer Integration
@@ -30,14 +30,11 @@ export class MessagingSDKService implements IMessagingSDK {
     private readonly messageRepository: MessageRepository,
     private readonly messageDeliveryRepository: MessageDeliveryRepository,
     private readonly messagingService: MessagingService,
-  ) { }
+  ) {}
 
-  async sendMessage(
-    request: SendMessageRequest,
-    tenantId?: string,
-  ): Promise<MessageResponse> {
+  async sendMessage(request: SendMessageRequest, tenantId?: string): Promise<MessageResponse> {
     const message = await this.messageRepository.create({
-      tenantId: tenantId || 'default',
+      tenantId: tenantId || "default",
       channels: request.channels,
       recipients: request.recipients,
       templateId: request.templateId,
@@ -47,9 +44,7 @@ export class MessagingSDKService implements IMessagingSDK {
       content: request.content,
       scheduledAt: request.scheduledAt,
       metadata: request.metadata,
-      status: request.scheduledAt
-        ? MessageStatus.PENDING
-        : MessageStatus.PROCESSING,
+      status: request.scheduledAt ? MessageStatus.PENDING : MessageStatus.PROCESSING,
     });
 
     // If not scheduled, process immediately
@@ -65,10 +60,7 @@ export class MessagingSDKService implements IMessagingSDK {
       recipientCount: message.recipients.length,
       scheduledAt: message.scheduledAt,
       createdAt: message.createdAt,
-      estimatedDelivery: this.calculateEstimatedDelivery(
-        message.channels,
-        message.scheduledAt,
-      ),
+      estimatedDelivery: this.calculateEstimatedDelivery(message.channels, message.scheduledAt),
     };
   }
 
@@ -77,8 +69,7 @@ export class MessagingSDKService implements IMessagingSDK {
     tenantId?: string,
   ): Promise<BulkMessageResponse> {
     const batchId =
-      request.batchId ||
-      `batch_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      request.batchId || `batch_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
     const results: MessageResponse[] = [];
     let successCount = 0;
     let failedCount = 0;
@@ -94,7 +85,7 @@ export class MessagingSDKService implements IMessagingSDK {
         this.logger.error(`Failed to send message in batch ${batchId}:`, error.message, {
           error: error.stack,
           batchId,
-          messageIndex: request.messages.indexOf(messageRequest)
+          messageIndex: request.messages.indexOf(messageRequest),
         });
       }
     }
@@ -108,24 +99,17 @@ export class MessagingSDKService implements IMessagingSDK {
     };
   }
 
-  async getMessageStatus(
-    messageId: string,
-    tenantId?: string,
-  ): Promise<MessageStatusResponse> {
+  async getMessageStatus(messageId: string, tenantId?: string): Promise<MessageStatusResponse> {
     const whereCondition = tenantId ? { tenantId } : {};
-    const message = await this.messageRepository.findById(
-      messageId,
-      false,
-      whereCondition,
-      ['deliveries'],
-    );
+    const message = await this.messageRepository.findById(messageId, false, whereCondition, [
+      "deliveries",
+    ]);
 
     if (!message) {
       throw new NotFoundException(`Message ${messageId} not found`);
     }
 
-    const deliveries =
-      await this.messageDeliveryRepository.findByMessageId(messageId);
+    const deliveries = await this.messageDeliveryRepository.findByMessageId(messageId);
 
     return {
       id: message.id,
@@ -140,10 +124,7 @@ export class MessagingSDKService implements IMessagingSDK {
     };
   }
 
-  async getDeliveryReports(
-    messageId: string,
-    tenantId?: string,
-  ): Promise<DeliveryReport[]> {
+  async getDeliveryReports(messageId: string, tenantId?: string): Promise<DeliveryReport[]> {
     // Verify message belongs to tenant (if tenant ID provided)
     if (tenantId) {
       const message = await this.messageRepository.findById(messageId, false, {
@@ -154,15 +135,11 @@ export class MessagingSDKService implements IMessagingSDK {
       }
     }
 
-    const deliveries =
-      await this.messageDeliveryRepository.findByMessageId(messageId);
+    const deliveries = await this.messageDeliveryRepository.findByMessageId(messageId);
     return deliveries.map(this.mapToDeliveryReport);
   }
 
-  async getMessages(
-    query: MessageQuery,
-    tenantId?: string,
-  ): Promise<PaginatedMessageResponse> {
+  async getMessages(query: MessageQuery, tenantId?: string): Promise<PaginatedMessageResponse> {
     const page = query.page || 1;
     const limit = query.limit || 20;
 
@@ -175,13 +152,9 @@ export class MessagingSDKService implements IMessagingSDK {
       if (query.endDate) where.createdAt.lte = query.endDate;
     }
 
-    const result = await this.messageRepository.findAllPaginated(
-      page,
-      limit,
-      false,
-      where,
-      ['deliveries'],
-    );
+    const result = await this.messageRepository.findAllPaginated(page, limit, false, where, [
+      "deliveries",
+    ]);
 
     const mappedData = result.data.map((message) => ({
       id: message.id,
@@ -197,7 +170,7 @@ export class MessagingSDKService implements IMessagingSDK {
       mappedData,
       result.total,
       { page, limit },
-      'messages',
+      "messages",
     );
 
     return {
@@ -211,11 +184,7 @@ export class MessagingSDKService implements IMessagingSDK {
 
   async cancelMessage(messageId: string, tenantId?: string): Promise<void> {
     const whereCondition = tenantId ? { tenantId } : {};
-    const message = await this.messageRepository.findById(
-      messageId,
-      false,
-      whereCondition,
-    );
+    const message = await this.messageRepository.findById(messageId, false, whereCondition);
 
     if (!message) {
       throw new NotFoundException(`Message ${messageId} not found`);
@@ -230,10 +199,7 @@ export class MessagingSDKService implements IMessagingSDK {
     });
   }
 
-  async getDeliveryStats(
-    query: StatsQuery,
-    tenantId?: string,
-  ): Promise<DeliveryStats> {
+  async getDeliveryStats(query: StatsQuery, tenantId?: string): Promise<DeliveryStats> {
     // This would typically use a more optimized query or aggregation
     const whereCondition: any = {
       createdAt: {
@@ -245,29 +211,23 @@ export class MessagingSDKService implements IMessagingSDK {
 
     const messages = await this.messageRepository.find({
       where: whereCondition,
-      relations: ['deliveries'],
+      relations: ["deliveries"],
     });
 
     const totalMessages = messages.length;
     const deliveredMessages = messages.filter((m) =>
       m.deliveries.some((d) => d.status === MessageDeliveryStatus.DELIVERED),
     ).length;
-    const failedMessages = messages.filter(
-      (m) => m.status === MessageStatus.FAILED,
-    ).length;
+    const failedMessages = messages.filter((m) => m.status === MessageStatus.FAILED).length;
 
     const channelStats = this.calculateChannelStats(messages, query.channel);
-    const timeSeriesData = this.calculateTimeSeriesData(
-      messages,
-      query.groupBy || 'day',
-    );
+    const timeSeriesData = this.calculateTimeSeriesData(messages, query.groupBy || "day");
 
     return {
       totalMessages,
       deliveredMessages,
       failedMessages,
-      deliveryRate:
-        totalMessages > 0 ? (deliveredMessages / totalMessages) * 100 : 0,
+      deliveryRate: totalMessages > 0 ? (deliveredMessages / totalMessages) * 100 : 0,
       channelStats,
       timeSeriesData,
     };
@@ -290,15 +250,10 @@ export class MessagingSDKService implements IMessagingSDK {
     };
   }
 
-  private calculateEstimatedDelivery(
-    channels: MessageChannel[],
-    scheduledAt?: Date,
-  ): Date {
+  private calculateEstimatedDelivery(channels: MessageChannel[], scheduledAt?: Date): Date {
     const baseTime = scheduledAt || new Date();
     // Add estimated processing time based on channels
-    const processingTime = channels.includes(MessageChannel.EMAIL)
-      ? 30000
-      : 5000; // 30s for email, 5s for others
+    const processingTime = channels.includes(MessageChannel.EMAIL) ? 30000 : 5000; // 30s for email, 5s for others
     return new Date(baseTime.getTime() + processingTime);
   }
 
@@ -306,21 +261,14 @@ export class MessagingSDKService implements IMessagingSDK {
     const lastDelivery = deliveries
       .filter(
         (d) =>
-          d.status === MessageDeliveryStatus.DELIVERED ||
-          d.status === MessageDeliveryStatus.FAILED,
+          d.status === MessageDeliveryStatus.DELIVERED || d.status === MessageDeliveryStatus.FAILED,
       )
-      .toSorted(
-        (a, b) =>
-          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
-      )[0];
+      .toSorted((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())[0];
 
     return lastDelivery?.deliveredAt || lastDelivery?.createdAt;
   }
 
-  private calculateChannelStats(
-    messages: any[],
-    filterChannel?: MessageChannel,
-  ) {
+  private calculateChannelStats(messages: any[], filterChannel?: MessageChannel) {
     const channelMap = new Map();
 
     messages.forEach((message) => {
@@ -334,20 +282,10 @@ export class MessagingSDKService implements IMessagingSDK {
         const stats = channelMap.get(channel);
         stats.sent++;
 
-        const channelDeliveries = message.deliveries.filter(
-          (d: any) => d.channel === channel,
-        );
-        if (
-          channelDeliveries.some(
-            (d: any) => d.status === MessageDeliveryStatus.DELIVERED,
-          )
-        ) {
+        const channelDeliveries = message.deliveries.filter((d: any) => d.channel === channel);
+        if (channelDeliveries.some((d: any) => d.status === MessageDeliveryStatus.DELIVERED)) {
           stats.delivered++;
-        } else if (
-          channelDeliveries.some(
-            (d: any) => d.status === MessageDeliveryStatus.FAILED,
-          )
-        ) {
+        } else if (channelDeliveries.some((d: any) => d.status === MessageDeliveryStatus.FAILED)) {
           stats.failed++;
         }
       });
@@ -362,10 +300,7 @@ export class MessagingSDKService implements IMessagingSDK {
     }));
   }
 
-  private calculateTimeSeriesData(
-    messages: any[],
-    groupBy: 'day' | 'week' | 'month',
-  ) {
+  private calculateTimeSeriesData(messages: any[], groupBy: "day" | "week" | "month") {
     // Implementation would group messages by time period and calculate stats
     // This is a simplified version
     const timeMap = new Map();
@@ -379,11 +314,7 @@ export class MessagingSDKService implements IMessagingSDK {
       const stats = timeMap.get(date);
       stats.sent++;
 
-      if (
-        message.deliveries.some(
-          (d: any) => d.status === MessageDeliveryStatus.DELIVERED,
-        )
-      ) {
+      if (message.deliveries.some((d: any) => d.status === MessageDeliveryStatus.DELIVERED)) {
         stats.delivered++;
       } else if (message.status === MessageStatus.FAILED) {
         stats.failed++;
@@ -398,21 +329,18 @@ export class MessagingSDKService implements IMessagingSDK {
     }));
   }
 
-  private formatDateByGrouping(
-    date: Date,
-    groupBy: 'day' | 'week' | 'month',
-  ): string {
+  private formatDateByGrouping(date: Date, groupBy: "day" | "week" | "month"): string {
     const d = new Date(date);
     switch (groupBy) {
-      case 'day':
-        return d.toISOString().split('T')[0];
-      case 'week':
+      case "day":
+        return d.toISOString().split("T")[0];
+      case "week":
         const week = Math.ceil(d.getDate() / 7);
         return `${d.getFullYear()}-${d.getMonth() + 1}-W${week}`;
-      case 'month':
+      case "month":
         return `${d.getFullYear()}-${d.getMonth() + 1}`;
       default:
-        return d.toISOString().split('T')[0];
+        return d.toISOString().split("T")[0];
     }
   }
 }

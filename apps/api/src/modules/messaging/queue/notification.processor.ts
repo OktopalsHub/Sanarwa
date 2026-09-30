@@ -1,23 +1,23 @@
-import { InjectQueue, Process, Processor } from '@nestjs/bull';
-import { Injectable, Logger } from '@nestjs/common';
-import { Job, Queue } from 'bull';
-import { BaseProviderPayload } from '../../../providers/base/base-provider.interface';
-import { ProviderService } from '../../provider/provider.service';
-import { TemplateService } from '../../template/template.service';
+import { InjectQueue, Process, Processor } from "@nestjs/bull";
+import { Injectable, Logger } from "@nestjs/common";
+import { Job, Queue } from "bull";
+import { BaseProviderPayload } from "../../../providers/base/base-provider.interface";
+import { ProviderService } from "../../provider/provider.service";
+import { TemplateService } from "../../template/template.service";
 import {
   MessageDeliveryStatus as DeliveryStatus,
   MessageDelivery,
-} from '../message-delivery.entity';
-import { Message, MessageStatus, MessagePriority as Priority } from '../message.entity';
-import { NOTIFICATION_DELIVERY_QUEUE, NOTIFICATION_QUEUE } from './notification-queue.module';
+} from "../message-delivery.entity";
+import { Message, MessageStatus, MessagePriority as Priority } from "../message.entity";
+import { NOTIFICATION_DELIVERY_QUEUE, NOTIFICATION_QUEUE } from "./notification-queue.constants";
 import {
   AlertJobData,
   DeadLetterJobData,
   DeliveryJobData,
   NotificationJobData,
-} from './notification-queue.service';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+} from "./notification-queue.service";
+import { InjectRepository } from "@nestjs/typeorm";
+import { Repository } from "typeorm";
 
 @Processor(NOTIFICATION_QUEUE)
 @Injectable()
@@ -32,27 +32,27 @@ export class NotificationProcessor {
     private readonly providerService: ProviderService,
     private readonly templateService: TemplateService,
     @InjectQueue(NOTIFICATION_QUEUE)
-    private readonly notificationQueue: Queue<NotificationJobData | DeadLetterJobData | AlertJobData>,
+    private readonly notificationQueue: Queue<
+      NotificationJobData | DeadLetterJobData | AlertJobData
+    >,
     @InjectQueue(NOTIFICATION_DELIVERY_QUEUE)
     private readonly deliveryQueue: Queue<DeliveryJobData>,
-  ) { }
+  ) {}
 
   /**
    * Process notification job
    */
-  @Process('process-notification')
+  @Process("process-notification")
   async processNotification(job: Job<NotificationJobData>): Promise<void> {
     const { notificationId, tenantId, retryCount = 0 } = job.data;
 
-    this.logger.log(
-      `Processing notification ${notificationId} (attempt ${retryCount + 1})`,
-    );
+    this.logger.log(`Processing notification ${notificationId} (attempt ${retryCount + 1})`);
 
     try {
       // Get message with deliveries
       const message = await this.messageRepository.findOne({
         where: { id: notificationId, tenantId },
-        relations: ['deliveries'],
+        relations: ["deliveries"],
       });
 
       if (!message) {
@@ -70,7 +70,7 @@ export class NotificationProcessor {
         // Reload message with deliveries
         const updatedMessage = await this.messageRepository.findOne({
           where: { id: notificationId },
-          relations: ['deliveries'],
+          relations: ["deliveries"],
         });
 
         if (updatedMessage) {
@@ -92,9 +92,7 @@ export class NotificationProcessor {
           renderedContent = rendered.content;
           renderedSubject = rendered.subject;
         } catch (error) {
-          this.logger.warn(
-            `Failed to render template ${message.templateId}: ${error.message}`,
-          );
+          this.logger.warn(`Failed to render template ${message.templateId}: ${error.message}`);
           // Continue with original content if template rendering fails
         }
       }
@@ -105,7 +103,7 @@ export class NotificationProcessor {
         deliveryId: delivery.id,
         tenantId: message.tenantId,
         channel: delivery.channel,
-        providerId: delivery.providerId || 'auto-select',
+        providerId: delivery.providerId || "auto-select",
         recipient: delivery.recipient,
         templateData: {
           ...message.data,
@@ -117,16 +115,16 @@ export class NotificationProcessor {
 
       // Add bulk delivery jobs
       const jobs = deliveryJobs.map((jobData, index) => ({
-        name: 'process-delivery',
+        name: "process-delivery",
         data: { ...jobData, retryCount: 0 },
         opts: {
           priority: this.getPriorityValue(Priority.NORMAL),
           attempts: 5,
           backoff: {
-            type: 'exponential',
+            type: "exponential",
             delay: 1000,
           },
-          delay: index * 100, // Stagger jobs slightly
+          delay: index * 20, // Minimal 250 plan (was 100)
         },
       }));
 
@@ -138,9 +136,7 @@ export class NotificationProcessor {
 
       this.logger.log(`Successfully processed notification ${notificationId}`);
     } catch (error) {
-      this.logger.error(
-        `Failed to process notification ${notificationId}: ${error.message}`,
-      );
+      this.logger.error(`Failed to process notification ${notificationId}: ${error.message}`);
 
       // Update message status to failed
       await this.messageRepository.update(notificationId, {
@@ -153,9 +149,9 @@ export class NotificationProcessor {
   }
 
   /**
-   * Process delivery job
+   * Process delivery job - minimal 250 plan: 5 concurrency for 4GB shared box
    */
-  @Process({ name: 'process-delivery', concurrency: 10 })
+  @Process({ name: "process-delivery", concurrency: 5 })
   async processDelivery(job: Job<DeliveryJobData>): Promise<void> {
     const {
       notificationId,
@@ -206,7 +202,7 @@ export class NotificationProcessor {
       const result = await this.providerService.send(payload, {
         tenantId,
         channel: channel as any,
-        excludeProviders: providerId === 'auto-select' ? [] : undefined,
+        excludeProviders: providerId === "auto-select" ? [] : undefined,
       });
 
       // Update delivery with provider response
@@ -221,13 +217,9 @@ export class NotificationProcessor {
       // Update parent notification status if all deliveries are complete
       await this.updateNotificationStatusFromDeliveries(notificationId);
 
-      this.logger.log(
-        `Successfully processed delivery ${deliveryId} via ${result.providerId}`,
-      );
+      this.logger.log(`Successfully processed delivery ${deliveryId} via ${result.providerId}`);
     } catch (error) {
-      this.logger.error(
-        `Failed to process delivery ${deliveryId}: ${error.message}`,
-      );
+      this.logger.error(`Failed to process delivery ${deliveryId}: ${error.message}`);
 
       // Update delivery status to failed
       await this.deliveryRepository.update(deliveryId, {
@@ -246,7 +238,7 @@ export class NotificationProcessor {
   /**
    * Handle failed notification jobs
    */
-  @Process('handle-failed-notification')
+  @Process("handle-failed-notification")
   async handleFailedNotification(job: Job<NotificationJobData>): Promise<void> {
     const { notificationId, tenantId, retryCount = 0 } = job.data;
 
@@ -258,7 +250,7 @@ export class NotificationProcessor {
       // Get the message for context
       const message = await this.messageRepository.findOne({
         where: { id: notificationId, tenantId },
-        relations: ['deliveries'],
+        relations: ["deliveries"],
       });
 
       if (!message) {
@@ -269,16 +261,16 @@ export class NotificationProcessor {
       // Update message status to failed
       await this.messageRepository.update(notificationId, {
         status: MessageStatus.FAILED,
-        errorMessage: 'Failed after all retry attempts',
+        errorMessage: "Failed after all retry attempts",
       });
 
       // Add to dead letter queue for manual review
       await this.addToDeadLetterQueue({
-        type: 'notification',
+        type: "notification",
         id: notificationId,
         tenantId,
         originalJobData: job.data,
-        failureReason: 'Exceeded maximum retry attempts',
+        failureReason: "Exceeded maximum retry attempts",
         failedAt: new Date(),
         retryCount,
         messageData: {
@@ -293,12 +285,12 @@ export class NotificationProcessor {
 
       // Send alert to administrators
       await this.sendFailureAlert({
-        type: 'notification_failure',
+        type: "notification_failure",
         notificationId,
         tenantId,
         retryCount,
         message: `Notification ${notificationId} failed after ${retryCount} retry attempts`,
-        severity: 'high',
+        severity: "high",
         metadata: {
           channels: message.channels,
           recipientCount: message.recipients.length,
@@ -316,11 +308,13 @@ export class NotificationProcessor {
   /**
    * Handle failed delivery jobs
    */
-  @Process('handle-failed-delivery')
+  @Process("handle-failed-delivery")
   async handleFailedDelivery(job: Job<DeliveryJobData>): Promise<void> {
     const { deliveryId, notificationId, tenantId, channel, recipient, retryCount = 0 } = job.data;
 
-    this.logger.error(`Delivery ${deliveryId} failed after all retry attempts (${retryCount} retries)`);
+    this.logger.error(
+      `Delivery ${deliveryId} failed after all retry attempts (${retryCount} retries)`,
+    );
 
     try {
       // Get the delivery for context
@@ -336,7 +330,7 @@ export class NotificationProcessor {
       // Update delivery status to failed
       await this.deliveryRepository.update(deliveryId, {
         status: DeliveryStatus.FAILED,
-        errorMessage: 'Failed after all retry attempts',
+        errorMessage: "Failed after all retry attempts",
         retryCount: retryCount + 1,
       });
 
@@ -345,11 +339,11 @@ export class NotificationProcessor {
 
       // Add to dead letter queue for manual review
       await this.addToDeadLetterQueue({
-        type: 'delivery',
+        type: "delivery",
         id: deliveryId,
         tenantId,
         originalJobData: job.data,
-        failureReason: 'Exceeded maximum retry attempts',
+        failureReason: "Exceeded maximum retry attempts",
         failedAt: new Date(),
         retryCount,
         deliveryData: {
@@ -365,7 +359,7 @@ export class NotificationProcessor {
       const shouldAlert = await this.shouldSendDeliveryAlert(notificationId, channel, retryCount);
       if (shouldAlert) {
         await this.sendFailureAlert({
-          type: 'delivery_failure',
+          type: "delivery_failure",
           deliveryId,
           notificationId,
           tenantId,
@@ -373,7 +367,7 @@ export class NotificationProcessor {
           recipient,
           retryCount,
           message: `Delivery ${deliveryId} (${channel} to ${recipient}) failed after ${retryCount} retry attempts`,
-          severity: 'medium',
+          severity: "medium",
           metadata: {
             channel,
             providerId: delivery.providerId,
@@ -402,7 +396,7 @@ export class NotificationProcessor {
           deliveries.push({
             messageId: message.id,
             channel,
-            providerId: 'pending',
+            providerId: "pending",
             recipient: recipientAddress,
             status: DeliveryStatus.PENDING,
           });
@@ -420,15 +414,15 @@ export class NotificationProcessor {
    */
   private getRecipientAddress(recipient: any, channel: string): string | null {
     switch (channel) {
-      case 'email':
+      case "email":
         return recipient.email || null;
-      case 'sms':
+      case "sms":
         return recipient.phone || null;
-      case 'whatsapp':
+      case "whatsapp":
         return recipient.whatsappNumber || null;
-      case 'push':
+      case "push":
         return recipient.deviceToken || null;
-      case 'in_app':
+      case "in_app":
         return recipient.userId || null;
       default:
         return recipient.id || null;
@@ -438,9 +432,7 @@ export class NotificationProcessor {
   /**
    * Update notification status based on delivery statuses
    */
-  private async updateNotificationStatusFromDeliveries(
-    notificationId: string,
-  ): Promise<void> {
+  private async updateNotificationStatusFromDeliveries(notificationId: string): Promise<void> {
     const deliveries = await this.deliveryRepository.find({
       where: { messageId: notificationId },
     });
@@ -452,20 +444,15 @@ export class NotificationProcessor {
     const deliveryStatuses = deliveries.map((d) => d.status);
     let notificationStatus: MessageStatus;
 
-    if (
-      deliveryStatuses.every((status) => status === DeliveryStatus.DELIVERED)
-    ) {
+    if (deliveryStatuses.every((status) => status === DeliveryStatus.DELIVERED)) {
       notificationStatus = MessageStatus.DELIVERED;
     } else if (
       deliveryStatuses.some(
-        (status) =>
-          status === DeliveryStatus.DELIVERED || status === DeliveryStatus.SENT,
+        (status) => status === DeliveryStatus.DELIVERED || status === DeliveryStatus.SENT,
       )
     ) {
       notificationStatus = MessageStatus.SENT;
-    } else if (
-      deliveryStatuses.every((status) => status === DeliveryStatus.FAILED)
-    ) {
+    } else if (deliveryStatuses.every((status) => status === DeliveryStatus.FAILED)) {
       notificationStatus = MessageStatus.FAILED;
     } else {
       notificationStatus = MessageStatus.PROCESSING;
@@ -480,7 +467,7 @@ export class NotificationProcessor {
    * Add failed job to dead letter queue for manual review
    */
   private async addToDeadLetterQueue(data: {
-    type: 'notification' | 'delivery';
+    type: "notification" | "delivery";
     id: string;
     tenantId: string;
     originalJobData: any;
@@ -494,7 +481,7 @@ export class NotificationProcessor {
       // Add to dead letter queue with high priority for manual review
       // Add to dead letter queue
       const jobData = {
-        type: 'dead_letter',
+        type: "dead_letter",
         originalType: data.type,
         originalId: data.id,
         tenantId: data.tenantId,
@@ -506,8 +493,8 @@ export class NotificationProcessor {
         deliveryData: data.deliveryData,
       };
 
-      await this.notificationQueue.add('handle-dead-letter', jobData, {
-        priority: data.type === 'notification' ? 10 : 5,
+      await this.notificationQueue.add("handle-dead-letter", jobData, {
+        priority: data.type === "notification" ? 10 : 5,
         attempts: 1,
         removeOnComplete: false,
         removeOnFail: false,
@@ -515,7 +502,9 @@ export class NotificationProcessor {
 
       this.logger.log(`Added ${data.type} ${data.id} to dead letter queue`);
     } catch (error) {
-      this.logger.error(`Failed to add ${data.type} ${data.id} to dead letter queue: ${error.message}`);
+      this.logger.error(
+        `Failed to add ${data.type} ${data.id} to dead letter queue: ${error.message}`,
+      );
     }
   }
 
@@ -531,14 +520,14 @@ export class NotificationProcessor {
     recipient?: string;
     retryCount: number;
     message: string;
-    severity: 'low' | 'medium' | 'high' | 'critical';
+    severity: "low" | "medium" | "high" | "critical";
     metadata?: any;
   }): Promise<void> {
     try {
       // Send alert via internal notification system
       // Add alert job
       const alertJobData = {
-        type: 'system_alert',
+        type: "system_alert",
         alert: {
           type: alert.type,
           severity: alert.severity,
@@ -561,11 +550,11 @@ export class NotificationProcessor {
 
       const priority = this.getAlertPriority(alert.severity);
 
-      await this.notificationQueue.add('process-alert', alertJobData, {
+      await this.notificationQueue.add("process-alert", alertJobData, {
         priority,
         attempts: 3,
         backoff: {
-          type: 'exponential',
+          type: "exponential",
           delay: 5000,
         },
         removeOnComplete: 10,
@@ -590,7 +579,7 @@ export class NotificationProcessor {
       // Get message to check priority
       const message = await this.messageRepository.findOne({
         where: { id: notificationId },
-        select: ['priority', 'channels'],
+        select: ["priority", "channels"],
       });
 
       if (!message) {
@@ -598,12 +587,12 @@ export class NotificationProcessor {
       }
 
       // Always alert for high/urgent priority messages
-      if (message.priority === 'high' || message.priority === 'urgent') {
+      if (message.priority === "high" || message.priority === "urgent") {
         return true;
       }
 
       // Alert for critical channels (email, sms) after multiple retries
-      const criticalChannels = ['email', 'sms'];
+      const criticalChannels = ["email", "sms"];
       if (criticalChannels.includes(channel) && retryCount >= 3) {
         return true;
       }
@@ -627,11 +616,11 @@ export class NotificationProcessor {
     try {
       // In a real implementation, this would fetch from tenant configuration
       // For now, return system administrators
-      const systemAdmins = process.env.SYSTEM_ADMIN_EMAILS?.split(',') || [];
+      const systemAdmins = process.env.SYSTEM_ADMIN_EMAILS?.split(",") || [];
 
       // For critical alerts, include more recipients
-      if (severity === 'critical' || severity === 'high') {
-        const tenantAdmins = process.env.TENANT_ADMIN_EMAILS?.split(',') || [];
+      if (severity === "critical" || severity === "high") {
+        const tenantAdmins = process.env.TENANT_ADMIN_EMAILS?.split(",") || [];
         return [...systemAdmins, ...tenantAdmins];
       }
 
@@ -645,13 +634,17 @@ export class NotificationProcessor {
   /**
    * Process retry with exponential backoff
    */
-  @Process('retry-notification')
-  async retryNotification(job: Job<NotificationJobData & { originalError: string }>): Promise<void> {
+  @Process("retry-notification")
+  async retryNotification(
+    job: Job<NotificationJobData & { originalError: string }>,
+  ): Promise<void> {
     const { notificationId, tenantId, retryCount = 0, originalError } = job.data;
     const maxRetries = 5;
     const baseDelay = 1000; // 1 second
 
-    this.logger.log(`Retrying notification ${notificationId} (attempt ${retryCount + 1}/${maxRetries})`);
+    this.logger.log(
+      `Retrying notification ${notificationId} (attempt ${retryCount + 1}/${maxRetries})`,
+    );
 
     if (retryCount >= maxRetries) {
       // Max retries reached, handle as failed
@@ -675,7 +668,7 @@ export class NotificationProcessor {
         retryCount: retryCount + 1,
       };
 
-      await this.notificationQueue.add('process-notification', jobData, {
+      await this.notificationQueue.add("process-notification", jobData, {
         delay: totalDelay,
         attempts: 1,
         removeOnComplete: 10,
@@ -684,7 +677,9 @@ export class NotificationProcessor {
 
       this.logger.log(`Scheduled retry for notification ${notificationId} in ${totalDelay}ms`);
     } catch (error) {
-      this.logger.error(`Failed to schedule retry for notification ${notificationId}: ${error.message}`);
+      this.logger.error(
+        `Failed to schedule retry for notification ${notificationId}: ${error.message}`,
+      );
       await this.handleFailedNotification(job);
     }
   }
@@ -692,7 +687,7 @@ export class NotificationProcessor {
   /**
    * Process retry for delivery
    */
-  @Process('retry-delivery')
+  @Process("retry-delivery")
   async retryDelivery(job: Job<DeliveryJobData & { originalError: string }>): Promise<void> {
     const { deliveryId, notificationId, tenantId, retryCount = 0, originalError } = job.data;
     const maxRetries = 3;
@@ -720,7 +715,7 @@ export class NotificationProcessor {
         retryCount: retryCount + 1,
       };
 
-      await this.deliveryQueue.add('process-delivery', jobData, {
+      await this.deliveryQueue.add("process-delivery", jobData, {
         delay: totalDelay,
         attempts: 1,
         removeOnComplete: 10,
@@ -757,13 +752,13 @@ export class NotificationProcessor {
    */
   private getAlertPriority(severity: string): number {
     switch (severity) {
-      case 'critical':
+      case "critical":
         return 20;
-      case 'high':
+      case "high":
         return 15;
-      case 'medium':
+      case "medium":
         return 5;
-      case 'low':
+      case "low":
         return 1;
       default:
         return 5;

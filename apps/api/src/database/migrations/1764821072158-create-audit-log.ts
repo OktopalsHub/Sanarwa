@@ -1,4 +1,4 @@
-import { MigrationInterface, QueryRunner } from 'typeorm';
+import { MigrationInterface, QueryRunner } from "typeorm";
 
 export class CreateAuditLog1764821072158 implements MigrationInterface {
   public async up(queryRunner: QueryRunner): Promise<void> {
@@ -37,12 +37,24 @@ export class CreateAuditLog1764821072158 implements MigrationInterface {
     `);
 
     // Create indexes for performance
-    await queryRunner.query(`CREATE INDEX IF NOT EXISTS IDX_audit_logs_tenant_id_created_at ON audit_logs (tenant_id, created_at)`);
-    await queryRunner.query(`CREATE INDEX IF NOT EXISTS IDX_audit_logs_tenant_member_id_created_at ON audit_logs (tenant_member_id, created_at)`);
-    await queryRunner.query(`CREATE INDEX IF NOT EXISTS IDX_audit_logs_resource_type_resource_id ON audit_logs (resource_type, resource_id)`);
-    await queryRunner.query(`CREATE INDEX IF NOT EXISTS IDX_audit_logs_action ON audit_logs (action)`);
-    await queryRunner.query(`CREATE INDEX IF NOT EXISTS IDX_audit_logs_severity ON audit_logs (severity)`);
-    await queryRunner.query(`CREATE INDEX IF NOT EXISTS IDX_audit_logs_created_at ON audit_logs (created_at)`);
+    await queryRunner.query(
+      `CREATE INDEX IF NOT EXISTS IDX_audit_logs_tenant_id_created_at ON audit_logs (tenant_id, created_at)`,
+    );
+    await queryRunner.query(
+      `CREATE INDEX IF NOT EXISTS IDX_audit_logs_tenant_member_id_created_at ON audit_logs (tenant_member_id, created_at)`,
+    );
+    await queryRunner.query(
+      `CREATE INDEX IF NOT EXISTS IDX_audit_logs_resource_type_resource_id ON audit_logs (resource_type, resource_id)`,
+    );
+    await queryRunner.query(
+      `CREATE INDEX IF NOT EXISTS IDX_audit_logs_action ON audit_logs (action)`,
+    );
+    await queryRunner.query(
+      `CREATE INDEX IF NOT EXISTS IDX_audit_logs_severity ON audit_logs (severity)`,
+    );
+    await queryRunner.query(
+      `CREATE INDEX IF NOT EXISTS IDX_audit_logs_created_at ON audit_logs (created_at)`,
+    );
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {

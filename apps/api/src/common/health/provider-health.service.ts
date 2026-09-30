@@ -1,13 +1,13 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import { InjectRedis } from '@nestjs-modules/ioredis';
-import Redis from 'ioredis';
-import axios from 'axios';
+import { Injectable, Logger } from "@nestjs/common";
+import { ConfigService } from "@nestjs/config";
+import { InjectRedis } from "@nestjs-modules/ioredis";
+import Redis from "ioredis";
+import axios from "axios";
 
 export interface ProviderHealthStatus {
   provider: string;
-  type: 'sms' | 'email' | 'push' | 'voice' | 'whatsapp' | 'chat';
-  status: 'healthy' | 'degraded' | 'unhealthy';
+  type: "sms" | "email" | "push" | "voice" | "whatsapp" | "chat";
+  status: "healthy" | "degraded" | "unhealthy";
   responseTime: number;
   lastChecked: Date;
   errorMessage?: string;
@@ -20,7 +20,7 @@ export interface ProviderHealthSummary {
   degradedProviders: number;
   unhealthyProviders: number;
   providers: ProviderHealthStatus[];
-  overallStatus: 'healthy' | 'degraded' | 'unhealthy';
+  overallStatus: "healthy" | "degraded" | "unhealthy";
 }
 
 @Injectable()
@@ -49,23 +49,23 @@ export class ProviderHealthService {
   private async runAllHealthChecks(): Promise<void> {
     const providers = this.getConfiguredProviders();
 
-    const healthChecks = providers.map(provider =>
-      this.checkProviderHealth(provider).catch(error => {
+    const healthChecks = providers.map((provider) =>
+      this.checkProviderHealth(provider).catch((error) => {
         this.logger.error(`Health check failed for ${provider.provider}`, error);
         return {
           ...provider,
-          status: 'unhealthy' as const,
+          status: "unhealthy" as const,
           responseTime: 0,
           lastChecked: new Date(),
           errorMessage: error.message,
         };
-      })
+      }),
     );
 
     const results = await Promise.all(healthChecks);
 
     // Cache results
-    results.forEach(result => {
+    results.forEach((result) => {
       this.healthCache.set(result.provider, result);
     });
 
@@ -73,102 +73,108 @@ export class ProviderHealthService {
     await this.storeHealthResults(results);
   }
 
-  private getConfiguredProviders(): Array<{ provider: string; type: ProviderHealthStatus['type'] }> {
-    const providers: Array<{ provider: string; type: ProviderHealthStatus['type'] }> = [];
+  private getConfiguredProviders(): Array<{
+    provider: string;
+    type: ProviderHealthStatus["type"];
+  }> {
+    const providers: Array<{ provider: string; type: ProviderHealthStatus["type"] }> = [];
 
     // SMS Providers
-    if (this.configService.get('TELNYX_API_KEY')) {
-      providers.push({ provider: 'telnyx', type: 'sms' });
+    if (this.configService.get("TELNYX_API_KEY")) {
+      providers.push({ provider: "telnyx", type: "sms" });
     }
-    if (this.configService.get('TWILIO_ACCOUNT_SID')) {
-      providers.push({ provider: 'twilio', type: 'sms' });
+    if (this.configService.get("TWILIO_ACCOUNT_SID")) {
+      providers.push({ provider: "twilio", type: "sms" });
     }
-    if (this.configService.get('TERMII_API_KEY')) {
-      providers.push({ provider: 'termii', type: 'sms' });
+    if (this.configService.get("TERMII_API_KEY")) {
+      providers.push({ provider: "termii", type: "sms" });
     }
-    if (this.configService.get('AFRICASTALKING_API_KEY')) {
-      providers.push({ provider: 'africastalking', type: 'sms' });
+    if (this.configService.get("AFRICASTALKING_API_KEY")) {
+      providers.push({ provider: "africastalking", type: "sms" });
     }
 
     // Email Providers
-    if (this.configService.get('AWS_ACCESS_KEY_ID')) {
-      providers.push({ provider: 'ses', type: 'email' });
+    if (this.configService.get("AWS_ACCESS_KEY_ID")) {
+      providers.push({ provider: "ses", type: "email" });
     }
-    if (this.configService.get('SMTP_HOST')) {
-      providers.push({ provider: 'smtp', type: 'email' });
+    if (this.configService.get("SMTP_HOST")) {
+      providers.push({ provider: "smtp", type: "email" });
     }
-    if (this.configService.get('MAILGUN_API_KEY')) {
-      providers.push({ provider: 'mailgun', type: 'email' });
+    if (this.configService.get("MAILGUN_API_KEY")) {
+      providers.push({ provider: "mailgun", type: "email" });
     }
 
     // Push Providers
-    if (this.configService.get('FCM_SERVER_KEY')) {
-      providers.push({ provider: 'fcm', type: 'push' });
+    if (this.configService.get("FCM_SERVER_KEY")) {
+      providers.push({ provider: "fcm", type: "push" });
     }
-    if (this.configService.get('APNS_KEY_ID')) {
-      providers.push({ provider: 'apns', type: 'push' });
+    if (this.configService.get("APNS_KEY_ID")) {
+      providers.push({ provider: "apns", type: "push" });
     }
 
     // Voice Providers
-    if (this.configService.get('TELNYX_CONNECTION_ID')) {
-      providers.push({ provider: 'telnyx-voice', type: 'voice' });
+    if (this.configService.get("TELNYX_CONNECTION_ID")) {
+      providers.push({ provider: "telnyx-voice", type: "voice" });
     }
 
     // WhatsApp
-    if (this.configService.get('WHATSAPP_ACCESS_TOKEN')) {
-      providers.push({ provider: 'whatsapp', type: 'whatsapp' });
+    if (this.configService.get("WHATSAPP_ACCESS_TOKEN")) {
+      providers.push({ provider: "whatsapp", type: "whatsapp" });
     }
 
     // Chat Providers
-    if (this.configService.get('SLACK_BOT_TOKEN')) {
-      providers.push({ provider: 'slack', type: 'chat' });
+    if (this.configService.get("SLACK_BOT_TOKEN")) {
+      providers.push({ provider: "slack", type: "chat" });
     }
-    if (this.configService.get('DISCORD_BOT_TOKEN')) {
-      providers.push({ provider: 'discord', type: 'chat' });
+    if (this.configService.get("DISCORD_BOT_TOKEN")) {
+      providers.push({ provider: "discord", type: "chat" });
     }
 
     return providers;
   }
 
-  private async checkProviderHealth(provider: { provider: string; type: ProviderHealthStatus['type'] }): Promise<ProviderHealthStatus> {
+  private async checkProviderHealth(provider: {
+    provider: string;
+    type: ProviderHealthStatus["type"];
+  }): Promise<ProviderHealthStatus> {
     const startTime = Date.now();
 
     try {
       let healthResult: { healthy: boolean; details?: any; errorMessage?: string };
 
       switch (provider.provider) {
-        case 'telnyx':
+        case "telnyx":
           healthResult = await this.checkTelnyxHealth();
           break;
-        case 'twilio':
+        case "twilio":
           healthResult = await this.checkTwilioHealth();
           break;
-        case 'termii':
+        case "termii":
           healthResult = await this.checkTermiiHealth();
           break;
-        case 'africastalking':
+        case "africastalking":
           healthResult = await this.checkAfricasTalkingHealth();
           break;
-        case 'ses':
+        case "ses":
           healthResult = await this.checkSESHealth();
           break;
-        case 'mailgun':
+        case "mailgun":
           healthResult = await this.checkMailgunHealth();
           break;
-        case 'fcm':
+        case "fcm":
           healthResult = await this.checkFCMHealth();
           break;
-        case 'whatsapp':
+        case "whatsapp":
           healthResult = await this.checkWhatsAppHealth();
           break;
-        case 'slack':
+        case "slack":
           healthResult = await this.checkSlackHealth();
           break;
-        case 'discord':
+        case "discord":
           healthResult = await this.checkDiscordHealth();
           break;
         default:
-          healthResult = { healthy: false, errorMessage: 'Unknown provider' };
+          healthResult = { healthy: false, errorMessage: "Unknown provider" };
       }
 
       const responseTime = Date.now() - startTime;
@@ -176,7 +182,7 @@ export class ProviderHealthService {
       return {
         provider: provider.provider,
         type: provider.type,
-        status: healthResult.healthy ? 'healthy' : 'unhealthy',
+        status: healthResult.healthy ? "healthy" : "unhealthy",
         responseTime,
         lastChecked: new Date(),
         errorMessage: healthResult.errorMessage,
@@ -186,7 +192,7 @@ export class ProviderHealthService {
       return {
         provider: provider.provider,
         type: provider.type,
-        status: 'unhealthy',
+        status: "unhealthy",
         responseTime: Date.now() - startTime,
         lastChecked: new Date(),
         errorMessage: error.message,
@@ -194,10 +200,14 @@ export class ProviderHealthService {
     }
   }
 
-  private async checkTelnyxHealth(): Promise<{ healthy: boolean; details?: any; errorMessage?: string }> {
+  private async checkTelnyxHealth(): Promise<{
+    healthy: boolean;
+    details?: any;
+    errorMessage?: string;
+  }> {
     try {
-      const apiKey = this.configService.get('TELNYX_API_KEY');
-      const response = await axios.get('https://api.telnyx.com/v2/balance', {
+      const apiKey = this.configService.get("TELNYX_API_KEY");
+      const response = await axios.get("https://api.telnyx.com/v2/balance", {
         headers: { Authorization: `Bearer ${apiKey}` },
         timeout: 10000,
       });
@@ -217,15 +227,22 @@ export class ProviderHealthService {
     }
   }
 
-  private async checkTwilioHealth(): Promise<{ healthy: boolean; details?: any; errorMessage?: string }> {
+  private async checkTwilioHealth(): Promise<{
+    healthy: boolean;
+    details?: any;
+    errorMessage?: string;
+  }> {
     try {
-      const accountSid = this.configService.get('TWILIO_ACCOUNT_SID');
-      const authToken = this.configService.get('TWILIO_AUTH_TOKEN');
+      const accountSid = this.configService.get("TWILIO_ACCOUNT_SID");
+      const authToken = this.configService.get("TWILIO_AUTH_TOKEN");
 
-      const response = await axios.get(`https://api.twilio.com/2010-04-01/Accounts/${accountSid}.json`, {
-        auth: { username: accountSid, password: authToken },
-        timeout: 10000,
-      });
+      const response = await axios.get(
+        `https://api.twilio.com/2010-04-01/Accounts/${accountSid}.json`,
+        {
+          auth: { username: accountSid, password: authToken },
+          timeout: 10000,
+        },
+      );
 
       return {
         healthy: response.status === 200,
@@ -242,10 +259,14 @@ export class ProviderHealthService {
     }
   }
 
-  private async checkTermiiHealth(): Promise<{ healthy: boolean; details?: any; errorMessage?: string }> {
+  private async checkTermiiHealth(): Promise<{
+    healthy: boolean;
+    details?: any;
+    errorMessage?: string;
+  }> {
     try {
-      const apiKey = this.configService.get('TERMII_API_KEY');
-      const response = await axios.get('https://api.ng.termii.com/api/get-balance', {
+      const apiKey = this.configService.get("TERMII_API_KEY");
+      const response = await axios.get("https://api.ng.termii.com/api/get-balance", {
         params: { api_key: apiKey },
         timeout: 10000,
       });
@@ -265,16 +286,20 @@ export class ProviderHealthService {
     }
   }
 
-  private async checkAfricasTalkingHealth(): Promise<{ healthy: boolean; details?: any; errorMessage?: string }> {
+  private async checkAfricasTalkingHealth(): Promise<{
+    healthy: boolean;
+    details?: any;
+    errorMessage?: string;
+  }> {
     try {
-      const apiKey = this.configService.get('AFRICASTALKING_API_KEY');
-      const username = this.configService.get('AFRICASTALKING_USERNAME');
+      const apiKey = this.configService.get("AFRICASTALKING_API_KEY");
+      const username = this.configService.get("AFRICASTALKING_USERNAME");
 
-      const response = await axios.get('https://api.africastalking.com/version1/user', {
+      const response = await axios.get("https://api.africastalking.com/version1/user", {
         params: { username },
         headers: {
-          'apiKey': apiKey,
-          'Content-Type': 'application/x-www-form-urlencoded',
+          apiKey: apiKey,
+          "Content-Type": "application/x-www-form-urlencoded",
         },
         timeout: 10000,
       });
@@ -293,23 +318,31 @@ export class ProviderHealthService {
     }
   }
 
-  private async checkSESHealth(): Promise<{ healthy: boolean; details?: any; errorMessage?: string }> {
+  private async checkSESHealth(): Promise<{
+    healthy: boolean;
+    details?: any;
+    errorMessage?: string;
+  }> {
     // For AWS SES, we'll check if credentials are valid by making a simple API call
     try {
       // This is a simplified check - in production, you'd use AWS SDK
-      return { healthy: true, details: { service: 'AWS SES' } };
+      return { healthy: true, details: { service: "AWS SES" } };
     } catch (error) {
       return { healthy: false, errorMessage: error.message };
     }
   }
 
-  private async checkMailgunHealth(): Promise<{ healthy: boolean; details?: any; errorMessage?: string }> {
+  private async checkMailgunHealth(): Promise<{
+    healthy: boolean;
+    details?: any;
+    errorMessage?: string;
+  }> {
     try {
-      const apiKey = this.configService.get('MAILGUN_API_KEY');
-      const domain = this.configService.get('MAILGUN_DOMAIN');
+      const apiKey = this.configService.get("MAILGUN_API_KEY");
+      const domain = this.configService.get("MAILGUN_DOMAIN");
 
       const response = await axios.get(`https://api.mailgun.net/v3/domains/${domain}`, {
-        auth: { username: 'api', password: apiKey },
+        auth: { username: "api", password: apiKey },
         timeout: 10000,
       });
 
@@ -328,23 +361,31 @@ export class ProviderHealthService {
     }
   }
 
-  private async checkFCMHealth(): Promise<{ healthy: boolean; details?: any; errorMessage?: string }> {
+  private async checkFCMHealth(): Promise<{
+    healthy: boolean;
+    details?: any;
+    errorMessage?: string;
+  }> {
     // FCM doesn't have a direct health check endpoint, so we'll validate the server key format
     try {
-      const serverKey = this.configService.get('FCM_SERVER_KEY');
+      const serverKey = this.configService.get("FCM_SERVER_KEY");
       return {
-        healthy: !!serverKey && serverKey.startsWith('AAAA'),
-        details: { service: 'Firebase Cloud Messaging' },
+        healthy: !!serverKey && serverKey.startsWith("AAAA"),
+        details: { service: "Firebase Cloud Messaging" },
       };
     } catch (error) {
       return { healthy: false, errorMessage: error.message };
     }
   }
 
-  private async checkWhatsAppHealth(): Promise<{ healthy: boolean; details?: any; errorMessage?: string }> {
+  private async checkWhatsAppHealth(): Promise<{
+    healthy: boolean;
+    details?: any;
+    errorMessage?: string;
+  }> {
     try {
-      const accessToken = this.configService.get('WHATSAPP_ACCESS_TOKEN');
-      const phoneNumberId = this.configService.get('WHATSAPP_PHONE_NUMBER_ID');
+      const accessToken = this.configService.get("WHATSAPP_ACCESS_TOKEN");
+      const phoneNumberId = this.configService.get("WHATSAPP_PHONE_NUMBER_ID");
 
       const response = await axios.get(`https://graph.facebook.com/v18.0/${phoneNumberId}`, {
         headers: { Authorization: `Bearer ${accessToken}` },
@@ -366,13 +407,21 @@ export class ProviderHealthService {
     }
   }
 
-  private async checkSlackHealth(): Promise<{ healthy: boolean; details?: any; errorMessage?: string }> {
+  private async checkSlackHealth(): Promise<{
+    healthy: boolean;
+    details?: any;
+    errorMessage?: string;
+  }> {
     try {
-      const botToken = this.configService.get('SLACK_BOT_TOKEN');
-      const response = await axios.post('https://slack.com/api/auth.test', {}, {
-        headers: { Authorization: `Bearer ${botToken}` },
-        timeout: 10000,
-      });
+      const botToken = this.configService.get("SLACK_BOT_TOKEN");
+      const response = await axios.post(
+        "https://slack.com/api/auth.test",
+        {},
+        {
+          headers: { Authorization: `Bearer ${botToken}` },
+          timeout: 10000,
+        },
+      );
 
       return {
         healthy: response.data.ok,
@@ -390,10 +439,14 @@ export class ProviderHealthService {
     }
   }
 
-  private async checkDiscordHealth(): Promise<{ healthy: boolean; details?: any; errorMessage?: string }> {
+  private async checkDiscordHealth(): Promise<{
+    healthy: boolean;
+    details?: any;
+    errorMessage?: string;
+  }> {
     try {
-      const botToken = this.configService.get('DISCORD_BOT_TOKEN');
-      const response = await axios.get('https://discord.com/api/users/@me', {
+      const botToken = this.configService.get("DISCORD_BOT_TOKEN");
+      const response = await axios.get("https://discord.com/api/users/@me", {
         headers: { Authorization: `Bot ${botToken}` },
         timeout: 10000,
       });
@@ -415,23 +468,23 @@ export class ProviderHealthService {
 
   private async storeHealthResults(results: ProviderHealthStatus[]): Promise<void> {
     try {
-      const key = 'provider_health_results';
+      const key = "provider_health_results";
       await this.redis.setex(key, 300, JSON.stringify(results)); // Cache for 5 minutes
     } catch (error) {
-      this.logger.error('Failed to store health results in Redis', error);
+      this.logger.error("Failed to store health results in Redis", error);
     }
   }
 
   async getProviderHealthSummary(): Promise<ProviderHealthSummary> {
     // Try to get from cache first
     try {
-      const cached = await this.redis.get('provider_health_results');
+      const cached = await this.redis.get("provider_health_results");
       if (cached) {
         const providers: ProviderHealthStatus[] = JSON.parse(cached);
         return this.buildHealthSummary(providers);
       }
     } catch (error) {
-      this.logger.error('Failed to get cached health results', error);
+      this.logger.error("Failed to get cached health results", error);
     }
 
     // Fallback to in-memory cache
@@ -440,15 +493,15 @@ export class ProviderHealthService {
   }
 
   private buildHealthSummary(providers: ProviderHealthStatus[]): ProviderHealthSummary {
-    const healthyCount = providers.filter(p => p.status === 'healthy').length;
-    const degradedCount = providers.filter(p => p.status === 'degraded').length;
-    const unhealthyCount = providers.filter(p => p.status === 'unhealthy').length;
+    const healthyCount = providers.filter((p) => p.status === "healthy").length;
+    const degradedCount = providers.filter((p) => p.status === "degraded").length;
+    const unhealthyCount = providers.filter((p) => p.status === "unhealthy").length;
 
-    let overallStatus: 'healthy' | 'degraded' | 'unhealthy' = 'healthy';
+    let overallStatus: "healthy" | "degraded" | "unhealthy" = "healthy";
     if (unhealthyCount > 0) {
-      overallStatus = 'unhealthy';
+      overallStatus = "unhealthy";
     } else if (degradedCount > 0) {
-      overallStatus = 'degraded';
+      overallStatus = "degraded";
     }
 
     return {

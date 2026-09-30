@@ -1,4 +1,4 @@
-import { DefaultOptions, QueryClient } from '@tanstack/react-query';
+import { DefaultOptions, QueryClient } from "@tanstack/react-query";
 
 // Default query options for consistent behavior
 const defaultQueryOptions: DefaultOptions = {
@@ -21,7 +21,7 @@ const defaultQueryOptions: DefaultOptions = {
     // Refetch on window focus for important data
     refetchOnWindowFocus: true,
     // Don't refetch on reconnect by default (can be overridden per query)
-    refetchOnReconnect: 'always',
+    refetchOnReconnect: "always",
   },
   mutations: {
     // Retry mutations once on network errors
@@ -45,55 +45,51 @@ export const queryClient = new QueryClient({
 export const queryKeys = {
   // Auth queries
   auth: {
-    user: () => ['auth', 'user'] as const,
-    permissions: (tenantId?: string) => ['auth', 'permissions', tenantId] as const,
+    user: () => ["auth", "user"] as const,
+    permissions: (tenantId?: string) => ["auth", "permissions", tenantId] as const,
   },
 
   // Tenant queries
   tenants: {
-    all: () => ['tenants'] as const,
-    detail: (id: string) => ['tenants', id] as const,
-    members: (id: string) => ['tenants', id, 'members'] as const,
-    settings: (id: string) => ['tenants', id, 'settings'] as const,
-    branding: (id: string) => ['tenants', id, 'branding'] as const,
+    all: () => ["tenants"] as const,
+    detail: (id: string) => ["tenants", id] as const,
+    members: (id: string) => ["tenants", id, "members"] as const,
+    settings: (id: string) => ["tenants", id, "settings"] as const,
+    branding: (id: string) => ["tenants", id, "branding"] as const,
   },
 
   // Campaign queries
   campaigns: {
     all: (tenantId: string, filters?: Record<string, any>) =>
-      ['campaigns', tenantId, filters] as const,
-    detail: (tenantId: string, id: string) =>
-      ['campaigns', tenantId, id] as const,
+      ["campaigns", tenantId, filters] as const,
+    detail: (tenantId: string, id: string) => ["campaigns", tenantId, id] as const,
     analytics: (tenantId: string, id: string, dateRange?: string) =>
-      ['campaigns', tenantId, id, 'analytics', dateRange] as const,
+      ["campaigns", tenantId, id, "analytics", dateRange] as const,
   },
 
   // Workflow queries
   workflows: {
     all: (tenantId: string, filters?: Record<string, any>) =>
-      ['workflows', tenantId, filters] as const,
-    detail: (tenantId: string, id: string) =>
-      ['workflows', tenantId, id] as const,
+      ["workflows", tenantId, filters] as const,
+    detail: (tenantId: string, id: string) => ["workflows", tenantId, id] as const,
     analytics: (tenantId: string, id: string, dateRange?: string) =>
-      ['workflows', tenantId, id, 'analytics', dateRange] as const,
+      ["workflows", tenantId, id, "analytics", dateRange] as const,
   },
 
   // Template queries
   templates: {
-    all: (tenantId: string, channel?: string) =>
-      ['templates', tenantId, channel] as const,
-    detail: (tenantId: string, id: string) =>
-      ['templates', tenantId, id] as const,
+    all: (tenantId: string, channel?: string) => ["templates", tenantId, channel] as const,
+    detail: (tenantId: string, id: string) => ["templates", tenantId, id] as const,
   },
 
   // Analytics queries
   analytics: {
     dashboard: (tenantId: string, dateRange?: string) =>
-      ['analytics', 'dashboard', tenantId, dateRange] as const,
+      ["analytics", "dashboard", tenantId, dateRange] as const,
     campaigns: (tenantId: string, dateRange?: string) =>
-      ['analytics', 'campaigns', tenantId, dateRange] as const,
+      ["analytics", "campaigns", tenantId, dateRange] as const,
     workflows: (tenantId: string, dateRange?: string) =>
-      ['analytics', 'workflows', tenantId, dateRange] as const,
+      ["analytics", "workflows", tenantId, dateRange] as const,
   },
 } as const;
 
@@ -112,7 +108,9 @@ export const invalidateQueries = {
     queryClient.invalidateQueries({ queryKey: queryKeys.campaigns.all(tenantId) });
     if (campaignId) {
       queryClient.invalidateQueries({ queryKey: queryKeys.campaigns.detail(tenantId, campaignId) });
-      queryClient.invalidateQueries({ queryKey: queryKeys.campaigns.analytics(tenantId, campaignId) });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.campaigns.analytics(tenantId, campaignId),
+      });
     }
   },
 
@@ -120,7 +118,9 @@ export const invalidateQueries = {
     queryClient.invalidateQueries({ queryKey: queryKeys.workflows.all(tenantId) });
     if (workflowId) {
       queryClient.invalidateQueries({ queryKey: queryKeys.workflows.detail(tenantId, workflowId) });
-      queryClient.invalidateQueries({ queryKey: queryKeys.workflows.analytics(tenantId, workflowId) });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.workflows.analytics(tenantId, workflowId),
+      });
     }
   },
 

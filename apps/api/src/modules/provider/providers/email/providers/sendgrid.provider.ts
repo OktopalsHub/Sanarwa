@@ -1,6 +1,12 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { NotificationChannel } from '../../../../../common/enums/notification-channel.enum';
-import { BaseEmailProvider, EmailDeliveryResult, EmailMessage, EmailProviderConfig, EmailProviderStats } from '../email-provider.interface';
+import { Injectable, Logger } from "@nestjs/common";
+import { NotificationChannel } from "../../../../../common/enums/notification-channel.enum";
+import {
+  BaseEmailProvider,
+  EmailDeliveryResult,
+  EmailMessage,
+  EmailProviderConfig,
+  EmailProviderStats,
+} from "../email-provider.interface";
 
 interface SendGridConfig {
   apiKey: string;
@@ -12,8 +18,8 @@ interface SendGridConfig {
 
 @Injectable()
 export class SendGridProvider extends BaseEmailProvider {
-  readonly providerId = 'sendgrid';
-  readonly name = 'SendGrid';
+  readonly providerId = "sendgrid";
+  readonly name = "SendGrid";
   readonly channel = NotificationChannel.EMAIL;
 
   private readonly logger = new Logger(SendGridProvider.name);
@@ -27,16 +33,16 @@ export class SendGridProvider extends BaseEmailProvider {
   async initialize(): Promise<void> {
     try {
       // Dynamic import to avoid bundling if not used
-      const sgMail = await import('@sendgrid/mail');
+      const sgMail = await import("@sendgrid/mail");
       this.sgMail = sgMail.default;
 
       const sendGridConfig = this.config.config as SendGridConfig;
       this.sgMail.setApiKey(sendGridConfig.apiKey);
 
       this.isInitialized = true;
-      this.logger.log('SendGrid provider initialized successfully');
+      this.logger.log("SendGrid provider initialized successfully");
     } catch (error) {
-      this.logger.error('Failed to initialize SendGrid provider', error);
+      this.logger.error("Failed to initialize SendGrid provider", error);
       throw new Error(`SendGrid initialization failed: ${error.message}`, { cause: error });
     }
   }
@@ -54,7 +60,7 @@ export class SendGridProvider extends BaseEmailProvider {
         to: Array.isArray(message.to) ? message.to : [message.to],
         from: {
           email: message.from || sendGridConfig.fromEmail,
-          name: message.fromName || sendGridConfig.fromName
+          name: message.fromName || sendGridConfig.fromName,
         },
         subject: message.subject,
         html: message.html,
@@ -63,23 +69,25 @@ export class SendGridProvider extends BaseEmailProvider {
         bcc: message.bcc,
         replyTo: message.replyTo || sendGridConfig.replyToEmail,
         headers: message.headers,
-        mailSettings: sendGridConfig.sandboxMode ? {
-          sandboxMode: { enable: true }
-        } : undefined,
-        attachments: message.attachments?.map(att => ({
+        mailSettings: sendGridConfig.sandboxMode
+          ? {
+              sandboxMode: { enable: true },
+            }
+          : undefined,
+        attachments: message.attachments?.map((att) => ({
           filename: att.filename,
-          content: typeof att.content === 'string' ? att.content : att.content.toString('base64'),
+          content: typeof att.content === "string" ? att.content : att.content.toString("base64"),
           type: att.contentType,
-          disposition: att.cid ? 'inline' : 'attachment',
-          contentId: att.cid
-        }))
+          disposition: att.cid ? "inline" : "attachment",
+          contentId: att.cid,
+        })),
       };
 
       // Handle template emails
       if (message.templateId) {
         Object.assign(msg, {
           templateId: message.templateId,
-          dynamicTemplateData: message.templateData || {}
+          dynamicTemplateData: message.templateData || {},
         });
         delete msg.html;
         delete msg.text;
@@ -89,37 +97,37 @@ export class SendGridProvider extends BaseEmailProvider {
       const latency = Date.now() - startTime;
 
       return {
-        messageId: response[0]?.headers?.['x-message-id'] || `sg_${Date.now()}`,
-        status: 'sent',
+        messageId: response[0]?.headers?.["x-message-id"] || `sg_${Date.now()}`,
+        status: "sent",
         providerId: this.providerId,
         timestamp: new Date(),
         cost: await this.calculateCost(Array.isArray(message.to) ? message.to.length : 1),
         metadata: {
           latency,
           statusCode: response[0]?.statusCode,
-          headers: response[0]?.headers
-        }
+          headers: response[0]?.headers,
+        },
       };
     } catch (error) {
       const latency = Date.now() - startTime;
 
-      this.logger.error('SendGrid email send failed', {
+      this.logger.error("SendGrid email send failed", {
         error: error.message,
         to: message.to,
-        subject: message.subject
+        subject: message.subject,
       });
 
       return {
         messageId: `sg_failed_${Date.now()}`,
-        status: 'failed',
+        status: "failed",
         providerId: this.providerId,
         timestamp: new Date(),
         error: error.message,
         metadata: {
           latency,
           statusCode: error.code,
-          errorType: error.response?.body?.errors?.[0]?.field || 'unknown'
-        }
+          errorType: error.response?.body?.errors?.[0]?.field || "unknown",
+        },
       };
     }
   }
@@ -133,11 +141,11 @@ export class SendGridProvider extends BaseEmailProvider {
     const results: EmailDeliveryResult[] = [];
 
     try {
-      const bulkMessages = messages.map(message => ({
+      const bulkMessages = messages.map((message) => ({
         to: Array.isArray(message.to) ? message.to : [message.to],
         from: {
           email: message.from || sendGridConfig.fromEmail,
-          name: message.fromName || sendGridConfig.fromName
+          name: message.fromName || sendGridConfig.fromName,
         },
         subject: message.subject,
         html: message.html,
@@ -147,89 +155,94 @@ export class SendGridProvider extends BaseEmailProvider {
         replyTo: message.replyTo || sendGridConfig.replyToEmail,
         headers: message.headers,
         templateId: message.templateId,
-        dynamicTemplateData: message.templateData
+        dynamicTemplateData: message.templateData,
       }));
 
       const response = await this.sgMail.send(bulkMessages);
 
       response.forEach((res: any, index: number) => {
         results.push({
-          messageId: res.headers?.['x-message-id'] || `sg_bulk_${Date.now()}_${index}`,
-          status: 'sent',
+          messageId: res.headers?.["x-message-id"] || `sg_bulk_${Date.now()}_${index}`,
+          status: "sent",
           providerId: this.providerId,
           timestamp: new Date(),
           cost: 0, // Will be calculated in batch
           metadata: {
             statusCode: res.statusCode,
-            headers: res.headers
-          }
+            headers: res.headers,
+          },
         });
       });
 
       return results;
     } catch (error) {
-      this.logger.error('SendGrid bulk email send failed', error);
+      this.logger.error("SendGrid bulk email send failed", error);
 
       // Return failed results for all messages
       return messages.map((_, index) => ({
         messageId: `sg_bulk_failed_${Date.now()}_${index}`,
-        status: 'failed',
+        status: "failed",
         providerId: this.providerId,
         timestamp: new Date(),
         error: error.message,
         metadata: {
-          errorType: 'bulk_send_failure'
-        }
+          errorType: "bulk_send_failure",
+        },
       }));
     }
   }
 
-  async validateConfig(config: Record<string, any>): Promise<{ isValid: boolean; errors: string[] }> {
+  async validateConfig(
+    config: Record<string, any>,
+  ): Promise<{ isValid: boolean; errors: string[] }> {
     const errors: string[] = [];
     const sendGridConfig = config as SendGridConfig;
 
     if (!sendGridConfig.apiKey) {
-      errors.push('API key is required');
-    } else if (!sendGridConfig.apiKey.startsWith('SG.')) {
-      errors.push('Invalid SendGrid API key format');
+      errors.push("API key is required");
+    } else if (!sendGridConfig.apiKey.startsWith("SG.")) {
+      errors.push("Invalid SendGrid API key format");
     }
 
     if (sendGridConfig.fromEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(sendGridConfig.fromEmail)) {
-      errors.push('Invalid from email format');
+      errors.push("Invalid from email format");
     }
 
-    if (sendGridConfig.replyToEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(sendGridConfig.replyToEmail)) {
-      errors.push('Invalid reply-to email format');
+    if (
+      sendGridConfig.replyToEmail &&
+      !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(sendGridConfig.replyToEmail)
+    ) {
+      errors.push("Invalid reply-to email format");
     }
 
     // Test API key if provided
     if (sendGridConfig.apiKey && errors.length === 0) {
       try {
-        const sgMail = await import('@sendgrid/mail');
+        const sgMail = await import("@sendgrid/mail");
         sgMail.default.setApiKey(sendGridConfig.apiKey);
 
         // Test with a simple API call
         await sgMail.default.send({
-          to: 'test@example.com',
-          from: sendGridConfig.fromEmail || 'test@example.com',
-          subject: 'Test',
-          text: 'Test',
+          to: "test@example.com",
+          from: sendGridConfig.fromEmail || "test@example.com",
+          subject: "Test",
+          text: "Test",
           mailSettings: {
-            sandboxMode: { enable: true }
-          }
+            sandboxMode: { enable: true },
+          },
         });
       } catch (error) {
         if (error.code === 401) {
-          errors.push('Invalid API key');
+          errors.push("Invalid API key");
         } else if (error.code === 403) {
-          errors.push('API key does not have sufficient permissions');
+          errors.push("API key does not have sufficient permissions");
         }
       }
     }
 
     return {
       isValid: errors.length === 0,
-      errors
+      errors,
     };
   }
 
@@ -241,7 +254,7 @@ export class SendGridProvider extends BaseEmailProvider {
       averageLatency: 0,
       deliveryRate: 0,
       lastUsed: new Date(),
-      costToDate: 0
+      costToDate: 0,
     };
   }
 
@@ -255,29 +268,29 @@ export class SendGridProvider extends BaseEmailProvider {
 
       // Simple health check - try to access SendGrid API
       const sendGridConfig = this.config.config as SendGridConfig;
-      const sgMail = await import('@sendgrid/mail');
+      const sgMail = await import("@sendgrid/mail");
       sgMail.default.setApiKey(sendGridConfig.apiKey);
 
       // Test with sandbox mode
       await sgMail.default.send({
-        to: 'healthcheck@example.com',
-        from: sendGridConfig.fromEmail || 'healthcheck@example.com',
-        subject: 'Health Check',
-        text: 'Health check message',
+        to: "healthcheck@example.com",
+        from: sendGridConfig.fromEmail || "healthcheck@example.com",
+        subject: "Health Check",
+        text: "Health check message",
         mailSettings: {
-          sandboxMode: { enable: true }
-        }
+          sandboxMode: { enable: true },
+        },
       });
 
       return {
         healthy: true,
-        latency: Date.now() - startTime
+        latency: Date.now() - startTime,
       };
     } catch (error) {
       return {
         healthy: false,
         latency: Date.now() - startTime,
-        error: error.message
+        error: error.message,
       };
     }
   }
@@ -294,10 +307,10 @@ export class SendGridProvider extends BaseEmailProvider {
 
       // SendGrid doesn't provide a direct API to list templates via the mail library
       // This would require using the SendGrid Web API v3 directly
-      this.logger.warn('Template listing not implemented for SendGrid provider');
+      this.logger.warn("Template listing not implemented for SendGrid provider");
       return [];
     } catch (error) {
-      this.logger.error('Failed to fetch SendGrid templates', error);
+      this.logger.error("Failed to fetch SendGrid templates", error);
       return [];
     }
   }

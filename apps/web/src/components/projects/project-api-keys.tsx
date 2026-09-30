@@ -1,15 +1,27 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
-import { PlusIcon, DocumentDuplicateIcon, EyeIcon, EyeSlashIcon, EllipsisHorizontalIcon, TrashIcon } from '@heroicons/react/24/outline'
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { CreateApiKeyDialog } from './create-api-key-dialog';
-import { toast } from 'sonner';
+import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import {
+  PlusIcon,
+  DocumentDuplicateIcon,
+  EyeIcon,
+  EyeSlashIcon,
+  EllipsisHorizontalIcon,
+  TrashIcon,
+} from "@heroicons/react/24/outline";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { CreateApiKeyDialog } from "./create-api-key-dialog";
+import { toast } from "sonner";
 
 interface ProjectApiKeysProps {
   projectId: string;
@@ -18,21 +30,21 @@ interface ProjectApiKeysProps {
 // Mock API key data - replace with actual API call
 const mockApiKeys = [
   {
-    id: '1',
-    name: 'Production API Key',
-    key: 'sk_live_1234567890abcdef',
-    permissions: ['read', 'write'],
-    lastUsed: new Date('2024-01-15'),
-    createdAt: new Date('2024-01-01'),
+    id: "1",
+    name: "Production API Key",
+    key: "sk_live_1234567890abcdef",
+    permissions: ["read", "write"],
+    lastUsed: new Date("2024-01-15"),
+    createdAt: new Date("2024-01-01"),
     isActive: true,
   },
   {
-    id: '2',
-    name: 'Development API Key',
-    key: 'sk_test_abcdef1234567890',
-    permissions: ['read'],
+    id: "2",
+    name: "Development API Key",
+    key: "sk_test_abcdef1234567890",
+    permissions: ["read"],
     lastUsed: null,
-    createdAt: new Date('2024-01-10'),
+    createdAt: new Date("2024-01-10"),
     isActive: true,
   },
 ];
@@ -41,8 +53,12 @@ export function ProjectApiKeys({ projectId }: ProjectApiKeysProps) {
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [visibleKeys, setVisibleKeys] = useState<Set<string>>(new Set());
 
-  const { data: apiKeys = [], isLoading, error } = useQuery({
-    queryKey: ['project-api-keys', projectId],
+  const {
+    data: apiKeys = [],
+    isLoading,
+    error,
+  } = useQuery({
+    queryKey: ["project-api-keys", projectId],
     queryFn: async () => {
       // TODO: Replace with actual API call when API key endpoints are implemented
       // For now, return mock data
@@ -63,23 +79,23 @@ export function ProjectApiKeys({ projectId }: ProjectApiKeysProps) {
   const copyToClipboard = async (text: string) => {
     try {
       await navigator.clipboard.writeText(text);
-      toast.success('API key copied to clipboard');
+      toast.success("API key copied to clipboard");
     } catch (error) {
-      toast.error('Failed to copy API key');
+      toast.error("Failed to copy API key");
     }
   };
 
   const maskApiKey = (key: string) => {
     if (key.length <= 8) return key;
-    return key.substring(0, 8) + '•'.repeat(key.length - 12) + key.substring(key.length - 4);
+    return key.substring(0, 8) + "•".repeat(key.length - 12) + key.substring(key.length - 4);
   };
 
   const formatDate = (date: Date | null) => {
-    if (!date) return 'Never';
-    return new Date(date).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
+    if (!date) return "Never";
+    return new Date(date).toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
     });
   };
 
@@ -140,8 +156,8 @@ export function ProjectApiKeys({ projectId }: ProjectApiKeysProps) {
                   <div className="space-y-1">
                     <CardTitle className="text-base">{apiKey.name}</CardTitle>
                     <div className="flex items-center gap-2">
-                      <Badge variant={apiKey.isActive ? 'default' : 'secondary'}>
-                        {apiKey.isActive ? 'Active' : 'Inactive'}
+                      <Badge variant={apiKey.isActive ? "default" : "secondary"}>
+                        {apiKey.isActive ? "Active" : "Inactive"}
                       </Badge>
                       <div className="flex gap-1">
                         {apiKey.permissions.map((permission) => (
@@ -159,9 +175,7 @@ export function ProjectApiKeys({ projectId }: ProjectApiKeysProps) {
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
-                      <DropdownMenuItem
-                        onClick={() => copyToClipboard(apiKey.key)}
-                      >
+                      <DropdownMenuItem onClick={() => copyToClipboard(apiKey.key)}>
                         <DocumentDuplicateIcon className="h-4 w-4 mr-2" />
                         Copy Key
                       </DropdownMenuItem>
@@ -192,11 +206,7 @@ export function ProjectApiKeys({ projectId }: ProjectApiKeysProps) {
                         <EyeIcon className="h-4 w-4" />
                       )}
                     </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => copyToClipboard(apiKey.key)}
-                    >
+                    <Button variant="outline" size="sm" onClick={() => copyToClipboard(apiKey.key)}>
                       <DocumentDuplicateIcon className="h-4 w-4" />
                     </Button>
                   </div>

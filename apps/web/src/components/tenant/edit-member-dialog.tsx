@@ -1,8 +1,8 @@
-'use client';
+"use client";
 
-import { Shield, ShieldCheck, User, UserCheck, UserX } from '@/lib/icons';
+import { Shield, ShieldCheck, User, UserCheck, UserX } from "@/lib/icons";
 
-import { Button } from '@/components/ui/button';
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -10,18 +10,23 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog';
-import { Label } from '@/components/ui/label';
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
-import { Tenant, TenantMember, TenantRole } from '@/lib/types/tenant';
-import { BookmarkIcon, ShieldCheckIcon, UserIcon, UserMinusIcon } from '@heroicons/react/24/outline'
-import { useState } from 'react';
+} from "@/components/ui/select";
+import { Tenant, TenantMember, TenantRole } from "@/lib/types/tenant";
+import {
+  BookmarkIcon,
+  ShieldCheckIcon,
+  UserIcon,
+  UserMinusIcon,
+} from "@heroicons/react/24/outline";
+import { useState } from "react";
 
 interface EditMemberDialogProps {
   member: TenantMember;
@@ -33,35 +38,35 @@ interface EditMemberDialogProps {
 
 const roleOptions = [
   {
-    value: 'owner' as const,
-    label: 'Owner',
+    value: "owner" as const,
+    label: "Owner",
     icon: ShieldCheck,
-    description: 'Full access to all features and settings',
+    description: "Full access to all features and settings",
     disabled: true, // Can't assign owner role
   },
   {
-    value: 'admin' as const,
-    label: 'Admin',
+    value: "admin" as const,
+    label: "Admin",
     icon: Shield,
-    description: 'Manage members, settings, and all features',
+    description: "Manage members, settings, and all features",
   },
   {
-    value: 'manager' as const,
-    label: 'Manager',
+    value: "manager" as const,
+    label: "Manager",
     icon: UserCheck,
-    description: 'Manage campaigns and workflows',
+    description: "Manage campaigns and workflows",
   },
   {
-    value: 'member' as const,
-    label: 'Member',
+    value: "member" as const,
+    label: "Member",
     icon: User,
-    description: 'Create and edit campaigns',
+    description: "Create and edit campaigns",
   },
   {
-    value: 'viewer' as const,
-    label: 'Viewer',
+    value: "viewer" as const,
+    label: "Viewer",
     icon: UserX,
-    description: 'View-only access',
+    description: "View-only access",
   },
 ];
 
@@ -112,28 +117,26 @@ export function EditMemberDialog({
         <div className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="role">Role</Label>
-            <Select value={selectedRole} onValueChange={(value) => setSelectedRole(value as TenantRole)}>
+            <Select
+              value={selectedRole}
+              onValueChange={(value) => setSelectedRole(value as TenantRole)}
+            >
               <SelectTrigger>
                 <SelectValue placeholder="Select a role" />
               </SelectTrigger>
               <SelectContent>
                 {roleOptions.map((role) => {
                   const RoleIcon = role.icon;
-                  const isDisabled = role.disabled || (role.value === 'owner' && member.role !== 'owner');
+                  const isDisabled =
+                    role.disabled || (role.value === "owner" && member.role !== "owner");
 
                   return (
-                    <SelectItem
-                      key={role.value}
-                      value={role.value}
-                      disabled={isDisabled}
-                    >
+                    <SelectItem key={role.value} value={role.value} disabled={isDisabled}>
                       <div className="flex items-center gap-2">
                         <RoleIcon className="h-4 w-4" />
                         <div>
                           <div className="font-medium">{role.label}</div>
-                          <div className="text-xs text-muted-foreground">
-                            {role.description}
-                          </div>
+                          <div className="text-xs text-muted-foreground">{role.description}</div>
                         </div>
                       </div>
                     </SelectItem>
@@ -146,7 +149,7 @@ export function EditMemberDialog({
           <div className="bg-muted/50 rounded-lg p-3">
             <h4 className="font-medium text-sm mb-2">Role Permissions</h4>
             <div className="text-xs text-muted-foreground space-y-1">
-              {selectedRole === 'admin' && (
+              {selectedRole === "admin" && (
                 <ul className="list-disc list-inside space-y-0.5">
                   <li>Manage team members and roles</li>
                   <li>Access all campaigns and workflows</li>
@@ -154,7 +157,7 @@ export function EditMemberDialog({
                   <li>Access billing and subscription</li>
                 </ul>
               )}
-              {selectedRole === 'admin' && (
+              {selectedRole === "admin" && (
                 <ul className="list-disc list-inside space-y-0.5">
                   <li>Create and manage campaigns</li>
                   <li>Build and edit workflows</li>
@@ -162,7 +165,7 @@ export function EditMemberDialog({
                   <li>Manage templates and branding</li>
                 </ul>
               )}
-              {selectedRole === 'member' && (
+              {selectedRole === "member" && (
                 <ul className="list-disc list-inside space-y-0.5">
                   <li>Create and edit own campaigns</li>
                   <li>Use existing templates</li>
@@ -170,7 +173,7 @@ export function EditMemberDialog({
                   <li>Collaborate on shared projects</li>
                 </ul>
               )}
-              {selectedRole === 'viewer' && (
+              {selectedRole === "viewer" && (
                 <ul className="list-disc list-inside space-y-0.5">
                   <li>View campaigns and workflows</li>
                   <li>Access read-only analytics</li>
@@ -181,11 +184,11 @@ export function EditMemberDialog({
             </div>
           </div>
 
-          {member.role === 'owner' && (
+          {member.role === "owner" && (
             <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
               <p className="text-sm text-amber-800">
-                <strong>Note:</strong> This member is the organization owner.
-                To change their role, ownership must first be transferred to another member.
+                <strong>Note:</strong> This member is the organization owner. To change their role,
+                ownership must first be transferred to another member.
               </p>
             </div>
           )}
@@ -203,11 +206,11 @@ export function EditMemberDialog({
           </Button>
           <Button
             onClick={handleSave}
-            disabled={isLoading || !hasChanges || member.role === 'owner'}
+            disabled={isLoading || !hasChanges || member.role === "owner"}
             className="w-full sm:w-auto"
           >
             <BookmarkIcon className="mr-2 h-4 w-4" />
-            {isLoading ? 'Saving...' : 'Save Changes'}
+            {isLoading ? "Saving..." : "Save Changes"}
           </Button>
         </DialogFooter>
       </DialogContent>

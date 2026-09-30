@@ -1,10 +1,14 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Between, Repository } from 'typeorm';
-import { NotificationChannel } from '../../../common/enums/notification-channel.enum';
-import { ProviderUsageLog } from '../entities/provider-usage-log.entity';
-import { ProviderCostModel, ProviderUsageMetrics, TimeSeriesData } from '../interfaces/byop.interface';
-import { ProviderConfig } from '../provider-config.entity';
+import { Injectable, Logger } from "@nestjs/common";
+import { InjectRepository } from "@nestjs/typeorm";
+import { Between, Repository } from "typeorm";
+import { NotificationChannel } from "../../../common/enums/notification-channel.enum";
+import { ProviderUsageLog } from "../entities/provider-usage-log.entity";
+import {
+  ProviderCostModel,
+  ProviderUsageMetrics,
+  TimeSeriesData,
+} from "../interfaces/byop.interface";
+import { ProviderConfig } from "../provider-config.entity";
 
 export interface CostCalculationResult {
   totalCost: number;
@@ -23,15 +27,13 @@ export interface CostCalculationResult {
 }
 
 export interface CostAlert {
-  type: 'threshold_exceeded' | 'budget_warning' | 'unusual_spike' | 'cost_optimization';
-  severity: 'info' | 'warning' | 'critical';
+  type: "threshold_exceeded" | "budget_warning" | "unusual_spike" | "cost_optimization";
+  severity: "info" | "warning" | "critical";
   message: string;
   currentCost: number;
   threshold?: number;
   recommendations?: string[];
 }
-
-
 
 @Injectable()
 export class ProviderCostTrackerService {
@@ -41,8 +43,8 @@ export class ProviderCostTrackerService {
     @InjectRepository(ProviderUsageLog)
     private readonly usageLogRepository: Repository<ProviderUsageLog>,
     @InjectRepository(ProviderConfig)
-    private readonly providerConfigRepository: Repository<ProviderConfig>
-  ) { }
+    private readonly providerConfigRepository: Repository<ProviderConfig>,
+  ) {}
 
   /**
    * Calculate cost for a specific usage
@@ -50,12 +52,12 @@ export class ProviderCostTrackerService {
   calculateCost(
     costModel: ProviderCostModel,
     messageCount: number,
-    metadata?: Record<string, any>
+    metadata?: Record<string, any>,
   ): CostCalculationResult {
     let providerCost = 0;
     let infrastructureCost = 0;
 
-    if (costModel.type === 'per_message') {
+    if (costModel.type === "per_message") {
       // Calculate tiered pricing
       if (costModel.tiers) {
         let remaining = messageCount;
@@ -73,7 +75,7 @@ export class ProviderCostTrackerService {
       if (costModel.infrastructureFee) {
         infrastructureCost = messageCount * costModel.infrastructureFee;
       }
-    } else if (costModel.type === 'monthly') {
+    } else if (costModel.type === "monthly") {
       providerCost = costModel.baseRate;
       infrastructureCost = costModel.infrastructureFee || 0;
     }
@@ -92,8 +94,8 @@ export class ProviderCostTrackerService {
       breakdown: {
         base: providerCost,
         overage: 0, // TODO: Implement overage calculation
-        infrastructure: infrastructureCost
-      }
+        infrastructure: infrastructureCost,
+      },
     };
   }
 
@@ -110,10 +112,10 @@ export class ProviderCostTrackerService {
       errorBreakdown?: Record<string, number>;
       periodStart: Date;
       periodEnd: Date;
-    }
+    },
   ): Promise<void> {
     const providerConfig = await this.providerConfigRepository.findOne({
-      where: { id: providerConfigId }
+      where: { id: providerConfigId },
     });
 
     if (!providerConfig) {
@@ -137,13 +139,13 @@ export class ProviderCostTrackerService {
       errorBreakdown: usage.errorBreakdown,
       currency: costModel.currency,
       periodStart: usage.periodStart,
-      periodEnd: usage.periodEnd
+      periodEnd: usage.periodEnd,
     });
 
     await this.usageLogRepository.save(usageLog);
 
     this.logger.debug(
-      `Logged usage for provider ${providerConfigId}: ${usage.messageCount} messages, $${costResult.totalCost.toFixed(4)}`
+      `Logged usage for provider ${providerConfigId}: ${usage.messageCount} messages, $${costResult.totalCost.toFixed(4)}`,
     );
   }
 
@@ -153,10 +155,10 @@ export class ProviderCostTrackerService {
   async getUsageMetrics(
     providerConfigId: string,
     startDate: Date,
-    endDate: Date
+    endDate: Date,
   ): Promise<ProviderUsageMetrics> {
     const providerConfig = await this.providerConfigRepository.findOne({
-      where: { id: providerConfigId }
+      where: { id: providerConfigId },
     });
 
     if (!providerConfig) {
@@ -166,9 +168,9 @@ export class ProviderCostTrackerService {
     const usageLogs = await this.usageLogRepository.find({
       where: {
         providerConfigId,
-        periodStart: Between(startDate, endDate)
+        periodStart: Between(startDate, endDate),
       },
-      order: { periodStart: 'ASC' }
+      order: { periodStart: "ASC" },
     });
 
     // Aggregate metrics
@@ -180,7 +182,10 @@ export class ProviderCostTrackerService {
     const providerCost = usageLogs.reduce((sum, log) => sum + log.providerCost, 0);
 
     // Calculate average latency
-    const totalLatency = usageLogs.reduce((sum, log) => sum + (log.averageLatencyMs * log.messageCount), 0);
+    const totalLatency = usageLogs.reduce(
+      (sum, log) => sum + log.averageLatencyMs * log.messageCount,
+      0,
+    );
     const averageLatency = totalMessages > 0 ? totalLatency / totalMessages : 0;
 
     // Calculate delivery rate
@@ -188,7 +193,7 @@ export class ProviderCostTrackerService {
 
     // Aggregate error breakdown
     const errorBreakdown: Record<string, number> = {};
-    usageLogs.forEach(log => {
+    usageLogs.forEach((log) => {
       if (log.errorBreakdown) {
         Object.entries(log.errorBreakdown).forEach(([error, count]) => {
           errorBreakdown[error] = (errorBreakdown[error] || 0) + count;
@@ -212,8 +217,8 @@ export class ProviderCostTrackerService {
       costBreakdown: {
         base: providerCost,
         overage: 0,
-        infrastructure: infrastructureCost
-      }
+        infrastructure: infrastructureCost,
+      },
     };
   }
 
@@ -225,59 +230,59 @@ export class ProviderCostTrackerService {
     channel?: NotificationChannel,
     startDate?: Date,
     endDate?: Date,
-    granularity: 'hour' | 'day' | 'week' | 'month' = 'day'
+    granularity: "hour" | "day" | "week" | "month" = "day",
   ): Promise<TimeSeriesData[]> {
     const queryBuilder = this.usageLogRepository
-      .createQueryBuilder('usage')
-      .leftJoin('usage.providerConfig', 'config')
-      .leftJoin('config.project', 'project')
-      .where('project.tenantId = :tenantId', { tenantId });
+      .createQueryBuilder("usage")
+      .leftJoin("usage.providerConfig", "config")
+      .leftJoin("config.project", "project")
+      .where("project.tenantId = :tenantId", { tenantId });
 
     if (channel) {
-      queryBuilder.andWhere('usage.channel = :channel', { channel });
+      queryBuilder.andWhere("usage.channel = :channel", { channel });
     }
 
     if (startDate) {
-      queryBuilder.andWhere('usage.periodStart >= :startDate', { startDate });
+      queryBuilder.andWhere("usage.periodStart >= :startDate", { startDate });
     }
 
     if (endDate) {
-      queryBuilder.andWhere('usage.periodEnd <= :endDate', { endDate });
+      queryBuilder.andWhere("usage.periodEnd <= :endDate", { endDate });
     }
 
     // Group by time period
     let dateFormat: string;
     switch (granularity) {
-      case 'hour':
-        dateFormat = '%Y-%m-%d %H:00:00';
+      case "hour":
+        dateFormat = "%Y-%m-%d %H:00:00";
         break;
-      case 'day':
-        dateFormat = '%Y-%m-%d';
+      case "day":
+        dateFormat = "%Y-%m-%d";
         break;
-      case 'week':
-        dateFormat = '%Y-%u';
+      case "week":
+        dateFormat = "%Y-%u";
         break;
-      case 'month':
-        dateFormat = '%Y-%m';
+      case "month":
+        dateFormat = "%Y-%m";
         break;
     }
 
     const results = await queryBuilder
       .select([
         `DATE_FORMAT(usage.periodStart, '${dateFormat}') as period`,
-        'SUM(usage.totalCost) as totalCost',
-        'SUM(usage.messageCount) as messageCount'
+        "SUM(usage.totalCost) as totalCost",
+        "SUM(usage.messageCount) as messageCount",
       ])
-      .groupBy('period')
-      .orderBy('period', 'ASC')
+      .groupBy("period")
+      .orderBy("period", "ASC")
       .getRawMany();
 
-    return results.map(result => ({
+    return results.map((result) => ({
       timestamp: new Date(result.period),
       value: parseFloat(result.totalCost),
       metadata: {
-        messageCount: parseInt(result.messageCount)
-      }
+        messageCount: parseInt(result.messageCount),
+      },
     }));
   }
 
@@ -288,7 +293,7 @@ export class ProviderCostTrackerService {
     tenantId: string,
     channel: NotificationChannel,
     startDate: Date,
-    endDate: Date
+    endDate: Date,
   ): Promise<{
     providers: Array<{
       providerId: string;
@@ -301,33 +306,33 @@ export class ProviderCostTrackerService {
     recommendations: string[];
   }> {
     const queryBuilder = this.usageLogRepository
-      .createQueryBuilder('usage')
-      .leftJoin('usage.providerConfig', 'config')
-      .leftJoin('config.project', 'project')
-      .where('project.tenantId = :tenantId', { tenantId })
-      .andWhere('usage.channel = :channel', { channel })
-      .andWhere('usage.periodStart >= :startDate', { startDate })
-      .andWhere('usage.periodEnd <= :endDate', { endDate });
+      .createQueryBuilder("usage")
+      .leftJoin("usage.providerConfig", "config")
+      .leftJoin("config.project", "project")
+      .where("project.tenantId = :tenantId", { tenantId })
+      .andWhere("usage.channel = :channel", { channel })
+      .andWhere("usage.periodStart >= :startDate", { startDate })
+      .andWhere("usage.periodEnd <= :endDate", { endDate });
 
     const results = await queryBuilder
       .select([
-        'config.providerId as providerId',
-        'config.providerName as providerName',
-        'SUM(usage.totalCost) as totalCost',
-        'SUM(usage.messageCount) as messageCount',
-        'SUM(usage.successfulCount) as successfulCount'
+        "config.providerId as providerId",
+        "config.providerName as providerName",
+        "SUM(usage.totalCost) as totalCost",
+        "SUM(usage.messageCount) as messageCount",
+        "SUM(usage.successfulCount) as successfulCount",
       ])
-      .groupBy('config.providerId, config.providerName')
-      .orderBy('totalCost', 'ASC')
+      .groupBy("config.providerId, config.providerName")
+      .orderBy("totalCost", "ASC")
       .getRawMany();
 
-    const providers = results.map(result => ({
+    const providers = results.map((result) => ({
       providerId: result.providerId,
       providerName: result.providerName,
       totalCost: parseFloat(result.totalCost),
       messageCount: parseInt(result.messageCount),
       costPerMessage: parseFloat(result.totalCost) / parseInt(result.messageCount),
-      deliveryRate: (parseInt(result.successfulCount) / parseInt(result.messageCount)) * 100
+      deliveryRate: (parseInt(result.successfulCount) / parseInt(result.messageCount)) * 100,
     }));
 
     // Generate recommendations
@@ -339,18 +344,18 @@ export class ProviderCostTrackerService {
       if (mostExpensive.totalCost > cheapest.totalCost * 1.2) {
         const savings = mostExpensive.totalCost - cheapest.totalCost;
         recommendations.push(
-          `Consider switching from ${mostExpensive.providerName} to ${cheapest.providerName} to save $${savings.toFixed(2)} (${(savings / mostExpensive.totalCost * 100).toFixed(1)}%)`
+          `Consider switching from ${mostExpensive.providerName} to ${cheapest.providerName} to save $${savings.toFixed(2)} (${((savings / mostExpensive.totalCost) * 100).toFixed(1)}%)`,
         );
       }
 
       // Check delivery rates
       const bestDelivery = providers.reduce((best, current) =>
-        current.deliveryRate > best.deliveryRate ? current : best
+        current.deliveryRate > best.deliveryRate ? current : best,
       );
 
       if (bestDelivery.deliveryRate > 95 && bestDelivery.providerId !== cheapest.providerId) {
         recommendations.push(
-          `${bestDelivery.providerName} has the highest delivery rate (${bestDelivery.deliveryRate.toFixed(1)}%) - consider for critical messages`
+          `${bestDelivery.providerName} has the highest delivery rate (${bestDelivery.deliveryRate.toFixed(1)}%) - consider for critical messages`,
         );
       }
     }
@@ -367,7 +372,7 @@ export class ProviderCostTrackerService {
       dailyLimit?: number;
       monthlyLimit?: number;
       spikeThreshold?: number; // Percentage increase
-    }
+    },
   ): Promise<CostAlert[]> {
     const alerts: CostAlert[] = [];
     const now = new Date();
@@ -381,19 +386,19 @@ export class ProviderCostTrackerService {
 
       if (dailyCosts >= thresholds.dailyLimit) {
         alerts.push({
-          type: 'threshold_exceeded',
-          severity: 'critical',
+          type: "threshold_exceeded",
+          severity: "critical",
           message: `Daily cost limit exceeded: $${dailyCosts.toFixed(2)} / $${thresholds.dailyLimit}`,
           currentCost: dailyCosts,
-          threshold: thresholds.dailyLimit
+          threshold: thresholds.dailyLimit,
         });
       } else if (dailyCosts >= thresholds.dailyLimit * 0.8) {
         alerts.push({
-          type: 'budget_warning',
-          severity: 'warning',
+          type: "budget_warning",
+          severity: "warning",
           message: `Daily cost approaching limit: $${dailyCosts.toFixed(2)} / $${thresholds.dailyLimit}`,
           currentCost: dailyCosts,
-          threshold: thresholds.dailyLimit
+          threshold: thresholds.dailyLimit,
         });
       }
     }
@@ -407,11 +412,11 @@ export class ProviderCostTrackerService {
 
       if (monthlyCosts >= thresholds.monthlyLimit) {
         alerts.push({
-          type: 'threshold_exceeded',
-          severity: 'critical',
+          type: "threshold_exceeded",
+          severity: "critical",
           message: `Monthly cost limit exceeded: $${monthlyCosts.toFixed(2)} / $${thresholds.monthlyLimit}`,
           currentCost: monthlyCosts,
-          threshold: thresholds.monthlyLimit
+          threshold: thresholds.monthlyLimit,
         });
       }
     }
@@ -429,15 +434,15 @@ export class ProviderCostTrackerService {
 
         if (increase >= thresholds.spikeThreshold) {
           alerts.push({
-            type: 'unusual_spike',
-            severity: 'warning',
+            type: "unusual_spike",
+            severity: "warning",
             message: `Unusual cost spike detected: ${increase.toFixed(1)}% increase from yesterday`,
             currentCost: todayCosts,
             recommendations: [
-              'Review recent message volume',
-              'Check for failed messages causing retries',
-              'Verify provider configurations'
-            ]
+              "Review recent message volume",
+              "Check for failed messages causing retries",
+              "Verify provider configurations",
+            ],
           });
         }
       }
@@ -451,15 +456,19 @@ export class ProviderCostTrackerService {
    */
   async getCostOptimizationRecommendations(
     tenantId: string,
-    channel?: NotificationChannel
+    channel?: NotificationChannel,
   ): Promise<{
     recommendations: Array<{
-      type: 'provider_switch' | 'volume_optimization' | 'timing_optimization' | 'configuration_change';
+      type:
+        | "provider_switch"
+        | "volume_optimization"
+        | "timing_optimization"
+        | "configuration_change";
       title: string;
       description: string;
       estimatedSavings: number;
-      effort: 'low' | 'medium' | 'high';
-      impact: 'low' | 'medium' | 'high';
+      effort: "low" | "medium" | "high";
+      impact: "low" | "medium" | "high";
     }>;
     totalPotentialSavings: number;
   }> {
@@ -475,18 +484,19 @@ export class ProviderCostTrackerService {
     // Provider switching recommendations
     if (comparison.providers.length > 1) {
       const cheapest = comparison.providers[0];
-      const current = comparison.providers.find(p => p.messageCount > 0);
+      const current = comparison.providers.find((p) => p.messageCount > 0);
 
       if (current && current.providerId !== cheapest.providerId) {
         const savings = (current.costPerMessage - cheapest.costPerMessage) * current.messageCount;
-        if (savings > 10) { // Only recommend if savings > $10
+        if (savings > 10) {
+          // Only recommend if savings > $10
           recommendations.push({
-            type: 'provider_switch',
+            type: "provider_switch",
             title: `Switch to ${cheapest.providerName}`,
             description: `Save $${savings.toFixed(2)} per month by switching from ${current.providerName}`,
             estimatedSavings: savings,
-            effort: 'medium',
-            impact: 'high'
+            effort: "medium",
+            impact: "high",
           });
           totalPotentialSavings += savings;
         }
@@ -498,31 +508,31 @@ export class ProviderCostTrackerService {
     if (volumeAnalysis.wastedMessages > 100) {
       const savings = volumeAnalysis.wastedMessages * 0.001; // Estimate $0.001 per wasted message
       recommendations.push({
-        type: 'volume_optimization',
-        title: 'Reduce Failed Messages',
+        type: "volume_optimization",
+        title: "Reduce Failed Messages",
         description: `${volumeAnalysis.wastedMessages} messages failed in the last 30 days. Improve targeting to reduce waste.`,
         estimatedSavings: savings,
-        effort: 'low',
-        impact: 'medium'
+        effort: "low",
+        impact: "medium",
       });
       totalPotentialSavings += savings;
     }
 
     return {
       recommendations,
-      totalPotentialSavings
+      totalPotentialSavings,
     };
   }
 
   private async getTotalCosts(tenantId: string, startDate: Date, endDate: Date): Promise<number> {
     const result = await this.usageLogRepository
-      .createQueryBuilder('usage')
-      .leftJoin('usage.providerConfig', 'config')
-      .leftJoin('config.project', 'project')
-      .where('project.tenantId = :tenantId', { tenantId })
-      .andWhere('usage.periodStart >= :startDate', { startDate })
-      .andWhere('usage.periodEnd <= :endDate', { endDate })
-      .select('SUM(usage.totalCost)', 'totalCost')
+      .createQueryBuilder("usage")
+      .leftJoin("usage.providerConfig", "config")
+      .leftJoin("config.project", "project")
+      .where("project.tenantId = :tenantId", { tenantId })
+      .andWhere("usage.periodStart >= :startDate", { startDate })
+      .andWhere("usage.periodEnd <= :endDate", { endDate })
+      .select("SUM(usage.totalCost)", "totalCost")
       .getRawOne();
 
     return parseFloat(result.totalCost) || 0;
@@ -532,7 +542,7 @@ export class ProviderCostTrackerService {
     tenantId: string,
     channel?: NotificationChannel,
     startDate?: Date,
-    endDate?: Date
+    endDate?: Date,
   ): Promise<{
     totalMessages: number;
     successfulMessages: number;
@@ -540,28 +550,28 @@ export class ProviderCostTrackerService {
     wastedMessages: number;
   }> {
     const queryBuilder = this.usageLogRepository
-      .createQueryBuilder('usage')
-      .leftJoin('usage.providerConfig', 'config')
-      .leftJoin('config.project', 'project')
-      .where('project.tenantId = :tenantId', { tenantId });
+      .createQueryBuilder("usage")
+      .leftJoin("usage.providerConfig", "config")
+      .leftJoin("config.project", "project")
+      .where("project.tenantId = :tenantId", { tenantId });
 
     if (channel) {
-      queryBuilder.andWhere('usage.channel = :channel', { channel });
+      queryBuilder.andWhere("usage.channel = :channel", { channel });
     }
 
     if (startDate) {
-      queryBuilder.andWhere('usage.periodStart >= :startDate', { startDate });
+      queryBuilder.andWhere("usage.periodStart >= :startDate", { startDate });
     }
 
     if (endDate) {
-      queryBuilder.andWhere('usage.periodEnd <= :endDate', { endDate });
+      queryBuilder.andWhere("usage.periodEnd <= :endDate", { endDate });
     }
 
     const result = await queryBuilder
       .select([
-        'SUM(usage.messageCount) as totalMessages',
-        'SUM(usage.successfulCount) as successfulMessages',
-        'SUM(usage.failedCount) as failedMessages'
+        "SUM(usage.messageCount) as totalMessages",
+        "SUM(usage.successfulCount) as successfulMessages",
+        "SUM(usage.failedCount) as failedMessages",
       ])
       .getRawOne();
 
@@ -573,7 +583,7 @@ export class ProviderCostTrackerService {
       totalMessages,
       successfulMessages,
       failedMessages,
-      wastedMessages: failedMessages
+      wastedMessages: failedMessages,
     };
   }
 
@@ -582,12 +592,12 @@ export class ProviderCostTrackerService {
     const metadata = providerConfig.metadata || {};
 
     return {
-      type: metadata.costModel?.type || 'per_message',
+      type: metadata.costModel?.type || "per_message",
       baseRate: metadata.costModel?.baseRate || 0.001,
-      currency: metadata.costModel?.currency || 'USD',
+      currency: metadata.costModel?.currency || "USD",
       infrastructureFee: metadata.costModel?.infrastructureFee || 0.0003,
       tiers: metadata.costModel?.tiers,
-      minimumCharge: metadata.costModel?.minimumCharge
+      minimumCharge: metadata.costModel?.minimumCharge,
     };
   }
 }

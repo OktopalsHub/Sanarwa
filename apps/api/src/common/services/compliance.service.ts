@@ -1,8 +1,8 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { AuditLog } from '../security/entities/audit-log.entity';
+import { Injectable, Logger } from "@nestjs/common";
+import { ConfigService } from "@nestjs/config";
+import { InjectRepository } from "@nestjs/typeorm";
+import { Repository } from "typeorm";
+import { AuditLog } from "../security/entities/audit-log.entity";
 
 export interface AuditEvent {
   action: string;
@@ -18,7 +18,7 @@ export interface AuditEvent {
 }
 
 export interface DataProcessingRequest {
-  type: 'access' | 'rectification' | 'erasure' | 'restriction' | 'portability' | 'objection';
+  type: "access" | "rectification" | "erasure" | "restriction" | "portability" | "objection";
   userId: string;
   tenantId?: string;
   reason: string;
@@ -41,11 +41,11 @@ export class ComplianceService {
   async logAuditEvent(event: AuditEvent): Promise<void> {
     try {
       const auditLog = this.auditLogRepository.create({
-        tenantId: event.tenantId || 'system',
+        tenantId: event.tenantId || "system",
         tenantMemberId: event.userId,
         action: event.action as any,
         resourceType: event.resource as any,
-        resourceId: event.resourceId || 'system',
+        resourceId: event.resourceId || "system",
         description: `${event.action} performed on ${event.resource}`,
         ipAddress: event.ipAddress,
         userAgent: event.userAgent,
@@ -64,7 +64,7 @@ export class ComplianceService {
         tenantId: event.tenantId,
       });
     } catch (error) {
-      this.logger.error('Failed to log audit event', error);
+      this.logger.error("Failed to log audit event", error);
       // Don't throw - audit logging failures shouldn't break business logic
     }
   }
@@ -81,20 +81,20 @@ export class ComplianceService {
     offset: number = 0,
   ): Promise<AuditLog[]> {
     const query = this.auditLogRepository
-      .createQueryBuilder('audit')
-      .where('audit.resource = :resource', { resource })
-      .orderBy('audit.timestamp', 'DESC')
+      .createQueryBuilder("audit")
+      .where("audit.resource = :resource", { resource })
+      .orderBy("audit.timestamp", "DESC")
       .limit(limit)
       .offset(offset);
 
     if (resourceId) {
-      query.andWhere('audit.resourceId = :resourceId', { resourceId });
+      query.andWhere("audit.resourceId = :resourceId", { resourceId });
     }
     if (userId) {
-      query.andWhere('audit.userId = :userId', { userId });
+      query.andWhere("audit.userId = :userId", { userId });
     }
     if (tenantId) {
-      query.andWhere('audit.tenantId = :tenantId', { tenantId });
+      query.andWhere("audit.tenantId = :tenantId", { tenantId });
     }
 
     return query.getMany();
@@ -110,8 +110,8 @@ export class ComplianceService {
   }> {
     // Log the request
     await this.logAuditEvent({
-      action: 'GDPR_REQUEST',
-      resource: 'user_data',
+      action: "GDPR_REQUEST",
+      resource: "user_data",
       resourceId: request.userId,
       userId: request.userId,
       tenantId: request.tenantId,
@@ -123,22 +123,22 @@ export class ComplianceService {
     });
 
     switch (request.type) {
-      case 'access':
+      case "access":
         return this.handleDataAccess(request);
-      case 'rectification':
+      case "rectification":
         return this.handleDataRectification(request);
-      case 'erasure':
+      case "erasure":
         return this.handleDataErasure(request);
-      case 'restriction':
+      case "restriction":
         return this.handleDataRestriction(request);
-      case 'portability':
+      case "portability":
         return this.handleDataPortability(request);
-      case 'objection':
+      case "objection":
         return this.handleDataObjection(request);
       default:
         return {
           success: false,
-          message: 'Invalid request type',
+          message: "Invalid request type",
         };
     }
   }
@@ -163,8 +163,8 @@ export class ComplianceService {
     consentDetails?: Record<string, any>,
   ): Promise<void> {
     await this.logAuditEvent({
-      action: consented ? 'CONSENT_GRANTED' : 'CONSENT_REVOKED',
-      resource: 'user_consent',
+      action: consented ? "CONSENT_GRANTED" : "CONSENT_REVOKED",
+      resource: "user_consent",
       resourceId: userId,
       userId,
       metadata: {
@@ -173,7 +173,9 @@ export class ComplianceService {
       },
     });
 
-    this.logger.log(`Data consent ${consented ? 'granted' : 'revoked'} for user ${userId}, type: ${consentType}`);
+    this.logger.log(
+      `Data consent ${consented ? "granted" : "revoked"} for user ${userId}, type: ${consentType}`,
+    );
   }
 
   /**
@@ -183,8 +185,8 @@ export class ComplianceService {
     const anonymized = { ...data };
 
     // Remove or hash personal identifiers
-    const personalFields = ['email', 'phone', 'name', 'firstName', 'lastName', 'ipAddress'];
-    personalFields.forEach(field => {
+    const personalFields = ["email", "phone", "name", "firstName", "lastName", "ipAddress"];
+    personalFields.forEach((field) => {
       if (anonymized[field]) {
         anonymized[field] = ComplianceService.hashValue(anonymized[field]);
       }
@@ -212,12 +214,12 @@ export class ComplianceService {
       userId: request.userId,
       tenantId: request.tenantId,
       dataCollected: new Date().toISOString(),
-      dataCategories: ['profile', 'notifications', 'usage'],
+      dataCategories: ["profile", "notifications", "usage"],
     };
 
     return {
       success: true,
-      message: 'Data access request processed',
+      message: "Data access request processed",
       data: userData,
     };
   }
@@ -229,7 +231,7 @@ export class ComplianceService {
     // In a real implementation, update user data
     return {
       success: true,
-      message: 'Data rectification request queued for processing',
+      message: "Data rectification request queued for processing",
     };
   }
 
@@ -240,7 +242,7 @@ export class ComplianceService {
     // In a real implementation, schedule data deletion
     return {
       success: true,
-      message: 'Data erasure request queued for processing (will be completed within 30 days)',
+      message: "Data erasure request queued for processing (will be completed within 30 days)",
     };
   }
 
@@ -251,7 +253,7 @@ export class ComplianceService {
     // In a real implementation, restrict data processing
     return {
       success: true,
-      message: 'Data processing restriction applied',
+      message: "Data processing restriction applied",
     };
   }
 
@@ -263,13 +265,13 @@ export class ComplianceService {
     // In a real implementation, export user data
     const exportData = {
       userId: request.userId,
-      exportFormat: 'JSON',
+      exportFormat: "JSON",
       exportedAt: new Date().toISOString(),
     };
 
     return {
       success: true,
-      message: 'Data portability request processed',
+      message: "Data portability request processed",
       data: exportData,
     };
   }
@@ -281,7 +283,7 @@ export class ComplianceService {
     // In a real implementation, stop data processing for specific purposes
     return {
       success: true,
-      message: 'Data processing objection recorded',
+      message: "Data processing objection recorded",
     };
   }
 
@@ -290,7 +292,7 @@ export class ComplianceService {
     let hash = 0;
     for (let i = 0; i < value.length; i++) {
       const char = value.charCodeAt(i);
-      hash = ((hash << 5) - hash) + char;
+      hash = (hash << 5) - hash + char;
       hash = hash & hash; // Convert to 32-bit integer
     }
     return hash.toString(36);

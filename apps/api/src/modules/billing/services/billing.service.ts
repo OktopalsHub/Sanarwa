@@ -1,33 +1,33 @@
-import { Injectable, Logger, BadRequestException } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
-import { ConfigService } from '@nestjs/config';
-import { Cron, CronExpression } from '@nestjs/schedule';
-import { OnEvent } from '@nestjs/event-emitter';
+import { Injectable, Logger, BadRequestException } from "@nestjs/common";
+import { InjectRepository } from "@nestjs/typeorm";
+import { Repository } from "typeorm";
+import { QueryDeepPartialEntity } from "typeorm/query-builder/QueryPartialEntity";
+import { ConfigService } from "@nestjs/config";
+import { Cron, CronExpression } from "@nestjs/schedule";
+import { OnEvent } from "@nestjs/event-emitter";
 import {
   Subscription,
   SubscriptionStatus,
   SubscriptionPlan,
-  PaymentProvider
-} from '../entities/subscription.entity';
+  PaymentProvider,
+} from "../entities/subscription.entity";
 import {
   TokenPurchase,
   TokenPurchaseStatus,
-  TokenPurchaseType
-} from '../entities/token-purchase.entity';
+  TokenPurchaseType,
+} from "../entities/token-purchase.entity";
 import {
   AutoTopupConfig,
   TopupTrigger,
-  ScheduleFrequency
-} from '../entities/auto-topup-config.entity';
+  ScheduleFrequency,
+} from "../entities/auto-topup-config.entity";
 import {
   TokenBalance,
   TokenTransaction,
-  TokenTransactionType
-} from '../entities/token-balance.entity';
-import { PolarService } from './polar.service';
-import { TokenManagementService } from '../../token-management/services/token-management.service';
+  TokenTransactionType,
+} from "../entities/token-balance.entity";
+import { PolarService } from "./polar.service";
+import { TokenManagementService } from "../../token-management/services/token-management.service";
 
 export interface CreateSubscriptionDto {
   tenantId: string;
@@ -96,7 +96,7 @@ export class BillingService {
 
         // Get the appropriate price ID for the plan
         const priceId = await this.getPolarPriceId(dto.plan);
-        
+
         const subscription = await this.polarService.createSubscription({
           customer_id: customer.id,
           price_id: priceId,
@@ -105,7 +105,7 @@ export class BillingService {
         });
         externalSubscriptionId = subscription.id;
       } else {
-        throw new BadRequestException('Only Polar subscriptions are supported');
+        throw new BadRequestException("Only Polar subscriptions are supported");
       }
 
       // Create local subscription record
@@ -122,7 +122,9 @@ export class BillingService {
         overageRate: planConfig.overageRate,
         currentPeriodStart: new Date(),
         currentPeriodEnd: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days
-        trialEnd: dto.trialDays ? new Date(Date.now() + dto.trialDays * 24 * 60 * 60 * 1000) : undefined,
+        trialEnd: dto.trialDays
+          ? new Date(Date.now() + dto.trialDays * 24 * 60 * 60 * 1000)
+          : undefined,
       });
 
       const savedSubscription = await this.subscriptionRepository.save(subscription);
@@ -133,15 +135,15 @@ export class BillingService {
           dto.tenantId,
           planConfig.includedTokens,
           TokenTransactionType.PURCHASE,
-          'Monthly subscription tokens',
-          { subscriptionId: savedSubscription.id }
+          "Monthly subscription tokens",
+          { subscriptionId: savedSubscription.id },
         );
       }
 
       return savedSubscription;
     } catch (error) {
-      this.logger.error('Failed to create subscription:', error);
-      throw new BadRequestException('Failed to create subscription');
+      this.logger.error("Failed to create subscription:", error);
+      throw new BadRequestException("Failed to create subscription");
     }
   }
 
@@ -156,7 +158,7 @@ export class BillingService {
       if (dto.paymentProvider === PaymentProvider.POLAR) {
         const paymentIntent = await this.polarService.createPaymentIntent({
           amount: Math.round(totalPrice * 100), // Convert to cents
-          currency: 'USD',
+          currency: "USD",
           metadata: {
             tenantId: dto.tenantId,
             tokenAmount: dto.tokenAmount,
@@ -166,7 +168,7 @@ export class BillingService {
         paymentIntentId = paymentIntent.id;
         transactionReference = paymentIntent.id;
       } else {
-        throw new BadRequestException('Use Bachs or Polar checkout for token purchases');
+        throw new BadRequestException("Use Bachs or Polar checkout for token purchases");
       }
 
       // Create token purchase record
@@ -184,14 +186,14 @@ export class BillingService {
 
       return await this.tokenPurchaseRepository.save(tokenPurchase);
     } catch (error) {
-      this.logger.error('Failed to purchase tokens:', error);
-      throw new BadRequestException('Failed to initiate token purchase');
+      this.logger.error("Failed to purchase tokens:", error);
+      throw new BadRequestException("Failed to initiate token purchase");
     }
   }
 
   async confirmTokenPurchase(_purchaseId: string): Promise<void> {
     throw new BadRequestException(
-      'Legacy confirmTokenPurchase is disabled; use SubscriptionBillingService',
+      "Legacy confirmTokenPurchase is disabled; use SubscriptionBillingService",
     );
   }
 
@@ -233,9 +235,9 @@ export class BillingService {
   private async getPolarPriceId(plan: SubscriptionPlan): Promise<string> {
     // This would typically be stored in configuration or fetched from Polar
     const priceIds = {
-      [SubscriptionPlan.STARTER]: this.configService.get('POLAR_STARTER_PRICE_ID'),
-      [SubscriptionPlan.PROFESSIONAL]: this.configService.get('POLAR_PROFESSIONAL_PRICE_ID'),
-      [SubscriptionPlan.ENTERPRISE]: this.configService.get('POLAR_ENTERPRISE_PRICE_ID'),
+      [SubscriptionPlan.STARTER]: this.configService.get("POLAR_STARTER_PRICE_ID"),
+      [SubscriptionPlan.PROFESSIONAL]: this.configService.get("POLAR_PROFESSIONAL_PRICE_ID"),
+      [SubscriptionPlan.ENTERPRISE]: this.configService.get("POLAR_ENTERPRISE_PRICE_ID"),
     };
 
     return priceIds[plan];
@@ -248,7 +250,10 @@ export class BillingService {
     });
   }
 
-  async updateSubscription(subscriptionId: string, updates: Partial<Subscription>): Promise<Subscription | null> {
+  async updateSubscription(
+    subscriptionId: string,
+    updates: Partial<Subscription>,
+  ): Promise<Subscription | null> {
     await this.subscriptionRepository.update(
       subscriptionId,
       updates as QueryDeepPartialEntity<Subscription>,
@@ -263,8 +268,14 @@ export class BillingService {
     tenantId: string,
     eventType: string,
     eventCount: number = 1,
-    metadata?: Record<string, any>
-  ): Promise<{ charged: boolean; amount: number; currency: string; reason: string; metadata?: any }> {
+    metadata?: Record<string, any>,
+  ): Promise<{
+    charged: boolean;
+    amount: number;
+    currency: string;
+    reason: string;
+    metadata?: any;
+  }> {
     try {
       // For BYOP usage, we charge per event regardless of channels
       const costPerEvent = 0.01; // $0.01 per event
@@ -273,7 +284,7 @@ export class BillingService {
       return {
         charged: true,
         amount: totalCost,
-        currency: 'USD',
+        currency: "USD",
         reason: `BYOP event billing: ${eventCount} event(s) at $${costPerEvent} each`,
         metadata: {
           eventType,
@@ -287,11 +298,9 @@ export class BillingService {
       return {
         charged: false,
         amount: 0,
-        currency: 'USD',
+        currency: "USD",
         reason: `Billing error: ${error.message}`,
       };
     }
   }
-
-
 }

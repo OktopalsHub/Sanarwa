@@ -1,5 +1,5 @@
-import { createParamDecorator, ExecutionContext } from '@nestjs/common';
-import { Tenant } from '../entities/tenant.entity';
+import { createParamDecorator, ExecutionContext } from "@nestjs/common";
+import { Tenant } from "../entities/tenant.entity";
 
 export const CurrentTenant = createParamDecorator(
   (data: keyof Tenant | undefined, ctx: ExecutionContext) => {
@@ -10,9 +10,7 @@ export const CurrentTenant = createParamDecorator(
   },
 );
 
-export const CurrentTenantId = createParamDecorator(
-  (data: unknown, ctx: ExecutionContext) => {
-    const request = ctx.switchToHttp().getRequest();
-    return request.tenantId;
-  },
-);
+export const CurrentTenantId = createParamDecorator((data: unknown, ctx: ExecutionContext) => {
+  const request = ctx.switchToHttp().getRequest();
+  return request.tenantId;
+});

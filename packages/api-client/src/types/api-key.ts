@@ -3,16 +3,16 @@
  */
 
 export enum ApiKeyStatus {
-  ACTIVE = 'active',
-  INACTIVE = 'inactive',
-  REVOKED = 'revoked',
+  ACTIVE = "active",
+  INACTIVE = "inactive",
+  REVOKED = "revoked",
 }
 
 export enum ApiKeyType {
-  PROJECT = 'project',
-  SERVICE = 'service',
-  TENANT = 'tenant',
-  USER = 'user', // Deprecated - will be removed in future versions
+  PROJECT = "project",
+  SERVICE = "service",
+  TENANT = "tenant",
+  USER = "user", // Deprecated - will be removed in future versions
 }
 
 export interface ApiKey {
@@ -75,8 +75,8 @@ export interface ApiKeyQueryParams {
   search?: string;
   page?: number;
   limit?: number;
-  sortBy?: 'name' | 'createdAt' | 'lastUsedAt' | 'usageCount' | 'expiresAt';
-  sortOrder?: 'asc' | 'desc';
+  sortBy?: "name" | "createdAt" | "lastUsedAt" | "usageCount" | "expiresAt";
+  sortOrder?: "asc" | "desc";
   includeExpired?: boolean;
 }
 
@@ -141,15 +141,15 @@ export interface ApiKeyActivity {
 }
 
 export enum ApiKeyAction {
-  CREATED = 'created',
-  UPDATED = 'updated',
-  ACTIVATED = 'activated',
-  DEACTIVATED = 'deactivated',
-  REVOKED = 'revoked',
-  USED = 'used',
-  RATE_LIMITED = 'rate_limited',
-  EXPIRED = 'expired',
-  REGENERATED = 'regenerated',
+  CREATED = "created",
+  UPDATED = "updated",
+  ACTIVATED = "activated",
+  DEACTIVATED = "deactivated",
+  REVOKED = "revoked",
+  USED = "used",
+  RATE_LIMITED = "rate_limited",
+  EXPIRED = "expired",
+  REGENERATED = "regenerated",
 }
 
 export interface ApiKeyPermission {
@@ -190,14 +190,14 @@ export interface ApiKeyRotation {
   rotatedAt: Date;
   rotatedBy: string;
   reason: string;
-  status: 'pending' | 'completed' | 'failed';
+  status: "pending" | "completed" | "failed";
 }
 
 export interface ApiKeyAlert {
   id: string;
   apiKeyId: string;
   type: ApiKeyAlertType;
-  severity: 'low' | 'medium' | 'high' | 'critical';
+  severity: "low" | "medium" | "high" | "critical";
   message: string;
   triggeredAt: Date;
   acknowledgedAt?: Date;
@@ -208,17 +208,17 @@ export interface ApiKeyAlert {
 }
 
 export enum ApiKeyAlertType {
-  EXPIRING_SOON = 'expiring_soon',
-  EXPIRED = 'expired',
-  HIGH_USAGE = 'high_usage',
-  RATE_LIMITED = 'rate_limited',
-  SUSPICIOUS_ACTIVITY = 'suspicious_activity',
-  UNAUTHORIZED_IP = 'unauthorized_ip',
-  PERMISSION_DENIED = 'permission_denied',
+  EXPIRING_SOON = "expiring_soon",
+  EXPIRED = "expired",
+  HIGH_USAGE = "high_usage",
+  RATE_LIMITED = "rate_limited",
+  SUSPICIOUS_ACTIVITY = "suspicious_activity",
+  UNAUTHORIZED_IP = "unauthorized_ip",
+  PERMISSION_DENIED = "permission_denied",
 }
 
 export interface ApiKeyBulkOperation {
-  operation: 'activate' | 'deactivate' | 'revoke' | 'delete' | 'update_permissions';
+  operation: "activate" | "deactivate" | "revoke" | "delete" | "update_permissions";
   apiKeyIds: string[];
   parameters?: Record<string, any>;
 }

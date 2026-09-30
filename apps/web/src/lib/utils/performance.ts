@@ -3,12 +3,12 @@
  * Includes lazy loading, code splitting, and performance monitoring
  */
 
-import { ComponentType, lazy } from 'react';
+import { ComponentType, lazy } from "react";
 
 // Lazy loading utilities
 export function createLazyComponent<T extends ComponentType<any>>(
   importFn: () => Promise<{ default: T }>,
-  fallback?: React.ComponentType
+  fallback?: React.ComponentType,
 ) {
   const LazyComponent = lazy(importFn);
 
@@ -26,17 +26,17 @@ export function createLazyComponent<T extends ComponentType<any>>(
 export async function dynamicImport<T>(
   importFn: () => Promise<T>,
   retries: number = 3,
-  delay: number = 1000
+  delay: number = 1000,
 ): Promise<T> {
   for (let i = 0; i < retries; i++) {
     try {
       return await importFn();
     } catch (error) {
       if (i === retries - 1) throw error;
-      await new Promise(resolve => setTimeout(resolve, delay * (i + 1)));
+      await new Promise((resolve) => setTimeout(resolve, delay * (i + 1)));
     }
   }
-  throw new Error('Dynamic import failed after retries');
+  throw new Error("Dynamic import failed after retries");
 }
 
 // Image lazy loading utilities
@@ -44,20 +44,15 @@ export function createImageLoader(src: string, quality: number = 75) {
   return `/_next/image?url=${encodeURIComponent(src)}&w=3840&q=${quality}`;
 }
 
-export function getOptimizedImageProps(
-  src: string,
-  alt: string,
-  width?: number,
-  height?: number
-) {
+export function getOptimizedImageProps(src: string, alt: string, width?: number, height?: number) {
   return {
     src,
     alt,
     width,
     height,
-    loading: 'lazy' as const,
-    decoding: 'async' as const,
-    style: { maxWidth: '100%', height: 'auto' },
+    loading: "lazy" as const,
+    decoding: "async" as const,
+    style: { maxWidth: "100%", height: "auto" },
   };
 }
 
@@ -67,17 +62,17 @@ export class PerformanceMonitor {
   private static observers: Map<string, PerformanceObserver> = new Map();
 
   static startMeasure(name: string) {
-    if (typeof window !== 'undefined' && 'performance' in window) {
+    if (typeof window !== "undefined" && "performance" in window) {
       performance.mark(`${name}-start`);
     }
   }
 
   static endMeasure(name: string) {
-    if (typeof window !== 'undefined' && 'performance' in window) {
+    if (typeof window !== "undefined" && "performance" in window) {
       performance.mark(`${name}-end`);
       performance.measure(name, `${name}-start`, `${name}-end`);
 
-      const measure = performance.getEntriesByName(name, 'measure')[0];
+      const measure = performance.getEntriesByName(name, "measure")[0];
       if (measure) {
         this.metrics.set(name, measure.duration);
         console.log(`Performance: ${name} took ${measure.duration.toFixed(2)}ms`);
@@ -94,60 +89,60 @@ export class PerformanceMonitor {
   }
 
   static observeLCP(callback: (entry: PerformanceEntry) => void) {
-    if (typeof window !== 'undefined' && 'PerformanceObserver' in window) {
+    if (typeof window !== "undefined" && "PerformanceObserver" in window) {
       const observer = new PerformanceObserver((list) => {
         const entries = list.getEntries();
         const lastEntry = entries[entries.length - 1];
         if (lastEntry) callback(lastEntry);
       });
 
-      observer.observe({ type: 'largest-contentful-paint', buffered: true });
-      this.observers.set('lcp', observer);
+      observer.observe({ type: "largest-contentful-paint", buffered: true });
+      this.observers.set("lcp", observer);
     }
   }
 
   static observeFID(callback: (entry: PerformanceEntry) => void) {
-    if (typeof window !== 'undefined' && 'PerformanceObserver' in window) {
+    if (typeof window !== "undefined" && "PerformanceObserver" in window) {
       const observer = new PerformanceObserver((list) => {
         list.getEntries().forEach(callback);
       });
 
-      observer.observe({ type: 'first-input', buffered: true });
-      this.observers.set('fid', observer);
+      observer.observe({ type: "first-input", buffered: true });
+      this.observers.set("fid", observer);
     }
   }
 
   static observeCLS(callback: (entry: PerformanceEntry) => void) {
-    if (typeof window !== 'undefined' && 'PerformanceObserver' in window) {
+    if (typeof window !== "undefined" && "PerformanceObserver" in window) {
       const observer = new PerformanceObserver((list) => {
         list.getEntries().forEach(callback);
       });
 
-      observer.observe({ type: 'layout-shift', buffered: true });
-      this.observers.set('cls', observer);
+      observer.observe({ type: "layout-shift", buffered: true });
+      this.observers.set("cls", observer);
     }
   }
 
   static disconnect() {
-    this.observers.forEach(observer => observer.disconnect());
+    this.observers.forEach((observer) => observer.disconnect());
     this.observers.clear();
   }
 }
 
 // Bundle size optimization utilities
 export function preloadRoute(href: string) {
-  if (typeof window !== 'undefined') {
-    const link = document.createElement('link');
-    link.rel = 'prefetch';
+  if (typeof window !== "undefined") {
+    const link = document.createElement("link");
+    link.rel = "prefetch";
     link.href = href;
     document.head.appendChild(link);
   }
 }
 
 export function preloadComponent(importFn: () => Promise<any>) {
-  if (typeof window !== 'undefined') {
+  if (typeof window !== "undefined") {
     // Preload on idle
-    if ('requestIdleCallback' in window) {
+    if ("requestIdleCallback" in window) {
       requestIdleCallback(() => importFn());
     } else {
       setTimeout(() => importFn(), 1);
@@ -185,7 +180,7 @@ export class MemoryManager {
 export function debounce<T extends (...args: any[]) => any>(
   func: T,
   wait: number,
-  immediate?: boolean
+  immediate?: boolean,
 ): (...args: Parameters<T>) => void {
   let timeout: NodeJS.Timeout | null = null;
 
@@ -206,7 +201,7 @@ export function debounce<T extends (...args: any[]) => any>(
 
 export function throttle<T extends (...args: any[]) => any>(
   func: T,
-  limit: number
+  limit: number,
 ): (...args: Parameters<T>) => void {
   let inThrottle: boolean;
 
@@ -214,7 +209,7 @@ export function throttle<T extends (...args: any[]) => any>(
     if (!inThrottle) {
       func(...args);
       inThrottle = true;
-      setTimeout(() => inThrottle = false, limit);
+      setTimeout(() => (inThrottle = false), limit);
     }
   };
 }
@@ -225,12 +220,12 @@ export function calculateVisibleItems(
   itemHeight: number,
   scrollTop: number,
   totalItems: number,
-  overscan: number = 5
+  overscan: number = 5,
 ) {
   const visibleStart = Math.floor(scrollTop / itemHeight);
   const visibleEnd = Math.min(
     visibleStart + Math.ceil(containerHeight / itemHeight),
-    totalItems - 1
+    totalItems - 1,
   );
 
   return {
@@ -243,30 +238,25 @@ export function calculateVisibleItems(
 
 // Resource hints utilities
 export function addResourceHints() {
-  if (typeof window !== 'undefined') {
+  if (typeof window !== "undefined") {
     // DNS prefetch for external domains
-    const dnsPrefetchDomains = [
-      'fonts.googleapis.com',
-      'fonts.gstatic.com',
-    ];
+    const dnsPrefetchDomains = ["fonts.googleapis.com", "fonts.gstatic.com"];
 
-    dnsPrefetchDomains.forEach(domain => {
-      const link = document.createElement('link');
-      link.rel = 'dns-prefetch';
+    dnsPrefetchDomains.forEach((domain) => {
+      const link = document.createElement("link");
+      link.rel = "dns-prefetch";
       link.href = `//${domain}`;
       document.head.appendChild(link);
     });
 
     // Preconnect to critical domains
-    const preconnectDomains = [
-      'https://fonts.googleapis.com',
-    ];
+    const preconnectDomains = ["https://fonts.googleapis.com"];
 
-    preconnectDomains.forEach(domain => {
-      const link = document.createElement('link');
-      link.rel = 'preconnect';
+    preconnectDomains.forEach((domain) => {
+      const link = document.createElement("link");
+      link.rel = "preconnect";
       link.href = domain;
-      link.crossOrigin = 'anonymous';
+      link.crossOrigin = "anonymous";
       document.head.appendChild(link);
     });
   }
@@ -274,33 +264,33 @@ export function addResourceHints() {
 
 // Critical CSS utilities
 export function loadNonCriticalCSS(href: string) {
-  if (typeof window !== 'undefined') {
-    const link = document.createElement('link');
-    link.rel = 'stylesheet';
+  if (typeof window !== "undefined") {
+    const link = document.createElement("link");
+    link.rel = "stylesheet";
     link.href = href;
-    link.media = 'print';
+    link.media = "print";
     link.onload = () => {
-      link.media = 'all';
+      link.media = "all";
     };
     document.head.appendChild(link);
   }
 }
 
 // Service Worker utilities
-export function registerServiceWorker(swPath: string = '/sw.js') {
+export function registerServiceWorker(swPath: string = "/sw.js") {
   if (
-    typeof window !== 'undefined' &&
-    'serviceWorker' in navigator &&
-    process.env.NODE_ENV === 'production'
+    typeof window !== "undefined" &&
+    "serviceWorker" in navigator &&
+    process.env.NODE_ENV === "production"
   ) {
-    window.addEventListener('load', () => {
+    window.addEventListener("load", () => {
       navigator.serviceWorker
         .register(swPath)
-        .then(registration => {
-          console.log('SW registered: ', registration);
+        .then((registration) => {
+          console.log("SW registered: ", registration);
         })
-        .catch(registrationError => {
-          console.log('SW registration failed: ', registrationError);
+        .catch((registrationError) => {
+          console.log("SW registration failed: ", registrationError);
         });
     });
   }
@@ -308,16 +298,16 @@ export function registerServiceWorker(swPath: string = '/sw.js') {
 
 // Web Vitals reporting
 export function reportWebVitals(metric: any) {
-  if (process.env.NODE_ENV === 'production') {
+  if (process.env.NODE_ENV === "production") {
     // Send to analytics service
-    console.log('Web Vital:', metric);
+    console.log("Web Vital:", metric);
 
     // Example: Send to Google Analytics
-    if (typeof window !== 'undefined' && 'gtag' in window) {
-      (window as any).gtag('event', metric.name, {
-        event_category: 'Web Vitals',
+    if (typeof window !== "undefined" && "gtag" in window) {
+      (window as any).gtag("event", metric.name, {
+        event_category: "Web Vitals",
         event_label: metric.id,
-        value: Math.round(metric.name === 'CLS' ? metric.value * 1000 : metric.value),
+        value: Math.round(metric.name === "CLS" ? metric.value * 1000 : metric.value),
         non_interaction: true,
       });
     }

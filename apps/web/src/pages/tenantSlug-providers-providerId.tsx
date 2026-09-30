@@ -1,14 +1,14 @@
-'use client';
+"use client";
 
-import { ProviderDetails } from '@/components/providers/provider-details';
-import { AppShell } from '@/components/layout';
-import { useRouter } from '@/compat/next-navigation';
-import { ArrowLeftIcon } from '@heroicons/react/24/outline'
+import { ProviderDetails } from "@/components/providers/provider-details";
+import { AppShell } from "@/components/layout";
+import { useRouter } from "@/compat/next-navigation";
+import { ArrowLeftIcon } from "@heroicons/react/24/outline";
 
-import { Button } from '@/components/ui/button';
+import { Button } from "@/components/ui/button";
 
-import { useTenantSlug } from '@/hooks/use-tenant-slug';
-import { useParams } from '@tanstack/react-router';
+import { useTenantSlug } from "@/hooks/use-tenant-slug";
+import { useParams } from "@tanstack/react-router";
 
 export default function ProviderDetailPage() {
   const router = useRouter();
@@ -30,7 +30,7 @@ export default function ProviderDetailPage() {
             </Button>
           </div>
 
-          <ProviderDetails providerId={providerId || ''} />
+          <ProviderDetails providerId={providerId || ""} />
         </div>
       </div>
     </AppShell>

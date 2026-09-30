@@ -1,10 +1,10 @@
 "use client";
 
-import { Send, User } from '@/lib/icons';
+import { Send, User } from "@/lib/icons";
 
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ChartBarIcon, ChartPieIcon } from '@heroicons/react/24/outline'
+import { ChartBarIcon, ChartPieIcon } from "@heroicons/react/24/outline";
 import { useState } from "react";
 import { CohortChart } from "./cohort-chart";
 import { PerformanceMonitor } from "./performance-monitor";
@@ -123,7 +123,10 @@ export function AdvancedDashboard() {
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="performance" className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+        <TabsContent
+          value="performance"
+          className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500"
+        >
           <PerformanceMonitor />
           <div className="grid gap-6 md:grid-cols-2">
             <Card className="glass border-border/50 p-6">
@@ -141,8 +144,19 @@ export function AdvancedDashboard() {
           </div>
         </TabsContent>
 
-        <TabsContent value="retention" className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-          <CohortChart data={MOCK_COHORT_DATA as Array<{ date: string; totalUsers: number; retention: Record<string, number> }>} />
+        <TabsContent
+          value="retention"
+          className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500"
+        >
+          <CohortChart
+            data={
+              MOCK_COHORT_DATA as Array<{
+                date: string;
+                totalUsers: number;
+                retention: Record<string, number>;
+              }>
+            }
+          />
           <div className="grid gap-6 md:grid-cols-2">
             <Card className="glass border-border/50 p-6">
               <h3 className="mb-4 text-lg font-semibold">Churn Risk Analysis</h3>
@@ -159,7 +173,10 @@ export function AdvancedDashboard() {
           </div>
         </TabsContent>
 
-        <TabsContent value="journey" className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+        <TabsContent
+          value="journey"
+          className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500"
+        >
           <div className="grid gap-6 lg:grid-cols-3">
             <div className="lg:col-span-1">
               <Card className="glass border-border/50 p-6">
@@ -185,10 +202,7 @@ export function AdvancedDashboard() {
               </Card>
             </div>
             <div className="lg:col-span-2">
-              <UserJourneyMap
-                steps={MOCK_JOURNEY_STEPS}
-                userIdentifier="user_1@example.com"
-              />
+              <UserJourneyMap steps={MOCK_JOURNEY_STEPS} userIdentifier="user_1@example.com" />
             </div>
           </div>
         </TabsContent>

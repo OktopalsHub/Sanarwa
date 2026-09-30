@@ -1,4 +1,4 @@
-import type { describe, it, expect, beforeEach, vi, Mock } from 'vitest';
+import type { describe, it, expect, beforeEach, vi, Mock } from "vitest";
 
 // Mock the AnalyticsService class
 class MockAnalyticsService {
@@ -23,7 +23,7 @@ class MockAnalyticsService {
   async getChannelAnalytics(query: any) {
     return [
       {
-        channel: 'EMAIL',
+        channel: "EMAIL",
         totalSent: 50,
         delivered: 45,
         failed: 5,
@@ -31,7 +31,7 @@ class MockAnalyticsService {
         averageDeliveryTime: 1500,
       },
       {
-        channel: 'SMS',
+        channel: "SMS",
         totalSent: 30,
         delivered: 28,
         failed: 2,
@@ -44,8 +44,8 @@ class MockAnalyticsService {
   async getProviderAnalytics(query: any) {
     return [
       {
-        providerId: 'sendgrid',
-        channel: 'EMAIL',
+        providerId: "sendgrid",
+        channel: "EMAIL",
         totalSent: 50,
         delivered: 45,
         failed: 5,
@@ -110,23 +110,23 @@ class MockAnalyticsService {
   }
 }
 
-describe('AnalyticsService', () => {
+describe("AnalyticsService", () => {
   let service: MockAnalyticsService;
 
   beforeEach(() => {
     service = new MockAnalyticsService();
   });
 
-  it('should be defined', () => {
+  it("should be defined", () => {
     expect(service).toBeDefined();
   });
 
-  describe('getDeliveryRateAnalytics', () => {
-    it('should return delivery rate analytics', async () => {
+  describe("getDeliveryRateAnalytics", () => {
+    it("should return delivery rate analytics", async () => {
       const result = await service.getDeliveryRateAnalytics({
-        tenantId: 'tenant-1',
-        startDate: new Date('2023-01-01'),
-        endDate: new Date('2023-12-31'),
+        tenantId: "tenant-1",
+        startDate: new Date("2023-01-01"),
+        endDate: new Date("2023-12-31"),
       });
 
       expect(result).toBeDefined();
@@ -140,42 +140,42 @@ describe('AnalyticsService', () => {
     });
   });
 
-  describe('getChannelAnalytics', () => {
-    it('should return analytics broken down by channel', async () => {
+  describe("getChannelAnalytics", () => {
+    it("should return analytics broken down by channel", async () => {
       const result = await service.getChannelAnalytics({
-        tenantId: 'tenant-1',
+        tenantId: "tenant-1",
       });
 
       expect(result).toBeDefined();
       expect(result).toHaveLength(2);
-      expect(result[0].channel).toBe('EMAIL');
+      expect(result[0].channel).toBe("EMAIL");
       expect(result[0].deliveryRate).toBe(90);
-      expect(result[1].channel).toBe('SMS');
+      expect(result[1].channel).toBe("SMS");
       expect(result[1].deliveryRate).toBe(93.33);
     });
   });
 
-  describe('getProviderAnalytics', () => {
-    it('should return analytics broken down by provider', async () => {
+  describe("getProviderAnalytics", () => {
+    it("should return analytics broken down by provider", async () => {
       const result = await service.getProviderAnalytics({
-        tenantId: 'tenant-1',
+        tenantId: "tenant-1",
       });
 
       expect(result).toBeDefined();
       expect(result).toHaveLength(1);
-      expect(result[0].providerId).toBe('sendgrid');
+      expect(result[0].providerId).toBe("sendgrid");
       expect(result[0].deliveryRate).toBe(90);
       expect(result[0].averageResponseTime).toBe(200);
       expect(result[0].errorRate).toBe(10);
     });
   });
 
-  describe('getTenantAnalytics', () => {
-    it('should return comprehensive tenant analytics', async () => {
-      const result = await service.getTenantAnalytics('tenant-1');
+  describe("getTenantAnalytics", () => {
+    it("should return comprehensive tenant analytics", async () => {
+      const result = await service.getTenantAnalytics("tenant-1");
 
       expect(result).toBeDefined();
-      expect(result.tenantId).toBe('tenant-1');
+      expect(result.tenantId).toBe("tenant-1");
       expect(result.totalNotifications).toBe(100);
       expect(result.deliveryRates).toBeDefined();
       expect(result.channelBreakdown).toBeDefined();
@@ -184,14 +184,14 @@ describe('AnalyticsService', () => {
     });
   });
 
-  describe('getDeliveryTrends', () => {
-    it('should return delivery trends comparison', async () => {
+  describe("getDeliveryTrends", () => {
+    it("should return delivery trends comparison", async () => {
       const result = await service.getDeliveryTrends(
-        'tenant-1',
-        new Date('2023-02-01'),
-        new Date('2023-02-28'),
-        new Date('2023-01-01'),
-        new Date('2023-01-31'),
+        "tenant-1",
+        new Date("2023-02-01"),
+        new Date("2023-02-28"),
+        new Date("2023-01-01"),
+        new Date("2023-01-31"),
       );
 
       expect(result).toBeDefined();
@@ -203,13 +203,13 @@ describe('AnalyticsService', () => {
     });
   });
 
-  describe('getTopProviders', () => {
-    it('should return top performing providers', async () => {
-      const result = await service.getTopProviders('tenant-1', 5);
+  describe("getTopProviders", () => {
+    it("should return top performing providers", async () => {
+      const result = await service.getTopProviders("tenant-1", 5);
 
       expect(result).toBeDefined();
       expect(result).toHaveLength(1);
-      expect(result[0].providerId).toBe('sendgrid');
+      expect(result[0].providerId).toBe("sendgrid");
     });
   });
 });

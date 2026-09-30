@@ -1,7 +1,7 @@
 "use client";
 
-import { ScreenReaderUtils } from '@/lib/utils/accessibility';
-import React, { useEffect, useRef, useState } from 'react';
+import { ScreenReaderUtils } from "@/lib/utils/accessibility";
+import React, { useEffect, useRef, useState } from "react";
 
 // Screen reader only text component
 interface ScreenReaderOnlyProps {
@@ -12,32 +12,28 @@ interface ScreenReaderOnlyProps {
 
 export function ScreenReaderOnly({
   children,
-  as: Component = 'span',
-  className = ''
+  as: Component = "span",
+  className = "",
 }: ScreenReaderOnlyProps) {
   const ElementType = Component as keyof React.JSX.IntrinsicElements;
-  return (
-    <ElementType className={`sr-only ${className}`}>
-      {children}
-    </ElementType>
-  );
+  return <ElementType className={`sr-only ${className}`}>{children}</ElementType>;
 }
 
 // Live region component for announcements
 interface LiveRegionProps {
   children?: React.ReactNode;
-  priority?: 'polite' | 'assertive' | 'off';
+  priority?: "polite" | "assertive" | "off";
   atomic?: boolean;
-  relevant?: 'additions' | 'removals' | 'text' | 'all';
+  relevant?: "additions" | "removals" | "text" | "all";
   className?: string;
 }
 
 export function LiveRegion({
   children,
-  priority = 'polite',
+  priority = "polite",
   atomic = true,
-  relevant = 'all',
-  className = ''
+  relevant = "all",
+  className = "",
 }: LiveRegionProps) {
   return (
     <div
@@ -54,41 +50,36 @@ export function LiveRegion({
 // Status component for form validation and other status updates
 interface StatusProps {
   message: string;
-  type?: 'error' | 'success' | 'warning' | 'info';
+  type?: "error" | "success" | "warning" | "info";
   visible?: boolean;
   className?: string;
 }
 
-export function Status({
-  message,
-  type = 'info',
-  visible = true,
-  className = ''
-}: StatusProps) {
-  const [announcement, setAnnouncement] = useState('');
+export function Status({ message, type = "info", visible = true, className = "" }: StatusProps) {
+  const [announcement, setAnnouncement] = useState("");
 
   useEffect(() => {
     if (visible && message) {
       setAnnouncement(message);
       // Clear announcement after it's been read
-      const timer = setTimeout(() => setAnnouncement(''), 1000);
+      const timer = setTimeout(() => setAnnouncement(""), 1000);
       return () => clearTimeout(timer);
     }
 
     // Return empty cleanup function for other code paths
-    return () => { };
+    return () => {};
   }, [message, visible]);
 
   const getAriaRole = () => {
     switch (type) {
-      case 'error':
-        return 'alert';
-      case 'success':
-      case 'warning':
-      case 'info':
-        return 'status';
+      case "error":
+        return "alert";
+      case "success":
+      case "warning":
+      case "info":
+        return "status";
       default:
-        return 'status';
+        return "status";
     }
   };
 
@@ -99,16 +90,14 @@ export function Status({
       {/* Visible status message */}
       <div
         role={getAriaRole()}
-        aria-live={type === 'error' ? 'assertive' : 'polite'}
+        aria-live={type === "error" ? "assertive" : "polite"}
         className={className}
       >
         {message}
       </div>
 
       {/* Screen reader announcement */}
-      <LiveRegion priority={type === 'error' ? 'assertive' : 'polite'}>
-        {announcement}
-      </LiveRegion>
+      <LiveRegion priority={type === "error" ? "assertive" : "polite"}>{announcement}</LiveRegion>
     </>
   );
 }
@@ -125,12 +114,12 @@ interface ProgressAnnouncerProps {
 export function ProgressAnnouncer({
   value,
   max = 100,
-  label = 'Progress',
+  label = "Progress",
   announceInterval = 10,
-  className = ''
+  className = "",
 }: ProgressAnnouncerProps) {
   const [lastAnnounced, setLastAnnounced] = useState(0);
-  const [announcement, setAnnouncement] = useState('');
+  const [announcement, setAnnouncement] = useState("");
 
   useEffect(() => {
     const percentage = Math.round((value / max) * 100);
@@ -142,19 +131,15 @@ export function ProgressAnnouncer({
       setLastAnnounced(percentage);
 
       // Clear announcement after it's been read
-      const timer = setTimeout(() => setAnnouncement(''), 1000);
+      const timer = setTimeout(() => setAnnouncement(""), 1000);
       return () => clearTimeout(timer);
     }
 
     // Return empty cleanup function for other code paths
-    return () => { };
+    return () => {};
   }, [value, max, label, announceInterval, lastAnnounced]);
 
-  return (
-    <LiveRegion className={className}>
-      {announcement}
-    </LiveRegion>
-  );
+  return <LiveRegion className={className}>{announcement}</LiveRegion>;
 }
 
 // Loading announcer for async operations
@@ -169,13 +154,13 @@ interface LoadingAnnouncerProps {
 
 export function LoadingAnnouncer({
   isLoading,
-  loadingMessage = 'Loading...',
-  completeMessage = 'Loading complete',
-  errorMessage = 'Loading failed',
+  loadingMessage = "Loading...",
+  completeMessage = "Loading complete",
+  errorMessage = "Loading failed",
   error = false,
-  className = ''
+  className = "",
 }: LoadingAnnouncerProps) {
-  const [announcement, setAnnouncement] = useState('');
+  const [announcement, setAnnouncement] = useState("");
   const previousLoadingRef = useRef(isLoading);
 
   useEffect(() => {
@@ -191,19 +176,16 @@ export function LoadingAnnouncer({
     }
 
     if (announcement) {
-      const timer = setTimeout(() => setAnnouncement(''), 1000);
+      const timer = setTimeout(() => setAnnouncement(""), 1000);
       return () => clearTimeout(timer);
     }
 
     // Return empty cleanup function for other code paths
-    return () => { };
+    return () => {};
   }, [isLoading, error, loadingMessage, completeMessage, errorMessage, announcement]);
 
   return (
-    <LiveRegion
-      priority={error ? 'assertive' : 'polite'}
-      className={className}
-    >
+    <LiveRegion priority={error ? "assertive" : "polite"} className={className}>
       {announcement}
     </LiveRegion>
   );
@@ -216,13 +198,9 @@ interface FieldDescriptionProps {
   className?: string;
 }
 
-export function FieldDescription({ id, children, className = '' }: FieldDescriptionProps) {
+export function FieldDescription({ id, children, className = "" }: FieldDescriptionProps) {
   return (
-    <div
-      id={id}
-      className={`text-sm text-muted-foreground ${className}`}
-      role="note"
-    >
+    <div id={id} className={`text-sm text-muted-foreground ${className}`} role="note">
       {children}
     </div>
   );
@@ -235,7 +213,7 @@ interface ErrorMessageProps {
   className?: string;
 }
 
-export function ErrorMessage({ id, children, className = '' }: ErrorMessageProps) {
+export function ErrorMessage({ id, children, className = "" }: ErrorMessageProps) {
   return (
     <div
       id={id}
@@ -258,7 +236,7 @@ interface BreadcrumbProps {
   className?: string;
 }
 
-export function Breadcrumb({ items, className = '' }: BreadcrumbProps) {
+export function Breadcrumb({ items, className = "" }: BreadcrumbProps) {
   return (
     <nav aria-label="Breadcrumb" className={className}>
       <ol className="flex items-center space-x-2">
@@ -270,10 +248,7 @@ export function Breadcrumb({ items, className = '' }: BreadcrumbProps) {
               </span>
             )}
             {item.current ? (
-              <span
-                aria-current="page"
-                className="font-medium text-foreground"
-              >
+              <span aria-current="page" className="font-medium text-foreground">
                 {item.label}
               </span>
             ) : item.href ? (
@@ -295,8 +270,8 @@ export function Breadcrumb({ items, className = '' }: BreadcrumbProps) {
 
 // Hook for managing announcements
 export function useAnnouncement() {
-  const announce = (message: string, priority: 'polite' | 'assertive' = 'polite') => {
-    ScreenReaderUtils.announce(message, priority.toUpperCase() as 'POLITE' | 'ASSERTIVE');
+  const announce = (message: string, priority: "polite" | "assertive" = "polite") => {
+    ScreenReaderUtils.announce(message, priority.toUpperCase() as "POLITE" | "ASSERTIVE");
   };
 
   return { announce };

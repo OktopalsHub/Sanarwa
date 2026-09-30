@@ -1,8 +1,8 @@
-import { createHmac, timingSafeEqual } from 'node:crypto';
+import { createHmac, timingSafeEqual } from "node:crypto";
 import {
   parseNotifiPaymentMethodSetupReference,
   parseNotifiPurchaseReference,
-} from '../constants/token-packages';
+} from "../constants/token-packages";
 
 export interface NombaWebhookVerifyInput {
   rawBody: string;
@@ -12,7 +12,7 @@ export interface NombaWebhookVerifyInput {
 export interface NombaWebhookVerifyResult {
   eventId: string;
   eventType: string;
-  outcome: 'success' | 'failed' | 'ignored';
+  outcome: "success" | "failed" | "ignored";
   purchaseId?: string;
   setupReference?: string;
   tenantId?: string;
@@ -59,21 +59,19 @@ export function verifyNombaWebhook(
   input: NombaWebhookVerifyInput,
   webhookSecret: string,
 ): NombaWebhookVerifyResult | null {
-  const signature = getHeader(input.headers, 'nomba-signature');
+  const signature = getHeader(input.headers, "nomba-signature");
   if (!signature || !webhookSecret) {
     return null;
   }
 
-  const expected = createHmac('sha256', webhookSecret)
-    .update(input.rawBody)
-    .digest('base64');
+  const expected = createHmac("sha256", webhookSecret).update(input.rawBody).digest("base64");
 
   if (!safeEqual(signature, expected)) {
     return null;
   }
 
   const body = JSON.parse(input.rawBody) as NombaWebhookPayload;
-  const eventType = body.event_type ?? '';
+  const eventType = body.event_type ?? "";
   const eventId = body.requestId ?? createHashFallback(input.rawBody);
   const orderReference = body.data?.order?.orderReference;
   const metadata = body.data?.order?.orderMetaData ?? {};
@@ -87,11 +85,11 @@ export function verifyNombaWebhook(
   const currency = body.data?.order?.currency ?? metadata.currency;
   const tokenKey = body.data?.tokenizedCardData?.tokenKey;
 
-  if (eventType !== 'payment_success') {
+  if (eventType !== "payment_success") {
     return {
       eventId,
       eventType,
-      outcome: 'ignored',
+      outcome: "ignored",
       purchaseId,
       setupReference,
       orderReference,
@@ -99,11 +97,11 @@ export function verifyNombaWebhook(
   }
 
   const txStatus = body.data?.transaction?.status?.toUpperCase();
-  if (txStatus && txStatus !== 'SUCCESS') {
+  if (txStatus && txStatus !== "SUCCESS") {
     return {
       eventId,
       eventType,
-      outcome: 'failed',
+      outcome: "failed",
       purchaseId,
       setupReference,
       orderReference,
@@ -114,14 +112,14 @@ export function verifyNombaWebhook(
   return {
     eventId,
     eventType,
-    outcome: 'success',
+    outcome: "success",
     purchaseId,
     setupReference,
     tenantId,
     currency,
     customerId: body.data?.order?.customerId,
     customerEmail: body.data?.order?.customerEmail,
-    tokenKey: tokenKey && tokenKey !== 'N/A' ? tokenKey : undefined,
+    tokenKey: tokenKey && tokenKey !== "N/A" ? tokenKey : undefined,
     orderReference,
     transactionId: body.data?.transaction?.transactionId,
     cardBrand: body.data?.order?.cardType ?? body.data?.tokenizedCardData?.cardType,
@@ -132,12 +130,12 @@ export function verifyNombaWebhook(
 }
 
 function createHashFallback(rawBody: string): string {
-  return createHmac('sha256', 'nomba').update(rawBody).digest('hex');
+  return createHmac("sha256", "nomba").update(rawBody).digest("hex");
 }
 
 function extractLast4(value?: string): string | undefined {
   if (!value) return undefined;
-  const digits = value.replace(/\D/g, '');
+  const digits = value.replace(/\D/g, "");
   return digits.slice(-4) || undefined;
 }
 

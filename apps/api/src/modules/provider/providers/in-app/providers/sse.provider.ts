@@ -1,6 +1,6 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import { IInAppProvider, InAppPayload, InAppResponse } from '../in-app-provider.interface';
+import { Injectable, Logger } from "@nestjs/common";
+import { ConfigService } from "@nestjs/config";
+import { IInAppProvider, InAppPayload, InAppResponse } from "../in-app-provider.interface";
 
 interface SSERoomResponse {
   delivered: number;
@@ -14,8 +14,8 @@ export class SSEProvider implements IInAppProvider {
   private readonly apiKey: string;
 
   constructor(private configService: ConfigService) {
-    this.sseServerUrl = this.configService.get('SSE_SERVER_URL') || 'http://localhost:3003';
-    this.apiKey = this.configService.get('SSE_API_KEY') || '';
+    this.sseServerUrl = this.configService.get("SSE_SERVER_URL") || "http://localhost:3003";
+    this.apiKey = this.configService.get("SSE_API_KEY") || "";
   }
 
   async sendNotification(payload: InAppPayload): Promise<InAppResponse> {
@@ -25,13 +25,13 @@ export class SSEProvider implements IInAppProvider {
       const failedDeliveries: string[] = [];
 
       const notificationPayload = {
-        type: 'in_app_notification',
+        type: "in_app_notification",
         data: {
           id: `sse_${Date.now()}`,
           title: payload.title,
           message: payload.message,
-          type: payload.type || 'info',
-          priority: payload.priority || 'normal',
+          type: payload.type || "info",
+          priority: payload.priority || "normal",
           data: payload.data,
           actions: payload.actions,
           persistent: payload.persistent || false,
@@ -51,7 +51,9 @@ export class SSEProvider implements IInAppProvider {
         }
       }
 
-      this.logger.log(`In-app notification sent via SSE to ${deliveredTo.length}/${users.length} users`);
+      this.logger.log(
+        `In-app notification sent via SSE to ${deliveredTo.length}/${users.length} users`,
+      );
 
       return {
         success: deliveredTo.length > 0,
@@ -59,14 +61,17 @@ export class SSEProvider implements IInAppProvider {
         deliveredTo,
         failedDeliveries,
         timestamp: new Date().toISOString(),
-        provider: 'sse',
+        provider: "sse",
       };
     } catch (error) {
-      this.logger.error(`Failed to send in-app notification via SSE: ${error.message}`, error.stack);
+      this.logger.error(
+        `Failed to send in-app notification via SSE: ${error.message}`,
+        error.stack,
+      );
       return {
         success: false,
         error: error.message,
-        provider: 'sse',
+        provider: "sse",
       };
     }
   }
@@ -74,14 +79,14 @@ export class SSEProvider implements IInAppProvider {
   async sendToRoom(roomId: string, payload: InAppPayload): Promise<InAppResponse> {
     try {
       const roomPayload = {
-        type: 'room_notification',
+        type: "room_notification",
         roomId,
         data: {
           id: `sse_room_${Date.now()}`,
           title: payload.title,
           message: payload.message,
-          type: payload.type || 'info',
-          priority: payload.priority || 'normal',
+          type: payload.type || "info",
+          priority: payload.priority || "normal",
           data: payload.data,
           actions: payload.actions,
           timestamp: new Date().toISOString(),
@@ -90,10 +95,10 @@ export class SSEProvider implements IInAppProvider {
 
       // Send to room via SSE API
       const response = await fetch(`${this.sseServerUrl}/api/rooms/${roomId}/notify`, {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Authorization': `Bearer ${this.apiKey}`,
-          'Content-Type': 'application/json',
+          Authorization: `Bearer ${this.apiKey}`,
+          "Content-Type": "application/json",
         },
         body: JSON.stringify(roomPayload),
       });
@@ -102,7 +107,7 @@ export class SSEProvider implements IInAppProvider {
         throw new Error(`SSE room notification failed: ${response.statusText}`);
       }
 
-      const result = await response.json() as SSERoomResponse;
+      const result = (await response.json()) as SSERoomResponse;
 
       this.logger.log(`SSE room notification sent to ${roomId}: ${result.delivered} users`);
 
@@ -111,14 +116,14 @@ export class SSEProvider implements IInAppProvider {
         messageId: roomPayload.data.id,
         deliveredTo: result.userIds || [],
         timestamp: new Date().toISOString(),
-        provider: 'sse',
+        provider: "sse",
       };
     } catch (error) {
       this.logger.error(`Failed to send SSE room notification: ${error.message}`, error.stack);
       return {
         success: false,
         error: error.message,
-        provider: 'sse',
+        provider: "sse",
       };
     }
   }
@@ -126,15 +131,15 @@ export class SSEProvider implements IInAppProvider {
   private async sendSSEToUser(userId: string, payload: any): Promise<void> {
     // Send notification via SSE server
     const response = await fetch(`${this.sseServerUrl}/api/users/${userId}/notify`, {
-      method: 'POST',
+      method: "POST",
       headers: {
-        'Authorization': `Bearer ${this.apiKey}`,
-        'Content-Type': 'application/json',
+        Authorization: `Bearer ${this.apiKey}`,
+        "Content-Type": "application/json",
       },
       body: JSON.stringify({
         ...payload,
         // SSE-specific formatting
-        event: 'notification',
+        event: "notification",
         data: JSON.stringify(payload.data),
         retry: 3000, // Retry after 3 seconds if connection lost
       }),
@@ -150,6 +155,6 @@ export class SSEProvider implements IInAppProvider {
   }
 
   getProviderName(): string {
-    return 'sse';
+    return "sse";
   }
 }

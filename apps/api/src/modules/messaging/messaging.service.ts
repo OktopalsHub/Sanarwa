@@ -1,19 +1,16 @@
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { In, Repository } from 'typeorm';
-import { getPaginationSummary } from '../../common/dto/pagination.dto';
-import { IPaginatedData } from '../../common/interfaces';
-import { BulkMessageDto, SendMessageDto } from './dto/send-message.dto';
-import { MessageStatus } from './message.entity';
-import { MessageDeliveryRepository, MessageRepository } from './repositories';
-import { DigestService, DigestNotification } from './services/digest.service';
-import { SchedulingService, ScheduleConfig } from './services/scheduling.service';
-import { NotificationEngineService } from '../notifications/engine/notification-engine.service';
-import { NotificationLog } from '../notifications/entities/notification-log.entity';
-import {
-  applyMessageLogFilters,
-  mapLogsToMessageListRecords,
-} from './message-log.query';
+import { Injectable, Logger, NotFoundException } from "@nestjs/common";
+import { InjectRepository } from "@nestjs/typeorm";
+import { In, Repository } from "typeorm";
+import { getPaginationSummary } from "../../common/dto/pagination.dto";
+import { IPaginatedData } from "../../common/interfaces";
+import { BulkMessageDto, SendMessageDto } from "./dto/send-message.dto";
+import { MessageStatus } from "./message.entity";
+import { MessageDeliveryRepository, MessageRepository } from "./repositories";
+import { DigestService, DigestNotification } from "./services/digest.service";
+import { SchedulingService, ScheduleConfig } from "./services/scheduling.service";
+import { NotificationEngineService } from "../notifications/engine/notification-engine.service";
+import { NotificationLog } from "../notifications/entities/notification-log.entity";
+import { applyMessageLogFilters, mapLogsToMessageListRecords } from "./message-log.query";
 
 @Injectable()
 export class MessagingService {
@@ -27,7 +24,7 @@ export class MessagingService {
     private readonly notificationEngine: NotificationEngineService,
     @InjectRepository(NotificationLog)
     private readonly logRepository: Repository<NotificationLog>,
-  ) { }
+  ) {}
 
   /**
    * Filter recipients based on subscriber preferences
@@ -41,7 +38,7 @@ export class MessagingService {
 
     for (const recipient of recipients) {
       const subscriberId = recipient.subscriberId || recipient.userId;
-      
+
       if (!subscriberId) {
         // No subscriber ID, include recipient
         filteredRecipients.push(recipient);
@@ -76,13 +73,13 @@ export class MessagingService {
     const filteredRecipients = await this.filterRecipientsByPreferences(
       sendMessageDto.recipients,
       sendMessageDto.channels,
-      tenantId || 'default',
+      tenantId || "default",
     );
 
     if (filteredRecipients.length === 0) {
       this.logger.warn(
-        'No recipients passed preference filters for channels: ' +
-          sendMessageDto.channels.join(', '),
+        "No recipients passed preference filters for channels: " +
+          sendMessageDto.channels.join(", "),
       );
       return {
         id: `msg_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`,
@@ -91,16 +88,14 @@ export class MessagingService {
         recipientCount: 0,
         deliveries: [],
         createdAt: new Date(),
-        message: 'No recipients passed preference filters',
+        message: "No recipients passed preference filters",
       };
     }
 
     return this.notificationEngine.sendMessagingRequest({
-      tenantId: tenantId || 'default',
+      tenantId: tenantId || "default",
       projectId:
-        (sendMessageDto.metadata?.projectId as string | undefined) ??
-        tenantId ??
-        'default',
+        (sendMessageDto.metadata?.projectId as string | undefined) ?? tenantId ?? "default",
       channels: sendMessageDto.channels,
       recipients: filteredRecipients,
       subject: sendMessageDto.subject,
@@ -126,10 +121,10 @@ export class MessagingService {
         successCount++;
       } catch (error) {
         failedCount++;
-        this.logger.error('Failed to send message in bulk:', error.message, {
+        this.logger.error("Failed to send message in bulk:", error.message, {
           error: error.stack,
           messageIndex: bulkMessageDto.messages.indexOf(messageDto),
-          batchId: bulkMessageDto.batchId
+          batchId: bulkMessageDto.batchId,
         });
       }
     }
@@ -149,18 +144,14 @@ export class MessagingService {
    */
   async getMessageStatus(messageId: string, tenantId?: string) {
     // Check if this is a transient ID (immediate send)
-    if (messageId.startsWith('msg_')) {
+    if (messageId.startsWith("msg_")) {
       throw new NotFoundException(
-        'Status not available for immediate sends. Only scheduled messages have persistent status.'
+        "Status not available for immediate sends. Only scheduled messages have persistent status.",
       );
     }
 
     const whereCondition = tenantId ? { tenantId } : {};
-    const message = await this.messageRepository.findById(
-      messageId,
-      false,
-      whereCondition,
-    );
+    const message = await this.messageRepository.findById(messageId, false, whereCondition);
 
     if (!message) {
       throw new NotFoundException(`Message ${messageId} not found`);
@@ -183,9 +174,9 @@ export class MessagingService {
    * Immediate sends don't store delivery records
    */
   async getDeliveryReports(messageId: string, tenantId?: string) {
-    if (messageId.startsWith('msg_')) {
+    if (messageId.startsWith("msg_")) {
       throw new NotFoundException(
-        'Delivery reports not available for immediate sends. Use provider webhooks for delivery tracking.'
+        "Delivery reports not available for immediate sends. Use provider webhooks for delivery tracking.",
       );
     }
 
@@ -201,30 +192,25 @@ export class MessagingService {
     // For scheduled messages, return basic info without detailed delivery records
     return {
       messageId,
-      note: 'Detailed delivery tracking available via provider webhooks'
+      note: "Detailed delivery tracking available via provider webhooks",
     };
   }
 
-  async getTenantMessages(
-    query: any,
-    tenantId?: string,
-  ): Promise<IPaginatedData<any>> {
+  async getTenantMessages(query: any, tenantId?: string): Promise<IPaginatedData<any>> {
     const page = Math.max(Number(query.page) || 1, 1);
     const limit = Math.min(Math.max(Number(query.limit) || 20, 1), 100);
 
-    const qb = this.logRepository.createQueryBuilder('log');
+    const qb = this.logRepository.createQueryBuilder("log");
     applyMessageLogFilters(qb, query, tenantId);
 
-    qb.orderBy('log.createdAt', 'DESC')
+    qb.orderBy("log.createdAt", "DESC")
       .skip((page - 1) * limit)
       .take(limit);
 
     const [logs, total] = await qb.getManyAndCount();
     const messageIds = [
       ...new Set(
-        logs
-          .map((log) => log.metadata?.messageId)
-          .filter((id): id is string => Boolean(id)),
+        logs.map((log) => log.metadata?.messageId).filter((id): id is string => Boolean(id)),
       ),
     ];
     const messages = messageIds.length
@@ -232,7 +218,7 @@ export class MessagingService {
       : [];
     const records = mapLogsToMessageListRecords(logs, messages);
 
-    return getPaginationSummary(records, total, { page, limit }, 'messages');
+    return getPaginationSummary(records, total, { page, limit }, "messages");
   }
 
   async getMessageDetail(id: string, tenantId?: string) {
@@ -243,11 +229,7 @@ export class MessagingService {
 
     const messageId = log.metadata?.messageId;
     const message = messageId
-      ? await this.messageRepository.findById(
-          messageId,
-          false,
-          tenantId ? { tenantId } : {},
-        )
+      ? await this.messageRepository.findById(messageId, false, tenantId ? { tenantId } : {})
       : null;
     const deliveries = messageId
       ? await this.messageDeliveryRepository.findByMessageId(messageId)
@@ -271,7 +253,7 @@ export class MessagingService {
       failedAt: log.failedAt,
       scheduledAt: log.scheduledAt,
       subject: message?.subject ?? null,
-      content: hasContent ? message?.content ?? null : null,
+      content: hasContent ? (message?.content ?? null) : null,
       hasContent,
       events,
       deliveries: deliveries.map((delivery) => ({
@@ -301,10 +283,10 @@ export class MessagingService {
     });
     if (byTracking) return byTracking;
 
-    const qb = this.logRepository.createQueryBuilder('log');
+    const qb = this.logRepository.createQueryBuilder("log");
     qb.where("log.metadata->>'messageId' = :id", { id });
     if (tenantId) {
-      qb.andWhere('log.tenantId = :tenantId', { tenantId });
+      qb.andWhere("log.tenantId = :tenantId", { tenantId });
     }
     return qb.getOne();
   }
@@ -326,24 +308,24 @@ export class MessagingService {
       at: Date;
       error?: string;
       detail?: unknown;
-    }> = [{ type: 'queued', at: log.createdAt }];
+    }> = [{ type: "queued", at: log.createdAt }];
 
-    if (log.sentAt) events.push({ type: 'sent', at: log.sentAt });
-    if (log.deliveredAt) events.push({ type: 'delivered', at: log.deliveredAt });
+    if (log.sentAt) events.push({ type: "sent", at: log.sentAt });
+    if (log.deliveredAt) events.push({ type: "delivered", at: log.deliveredAt });
     if (log.failedAt) {
-      events.push({ type: 'failed', at: log.failedAt, error: log.error });
+      events.push({ type: "failed", at: log.failedAt, error: log.error });
     }
 
     for (const delivery of deliveries) {
       if (delivery.openedAt) {
-        events.push({ type: 'opened', at: delivery.openedAt });
+        events.push({ type: "opened", at: delivery.openedAt });
       }
       if (delivery.clickedAt) {
-        events.push({ type: 'clicked', at: delivery.clickedAt });
+        events.push({ type: "clicked", at: delivery.clickedAt });
       }
-      if (delivery.status === 'bounced') {
+      if (delivery.status === "bounced") {
         events.push({
-          type: 'bounced',
+          type: "bounced",
           at: delivery.deliveredAt ?? log.createdAt,
           error: delivery.errorMessage,
           detail: delivery.providerResponse,
@@ -356,11 +338,7 @@ export class MessagingService {
 
   async cancelMessage(messageId: string, tenantId?: string) {
     const whereCondition = tenantId ? { tenantId } : {};
-    const message = await this.messageRepository.findById(
-      messageId,
-      false,
-      whereCondition,
-    );
+    const message = await this.messageRepository.findById(messageId, false, whereCondition);
 
     if (!message) {
       throw new NotFoundException(`Message ${messageId} not found`);
@@ -376,16 +354,14 @@ export class MessagingService {
   }
 
   async getDeliveryStats(query: any, tenantId?: string) {
-    const qb = this.logRepository.createQueryBuilder('log');
+    const qb = this.logRepository.createQueryBuilder("log");
     applyMessageLogFilters(qb, query, tenantId);
 
     const logs = await qb.getMany();
-    const sent = logs.filter((log) =>
-      ['sent', 'delivered'].includes(log.status),
-    ).length;
-    const delivered = logs.filter((log) => log.status === 'delivered').length;
-    const failed = logs.filter((log) => log.status === 'failed').length;
-    const queued = logs.filter((log) => log.status === 'queued').length;
+    const sent = logs.filter((log) => ["sent", "delivered"].includes(log.status)).length;
+    const delivered = logs.filter((log) => log.status === "delivered").length;
+    const failed = logs.filter((log) => log.status === "failed").length;
+    const queued = logs.filter((log) => log.status === "queued").length;
 
     return {
       total: logs.length,
@@ -415,15 +391,15 @@ export class MessagingService {
       // Process each channel
       const deliveryResults: Array<{
         channel: string;
-        status: 'delivered' | 'failed';
+        status: "delivered" | "failed";
         result?: any;
         error?: string;
       }> = [];
-      
+
       for (const channel of message.channels) {
         try {
           let result;
-          
+
           switch (channel.toLowerCase()) {
             // case 'email':
             //   result = await this.processEmailChannel(message);
@@ -450,24 +426,23 @@ export class MessagingService {
 
           deliveryResults.push({
             channel,
-            status: 'delivered',
-            result
+            status: "delivered",
+            result,
           });
-
         } catch (error) {
           this.logger.error(`Failed to process ${channel} for message ${messageId}:`, error);
           deliveryResults.push({
             channel,
-            status: 'failed',
-            error: error.message
+            status: "failed",
+            error: error.message,
           });
         }
       }
 
       // Update final message status
-      const hasFailures = deliveryResults.some(r => r.status === 'failed');
-      const hasSuccess = deliveryResults.some(r => r.status === 'delivered');
-      
+      const hasFailures = deliveryResults.some((r) => r.status === "failed");
+      const hasSuccess = deliveryResults.some((r) => r.status === "delivered");
+
       let finalStatus = MessageStatus.FAILED;
       if (hasSuccess && !hasFailures) {
         finalStatus = MessageStatus.DELIVERED;
@@ -478,12 +453,11 @@ export class MessagingService {
       await this.messageRepository.update(messageId, {
         status: finalStatus,
         deliveredAt: hasSuccess ? new Date() : undefined,
-        errorMessage: hasFailures ? 'Some channels failed' : undefined,
+        errorMessage: hasFailures ? "Some channels failed" : undefined,
       });
 
       // NO DELIVERY RECORDS - Keep it lightweight
       this.logger.log(`Processed scheduled message ${messageId}: ${finalStatus}`);
-
     } catch (error) {
       this.logger.error(`Failed to process message ${messageId}:`, error);
       await this.messageRepository.update(messageId, {
@@ -496,7 +470,7 @@ export class MessagingService {
   /**
    * DIRECT SEND METHODS - Transport mode (no storage)
    */
-  
+
   // private async sendEmailDirect(messageData: any) {
   //   const emailPayload = {
   //     to: messageData.recipients.map(r => r.email).filter(Boolean),
@@ -574,7 +548,7 @@ export class MessagingService {
   /**
    * SCHEDULED MESSAGE PROCESSING - Only for stored scheduled messages
    */
-  
+
   // private async processEmailChannel(message: any) {
   //   const emailPayload = {
   //     to: message.recipients.map(r => r.email).filter(Boolean),
@@ -670,17 +644,20 @@ export class MessagingService {
     metadata?: Record<string, any>;
   }) {
     // Use the main sendMessage method which handles transport mode
-    return this.sendMessage({
-      channels: request.channels as any,
-      recipients: request.recipients as any,
-      templateId: request.templateId,
-      data: request.data,
-      subject: request.subject,
-      content: request.content,
-      priority: request.priority as any,
-      scheduledAt: request.scheduledAt,
-      metadata: request.metadata,
-    }, request.tenantId);
+    return this.sendMessage(
+      {
+        channels: request.channels as any,
+        recipients: request.recipients as any,
+        templateId: request.templateId,
+        data: request.data,
+        subject: request.subject,
+        content: request.content,
+        priority: request.priority as any,
+        scheduledAt: request.scheduledAt,
+        metadata: request.metadata,
+      },
+      request.tenantId,
+    );
   }
 
   /**
@@ -693,7 +670,7 @@ export class MessagingService {
   async sendWithDigest(
     sendMessageDto: SendMessageDto,
     tenantId: string,
-    frequency: 'instant' | 'daily' | 'weekly' | 'monthly' = 'instant',
+    frequency: "instant" | "daily" | "weekly" | "monthly" = "instant",
   ) {
     const digestConfig = this.digestService.getDigestConfig(frequency);
     if (!digestConfig) {
@@ -701,7 +678,7 @@ export class MessagingService {
     }
 
     // For instant, send immediately
-    if (frequency === 'instant') {
+    if (frequency === "instant") {
       return this.sendMessage(sendMessageDto, tenantId);
     }
 
@@ -711,31 +688,29 @@ export class MessagingService {
       if (!subscriberId) continue;
 
       for (const channel of sendMessageDto.channels) {
-        const contentText = typeof sendMessageDto.content === 'string' 
-          ? sendMessageDto.content 
-          : (sendMessageDto.content as any)?.text || '';
+        const contentText =
+          typeof sendMessageDto.content === "string"
+            ? sendMessageDto.content
+            : (sendMessageDto.content as any)?.text || "";
 
         const digestNotification: DigestNotification = {
           id: `notif_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
           subscriberId,
           tenantId,
           channel,
-          title: sendMessageDto.subject || '',
+          title: sendMessageDto.subject || "",
           content: contentText,
           data: sendMessageDto.data,
           createdAt: new Date(),
           templateId: sendMessageDto.templateId,
         };
 
-        await this.digestService.queueNotificationForDigest(
-          digestNotification,
-          digestConfig,
-        );
+        await this.digestService.queueNotificationForDigest(digestNotification, digestConfig);
       }
     }
 
     return {
-      status: 'queued_for_digest',
+      status: "queued_for_digest",
       frequency,
       recipientCount: sendMessageDto.recipients.length,
       message: `Notifications queued for ${frequency} digest delivery`,
@@ -798,7 +773,7 @@ export class MessagingService {
     }
 
     return {
-      status: 'scheduled',
+      status: "scheduled",
       timezone: scheduleConfig.timezone,
       sendTime: scheduleConfig.sendTime,
       notificationCount: scheduled.length,
@@ -832,7 +807,7 @@ export class MessagingService {
    */
   async cancelScheduledNotification(notificationId: string) {
     await this.schedulingService.cancelNotification(notificationId);
-    return { status: 'cancelled', notificationId };
+    return { status: "cancelled", notificationId };
   }
 
   /**

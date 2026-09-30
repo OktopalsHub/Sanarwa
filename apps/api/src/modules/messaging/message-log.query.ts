@@ -18,29 +18,29 @@ export function applyMessageLogFilters(
   tenantId?: string,
 ) {
   if (tenantId) {
-    qb.where('log.tenantId = :tenantId', { tenantId });
+    qb.where("log.tenantId = :tenantId", { tenantId });
   }
   if (query.channel) {
-    qb.andWhere('log.channel = :channel', { channel: query.channel });
+    qb.andWhere("log.channel = :channel", { channel: query.channel });
   }
   if (query.status) {
-    qb.andWhere('log.status = :status', { status: query.status });
+    qb.andWhere("log.status = :status", { status: query.status });
   }
   if (query.projectId) {
-    qb.andWhere('log.projectId = :projectId', { projectId: query.projectId });
+    qb.andWhere("log.projectId = :projectId", { projectId: query.projectId });
   }
   if (query.q) {
-    qb.andWhere('(log.to ILIKE :q OR log.trackingId ILIKE :q)', {
+    qb.andWhere("(log.to ILIKE :q OR log.trackingId ILIKE :q)", {
       q: `%${query.q}%`,
     });
   }
   if (query.startDate) {
-    qb.andWhere('log.createdAt >= :startDate', {
+    qb.andWhere("log.createdAt >= :startDate", {
       startDate: new Date(query.startDate),
     });
   }
   if (query.endDate) {
-    qb.andWhere('log.createdAt <= :endDate', {
+    qb.andWhere("log.createdAt <= :endDate", {
       endDate: new Date(query.endDate),
     });
   }
@@ -64,9 +64,7 @@ export function mapLogsToMessageListRecords(
 ) {
   const messageById = new Map(messages.map((message) => [message.id, message]));
   return logs.map((log) => {
-    const message = log.metadata?.messageId
-      ? messageById.get(log.metadata.messageId)
-      : undefined;
+    const message = log.metadata?.messageId ? messageById.get(log.metadata.messageId) : undefined;
     return {
       id: log.id,
       trackingId: log.trackingId,

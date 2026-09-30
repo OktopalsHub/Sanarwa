@@ -1,4 +1,4 @@
-import { providerApi } from '@/lib/api/provider';
+import { providerApi } from "@/lib/api/provider";
 import type {
   CreateProviderRequest,
   Provider,
@@ -6,14 +6,14 @@ import type {
   ProviderQueryParams,
   ProviderTestData,
   ProviderType,
-  UpdateProviderRequest
-} from '@/lib/types/provider';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+  UpdateProviderRequest,
+} from "@/lib/types/provider";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 // Query hook for providers with filtering and pagination
 export function useProviders(params?: ProviderQueryParams) {
   return useQuery({
-    queryKey: ['providers', params],
+    queryKey: ["providers", params],
     queryFn: () => providerApi.getProviders(params),
     staleTime: 2 * 60 * 1000, // 2 minutes
   });
@@ -22,7 +22,7 @@ export function useProviders(params?: ProviderQueryParams) {
 // Query hook for providers by project
 export function useProvidersByProject(projectId: string, params?: ProviderQueryParams) {
   return useQuery({
-    queryKey: ['providers', 'project', projectId, params],
+    queryKey: ["providers", "project", projectId, params],
     queryFn: () => providerApi.getProvidersByProject(projectId, params),
     enabled: !!projectId,
     staleTime: 2 * 60 * 1000, // 2 minutes
@@ -32,7 +32,7 @@ export function useProvidersByProject(projectId: string, params?: ProviderQueryP
 // Query hook for specific provider details
 export function useProvider(providerId: string) {
   return useQuery({
-    queryKey: ['providers', providerId],
+    queryKey: ["providers", providerId],
     queryFn: () => providerApi.getProvider(providerId),
     enabled: !!providerId,
     staleTime: 5 * 60 * 1000, // 5 minutes
@@ -42,7 +42,7 @@ export function useProvider(providerId: string) {
 // Query hook for provider health status
 export function useProviderHealth(providerId: string) {
   return useQuery({
-    queryKey: ['providers', providerId, 'health'],
+    queryKey: ["providers", providerId, "health"],
     queryFn: () => providerApi.checkProviderHealth(providerId),
     enabled: !!providerId,
     staleTime: 30 * 1000, // 30 seconds - health changes frequently
@@ -53,7 +53,7 @@ export function useProviderHealth(providerId: string) {
 // Query hook for all providers health status
 export function useAllProvidersHealth() {
   return useQuery({
-    queryKey: ['providers', 'health', 'all'],
+    queryKey: ["providers", "health", "all"],
     queryFn: () => providerApi.getAllProviderHealth(),
     staleTime: 30 * 1000, // 30 seconds
     refetchInterval: 60 * 1000, // Refetch every minute
@@ -67,10 +67,10 @@ export function useProviderHealthHistory(
     startDate?: Date;
     endDate?: Date;
     limit?: number;
-  }
+  },
 ) {
   return useQuery({
-    queryKey: ['providers', providerId, 'health', 'history', params],
+    queryKey: ["providers", providerId, "health", "history", params],
     queryFn: () => providerApi.getProviderHealthHistory(providerId, params),
     enabled: !!providerId,
     staleTime: 5 * 60 * 1000, // 5 minutes
@@ -83,11 +83,11 @@ export function useProviderMetrics(
   params?: {
     startDate?: Date;
     endDate?: Date;
-    groupBy?: 'hour' | 'day' | 'week' | 'month';
-  }
+    groupBy?: "hour" | "day" | "week" | "month";
+  },
 ) {
   return useQuery({
-    queryKey: ['providers', providerId, 'metrics', params],
+    queryKey: ["providers", providerId, "metrics", params],
     queryFn: () => providerApi.getProviderMetrics(providerId, params),
     enabled: !!providerId,
     staleTime: 2 * 60 * 1000, // 2 minutes
@@ -99,10 +99,10 @@ export function useAllProvidersMetrics(params?: {
   type?: ProviderType;
   startDate?: Date;
   endDate?: Date;
-  groupBy?: 'hour' | 'day' | 'week' | 'month';
+  groupBy?: "hour" | "day" | "week" | "month";
 }) {
   return useQuery({
-    queryKey: ['providers', 'metrics', 'all', params],
+    queryKey: ["providers", "metrics", "all", params],
     queryFn: () => providerApi.getAllProviderMetrics(params),
     staleTime: 2 * 60 * 1000, // 2 minutes
   });
@@ -114,11 +114,11 @@ export function useProviderComparison(
   params?: {
     startDate?: Date;
     endDate?: Date;
-    metrics?: ('success_rate' | 'response_time' | 'usage_count')[];
-  }
+    metrics?: ("success_rate" | "response_time" | "usage_count")[];
+  },
 ) {
   return useQuery({
-    queryKey: ['providers', 'comparison', providerIds, params],
+    queryKey: ["providers", "comparison", providerIds, params],
     queryFn: () => providerApi.compareProviders(providerIds, params),
     enabled: providerIds.length > 0,
     staleTime: 5 * 60 * 1000, // 5 minutes
@@ -128,7 +128,7 @@ export function useProviderComparison(
 // Query hook for failover configuration
 export function useFailoverConfig(channel: ProviderType) {
   return useQuery({
-    queryKey: ['providers', 'failover', channel],
+    queryKey: ["providers", "failover", channel],
     queryFn: () => providerApi.getFailoverConfig(channel),
     enabled: !!channel,
     staleTime: 5 * 60 * 1000, // 5 minutes
@@ -138,7 +138,7 @@ export function useFailoverConfig(channel: ProviderType) {
 // Query hook for recommended provider
 export function useRecommendedProvider(channel: ProviderType) {
   return useQuery({
-    queryKey: ['providers', 'recommendations', channel],
+    queryKey: ["providers", "recommendations", channel],
     queryFn: () => providerApi.getRecommendedProvider(channel),
     enabled: !!channel,
     staleTime: 10 * 60 * 1000, // 10 minutes
@@ -148,7 +148,7 @@ export function useRecommendedProvider(channel: ProviderType) {
 // Query hook for provider feature support
 export function useProviderFeatureSupport(providerId: string, feature: string) {
   return useQuery({
-    queryKey: ['providers', providerId, 'features', feature],
+    queryKey: ["providers", providerId, "features", feature],
     queryFn: () => providerApi.checkProviderFeatureSupport(providerId, feature),
     enabled: !!providerId && !!feature,
     staleTime: 30 * 60 * 1000, // 30 minutes - feature support doesn't change often
@@ -163,12 +163,12 @@ export function useCreateProvider() {
     mutationFn: (data: CreateProviderRequest) => providerApi.createProvider(data),
     onSuccess: () => {
       // Invalidate providers list
-      queryClient.invalidateQueries({ queryKey: ['providers'] });
+      queryClient.invalidateQueries({ queryKey: ["providers"] });
       // Invalidate health status
-      queryClient.invalidateQueries({ queryKey: ['providers', 'health'] });
+      queryClient.invalidateQueries({ queryKey: ["providers", "health"] });
     },
     onError: (error) => {
-      console.error('Create provider failed:', error);
+      console.error("Create provider failed:", error);
     },
   });
 }
@@ -181,14 +181,14 @@ export function useUpdateProvider(providerId: string) {
     mutationFn: (data: UpdateProviderRequest) => providerApi.updateProvider(providerId, data),
     onSuccess: () => {
       // Invalidate specific provider
-      queryClient.invalidateQueries({ queryKey: ['providers', providerId] });
+      queryClient.invalidateQueries({ queryKey: ["providers", providerId] });
       // Invalidate providers list
-      queryClient.invalidateQueries({ queryKey: ['providers'] });
+      queryClient.invalidateQueries({ queryKey: ["providers"] });
       // Invalidate health status
-      queryClient.invalidateQueries({ queryKey: ['providers', providerId, 'health'] });
+      queryClient.invalidateQueries({ queryKey: ["providers", providerId, "health"] });
     },
     onError: (error) => {
-      console.error('Update provider failed:', error);
+      console.error("Update provider failed:", error);
     },
   });
 }
@@ -201,14 +201,14 @@ export function useDeleteProvider() {
     mutationFn: (providerId: string) => providerApi.deleteProvider(providerId),
     onSuccess: (data, providerId) => {
       // Remove provider from cache
-      queryClient.removeQueries({ queryKey: ['providers', providerId] });
+      queryClient.removeQueries({ queryKey: ["providers", providerId] });
       // Invalidate providers list
-      queryClient.invalidateQueries({ queryKey: ['providers'] });
+      queryClient.invalidateQueries({ queryKey: ["providers"] });
       // Invalidate health status
-      queryClient.invalidateQueries({ queryKey: ['providers', 'health'] });
+      queryClient.invalidateQueries({ queryKey: ["providers", "health"] });
     },
     onError: (error) => {
-      console.error('Delete provider failed:', error);
+      console.error("Delete provider failed:", error);
     },
   });
 }
@@ -219,7 +219,7 @@ export function useTestProvider() {
     mutationFn: ({ providerId, testData }: { providerId: string; testData?: ProviderTestData }) =>
       providerApi.testProvider(providerId, testData),
     onError: (error) => {
-      console.error('Test provider failed:', error);
+      console.error("Test provider failed:", error);
     },
   });
 }
@@ -230,7 +230,7 @@ export function useTestProviderWithData() {
     mutationFn: ({ providerId, testData }: { providerId: string; testData: ProviderTestData }) =>
       providerApi.testProviderWithData(providerId, testData),
     onError: (error) => {
-      console.error('Test provider with data failed:', error);
+      console.error("Test provider with data failed:", error);
     },
   });
 }
@@ -243,14 +243,14 @@ export function useActivateProvider() {
     mutationFn: (providerId: string) => providerApi.activateProvider(providerId),
     onSuccess: (data, providerId) => {
       // Update provider status in cache
-      queryClient.setQueryData(['providers', providerId], (old: Provider | undefined) =>
-        old ? { ...old, status: 'active' } : old
+      queryClient.setQueryData(["providers", providerId], (old: Provider | undefined) =>
+        old ? { ...old, status: "active" } : old,
       );
       // Invalidate providers list
-      queryClient.invalidateQueries({ queryKey: ['providers'] });
+      queryClient.invalidateQueries({ queryKey: ["providers"] });
     },
     onError: (error) => {
-      console.error('Activate provider failed:', error);
+      console.error("Activate provider failed:", error);
     },
   });
 }
@@ -263,14 +263,14 @@ export function useDeactivateProvider() {
     mutationFn: (providerId: string) => providerApi.deactivateProvider(providerId),
     onSuccess: (data, providerId) => {
       // Update provider status in cache
-      queryClient.setQueryData(['providers', providerId], (old: Provider | undefined) =>
-        old ? { ...old, status: 'inactive' } : old
+      queryClient.setQueryData(["providers", providerId], (old: Provider | undefined) =>
+        old ? { ...old, status: "inactive" } : old,
       );
       // Invalidate providers list
-      queryClient.invalidateQueries({ queryKey: ['providers'] });
+      queryClient.invalidateQueries({ queryKey: ["providers"] });
     },
     onError: (error) => {
-      console.error('Deactivate provider failed:', error);
+      console.error("Deactivate provider failed:", error);
     },
   });
 }
@@ -283,14 +283,14 @@ export function useSetDefaultProvider() {
     mutationFn: (providerId: string) => providerApi.setDefaultProvider(providerId),
     onSuccess: (data, providerId) => {
       // Update provider default status in cache
-      queryClient.setQueryData(['providers', providerId], (old: Provider | undefined) =>
-        old ? { ...old, isDefault: true } : old
+      queryClient.setQueryData(["providers", providerId], (old: Provider | undefined) =>
+        old ? { ...old, isDefault: true } : old,
       );
       // Invalidate providers list to update other providers' default status
-      queryClient.invalidateQueries({ queryKey: ['providers'] });
+      queryClient.invalidateQueries({ queryKey: ["providers"] });
     },
     onError: (error) => {
-      console.error('Set default provider failed:', error);
+      console.error("Set default provider failed:", error);
     },
   });
 }
@@ -303,12 +303,12 @@ export function useTriggerHealthCheck() {
     mutationFn: (providerId: string) => providerApi.triggerHealthCheck(providerId),
     onSuccess: (data, providerId) => {
       // Update health status in cache
-      queryClient.setQueryData(['providers', providerId, 'health'], data);
+      queryClient.setQueryData(["providers", providerId, "health"], data);
       // Invalidate all health queries
-      queryClient.invalidateQueries({ queryKey: ['providers', 'health'] });
+      queryClient.invalidateQueries({ queryKey: ["providers", "health"] });
     },
     onError: (error) => {
-      console.error('Trigger health check failed:', error);
+      console.error("Trigger health check failed:", error);
     },
   });
 }
@@ -322,10 +322,10 @@ export function useUpdateFailoverConfig(channel: ProviderType) {
       providerApi.updateFailoverConfig(channel, config),
     onSuccess: () => {
       // Invalidate failover configuration
-      queryClient.invalidateQueries({ queryKey: ['providers', 'failover', channel] });
+      queryClient.invalidateQueries({ queryKey: ["providers", "failover", channel] });
     },
     onError: (error) => {
-      console.error('Update failover config failed:', error);
+      console.error("Update failover config failed:", error);
     },
   });
 }
@@ -346,12 +346,12 @@ export function useTriggerFailover() {
     }) => providerApi.triggerFailover(channel, fromProviderId, toProviderId),
     onSuccess: (data, { channel }) => {
       // Invalidate failover configuration and provider status
-      queryClient.invalidateQueries({ queryKey: ['providers', 'failover', channel] });
-      queryClient.invalidateQueries({ queryKey: ['providers'] });
-      queryClient.invalidateQueries({ queryKey: ['providers', 'health'] });
+      queryClient.invalidateQueries({ queryKey: ["providers", "failover", channel] });
+      queryClient.invalidateQueries({ queryKey: ["providers"] });
+      queryClient.invalidateQueries({ queryKey: ["providers", "health"] });
     },
     onError: (error) => {
-      console.error('Trigger failover failed:', error);
+      console.error("Trigger failover failed:", error);
     },
   });
 }
@@ -384,15 +384,19 @@ export function useProviderStats() {
 
   const stats = {
     total: providers?.data?.length || 0,
-    active: providers?.data?.filter(p => p.status === 'active').length || 0,
-    inactive: providers?.data?.filter(p => p.status === 'inactive').length || 0,
-    healthy: healthStatuses?.filter(h => h.status === 'healthy').length || 0,
-    unhealthy: healthStatuses?.filter(h => h.status === 'unhealthy').length || 0,
-    degraded: healthStatuses?.filter(h => h.status === 'degraded').length || 0,
-    byType: providers?.data?.reduce((acc, provider) => {
-      acc[provider.type] = (acc[provider.type] || 0) + 1;
-      return acc;
-    }, {} as Record<string, number>) || {},
+    active: providers?.data?.filter((p) => p.status === "active").length || 0,
+    inactive: providers?.data?.filter((p) => p.status === "inactive").length || 0,
+    healthy: healthStatuses?.filter((h) => h.status === "healthy").length || 0,
+    unhealthy: healthStatuses?.filter((h) => h.status === "unhealthy").length || 0,
+    degraded: healthStatuses?.filter((h) => h.status === "degraded").length || 0,
+    byType:
+      providers?.data?.reduce(
+        (acc, provider) => {
+          acc[provider.type] = (acc[provider.type] || 0) + 1;
+          return acc;
+        },
+        {} as Record<string, number>,
+      ) || {},
   };
 
   return stats;
@@ -407,10 +411,10 @@ export function useProviderInsights(timeRange: { startDate: Date; endDate: Date 
 
   const insights = {
     bestPerforming: allMetrics?.reduce((best, current) =>
-      current.successRate > (best?.successRate || 0) ? current : best
+      current.successRate > (best?.successRate || 0) ? current : best,
     ),
     worstPerforming: allMetrics?.reduce((worst, current) =>
-      current.successRate < (worst?.successRate || 1) ? current : worst
+      current.successRate < (worst?.successRate || 1) ? current : worst,
     ),
     averageSuccessRate: allMetrics?.length
       ? allMetrics.reduce((sum, m) => sum + m.successRate, 0) / allMetrics.length

@@ -1,10 +1,5 @@
-import {
-  ArgumentsHost,
-  BadRequestException,
-  Catch,
-  ExceptionFilter,
-} from '@nestjs/common';
-import { Response } from 'express';
+import { ArgumentsHost, BadRequestException, Catch, ExceptionFilter } from "@nestjs/common";
+import { Response } from "express";
 
 @Catch(BadRequestException)
 export class ValidationExceptionFilter implements ExceptionFilter {
@@ -17,8 +12,8 @@ export class ValidationExceptionFilter implements ExceptionFilter {
     const errorResponse = {
       success: false,
       error: {
-        code: 'VALIDATION_ERROR',
-        message: 'Validation failed',
+        code: "VALIDATION_ERROR",
+        message: "Validation failed",
         details: exceptionResponse.message || exceptionResponse,
         timestamp: new Date().toISOString(),
       },

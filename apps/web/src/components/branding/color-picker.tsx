@@ -1,13 +1,17 @@
-'use client';
+"use client";
 
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { cn } from '@/lib/utils';
-import { getAccessibilityLevel } from '@/lib/utils/color-contrast';
-import { Popover, PopoverContent, PopoverTrigger } from '@radix-ui/react-popover';
-import { CheckIcon, ExclamationTriangleIcon, DocumentDuplicateIcon } from '@heroicons/react/24/outline';
-import { useCallback, useState } from 'react';
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { cn } from "@/lib/utils";
+import { getAccessibilityLevel } from "@/lib/utils/color-contrast";
+import { Popover, PopoverContent, PopoverTrigger } from "@radix-ui/react-popover";
+import {
+  CheckIcon,
+  ExclamationTriangleIcon,
+  DocumentDuplicateIcon,
+} from "@heroicons/react/24/outline";
+import { useCallback, useState } from "react";
 
 interface ColorPickerProps {
   label: string;
@@ -41,9 +45,9 @@ export function ColorPicker({
         <Label className="text-sm font-medium">{label}</Label>
         {showAccessibility && accessibilityLevel && (
           <div className="flex items-center gap-1">
-            {accessibilityLevel === 'AAA' && <CheckIcon className="h-4 w-4 text-green-600" />}
-            {accessibilityLevel === 'AA' && <CheckIcon className="h-4 w-4 text-yellow-600" />}
-            {accessibilityLevel === 'FAIL' && (
+            {accessibilityLevel === "AAA" && <CheckIcon className="h-4 w-4 text-green-600" />}
+            {accessibilityLevel === "AA" && <CheckIcon className="h-4 w-4 text-yellow-600" />}
+            {accessibilityLevel === "FAIL" && (
               <ExclamationTriangleIcon className="h-4 w-4 text-red-600" />
             )}
             <span className="text-xs text-muted-foreground">{accessibilityLevel}</span>
@@ -67,8 +71,8 @@ export function ColorPicker({
                     key={preset.name}
                     type="button"
                     className={cn(
-                      'h-8 rounded border-2 transition-all hover:scale-105',
-                      value === preset.value ? 'border-primary' : 'border-transparent'
+                      "h-8 rounded border-2 transition-all hover:scale-105",
+                      value === preset.value ? "border-primary" : "border-transparent",
                     )}
                     style={{ backgroundColor: preset.value }}
                     onClick={() => onChange(preset.value)}
@@ -77,7 +81,12 @@ export function ColorPicker({
                 ))}
               </div>
             )}
-            <Button variant="ghost" size="sm" className="w-full" onClick={() => copyToClipboard(value)}>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="w-full"
+              onClick={() => copyToClipboard(value)}
+            >
               <DocumentDuplicateIcon className="h-4 w-4 mr-2" />
               Copy value
             </Button>

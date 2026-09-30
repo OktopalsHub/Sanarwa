@@ -1,18 +1,18 @@
-export type BillingChannel = 'email' | 'sms' | 'push' | 'whatsapp' | 'in_app' | 'voice';
+export type BillingChannel = "email" | "sms" | "push" | "whatsapp" | "in_app" | "voice";
 
-export type BillingMode = 'managed' | 'byo';
+export type BillingMode = "managed" | "byo";
 
 /** BYO-eligible channels — customer brings provider credentials. */
 export const BYO_ELIGIBLE_CHANNELS: BillingChannel[] = [
-  'email',
-  'sms',
-  'push',
-  'whatsapp',
-  'voice',
+  "email",
+  "sms",
+  "push",
+  "whatsapp",
+  "voice",
 ];
 
 /** Always Sanarwa-managed — not BYO (Novu-style in-app / realtime). */
-export const MANAGED_ONLY_CHANNELS: BillingChannel[] = ['in_app'];
+export const MANAGED_ONLY_CHANNELS: BillingChannel[] = ["in_app"];
 
 /** Sanarwa pays delivery — per-channel weights include provider COGS. */
 export const MANAGED_CHANNEL_TOKEN_COST: Record<BillingChannel, number> = {
@@ -35,7 +35,7 @@ export function isByoEligibleChannel(channel: BillingChannel): boolean {
 }
 
 export function channelTokenCosts(mode: BillingMode): Record<BillingChannel, number> {
-  if (mode === 'managed') {
+  if (mode === "managed") {
     return { ...MANAGED_CHANNEL_TOKEN_COST };
   }
   return Object.fromEntries(
@@ -46,17 +46,12 @@ export function channelTokenCosts(mode: BillingMode): Record<BillingChannel, num
   ) as Record<BillingChannel, number>;
 }
 
-export function resolveTokenCost(
-  channel: BillingChannel,
-  mode: BillingMode,
-  units = 1,
-): number {
-  const effectiveMode =
-    mode === 'byo' && !isByoEligibleChannel(channel) ? 'managed' : mode;
+export function resolveTokenCost(channel: BillingChannel, mode: BillingMode, units = 1): number {
+  const effectiveMode = mode === "byo" && !isByoEligibleChannel(channel) ? "managed" : mode;
   const costs = channelTokenCosts(effectiveMode);
   const perUnit = costs[channel] ?? 1;
 
-  if (channel === 'voice') {
+  if (channel === "voice") {
     const minutes = Math.ceil(Number(units) || 1);
     return Math.ceil(perUnit * Math.max(1, minutes));
   }
@@ -70,5 +65,5 @@ export function normalizeBillingChannel(eventType: string): BillingChannel {
   if (key in MANAGED_CHANNEL_TOKEN_COST) {
     return key as BillingChannel;
   }
-  return 'email';
+  return "email";
 }

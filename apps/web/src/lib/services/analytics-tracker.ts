@@ -37,16 +37,16 @@ class AnalyticsTracker {
 
   constructor() {
     // Only initialize in production
-    if (process.env.NODE_ENV === 'production') {
+    if (process.env.NODE_ENV === "production") {
       this.session = this.initializeSession();
 
-      if (typeof window !== 'undefined') {
+      if (typeof window !== "undefined") {
         this.initializeTracking();
       }
     } else {
       // Minimal session for development
       this.session = {
-        id: 'dev-session',
+        id: "dev-session",
         startTime: Date.now(),
         lastActivity: Date.now(),
         pageViews: 0,
@@ -59,7 +59,7 @@ class AnalyticsTracker {
     const existingSession = this.getStoredSession();
     const now = Date.now();
 
-    if (existingSession && (now - existingSession.lastActivity) < this.sessionTimeout) {
+    if (existingSession && now - existingSession.lastActivity < this.sessionTimeout) {
       // Continue existing session
       return {
         ...existingSession,
@@ -85,7 +85,7 @@ class AnalyticsTracker {
 
   private getStoredSession(): UserSession | null {
     try {
-      const stored = localStorage.getItem('analytics_session');
+      const stored = localStorage.getItem("analytics_session");
       return stored ? JSON.parse(stored) : null;
     } catch {
       return null;
@@ -94,7 +94,7 @@ class AnalyticsTracker {
 
   private storeSession(session: UserSession) {
     try {
-      localStorage.setItem('analytics_session', JSON.stringify(session));
+      localStorage.setItem("analytics_session", JSON.stringify(session));
     } catch {
       // Ignore storage errors
     }
@@ -105,18 +105,18 @@ class AnalyticsTracker {
     this.trackPageView();
 
     // Track page visibility changes
-    document.addEventListener('visibilitychange', () => {
+    document.addEventListener("visibilitychange", () => {
       if (document.hidden) {
-        this.trackEvent('page_hidden');
+        this.trackEvent("page_hidden");
         this.endCurrentPageView();
       } else {
-        this.trackEvent('page_visible');
+        this.trackEvent("page_visible");
         this.trackPageView();
       }
     });
 
     // Track page unload
-    window.addEventListener('beforeunload', () => {
+    window.addEventListener("beforeunload", () => {
       this.endCurrentPageView();
       this.flush();
     });
@@ -153,7 +153,7 @@ class AnalyticsTracker {
     this.session.lastActivity = Date.now();
     this.storeSession(this.session);
 
-    this.trackEvent('page_view', {
+    this.trackEvent("page_view", {
       url: this.currentPageView.url,
       title: this.currentPageView.title,
       referrer: this.currentPageView.referrer,
@@ -164,7 +164,7 @@ class AnalyticsTracker {
     if (this.currentPageView) {
       const duration = Date.now() - this.currentPageView.timestamp;
 
-      this.trackEvent('page_view_end', {
+      this.trackEvent("page_view_end", {
         url: this.currentPageView.url,
         title: this.currentPageView.title,
         duration,
@@ -176,21 +176,21 @@ class AnalyticsTracker {
 
   private trackUserInteractions() {
     // Track clicks
-    document.addEventListener('click', (event) => {
+    document.addEventListener("click", (event) => {
       const target = event.target as HTMLElement;
       const elementInfo = this.getElementInfo(target);
 
-      this.trackEvent('click', {
+      this.trackEvent("click", {
         element: elementInfo,
         coordinates: { x: event.clientX, y: event.clientY },
       });
     });
 
     // Track keyboard interactions
-    document.addEventListener('keydown', (event) => {
+    document.addEventListener("keydown", (event) => {
       // Only track specific keys to avoid privacy issues
-      if (['Enter', 'Escape', 'Tab'].includes(event.key)) {
-        this.trackEvent('key_press', {
+      if (["Enter", "Escape", "Tab"].includes(event.key)) {
+        this.trackEvent("key_press", {
           key: event.key,
           ctrlKey: event.ctrlKey,
           shiftKey: event.shiftKey,
@@ -202,10 +202,14 @@ class AnalyticsTracker {
 
   private trackFormInteractions() {
     // Track form field focus
-    document.addEventListener('focusin', (event) => {
+    document.addEventListener("focusin", (event) => {
       const target = event.target as HTMLElement;
-      if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.tagName === 'SELECT') {
-        this.trackEvent('form_field_focus', {
+      if (
+        target.tagName === "INPUT" ||
+        target.tagName === "TEXTAREA" ||
+        target.tagName === "SELECT"
+      ) {
+        this.trackEvent("form_field_focus", {
           fieldType: target.tagName.toLowerCase(),
           fieldName: (target as HTMLInputElement).name,
           fieldId: target.id,
@@ -214,9 +218,9 @@ class AnalyticsTracker {
     });
 
     // Track form submissions
-    document.addEventListener('submit', (event) => {
+    document.addEventListener("submit", (event) => {
       const form = event.target as HTMLFormElement;
-      this.trackEvent('form_submit', {
+      this.trackEvent("form_submit", {
         formId: form.id,
         formAction: form.action,
         formMethod: form.method,
@@ -224,9 +228,9 @@ class AnalyticsTracker {
     });
 
     // Track form validation errors
-    document.addEventListener('invalid', (event) => {
+    document.addEventListener("invalid", (event) => {
       const target = event.target as HTMLInputElement;
-      this.trackEvent('form_validation_error', {
+      this.trackEvent("form_validation_error", {
         fieldName: target.name,
         fieldId: target.id,
         validationMessage: target.validationMessage,
@@ -240,7 +244,7 @@ class AnalyticsTracker {
 
     const trackScroll = () => {
       const scrollPercent = Math.round(
-        (window.scrollY / (document.documentElement.scrollHeight - window.innerHeight)) * 100
+        (window.scrollY / (document.documentElement.scrollHeight - window.innerHeight)) * 100,
       );
 
       if (scrollPercent > maxScroll) {
@@ -249,14 +253,14 @@ class AnalyticsTracker {
 
       clearTimeout(scrollTimeout);
       scrollTimeout = setTimeout(() => {
-        this.trackEvent('scroll_depth', {
+        this.trackEvent("scroll_depth", {
           scrollPercent: maxScroll,
           url: window.location.href,
         });
       }, 1000);
     };
 
-    window.addEventListener('scroll', trackScroll, { passive: true });
+    window.addEventListener("scroll", trackScroll, { passive: true });
   }
 
   private trackSessionActivity() {
@@ -268,15 +272,18 @@ class AnalyticsTracker {
       this.session.lastActivity = Date.now();
       this.storeSession(this.session);
 
-      activityTimeout = setTimeout(() => {
-        this.trackEvent('session_idle');
-      }, 5 * 60 * 1000); // 5 minutes of inactivity
+      activityTimeout = setTimeout(
+        () => {
+          this.trackEvent("session_idle");
+        },
+        5 * 60 * 1000,
+      ); // 5 minutes of inactivity
     };
 
-    document.addEventListener('mousemove', resetActivityTimer, { passive: true });
-    document.addEventListener('keydown', resetActivityTimer, { passive: true });
-    document.addEventListener('click', resetActivityTimer, { passive: true });
-    document.addEventListener('scroll', resetActivityTimer, { passive: true });
+    document.addEventListener("mousemove", resetActivityTimer, { passive: true });
+    document.addEventListener("keydown", resetActivityTimer, { passive: true });
+    document.addEventListener("click", resetActivityTimer, { passive: true });
+    document.addEventListener("scroll", resetActivityTimer, { passive: true });
 
     resetActivityTimer();
   }
@@ -299,7 +306,7 @@ class AnalyticsTracker {
   }
 
   public trackEvent(name: string, properties: Record<string, any> = {}) {
-    if (!this.isEnabled || process.env.NODE_ENV === 'development') return;
+    if (!this.isEnabled || process.env.NODE_ENV === "development") return;
 
     const event: AnalyticsEvent = {
       name,
@@ -327,8 +334,12 @@ class AnalyticsTracker {
     this.trackEvent(`custom_${name}`, properties);
   }
 
-  public trackFeatureUsage(featureName: string, action: string, properties: Record<string, any> = {}) {
-    this.trackEvent('feature_usage', {
+  public trackFeatureUsage(
+    featureName: string,
+    action: string,
+    properties: Record<string, any> = {},
+  ) {
+    this.trackEvent("feature_usage", {
       feature: featureName,
       action,
       ...properties,
@@ -336,7 +347,7 @@ class AnalyticsTracker {
   }
 
   public trackError(error: Error, context?: Record<string, any>) {
-    this.trackEvent('client_error', {
+    this.trackEvent("client_error", {
       message: error.message,
       stack: error.stack,
       context,
@@ -344,7 +355,7 @@ class AnalyticsTracker {
   }
 
   public trackPerformance(metricName: string, value: number, context?: Record<string, any>) {
-    this.trackEvent('performance_metric', {
+    this.trackEvent("performance_metric", {
       metric: metricName,
       value,
       context,
@@ -353,7 +364,7 @@ class AnalyticsTracker {
 
   private getUserId(): string | null {
     try {
-      const authData = localStorage.getItem('auth');
+      const authData = localStorage.getItem("auth");
       if (authData) {
         const parsed = JSON.parse(authData);
         return parsed.user?.id || null;
@@ -366,7 +377,7 @@ class AnalyticsTracker {
 
   private getTenantId(): string | null {
     try {
-      const tenantData = localStorage.getItem('selectedTenant');
+      const tenantData = localStorage.getItem("selectedTenant");
       if (tenantData) {
         const parsed = JSON.parse(tenantData);
         return parsed.id || null;
@@ -384,10 +395,10 @@ class AnalyticsTracker {
     this.events = [];
 
     try {
-      await fetch('/api/monitoring/analytics', {
-        method: 'POST',
+      await fetch("/api/monitoring/analytics", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
           events: eventsToSend,
@@ -397,8 +408,8 @@ class AnalyticsTracker {
       });
     } catch (error) {
       // Silently fail in development, only log in production
-      if (process.env.NODE_ENV === 'production') {
-        console.warn('Failed to send analytics events:', error);
+      if (process.env.NODE_ENV === "production") {
+        console.warn("Failed to send analytics events:", error);
       }
       // Re-add events to queue for retry
       this.events.unshift(...eventsToSend);
@@ -428,21 +439,21 @@ export const analyticsTracker = new AnalyticsTracker();
 
 // Utility functions for common tracking scenarios
 export function trackButtonClick(buttonName: string, context?: Record<string, any>) {
-  analyticsTracker.trackEvent('button_click', {
+  analyticsTracker.trackEvent("button_click", {
     buttonName,
     ...context,
   });
 }
 
 export function trackNavigation(from: string, to: string) {
-  analyticsTracker.trackEvent('navigation', {
+  analyticsTracker.trackEvent("navigation", {
     from,
     to,
   });
 }
 
 export function trackSearch(query: string, results: number, context?: Record<string, any>) {
-  analyticsTracker.trackEvent('search', {
+  analyticsTracker.trackEvent("search", {
     query,
     results,
     ...context,
@@ -450,14 +461,14 @@ export function trackSearch(query: string, results: number, context?: Record<str
 }
 
 export function trackModalOpen(modalName: string, context?: Record<string, any>) {
-  analyticsTracker.trackEvent('modal_open', {
+  analyticsTracker.trackEvent("modal_open", {
     modalName,
     ...context,
   });
 }
 
 export function trackModalClose(modalName: string, context?: Record<string, any>) {
-  analyticsTracker.trackEvent('modal_close', {
+  analyticsTracker.trackEvent("modal_close", {
     modalName,
     ...context,
   });

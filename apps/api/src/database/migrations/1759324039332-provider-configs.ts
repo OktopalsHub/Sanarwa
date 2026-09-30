@@ -1,7 +1,7 @@
-import { MigrationInterface, QueryRunner } from 'typeorm';
+import { MigrationInterface, QueryRunner } from "typeorm";
 
 export class ProviderConfigs1759324039332 implements MigrationInterface {
-  name = 'ProviderConfigs1759324039332';
+  name = "ProviderConfigs1759324039332";
 
   public async up(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.query(`CREATE EXTENSION IF NOT EXISTS "uuid-ossp";`);
@@ -32,9 +32,15 @@ export class ProviderConfigs1759324039332 implements MigrationInterface {
         CONSTRAINT UQ_provider_configs_project_provider_channel UNIQUE (project_id, provider_id, channel)
       );
     `);
-    await queryRunner.query(`CREATE INDEX IF NOT EXISTS IDX_provider_configs_project_id ON provider_configs(project_id);`);
-    await queryRunner.query(`CREATE INDEX IF NOT EXISTS IDX_provider_configs_project_channel ON provider_configs(project_id, channel);`);
-    await queryRunner.query(`CREATE INDEX IF NOT EXISTS IDX_provider_configs_project_active ON provider_configs(project_id, is_active);`);
+    await queryRunner.query(
+      `CREATE INDEX IF NOT EXISTS IDX_provider_configs_project_id ON provider_configs(project_id);`,
+    );
+    await queryRunner.query(
+      `CREATE INDEX IF NOT EXISTS IDX_provider_configs_project_channel ON provider_configs(project_id, channel);`,
+    );
+    await queryRunner.query(
+      `CREATE INDEX IF NOT EXISTS IDX_provider_configs_project_active ON provider_configs(project_id, is_active);`,
+    );
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {

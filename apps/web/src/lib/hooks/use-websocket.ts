@@ -1,12 +1,12 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
-import { getEnvironmentConfig } from '../api/client';
-import { getWebSocketManager, initializeWebSocketManager } from '../services/websocket-manager';
+import { useCallback, useEffect, useRef, useState } from "react";
+import { getEnvironmentConfig } from "../api/client";
+import { getWebSocketManager, initializeWebSocketManager } from "../services/websocket-manager";
 import type {
   ChannelMessageMap,
   WebSocketChannels,
   WebSocketConfig,
-  WebSocketConnectionState
-} from '../types/websocket';
+  WebSocketConnectionState,
+} from "../types/websocket";
 
 interface UseWebSocketOptions {
   autoConnect?: boolean;
@@ -20,7 +20,7 @@ interface UseWebSocketReturn {
   disconnect: () => void;
   subscribe: <T extends WebSocketChannels>(
     channel: T,
-    callback: (data: ChannelMessageMap[T]) => void
+    callback: (data: ChannelMessageMap[T]) => void,
   ) => string;
   unsubscribe: (subscriptionId: string) => void;
   sendMessage: (type: string, data: any, channel?: string) => void;
@@ -33,8 +33,8 @@ export function useWebSocket(options: UseWebSocketOptions = {}): UseWebSocketRet
   const { autoConnect = true, config = {} } = options;
   const managerRef = useRef<ReturnType<typeof getWebSocketManager> | null>(null);
   const [connectionState, setConnectionState] = useState<WebSocketConnectionState>({
-    status: 'disconnected',
-    reconnectAttempts: 0
+    status: "disconnected",
+    reconnectAttempts: 0,
   });
 
   // Initialize WebSocket manager
@@ -46,7 +46,7 @@ export function useWebSocket(options: UseWebSocketOptions = {}): UseWebSocketRet
       maxReconnectAttempts: 10,
       heartbeatInterval: 30000,
       timeout: 10000,
-      ...config
+      ...config,
     };
 
     try {
@@ -63,12 +63,12 @@ export function useWebSocket(options: UseWebSocketOptions = {}): UseWebSocketRet
       setConnectionState(manager.getConnectionState());
     };
 
-    manager.on('connection:open', handleConnectionStateChange);
-    manager.on('connection:close', handleConnectionStateChange);
-    manager.on('connection:error', handleConnectionStateChange);
-    manager.on('connection:reconnecting', handleConnectionStateChange);
-    manager.on('connection:reconnected', handleConnectionStateChange);
-    manager.on('connection:failed', handleConnectionStateChange);
+    manager.on("connection:open", handleConnectionStateChange);
+    manager.on("connection:close", handleConnectionStateChange);
+    manager.on("connection:error", handleConnectionStateChange);
+    manager.on("connection:reconnecting", handleConnectionStateChange);
+    manager.on("connection:reconnected", handleConnectionStateChange);
+    manager.on("connection:failed", handleConnectionStateChange);
 
     // Initial state
     setConnectionState(manager.getConnectionState());
@@ -79,12 +79,12 @@ export function useWebSocket(options: UseWebSocketOptions = {}): UseWebSocketRet
     }
 
     return () => {
-      manager.off('connection:open', handleConnectionStateChange);
-      manager.off('connection:close', handleConnectionStateChange);
-      manager.off('connection:error', handleConnectionStateChange);
-      manager.off('connection:reconnecting', handleConnectionStateChange);
-      manager.off('connection:reconnected', handleConnectionStateChange);
-      manager.off('connection:failed', handleConnectionStateChange);
+      manager.off("connection:open", handleConnectionStateChange);
+      manager.off("connection:close", handleConnectionStateChange);
+      manager.off("connection:error", handleConnectionStateChange);
+      manager.off("connection:reconnecting", handleConnectionStateChange);
+      manager.off("connection:reconnected", handleConnectionStateChange);
+      manager.off("connection:failed", handleConnectionStateChange);
     };
   }, [autoConnect, config]);
 
@@ -100,15 +100,18 @@ export function useWebSocket(options: UseWebSocketOptions = {}): UseWebSocketRet
     }
   }, []);
 
-  const subscribe = useCallback(<T extends WebSocketChannels>(
-    channel: T,
-    callback: (data: ChannelMessageMap[T]) => void
-  ): string => {
-    if (!managerRef.current) {
-      throw new Error('WebSocket manager not initialized');
-    }
-    return managerRef.current.subscribe(channel, callback);
-  }, []);
+  const subscribe = useCallback(
+    <T extends WebSocketChannels>(
+      channel: T,
+      callback: (data: ChannelMessageMap[T]) => void,
+    ): string => {
+      if (!managerRef.current) {
+        throw new Error("WebSocket manager not initialized");
+      }
+      return managerRef.current.subscribe(channel, callback);
+    },
+    [],
+  );
 
   const unsubscribe = useCallback((subscriptionId: string) => {
     if (managerRef.current) {
@@ -122,19 +125,19 @@ export function useWebSocket(options: UseWebSocketOptions = {}): UseWebSocketRet
         type,
         channel,
         data,
-        timestamp: Date.now()
+        timestamp: Date.now(),
       });
     }
   }, []);
 
   return {
     connectionState,
-    isConnected: connectionState.status === 'connected',
+    isConnected: connectionState.status === "connected",
     connect,
     disconnect,
     subscribe,
     unsubscribe,
-    sendMessage
+    sendMessage,
   };
 }
 
@@ -144,7 +147,7 @@ export function useWebSocket(options: UseWebSocketOptions = {}): UseWebSocketRet
 export function useWebSocketSubscription<T extends WebSocketChannels>(
   channel: T,
   callback: (data: ChannelMessageMap[T]) => void,
-  options: UseWebSocketOptions & { enabled?: boolean } = {}
+  options: UseWebSocketOptions & { enabled?: boolean } = {},
 ) {
   const { enabled = true, ...wsOptions } = options;
   const { subscribe, unsubscribe, connectionState, isConnected } = useWebSocket(wsOptions);
@@ -177,7 +180,7 @@ export function useWebSocketSubscription<T extends WebSocketChannels>(
   return {
     connectionState,
     isConnected,
-    isSubscribed: subscriptionIdRef.current !== null
+    isSubscribed: subscriptionIdRef.current !== null,
   };
 }
 
@@ -191,43 +194,43 @@ export function useWebSocketStatus() {
   useEffect(() => {
     // Show reconnect button if connection failed or after multiple reconnect attempts
     const shouldShowReconnect =
-      connectionState.status === 'error' ||
-      (connectionState.status === 'disconnected' && connectionState.reconnectAttempts > 0);
+      connectionState.status === "error" ||
+      (connectionState.status === "disconnected" && connectionState.reconnectAttempts > 0);
 
     setShowReconnectButton(shouldShowReconnect);
   }, [connectionState]);
 
   const getStatusMessage = useCallback(() => {
     switch (connectionState.status) {
-      case 'connecting':
-        return 'Connecting to real-time updates...';
-      case 'connected':
-        return 'Connected to real-time updates';
-      case 'disconnected':
+      case "connecting":
+        return "Connecting to real-time updates...";
+      case "connected":
+        return "Connected to real-time updates";
+      case "disconnected":
         return connectionState.reconnectAttempts > 0
-          ? 'Disconnected from real-time updates'
-          : 'Real-time updates not connected';
-      case 'reconnecting':
+          ? "Disconnected from real-time updates"
+          : "Real-time updates not connected";
+      case "reconnecting":
         return `Reconnecting... (attempt ${connectionState.reconnectAttempts})`;
-      case 'error':
-        return connectionState.error || 'Connection error';
+      case "error":
+        return connectionState.error || "Connection error";
       default:
-        return 'Unknown connection status';
+        return "Unknown connection status";
     }
   }, [connectionState]);
 
   const getStatusColor = useCallback(() => {
     switch (connectionState.status) {
-      case 'connected':
-        return 'success';
-      case 'connecting':
-      case 'reconnecting':
-        return 'warning';
-      case 'disconnected':
-      case 'error':
-        return 'error';
+      case "connected":
+        return "success";
+      case "connecting":
+      case "reconnecting":
+        return "warning";
+      case "disconnected":
+      case "error":
+        return "error";
       default:
-        return 'default';
+        return "default";
     }
   }, [connectionState.status]);
 
@@ -238,6 +241,6 @@ export function useWebSocketStatus() {
     statusMessage: getStatusMessage(),
     statusColor: getStatusColor(),
     connect,
-    disconnect
+    disconnect,
   };
 }

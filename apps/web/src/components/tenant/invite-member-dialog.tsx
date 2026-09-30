@@ -1,8 +1,8 @@
-'use client';
+"use client";
 
-import { Send, Shield, User, UserX } from '@/lib/icons';
+import { Send, Shield, User, UserX } from "@/lib/icons";
 
-import { Button } from '@/components/ui/button';
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -10,27 +10,33 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
-import { Textarea } from '@/components/ui/textarea';
-import { useTenant } from '@/contexts/tenant-context';
-import { InviteMemberRequest, Tenant, TenantMemberRole } from '@/lib/types/tenant';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { EnvelopeIcon, PaperAirplaneIcon, ShieldCheckIcon, UserIcon, UserMinusIcon } from '@heroicons/react/24/outline'
-import { Controller, useForm } from 'react-hook-form';
-import { toast } from 'sonner';
-import { z } from 'zod';
+} from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
+import { useTenant } from "@/contexts/tenant-context";
+import { InviteMemberRequest, Tenant, TenantMemberRole } from "@/lib/types/tenant";
+import { zodResolver } from "@hookform/resolvers/zod";
+import {
+  EnvelopeIcon,
+  PaperAirplaneIcon,
+  ShieldCheckIcon,
+  UserIcon,
+  UserMinusIcon,
+} from "@heroicons/react/24/outline";
+import { Controller, useForm } from "react-hook-form";
+import { toast } from "sonner";
+import { z } from "zod";
 
 const inviteMemberSchema = z.object({
-  email: z.string().email('Please enter a valid email address'),
+  email: z.string().email("Please enter a valid email address"),
   role: z.nativeEnum(TenantMemberRole),
   message: z.string().optional(),
 });
@@ -48,21 +54,21 @@ interface InviteMemberDialogProps {
 const roleOptions = [
   {
     value: TenantMemberRole.ADMIN,
-    label: 'Admin',
+    label: "Admin",
     icon: Shield,
-    description: 'Manage members, settings, and all features',
+    description: "Manage members, settings, and all features",
   },
   {
     value: TenantMemberRole.MEMBER,
-    label: 'Member',
+    label: "Member",
     icon: User,
-    description: 'Create and edit campaigns',
+    description: "Create and edit campaigns",
   },
   {
     value: TenantMemberRole.VIEWER,
-    label: 'Viewer',
+    label: "Viewer",
     icon: UserX,
-    description: 'View-only access',
+    description: "View-only access",
   },
 ];
 
@@ -78,15 +84,15 @@ export function InviteMemberDialog({
   const form = useForm({
     resolver: zodResolver(inviteMemberSchema),
     defaultValues: {
-      email: '',
+      email: "",
       role: TenantMemberRole.MEMBER,
-      message: '',
+      message: "",
     },
   });
 
   const handleSubmit = async (data: InviteMemberForm) => {
     if (currentMemberCount >= maxMembers) {
-      toast.error('Maximum member limit reached');
+      toast.error("Maximum member limit reached");
       return;
     }
 
@@ -102,8 +108,8 @@ export function InviteMemberDialog({
       form.reset();
       onOpenChange(false);
     } catch (error) {
-      toast.error('Failed to send invitation');
-      console.error('Invite error:', error);
+      toast.error("Failed to send invitation");
+      console.error("Invite error:", error);
     }
   };
 
@@ -134,12 +140,10 @@ export function InviteMemberDialog({
               id="email"
               type="email"
               placeholder="colleague@company.com"
-              {...form.register('email')}
+              {...form.register("email")}
             />
             {form.formState.errors.email && (
-              <p className="text-sm text-destructive">
-                {form.formState.errors.email.message}
-              </p>
+              <p className="text-sm text-destructive">{form.formState.errors.email.message}</p>
             )}
           </div>
 
@@ -175,9 +179,7 @@ export function InviteMemberDialog({
               )}
             />
             {form.formState.errors.role && (
-              <p className="text-sm text-destructive">
-                {form.formState.errors.role.message}
-              </p>
+              <p className="text-sm text-destructive">{form.formState.errors.role.message}</p>
             )}
           </div>
 
@@ -187,7 +189,7 @@ export function InviteMemberDialog({
               id="message"
               placeholder="Add a personal message to the invitation..."
               rows={3}
-              {...form.register('message')}
+              {...form.register("message")}
             />
             <p className="text-xs text-muted-foreground">
               This message will be included in the invitation email.
@@ -229,7 +231,7 @@ export function InviteMemberDialog({
               className="w-full sm:w-auto"
             >
               <PaperAirplaneIcon className="mr-2 h-4 w-4" />
-              {isLoading ? 'Sending...' : 'Send Invitation'}
+              {isLoading ? "Sending..." : "Send Invitation"}
             </Button>
           </DialogFooter>
         </form>

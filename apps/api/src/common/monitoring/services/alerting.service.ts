@@ -1,20 +1,20 @@
-import { Injectable } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import { WebClient } from '@slack/web-api';
+import { Injectable } from "@nestjs/common";
+import { ConfigService } from "@nestjs/config";
+import { WebClient } from "@slack/web-api";
 let Client: any, GatewayIntentBits: any, TextChannel: any;
 try {
-  const discord = require('discord.js');
+  const discord = require("discord.js");
   Client = discord.Client;
   GatewayIntentBits = discord.GatewayIntentBits;
   TextChannel = discord.TextChannel;
 } catch (error) {
   // Discord.js not available in test environment
 }
-import { LoggingService } from './logging.service';
+import { LoggingService } from "./logging.service";
 
 export interface AlertConfig {
-  type: 'provider_health' | 'system_error' | 'security_event' | 'performance';
-  severity: 'low' | 'medium' | 'high' | 'critical';
+  type: "provider_health" | "system_error" | "security_event" | "performance";
+  severity: "low" | "medium" | "high" | "critical";
   title: string;
   message: string;
   metadata?: Record<string, any>;
@@ -22,7 +22,7 @@ export interface AlertConfig {
 }
 
 export interface AlertChannel {
-  type: 'slack' | 'discord';
+  type: "slack" | "discord";
   enabled: boolean;
   config: Record<string, any>;
 }
@@ -32,8 +32,7 @@ export class AlertingService {
   private slackClient: WebClient | null = null;
   private discordClient: any | null = null;
   private alertChannels: AlertChannel[] = [];
-  private errorTracker: Map<string, { count: number; lastSent: Date }> =
-    new Map();
+  private errorTracker: Map<string, { count: number; lastSent: Date }> = new Map();
   private readonly errorThreshold = 5; // Send alert after 5 occurrences
   private readonly errorCooldown = 300000; // 5 minutes cooldown
 
@@ -50,33 +49,24 @@ export class AlertingService {
     }
 
     // Initialize Slack
-    const slackToken = this.configService.get<string>('SLACK_BOT_TOKEN');
-    const slackEnabled = this.configService.get<boolean>(
-      'SLACK_ALERTS_ENABLED',
-      false,
-    );
+    const slackToken = this.configService.get<string>("SLACK_BOT_TOKEN");
+    const slackEnabled = this.configService.get<boolean>("SLACK_ALERTS_ENABLED", false);
 
     if (slackToken && slackEnabled) {
       this.slackClient = new WebClient(slackToken);
       this.alertChannels.push({
-        type: 'slack',
+        type: "slack",
         enabled: true,
         config: {
-          channel: this.configService.get<string>(
-            'SLACK_ALERT_CHANNEL',
-            '#alerts',
-          ),
+          channel: this.configService.get<string>("SLACK_ALERT_CHANNEL", "#alerts"),
         },
       });
-      this.loggingService.info('Slack alerting initialized');
+      this.loggingService.info("Slack alerting initialized");
     }
 
     // Initialize Discord
-    const discordToken = this.configService.get<string>('DISCORD_BOT_TOKEN');
-    const discordEnabled = this.configService.get<boolean>(
-      'DISCORD_ALERTS_ENABLED',
-      false,
-    );
+    const discordToken = this.configService.get<string>("DISCORD_BOT_TOKEN");
+    const discordEnabled = this.configService.get<boolean>("DISCORD_ALERTS_ENABLED", false);
 
     if (discordToken && discordEnabled && Client && GatewayIntentBits) {
       this.discordClient = new Client({
@@ -86,29 +76,27 @@ export class AlertingService {
       try {
         await this.discordClient.login(discordToken);
         this.alertChannels.push({
-          type: 'discord',
+          type: "discord",
           enabled: true,
           config: {
-            channelId: this.configService.get<string>(
-              'DISCORD_ALERT_CHANNEL_ID',
-            ),
+            channelId: this.configService.get<string>("DISCORD_ALERT_CHANNEL_ID"),
           },
         });
-        this.loggingService.info('Discord alerting initialized');
+        this.loggingService.info("Discord alerting initialized");
       } catch (error) {
-        this.loggingService.error('Failed to initialize Discord client', error);
+        this.loggingService.error("Failed to initialize Discord client", error);
       }
     }
   }
 
   async sendAlert(alert: AlertConfig): Promise<void> {
     // Only send alerts for 5xx critical errors as specified in requirements
-    if (alert.type === 'system_error' && alert.severity !== 'critical') {
+    if (alert.type === "system_error" && alert.severity !== "critical") {
       return;
     }
 
     // Check error tracking for rate limiting
-    if (alert.type === 'system_error') {
+    if (alert.type === "system_error") {
       const errorKey = `${alert.title}-${alert.message}`;
       const tracked = this.errorTracker.get(errorKey);
 
@@ -117,10 +105,7 @@ export class AlertingService {
         const timeSinceLastSent = Date.now() - tracked.lastSent.getTime();
 
         // Only send if we've hit the threshold and cooldown has passed
-        if (
-          tracked.count < this.errorThreshold ||
-          timeSinceLastSent < this.errorCooldown
-        ) {
+        if (tracked.count < this.errorThreshold || timeSinceLastSent < this.errorCooldown) {
           return;
         }
 
@@ -143,49 +128,40 @@ export class AlertingService {
 
     try {
       await Promise.allSettled(promises);
-      this.loggingService.info('Alert sent', {
+      this.loggingService.info("Alert sent", {
         type: alert.type,
         severity: alert.severity,
         title: alert.title,
       });
     } catch (error) {
-      this.loggingService.error('Failed to send alert', error, {
+      this.loggingService.error("Failed to send alert", error, {
         alertType: alert.type,
         alertTitle: alert.title,
       });
     }
   }
 
-  private async sendToChannel(
-    channel: AlertChannel,
-    alert: AlertConfig,
-  ): Promise<void> {
+  private async sendToChannel(channel: AlertChannel, alert: AlertConfig): Promise<void> {
     try {
       switch (channel.type) {
-        case 'slack':
+        case "slack":
           await this.sendSlackAlert(channel, alert);
           break;
-        case 'discord':
+        case "discord":
           await this.sendDiscordAlert(channel, alert);
           break;
         default:
           throw new Error(`Unknown alert channel type: ${channel.type}`);
       }
     } catch (error) {
-      this.loggingService.error(
-        `Failed to send alert to ${channel.type}`,
-        error,
-      );
+      this.loggingService.error(`Failed to send alert to ${channel.type}`, error);
       throw error;
     }
   }
 
-  private async sendSlackAlert(
-    channel: AlertChannel,
-    alert: AlertConfig,
-  ): Promise<void> {
+  private async sendSlackAlert(channel: AlertChannel, alert: AlertConfig): Promise<void> {
     if (!this.slackClient) {
-      throw new Error('Slack client not initialized');
+      throw new Error("Slack client not initialized");
     }
 
     const color = this.getSeverityColor(alert.severity);
@@ -193,16 +169,16 @@ export class AlertingService {
 
     const blocks = [
       {
-        type: 'header',
+        type: "header",
         text: {
-          type: 'plain_text',
+          type: "plain_text",
           text: `${emoji} ${alert.title}`,
         },
       },
       {
-        type: 'section',
+        type: "section",
         text: {
-          type: 'mrkdwn',
+          type: "mrkdwn",
           text: alert.message,
         },
       },
@@ -210,19 +186,19 @@ export class AlertingService {
 
     if (alert.metadata) {
       blocks.push({
-        type: 'section',
+        type: "section",
         fields: Object.entries(alert.metadata).map(([key, value]) => ({
-          type: 'mrkdwn',
+          type: "mrkdwn",
           text: `*${key}:* ${value}`,
         })),
       } as any);
     }
 
     blocks.push({
-      type: 'context',
+      type: "context",
       elements: [
         {
-          type: 'mrkdwn',
+          type: "mrkdwn",
           text: `Severity: ${alert.severity.toUpperCase()} | Time: ${alert.timestamp?.toISOString()}`,
         },
       ],
@@ -240,17 +216,12 @@ export class AlertingService {
     });
   }
 
-  private async sendDiscordAlert(
-    channel: AlertChannel,
-    alert: AlertConfig,
-  ): Promise<void> {
+  private async sendDiscordAlert(channel: AlertChannel, alert: AlertConfig): Promise<void> {
     if (!this.discordClient) {
-      throw new Error('Discord client not initialized');
+      throw new Error("Discord client not initialized");
     }
 
-    const discordChannel = this.discordClient.channels.cache.get(
-      channel.config.channelId,
-    ) as any;
+    const discordChannel = this.discordClient.channels.cache.get(channel.config.channelId) as any;
     if (!discordChannel) {
       throw new Error(`Discord channel ${channel.config.channelId} not found`);
     }
@@ -261,7 +232,7 @@ export class AlertingService {
     const embed = {
       title: `${emoji} ${alert.title}`,
       description: alert.message,
-      color: parseInt(color.replace('#', ''), 16),
+      color: parseInt(color.replace("#", ""), 16),
       timestamp: alert.timestamp?.toISOString(),
       fields: alert.metadata
         ? Object.entries(alert.metadata).map(([key, value]) => ({
@@ -280,59 +251,58 @@ export class AlertingService {
 
   private getSeverityColor(severity: string): string {
     switch (severity) {
-      case 'critical':
-        return 'danger';
-      case 'high':
-        return 'warning';
-      case 'medium':
-        return 'good';
-      case 'low':
-        return '#36a64f';
+      case "critical":
+        return "danger";
+      case "high":
+        return "warning";
+      case "medium":
+        return "good";
+      case "low":
+        return "#36a64f";
       default:
-        return 'good';
+        return "good";
     }
   }
 
   private getSeverityColorHex(severity: string): string {
     switch (severity) {
-      case 'critical':
-        return '#ff0000';
-      case 'high':
-        return '#ff9900';
-      case 'medium':
-        return '#ffcc00';
-      case 'low':
-        return '#36a64f';
+      case "critical":
+        return "#ff0000";
+      case "high":
+        return "#ff9900";
+      case "medium":
+        return "#ffcc00";
+      case "low":
+        return "#36a64f";
       default:
-        return '#36a64f';
+        return "#36a64f";
     }
   }
 
   private getSeverityEmoji(severity: string): string {
     switch (severity) {
-      case 'critical':
-        return '🚨';
-      case 'high':
-        return '⚠️';
-      case 'medium':
-        return '⚡';
-      case 'low':
-        return 'ℹ️';
+      case "critical":
+        return "🚨";
+      case "high":
+        return "⚠️";
+      case "medium":
+        return "⚡";
+      case "low":
+        return "ℹ️";
       default:
-        return 'ℹ️';
+        return "ℹ️";
     }
   }
 
   // Method to manually test alerting
-  async testAlert(channelType?: 'slack' | 'discord'): Promise<void> {
+  async testAlert(channelType?: "slack" | "discord"): Promise<void> {
     const testAlert: AlertConfig = {
-      type: 'system_error',
-      severity: 'critical',
-      title: 'Test Alert',
-      message:
-        'This is a test alert to verify the alerting system is working correctly.',
+      type: "system_error",
+      severity: "critical",
+      title: "Test Alert",
+      message: "This is a test alert to verify the alerting system is working correctly.",
       metadata: {
-        environment: this.configService.get<string>('NODE_ENV'),
+        environment: this.configService.get<string>("NODE_ENV"),
         timestamp: new Date().toISOString(),
       },
     };

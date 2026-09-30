@@ -1,10 +1,9 @@
 import { MigrationInterface, QueryRunner } from "typeorm";
 
 export class CreateWebhook1766923292947 implements MigrationInterface {
-
-   public async up(queryRunner: QueryRunner): Promise<void> {
-        // Create webhooks table
-        await queryRunner.query(`
+  public async up(queryRunner: QueryRunner): Promise<void> {
+    // Create webhooks table
+    await queryRunner.query(`
             CREATE TABLE IF NOT EXISTS webhooks (
                 id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
                 tenant_id UUID NOT NULL,
@@ -19,12 +18,14 @@ export class CreateWebhook1766923292947 implements MigrationInterface {
             )
         `);
 
-        // Create indexes for webhooks
-        await queryRunner.query(`CREATE INDEX IF NOT EXISTS idx_webhooks_tenant_id ON webhooks (tenant_id)`);
-        await queryRunner.query(`CREATE INDEX IF NOT EXISTS idx_webhooks_active ON webhooks (active)`);
-    }
+    // Create indexes for webhooks
+    await queryRunner.query(
+      `CREATE INDEX IF NOT EXISTS idx_webhooks_tenant_id ON webhooks (tenant_id)`,
+    );
+    await queryRunner.query(`CREATE INDEX IF NOT EXISTS idx_webhooks_active ON webhooks (active)`);
+  }
 
-    public async down(queryRunner: QueryRunner): Promise<void> {
-        await queryRunner.query(`DROP TABLE IF EXISTS webhooks`);
-    }
+  public async down(queryRunner: QueryRunner): Promise<void> {
+    await queryRunner.query(`DROP TABLE IF EXISTS webhooks`);
+  }
 }

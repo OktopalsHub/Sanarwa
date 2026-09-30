@@ -1,5 +1,5 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
+import { Injectable, Logger } from "@nestjs/common";
+import { ConfigService } from "@nestjs/config";
 
 export interface CloudflareDNSRecord {
   id?: string;
@@ -32,7 +32,7 @@ interface CloudflareAPIResponse<T> {
 @Injectable()
 export class CloudflareDNSService {
   private readonly logger = new Logger(CloudflareDNSService.name);
-  private readonly baseUrl = 'https://api.cloudflare.com/client/v4';
+  private readonly baseUrl = "https://api.cloudflare.com/client/v4";
 
   constructor(private readonly configService: ConfigService) {}
 
@@ -44,17 +44,19 @@ export class CloudflareDNSService {
       this.logger.log(`Getting zone ID for domain: ${domain}`);
 
       const response = await fetch(`${this.baseUrl}/zones?name=${domain}`, {
-        method: 'GET',
+        method: "GET",
         headers: {
-          'Authorization': `Bearer ${apiToken}`,
-          'Content-Type': 'application/json',
+          Authorization: `Bearer ${apiToken}`,
+          "Content-Type": "application/json",
         },
       });
 
-      const data = await response.json() as CloudflareAPIResponse<CloudflareZone[]>;
+      const data = (await response.json()) as CloudflareAPIResponse<CloudflareZone[]>;
 
       if (!response.ok) {
-        throw new Error(`Cloudflare API error: ${data.errors?.[0]?.message || response.statusText}`);
+        throw new Error(
+          `Cloudflare API error: ${data.errors?.[0]?.message || response.statusText}`,
+        );
       }
 
       if (!data.result || data.result.length === 0) {
@@ -73,7 +75,11 @@ export class CloudflareDNSService {
   /**
    * Add DNS record to Cloudflare
    */
-  async addDNSRecord(zoneId: string, record: CloudflareDNSRecord, apiToken: string): Promise<string | null> {
+  async addDNSRecord(
+    zoneId: string,
+    record: CloudflareDNSRecord,
+    apiToken: string,
+  ): Promise<string | null> {
     try {
       this.logger.log(`Adding DNS record to zone ${zoneId}: ${record.type} ${record.name}`);
 
@@ -87,18 +93,20 @@ export class CloudflareDNSService {
       };
 
       const response = await fetch(`${this.baseUrl}/zones/${zoneId}/dns_records`, {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Authorization': `Bearer ${apiToken}`,
-          'Content-Type': 'application/json',
+          Authorization: `Bearer ${apiToken}`,
+          "Content-Type": "application/json",
         },
         body: JSON.stringify(payload),
       });
 
-      const data = await response.json() as CloudflareAPIResponse<CloudflareDNSRecord>;
+      const data = (await response.json()) as CloudflareAPIResponse<CloudflareDNSRecord>;
 
       if (!response.ok) {
-        throw new Error(`Cloudflare API error: ${data.errors?.[0]?.message || response.statusText}`);
+        throw new Error(
+          `Cloudflare API error: ${data.errors?.[0]?.message || response.statusText}`,
+        );
       }
 
       this.logger.log(`DNS record added successfully: ${data.result.id}`);
@@ -112,7 +120,11 @@ export class CloudflareDNSService {
   /**
    * Add multiple DNS records to Cloudflare
    */
-  async addDNSRecords(zoneId: string, records: CloudflareDNSRecord[], apiToken: string): Promise<{
+  async addDNSRecords(
+    zoneId: string,
+    records: CloudflareDNSRecord[],
+    apiToken: string,
+  ): Promise<{
     successful: CloudflareDNSRecord[];
     failed: Array<{ record: CloudflareDNSRecord; error: string }>;
   }> {
@@ -125,7 +137,7 @@ export class CloudflareDNSService {
         if (recordId) {
           successful.push({ ...record, id: recordId });
         } else {
-          failed.push({ record, error: 'Failed to add record' });
+          failed.push({ record, error: "Failed to add record" });
         }
       } catch (error) {
         failed.push({ record, error: error.message });
@@ -138,30 +150,35 @@ export class CloudflareDNSService {
   /**
    * Check if DNS record exists
    */
-  async dnsRecordExists(zoneId: string, record: CloudflareDNSRecord, apiToken: string): Promise<boolean> {
+  async dnsRecordExists(
+    zoneId: string,
+    record: CloudflareDNSRecord,
+    apiToken: string,
+  ): Promise<boolean> {
     try {
       const response = await fetch(
         `${this.baseUrl}/zones/${zoneId}/dns_records?type=${record.type}&name=${record.name}`,
         {
-          method: 'GET',
+          method: "GET",
           headers: {
-            'Authorization': `Bearer ${apiToken}`,
-            'Content-Type': 'application/json',
+            Authorization: `Bearer ${apiToken}`,
+            "Content-Type": "application/json",
           },
-        }
+        },
       );
 
-      const data = await response.json() as CloudflareAPIResponse<CloudflareDNSRecord[]>;
+      const data = (await response.json()) as CloudflareAPIResponse<CloudflareDNSRecord[]>;
 
       if (!response.ok) {
         return false;
       }
 
       // Check if any existing record matches
-      return data.result.some((existing: any) =>
-        existing.type === record.type &&
-        existing.name === record.name &&
-        existing.content === record.content
+      return data.result.some(
+        (existing: any) =>
+          existing.type === record.type &&
+          existing.name === record.name &&
+          existing.content === record.content,
       );
     } catch (error) {
       this.logger.error(`Failed to check DNS record existence:`, error);
@@ -178,19 +195,19 @@ export class CloudflareDNSService {
   }> {
     try {
       const response = await fetch(`${this.baseUrl}/user/tokens/verify`, {
-        method: 'GET',
+        method: "GET",
         headers: {
-          'Authorization': `Bearer ${apiToken}`,
-          'Content-Type': 'application/json',
+          Authorization: `Bearer ${apiToken}`,
+          "Content-Type": "application/json",
         },
       });
 
-      const data = await response.json() as CloudflareAPIResponse<any>;
+      const data = (await response.json()) as CloudflareAPIResponse<any>;
 
       if (!response.ok) {
         return {
           valid: false,
-          error: data.errors?.[0]?.message || 'Invalid API token',
+          error: data.errors?.[0]?.message || "Invalid API token",
         };
       }
 
@@ -198,7 +215,7 @@ export class CloudflareDNSService {
         valid: true,
       };
     } catch (error) {
-      this.logger.error('Cloudflare API token validation failed:', error);
+      this.logger.error("Cloudflare API token validation failed:", error);
       return {
         valid: false,
         error: error.message,
@@ -209,14 +226,16 @@ export class CloudflareDNSService {
   /**
    * Convert Resend DNS records to Cloudflare format
    */
-  convertResendRecordsToCloudflare(resendRecords: Array<{
-    record: string;
-    name: string;
-    type: string;
-    value: string;
-    priority?: number;
-  }>): CloudflareDNSRecord[] {
-    return resendRecords.map(record => ({
+  convertResendRecordsToCloudflare(
+    resendRecords: Array<{
+      record: string;
+      name: string;
+      type: string;
+      value: string;
+      priority?: number;
+    }>,
+  ): CloudflareDNSRecord[] {
+    return resendRecords.map((record) => ({
       type: record.type,
       name: record.name,
       content: record.value,

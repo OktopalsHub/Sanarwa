@@ -1,11 +1,11 @@
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsArray, IsBoolean, IsOptional, IsString, IsUrl, MaxLength } from 'class-validator';
-import { WebhookEvent } from '../entities/webhook.entity';
+import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
+import { IsArray, IsBoolean, IsOptional, IsString, IsUrl, MaxLength } from "class-validator";
+import { WebhookEvent } from "../entities/webhook.entity";
 
 export class CreateWebhookDto {
   @ApiPropertyOptional({
-    description: 'Friendly name for the webhook',
-    example: 'Delivery Status Webhook',
+    description: "Friendly name for the webhook",
+    example: "Delivery Status Webhook",
     maxLength: 255,
   })
   @IsOptional()
@@ -14,16 +14,16 @@ export class CreateWebhookDto {
   name?: string;
 
   @ApiProperty({
-    description: 'Webhook endpoint URL',
-    example: 'https://api.myapp.com/webhooks/notifications',
+    description: "Webhook endpoint URL",
+    example: "https://api.myapp.com/webhooks/notifications",
   })
   @IsString()
   @IsUrl()
   url: string;
 
   @ApiPropertyOptional({
-    description: 'Secret for webhook signature verification',
-    example: 'whsec_1234567890abcdef',
+    description: "Secret for webhook signature verification",
+    example: "whsec_1234567890abcdef",
     maxLength: 255,
   })
   @IsOptional()
@@ -32,8 +32,8 @@ export class CreateWebhookDto {
   secret?: string;
 
   @ApiProperty({
-    description: 'Event types to trigger this webhook',
-    example: ['email.delivered', 'email.bounced', 'sms.sent'],
+    description: "Event types to trigger this webhook",
+    example: ["email.delivered", "email.bounced", "sms.sent"],
     type: [String],
   })
   @IsArray()
@@ -41,7 +41,7 @@ export class CreateWebhookDto {
   events: WebhookEvent[];
 
   @ApiPropertyOptional({
-    description: 'Whether the webhook is active',
+    description: "Whether the webhook is active",
     example: true,
     default: true,
   })

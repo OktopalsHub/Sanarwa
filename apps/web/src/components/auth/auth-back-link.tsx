@@ -1,9 +1,9 @@
-'use client';
+"use client";
 
-import Link from '@/compat/next-link';
-import { ArrowLeftIcon } from '@heroicons/react/24/outline';
+import Link from "@/compat/next-link";
+import { ArrowLeftIcon } from "@heroicons/react/24/outline";
 
-export function AuthBackLink({ className = '' }: { className?: string }) {
+export function AuthBackLink({ className = "" }: { className?: string }) {
   return (
     <Link
       href="/"

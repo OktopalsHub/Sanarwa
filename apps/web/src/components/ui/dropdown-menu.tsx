@@ -1,1 +1,1 @@
-export * from '@sanarwa/ui/dropdown-menu';
+export * from "@sanarwa/ui/dropdown-menu";

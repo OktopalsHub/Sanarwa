@@ -1,7 +1,7 @@
-import { MigrationInterface, QueryRunner } from 'typeorm';
+import { MigrationInterface, QueryRunner } from "typeorm";
 
 export class Tenants1759217759658 implements MigrationInterface {
-  name = 'Tenants1759217759658';
+  name = "Tenants1759217759658";
 
   public async up(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.query(`
@@ -25,6 +25,6 @@ export class Tenants1759217759658 implements MigrationInterface {
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {
-    await queryRunner.dropTable('tenants');
+    await queryRunner.dropTable("tenants");
   }
 }

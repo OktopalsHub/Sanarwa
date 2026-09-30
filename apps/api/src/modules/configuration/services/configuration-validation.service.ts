@@ -1,6 +1,6 @@
-import { Injectable, Logger } from '@nestjs/common';
-import Ajv from 'ajv';
-import addFormats from 'ajv-formats';
+import { Injectable, Logger } from "@nestjs/common";
+import Ajv from "ajv";
+import addFormats from "ajv-formats";
 
 export interface ValidationResult {
   isValid: boolean;
@@ -23,69 +23,69 @@ export class ConfigurationValidationService {
   // Built-in validation schemas for common configuration types
   private readonly builtInSchemas: Record<string, ConfigurationSchema> = {
     string: {
-      type: 'string',
+      type: "string",
     },
     number: {
-      type: 'number',
+      type: "number",
     },
     boolean: {
-      type: 'boolean',
+      type: "boolean",
     },
     email: {
-      type: 'string',
-      format: 'email',
+      type: "string",
+      format: "email",
     },
     url: {
-      type: 'string',
-      format: 'uri',
+      type: "string",
+      format: "uri",
     },
     port: {
-      type: 'number',
+      type: "number",
       minimum: 1,
       maximum: 65535,
     },
     database_config: {
-      type: 'object',
+      type: "object",
       properties: {
-        host: { type: 'string' },
-        port: { type: 'number', minimum: 1, maximum: 65535 },
-        username: { type: 'string' },
-        password: { type: 'string' },
-        database: { type: 'string' },
+        host: { type: "string" },
+        port: { type: "number", minimum: 1, maximum: 65535 },
+        username: { type: "string" },
+        password: { type: "string" },
+        database: { type: "string" },
       },
-      required: ['host', 'port', 'username', 'database'],
+      required: ["host", "port", "username", "database"],
       additionalProperties: false,
     },
     redis_config: {
-      type: 'object',
+      type: "object",
       properties: {
-        host: { type: 'string' },
-        port: { type: 'number', minimum: 1, maximum: 65535 },
-        password: { type: 'string' },
-        db: { type: 'number', minimum: 0 },
+        host: { type: "string" },
+        port: { type: "number", minimum: 1, maximum: 65535 },
+        password: { type: "string" },
+        db: { type: "number", minimum: 0 },
       },
-      required: ['host', 'port'],
+      required: ["host", "port"],
       additionalProperties: false,
     },
     jwt_config: {
-      type: 'object',
+      type: "object",
       properties: {
-        secret: { type: 'string', minLength: 32 },
-        expiresIn: { type: 'string' },
-        issuer: { type: 'string' },
-        audience: { type: 'string' },
+        secret: { type: "string", minLength: 32 },
+        expiresIn: { type: "string" },
+        issuer: { type: "string" },
+        audience: { type: "string" },
       },
-      required: ['secret'],
+      required: ["secret"],
       additionalProperties: false,
     },
     rate_limit_config: {
-      type: 'object',
+      type: "object",
       properties: {
-        windowMs: { type: 'number', minimum: 1000 },
-        max: { type: 'number', minimum: 1 },
-        message: { type: 'string' },
+        windowMs: { type: "number", minimum: 1000 },
+        max: { type: "number", minimum: 1 },
+        message: { type: "string" },
       },
-      required: ['windowMs', 'max'],
+      required: ["windowMs", "max"],
       additionalProperties: false,
     },
   };
@@ -99,10 +99,7 @@ export class ConfigurationValidationService {
   /**
    * Validate a configuration value against a schema
    */
-  async validateValue(
-    value: string,
-    schemaName?: string,
-  ): Promise<ValidationResult> {
+  async validateValue(value: string, schemaName?: string): Promise<ValidationResult> {
     try {
       if (!schemaName) {
         return { isValid: true };
@@ -110,9 +107,7 @@ export class ConfigurationValidationService {
 
       const schema = this.getSchema(schemaName);
       if (!schema) {
-        this.logger.warn(
-          `Schema '${schemaName}' not found, skipping validation`,
-        );
+        this.logger.warn(`Schema '${schemaName}' not found, skipping validation`);
         return { isValid: true };
       }
 
@@ -129,9 +124,8 @@ export class ConfigurationValidationService {
 
       if (!isValid) {
         const errors =
-          validate.errors?.map(
-            (error) => `${error.instancePath || 'root'}: ${error.message}`,
-          ) || [];
+          validate.errors?.map((error) => `${error.instancePath || "root"}: ${error.message}`) ||
+          [];
 
         return {
           isValid: false,
@@ -162,10 +156,7 @@ export class ConfigurationValidationService {
     const results: Record<string, ValidationResult> = {};
 
     for (const config of configurations) {
-      results[config.key] = await this.validateValue(
-        config.value,
-        config.validationSchema,
-      );
+      results[config.key] = await this.validateValue(config.value, config.validationSchema);
     }
 
     return results;
@@ -179,9 +170,7 @@ export class ConfigurationValidationService {
       this.ajv.addSchema(schema, name);
       this.logger.debug(`Registered custom schema: ${name}`);
     } catch (error) {
-      this.logger.error(
-        `Failed to register schema '${name}': ${error.message}`,
-      );
+      this.logger.error(`Failed to register schema '${name}': ${error.message}`);
       throw error;
     }
   }
@@ -215,9 +204,7 @@ export class ConfigurationValidationService {
       try {
         this.ajv.addSchema(schema, name);
       } catch (error) {
-        this.logger.error(
-          `Failed to register built-in schema '${name}': ${error.message}`,
-        );
+        this.logger.error(`Failed to register built-in schema '${name}': ${error.message}`);
       }
     }
   }
@@ -241,9 +228,7 @@ export class ConfigurationValidationService {
     if (missing.length > 0) {
       return {
         isValid: false,
-        errors: [
-          `Missing required configurations for ${environment}: ${missing.join(', ')}`,
-        ],
+        errors: [`Missing required configurations for ${environment}: ${missing.join(", ")}`],
       };
     }
 
@@ -255,27 +240,21 @@ export class ConfigurationValidationService {
    */
   private getRequiredConfigsForEnvironment(environment: string): string[] {
     const baseRequired = [
-      'DATABASE_HOST',
-      'DATABASE_PORT',
-      'DATABASE_USERNAME',
-      'DATABASE_NAME',
-      'JWT_AUTH_SECRET',
-      'JWT_REFRESH_SECRET',
+      "DATABASE_HOST",
+      "DATABASE_PORT",
+      "DATABASE_USERNAME",
+      "DATABASE_NAME",
+      "JWT_AUTH_SECRET",
+      "JWT_REFRESH_SECRET",
     ];
 
     switch (environment) {
-      case 'production':
-        return [
-          ...baseRequired,
-          'REDIS_HOST',
-          'REDIS_PORT',
-          'ENCRYPTION_KEY_V1',
-          'SESSION_SECRET',
-        ];
-      case 'staging':
-        return [...baseRequired, 'REDIS_HOST', 'REDIS_PORT'];
-      case 'development':
-      case 'test':
+      case "production":
+        return [...baseRequired, "REDIS_HOST", "REDIS_PORT", "ENCRYPTION_KEY_V1", "SESSION_SECRET"];
+      case "staging":
+        return [...baseRequired, "REDIS_HOST", "REDIS_PORT"];
+      case "development":
+      case "test":
       default:
         return baseRequired;
     }

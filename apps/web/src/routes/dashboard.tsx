@@ -1,6 +1,6 @@
-import { createFileRoute } from '@tanstack/react-router';
-import { TenantRouteRedirect } from '@/components/layout/tenant-route-redirect';
+import { createFileRoute } from "@tanstack/react-router";
+import { TenantRouteRedirect } from "@/components/layout/tenant-route-redirect";
 
-export const Route = createFileRoute('/dashboard')({
+export const Route = createFileRoute("/dashboard")({
   component: () => <TenantRouteRedirect suffix="dashboard" />,
 });

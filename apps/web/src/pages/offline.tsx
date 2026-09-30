@@ -1,22 +1,21 @@
-'use client';
+"use client";
 
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { HomeIcon, ArrowPathIcon, WifiIcon } from '@heroicons/react/24/outline'
-
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { HomeIcon, ArrowPathIcon, WifiIcon } from "@heroicons/react/24/outline";
 
 // Metadata is handled by layout.tsx for client components
 
 export default function OfflinePage() {
   const handleRetry = () => {
-    if (typeof window !== 'undefined') {
+    if (typeof window !== "undefined") {
       window.location.reload();
     }
   };
 
   const handleGoHome = () => {
-    if (typeof window !== 'undefined') {
-      window.location.href = '/';
+    if (typeof window !== "undefined") {
+      window.location.href = "/";
     }
   };
 
@@ -43,11 +42,7 @@ export default function OfflinePage() {
           </div>
 
           <div className="flex flex-col sm:flex-row gap-2">
-            <Button
-              onClick={handleRetry}
-              className="flex-1"
-              aria-label="Retry connection"
-            >
+            <Button onClick={handleRetry} className="flex-1" aria-label="Retry connection">
               <ArrowPathIcon className="w-4 h-4 mr-2" />
               Try Again
             </Button>

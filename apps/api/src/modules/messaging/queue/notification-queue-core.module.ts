@@ -1,10 +1,10 @@
-import { BullModule } from '@nestjs/bull';
-import { Module } from '@nestjs/common';
-import { MessagingEntitiesModule } from '../shared/messaging-entities.module';
-import { NotificationQueueService } from './notification-queue.service';
+import { BullModule } from "@nestjs/bull";
+import { Module } from "@nestjs/common";
+import { MessagingEntitiesModule } from "../shared/messaging-entities.module";
+import { NotificationQueueService } from "./notification-queue.service";
 
-export const NOTIFICATION_QUEUE = 'notification-queue';
-export const NOTIFICATION_DELIVERY_QUEUE = 'notification-delivery-queue';
+export const NOTIFICATION_QUEUE = "notification-queue";
+export const NOTIFICATION_DELIVERY_QUEUE = "notification-delivery-queue";
 
 @Module({
   imports: [
@@ -16,7 +16,7 @@ export const NOTIFICATION_DELIVERY_QUEUE = 'notification-delivery-queue';
           removeOnFail: 50,
           attempts: 3,
           backoff: {
-            type: 'exponential',
+            type: "exponential",
             delay: 2000,
           },
         },
@@ -28,7 +28,7 @@ export const NOTIFICATION_DELIVERY_QUEUE = 'notification-delivery-queue';
           removeOnFail: 50,
           attempts: 5,
           backoff: {
-            type: 'exponential',
+            type: "exponential",
             delay: 1000,
           },
         },
@@ -39,4 +39,4 @@ export const NOTIFICATION_DELIVERY_QUEUE = 'notification-delivery-queue';
   providers: [NotificationQueueService],
   exports: [NotificationQueueService],
 })
-export class NotificationQueueCoreModule { }
+export class NotificationQueueCoreModule {}

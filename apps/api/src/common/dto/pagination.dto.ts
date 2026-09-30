@@ -1,10 +1,10 @@
-import { ApiPropertyOptional } from '@nestjs/swagger';
-import { Type } from 'class-transformer';
-import { IsInt, IsOptional, Max, Min } from 'class-validator';
+import { ApiPropertyOptional } from "@nestjs/swagger";
+import { Type } from "class-transformer";
+import { IsInt, IsOptional, Max, Min } from "class-validator";
 
 export class PaginationDto {
   @ApiPropertyOptional({
-    description: 'Page number (1-based)',
+    description: "Page number (1-based)",
     minimum: 1,
     default: 1,
   })
@@ -15,7 +15,7 @@ export class PaginationDto {
   page?: number = 1;
 
   @ApiPropertyOptional({
-    description: 'Number of items per page',
+    description: "Number of items per page",
     minimum: 1,
     maximum: 100,
     default: 10,
@@ -93,7 +93,7 @@ export async function getPaginationSummary(
   const pageCount = Math.ceil(totalItems / limit) || 1;
 
   return {
-    name: name || 'Unknown',
+    name: name || "Unknown",
     size: records.length,
     limit,
     pageCount,
@@ -117,13 +117,7 @@ export class PaginatedDataResponse<T> {
   totalItems: number;
   records: T[];
 
-  constructor(
-    data: T[],
-    total: number,
-    page: number,
-    limit: number,
-    name: string = 'data',
-  ) {
+  constructor(data: T[], total: number, page: number, limit: number, name: string = "data") {
     this.name = name;
     this.size = data.length;
     this.pageCount = Math.ceil(total / limit);

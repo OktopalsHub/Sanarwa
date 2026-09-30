@@ -1,47 +1,62 @@
-import { authApi } from '@/lib/api/auth';
-import type { AuthProvider, AuthResponse, LoginCredentials, RegisterData, User, UserRole, UserStatus } from '@/lib/types/auth';
-import { configureStore } from '@reduxjs/toolkit';
-import { authSlice, AuthState, loginUser, logoutUser, refreshAuthToken, registerUser } from '../auth-slice';
+import { authApi } from "@/lib/api/auth";
+import type {
+  AuthProvider,
+  AuthResponse,
+  LoginCredentials,
+  RegisterData,
+  User,
+  UserRole,
+  UserStatus,
+} from "@/lib/types/auth";
+import { configureStore } from "@reduxjs/toolkit";
+import {
+  authSlice,
+  AuthState,
+  loginUser,
+  logoutUser,
+  refreshAuthToken,
+  registerUser,
+} from "../auth-slice";
 
 // Mock the auth API
-jest.mock('@/lib/api/auth');
+jest.mock("@/lib/api/auth");
 const mockedAuthApi = authApi as jest.Mocked<typeof authApi>;
 
 // Test data
 const mockUser: User = {
-  id: '1',
-  email: 'test@example.com',
-  firstName: 'John',
-  lastName: 'Doe',
-  role: 'basic' as UserRole,
-  status: 'active' as UserStatus,
-  authProvider: 'local' as AuthProvider,
+  id: "1",
+  email: "test@example.com",
+  firstName: "John",
+  lastName: "Doe",
+  role: "basic" as UserRole,
+  status: "active" as UserStatus,
+  authProvider: "local" as AuthProvider,
   emailVerified: true,
   loginAttempts: 0,
   createdAt: new Date(),
   updatedAt: new Date(),
-  fullName: 'John Doe',
+  fullName: "John Doe",
   isLocked: false,
 };
 
 const mockAuthResponse: AuthResponse = {
   user: mockUser,
-  accessToken: 'mock-access-token',
-  refreshToken: 'mock-refresh-token',
+  accessToken: "mock-access-token",
+  refreshToken: "mock-refresh-token",
   expiresIn: 3600,
-  tokenType: 'Bearer',
+  tokenType: "Bearer",
 };
 
 const mockLoginCredentials: LoginCredentials = {
-  email: 'test@example.com',
-  password: 'password123',
+  email: "test@example.com",
+  password: "password123",
 };
 
 const mockRegisterData: RegisterData = {
-  email: 'test@example.com',
-  password: 'password123',
-  firstName: 'John',
-  lastName: 'Doe',
+  email: "test@example.com",
+  password: "password123",
+  firstName: "John",
+  lastName: "Doe",
 };
 
 // Helper function to create store
@@ -71,13 +86,13 @@ const createTestStore = (initialState?: Partial<AuthState>) => {
   });
 };
 
-describe('authSlice', () => {
+describe("authSlice", () => {
   beforeEach(() => {
     jest.clearAllMocks();
   });
 
-  describe('initial state', () => {
-    it('should have correct initial state', () => {
+  describe("initial state", () => {
+    it("should have correct initial state", () => {
       const store = createTestStore();
       const state = store.getState().auth;
 
@@ -97,12 +112,12 @@ describe('authSlice', () => {
     });
   });
 
-  describe('synchronous actions', () => {
-    it('should set tokens', () => {
+  describe("synchronous actions", () => {
+    it("should set tokens", () => {
       const store = createTestStore();
       const tokenData = {
-        accessToken: 'new-access-token',
-        refreshToken: 'new-refresh-token',
+        accessToken: "new-access-token",
+        refreshToken: "new-refresh-token",
         expiresIn: 3600,
       };
 
@@ -114,10 +129,10 @@ describe('authSlice', () => {
       expect(state.tokenExpiresAt).toBeInstanceOf(Date);
     });
 
-    it('should clear tokens', () => {
+    it("should clear tokens", () => {
       const store = createTestStore({
-        accessToken: 'token',
-        refreshToken: 'refresh',
+        accessToken: "token",
+        refreshToken: "refresh",
         tokenExpiresAt: new Date(),
       });
 
@@ -129,9 +144,9 @@ describe('authSlice', () => {
       expect(state.tokenExpiresAt).toBeNull();
     });
 
-    it('should set permissions', () => {
+    it("should set permissions", () => {
       const store = createTestStore();
-      const permissions = ['read:users', 'write:users'];
+      const permissions = ["read:users", "write:users"];
 
       store.dispatch(authSlice.actions.setPermissions(permissions));
       const state = store.getState().auth;
@@ -139,42 +154,42 @@ describe('authSlice', () => {
       expect(state.permissions).toEqual(permissions);
     });
 
-    it('should add permission', () => {
+    it("should add permission", () => {
       const store = createTestStore({
-        permissions: ['read:users'],
+        permissions: ["read:users"],
       });
 
-      store.dispatch(authSlice.actions.addPermission('write:users'));
+      store.dispatch(authSlice.actions.addPermission("write:users"));
       const state = store.getState().auth;
 
-      expect(state.permissions).toEqual(['read:users', 'write:users']);
+      expect(state.permissions).toEqual(["read:users", "write:users"]);
     });
 
-    it('should not add duplicate permission', () => {
+    it("should not add duplicate permission", () => {
       const store = createTestStore({
-        permissions: ['read:users'],
+        permissions: ["read:users"],
       });
 
-      store.dispatch(authSlice.actions.addPermission('read:users'));
+      store.dispatch(authSlice.actions.addPermission("read:users"));
       const state = store.getState().auth;
 
-      expect(state.permissions).toEqual(['read:users']);
+      expect(state.permissions).toEqual(["read:users"]);
     });
 
-    it('should remove permission', () => {
+    it("should remove permission", () => {
       const store = createTestStore({
-        permissions: ['read:users', 'write:users'],
+        permissions: ["read:users", "write:users"],
       });
 
-      store.dispatch(authSlice.actions.removePermission('write:users'));
+      store.dispatch(authSlice.actions.removePermission("write:users"));
       const state = store.getState().auth;
 
-      expect(state.permissions).toEqual(['read:users']);
+      expect(state.permissions).toEqual(["read:users"]);
     });
 
-    it('should clear permissions', () => {
+    it("should clear permissions", () => {
       const store = createTestStore({
-        permissions: ['read:users', 'write:users'],
+        permissions: ["read:users", "write:users"],
       });
 
       store.dispatch(authSlice.actions.clearPermissions());
@@ -183,9 +198,9 @@ describe('authSlice', () => {
       expect(state.permissions).toEqual([]);
     });
 
-    it('should set current tenant ID', () => {
+    it("should set current tenant ID", () => {
       const store = createTestStore();
-      const tenantId = 'tenant-123';
+      const tenantId = "tenant-123";
 
       store.dispatch(authSlice.actions.setCurrentTenantId(tenantId));
       const state = store.getState().auth;
@@ -193,9 +208,9 @@ describe('authSlice', () => {
       expect(state.currentTenantId).toBe(tenantId);
     });
 
-    it('should open login modal', () => {
+    it("should open login modal", () => {
       const store = createTestStore();
-      const redirectUrl = '/dashboard';
+      const redirectUrl = "/dashboard";
 
       store.dispatch(authSlice.actions.openLoginModal(redirectUrl));
       const state = store.getState().auth;
@@ -204,10 +219,10 @@ describe('authSlice', () => {
       expect(state.redirectAfterLogin).toBe(redirectUrl);
     });
 
-    it('should close login modal', () => {
+    it("should close login modal", () => {
       const store = createTestStore({
         isLoginModalOpen: true,
-        redirectAfterLogin: '/dashboard',
+        redirectAfterLogin: "/dashboard",
       });
 
       store.dispatch(authSlice.actions.closeLoginModal());
@@ -217,14 +232,14 @@ describe('authSlice', () => {
       expect(state.redirectAfterLogin).toBeNull();
     });
 
-    it('should clear auth state', () => {
+    it("should clear auth state", () => {
       const store = createTestStore({
         user: mockUser,
         isAuthenticated: true,
-        accessToken: 'token',
-        refreshToken: 'refresh',
-        permissions: ['read:users'],
-        currentTenantId: 'tenant-123',
+        accessToken: "token",
+        refreshToken: "refresh",
+        permissions: ["read:users"],
+        currentTenantId: "tenant-123",
       });
 
       store.dispatch(authSlice.actions.clearAuthState());
@@ -239,9 +254,9 @@ describe('authSlice', () => {
     });
   });
 
-  describe('async actions', () => {
-    describe('loginUser', () => {
-      it('should handle successful login', async () => {
+  describe("async actions", () => {
+    describe("loginUser", () => {
+      it("should handle successful login", async () => {
         mockedAuthApi.login.mockResolvedValue(mockAuthResponse);
         const store = createTestStore();
 
@@ -257,8 +272,8 @@ describe('authSlice', () => {
         expect(state.isLoginModalOpen).toBe(false);
       });
 
-      it('should handle login failure', async () => {
-        const error = new Error('Invalid credentials');
+      it("should handle login failure", async () => {
+        const error = new Error("Invalid credentials");
         mockedAuthApi.login.mockRejectedValue(error);
         const store = createTestStore();
 
@@ -269,11 +284,11 @@ describe('authSlice', () => {
         expect(state.user).toBeNull();
         expect(state.isAuthenticated).toBe(false);
         expect(state.error).toBeTruthy();
-        expect(state.error?.message).toBe('Invalid credentials');
+        expect(state.error?.message).toBe("Invalid credentials");
       });
 
-      it('should set loading state during login', () => {
-        mockedAuthApi.login.mockImplementation(() => new Promise(() => { })); // Never resolves
+      it("should set loading state during login", () => {
+        mockedAuthApi.login.mockImplementation(() => new Promise(() => {})); // Never resolves
         const store = createTestStore();
 
         store.dispatch(loginUser(mockLoginCredentials));
@@ -284,8 +299,8 @@ describe('authSlice', () => {
       });
     });
 
-    describe('registerUser', () => {
-      it('should handle successful registration', async () => {
+    describe("registerUser", () => {
+      it("should handle successful registration", async () => {
         mockedAuthApi.register.mockResolvedValue(mockAuthResponse);
         const store = createTestStore();
 
@@ -300,8 +315,8 @@ describe('authSlice', () => {
         expect(state.isRegistrationModalOpen).toBe(false);
       });
 
-      it('should handle registration failure', async () => {
-        const error = new Error('Email already exists');
+      it("should handle registration failure", async () => {
+        const error = new Error("Email already exists");
         mockedAuthApi.register.mockRejectedValue(error);
         const store = createTestStore();
 
@@ -312,18 +327,18 @@ describe('authSlice', () => {
         expect(state.user).toBeNull();
         expect(state.isAuthenticated).toBe(false);
         expect(state.error).toBeTruthy();
-        expect(state.error?.message).toBe('Email already exists');
+        expect(state.error?.message).toBe("Email already exists");
       });
     });
 
-    describe('logoutUser', () => {
-      it('should handle successful logout', async () => {
+    describe("logoutUser", () => {
+      it("should handle successful logout", async () => {
         mockedAuthApi.logout.mockResolvedValue();
         const store = createTestStore({
           user: mockUser,
           isAuthenticated: true,
-          accessToken: 'token',
-          refreshToken: 'refresh',
+          accessToken: "token",
+          refreshToken: "refresh",
         });
 
         await store.dispatch(logoutUser());
@@ -336,12 +351,12 @@ describe('authSlice', () => {
         expect(state.isLoading).toBe(false);
       });
 
-      it('should clear state even if logout API fails', async () => {
-        mockedAuthApi.logout.mockRejectedValue(new Error('Network error'));
+      it("should clear state even if logout API fails", async () => {
+        mockedAuthApi.logout.mockRejectedValue(new Error("Network error"));
         const store = createTestStore({
           user: mockUser,
           isAuthenticated: true,
-          accessToken: 'token',
+          accessToken: "token",
         });
 
         await store.dispatch(logoutUser());
@@ -353,18 +368,18 @@ describe('authSlice', () => {
       });
     });
 
-    describe('refreshAuthToken', () => {
-      it('should handle successful token refresh', async () => {
+    describe("refreshAuthToken", () => {
+      it("should handle successful token refresh", async () => {
         const tokenResponse = {
-          accessToken: 'new-access-token',
-          refreshToken: 'new-refresh-token',
+          accessToken: "new-access-token",
+          refreshToken: "new-refresh-token",
           expiresIn: 3600,
-          tokenType: 'Bearer',
+          tokenType: "Bearer",
         };
         mockedAuthApi.refreshToken.mockResolvedValue(tokenResponse);
 
         const store = createTestStore({
-          refreshToken: 'old-refresh-token',
+          refreshToken: "old-refresh-token",
         });
 
         await store.dispatch(refreshAuthToken());
@@ -375,13 +390,13 @@ describe('authSlice', () => {
         expect(state.error).toBeNull();
       });
 
-      it('should clear auth state on token refresh failure', async () => {
-        mockedAuthApi.refreshToken.mockRejectedValue(new Error('Invalid refresh token'));
+      it("should clear auth state on token refresh failure", async () => {
+        mockedAuthApi.refreshToken.mockRejectedValue(new Error("Invalid refresh token"));
         const store = createTestStore({
           user: mockUser,
           isAuthenticated: true,
-          accessToken: 'token',
-          refreshToken: 'refresh',
+          accessToken: "token",
+          refreshToken: "refresh",
         });
 
         await store.dispatch(refreshAuthToken());
@@ -396,23 +411,23 @@ describe('authSlice', () => {
     });
   });
 
-  describe('selectors', () => {
-    it('should select user', () => {
+  describe("selectors", () => {
+    it("should select user", () => {
       const store = createTestStore({ user: mockUser });
       const state = store.getState();
 
       expect(authSlice.selectors?.selectUser?.(state)).toEqual(mockUser);
     });
 
-    it('should select authentication status', () => {
+    it("should select authentication status", () => {
       const store = createTestStore({ isAuthenticated: true });
       const state = store.getState();
 
       expect(authSlice.selectors?.selectIsAuthenticated?.(state)).toBe(true);
     });
 
-    it('should select permissions', () => {
-      const permissions = ['read:users', 'write:users'];
+    it("should select permissions", () => {
+      const permissions = ["read:users", "write:users"];
       const store = createTestStore({ permissions });
       const state = store.getState();
 

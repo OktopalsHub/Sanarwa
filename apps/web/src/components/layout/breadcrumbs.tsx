@@ -1,8 +1,8 @@
-'use client';
+"use client";
 
-import { ChevronRightIcon, HomeIcon } from '@heroicons/react/24/outline'
-import Link from '@/compat/next-link';
-import { usePathname } from '@/compat/next-navigation';
+import { ChevronRightIcon, HomeIcon } from "@heroicons/react/24/outline";
+import Link from "@/compat/next-link";
+import { usePathname } from "@/compat/next-navigation";
 
 interface BreadcrumbItem {
   label: string;
@@ -10,23 +10,23 @@ interface BreadcrumbItem {
 }
 
 const routeLabels: Record<string, string> = {
-  dashboard: 'Dashboard',
-  campaigns: 'Campaigns',
-  workflows: 'Workflows',
-  messages: 'Messages',
-  webhooks: 'Webhooks',
-  providers: 'Providers',
-  projects: 'Projects',
-  analytics: 'Analytics',
-  audience: 'Audience',
-  settings: 'Settings',
-  integrations: 'Integrations',
-  notifications: 'Notifications',
-  branding: 'Branding',
-  team: 'Team',
-  'api-keys': 'API Keys',
-  billing: 'Billing',
-  profile: 'Profile',
+  dashboard: "Dashboard",
+  campaigns: "Campaigns",
+  workflows: "Workflows",
+  messages: "Messages",
+  webhooks: "Webhooks",
+  providers: "Providers",
+  projects: "Projects",
+  analytics: "Analytics",
+  audience: "Audience",
+  settings: "Settings",
+  integrations: "Integrations",
+  notifications: "Notifications",
+  branding: "Branding",
+  team: "Team",
+  "api-keys": "API Keys",
+  billing: "Billing",
+  profile: "Profile",
 };
 
 export function Breadcrumbs() {
@@ -34,19 +34,19 @@ export function Breadcrumbs() {
 
   // Generate breadcrumb items from pathname
   const generateBreadcrumbs = (): BreadcrumbItem[] => {
-    const segments = pathname.split('/').filter(Boolean);
+    const segments = pathname.split("/").filter(Boolean);
     const breadcrumbs: BreadcrumbItem[] = [];
 
     // Always start with dashboard
-    if (segments[0] !== 'dashboard') {
+    if (segments[0] !== "dashboard") {
       breadcrumbs.push({
-        label: 'Dashboard',
-        href: '/dashboard',
+        label: "Dashboard",
+        href: "/dashboard",
       });
     }
 
     // Build breadcrumbs from path segments
-    let currentPath = '';
+    let currentPath = "";
     segments.forEach((segment, index) => {
       currentPath += `/${segment}`;
       const label = routeLabels[segment] || segment.charAt(0).toUpperCase() + segment.slice(1);
@@ -73,10 +73,7 @@ export function Breadcrumbs() {
         <div key={item.label} className="flex items-center space-x-1">
           {index > 0 && <ChevronRightIcon className="h-4 w-4" />}
           {item.href ? (
-            <Link
-              href={item.href}
-              className="hover:text-foreground transition-colors"
-            >
+            <Link href={item.href} className="hover:text-foreground transition-colors">
               {item.label}
             </Link>
           ) : (

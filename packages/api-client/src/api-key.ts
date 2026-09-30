@@ -17,9 +17,9 @@ import {
   ApiKeyUsage,
   ApiKeyWithSecret,
   CreateApiKeyRequest,
-  UpdateApiKeyRequest
-} from './types/api-key';
-import { ApiClient, createApiClient } from './client';
+  UpdateApiKeyRequest,
+} from "./types/api-key";
+import { ApiClient, createApiClient } from "./client";
 
 /**
  * API Key Management API client for handling all API key-related operations
@@ -42,11 +42,11 @@ class ApiKeyApiClient {
    */
   async createApiKey(data: CreateApiKeyRequest): Promise<ApiKeyWithSecret> {
     if (!data.projectId) {
-      throw new Error('projectId is required to create an API key');
+      throw new Error("projectId is required to create an API key");
     }
     const { projectId, ...body } = data;
     return this.apiClient.post<ApiKeyWithSecret>(
-      '/tenants/:tenantId/projects/:projectId/api-keys',
+      "/tenants/:tenantId/projects/:projectId/api-keys",
       body,
       { projectId },
     );
@@ -78,7 +78,10 @@ class ApiKeyApiClient {
    * @param params Query parameters for filtering
    * @returns List of API keys for the project
    */
-  async getApiKeysByProject(projectId: string, params?: ApiKeyQueryParams): Promise<{
+  async getApiKeysByProject(
+    projectId: string,
+    params?: ApiKeyQueryParams,
+  ): Promise<{
     data: ApiKey[];
     pagination?: {
       page: number;
@@ -89,7 +92,9 @@ class ApiKeyApiClient {
       hasPrev: boolean;
     };
   }> {
-    return this.apiClient.get('/tenants/:tenantId/projects/:projectId/api-keys', params, { projectId });
+    return this.apiClient.get("/tenants/:tenantId/projects/:projectId/api-keys", params, {
+      projectId,
+    });
   }
 
   /**
@@ -106,7 +111,11 @@ class ApiKeyApiClient {
   /**
    * Update an existing API key
    */
-  async updateApiKey(projectId: string, apiKeyId: string, data: UpdateApiKeyRequest): Promise<ApiKey> {
+  async updateApiKey(
+    projectId: string,
+    apiKeyId: string,
+    data: UpdateApiKeyRequest,
+  ): Promise<ApiKey> {
     return this.apiClient.patch<ApiKey>(
       `/tenants/:tenantId/projects/:projectId/api-keys/${apiKeyId}`,
       data,
@@ -171,11 +180,14 @@ class ApiKeyApiClient {
    * @param params Query parameters for usage data
    * @returns API key usage statistics
    */
-  async getApiKeyUsage(apiKeyId: string, params?: {
-    startDate?: Date;
-    endDate?: Date;
-    granularity?: 'hour' | 'day' | 'week' | 'month';
-  }): Promise<ApiKeyUsage> {
+  async getApiKeyUsage(
+    apiKeyId: string,
+    params?: {
+      startDate?: Date;
+      endDate?: Date;
+      granularity?: "hour" | "day" | "week" | "month";
+    },
+  ): Promise<ApiKeyUsage> {
     const queryParams: Record<string, string> = {};
     if (params?.startDate) queryParams.startDate = params.startDate.toISOString();
     if (params?.endDate) queryParams.endDate = params.endDate.toISOString();
@@ -189,7 +201,7 @@ class ApiKeyApiClient {
    * @returns API key statistics
    */
   async getApiKeyStats(): Promise<ApiKeyStats> {
-    return this.apiClient.get<ApiKeyStats>('/api-keys/stats');
+    return this.apiClient.get<ApiKeyStats>("/api-keys/stats");
   }
 
   /**
@@ -198,13 +210,16 @@ class ApiKeyApiClient {
    * @param params Query parameters for activity log
    * @returns API key activity log
    */
-  async getApiKeyActivity(apiKeyId: string, params?: {
-    action?: ApiKeyAction;
-    startDate?: Date;
-    endDate?: Date;
-    limit?: number;
-    offset?: number;
-  }): Promise<{
+  async getApiKeyActivity(
+    apiKeyId: string,
+    params?: {
+      action?: ApiKeyAction;
+      startDate?: Date;
+      endDate?: Date;
+      limit?: number;
+      offset?: number;
+    },
+  ): Promise<{
     data: ApiKeyActivity[];
     total: number;
     hasMore: boolean;
@@ -244,7 +259,7 @@ class ApiKeyApiClient {
     if (params?.limit) queryParams.limit = params.limit.toString();
     if (params?.offset) queryParams.offset = params.offset.toString();
 
-    return this.apiClient.get('/api-keys/activity', queryParams);
+    return this.apiClient.get("/api-keys/activity", queryParams);
   }
 
   // API Key Security and Monitoring
@@ -254,7 +269,7 @@ class ApiKeyApiClient {
    * @returns API key security settings
    */
   async getSecuritySettings(): Promise<ApiKeySecuritySettings> {
-    return this.apiClient.get<ApiKeySecuritySettings>('/api-keys/security/settings');
+    return this.apiClient.get<ApiKeySecuritySettings>("/api-keys/security/settings");
   }
 
   /**
@@ -262,8 +277,10 @@ class ApiKeyApiClient {
    * @param settings Security settings to update
    * @returns Updated security settings
    */
-  async updateSecuritySettings(settings: Partial<ApiKeySecuritySettings>): Promise<ApiKeySecuritySettings> {
-    return this.apiClient.patch<ApiKeySecuritySettings>('/api-keys/security/settings', settings);
+  async updateSecuritySettings(
+    settings: Partial<ApiKeySecuritySettings>,
+  ): Promise<ApiKeySecuritySettings> {
+    return this.apiClient.patch<ApiKeySecuritySettings>("/api-keys/security/settings", settings);
   }
 
   /**
@@ -274,7 +291,7 @@ class ApiKeyApiClient {
   async getApiKeyAlerts(params?: {
     apiKeyId?: string;
     type?: ApiKeyAlertType;
-    severity?: 'low' | 'medium' | 'high' | 'critical';
+    severity?: "low" | "medium" | "high" | "critical";
     resolved?: boolean;
     limit?: number;
     offset?: number;
@@ -291,7 +308,7 @@ class ApiKeyApiClient {
     if (params?.limit) queryParams.limit = params.limit.toString();
     if (params?.offset) queryParams.offset = params.offset.toString();
 
-    return this.apiClient.get('/api-keys/alerts', queryParams);
+    return this.apiClient.get("/api-keys/alerts", queryParams);
   }
 
   /**
@@ -329,11 +346,14 @@ class ApiKeyApiClient {
    * @param data Rotation schedule data
    * @returns Scheduled rotation
    */
-  async scheduleRotation(apiKeyId: string, data: {
-    rotateAt: Date;
-    reason: string;
-    notifyUsers?: boolean;
-  }): Promise<ApiKeyRotation> {
+  async scheduleRotation(
+    apiKeyId: string,
+    data: {
+      rotateAt: Date;
+      reason: string;
+      notifyUsers?: boolean;
+    },
+  ): Promise<ApiKeyRotation> {
     return this.apiClient.post<ApiKeyRotation>(`/api-keys/${apiKeyId}/rotations/schedule`, data);
   }
 
@@ -353,7 +373,7 @@ class ApiKeyApiClient {
    * @returns List of API key templates
    */
   async getApiKeyTemplates(): Promise<ApiKeyTemplate[]> {
-    return this.apiClient.get<ApiKeyTemplate[]>('/api-keys/templates');
+    return this.apiClient.get<ApiKeyTemplate[]>("/api-keys/templates");
   }
 
   /**
@@ -362,13 +382,16 @@ class ApiKeyApiClient {
    * @param data Additional data for the API key
    * @returns Created API key with secret
    */
-  async createFromTemplate(templateId: string, data: {
-    name: string;
-    projectId?: string;
-    customPermissions?: string[];
-    customRateLimit?: number;
-    customExpiry?: Date;
-  }): Promise<ApiKeyWithSecret> {
+  async createFromTemplate(
+    templateId: string,
+    data: {
+      name: string;
+      projectId?: string;
+      customPermissions?: string[];
+      customRateLimit?: number;
+      customExpiry?: Date;
+    },
+  ): Promise<ApiKeyWithSecret> {
     return this.apiClient.post<ApiKeyWithSecret>(`/api-keys/templates/${templateId}/create`, data);
   }
 
@@ -377,7 +400,7 @@ class ApiKeyApiClient {
    * @returns List of available permissions
    */
   async getAvailablePermissions(): Promise<ApiKeyPermission[]> {
-    return this.apiClient.get<ApiKeyPermission[]>('/api-keys/permissions');
+    return this.apiClient.get<ApiKeyPermission[]>("/api-keys/permissions");
   }
 
   /**
@@ -390,7 +413,7 @@ class ApiKeyApiClient {
     invalid: string[];
     warnings: string[];
   }> {
-    return this.apiClient.post('/api-keys/permissions/validate', { permissions });
+    return this.apiClient.post("/api-keys/permissions/validate", { permissions });
   }
 
   // Bulk Operations
@@ -401,7 +424,7 @@ class ApiKeyApiClient {
    * @returns Operation results
    */
   async bulkOperation(operation: ApiKeyBulkOperation): Promise<ApiKeyBulkOperationResult> {
-    return this.apiClient.post<ApiKeyBulkOperationResult>('/api-keys/bulk', operation);
+    return this.apiClient.post<ApiKeyBulkOperationResult>("/api-keys/bulk", operation);
   }
 
   /**
@@ -411,7 +434,7 @@ class ApiKeyApiClient {
    */
   async bulkActivate(apiKeyIds: string[]): Promise<ApiKeyBulkOperationResult> {
     return this.bulkOperation({
-      operation: 'activate',
+      operation: "activate",
       apiKeyIds,
     });
   }
@@ -423,7 +446,7 @@ class ApiKeyApiClient {
    */
   async bulkDeactivate(apiKeyIds: string[]): Promise<ApiKeyBulkOperationResult> {
     return this.bulkOperation({
-      operation: 'deactivate',
+      operation: "deactivate",
       apiKeyIds,
     });
   }
@@ -436,7 +459,7 @@ class ApiKeyApiClient {
    */
   async bulkRevoke(apiKeyIds: string[], reason?: string): Promise<ApiKeyBulkOperationResult> {
     return this.bulkOperation({
-      operation: 'revoke',
+      operation: "revoke",
       apiKeyIds,
       parameters: { reason },
     });
@@ -449,7 +472,7 @@ class ApiKeyApiClient {
    */
   async bulkDelete(apiKeyIds: string[]): Promise<ApiKeyBulkOperationResult> {
     return this.bulkOperation({
-      operation: 'delete',
+      operation: "delete",
       apiKeyIds,
     });
   }
@@ -468,42 +491,45 @@ class ApiKeyApiClient {
     const errors: string[] = [];
 
     // Validate name
-    if ('name' in data && data.name) {
+    if ("name" in data && data.name) {
       if (data.name.length < 2) {
-        errors.push('API key name must be at least 2 characters long');
+        errors.push("API key name must be at least 2 characters long");
       }
       if (data.name.length > 100) {
-        errors.push('API key name must be less than 100 characters');
+        errors.push("API key name must be less than 100 characters");
       }
       if (!/^[a-zA-Z0-9\s\-_]+$/.test(data.name)) {
-        errors.push('API key name can only contain letters, numbers, spaces, hyphens, and underscores');
+        errors.push(
+          "API key name can only contain letters, numbers, spaces, hyphens, and underscores",
+        );
       }
     }
 
     // Validate rate limit
-    if ('rateLimit' in data && data.rateLimit !== undefined) {
+    if ("rateLimit" in data && data.rateLimit !== undefined) {
       if (data.rateLimit < 1 || data.rateLimit > 10000) {
-        errors.push('Rate limit must be between 1 and 10000 requests per minute');
+        errors.push("Rate limit must be between 1 and 10000 requests per minute");
       }
     }
 
     // Validate expiry date
-    if ('expiresAt' in data && data.expiresAt) {
+    if ("expiresAt" in data && data.expiresAt) {
       const now = new Date();
       if (data.expiresAt <= now) {
-        errors.push('Expiry date must be in the future');
+        errors.push("Expiry date must be in the future");
       }
 
       const maxExpiry = new Date();
       maxExpiry.setFullYear(maxExpiry.getFullYear() + 5); // Max 5 years
       if (data.expiresAt > maxExpiry) {
-        errors.push('Expiry date cannot be more than 5 years in the future');
+        errors.push("Expiry date cannot be more than 5 years in the future");
       }
     }
 
     // Validate IP whitelist
-    if ('ipWhitelist' in data && data.ipWhitelist) {
-      const ipRegex = /^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)(?:\/(?:[0-9]|[1-2][0-9]|3[0-2]))?$/;
+    if ("ipWhitelist" in data && data.ipWhitelist) {
+      const ipRegex =
+        /^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)(?:\/(?:[0-9]|[1-2][0-9]|3[0-2]))?$/;
 
       for (const ip of data.ipWhitelist) {
         if (!ipRegex.test(ip)) {
@@ -536,65 +562,69 @@ class ApiKeyApiClient {
     rateLimit: string;
   } {
     const formatDate = (date?: Date) => {
-      if (!date) return 'Never';
+      if (!date) return "Never";
       const now = new Date();
       const diffMs = now.getTime() - new Date(date).getTime();
       const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
 
-      if (diffDays === 0) return 'Today';
-      if (diffDays === 1) return 'Yesterday';
+      if (diffDays === 0) return "Today";
+      if (diffDays === 1) return "Yesterday";
       if (diffDays < 7) return `${diffDays} days ago`;
       return new Date(date).toLocaleDateString();
     };
 
     const getStatusColor = (status: ApiKeyStatus) => {
       switch (status) {
-        case ApiKeyStatus.ACTIVE: return 'green';
-        case ApiKeyStatus.INACTIVE: return 'yellow';
-        case ApiKeyStatus.REVOKED: return 'red';
-        default: return 'gray';
+        case ApiKeyStatus.ACTIVE:
+          return "green";
+        case ApiKeyStatus.INACTIVE:
+          return "yellow";
+        case ApiKeyStatus.REVOKED:
+          return "red";
+        default:
+          return "gray";
       }
     };
 
     const getExpiryStatus = () => {
-      if (!apiKey.expiresAt) return 'No expiry';
+      if (!apiKey.expiresAt) return "No expiry";
 
       const now = new Date();
       const expiryDate = new Date(apiKey.expiresAt);
       const diffMs = expiryDate.getTime() - now.getTime();
       const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
 
-      if (diffMs <= 0) return 'Expired';
+      if (diffMs <= 0) return "Expired";
       if (diffDays <= 7) return `Expires in ${diffDays} days`;
       if (diffDays <= 30) return `Expires in ${Math.ceil(diffDays / 7)} weeks`;
       return `Expires ${expiryDate.toLocaleDateString()}`;
     };
 
     const getExpiryColor = () => {
-      if (!apiKey.expiresAt) return 'gray';
+      if (!apiKey.expiresAt) return "gray";
 
       const now = new Date();
       const expiryDate = new Date(apiKey.expiresAt);
       const diffMs = expiryDate.getTime() - now.getTime();
       const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
 
-      if (diffMs <= 0) return 'red';
-      if (diffDays <= 7) return 'red';
-      if (diffDays <= 30) return 'yellow';
-      return 'green';
+      if (diffMs <= 0) return "red";
+      if (diffDays <= 7) return "red";
+      if (diffDays <= 30) return "yellow";
+      return "green";
     };
 
     return {
       name: apiKey.name,
       keyPrefix: `${apiKey.keyPrefix}...`,
-      type: apiKey.type.replace('_', ' ').toUpperCase(),
+      type: apiKey.type.replace("_", " ").toUpperCase(),
       status: apiKey.status.charAt(0).toUpperCase() + apiKey.status.slice(1),
       statusColor: getStatusColor(apiKey.status),
       expiryStatus: getExpiryStatus(),
       expiryColor: getExpiryColor(),
       lastUsed: formatDate(apiKey.lastUsedAt),
       usageCount: apiKey.usageCount.toLocaleString(),
-      rateLimit: apiKey.rateLimit ? `${apiKey.rateLimit}/min` : 'No limit',
+      rateLimit: apiKey.rateLimit ? `${apiKey.rateLimit}/min` : "No limit",
     };
   }
 
@@ -606,7 +636,7 @@ class ApiKeyApiClient {
    */
   generateApiKeyName(type: ApiKeyType, projectName?: string): string {
     const timestamp = new Date().toISOString().slice(0, 10);
-    const typeLabel = type.replace('_', ' ').toLowerCase();
+    const typeLabel = type.replace("_", " ").toLowerCase();
 
     if (projectName) {
       return `${projectName} ${typeLabel} key (${timestamp})`;
@@ -648,44 +678,55 @@ class ApiKeyApiClient {
   } {
     const factors = [
       {
-        factor: 'Has expiry date',
+        factor: "Has expiry date",
         score: apiKey.expiresAt ? 100 : 0,
         weight: 20,
-        recommendation: !apiKey.expiresAt ? 'Set an expiry date for better security' : undefined,
+        recommendation: !apiKey.expiresAt ? "Set an expiry date for better security" : undefined,
       },
       {
-        factor: 'IP whitelist configured',
+        factor: "IP whitelist configured",
         score: apiKey.ipWhitelist && apiKey.ipWhitelist.length > 0 ? 100 : 0,
         weight: 25,
-        recommendation: !apiKey.ipWhitelist?.length ? 'Configure IP whitelist to restrict access' : undefined,
+        recommendation: !apiKey.ipWhitelist?.length
+          ? "Configure IP whitelist to restrict access"
+          : undefined,
       },
       {
-        factor: 'Rate limit configured',
+        factor: "Rate limit configured",
         score: apiKey.rateLimit ? 100 : 0,
         weight: 15,
-        recommendation: !apiKey.rateLimit ? 'Set a rate limit to prevent abuse' : undefined,
+        recommendation: !apiKey.rateLimit ? "Set a rate limit to prevent abuse" : undefined,
       },
       {
-        factor: 'Limited permissions',
+        factor: "Limited permissions",
         score: apiKey.permissions && apiKey.permissions.length < 10 ? 100 : 50,
         weight: 20,
-        recommendation: !apiKey.permissions?.length ? 'Limit permissions to minimum required' : undefined,
+        recommendation: !apiKey.permissions?.length
+          ? "Limit permissions to minimum required"
+          : undefined,
       },
       {
-        factor: 'Recent usage',
-        score: apiKey.lastUsedAt && new Date(apiKey.lastUsedAt) > new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) ? 100 : 0,
+        factor: "Recent usage",
+        score:
+          apiKey.lastUsedAt &&
+          new Date(apiKey.lastUsedAt) > new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
+            ? 100
+            : 0,
         weight: 10,
-        recommendation: !apiKey.lastUsedAt ? 'Consider revoking unused API keys' : undefined,
+        recommendation: !apiKey.lastUsedAt ? "Consider revoking unused API keys" : undefined,
       },
       {
-        factor: 'Not expired',
+        factor: "Not expired",
         score: !apiKey.isExpired ? 100 : 0,
         weight: 10,
-        recommendation: apiKey.isExpired ? 'Regenerate or remove expired API key' : undefined,
+        recommendation: apiKey.isExpired ? "Regenerate or remove expired API key" : undefined,
       },
     ];
 
-    const totalScore = factors.reduce((sum, factor) => sum + (factor.score * factor.weight / 100), 0);
+    const totalScore = factors.reduce(
+      (sum, factor) => sum + (factor.score * factor.weight) / 100,
+      0,
+    );
     const maxScore = factors.reduce((sum, factor) => sum + factor.weight, 0);
 
     return {

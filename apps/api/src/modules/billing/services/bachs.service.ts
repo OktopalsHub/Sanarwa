@@ -1,10 +1,10 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
+import { Injectable, Logger } from "@nestjs/common";
+import { ConfigService } from "@nestjs/config";
 import {
   BillingCurrency,
   buildNotifiPurchaseReference,
   packagePriceMinor,
-} from '../constants/token-packages';
+} from "../constants/token-packages";
 
 export class BachsCheckoutInitError extends Error {
   readonly code: string;
@@ -13,7 +13,7 @@ export class BachsCheckoutInitError extends Error {
 
   constructor(options: { code: string; httpStatus: number; detail: string }) {
     super(options.detail);
-    this.name = 'BachsCheckoutInitError';
+    this.name = "BachsCheckoutInitError";
     this.code = options.code;
     this.httpStatus = options.httpStatus;
     this.detail = options.detail;
@@ -48,32 +48,32 @@ export class BachsService {
   isConfigured(currency?: BillingCurrency): boolean {
     if (!this.getSecretKey()) return false;
     if (!currency) {
-      return Boolean(this.getProductId('USD') || this.getProductId('NGN'));
+      return Boolean(this.getProductId("USD") || this.getProductId("NGN"));
     }
     return Boolean(this.getProductId(currency));
   }
 
   getBaseUrl(): string {
-    const configured = this.configService.get<string>('BACHS_BASE_URL')?.trim().replace(/\/$/, '');
+    const configured = this.configService.get<string>("BACHS_BASE_URL")?.trim().replace(/\/$/, "");
     if (configured) {
-      return configured.startsWith('http') ? configured : `https://${configured}`;
+      return configured.startsWith("http") ? configured : `https://${configured}`;
     }
 
     const secretKey = this.getSecretKey();
-    return secretKey.startsWith('sk_sandbox_')
-      ? 'https://sandbox-api.bachs.io'
-      : 'https://api.bachs.io';
+    return secretKey.startsWith("sk_sandbox_")
+      ? "https://sandbox-api.bachs.io"
+      : "https://api.bachs.io";
   }
 
   async initializeCheckout(input: BachsCheckoutInput): Promise<BachsCheckoutResult> {
     const secretKey = this.getSecretKey();
     if (!secretKey) {
-      throw new Error('bachs_not_configured');
+      throw new Error("bachs_not_configured");
     }
 
     const productId = this.getProductId(input.currency);
     if (!productId) {
-      throw new Error('bachs_product_unconfigured');
+      throw new Error("bachs_product_unconfigured");
     }
 
     const reference = buildNotifiPurchaseReference(input.purchaseId);
@@ -102,10 +102,10 @@ export class BachsService {
 
   async verifyCheckoutSession(
     checkoutId: string,
-  ): Promise<import('../types/payment-verify-result').PaymentVerifyResult> {
+  ): Promise<import("../types/payment-verify-result").PaymentVerifyResult> {
     const secretKey = this.getSecretKey();
     if (!secretKey) {
-      throw new Error('bachs_not_configured');
+      throw new Error("bachs_not_configured");
     }
 
     const baseUrl = this.getBaseUrl();
@@ -117,7 +117,7 @@ export class BachsService {
     );
 
     if (response.status === 404) {
-      return { status: 'pending' };
+      return { status: "pending" };
     }
 
     const payload = (await response.json().catch(() => ({}))) as {
@@ -131,67 +131,68 @@ export class BachsService {
     };
 
     if (!response.ok) {
-      throw new Error(payload.detail ?? 'bachs_verify_failed');
+      throw new Error(payload.detail ?? "bachs_verify_failed");
     }
 
     const sessionStatus = payload.status?.toUpperCase();
     const chargeStatus = payload.charge?.status?.toLowerCase();
     const paymentStatus = payload.payment_status?.toLowerCase();
     const amountRaw = payload.amount_total ?? payload.amount ?? payload.charge?.amount;
-    const amount =
-      amountRaw === undefined || amountRaw === null
-        ? undefined
-        : Number(amountRaw);
+    const amount = amountRaw === undefined || amountRaw === null ? undefined : Number(amountRaw);
 
     if (
-      sessionStatus === 'COMPLETED' ||
-      chargeStatus === 'succeeded' ||
-      chargeStatus === 'accepted' ||
-      paymentStatus === 'succeeded'
+      sessionStatus === "COMPLETED" ||
+      chargeStatus === "succeeded" ||
+      chargeStatus === "accepted" ||
+      paymentStatus === "succeeded"
     ) {
       return {
-        status: 'success',
+        status: "success",
         amount: Number.isFinite(amount) ? amount : undefined,
         currency: payload.currency,
       };
     }
 
     if (
-      sessionStatus === 'EXPIRED' ||
-      sessionStatus === 'CANCELLED' ||
-      chargeStatus === 'failed' ||
-      chargeStatus === 'expired' ||
-      chargeStatus === 'cancelled' ||
-      paymentStatus === 'failed' ||
-      paymentStatus === 'canceled'
+      sessionStatus === "EXPIRED" ||
+      sessionStatus === "CANCELLED" ||
+      chargeStatus === "failed" ||
+      chargeStatus === "expired" ||
+      chargeStatus === "cancelled" ||
+      paymentStatus === "failed" ||
+      paymentStatus === "canceled"
     ) {
-      return { status: 'failed', amount: Number.isFinite(amount) ? amount : undefined, currency: payload.currency };
+      return {
+        status: "failed",
+        amount: Number.isFinite(amount) ? amount : undefined,
+        currency: payload.currency,
+      };
     }
 
-    return { status: 'pending' };
+    return { status: "pending" };
   }
 
   getProductId(currency: BillingCurrency): string | undefined {
     const normalized = currency.toUpperCase() as BillingCurrency;
-    if (normalized === 'USD') {
-      return this.configService.get<string>('BACHS_PRODUCT_ID_USD')?.trim() || undefined;
+    if (normalized === "USD") {
+      return this.configService.get<string>("BACHS_PRODUCT_ID_USD")?.trim() || undefined;
     }
-    if (normalized === 'NGN') {
-      return this.configService.get<string>('BACHS_PRODUCT_ID_NGN')?.trim() || undefined;
+    if (normalized === "NGN") {
+      return this.configService.get<string>("BACHS_PRODUCT_ID_NGN")?.trim() || undefined;
     }
     return undefined;
   }
 
   getWebhookSecret(): string {
-    return this.configService.get<string>('BACHS_WEBHOOK_SECRET') || '';
+    return this.configService.get<string>("BACHS_WEBHOOK_SECRET") || "";
   }
 
   getWebOrigin(): string {
     return (
-      this.configService.get<string>('WEB_ORIGIN') ||
-      this.configService.get<string>('FRONTEND_URL') ||
-      'http://localhost:3001'
-    ).replace(/\/$/, '');
+      this.configService.get<string>("WEB_ORIGIN") ||
+      this.configService.get<string>("FRONTEND_URL") ||
+      "http://localhost:3001"
+    ).replace(/\/$/, "");
   }
 
   buildCheckoutUrls(
@@ -200,7 +201,7 @@ export class BachsService {
   ): { successUrl: string; cancelUrl: string } {
     const origin = this.getWebOrigin();
     const base = `${origin}/${tenantSlug}/billing`;
-    const purchaseQuery = purchaseId ? `&purchase_id=${encodeURIComponent(purchaseId)}` : '';
+    const purchaseQuery = purchaseId ? `&purchase_id=${encodeURIComponent(purchaseId)}` : "";
     return {
       successUrl: `${base}?checkout=success${purchaseQuery}`,
       cancelUrl: `${base}?checkout=cancel`,
@@ -225,9 +226,9 @@ export class BachsService {
   }
 
   getCardSetupAmount(): string {
-    const configured = this.configService.get<string>('BACHS_CARD_SETUP_AMOUNT')?.trim();
+    const configured = this.configService.get<string>("BACHS_CARD_SETUP_AMOUNT")?.trim();
     if (configured) return Number(configured).toFixed(2);
-    return '1.00';
+    return "1.00";
   }
 
   async initializePaymentMethodSetup(input: {
@@ -243,7 +244,7 @@ export class BachsService {
   }): Promise<BachsCheckoutResult> {
     const productId = this.getProductId(input.currency);
     if (!productId) {
-      throw new Error('bachs_product_unconfigured');
+      throw new Error("bachs_product_unconfigured");
     }
 
     // Same CUSTOM product for that currency; small amount to vault the card on Bachs.
@@ -269,13 +270,17 @@ export class BachsService {
     currency: BillingCurrency;
     tokenAmount: number;
     priceMinor: number;
-  }): Promise<{ status: 'success' | 'pending' | 'failed'; providerReference?: string; errorCode?: string }> {
+  }): Promise<{
+    status: "success" | "pending" | "failed";
+    providerReference?: string;
+    errorCode?: string;
+  }> {
     // Bachs has no documented off-session / saved-card charge API (checkout + webhooks only).
     // Fail closed rather than invent POST /v1/payments/charges.
     this.logger.warn(
       `Bachs off-session charge refused for purchase ${input.purchaseId}: OFF_SESSION_NOT_SUPPORTED`,
     );
-    return { status: 'failed', errorCode: 'OFF_SESSION_NOT_SUPPORTED' };
+    return { status: "failed", errorCode: "OFF_SESSION_NOT_SUPPORTED" };
   }
 
   async getCheckoutSessionDetails(checkoutId: string): Promise<{
@@ -290,7 +295,7 @@ export class BachsService {
   }> {
     const secretKey = this.getSecretKey();
     if (!secretKey) {
-      throw new Error('bachs_not_configured');
+      throw new Error("bachs_not_configured");
     }
 
     const baseUrl = this.getBaseUrl();
@@ -343,10 +348,10 @@ export class BachsService {
       const response = await fetch(
         `${baseUrl}/v1/subscriptions/${encodeURIComponent(subscriptionId)}`,
         {
-          method: 'PATCH',
+          method: "PATCH",
           headers: {
             Authorization: `Bearer ${secretKey}`,
-            'Content-Type': 'application/json',
+            "Content-Type": "application/json",
           },
           body: JSON.stringify({ cancel_at_period_end: true }),
         },
@@ -354,7 +359,7 @@ export class BachsService {
       if (!response.ok) {
         const payload = (await response.json().catch(() => ({}))) as { detail?: string };
         this.logger.warn(
-          `Failed to cancel Bachs vault subscription ${subscriptionId}: ${response.status} - ${payload.detail ?? 'Unknown error'}`,
+          `Failed to cancel Bachs vault subscription ${subscriptionId}: ${response.status} - ${payload.detail ?? "Unknown error"}`,
         );
       }
     } catch (error) {
@@ -376,7 +381,7 @@ export class BachsService {
   }): Promise<BachsCheckoutResult> {
     const secretKey = this.getSecretKey();
     if (!secretKey) {
-      throw new Error('bachs_not_configured');
+      throw new Error("bachs_not_configured");
     }
 
     const baseUrl = this.getBaseUrl();
@@ -393,10 +398,10 @@ export class BachsService {
     }
 
     const response = await fetch(`${baseUrl}/v1/checkout-sessions`, {
-      method: 'POST',
+      method: "POST",
       headers: {
         Authorization: `Bearer ${secretKey}`,
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
       },
       body: JSON.stringify({
         product_cart: [lineItem],
@@ -417,9 +422,9 @@ export class BachsService {
     };
 
     if (!response.ok || !payload.checkout_url || !payload.checkout_id) {
-      const detail = payload.detail ?? payload.error?.message ?? 'bachs_checkout_failed';
+      const detail = payload.detail ?? payload.error?.message ?? "bachs_checkout_failed";
       throw new BachsCheckoutInitError({
-        code: 'bachs_checkout_failed',
+        code: "bachs_checkout_failed",
         httpStatus: response.status,
         detail,
       });
@@ -433,7 +438,7 @@ export class BachsService {
   }
 
   private getSecretKey(): string {
-    return this.configService.get<string>('BACHS_SECRET_KEY') || '';
+    return this.configService.get<string>("BACHS_SECRET_KEY") || "";
   }
 }
 

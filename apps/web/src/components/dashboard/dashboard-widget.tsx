@@ -1,10 +1,15 @@
-'use client';
+"use client";
 
-import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
-import { cn } from '@/lib/utils';
-import { EllipsisHorizontalIcon, ArrowPathIcon, ArrowsPointingOutIcon, ArrowsPointingInIcon } from '@heroicons/react/24/outline'
-import { useState } from 'react';
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { cn } from "@/lib/utils";
+import {
+  EllipsisHorizontalIcon,
+  ArrowPathIcon,
+  ArrowsPointingOutIcon,
+  ArrowsPointingInIcon,
+} from "@heroicons/react/24/outline";
+import { useState } from "react";
 
 interface DashboardWidgetProps {
   title: string;
@@ -28,9 +33,9 @@ export function DashboardWidget({
   return (
     <Card
       className={cn(
-        'transition-all duration-200',
-        isExpanded && 'col-span-full row-span-2',
-        className
+        "transition-all duration-200",
+        isExpanded && "col-span-full row-span-2",
+        className,
       )}
     >
       <div className="flex items-center justify-between p-4 border-b">
@@ -44,9 +49,7 @@ export function DashboardWidget({
               disabled={isLoading}
               className="h-8 w-8 p-0"
             >
-              <ArrowPathIcon
-                className={cn('h-4 w-4', isLoading && 'animate-spin')}
-              />
+              <ArrowPathIcon className={cn("h-4 w-4", isLoading && "animate-spin")} />
             </Button>
           )}
           {expandable && (

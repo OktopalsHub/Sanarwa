@@ -1,13 +1,13 @@
-import type { AuthUser } from '@/lib/types/auth';
-import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+import type { AuthUser } from "@/lib/types/auth";
+import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 
 export interface UserPreferences {
-  theme: 'light' | 'dark' | 'system';
+  theme: "light" | "dark" | "system";
   language: string;
   timezone: string;
   emailNotifications: boolean;
   pushNotifications: boolean;
-  dashboardLayout: 'grid' | 'list';
+  dashboardLayout: "grid" | "list";
   itemsPerPage: number;
 }
 
@@ -22,12 +22,12 @@ export interface UserState {
 const initialState: UserState = {
   currentUser: null,
   preferences: {
-    theme: 'system',
-    language: 'en',
+    theme: "system",
+    language: "en",
     timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
     emailNotifications: true,
     pushNotifications: true,
-    dashboardLayout: 'grid',
+    dashboardLayout: "grid",
     itemsPerPage: 10,
   },
   recentTenants: [],
@@ -36,7 +36,7 @@ const initialState: UserState = {
 };
 
 export const userSlice = createSlice({
-  name: 'user',
+  name: "user",
   initialState,
   reducers: {
     // User authentication actions
@@ -64,7 +64,7 @@ export const userSlice = createSlice({
       state.preferences = { ...state.preferences, ...action.payload };
     },
 
-    setTheme: (state, action: PayloadAction<'light' | 'dark' | 'system'>) => {
+    setTheme: (state, action: PayloadAction<"light" | "dark" | "system">) => {
       state.preferences.theme = action.payload;
     },
 
@@ -84,7 +84,7 @@ export const userSlice = createSlice({
       state.preferences.pushNotifications = !state.preferences.pushNotifications;
     },
 
-    setDashboardLayout: (state, action: PayloadAction<'grid' | 'list'>) => {
+    setDashboardLayout: (state, action: PayloadAction<"grid" | "list">) => {
       state.preferences.dashboardLayout = action.payload;
     },
 
@@ -96,7 +96,7 @@ export const userSlice = createSlice({
     addRecentTenant: (state, action: PayloadAction<string>) => {
       const tenantId = action.payload;
       // Remove if already exists
-      state.recentTenants = state.recentTenants.filter(id => id !== tenantId);
+      state.recentTenants = state.recentTenants.filter((id) => id !== tenantId);
       // Add to beginning
       state.recentTenants.unshift(tenantId);
       // Keep only last 5
@@ -104,7 +104,7 @@ export const userSlice = createSlice({
     },
 
     removeRecentTenant: (state, action: PayloadAction<string>) => {
-      state.recentTenants = state.recentTenants.filter(id => id !== action.payload);
+      state.recentTenants = state.recentTenants.filter((id) => id !== action.payload);
     },
 
     clearRecentTenants: (state) => {

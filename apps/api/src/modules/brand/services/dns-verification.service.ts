@@ -1,7 +1,7 @@
-import { Injectable, Logger } from '@nestjs/common';
-import * as dns from 'dns';
-import { promisify } from 'util';
-import * as crypto from 'crypto';
+import { Injectable, Logger } from "@nestjs/common";
+import * as dns from "dns";
+import { promisify } from "util";
+import * as crypto from "crypto";
 
 export interface DomainVerificationResult {
   verified: boolean;
@@ -19,7 +19,7 @@ export interface DKIMVerificationResult {
 
 export interface DMARCVerificationResult {
   verified: boolean;
-  policy?: 'none' | 'quarantine' | 'reject';
+  policy?: "none" | "quarantine" | "reject";
   percentage?: number;
   reportEmail?: string;
   error?: string;
@@ -47,7 +47,7 @@ export class DnsVerificationService {
       this.logger.debug(`Found TXT records for ${verificationDomain}:`, flatRecords);
 
       // Check if any record matches our expected token
-      const verified = flatRecords.some(record => record.includes(expectedToken));
+      const verified = flatRecords.some((record) => record.includes(expectedToken));
 
       return {
         verified,
@@ -67,10 +67,7 @@ export class DnsVerificationService {
   /**
    * Verify DKIM configuration by checking DNS records
    */
-  async verifyDKIM(
-    domain: string,
-    selector: string = 'default',
-  ): Promise<DKIMVerificationResult> {
+  async verifyDKIM(domain: string, selector: string = "default"): Promise<DKIMVerificationResult> {
     try {
       const dkimDomain = `${selector}._domainkey.${domain}`;
       this.logger.log(`Verifying DKIM for ${domain} using selector ${selector}`);
@@ -81,7 +78,7 @@ export class DnsVerificationService {
       this.logger.debug(`Found DKIM records for ${dkimDomain}:`, flatRecords);
 
       // Look for DKIM record (should contain v=DKIM1)
-      const dkimRecord = flatRecords.find(record => record.includes('v=DKIM1'));
+      const dkimRecord = flatRecords.find((record) => record.includes("v=DKIM1"));
 
       if (!dkimRecord) {
         return {
@@ -123,12 +120,12 @@ export class DnsVerificationService {
       this.logger.debug(`Found DMARC records for ${dmarcDomain}:`, flatRecords);
 
       // Look for DMARC record (should contain v=DMARC1)
-      const dmarcRecord = flatRecords.find(record => record.includes('v=DMARC1'));
+      const dmarcRecord = flatRecords.find((record) => record.includes("v=DMARC1"));
 
       if (!dmarcRecord) {
         return {
           verified: false,
-          error: 'No valid DMARC record found',
+          error: "No valid DMARC record found",
         };
       }
 
@@ -139,7 +136,7 @@ export class DnsVerificationService {
 
       return {
         verified: true,
-        policy: policyMatch ? (policyMatch[1] as 'none' | 'quarantine' | 'reject') : undefined,
+        policy: policyMatch ? (policyMatch[1] as "none" | "quarantine" | "reject") : undefined,
         percentage: percentageMatch ? parseInt(percentageMatch[1]) : undefined,
         reportEmail: reportEmailMatch ? reportEmailMatch[1] : undefined,
       };
@@ -157,10 +154,10 @@ export class DnsVerificationService {
    */
   generateVerificationToken(domain: string, brandId: string): string {
     const timestamp = Date.now();
-    const hash = require('crypto')
-      .createHash('sha256')
+    const hash = require("crypto")
+      .createHash("sha256")
       .update(`${domain}-${brandId}-${timestamp}`)
-      .digest('hex')
+      .digest("hex")
       .substring(0, 32);
 
     return `notifi-verify=${hash}`;
@@ -201,9 +198,9 @@ export class DnsVerificationService {
       ]);
 
       return {
-        hasA: aRecords.status === 'fulfilled' && aRecords.value.length > 0,
-        hasAAAA: aaaaRecords.status === 'fulfilled' && aaaaRecords.value.length > 0,
-        hasMX: mxRecords.status === 'fulfilled' && mxRecords.value.length > 0,
+        hasA: aRecords.status === "fulfilled" && aRecords.value.length > 0,
+        hasAAAA: aaaaRecords.status === "fulfilled" && aaaaRecords.value.length > 0,
+        hasMX: mxRecords.status === "fulfilled" && mxRecords.value.length > 0,
       };
     } catch (error) {
       return {
@@ -223,33 +220,37 @@ export class DnsVerificationService {
     privateKey: string;
   }> {
     return new Promise((resolve, reject) => {
-      crypto.generateKeyPair('rsa', {
-        modulusLength: 2048,
-        publicKeyEncoding: {
-          type: 'spki',
-          format: 'pem'
+      crypto.generateKeyPair(
+        "rsa",
+        {
+          modulusLength: 2048,
+          publicKeyEncoding: {
+            type: "spki",
+            format: "pem",
+          },
+          privateKeyEncoding: {
+            type: "pkcs8",
+            format: "pem",
+          },
         },
-        privateKeyEncoding: {
-          type: 'pkcs8',
-          format: 'pem'
-        }
-      }, (err, publicKey, privateKey) => {
-        if (err) {
-          this.logger.error('Failed to generate DKIM key pair:', err);
-          reject(err);
-        } else {
-          // Convert public key to DNS format (remove headers/footers and format)
-          const publicKeyClean = publicKey
-            .replace(/-----BEGIN PUBLIC KEY-----/, '')
-            .replace(/-----END PUBLIC KEY-----/, '')
-            .replace(/\s/g, '');
+        (err, publicKey, privateKey) => {
+          if (err) {
+            this.logger.error("Failed to generate DKIM key pair:", err);
+            reject(err);
+          } else {
+            // Convert public key to DNS format (remove headers/footers and format)
+            const publicKeyClean = publicKey
+              .replace(/-----BEGIN PUBLIC KEY-----/, "")
+              .replace(/-----END PUBLIC KEY-----/, "")
+              .replace(/\s/g, "");
 
-          resolve({
-            publicKey: publicKeyClean,
-            privateKey,
-          });
-        }
-      });
+            resolve({
+              publicKey: publicKeyClean,
+              privateKey,
+            });
+          }
+        },
+      );
     });
   }
 }

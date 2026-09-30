@@ -1,29 +1,26 @@
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
-import { EncryptionService } from '../../../common/security/services/encryption.service';
+import { Injectable, Logger, NotFoundException } from "@nestjs/common";
+import { ConfigService } from "@nestjs/config";
+import { InjectRepository } from "@nestjs/typeorm";
+import { Repository } from "typeorm";
+import { QueryDeepPartialEntity } from "typeorm/query-builder/QueryPartialEntity";
+import { EncryptionService } from "../../../common/security/services/encryption.service";
 import {
   BulkConfigurationDto,
   ConfigurationQueryDto,
   CreateConfigurationDto,
   RollbackConfigurationDto,
   UpdateConfigurationDto,
-} from '../dto/configuration.dto';
-import {
-  ConfigurationVersion,
-  VersionAction,
-} from '../entities/configuration-version.entity';
+} from "../dto/configuration.dto";
+import { ConfigurationVersion, VersionAction } from "../entities/configuration-version.entity";
 import {
   Configuration,
   ConfigurationScope,
   ConfigurationStatus,
-} from '../entities/configuration.entity';
+} from "../entities/configuration.entity";
 import {
   ConfigurationValidationService,
   ValidationResult,
-} from './configuration-validation.service';
+} from "./configuration-validation.service";
 
 export interface ConfigurationResult {
   configuration: Configuration;
@@ -50,15 +47,12 @@ export class ConfigurationService {
     private readonly encryptionService: EncryptionService,
     private readonly validationService: ConfigurationValidationService,
     private readonly configService: ConfigService,
-  ) { }
+  ) {}
 
   /**
    * Create a new configuration
-    */
-   async create(
-     dto: CreateConfigurationDto,
-     memberId?: string,
-   ): Promise<ConfigurationResult> {
+   */
+  async create(dto: CreateConfigurationDto, memberId?: string): Promise<ConfigurationResult> {
     // Validate the configuration value
     const validationResult = await this.validationService.validateValue(
       dto.value,
@@ -73,12 +67,7 @@ export class ConfigurationService {
     }
 
     // Check if configuration already exists
-    const existing = await this.findByKey(
-      dto.key,
-      dto.scope,
-      dto.scopeId,
-      dto.environment,
-    );
+    const existing = await this.findByKey(dto.key, dto.scope, dto.scopeId, dto.environment);
 
     if (existing) {
       throw new Error(
@@ -100,8 +89,8 @@ export class ConfigurationService {
       tenantId:
         dto.scope === ConfigurationScope.TENANT && dto.scopeId
           ? dto.scopeId
-          : '00000000-0000-0000-0000-000000000000', // Use a default UUID for global configs
-      configType: dto.scope || 'general',
+          : "00000000-0000-0000-0000-000000000000", // Use a default UUID for global configs
+      configType: dto.scope || "general",
       description: dto.description,
       isEncrypted: dto.isEncrypted || false,
       isSystem: false,
@@ -133,12 +122,12 @@ export class ConfigurationService {
 
   /**
    * Update an existing configuration
-    */
-   async update(
-     id: string,
-     dto: UpdateConfigurationDto,
-     memberId?: string,
-   ): Promise<ConfigurationResult> {
+   */
+  async update(
+    id: string,
+    dto: UpdateConfigurationDto,
+    memberId?: string,
+  ): Promise<ConfigurationResult> {
     const configuration = await this.configRepository.findOne({
       where: { id },
     });
@@ -172,10 +161,7 @@ export class ConfigurationService {
     let newValue: any = dto.value;
     if (
       newValue &&
-      (dto.isEncrypted ||
-        configuration.isEncrypted ||
-        dto.isSecret ||
-        configuration.isSecret)
+      (dto.isEncrypted || configuration.isEncrypted || dto.isSecret || configuration.isSecret)
     ) {
       const encryptionResult = await this.encryptionService.encrypt(dto.value!);
       newValue = encryptionResult; // Store as object, not stringified JSON
@@ -207,10 +193,7 @@ export class ConfigurationService {
       updateData.value = newValue;
     }
 
-    await this.configRepository.update(
-      id,
-      updateData as QueryDeepPartialEntity<Configuration>,
-    );
+    await this.configRepository.update(id, updateData as QueryDeepPartialEntity<Configuration>);
 
     // Get latest version number
     const latestVersion = await this.getLatestVersion(id);
@@ -247,39 +230,39 @@ export class ConfigurationService {
    * Find configurations by query
    */
   async find(query: ConfigurationQueryDto): Promise<Configuration[]> {
-    const queryBuilder = this.configRepository.createQueryBuilder('config');
+    const queryBuilder = this.configRepository.createQueryBuilder("config");
 
     if (query.key) {
-      queryBuilder.andWhere('config.key ILIKE :key', { key: `%${query.key}%` });
+      queryBuilder.andWhere("config.key ILIKE :key", { key: `%${query.key}%` });
     }
 
     if (query.scope) {
-      queryBuilder.andWhere('config.scope = :scope', { scope: query.scope });
+      queryBuilder.andWhere("config.scope = :scope", { scope: query.scope });
     }
 
     if (query.scopeId) {
-      queryBuilder.andWhere('config.scopeId = :scopeId', {
+      queryBuilder.andWhere("config.scopeId = :scopeId", {
         scopeId: query.scopeId,
       });
     }
 
     if (query.environment) {
-      queryBuilder.andWhere('config.environment = :environment', {
+      queryBuilder.andWhere("config.environment = :environment", {
         environment: query.environment,
       });
     }
 
     if (query.status) {
-      queryBuilder.andWhere('config.status = :status', {
+      queryBuilder.andWhere("config.status = :status", {
         status: query.status,
       });
     }
 
     if (!query.includeSecrets) {
-      queryBuilder.andWhere('config.isSecret = :isSecret', { isSecret: false });
+      queryBuilder.andWhere("config.isSecret = :isSecret", { isSecret: false });
     }
 
-    queryBuilder.orderBy('config.key', 'ASC');
+    queryBuilder.orderBy("config.key", "ASC");
 
     return queryBuilder.getMany();
   }
@@ -289,11 +272,11 @@ export class ConfigurationService {
    */
   async findById(id: string, includeSecrets = false): Promise<Configuration> {
     const queryBuilder = this.configRepository
-      .createQueryBuilder('config')
-      .where('config.id = :id', { id });
+      .createQueryBuilder("config")
+      .where("config.id = :id", { id });
 
     if (!includeSecrets) {
-      queryBuilder.andWhere('config.isSecret = :isSecret', { isSecret: false });
+      queryBuilder.andWhere("config.isSecret = :isSecret", { isSecret: false });
     }
 
     const configuration = await queryBuilder.getOne();
@@ -337,24 +320,24 @@ export class ConfigurationService {
     environment?: string,
   ): Promise<Record<string, string>> {
     const queryBuilder = this.configRepository
-      .createQueryBuilder('config')
-      .where('config.scope = :scope', { scope })
-      .andWhere('config.status = :status', {
+      .createQueryBuilder("config")
+      .where("config.scope = :scope", { scope })
+      .andWhere("config.status = :status", {
         status: ConfigurationStatus.ACTIVE,
       });
 
     if (keys.length > 0) {
-      queryBuilder.andWhere('config.key IN (:...keys)', { keys });
+      queryBuilder.andWhere("config.key IN (:...keys)", { keys });
     }
 
     if (scopeId !== undefined) {
-      queryBuilder.andWhere('config.scopeId = :scopeId', { scopeId });
+      queryBuilder.andWhere("config.scopeId = :scopeId", { scopeId });
     } else {
-      queryBuilder.andWhere('config.scopeId IS NULL');
+      queryBuilder.andWhere("config.scopeId IS NULL");
     }
 
     if (environment) {
-      queryBuilder.andWhere('config.environment = :environment', {
+      queryBuilder.andWhere("config.environment = :environment", {
         environment,
       });
     }
@@ -365,9 +348,7 @@ export class ConfigurationService {
 
     for (const config of configurations) {
       if (config.isEncrypted || config.isSecret) {
-        result[config.key] = await this.encryptionService.decrypt(
-          JSON.parse(config.value),
-        );
+        result[config.key] = await this.encryptionService.decrypt(JSON.parse(config.value));
       } else {
         result[config.key] = config.value;
       }
@@ -378,8 +359,8 @@ export class ConfigurationService {
 
   /**
    * Delete configuration
-    */
-   async delete(id: string, memberId?: string): Promise<void> {
+   */
+  async delete(id: string, memberId?: string): Promise<void> {
     const configuration = await this.findById(id);
 
     // Create version record for deletion
@@ -395,9 +376,9 @@ export class ConfigurationService {
       id,
       nextVersion,
       previousValue,
-      '',
+      "",
       VersionAction.DELETE,
-      'Configuration deleted',
+      "Configuration deleted",
       memberId,
     );
 
@@ -408,25 +389,23 @@ export class ConfigurationService {
 
   /**
    * Rollback configuration to a previous version
-    */
-   async rollback(
-     id: string,
-     dto: RollbackConfigurationDto,
-     memberId?: string,
-   ): Promise<Configuration> {
+   */
+  async rollback(
+    id: string,
+    dto: RollbackConfigurationDto,
+    memberId?: string,
+  ): Promise<Configuration> {
     const configuration = await this.findById(id);
     const version = await this.versionRepository.findOne({
       where: { id: dto.versionId },
     });
 
     if (!version) {
-      throw new NotFoundException(
-        `Version with ID '${dto.versionId}' not found`,
-      );
+      throw new NotFoundException(`Version with ID '${dto.versionId}' not found`);
     }
 
     if (version.configurationId !== id) {
-      throw new Error('Version does not belong to this configuration');
+      throw new Error("Version does not belong to this configuration");
     }
 
     // Get current value for version record
@@ -438,9 +417,7 @@ export class ConfigurationService {
     // Encrypt rollback value if needed
     let rollbackValue: any = version.newValue;
     if (configuration.isEncrypted || configuration.isSecret) {
-      const encryptionResult = await this.encryptionService.encrypt(
-        version.newValue,
-      );
+      const encryptionResult = await this.encryptionService.encrypt(version.newValue);
       rollbackValue = encryptionResult; // Store as object, not stringified JSON
     }
 
@@ -479,17 +456,14 @@ export class ConfigurationService {
   async getVersions(configurationId: string): Promise<ConfigurationVersion[]> {
     return this.versionRepository.find({
       where: { configurationId },
-      order: { version: 'DESC' },
+      order: { version: "DESC" },
     });
   }
 
   /**
    * Bulk create/update configurations
-    */
-   async bulkOperation(
-     dto: BulkConfigurationDto,
-     memberId?: string,
-   ): Promise<BulkOperationResult> {
+   */
+  async bulkOperation(dto: BulkConfigurationDto, memberId?: string): Promise<BulkOperationResult> {
     const result: BulkOperationResult = {
       successful: [],
       failed: [],
@@ -497,14 +471,13 @@ export class ConfigurationService {
 
     // Validate all configurations first if requested
     if (dto.validateAll) {
-      const validationResults =
-        await this.validationService.validateConfigurations(
-          dto.configurations.map((config) => ({
-            key: config.key,
-            value: config.value,
-            validationSchema: config.validationSchema,
-          })),
-        );
+      const validationResults = await this.validationService.validateConfigurations(
+        dto.configurations.map((config) => ({
+          key: config.key,
+          value: config.value,
+          validationSchema: config.validationSchema,
+        })),
+      );
 
       const hasValidationErrors = Object.values(validationResults).some(
         (result) => !result.isValid,
@@ -516,7 +489,7 @@ export class ConfigurationService {
           if (!validationResult.isValid) {
             result.failed.push({
               configuration: config,
-              error: `Validation failed: ${validationResult.errors?.join(', ')}`,
+              error: `Validation failed: ${validationResult.errors?.join(", ")}`,
             });
           }
         }
@@ -537,19 +510,19 @@ export class ConfigurationService {
         let configResult: ConfigurationResult;
 
         if (existing) {
-           // Update existing
-           configResult = await this.update(existing.id, configDto, memberId);
-         } else {
-           // Create new
-           configResult = await this.create(configDto, memberId);
-         }
+          // Update existing
+          configResult = await this.update(existing.id, configDto, memberId);
+        } else {
+          // Create new
+          configResult = await this.create(configDto, memberId);
+        }
 
         if (configResult.validationResult?.isValid !== false) {
           result.successful.push(configResult);
         } else {
           result.failed.push({
             configuration: configDto,
-            error: `Validation failed: ${configResult.validationResult?.errors?.join(', ')}`,
+            error: `Validation failed: ${configResult.validationResult?.errors?.join(", ")}`,
           });
         }
       } catch (error) {
@@ -577,18 +550,18 @@ export class ConfigurationService {
     environment?: string,
   ): Promise<Configuration | null> {
     const queryBuilder = this.configRepository
-      .createQueryBuilder('config')
-      .where('config.key = :key', { key })
-      .andWhere('config.isActive = :isActive', { isActive: true });
+      .createQueryBuilder("config")
+      .where("config.key = :key", { key })
+      .andWhere("config.isActive = :isActive", { isActive: true });
 
     if (scope === ConfigurationScope.TENANT && scopeId) {
-      queryBuilder.andWhere('config.tenantId = :tenantId', {
+      queryBuilder.andWhere("config.tenantId = :tenantId", {
         tenantId: scopeId,
       });
     } else {
       // For global scope, use the default global tenant ID
-      queryBuilder.andWhere('config.tenantId = :tenantId', {
-        tenantId: '00000000-0000-0000-0000-000000000000',
+      queryBuilder.andWhere("config.tenantId = :tenantId", {
+        tenantId: "00000000-0000-0000-0000-000000000000",
       });
     }
 
@@ -625,12 +598,10 @@ export class ConfigurationService {
   /**
    * Get latest version for a configuration
    */
-  private async getLatestVersion(
-    configurationId: string,
-  ): Promise<ConfigurationVersion | null> {
+  private async getLatestVersion(configurationId: string): Promise<ConfigurationVersion | null> {
     return this.versionRepository.findOne({
       where: { configurationId },
-      order: { version: 'DESC' },
+      order: { version: "DESC" },
     });
   }
 }

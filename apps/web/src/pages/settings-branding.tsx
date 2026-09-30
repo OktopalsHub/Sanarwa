@@ -1,16 +1,22 @@
-'use client';
+"use client";
 
-import { BrandAssetManager } from '@/components/branding/brand-asset-manager';
-import { BrandPreview } from '@/components/branding/brand-preview';
-import { BrandTestingTool } from '@/components/branding/brand-testing-tool';
-import { BrandingConfigurator } from '@/components/branding/branding-configurator';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { useBranding } from '@/contexts/branding-context';
-import { EyeIcon, CubeIcon, SwatchIcon, BeakerIcon } from '@heroicons/react/24/outline'
-
+import { BrandAssetManager } from "@/components/branding/brand-asset-manager";
+import { BrandPreview } from "@/components/branding/brand-preview";
+import { BrandTestingTool } from "@/components/branding/brand-testing-tool";
+import { BrandingConfigurator } from "@/components/branding/branding-configurator";
+import { EmailDomainSetup } from "@/components/email/email-domain-setup";
+import { EmailBYOKBanner } from "@/components/email/email-byok-banner";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useBranding } from "@/contexts/branding-context";
+import { EyeIcon, CubeIcon, SwatchIcon, BeakerIcon, EnvelopeIcon } from "@heroicons/react/24/outline";
+import { useIsBYOK } from "@/lib/query/hooks/use-email-setup";
+import { useTenant } from "@/contexts/tenant-context";
 
 export default function BrandingSettingsPage() {
   const { branding, applyBranding } = useBranding();
+  const { selectedTenant } = useTenant();
+  const { data: byok } = useIsBYOK(selectedTenant?.id);
+  const isBYOK = !!byok?.isBYOK;
 
   if (!branding) {
     return (
@@ -38,10 +44,14 @@ export default function BrandingSettingsPage() {
       </div>
 
       <Tabs defaultValue="configurator" className="w-full">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="configurator" className="flex items-center gap-2">
             <SwatchIcon className="h-4 w-4" />
             Configuration
+          </TabsTrigger>
+          <TabsTrigger value="email" className="flex items-center gap-2">
+            <EnvelopeIcon className="h-4 w-4" />
+            Email Domain
           </TabsTrigger>
           <TabsTrigger value="preview" className="flex items-center gap-2">
             <EyeIcon className="h-4 w-4" />
@@ -61,6 +71,11 @@ export default function BrandingSettingsPage() {
           <BrandingConfigurator />
         </TabsContent>
 
+        <TabsContent value="email" className="mt-6 space-y-4">
+          {isBYOK && <EmailBYOKBanner tenantId={selectedTenant?.id} />}
+          <EmailDomainSetup />
+        </TabsContent>
+
         <TabsContent value="preview" className="mt-6">
           <BrandPreview branding={branding} />
         </TabsContent>
@@ -70,10 +85,7 @@ export default function BrandingSettingsPage() {
         </TabsContent>
 
         <TabsContent value="assets" className="mt-6">
-          <BrandAssetManager
-            branding={branding}
-            onBrandingChange={handleBrandingChange}
-          />
+          <BrandAssetManager branding={branding} onBrandingChange={handleBrandingChange} />
         </TabsContent>
       </Tabs>
     </div>

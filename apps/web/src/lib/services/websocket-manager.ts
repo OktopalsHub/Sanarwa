@@ -1,20 +1,20 @@
-import { EventEmitter } from 'events';
+import { EventEmitter } from "events";
 import type {
   ChannelMessageMap,
   WebSocketChannels,
   WebSocketConfig,
   WebSocketConnectionState,
   WebSocketMessage,
-  WebSocketSubscription
-} from '../types/websocket';
+  WebSocketSubscription,
+} from "../types/websocket";
 
 export class WebSocketManager extends EventEmitter {
   private ws: WebSocket | null = null;
   private config: Required<WebSocketConfig>;
   private subscriptions = new Map<string, WebSocketSubscription>();
   private connectionState: WebSocketConnectionState = {
-    status: 'disconnected',
-    reconnectAttempts: 0
+    status: "disconnected",
+    reconnectAttempts: 0,
   };
   private reconnectTimer: NodeJS.Timeout | null = null;
   private heartbeatTimer: NodeJS.Timeout | null = null;
@@ -30,7 +30,7 @@ export class WebSocketManager extends EventEmitter {
       reconnectInterval: config.reconnectInterval || 5000,
       maxReconnectAttempts: config.maxReconnectAttempts || 10,
       heartbeatInterval: config.heartbeatInterval || 30000,
-      timeout: config.timeout || 10000
+      timeout: config.timeout || 10000,
     };
 
     // Bind methods to preserve context
@@ -53,23 +53,23 @@ export class WebSocketManager extends EventEmitter {
       if (this.ws?.readyState === WebSocket.CONNECTING) {
         // Already connecting, wait for result
         const onOpen = () => {
-          this.off('connection:open', onOpen);
-          this.off('connection:error', onError);
+          this.off("connection:open", onOpen);
+          this.off("connection:error", onError);
           resolve();
         };
         const onError = (error: Event) => {
-          this.off('connection:open', onOpen);
-          this.off('connection:error', onError);
+          this.off("connection:open", onOpen);
+          this.off("connection:error", onError);
           reject(error);
         };
 
-        this.on('connection:open', onOpen);
-        this.on('connection:error', onError);
+        this.on("connection:open", onOpen);
+        this.on("connection:error", onError);
         return;
       }
 
       this.isManuallyDisconnected = false;
-      this.updateConnectionState({ status: 'connecting' });
+      this.updateConnectionState({ status: "connecting" });
 
       try {
         this.ws = new WebSocket(this.config.url, this.config.protocols);
@@ -79,31 +79,30 @@ export class WebSocketManager extends EventEmitter {
         const timeout = setTimeout(() => {
           if (this.ws?.readyState === WebSocket.CONNECTING) {
             this.ws.close();
-            reject(new Error('WebSocket connection timeout'));
+            reject(new Error("WebSocket connection timeout"));
           }
         }, this.config.timeout);
 
         const onOpen = () => {
           clearTimeout(timeout);
-          this.off('connection:open', onOpen);
-          this.off('connection:error', onError);
+          this.off("connection:open", onOpen);
+          this.off("connection:error", onError);
           resolve();
         };
 
         const onError = (error: Event) => {
           clearTimeout(timeout);
-          this.off('connection:open', onOpen);
-          this.off('connection:error', onError);
+          this.off("connection:open", onOpen);
+          this.off("connection:error", onError);
           reject(error);
         };
 
-        this.once('connection:open', onOpen);
-        this.once('connection:error', onError);
-
+        this.once("connection:open", onOpen);
+        this.once("connection:error", onError);
       } catch (error) {
         this.updateConnectionState({
-          status: 'error',
-          error: error instanceof Error ? error.message : 'Unknown error'
+          status: "error",
+          error: error instanceof Error ? error.message : "Unknown error",
         });
         reject(error);
       }
@@ -118,11 +117,11 @@ export class WebSocketManager extends EventEmitter {
     this.clearTimers();
 
     if (this.ws) {
-      this.ws.close(1000, 'Manual disconnect');
+      this.ws.close(1000, "Manual disconnect");
       this.ws = null;
     }
 
-    this.updateConnectionState({ status: 'disconnected' });
+    this.updateConnectionState({ status: "disconnected" });
   }
 
   /**
@@ -130,13 +129,13 @@ export class WebSocketManager extends EventEmitter {
    */
   subscribe<T extends WebSocketChannels>(
     channel: T,
-    callback: (data: ChannelMessageMap[T]) => void
+    callback: (data: ChannelMessageMap[T]) => void,
   ): string {
     const subscriptionId = this.generateSubscriptionId();
     const subscription: WebSocketSubscription = {
       id: subscriptionId,
       channel,
-      callback: callback as (data: any) => void
+      callback: callback as (data: any) => void,
     };
 
     this.subscriptions.set(subscriptionId, subscription);
@@ -144,14 +143,14 @@ export class WebSocketManager extends EventEmitter {
     // Send subscription message if connected
     if (this.isConnected()) {
       this.sendMessage({
-        type: 'subscribe',
+        type: "subscribe",
         channel,
         data: { subscriptionId },
-        timestamp: Date.now()
+        timestamp: Date.now(),
       });
     }
 
-    this.emit('subscription:added', subscription);
+    this.emit("subscription:added", subscription);
     return subscriptionId;
   }
 
@@ -167,14 +166,14 @@ export class WebSocketManager extends EventEmitter {
     // Send unsubscribe message if connected
     if (this.isConnected()) {
       this.sendMessage({
-        type: 'unsubscribe',
+        type: "unsubscribe",
         channel: subscription.channel,
         data: { subscriptionId },
-        timestamp: Date.now()
+        timestamp: Date.now(),
       });
     }
 
-    this.emit('subscription:removed', subscriptionId);
+    this.emit("subscription:removed", subscriptionId);
   }
 
   /**
@@ -190,7 +189,7 @@ export class WebSocketManager extends EventEmitter {
     try {
       this.ws.send(JSON.stringify(message));
     } catch (error) {
-      console.error('Failed to send WebSocket message:', error);
+      console.error("Failed to send WebSocket message:", error);
     }
   }
 
@@ -218,37 +217,37 @@ export class WebSocketManager extends EventEmitter {
   private setupEventListeners(): void {
     if (!this.ws) return;
 
-    this.ws.addEventListener('open', this.handleOpen);
-    this.ws.addEventListener('close', this.handleClose);
-    this.ws.addEventListener('error', this.handleError);
-    this.ws.addEventListener('message', this.handleMessage);
+    this.ws.addEventListener("open", this.handleOpen);
+    this.ws.addEventListener("close", this.handleClose);
+    this.ws.addEventListener("error", this.handleError);
+    this.ws.addEventListener("message", this.handleMessage);
   }
 
   private handleOpen(): void {
     this.updateConnectionState({
-      status: 'connected',
+      status: "connected",
       lastConnected: new Date(),
       reconnectAttempts: 0,
-      error: undefined
+      error: undefined,
     });
 
     this.startHeartbeat();
     this.resubscribeAll();
     this.flushMessageQueue();
 
-    this.emit('connection:open');
+    this.emit("connection:open");
 
     // If this was a reconnection
     if (this.connectionState.reconnectAttempts > 0) {
-      this.emit('connection:reconnected');
+      this.emit("connection:reconnected");
     }
   }
 
   private handleClose(event: CloseEvent): void {
     this.clearTimers();
 
-    this.updateConnectionState({ status: 'disconnected' });
-    this.emit('connection:close', event);
+    this.updateConnectionState({ status: "disconnected" });
+    this.emit("connection:close", event);
 
     // Attempt reconnection if not manually disconnected
     if (!this.isManuallyDisconnected && event.code !== 1000) {
@@ -257,19 +256,19 @@ export class WebSocketManager extends EventEmitter {
   }
 
   private handleError(event: Event): void {
-    const error = 'WebSocket connection error';
+    const error = "WebSocket connection error";
     this.updateConnectionState({
-      status: 'error',
-      error
+      status: "error",
+      error,
     });
 
-    this.emit('connection:error', event);
+    this.emit("connection:error", event);
   }
 
   private handleMessage(event: MessageEvent): void {
     try {
       const message: WebSocketMessage = JSON.parse(event.data);
-      this.emit('message:received', message);
+      this.emit("message:received", message);
 
       // Route message to appropriate subscribers
       if (message.channel) {
@@ -278,9 +277,8 @@ export class WebSocketManager extends EventEmitter {
 
       // Handle system messages
       this.handleSystemMessage(message);
-
     } catch (error) {
-      console.error('Failed to parse WebSocket message:', error);
+      console.error("Failed to parse WebSocket message:", error);
     }
   }
 
@@ -290,7 +288,7 @@ export class WebSocketManager extends EventEmitter {
         try {
           subscription.callback(message.data);
         } catch (error) {
-          console.error('Error in subscription callback:', error);
+          console.error("Error in subscription callback:", error);
         }
       }
     }
@@ -298,42 +296,42 @@ export class WebSocketManager extends EventEmitter {
 
   private handleSystemMessage(message: WebSocketMessage): void {
     switch (message.type) {
-      case 'ping':
+      case "ping":
         // Respond to server ping
         this.sendMessage({
-          type: 'pong',
+          type: "pong",
           data: message.data,
-          timestamp: Date.now()
+          timestamp: Date.now(),
         });
         break;
 
-      case 'error':
-        console.error('WebSocket server error:', message.data);
+      case "error":
+        console.error("WebSocket server error:", message.data);
         break;
 
-      case 'subscription:confirmed':
-        console.log('Subscription confirmed:', message.data);
+      case "subscription:confirmed":
+        console.log("Subscription confirmed:", message.data);
         break;
 
-      case 'subscription:error':
-        console.error('Subscription error:', message.data);
+      case "subscription:error":
+        console.error("Subscription error:", message.data);
         break;
     }
   }
 
   private attemptReconnection(): void {
     if (this.connectionState.reconnectAttempts >= this.config.maxReconnectAttempts) {
-      this.updateConnectionState({ status: 'error', error: 'Max reconnection attempts reached' });
-      this.emit('connection:failed');
+      this.updateConnectionState({ status: "error", error: "Max reconnection attempts reached" });
+      this.emit("connection:failed");
       return;
     }
 
     this.updateConnectionState({
-      status: 'reconnecting',
-      reconnectAttempts: this.connectionState.reconnectAttempts + 1
+      status: "reconnecting",
+      reconnectAttempts: this.connectionState.reconnectAttempts + 1,
     });
 
-    this.emit('connection:reconnecting', this.connectionState.reconnectAttempts);
+    this.emit("connection:reconnecting", this.connectionState.reconnectAttempts);
 
     // Exponential backoff with jitter
     const baseDelay = this.config.reconnectInterval;
@@ -352,9 +350,9 @@ export class WebSocketManager extends EventEmitter {
     this.heartbeatTimer = setInterval(() => {
       if (this.isConnected()) {
         this.sendMessage({
-          type: 'ping',
+          type: "ping",
           data: { timestamp: Date.now() },
-          timestamp: Date.now()
+          timestamp: Date.now(),
         });
       }
     }, this.config.heartbeatInterval);
@@ -364,10 +362,10 @@ export class WebSocketManager extends EventEmitter {
     // Re-establish all subscriptions after reconnection
     for (const subscription of this.subscriptions.values()) {
       this.sendMessage({
-        type: 'subscribe',
+        type: "subscribe",
         channel: subscription.channel,
         data: { subscriptionId: subscription.id },
-        timestamp: Date.now()
+        timestamp: Date.now(),
       });
     }
   }
@@ -425,7 +423,7 @@ export function getWebSocketManager(config?: WebSocketConfig): WebSocketManager 
   }
 
   if (!globalWebSocketManager) {
-    throw new Error('WebSocket manager not initialized. Please provide config on first call.');
+    throw new Error("WebSocket manager not initialized. Please provide config on first call.");
   }
 
   return globalWebSocketManager;

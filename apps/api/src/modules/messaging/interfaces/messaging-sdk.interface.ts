@@ -1,10 +1,10 @@
-import { MessageDeliveryStatus } from '../message-delivery.entity';
+import { MessageDeliveryStatus } from "../message-delivery.entity";
 import {
   MessageChannel,
   MessagePriority,
   MessageRecipient,
   MessageStatus,
-} from '../message.entity';
+} from "../message.entity";
 
 /**
  * External Developer SDK Interface for Messaging System
@@ -16,50 +16,35 @@ export interface IMessagingSDK {
    * @param request - Message request
    * @param tenantId - Optional tenant ID for multi-tenant mode
    */
-  sendMessage(
-    request: SendMessageRequest,
-    tenantId?: string,
-  ): Promise<MessageResponse>;
+  sendMessage(request: SendMessageRequest, tenantId?: string): Promise<MessageResponse>;
 
   /**
    * Send multiple messages in bulk
    * @param request - Bulk message request
    * @param tenantId - Optional tenant ID for multi-tenant mode
    */
-  sendBulkMessages(
-    request: BulkMessageRequest,
-    tenantId?: string,
-  ): Promise<BulkMessageResponse>;
+  sendBulkMessages(request: BulkMessageRequest, tenantId?: string): Promise<BulkMessageResponse>;
 
   /**
    * Get message status and delivery information
    * @param messageId - Message ID
    * @param tenantId - Optional tenant ID for multi-tenant mode
    */
-  getMessageStatus(
-    messageId: string,
-    tenantId?: string,
-  ): Promise<MessageStatusResponse>;
+  getMessageStatus(messageId: string, tenantId?: string): Promise<MessageStatusResponse>;
 
   /**
    * Get delivery reports for a message
    * @param messageId - Message ID
    * @param tenantId - Optional tenant ID for multi-tenant mode
    */
-  getDeliveryReports(
-    messageId: string,
-    tenantId?: string,
-  ): Promise<DeliveryReport[]>;
+  getDeliveryReports(messageId: string, tenantId?: string): Promise<DeliveryReport[]>;
 
   /**
    * Get messages with pagination and filtering
    * @param query - Query parameters
    * @param tenantId - Optional tenant ID for multi-tenant mode
    */
-  getMessages(
-    query: MessageQuery,
-    tenantId?: string,
-  ): Promise<PaginatedMessageResponse>;
+  getMessages(query: MessageQuery, tenantId?: string): Promise<PaginatedMessageResponse>;
 
   /**
    * Cancel a scheduled message
@@ -73,10 +58,7 @@ export interface IMessagingSDK {
    * @param query - Stats query parameters
    * @param tenantId - Optional tenant ID for multi-tenant mode
    */
-  getDeliveryStats(
-    query: StatsQuery,
-    tenantId?: string,
-  ): Promise<DeliveryStats>;
+  getDeliveryStats(query: StatsQuery, tenantId?: string): Promise<DeliveryStats>;
 }
 
 export interface SendMessageRequest {
@@ -163,7 +145,7 @@ export interface StatsQuery {
   startDate: Date;
   endDate: Date;
   channel?: MessageChannel;
-  groupBy?: 'day' | 'week' | 'month';
+  groupBy?: "day" | "week" | "month";
 }
 
 export interface DeliveryStats {

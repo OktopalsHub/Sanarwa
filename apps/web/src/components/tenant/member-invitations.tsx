@@ -1,9 +1,9 @@
-'use client';
+"use client";
 
-import { Shield, ShieldCheck, User, UserX } from '@/lib/icons';
+import { Shield, ShieldCheck, User, UserX } from "@/lib/icons";
 
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -11,7 +11,7 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+} from "@/components/ui/dropdown-menu";
 import {
   Table,
   TableBody,
@@ -19,43 +19,57 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/table';
-import { useTenant } from '@/contexts/tenant-context';
-import { tenantApi } from '@/lib/api/tenant';
-import { Invitation, Tenant, TenantMemberRole } from '@/lib/types/tenant';
-import { ClockIcon, EnvelopeIcon, EllipsisHorizontalIcon, ArrowPathIcon, ShieldCheckIcon, UserIcon, XMarkIcon, UserMinusIcon } from '@heroicons/react/24/outline'
-import { useState } from 'react';
-import { toast } from 'sonner';
+} from "@/components/ui/table";
+import { useTenant } from "@/contexts/tenant-context";
+import { tenantApi } from "@/lib/api/tenant";
+import { Invitation, Tenant, TenantMemberRole } from "@/lib/types/tenant";
+import {
+  ClockIcon,
+  EnvelopeIcon,
+  EllipsisHorizontalIcon,
+  ArrowPathIcon,
+  ShieldCheckIcon,
+  UserIcon,
+  XMarkIcon,
+  UserMinusIcon,
+} from "@heroicons/react/24/outline";
+import { useState } from "react";
+import { toast } from "sonner";
 
 interface MemberInvitationsProps {
   invitations: Invitation[];
   tenant: Tenant;
 }
 
-const roleConfig: Partial<Record<TenantMemberRole, {
-  label: string;
-  icon: any;
-  color: string;
-}>> = {
+const roleConfig: Partial<
+  Record<
+    TenantMemberRole,
+    {
+      label: string;
+      icon: any;
+      color: string;
+    }
+  >
+> = {
   [TenantMemberRole.OWNER]: {
-    label: 'Owner',
+    label: "Owner",
     icon: ShieldCheck,
-    color: 'bg-purple-100 text-purple-800 hover:bg-purple-200',
+    color: "bg-purple-100 text-purple-800 hover:bg-purple-200",
   },
   [TenantMemberRole.ADMIN]: {
-    label: 'Admin',
+    label: "Admin",
     icon: Shield,
-    color: 'bg-red-100 text-red-800 hover:bg-red-200',
+    color: "bg-red-100 text-red-800 hover:bg-red-200",
   },
   [TenantMemberRole.MEMBER]: {
-    label: 'Member',
+    label: "Member",
     icon: User,
-    color: 'bg-green-100 text-green-800 hover:bg-green-200',
+    color: "bg-green-100 text-green-800 hover:bg-green-200",
   },
   [TenantMemberRole.VIEWER]: {
-    label: 'Viewer',
+    label: "Viewer",
     icon: UserX,
-    color: 'bg-gray-100 text-gray-800 hover:bg-gray-200',
+    color: "bg-gray-100 text-gray-800 hover:bg-gray-200",
   },
 };
 
@@ -64,21 +78,21 @@ export function MemberInvitations({ invitations, tenant }: MemberInvitationsProp
   const [loadingActions, setLoadingActions] = useState<Record<string, boolean>>({});
 
   const handleResendInvitation = async (memberId: string, email: string) => {
-    setLoadingActions(prev => ({ ...prev, [memberId]: true }));
+    setLoadingActions((prev) => ({ ...prev, [memberId]: true }));
 
     try {
       // In a real app, this would call a resend invitation API
       await fetch(`/api/tenants/${tenant.id}/invitations/${memberId}/resend`, {
-        method: 'POST',
-        credentials: 'include',
+        method: "POST",
+        credentials: "include",
       });
 
       toast.success(`Invitation resent to ${email}`);
     } catch (error) {
-      toast.error('Failed to resend invitation');
-      console.error('Resend invitation error:', error);
+      toast.error("Failed to resend invitation");
+      console.error("Resend invitation error:", error);
     } finally {
-      setLoadingActions(prev => ({ ...prev, [memberId]: false }));
+      setLoadingActions((prev) => ({ ...prev, [memberId]: false }));
     }
   };
 
@@ -87,7 +101,7 @@ export function MemberInvitations({ invitations, tenant }: MemberInvitationsProp
       return;
     }
 
-    setLoadingActions(prev => ({ ...prev, [memberId]: true }));
+    setLoadingActions((prev) => ({ ...prev, [memberId]: true }));
 
     try {
       // In a real app, this would call the revoke invitation API
@@ -95,10 +109,10 @@ export function MemberInvitations({ invitations, tenant }: MemberInvitationsProp
       await refreshTenants();
       toast.success(`Invitation revoked for ${email}`);
     } catch (error) {
-      toast.error('Failed to revoke invitation');
-      console.error('Revoke invitation error:', error);
+      toast.error("Failed to revoke invitation");
+      console.error("Revoke invitation error:", error);
     } finally {
-      setLoadingActions(prev => ({ ...prev, [memberId]: false }));
+      setLoadingActions((prev) => ({ ...prev, [memberId]: false }));
     }
   };
 
@@ -108,7 +122,7 @@ export function MemberInvitations({ invitations, tenant }: MemberInvitationsProp
     const diffInHours = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60));
 
     if (diffInHours < 1) {
-      return 'Just now';
+      return "Just now";
     } else if (diffInHours < 24) {
       return `${diffInHours}h ago`;
     } else {
@@ -154,7 +168,9 @@ export function MemberInvitations({ invitations, tenant }: MemberInvitationsProp
           const roleInfo = roleConfig[invitation.role];
           const RoleIcon = roleInfo?.icon;
           const isLoading = loadingActions[invitation.id];
-          const expiringSoon = isExpiringSoon(invitation.createdAt?.toISOString() || new Date().toISOString());
+          const expiringSoon = isExpiringSoon(
+            invitation.createdAt?.toISOString() || new Date().toISOString(),
+          );
 
           return (
             <TableRow key={invitation.id}>
@@ -163,9 +179,7 @@ export function MemberInvitations({ invitations, tenant }: MemberInvitationsProp
                   <EnvelopeIcon className="h-4 w-4 text-muted-foreground" />
                   <div>
                     <div className="font-medium">{invitation.email}</div>
-                    <div className="text-sm text-muted-foreground">
-                      Invitation pending
-                    </div>
+                    <div className="text-sm text-muted-foreground">Invitation pending</div>
                   </div>
                 </div>
               </TableCell>
@@ -188,24 +202,19 @@ export function MemberInvitations({ invitations, tenant }: MemberInvitationsProp
                     variant="secondary"
                     className={
                       expiringSoon
-                        ? 'bg-amber-100 text-amber-800 hover:bg-amber-200'
-                        : 'bg-blue-100 text-blue-800 hover:bg-blue-200'
+                        ? "bg-amber-100 text-amber-800 hover:bg-amber-200"
+                        : "bg-blue-100 text-blue-800 hover:bg-blue-200"
                     }
                   >
                     <ClockIcon className="mr-1 h-3 w-3" />
-                    {expiringSoon ? 'Expiring Soon' : 'Pending'}
+                    {expiringSoon ? "Expiring Soon" : "Pending"}
                   </Badge>
                 </div>
               </TableCell>
               <TableCell>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-8 w-8 p-0"
-                      disabled={isLoading}
-                    >
+                    <Button variant="ghost" size="sm" className="h-8 w-8 p-0" disabled={isLoading}>
                       <EllipsisHorizontalIcon className="h-4 w-4" />
                     </Button>
                   </DropdownMenuTrigger>

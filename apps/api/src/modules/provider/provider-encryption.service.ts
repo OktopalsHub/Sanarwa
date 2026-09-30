@@ -1,5 +1,5 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { EncryptionService } from '../../common/security/services/encryption.service';
+import { Injectable, Logger } from "@nestjs/common";
+import { EncryptionService } from "../../common/security/services/encryption.service";
 
 export interface EncryptionResult {
   encryptedData: string;
@@ -34,7 +34,7 @@ export class ProviderEncryptionService {
    */
   async encryptValue(value: any): Promise<EncryptionResult> {
     return this.encryptionService.encrypt(value, {
-      additionalData: 'provider_config_value',
+      additionalData: "provider_config_value",
     });
   }
 
@@ -42,10 +42,7 @@ export class ProviderEncryptionService {
    * Decrypt a single value
    */
   async decryptValue(encryptedValue: EncryptionResult): Promise<string> {
-    return this.encryptionService.decrypt(
-      encryptedValue,
-      'provider_config_value',
-    );
+    return this.encryptionService.decrypt(encryptedValue, "provider_config_value");
   }
 
   /**

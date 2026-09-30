@@ -1,9 +1,9 @@
-import * as Sentry from '@sentry/node';
-import { nodeProfilingIntegration } from '@sentry/profiling-node';
-import { httpIntegration } from '@sentry/node';
-import { consoleIntegration } from '@sentry/node';
-import { onUncaughtExceptionIntegration } from '@sentry/node';
-import { onUnhandledRejectionIntegration } from '@sentry/node';
+import * as Sentry from "@sentry/node";
+import { nodeProfilingIntegration } from "@sentry/profiling-node";
+import { httpIntegration } from "@sentry/node";
+import { consoleIntegration } from "@sentry/node";
+import { onUncaughtExceptionIntegration } from "@sentry/node";
+import { onUnhandledRejectionIntegration } from "@sentry/node";
 
 export function initializeSentry(dsn: string, environment: string) {
   Sentry.init({
@@ -17,18 +17,18 @@ export function initializeSentry(dsn: string, environment: string) {
       onUnhandledRejectionIntegration(),
     ],
     // Performance Monitoring
-    tracesSampleRate: environment === 'production' ? 0.1 : 1.0,
-    profilesSampleRate: environment === 'production' ? 0.1 : 1.0,
+    tracesSampleRate: environment === "production" ? 0.1 : 1.0,
+    profilesSampleRate: environment === "production" ? 0.1 : 1.0,
 
     // Error filtering
     beforeSend(event, hint) {
       // Filter out common non-errors
       if (event.exception) {
         const error = hint.originalException as Error;
-        if (error?.message?.includes('ECONNRESET')) {
+        if (error?.message?.includes("ECONNRESET")) {
           return null; // Ignore connection resets
         }
-        if (error?.message?.includes('Client disconnected')) {
+        if (error?.message?.includes("Client disconnected")) {
           return null; // Ignore client disconnects
         }
       }
@@ -43,13 +43,13 @@ export function initializeSentry(dsn: string, environment: string) {
   });
 
   // Global error handler
-  process.on('uncaughtException', (error) => {
+  process.on("uncaughtException", (error) => {
     Sentry.captureException(error);
   });
 
-  process.on('unhandledRejection', (reason, promise) => {
+  process.on("unhandledRejection", (reason, promise) => {
     Sentry.captureException(reason as Error, {
-      tags: { type: 'unhandledRejection' },
+      tags: { type: "unhandledRejection" },
       extra: { promise: promise.toString() },
     });
   });
@@ -70,7 +70,7 @@ export function setSentryContext(key: string, context: any) {
 export function captureSentryException(error: Error, context?: any) {
   Sentry.withScope((scope) => {
     if (context) {
-      Object.keys(context).forEach(key => {
+      Object.keys(context).forEach((key) => {
         scope.setTag(key, context[key]);
       });
     }
@@ -78,10 +78,14 @@ export function captureSentryException(error: Error, context?: any) {
   });
 }
 
-export function captureSentryMessage(message: string, level: Sentry.SeverityLevel = 'info', context?: any) {
+export function captureSentryMessage(
+  message: string,
+  level: Sentry.SeverityLevel = "info",
+  context?: any,
+) {
   Sentry.withScope((scope) => {
     if (context) {
-      Object.keys(context).forEach(key => {
+      Object.keys(context).forEach((key) => {
         scope.setTag(key, context[key]);
       });
     }

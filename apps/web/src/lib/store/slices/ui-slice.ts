@@ -1,8 +1,8 @@
-import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 
 export interface NotificationState {
   id: string;
-  type: 'success' | 'error' | 'warning' | 'info';
+  type: "success" | "error" | "warning" | "info";
   title: string;
   message?: string;
   duration?: number;
@@ -18,9 +18,9 @@ export interface ModalState {
 
 export interface UIState {
   // Theme and layout
-  theme: 'light' | 'dark' | 'system';
+  theme: "light" | "dark" | "system";
   sidebarCollapsed: boolean;
-  dashboardLayout: 'grid' | 'list';
+  dashboardLayout: "grid" | "list";
 
   // Loading states
   globalLoading: boolean;
@@ -47,26 +47,26 @@ export interface UIState {
 }
 
 const initialState: UIState = {
-  theme: 'system',
+  theme: "system",
   sidebarCollapsed: false,
-  dashboardLayout: 'grid',
+  dashboardLayout: "grid",
   globalLoading: false,
   loadingStates: {},
   notifications: [],
   modals: {},
   breadcrumbs: [],
   globalSearchOpen: false,
-  globalSearchQuery: '',
+  globalSearchQuery: "",
   commandPaletteOpen: false,
   errors: {},
 };
 
 export const uiSlice = createSlice({
-  name: 'ui',
+  name: "ui",
   initialState,
   reducers: {
     // Theme actions
-    setTheme: (state, action: PayloadAction<'light' | 'dark' | 'system'>) => {
+    setTheme: (state, action: PayloadAction<"light" | "dark" | "system">) => {
       state.theme = action.payload;
     },
 
@@ -80,7 +80,7 @@ export const uiSlice = createSlice({
     },
 
     // Dashboard layout
-    setDashboardLayout: (state, action: PayloadAction<'grid' | 'list'>) => {
+    setDashboardLayout: (state, action: PayloadAction<"grid" | "list">) => {
       state.dashboardLayout = action.payload;
     },
 
@@ -99,7 +99,10 @@ export const uiSlice = createSlice({
     },
 
     // Notification actions
-    addNotification: (state, action: PayloadAction<Omit<NotificationState, 'id' | 'timestamp'>>) => {
+    addNotification: (
+      state,
+      action: PayloadAction<Omit<NotificationState, "id" | "timestamp">>,
+    ) => {
       const notification: NotificationState = {
         ...action.payload,
         id: Date.now().toString(),
@@ -109,7 +112,7 @@ export const uiSlice = createSlice({
     },
 
     removeNotification: (state, action: PayloadAction<string>) => {
-      state.notifications = state.notifications.filter(n => n.id !== action.payload);
+      state.notifications = state.notifications.filter((n) => n.id !== action.payload);
     },
 
     clearNotifications: (state) => {
@@ -117,7 +120,10 @@ export const uiSlice = createSlice({
     },
 
     // Modal actions
-    openModal: (state, action: PayloadAction<{ id: string; type: string; props?: Record<string, any> }>) => {
+    openModal: (
+      state,
+      action: PayloadAction<{ id: string; type: string; props?: Record<string, any> }>,
+    ) => {
       const { id, type, props } = action.payload;
       state.modals[id] = { id, type, props, isOpen: true };
     },
@@ -146,7 +152,7 @@ export const uiSlice = createSlice({
     setGlobalSearchOpen: (state, action: PayloadAction<boolean>) => {
       state.globalSearchOpen = action.payload;
       if (!action.payload) {
-        state.globalSearchQuery = '';
+        state.globalSearchQuery = "";
       }
     },
 

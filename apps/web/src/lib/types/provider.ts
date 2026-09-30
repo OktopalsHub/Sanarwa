@@ -2,57 +2,57 @@
 
 // Enums matching backend
 export enum ProviderType {
-  EMAIL = 'email',
-  SMS = 'sms',
-  PUSH = 'push',
-  WHATSAPP = 'whatsapp',
-  WEBHOOK = 'webhook',
-  VOICE = 'voice',
+  EMAIL = "email",
+  SMS = "sms",
+  PUSH = "push",
+  WHATSAPP = "whatsapp",
+  WEBHOOK = "webhook",
+  VOICE = "voice",
 }
 
 export enum ProviderStatus {
-  ACTIVE = 'active',
-  INACTIVE = 'inactive',
-  TESTING = 'testing',
-  ERROR = 'error',
-  MAINTENANCE = 'maintenance',
+  ACTIVE = "active",
+  INACTIVE = "inactive",
+  TESTING = "testing",
+  ERROR = "error",
+  MAINTENANCE = "maintenance",
 }
 
 export enum ProviderHealthStatus {
-  HEALTHY = 'healthy',
-  DEGRADED = 'degraded',
-  UNHEALTHY = 'unhealthy',
-  UNKNOWN = 'unknown',
+  HEALTHY = "healthy",
+  DEGRADED = "degraded",
+  UNHEALTHY = "unhealthy",
+  UNKNOWN = "unknown",
 }
 
 export enum EmailProviderType {
-  AWS_SES = 'aws_ses',
-  SENDGRID = 'sendgrid',
-  MAILGUN = 'mailgun',
-  POSTMARK = 'postmark',
-  SMTP = 'smtp',
+  AWS_SES = "aws_ses",
+  SENDGRID = "sendgrid",
+  MAILGUN = "mailgun",
+  POSTMARK = "postmark",
+  SMTP = "smtp",
 }
 
 export enum SmsProviderType {
-  TWILIO = 'twilio',
-  AWS_SNS = 'aws_sns',
-  TERMII = 'termii',
-  NEXMO = 'nexmo',
-  MESSAGEBIRD = 'messagebird',
+  TWILIO = "twilio",
+  AWS_SNS = "aws_sns",
+  TERMII = "termii",
+  NEXMO = "nexmo",
+  MESSAGEBIRD = "messagebird",
 }
 
 export enum PushProviderType {
-  FIREBASE = 'firebase',
-  AWS_PINPOINT = 'aws_pinpoint',
-  APNS = 'apns',
-  FCM = 'fcm',
-  ONESIGNAL = 'onesignal',
+  FIREBASE = "firebase",
+  AWS_PINPOINT = "aws_pinpoint",
+  APNS = "apns",
+  FCM = "fcm",
+  ONESIGNAL = "onesignal",
 }
 
 export enum WhatsAppProviderType {
-  WHATSAPP_BUSINESS = 'whatsapp_business',
-  TWILIO_WHATSAPP = 'twilio_whatsapp',
-  MESSAGEBIRD_WHATSAPP = 'messagebird_whatsapp',
+  WHATSAPP_BUSINESS = "whatsapp_business",
+  TWILIO_WHATSAPP = "twilio_whatsapp",
+  MESSAGEBIRD_WHATSAPP = "messagebird_whatsapp",
 }
 
 // Core provider interface
@@ -95,7 +95,12 @@ export interface ProviderConfig {
   };
 
   // Provider-specific configuration (discriminated union)
-  credentials: EmailProviderConfig | SmsProviderConfig | PushProviderConfig | WhatsAppProviderConfig | WebhookProviderConfig;
+  credentials:
+    | EmailProviderConfig
+    | SmsProviderConfig
+    | PushProviderConfig
+    | WhatsAppProviderConfig
+    | WebhookProviderConfig;
 }
 
 // Email provider configurations
@@ -125,7 +130,7 @@ export interface SendGridConfig {
 export interface MailgunConfig {
   domain: string;
   apiKey: string;
-  region?: 'us' | 'eu';
+  region?: "us" | "eu";
   fromEmail: string;
   fromName?: string;
 }
@@ -165,13 +170,13 @@ export interface AwsSnsConfig {
   accessKeyId: string;
   secretAccessKey: string;
   senderId?: string;
-  messageType?: 'Promotional' | 'Transactional';
+  messageType?: "Promotional" | "Transactional";
 }
 
 export interface TermiiConfig {
   apiKey: string;
   senderId: string;
-  channel?: 'generic' | 'dnd' | 'whatsapp';
+  channel?: "generic" | "dnd" | "whatsapp";
 }
 
 export interface NexmoConfig {
@@ -249,16 +254,16 @@ export interface MessageBirdWhatsAppConfig {
 
 // Webhook provider configuration
 export interface WebhookProviderConfig {
-  type: 'webhook';
+  type: "webhook";
   config: WebhookConfig;
 }
 
 export interface WebhookConfig {
   url: string;
-  method: 'POST' | 'PUT' | 'PATCH';
+  method: "POST" | "PUT" | "PATCH";
   headers?: Record<string, string>;
   authentication?: {
-    type: 'bearer' | 'basic' | 'api_key';
+    type: "bearer" | "basic" | "api_key";
     token?: string;
     username?: string;
     password?: string;
@@ -294,7 +299,13 @@ export interface ProviderMetrics {
   averageResponseTime: number;
   errorRate?: number;
   requestsTrend?: number;
-  errorBreakdown?: Array<{ error: string; type?: string; message?: string; count: number; percentage: number }>;
+  errorBreakdown?: Array<{
+    error: string;
+    type?: string;
+    message?: string;
+    count: number;
+    percentage: number;
+  }>;
   lastUsed?: Date;
   timeSeriesData: ProviderTimeSeriesPoint[];
 }
@@ -404,7 +415,7 @@ export interface ProviderQueryParams {
   page?: number;
   limit?: number;
   sortBy?: string;
-  sortOrder?: 'ASC' | 'DESC';
+  sortOrder?: "ASC" | "DESC";
 }
 
 // State management

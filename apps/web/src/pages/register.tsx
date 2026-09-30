@@ -1,6 +1,6 @@
-import { RegisterForm } from '@/components/auth/register-form';
-import { RegisterPageLayout } from '@/components/auth/register-page-layout';
-import { Suspense } from 'react';
+import { RegisterForm } from "@/components/auth/register-form";
+import { RegisterPageLayout } from "@/components/auth/register-page-layout";
+import { Suspense } from "react";
 
 function RegisterPageContent() {
   return (
@@ -25,6 +25,6 @@ export default function RegisterPage() {
 }
 
 export const metadata = {
-  title: 'Sign Up - Sanarwa',
-  description: 'Create your Sanarwa account',
+  title: "Sign Up - Sanarwa",
+  description: "Create your Sanarwa account",
 };

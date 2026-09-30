@@ -1,8 +1,8 @@
-import { Controller, Get, Query } from '@nestjs/common';
-import { Public } from '../../modules/auth/decorators/public.decorator';
-import { HealthCheckService } from './health-check.service';
-import { MetricsService } from './metrics.service';
-import { ProviderHealthService } from './provider-health.service';
+import { Controller, Get, Query } from "@nestjs/common";
+import { Public } from "../../modules/auth/decorators/public.decorator";
+import { HealthCheckService } from "./health-check.service";
+import { MetricsService } from "./metrics.service";
+import { ProviderHealthService } from "./provider-health.service";
 
 interface DashboardAlert {
   id: string;
@@ -13,16 +13,16 @@ interface DashboardAlert {
   category: string;
 }
 
-@Controller('dashboard')
+@Controller("dashboard")
 export class DashboardController {
   constructor(
     private readonly healthCheckService: HealthCheckService,
     private readonly metricsService: MetricsService,
     private readonly providerHealthService: ProviderHealthService,
-  ) { }
+  ) {}
 
   @Public()
-  @Get('status')
+  @Get("status")
   async getDashboardStatus() {
     const [systemHealth, providerHealth, metrics] = await Promise.all([
       this.healthCheckService.getHealthStatus(),
@@ -70,8 +70,8 @@ export class DashboardController {
   }
 
   @Public()
-  @Get('alerts')
-  async getActiveAlerts(@Query('severity') severity?: string) {
+  @Get("alerts")
+  async getActiveAlerts(@Query("severity") severity?: string) {
     const healthMetrics = await this.metricsService.getHealthMetrics();
     const systemHealth = await this.healthCheckService.getHealthStatus();
     const providerHealth = await this.providerHealthService.getProviderHealthSummary();
@@ -79,34 +79,34 @@ export class DashboardController {
     const alerts: DashboardAlert[] = [];
 
     // System alerts
-    if (systemHealth.status === 'unhealthy') {
+    if (systemHealth.status === "unhealthy") {
       const unhealthyChecks = Object.entries(systemHealth.checks)
-        .filter(([, check]) => check.status === 'unhealthy')
+        .filter(([, check]) => check.status === "unhealthy")
         .map(([name]) => name);
 
       alerts.push({
-        id: 'system-unhealthy',
-        severity: 'critical',
-        title: 'System Health Critical',
-        message: `System components are unhealthy: ${unhealthyChecks.join(', ')}`,
+        id: "system-unhealthy",
+        severity: "critical",
+        title: "System Health Critical",
+        message: `System components are unhealthy: ${unhealthyChecks.join(", ")}`,
         timestamp: systemHealth.timestamp,
-        category: 'system',
+        category: "system",
       });
     }
 
     // Provider alerts
     if (providerHealth.unhealthyProviders > 0) {
       const unhealthyProviders = providerHealth.providers
-        .filter(p => p.status === 'unhealthy')
-        .map(p => p.provider);
+        .filter((p) => p.status === "unhealthy")
+        .map((p) => p.provider);
 
       alerts.push({
-        id: 'providers-unhealthy',
-        severity: 'high',
-        title: 'Provider Health Issues',
-        message: `${providerHealth.unhealthyProviders} providers are unhealthy: ${unhealthyProviders.join(', ')}`,
+        id: "providers-unhealthy",
+        severity: "high",
+        title: "Provider Health Issues",
+        message: `${providerHealth.unhealthyProviders} providers are unhealthy: ${unhealthyProviders.join(", ")}`,
         timestamp: new Date(),
-        category: 'providers',
+        category: "providers",
       });
     }
 
@@ -114,17 +114,17 @@ export class DashboardController {
     healthMetrics.alerts.forEach((alert, index) => {
       alerts.push({
         id: `memory-alert-${index}`,
-        severity: alert.includes('Critical') ? 'critical' : 'warning',
-        title: 'Memory Usage Alert',
+        severity: alert.includes("Critical") ? "critical" : "warning",
+        title: "Memory Usage Alert",
         message: alert,
         timestamp: new Date(),
-        category: 'performance',
+        category: "performance",
       });
     });
 
     // Filter by severity if provided
     const filteredAlerts = severity
-      ? alerts.filter(alert => alert.severity === severity)
+      ? alerts.filter((alert) => alert.severity === severity)
       : alerts;
 
     return {
@@ -135,7 +135,7 @@ export class DashboardController {
   }
 
   @Public()
-  @Get('overview')
+  @Get("overview")
   async getSystemOverview() {
     const [systemHealth, providerHealth, metrics] = await Promise.all([
       this.healthCheckService.getHealthStatus(),
@@ -155,7 +155,8 @@ export class DashboardController {
       summary: {
         system: {
           status: systemHealth.status,
-          healthyChecks: Object.values(systemHealth.checks).filter(c => c.status === 'healthy').length,
+          healthyChecks: Object.values(systemHealth.checks).filter((c) => c.status === "healthy")
+            .length,
           totalChecks: Object.keys(systemHealth.checks).length,
         },
         providers: {
@@ -164,7 +165,9 @@ export class DashboardController {
           total: providerHealth.totalProviders,
         },
         performance: {
-          memoryUsagePercent: Math.round((metrics.memory.heapUsed / metrics.memory.heapTotal) * 100),
+          memoryUsagePercent: Math.round(
+            (metrics.memory.heapUsed / metrics.memory.heapTotal) * 100,
+          ),
           cpuLoad: metrics.cpu.loadAverage[0],
           redisConnections: metrics.redis.connectedClients,
         },
@@ -181,19 +184,19 @@ export class DashboardController {
   private determineOverallStatus(
     systemStatus: string,
     providerStatus: string,
-  ): 'healthy' | 'degraded' | 'unhealthy' {
-    if (systemStatus === 'unhealthy') {
-      return 'unhealthy';
+  ): "healthy" | "degraded" | "unhealthy" {
+    if (systemStatus === "unhealthy") {
+      return "unhealthy";
     }
 
-    if (systemStatus === 'degraded' || providerStatus === 'unhealthy') {
-      return 'degraded';
+    if (systemStatus === "degraded" || providerStatus === "unhealthy") {
+      return "degraded";
     }
 
-    if (providerStatus === 'degraded') {
-      return 'degraded';
+    if (providerStatus === "degraded") {
+      return "degraded";
     }
 
-    return 'healthy';
+    return "healthy";
   }
 }

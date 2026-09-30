@@ -1,7 +1,4 @@
-import {
-  BaseProviderPayload,
-  IBaseProvider,
-} from '../base/base-provider.interface';
+import { BaseProviderPayload, IBaseProvider } from "../base/base-provider.interface";
 
 export interface SMSPayload extends BaseProviderPayload {
   recipient: string; // phone number in E.164 format
@@ -20,7 +17,7 @@ export interface SMSConfig {
 }
 
 export interface ISMSProvider extends IBaseProvider {
-  send(payload: SMSPayload): Promise<import('../types').ProviderResponse>;
+  send(payload: SMSPayload): Promise<import("../types").ProviderResponse>;
 
   /**
    * Get list of countries supported by this provider

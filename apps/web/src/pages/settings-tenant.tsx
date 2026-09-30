@@ -1,10 +1,9 @@
-'use client';
+"use client";
 
-import { TenantSettings } from '@/components/tenant/tenant-settings';
-import { Card, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { useTenant } from '@/contexts/tenant-context';
-import { ArrowPathIcon } from '@heroicons/react/24/outline'
-
+import { TenantSettings } from "@/components/tenant/tenant-settings";
+import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { useTenant } from "@/contexts/tenant-context";
+import { ArrowPathIcon } from "@heroicons/react/24/outline";
 
 export default function TenantSettingsPage() {
   const { currentTenant, isLoading } = useTenant();
@@ -22,9 +21,7 @@ export default function TenantSettingsPage() {
       <Card>
         <CardHeader>
           <CardTitle>No Tenant Selected</CardTitle>
-          <CardDescription>
-            Please select a tenant to manage settings.
-          </CardDescription>
+          <CardDescription>Please select a tenant to manage settings.</CardDescription>
         </CardHeader>
       </Card>
     );

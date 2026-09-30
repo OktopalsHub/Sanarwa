@@ -1,31 +1,31 @@
 export const troubleshootingItems = [
   {
-    id: 'auth-invalid-api-key',
-    title: 'Invalid API Key Error',
-    category: 'authentication' as const,
-    severity: 'high' as const,
-    description: 'Getting authentication errors when making API calls',
+    id: "auth-invalid-api-key",
+    title: "Invalid API Key Error",
+    category: "authentication" as const,
+    severity: "high" as const,
+    description: "Getting authentication errors when making API calls",
     symptoms: [
-      'Receiving 401 Unauthorized responses',
+      "Receiving 401 Unauthorized responses",
       'Error message: "Invalid API key"',
-      'All API requests failing with authentication error'
+      "All API requests failing with authentication error",
     ],
     causes: [
-      'API key is incorrect or expired',
-      'API key is not properly set in environment variables',
-      'Using wrong API key for the environment (dev/staging/prod)',
-      'API key has been revoked or deactivated'
+      "API key is incorrect or expired",
+      "API key is not properly set in environment variables",
+      "Using wrong API key for the environment (dev/staging/prod)",
+      "API key has been revoked or deactivated",
     ],
     solutions: [
       {
-        title: 'Verify API Key Configuration',
-        description: 'Check that your API key is correctly configured and valid.',
+        title: "Verify API Key Configuration",
+        description: "Check that your API key is correctly configured and valid.",
         steps: [
-          'Log in to your Notifi dashboard',
-          'Navigate to Settings > API Keys',
-          'Verify the API key matches what you\'re using in your code',
-          'Check the key\'s status and permissions',
-          'Regenerate the key if necessary'
+          "Log in to your Notifi dashboard",
+          "Navigate to Settings > API Keys",
+          "Verify the API key matches what you're using in your code",
+          "Check the key's status and permissions",
+          "Regenerate the key if necessary",
         ],
         code: `// Check your API key configuration
 const client = new NotifiClient({
@@ -40,16 +40,16 @@ try {
 } catch (error) {
   console.error('API key validation failed:', error);
 }`,
-        language: 'javascript'
+        language: "javascript",
       },
       {
-        title: 'Environment Variable Setup',
-        description: 'Ensure your environment variables are properly configured.',
+        title: "Environment Variable Setup",
+        description: "Ensure your environment variables are properly configured.",
         steps: [
-          'Create a .env file in your project root',
-          'Add your API key: NOTIFI_API_KEY=your_actual_key_here',
-          'Restart your application to load the new environment variables',
-          'Verify the variable is loaded correctly'
+          "Create a .env file in your project root",
+          "Add your API key: NOTIFI_API_KEY=your_actual_key_here",
+          "Restart your application to load the new environment variables",
+          "Verify the variable is loaded correctly",
         ],
         code: `# .env file
 NOTIFI_API_KEY=nk_live_1234567890abcdef
@@ -57,44 +57,44 @@ NOTIFI_BASE_URL=https://api.notifi.com
 
 # Verify in your code
 console.log('API Key loaded:', process.env.NOTIFI_API_KEY ? 'Yes' : 'No');`,
-        language: 'bash'
-      }
+        language: "bash",
+      },
     ],
     relatedLinks: [
       {
-        title: 'API Authentication Guide',
-        url: '/docs/authentication'
+        title: "API Authentication Guide",
+        url: "/docs/authentication",
       },
       {
-        title: 'Environment Setup',
-        url: '/docs/getting-started/setup'
-      }
+        title: "Environment Setup",
+        url: "/docs/getting-started/setup",
+      },
     ],
-    tags: ['api-key', 'authentication', '401', 'unauthorized']
+    tags: ["api-key", "authentication", "401", "unauthorized"],
   },
   {
-    id: 'email-delivery-failed',
-    title: 'Email Delivery Failures',
-    category: 'api' as const,
-    severity: 'medium' as const,
-    description: 'Emails are not being delivered to recipients',
+    id: "email-delivery-failed",
+    title: "Email Delivery Failures",
+    category: "api" as const,
+    severity: "medium" as const,
+    description: "Emails are not being delivered to recipients",
     symptoms: [
-      'API returns success but emails are not received',
-      'High bounce rates in analytics',
-      'Emails going to spam folder',
-      'Delivery status shows "failed" or "bounced"'
+      "API returns success but emails are not received",
+      "High bounce rates in analytics",
+      "Emails going to spam folder",
+      'Delivery status shows "failed" or "bounced"',
     ],
     causes: [
-      'Invalid or non-existent email addresses',
-      'Email provider blocking messages',
-      'Domain reputation issues',
-      'Missing SPF/DKIM/DMARC records',
-      'Content triggering spam filters'
+      "Invalid or non-existent email addresses",
+      "Email provider blocking messages",
+      "Domain reputation issues",
+      "Missing SPF/DKIM/DMARC records",
+      "Content triggering spam filters",
     ],
     solutions: [
       {
-        title: 'Validate Email Addresses',
-        description: 'Ensure you\'re sending to valid, active email addresses.',
+        title: "Validate Email Addresses",
+        description: "Ensure you're sending to valid, active email addresses.",
         code: `// Email validation before sending
 function isValidEmail(email) {
   const emailRegex = /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/;
@@ -121,21 +121,21 @@ async function sendEmailSafely(to, subject, content) {
     throw error;
   }
 }`,
-        language: 'javascript'
+        language: "javascript",
       },
       {
-        title: 'Check Domain Authentication',
-        description: 'Verify your domain has proper email authentication records.',
+        title: "Check Domain Authentication",
+        description: "Verify your domain has proper email authentication records.",
         steps: [
           'Add SPF record to your DNS: "v=spf1 include:_spf.notifi.com ~all"',
-          'Configure DKIM signing in your Notifi dashboard',
-          'Set up DMARC policy for your domain',
-          'Verify records using DNS lookup tools'
-        ]
+          "Configure DKIM signing in your Notifi dashboard",
+          "Set up DMARC policy for your domain",
+          "Verify records using DNS lookup tools",
+        ],
       },
       {
-        title: 'Monitor Delivery Analytics',
-        description: 'Use Notifi\'s analytics to track delivery performance.',
+        title: "Monitor Delivery Analytics",
+        description: "Use Notifi's analytics to track delivery performance.",
         code: `// Check delivery status
 const deliveryStats = await client.analytics.getDeliveryStats({
   startDate: '2024-01-01',
@@ -146,44 +146,44 @@ const deliveryStats = await client.analytics.getDeliveryStats({
 console.log('Delivery rate:', deliveryStats.deliveryRate);
 console.log('Bounce rate:', deliveryStats.bounceRate);
 console.log('Spam rate:', deliveryStats.spamRate);`,
-        language: 'javascript'
-      }
+        language: "javascript",
+      },
     ],
     relatedLinks: [
       {
-        title: 'Email Deliverability Guide',
-        url: '/docs/channels/email/deliverability'
+        title: "Email Deliverability Guide",
+        url: "/docs/channels/email/deliverability",
       },
       {
-        title: 'Domain Authentication Setup',
-        url: '/docs/channels/email/authentication'
-      }
+        title: "Domain Authentication Setup",
+        url: "/docs/channels/email/authentication",
+      },
     ],
-    tags: ['email', 'delivery', 'bounce', 'spam', 'deliverability']
+    tags: ["email", "delivery", "bounce", "spam", "deliverability"],
   },
   {
-    id: 'sdk-installation-issues',
-    title: 'SDK Installation Problems',
-    category: 'sdk' as const,
-    severity: 'medium' as const,
-    description: 'Issues installing or importing the Notifi SDK',
+    id: "sdk-installation-issues",
+    title: "SDK Installation Problems",
+    category: "sdk" as const,
+    severity: "medium" as const,
+    description: "Issues installing or importing the Notifi SDK",
     symptoms: [
-      'npm install fails with dependency errors',
-      'Import statements not working',
-      'TypeScript compilation errors',
-      'Module not found errors'
+      "npm install fails with dependency errors",
+      "Import statements not working",
+      "TypeScript compilation errors",
+      "Module not found errors",
     ],
     causes: [
-      'Node.js version incompatibility',
-      'Package manager cache issues',
-      'Conflicting dependencies',
-      'Incorrect import syntax',
-      'Missing peer dependencies'
+      "Node.js version incompatibility",
+      "Package manager cache issues",
+      "Conflicting dependencies",
+      "Incorrect import syntax",
+      "Missing peer dependencies",
     ],
     solutions: [
       {
-        title: 'Clear Package Manager Cache',
-        description: 'Clear your package manager cache and reinstall.',
+        title: "Clear Package Manager Cache",
+        description: "Clear your package manager cache and reinstall.",
         code: `# For npm
 npm cache clean --force
 rm -rf node_modules package-lock.json
@@ -198,16 +198,16 @@ yarn install
 pnpm store prune
 rm -rf node_modules pnpm-lock.yaml
 pnpm install`,
-        language: 'bash'
+        language: "bash",
       },
       {
-        title: 'Check Node.js Version',
-        description: 'Ensure you\'re using a supported Node.js version.',
+        title: "Check Node.js Version",
+        description: "Ensure you're using a supported Node.js version.",
         steps: [
-          'Check your Node.js version: node --version',
-          'Notifi SDK requires Node.js 16 or higher',
-          'Update Node.js if necessary using nvm or direct download',
-          'Reinstall dependencies after Node.js update'
+          "Check your Node.js version: node --version",
+          "Notifi SDK requires Node.js 16 or higher",
+          "Update Node.js if necessary using nvm or direct download",
+          "Reinstall dependencies after Node.js update",
         ],
         code: `# Check Node.js version
 node --version
@@ -215,11 +215,11 @@ node --version
 # Install latest LTS version with nvm
 nvm install --lts
 nvm use --lts`,
-        language: 'bash'
+        language: "bash",
       },
       {
-        title: 'Correct Import Syntax',
-        description: 'Use the correct import syntax for your environment.',
+        title: "Correct Import Syntax",
+        description: "Use the correct import syntax for your environment.",
         code: `// ES6 Modules (recommended)
 import { NotifiClient } from '@notifi/sdk';
 
@@ -231,42 +231,42 @@ import { NotifiClient, EmailOptions } from '@notifi/sdk';
 
 // Default import (if using default export)
 import NotifiClient from '@notifi/sdk';`,
-        language: 'javascript'
-      }
+        language: "javascript",
+      },
     ],
     relatedLinks: [
       {
-        title: 'Installation Guide',
-        url: '/docs/getting-started/installation'
+        title: "Installation Guide",
+        url: "/docs/getting-started/installation",
       },
       {
-        title: 'TypeScript Setup',
-        url: '/docs/sdks/typescript'
-      }
+        title: "TypeScript Setup",
+        url: "/docs/sdks/typescript",
+      },
     ],
-    tags: ['sdk', 'installation', 'npm', 'import', 'dependencies']
+    tags: ["sdk", "installation", "npm", "import", "dependencies"],
   },
   {
-    id: 'rate-limit-exceeded',
-    title: 'Rate Limit Exceeded',
-    category: 'api' as const,
-    severity: 'medium' as const,
-    description: 'Getting rate limit errors when making API requests',
+    id: "rate-limit-exceeded",
+    title: "Rate Limit Exceeded",
+    category: "api" as const,
+    severity: "medium" as const,
+    description: "Getting rate limit errors when making API requests",
     symptoms: [
-      'Receiving 429 Too Many Requests responses',
+      "Receiving 429 Too Many Requests responses",
       'Error message: "Rate limit exceeded"',
-      'API requests being throttled or rejected'
+      "API requests being throttled or rejected",
     ],
     causes: [
-      'Sending too many requests in a short time period',
-      'Not implementing proper rate limiting in client code',
-      'Burst traffic exceeding plan limits',
-      'Multiple instances making concurrent requests'
+      "Sending too many requests in a short time period",
+      "Not implementing proper rate limiting in client code",
+      "Burst traffic exceeding plan limits",
+      "Multiple instances making concurrent requests",
     ],
     solutions: [
       {
-        title: 'Implement Exponential Backoff',
-        description: 'Add retry logic with exponential backoff to handle rate limits gracefully.',
+        title: "Implement Exponential Backoff",
+        description: "Add retry logic with exponential backoff to handle rate limits gracefully.",
         code: `async function sendWithRetry(requestFn, maxRetries = 3) {
   for (let attempt = 0; attempt < maxRetries; attempt++) {
     try {
@@ -292,11 +292,11 @@ const result = await sendWithRetry(() =>
     content: 'World'
   })
 );`,
-        language: 'javascript'
+        language: "javascript",
       },
       {
-        title: 'Use Batch Operations',
-        description: 'Send multiple notifications in batches to reduce API calls.',
+        title: "Use Batch Operations",
+        description: "Send multiple notifications in batches to reduce API calls.",
         code: `// Instead of individual calls
 // for (const user of users) {
 //   await client.email.send({ to: user.email, ... });
@@ -312,11 +312,11 @@ const emailBatch = users.map(user => ({
 
 const result = await client.email.sendBatch(emailBatch);
 console.log(\`Sent \${result.sent} emails, \${result.failed} failed\`);`,
-        language: 'javascript'
+        language: "javascript",
       },
       {
-        title: 'Monitor Rate Limits',
-        description: 'Check rate limit headers and adjust request frequency.',
+        title: "Monitor Rate Limits",
+        description: "Check rate limit headers and adjust request frequency.",
         code: `// Check rate limit headers in response
 client.on('response', (response) => {
   const remaining = response.headers['x-ratelimit-remaining'];
@@ -329,49 +329,49 @@ client.on('response', (response) => {
     console.warn('Approaching rate limit, consider slowing down requests');
   }
 });`,
-        language: 'javascript'
-      }
+        language: "javascript",
+      },
     ],
     relatedLinks: [
       {
-        title: 'Rate Limiting Guide',
-        url: '/docs/api/rate-limits'
+        title: "Rate Limiting Guide",
+        url: "/docs/api/rate-limits",
       },
       {
-        title: 'Batch Operations',
-        url: '/docs/api/batch-operations'
-      }
+        title: "Batch Operations",
+        url: "/docs/api/batch-operations",
+      },
     ],
-    tags: ['rate-limit', '429', 'throttling', 'batch', 'retry']
+    tags: ["rate-limit", "429", "throttling", "batch", "retry"],
   },
   {
-    id: 'webhook-not-received',
-    title: 'Webhooks Not Being Received',
-    category: 'integration' as const,
-    severity: 'medium' as const,
-    description: 'Webhook events are not reaching your endpoint',
+    id: "webhook-not-received",
+    title: "Webhooks Not Being Received",
+    category: "integration" as const,
+    severity: "medium" as const,
+    description: "Webhook events are not reaching your endpoint",
     symptoms: [
-      'No webhook requests received at your endpoint',
-      'Webhook delivery attempts showing as failed',
-      'Missing delivery status updates',
-      'Events not triggering expected actions'
+      "No webhook requests received at your endpoint",
+      "Webhook delivery attempts showing as failed",
+      "Missing delivery status updates",
+      "Events not triggering expected actions",
     ],
     causes: [
-      'Incorrect webhook URL configuration',
-      'Firewall blocking incoming requests',
-      'SSL certificate issues',
-      'Webhook endpoint returning non-2xx status codes',
-      'Request timeout or slow response times'
+      "Incorrect webhook URL configuration",
+      "Firewall blocking incoming requests",
+      "SSL certificate issues",
+      "Webhook endpoint returning non-2xx status codes",
+      "Request timeout or slow response times",
     ],
     solutions: [
       {
-        title: 'Verify Webhook Configuration',
-        description: 'Check that your webhook URL is correctly configured and accessible.',
+        title: "Verify Webhook Configuration",
+        description: "Check that your webhook URL is correctly configured and accessible.",
         steps: [
-          'Verify the webhook URL in your Notifi dashboard',
-          'Test the URL manually with curl or Postman',
-          'Ensure the endpoint returns 200 OK for POST requests',
-          'Check that the URL is publicly accessible (not localhost)'
+          "Verify the webhook URL in your Notifi dashboard",
+          "Test the URL manually with curl or Postman",
+          "Ensure the endpoint returns 200 OK for POST requests",
+          "Check that the URL is publicly accessible (not localhost)",
         ],
         code: `# Test your webhook endpoint
 curl -X POST https://your-domain.com/webhooks/notifi \\
@@ -379,11 +379,11 @@ curl -X POST https://your-domain.com/webhooks/notifi \\
   -d '{"test": true}'
 
 # Should return 200 OK`,
-        language: 'bash'
+        language: "bash",
       },
       {
-        title: 'Implement Proper Webhook Handler',
-        description: 'Create a webhook endpoint that properly handles Notifi events.',
+        title: "Implement Proper Webhook Handler",
+        description: "Create a webhook endpoint that properly handles Notifi events.",
         code: `// Express.js webhook handler
 app.post('/webhooks/notifi', express.raw({type: 'application/json'}), (req, res) => {
   const signature = req.headers['x-notifi-signature'];
@@ -417,11 +417,11 @@ function verifyWebhookSignature(payload, signature) {
   
   return signature === \`sha256=\${expectedSignature}\`;
 }`,
-        language: 'javascript'
+        language: "javascript",
       },
       {
-        title: 'Debug Webhook Deliveries',
-        description: 'Use webhook debugging tools to troubleshoot delivery issues.',
+        title: "Debug Webhook Deliveries",
+        description: "Use webhook debugging tools to troubleshoot delivery issues.",
         code: `// Check webhook delivery logs
 const deliveries = await client.webhooks.getDeliveries({
   webhookId: 'wh_1234567890',
@@ -434,44 +434,44 @@ deliveries.forEach(delivery => {
   console.log(\`  Response: \${delivery.responseCode}\`);
   console.log(\`  Error: \${delivery.errorMessage}\`);
 });`,
-        language: 'javascript'
-      }
+        language: "javascript",
+      },
     ],
     relatedLinks: [
       {
-        title: 'Webhook Setup Guide',
-        url: '/docs/webhooks/setup'
+        title: "Webhook Setup Guide",
+        url: "/docs/webhooks/setup",
       },
       {
-        title: 'Webhook Security',
-        url: '/docs/webhooks/security'
-      }
+        title: "Webhook Security",
+        url: "/docs/webhooks/security",
+      },
     ],
-    tags: ['webhooks', 'integration', 'delivery', 'endpoint', 'debugging']
+    tags: ["webhooks", "integration", "delivery", "endpoint", "debugging"],
   },
   {
-    id: 'template-rendering-errors',
-    title: 'Template Rendering Errors',
-    category: 'api' as const,
-    severity: 'medium' as const,
-    description: 'Template variables not rendering correctly or causing errors',
+    id: "template-rendering-errors",
+    title: "Template Rendering Errors",
+    category: "api" as const,
+    severity: "medium" as const,
+    description: "Template variables not rendering correctly or causing errors",
     symptoms: [
-      'Variables showing as {{variable}} in sent messages',
-      'Template compilation errors',
-      'Missing or incorrect dynamic content',
-      'Error: "Template variable not found"'
+      "Variables showing as {{variable}} in sent messages",
+      "Template compilation errors",
+      "Missing or incorrect dynamic content",
+      'Error: "Template variable not found"',
     ],
     causes: [
-      'Missing required template variables',
-      'Incorrect variable syntax in templates',
-      'Data type mismatches',
-      'Nested object access issues',
-      'Template syntax errors'
+      "Missing required template variables",
+      "Incorrect variable syntax in templates",
+      "Data type mismatches",
+      "Nested object access issues",
+      "Template syntax errors",
     ],
     solutions: [
       {
-        title: 'Validate Template Variables',
-        description: 'Ensure all required variables are provided with correct data types.',
+        title: "Validate Template Variables",
+        description: "Ensure all required variables are provided with correct data types.",
         code: `// Validate variables before sending
 function validateTemplateVariables(template, variables) {
   const requiredVars = template.variables.filter(v => v.required);
@@ -507,11 +507,11 @@ const result = await client.email.send({
   template: 'user-profile-update',
   variables: templateVars
 });`,
-        language: 'javascript'
+        language: "javascript",
       },
       {
-        title: 'Test Template Rendering',
-        description: 'Use the template preview API to test rendering before sending.',
+        title: "Test Template Rendering",
+        description: "Use the template preview API to test rendering before sending.",
         code: `// Preview template with test data
 const preview = await client.templates.preview({
   templateId: 'welcome-email',
@@ -531,44 +531,44 @@ const unrendered = preview.html.match(/{{\\w+}}/g);
 if (unrendered) {
   console.warn('Unrendered variables found:', unrendered);
 }`,
-        language: 'javascript'
-      }
+        language: "javascript",
+      },
     ],
     relatedLinks: [
       {
-        title: 'Template Variables Guide',
-        url: '/docs/templates/variables'
+        title: "Template Variables Guide",
+        url: "/docs/templates/variables",
       },
       {
-        title: 'Template Testing',
-        url: '/docs/templates/testing'
-      }
+        title: "Template Testing",
+        url: "/docs/templates/testing",
+      },
     ],
-    tags: ['templates', 'variables', 'rendering', 'validation']
+    tags: ["templates", "variables", "rendering", "validation"],
   },
   {
-    id: 'performance-slow-api',
-    title: 'Slow API Response Times',
-    category: 'performance' as const,
-    severity: 'medium' as const,
-    description: 'API requests taking longer than expected to complete',
+    id: "performance-slow-api",
+    title: "Slow API Response Times",
+    category: "performance" as const,
+    severity: "medium" as const,
+    description: "API requests taking longer than expected to complete",
     symptoms: [
-      'API requests timing out',
-      'Slow response times (>5 seconds)',
-      'Application performance degradation',
-      'User experience issues'
+      "API requests timing out",
+      "Slow response times (>5 seconds)",
+      "Application performance degradation",
+      "User experience issues",
     ],
     causes: [
-      'Large payload sizes',
-      'Inefficient API usage patterns',
-      'Network latency issues',
-      'Server-side processing delays',
-      'Missing request optimization'
+      "Large payload sizes",
+      "Inefficient API usage patterns",
+      "Network latency issues",
+      "Server-side processing delays",
+      "Missing request optimization",
     ],
     solutions: [
       {
-        title: 'Optimize Request Payloads',
-        description: 'Reduce payload size and optimize request structure.',
+        title: "Optimize Request Payloads",
+        description: "Reduce payload size and optimize request structure.",
         code: `// Instead of sending large objects
 const heavyPayload = {
   to: 'user@example.com',
@@ -596,11 +596,11 @@ const startTime = Date.now();
 const result = await client.email.send(optimizedPayload);
 const duration = Date.now() - startTime;
 console.log(\`Request completed in \${duration}ms\`);`,
-        language: 'javascript'
+        language: "javascript",
       },
       {
-        title: 'Implement Request Caching',
-        description: 'Cache frequently used data to reduce API calls.',
+        title: "Implement Request Caching",
+        description: "Cache frequently used data to reduce API calls.",
         code: `class NotifiCache {
   constructor(ttl = 300000) { // 5 minutes default TTL
     this.cache = new Map();
@@ -640,11 +640,11 @@ async function getTemplateWithCache(templateId) {
   
   return template;
 }`,
-        language: 'javascript'
+        language: "javascript",
       },
       {
-        title: 'Use Async Processing',
-        description: 'Implement asynchronous processing for non-critical operations.',
+        title: "Use Async Processing",
+        description: "Implement asynchronous processing for non-critical operations.",
         code: `// Queue non-urgent notifications
 const notificationQueue = [];
 
@@ -682,44 +682,44 @@ async function processQueue() {
 
 // Process queue every 30 seconds
 setInterval(processQueue, 30000);`,
-        language: 'javascript'
-      }
+        language: "javascript",
+      },
     ],
     relatedLinks: [
       {
-        title: 'Performance Best Practices',
-        url: '/docs/performance/best-practices'
+        title: "Performance Best Practices",
+        url: "/docs/performance/best-practices",
       },
       {
-        title: 'API Optimization Guide',
-        url: '/docs/api/optimization'
-      }
+        title: "API Optimization Guide",
+        url: "/docs/api/optimization",
+      },
     ],
-    tags: ['performance', 'optimization', 'caching', 'async', 'batching']
+    tags: ["performance", "optimization", "caching", "async", "batching"],
   },
   {
-    id: 'multi-channel-sync-issues',
-    title: 'Multi-Channel Synchronization Issues',
-    category: 'integration' as const,
-    severity: 'high' as const,
-    description: 'Messages not synchronized properly across different channels',
+    id: "multi-channel-sync-issues",
+    title: "Multi-Channel Synchronization Issues",
+    category: "integration" as const,
+    severity: "high" as const,
+    description: "Messages not synchronized properly across different channels",
     symptoms: [
-      'Duplicate messages across channels',
-      'Messages sent out of order',
-      'Some channels not receiving messages',
-      'Inconsistent delivery timing'
+      "Duplicate messages across channels",
+      "Messages sent out of order",
+      "Some channels not receiving messages",
+      "Inconsistent delivery timing",
     ],
     causes: [
-      'Race conditions in multi-channel workflows',
-      'Incorrect workflow configuration',
-      'Channel-specific delivery delays',
-      'Missing error handling for failed channels',
-      'Improper sequencing logic'
+      "Race conditions in multi-channel workflows",
+      "Incorrect workflow configuration",
+      "Channel-specific delivery delays",
+      "Missing error handling for failed channels",
+      "Improper sequencing logic",
     ],
     solutions: [
       {
-        title: 'Implement Proper Workflow Sequencing',
-        description: 'Use workflow steps with proper delays and conditions.',
+        title: "Implement Proper Workflow Sequencing",
+        description: "Use workflow steps with proper delays and conditions.",
         code: `// Create a synchronized multi-channel workflow
 const workflow = await client.workflows.create({
   name: 'Synchronized Welcome Campaign',
@@ -763,11 +763,11 @@ const workflow = await client.workflows.create({
     }
   ]
 });`,
-        language: 'javascript'
+        language: "javascript",
       },
       {
-        title: 'Handle Channel Failures Gracefully',
-        description: 'Implement fallback mechanisms for failed channels.',
+        title: "Handle Channel Failures Gracefully",
+        description: "Implement fallback mechanisms for failed channels.",
         code: `async function sendMultiChannelMessage(user, message) {
   const results = {
     email: null,
@@ -816,19 +816,19 @@ const workflow = await client.workflows.create({
   
   return results;
 }`,
-        language: 'javascript'
-      }
+        language: "javascript",
+      },
     ],
     relatedLinks: [
       {
-        title: 'Multi-Channel Workflows',
-        url: '/docs/workflows/multi-channel'
+        title: "Multi-Channel Workflows",
+        url: "/docs/workflows/multi-channel",
       },
       {
-        title: 'Error Handling Strategies',
-        url: '/docs/best-practices/error-handling'
-      }
+        title: "Error Handling Strategies",
+        url: "/docs/best-practices/error-handling",
+      },
     ],
-    tags: ['multi-channel', 'workflows', 'synchronization', 'fallback', 'sequencing']
-  }
+    tags: ["multi-channel", "workflows", "synchronization", "fallback", "sequencing"],
+  },
 ];

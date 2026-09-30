@@ -1,6 +1,6 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import * as crypto from 'crypto';
+import { Injectable, Logger } from "@nestjs/common";
+import { ConfigService } from "@nestjs/config";
+import * as crypto from "crypto";
 
 export interface SessionData {
   sessionId: string;
@@ -30,18 +30,9 @@ export class SessionSecurityService {
   private readonly sessionSecret: string;
 
   constructor(private readonly configService: ConfigService) {
-    this.sessionTimeout = this.configService.get<number>(
-      'SESSION_TIMEOUT',
-      3600000,
-    ); // 1 hour
-    this.maxSessionsPerUser = this.configService.get<number>(
-      'MAX_SESSIONS_PER_USER',
-      5,
-    );
-    this.sessionSecret = this.configService.get<string>(
-      'SESSION_SECRET',
-      'default-session-secret',
-    );
+    this.sessionTimeout = this.configService.get<number>("SESSION_TIMEOUT", 3600000); // 1 hour
+    this.maxSessionsPerUser = this.configService.get<number>("MAX_SESSIONS_PER_USER", 5);
+    this.sessionSecret = this.configService.get<string>("SESSION_SECRET", "default-session-secret");
 
     // Clean up expired sessions every 5 minutes
     setInterval(
@@ -101,14 +92,14 @@ export class SessionSecurityService {
     if (!session) {
       return {
         isValid: false,
-        reason: 'Session not found',
+        reason: "Session not found",
       };
     }
 
     if (!session.isActive) {
       return {
         isValid: false,
-        reason: 'Session is inactive',
+        reason: "Session is inactive",
       };
     }
 
@@ -116,15 +107,12 @@ export class SessionSecurityService {
       await this.invalidateSession(sessionId);
       return {
         isValid: false,
-        reason: 'Session expired',
+        reason: "Session expired",
       };
     }
 
     // Check IP address if provided (optional for security)
-    if (
-      ipAddress &&
-      this.configService.get<boolean>('ENFORCE_SESSION_IP', false)
-    ) {
+    if (ipAddress && this.configService.get<boolean>("ENFORCE_SESSION_IP", false)) {
       if (session.ipAddress !== ipAddress) {
         await this.invalidateSession(sessionId);
         this.logger.warn(
@@ -132,7 +120,7 @@ export class SessionSecurityService {
         );
         return {
           isValid: false,
-          reason: 'IP address mismatch',
+          reason: "IP address mismatch",
         };
       }
     }
@@ -198,9 +186,7 @@ export class SessionSecurityService {
       }
     }
 
-    this.logger.log(
-      `Invalidated ${invalidatedCount} sessions for user ${userId}`,
-    );
+    this.logger.log(`Invalidated ${invalidatedCount} sessions for user ${userId}`);
     return invalidatedCount;
   }
 
@@ -211,18 +197,12 @@ export class SessionSecurityService {
     const userSessions: SessionData[] = [];
 
     for (const session of this.sessions.values()) {
-      if (
-        session.userId === userId &&
-        session.isActive &&
-        session.expiresAt > new Date()
-      ) {
+      if (session.userId === userId && session.isActive && session.expiresAt > new Date()) {
         userSessions.push(session);
       }
     }
 
-    return userSessions.toSorted(
-      (a, b) => b.lastAccessedAt.getTime() - a.lastAccessedAt.getTime(),
-    );
+    return userSessions.toSorted((a, b) => b.lastAccessedAt.getTime() - a.lastAccessedAt.getTime());
   }
 
   /**
@@ -238,43 +218,38 @@ export class SessionSecurityService {
   generateSessionToken(sessionId: string): string {
     const timestamp = Date.now().toString();
     const data = `${sessionId}:${timestamp}`;
-    const signature = crypto
-      .createHmac('sha256', this.sessionSecret)
-      .update(data)
-      .digest('hex');
+    const signature = crypto.createHmac("sha256", this.sessionSecret).update(data).digest("hex");
 
-    return `${Buffer.from(data).toString('base64')}.${signature}`;
+    return `${Buffer.from(data).toString("base64")}.${signature}`;
   }
 
   /**
    * Verify session token
    */
-  verifySessionToken(
-    token: string,
-  ): { sessionId: string; timestamp: number } | null {
+  verifySessionToken(token: string): { sessionId: string; timestamp: number } | null {
     try {
-      const [encodedData, signature] = token.split('.');
+      const [encodedData, signature] = token.split(".");
 
       if (!encodedData || !signature) {
         return null;
       }
 
-      const data = Buffer.from(encodedData, 'base64').toString('utf8');
+      const data = Buffer.from(encodedData, "base64").toString("utf8");
       const expectedSignature = crypto
-        .createHmac('sha256', this.sessionSecret)
+        .createHmac("sha256", this.sessionSecret)
         .update(data)
-        .digest('hex');
+        .digest("hex");
 
       if (
         !crypto.timingSafeEqual(
-          Buffer.from(signature, 'hex'),
-          Buffer.from(expectedSignature, 'hex'),
+          Buffer.from(signature, "hex"),
+          Buffer.from(expectedSignature, "hex"),
         )
       ) {
         return null;
       }
 
-      const [sessionId, timestampStr] = data.split(':');
+      const [sessionId, timestampStr] = data.split(":");
       const timestamp = parseInt(timestampStr, 10);
 
       if (isNaN(timestamp)) {
@@ -294,30 +269,30 @@ export class SessionSecurityService {
   async detectSuspiciousActivity(userId: string): Promise<{
     isSuspicious: boolean;
     reasons: string[];
-    riskLevel: 'low' | 'medium' | 'high';
+    riskLevel: "low" | "medium" | "high";
   }> {
     const userSessions = await this.getUserSessions(userId);
     const reasons: string[] = [];
-    let riskLevel: 'low' | 'medium' | 'high' = 'low';
+    let riskLevel: "low" | "medium" | "high" = "low";
 
     // Check for too many concurrent sessions
     if (userSessions.length > this.maxSessionsPerUser * 0.8) {
-      reasons.push('High number of concurrent sessions');
-      riskLevel = 'medium';
+      reasons.push("High number of concurrent sessions");
+      riskLevel = "medium";
     }
 
     // Check for sessions from different IP addresses
     const uniqueIPs = new Set(userSessions.map((s) => s.ipAddress));
     if (uniqueIPs.size > 3) {
-      reasons.push('Sessions from multiple IP addresses');
-      riskLevel = 'high';
+      reasons.push("Sessions from multiple IP addresses");
+      riskLevel = "high";
     }
 
     // Check for sessions from different user agents
     const uniqueUserAgents = new Set(userSessions.map((s) => s.userAgent));
     if (uniqueUserAgents.size > 2) {
-      reasons.push('Sessions from multiple devices/browsers');
-      if (riskLevel === 'low') riskLevel = 'medium';
+      reasons.push("Sessions from multiple devices/browsers");
+      if (riskLevel === "low") riskLevel = "medium";
     }
 
     // Check for rapid session creation
@@ -325,8 +300,8 @@ export class SessionSecurityService {
       (s) => s.createdAt > new Date(Date.now() - 10 * 60 * 1000), // Last 10 minutes
     );
     if (recentSessions.length > 3) {
-      reasons.push('Rapid session creation');
-      riskLevel = 'high';
+      reasons.push("Rapid session creation");
+      riskLevel = "high";
     }
 
     return {
@@ -363,12 +338,10 @@ export class SessionSecurityService {
         expiredSessions++;
       }
 
-      sessionsByTenant[session.tenantId] =
-        (sessionsByTenant[session.tenantId] || 0) + 1;
+      sessionsByTenant[session.tenantId] = (sessionsByTenant[session.tenantId] || 0) + 1;
     }
 
-    const averageSessionDuration =
-      activeSessions > 0 ? totalDuration / activeSessions : 0;
+    const averageSessionDuration = activeSessions > 0 ? totalDuration / activeSessions : 0;
 
     return {
       totalSessions,
@@ -424,6 +397,6 @@ export class SessionSecurityService {
    * Generate secure session ID
    */
   private generateSecureSessionId(): string {
-    return crypto.randomBytes(32).toString('hex');
+    return crypto.randomBytes(32).toString("hex");
   }
 }

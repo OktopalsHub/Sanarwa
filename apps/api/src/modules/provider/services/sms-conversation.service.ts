@@ -1,9 +1,9 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { EventEmitter2, OnEvent } from '@nestjs/event-emitter';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { Message } from '../../messaging/message.entity';
-import { SMSService } from './sms.service';
+import { Injectable, Logger } from "@nestjs/common";
+import { EventEmitter2, OnEvent } from "@nestjs/event-emitter";
+import { InjectRepository } from "@nestjs/typeorm";
+import { Repository } from "typeorm";
+import { Message } from "../../messaging/message.entity";
+import { SMSService } from "./sms.service";
 
 export interface ConversationContext {
   conversationId: string;
@@ -32,7 +32,7 @@ export class SMSConversationService {
   /**
    * Handle conversation replies - ensures replies use the same provider
    */
-  @OnEvent('sms.conversation.reply')
+  @OnEvent("sms.conversation.reply")
   async handleConversationReply(payload: {
     inboundMessage: any;
     originalMessage: Message;
@@ -46,7 +46,7 @@ export class SMSConversationService {
       await this.updateConversationContext(payload);
 
       // Emit event for business logic to handle the reply
-      this.eventEmitter.emit('sms.conversation.message', {
+      this.eventEmitter.emit("sms.conversation.message", {
         conversationId: payload.conversationId,
         message: payload.inboundMessage.text,
         from: payload.inboundMessage.from,
@@ -59,7 +59,6 @@ export class SMSConversationService {
 
       // Example auto-reply logic based on keywords
       await this.processConversationAutoReply(payload);
-
     } catch (error) {
       this.logger.error(`Failed to handle conversation reply: ${error.message}`, error.stack);
     }
@@ -72,7 +71,7 @@ export class SMSConversationService {
     conversationId: string,
     message: string,
     tenantId: string,
-    metadata?: Record<string, any>
+    metadata?: Record<string, any>,
   ): Promise<{ success: boolean; messageId?: string; error?: string }> {
     try {
       // Get conversation context
@@ -80,7 +79,7 @@ export class SMSConversationService {
       if (!context) {
         return {
           success: false,
-          error: 'Conversation not found',
+          error: "Conversation not found",
         };
       }
 
@@ -117,12 +116,12 @@ export class SMSConversationService {
    */
   async getConversationHistory(
     conversationId: string,
-    limit: number = 50
+    limit: number = 50,
   ): Promise<{
     messages: Array<{
       id: string;
       content: string;
-      direction: 'inbound' | 'outbound';
+      direction: "inbound" | "outbound";
       timestamp: Date;
       provider: string;
       status: string;
@@ -132,19 +131,19 @@ export class SMSConversationService {
     try {
       // Get messages for this conversation
       const messages = await this.messageRepository
-        .createQueryBuilder('message')
-        .leftJoinAndSelect('message.deliveries', 'delivery')
-        .where('message.metadata->\'conversationId\' = :conversationId', { conversationId })
-        .orderBy('message.createdAt', 'DESC')
+        .createQueryBuilder("message")
+        .leftJoinAndSelect("message.deliveries", "delivery")
+        .where("message.metadata->'conversationId' = :conversationId", { conversationId })
+        .orderBy("message.createdAt", "DESC")
         .limit(limit)
         .getMany();
 
-      const formattedMessages = messages.map(msg => ({
+      const formattedMessages = messages.map((msg) => ({
         id: msg.id,
-        content: msg.content || '',
-        direction: msg.metadata?.direction || 'outbound',
+        content: msg.content || "",
+        direction: msg.metadata?.direction || "outbound",
         timestamp: msg.createdAt,
-        provider: msg.metadata?.provider || 'unknown',
+        provider: msg.metadata?.provider || "unknown",
         status: msg.status,
       }));
 
@@ -168,26 +167,28 @@ export class SMSConversationService {
    */
   async getActiveConversations(
     tenantId: string,
-    limit: number = 100
+    limit: number = 100,
   ): Promise<ConversationContext[]> {
     try {
       // Get recent conversations from database
       const recentMessages = await this.messageRepository
-        .createQueryBuilder('message')
+        .createQueryBuilder("message")
         .select([
-          'message.metadata->\'conversationId\' as conversationId',
-          'message.tenantId as tenantId',
-          'message.metadata->\'provider\' as provider',
-          'MAX(message.createdAt) as lastMessageAt',
-          'COUNT(*) as messageCount'
+          "message.metadata->'conversationId' as conversationId",
+          "message.tenantId as tenantId",
+          "message.metadata->'provider' as provider",
+          "MAX(message.createdAt) as lastMessageAt",
+          "COUNT(*) as messageCount",
         ])
-        .where('message.tenantId = :tenantId', { tenantId })
-        .andWhere('message.metadata->\'conversationId\' IS NOT NULL')
-        .andWhere('message.createdAt >= :since', { 
-          since: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) // Last 7 days
+        .where("message.tenantId = :tenantId", { tenantId })
+        .andWhere("message.metadata->'conversationId' IS NOT NULL")
+        .andWhere("message.createdAt >= :since", {
+          since: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000), // Last 7 days
         })
-        .groupBy('message.metadata->\'conversationId\', message.tenantId, message.metadata->\'provider\'')
-        .orderBy('MAX(message.createdAt)', 'DESC')
+        .groupBy(
+          "message.metadata->'conversationId', message.tenantId, message.metadata->'provider'",
+        )
+        .orderBy("MAX(message.createdAt)", "DESC")
         .limit(limit)
         .getRawMany();
 
@@ -199,11 +200,11 @@ export class SMSConversationService {
 
         // Extract phone number from conversation ID
         const phoneNumber = this.extractPhoneFromConversationId(conversationId);
-        
+
         conversations.push({
           conversationId,
           phoneNumber,
-          provider: row.provider || 'unknown',
+          provider: row.provider || "unknown",
           tenantId: row.tenantId,
           lastMessageAt: new Date(row.lastmessageat),
           messageCount: parseInt(row.messagecount) || 0,
@@ -230,23 +231,23 @@ export class SMSConversationService {
     const tenantId = payload.originalMessage.tenantId;
 
     // Example conversation-aware auto-replies
-    if (message === 'status') {
+    if (message === "status") {
       await this.sendConversationMessage(
         payload.conversationId,
-        'Your order is being processed. You will receive updates via SMS.',
+        "Your order is being processed. You will receive updates via SMS.",
         tenantId,
-        { type: 'auto-reply', trigger: 'status' }
+        { type: "auto-reply", trigger: "status" },
       );
-    } else if (message === 'help') {
+    } else if (message === "help") {
       await this.sendConversationMessage(
         payload.conversationId,
-        'Reply with STATUS for order updates, STOP to unsubscribe, or SUPPORT for human assistance.',
+        "Reply with STATUS for order updates, STOP to unsubscribe, or SUPPORT for human assistance.",
         tenantId,
-        { type: 'auto-reply', trigger: 'help' }
+        { type: "auto-reply", trigger: "help" },
       );
-    } else if (message === 'support') {
+    } else if (message === "support") {
       // Escalate to human support
-      this.eventEmitter.emit('sms.conversation.escalate', {
+      this.eventEmitter.emit("sms.conversation.escalate", {
         conversationId: payload.conversationId,
         phoneNumber: payload.inboundMessage.from,
         message: payload.inboundMessage.text,
@@ -255,9 +256,9 @@ export class SMSConversationService {
 
       await this.sendConversationMessage(
         payload.conversationId,
-        'Your request has been forwarded to our support team. Someone will respond shortly.',
+        "Your request has been forwarded to our support team. Someone will respond shortly.",
         tenantId,
-        { type: 'auto-reply', trigger: 'support', escalated: true }
+        { type: "auto-reply", trigger: "support", escalated: true },
       );
     }
   }
@@ -292,7 +293,9 @@ export class SMSConversationService {
   /**
    * Get conversation context
    */
-  private async getConversationContext(conversationId: string): Promise<ConversationContext | null> {
+  private async getConversationContext(
+    conversationId: string,
+  ): Promise<ConversationContext | null> {
     // Check cache first
     const cached = this.conversationCache.get(conversationId);
     if (cached) {
@@ -301,9 +304,9 @@ export class SMSConversationService {
 
     // Get from database
     const message = await this.messageRepository
-      .createQueryBuilder('message')
-      .where('message.metadata->\'conversationId\' = :conversationId', { conversationId })
-      .orderBy('message.createdAt', 'DESC')
+      .createQueryBuilder("message")
+      .where("message.metadata->'conversationId' = :conversationId", { conversationId })
+      .orderBy("message.createdAt", "DESC")
       .limit(1)
       .getOne();
 
@@ -315,7 +318,7 @@ export class SMSConversationService {
     const context: ConversationContext = {
       conversationId,
       phoneNumber,
-      provider: message.metadata?.provider || 'unknown',
+      provider: message.metadata?.provider || "unknown",
       tenantId: message.tenantId,
       lastMessageAt: message.createdAt,
       messageCount: 1,
@@ -343,11 +346,11 @@ export class SMSConversationService {
    */
   private extractPhoneFromConversationId(conversationId: string): string {
     // Conversation ID format: provider_phonenumber
-    const parts = conversationId.split('_');
+    const parts = conversationId.split("_");
     if (parts.length >= 2) {
-      return '+' + parts.slice(1).join('');
+      return "+" + parts.slice(1).join("");
     }
-    return 'unknown';
+    return "unknown";
   }
 
   /**
@@ -363,6 +366,8 @@ export class SMSConversationService {
       }
     }
 
-    this.logger.debug(`Cleaned conversation cache, ${this.conversationCache.size} entries remaining`);
+    this.logger.debug(
+      `Cleaned conversation cache, ${this.conversationCache.size} entries remaining`,
+    );
   }
 }

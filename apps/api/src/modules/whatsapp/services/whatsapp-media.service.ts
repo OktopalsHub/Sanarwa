@@ -1,6 +1,6 @@
-import { Injectable, Logger, BadRequestException } from '@nestjs/common';
-import { HttpService } from '@nestjs/axios';
-import { firstValueFrom } from 'rxjs';
+import { Injectable, Logger, BadRequestException } from "@nestjs/common";
+import { HttpService } from "@nestjs/axios";
+import { firstValueFrom } from "rxjs";
 
 export interface MediaUploadResponse {
   id: string;
@@ -10,7 +10,7 @@ export interface MediaUploadResponse {
 }
 
 export interface MediaMessage {
-  type: 'image' | 'video' | 'document' | 'audio';
+  type: "image" | "video" | "document" | "audio";
   url: string;
   caption?: string;
 }
@@ -18,7 +18,7 @@ export interface MediaMessage {
 @Injectable()
 export class WhatsAppMediaService {
   private readonly logger = new Logger(WhatsAppMediaService.name);
-  private readonly baseUrl = 'https://graph.facebook.com/v18.0';
+  private readonly baseUrl = "https://graph.facebook.com/v18.0";
 
   constructor(private readonly httpService: HttpService) {}
 
@@ -29,7 +29,7 @@ export class WhatsAppMediaService {
     phoneNumberId: string,
     accessToken: string,
     mediaBuffer: Buffer,
-    mediaType: 'image/jpeg' | 'image/png' | 'video/mp4' | 'application/pdf' | 'audio/mpeg',
+    mediaType: "image/jpeg" | "image/png" | "video/mp4" | "application/pdf" | "audio/mpeg",
     filename: string,
   ): Promise<MediaUploadResponse> {
     try {
@@ -37,8 +37,8 @@ export class WhatsAppMediaService {
 
       const formData = new FormData();
       const blob = new Blob([Buffer.from(mediaBuffer)], { type: mediaType });
-      formData.append('file', blob, filename);
-      formData.append('type', mediaType);
+      formData.append("file", blob, filename);
+      formData.append("type", mediaType);
 
       const url = `${this.baseUrl}/${phoneNumberId}/media`;
 
@@ -66,10 +66,7 @@ export class WhatsAppMediaService {
   /**
    * Download media from WhatsApp
    */
-  async downloadMedia(
-    mediaId: string,
-    accessToken: string,
-  ): Promise<Buffer> {
+  async downloadMedia(mediaId: string, accessToken: string): Promise<Buffer> {
     try {
       this.logger.log(`Downloading media: ${mediaId}`);
 
@@ -87,7 +84,7 @@ export class WhatsAppMediaService {
       // Download media
       const mediaResponse = await firstValueFrom(
         this.httpService.get(mediaUrl, {
-          responseType: 'arraybuffer',
+          responseType: "arraybuffer",
           headers: {
             Authorization: `Bearer ${accessToken}`,
           },
@@ -116,7 +113,7 @@ export class WhatsAppMediaService {
       this.logger.log(`Sending ${media.type} message to ${to}`);
 
       const payload = {
-        messaging_product: 'whatsapp',
+        messaging_product: "whatsapp",
         to,
         type: media.type,
         [media.type]: {
@@ -126,33 +123,22 @@ export class WhatsAppMediaService {
       };
 
       const response = await firstValueFrom(
-        this.httpService.post(
-          `${this.baseUrl}/${phoneNumberId}/messages`,
-          payload,
-          {
-            headers: {
-              Authorization: `Bearer ${accessToken}`,
-              'Content-Type': 'application/json',
-            },
+        this.httpService.post(`${this.baseUrl}/${phoneNumberId}/messages`, payload, {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            "Content-Type": "application/json",
           },
-        ),
+        }),
       );
 
-      this.logger.log(
-        `Media message sent successfully: ${response.data.messages[0].id}`,
-      );
+      this.logger.log(`Media message sent successfully: ${response.data.messages[0].id}`);
 
       return {
         messageId: response.data.messages[0].id,
       };
     } catch (error) {
-      this.logger.error(
-        `Failed to send media message to ${to}`,
-        error.message,
-      );
-      throw new BadRequestException(
-        `Media message send failed: ${error.message}`,
-      );
+      this.logger.error(`Failed to send media message to ${to}`, error.message);
+      throw new BadRequestException(`Media message send failed: ${error.message}`);
     }
   }
 
@@ -173,13 +159,7 @@ export class WhatsAppMediaService {
     }
 
     // Check type
-    const validTypes = [
-      'image/jpeg',
-      'image/png',
-      'video/mp4',
-      'application/pdf',
-      'audio/mpeg',
-    ];
+    const validTypes = ["image/jpeg", "image/png", "video/mp4", "application/pdf", "audio/mpeg"];
 
     if (!validTypes.includes(mediaType)) {
       return {

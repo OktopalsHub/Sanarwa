@@ -1,11 +1,11 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { IBaseProvider } from '../base/base-provider.interface';
-import { Channel, ProviderHealth } from '../types';
+import { Injectable, Logger } from "@nestjs/common";
+import { IBaseProvider } from "../base/base-provider.interface";
+import { Channel, ProviderHealth } from "../types";
 import {
   HealthCheckResult,
   IProviderHealthMonitor,
   ProviderHealthMetrics,
-} from './provider-health.interface';
+} from "./provider-health.interface";
 
 interface ProviderMetricsData {
   providerId: string;
@@ -56,25 +56,18 @@ export class ProviderHealthMonitor implements IProviderHealthMonitor {
     this.providers.delete(key);
     this.metrics.delete(key);
 
-    this.logger.log(
-      `Unregistered provider from health monitoring: ${providerId} (${channel})`,
-    );
+    this.logger.log(`Unregistered provider from health monitoring: ${providerId} (${channel})`);
   }
 
   /**
    * Check health of a specific provider
    */
-  async checkProviderHealth(
-    providerId: string,
-    channel: Channel,
-  ): Promise<HealthCheckResult> {
+  async checkProviderHealth(providerId: string, channel: Channel): Promise<HealthCheckResult> {
     const key = this.getProviderKey(providerId, channel);
     const provider = this.providers.get(key);
 
     if (!provider) {
-      throw new Error(
-        `Provider ${providerId} for channel ${channel} is not registered`,
-      );
+      throw new Error(`Provider ${providerId} for channel ${channel} is not registered`);
     }
 
     try {
@@ -91,10 +84,7 @@ export class ProviderHealthMonitor implements IProviderHealthMonitor {
         metrics,
       };
     } catch (error) {
-      this.logger.error(
-        `Health check failed for provider ${providerId}:`,
-        error,
-      );
+      this.logger.error(`Health check failed for provider ${providerId}:`, error);
 
       const metrics = await this.getProviderMetrics(providerId, channel);
 
@@ -124,10 +114,7 @@ export class ProviderHealthMonitor implements IProviderHealthMonitor {
           const result = await this.checkProviderHealth(provider.id, channel);
           results.push(result);
         } catch (error) {
-          this.logger.error(
-            `Failed to check health for provider ${provider.id}:`,
-            error,
-          );
+          this.logger.error(`Failed to check health for provider ${provider.id}:`, error);
         }
       }
     }
@@ -143,16 +130,10 @@ export class ProviderHealthMonitor implements IProviderHealthMonitor {
 
     for (const [, provider] of this.providers) {
       try {
-        const result = await this.checkProviderHealth(
-          provider.id,
-          provider.channel,
-        );
+        const result = await this.checkProviderHealth(provider.id, provider.channel);
         results.push(result);
       } catch (error) {
-        this.logger.error(
-          `Failed to check health for provider ${provider.id}:`,
-          error,
-        );
+        this.logger.error(`Failed to check health for provider ${provider.id}:`, error);
       }
     }
 
@@ -162,17 +143,12 @@ export class ProviderHealthMonitor implements IProviderHealthMonitor {
   /**
    * Get health metrics for a provider
    */
-  async getProviderMetrics(
-    providerId: string,
-    channel: Channel,
-  ): Promise<ProviderHealthMetrics> {
+  async getProviderMetrics(providerId: string, channel: Channel): Promise<ProviderHealthMetrics> {
     const key = this.getProviderKey(providerId, channel);
     const data = this.metrics.get(key);
 
     if (!data) {
-      throw new Error(
-        `No metrics found for provider ${providerId} (${channel})`,
-      );
+      throw new Error(`No metrics found for provider ${providerId} (${channel})`);
     }
 
     const provider = this.providers.get(key);
@@ -185,16 +161,13 @@ export class ProviderHealthMonitor implements IProviderHealthMonitor {
       try {
         healthStatus = await provider.checkHealth();
       } catch (error) {
-        this.logger.warn(
-          `Failed to get health status for metrics: ${error.message}`,
-        );
+        this.logger.warn(`Failed to get health status for metrics: ${error.message}`);
       }
     }
 
     const successRate =
       data.totalRequests > 0
-        ? ((data.totalRequests - data.failedRequests) / data.totalRequests) *
-          100
+        ? ((data.totalRequests - data.failedRequests) / data.totalRequests) * 100
         : 0;
 
     const averageResponseTime =
@@ -216,11 +189,7 @@ export class ProviderHealthMonitor implements IProviderHealthMonitor {
   /**
    * Record a successful request
    */
-  async recordSuccess(
-    providerId: string,
-    channel: Channel,
-    responseTime: number,
-  ): Promise<void> {
+  async recordSuccess(providerId: string, channel: Channel, responseTime: number): Promise<void> {
     const key = this.getProviderKey(providerId, channel);
     const data = this.metrics.get(key);
 
@@ -243,11 +212,7 @@ export class ProviderHealthMonitor implements IProviderHealthMonitor {
   /**
    * Record a failed request
    */
-  async recordFailure(
-    providerId: string,
-    channel: Channel,
-    error: string,
-  ): Promise<void> {
+  async recordFailure(providerId: string, channel: Channel, error: string): Promise<void> {
     const key = this.getProviderKey(providerId, channel);
     const data = this.metrics.get(key);
 
@@ -266,9 +231,7 @@ export class ProviderHealthMonitor implements IProviderHealthMonitor {
       });
     }
 
-    this.logger.warn(
-      `Recorded failure for provider ${providerId} (${channel}): ${error}`,
-    );
+    this.logger.warn(`Recorded failure for provider ${providerId} (${channel}): ${error}`);
   }
 
   /**
@@ -296,15 +259,13 @@ export class ProviderHealthMonitor implements IProviderHealthMonitor {
       this.stopMonitoring();
     }
 
-    this.logger.log(
-      `Starting continuous health monitoring with ${intervalMs}ms interval`,
-    );
+    this.logger.log(`Starting continuous health monitoring with ${intervalMs}ms interval`);
 
     this.monitoringInterval = setInterval(async () => {
       try {
         await this.checkAllProvidersHealth();
       } catch (error) {
-        this.logger.error('Error during continuous health monitoring:', error);
+        this.logger.error("Error during continuous health monitoring:", error);
       }
     }, intervalMs);
   }
@@ -316,7 +277,7 @@ export class ProviderHealthMonitor implements IProviderHealthMonitor {
     if (this.monitoringInterval) {
       clearInterval(this.monitoringInterval);
       this.monitoringInterval = undefined;
-      this.logger.log('Stopped continuous health monitoring');
+      this.logger.log("Stopped continuous health monitoring");
     }
   }
 
@@ -325,7 +286,7 @@ export class ProviderHealthMonitor implements IProviderHealthMonitor {
    */
   clearMetrics(): void {
     this.metrics.clear();
-    this.logger.log('Cleared all provider metrics');
+    this.logger.log("Cleared all provider metrics");
   }
 
   /**

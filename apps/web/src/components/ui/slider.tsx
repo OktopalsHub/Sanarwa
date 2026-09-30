@@ -1,1 +1,1 @@
-export * from '@sanarwa/ui/slider';
+export * from "@sanarwa/ui/slider";

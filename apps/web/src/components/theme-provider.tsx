@@ -9,8 +9,8 @@ type ThemeProviderProps = React.ComponentProps<typeof NextThemesProvider>;
 export function ThemeProvider({ children, ...props }: ThemeProviderProps) {
   useEffect(() => {
     // Add CSS for theme transitions and enhanced styling
-    const style = document.createElement('style');
-    style.id = 'theme-provider-styles';
+    const style = document.createElement("style");
+    style.id = "theme-provider-styles";
     style.textContent = `
       /* Theme transition styles */
       .theme-transitioning * {
@@ -102,7 +102,7 @@ export function ThemeProvider({ children, ...props }: ThemeProviderProps) {
     `;
 
     // Check if style already exists to avoid duplicates
-    const existingStyle = document.getElementById('theme-provider-styles');
+    const existingStyle = document.getElementById("theme-provider-styles");
     if (existingStyle) {
       existingStyle.remove();
     }
@@ -111,8 +111,8 @@ export function ThemeProvider({ children, ...props }: ThemeProviderProps) {
 
     // Listen for theme changes to update color-scheme
     const handleThemeChange = () => {
-      const isDark = document.documentElement.classList.contains('dark');
-      document.documentElement.style.colorScheme = isDark ? 'dark' : 'light';
+      const isDark = document.documentElement.classList.contains("dark");
+      document.documentElement.style.colorScheme = isDark ? "dark" : "light";
     };
 
     // Initial check
@@ -121,7 +121,7 @@ export function ThemeProvider({ children, ...props }: ThemeProviderProps) {
     // Set up observer for theme changes
     const observer = new MutationObserver((mutations) => {
       mutations.forEach((mutation) => {
-        if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
+        if (mutation.type === "attributes" && mutation.attributeName === "class") {
           handleThemeChange();
         }
       });
@@ -129,11 +129,11 @@ export function ThemeProvider({ children, ...props }: ThemeProviderProps) {
 
     observer.observe(document.documentElement, {
       attributes: true,
-      attributeFilter: ['class'],
+      attributeFilter: ["class"],
     });
 
     return () => {
-      const styleElement = document.getElementById('theme-provider-styles');
+      const styleElement = document.getElementById("theme-provider-styles");
       if (styleElement) {
         styleElement.remove();
       }

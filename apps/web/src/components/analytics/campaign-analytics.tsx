@@ -1,21 +1,28 @@
-'use client';
+"use client";
 
-import { Eye, MousePointer, Send, TrendingUp } from '@/lib/icons';
+import { Eye, MousePointer, Send, TrendingUp } from "@/lib/icons";
 
-import { DashboardChart } from '@/components/dashboard/dashboard-chart';
-import { MetricCard } from '@/components/dashboard/metric-card';
-import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
-import { DateRange, DateRangePicker } from '@/components/ui/date-range-picker';
+import { DashboardChart } from "@/components/dashboard/dashboard-chart";
+import { MetricCard } from "@/components/dashboard/metric-card";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { DateRange, DateRangePicker } from "@/components/ui/date-range-picker";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
-import { ArrowDownTrayIcon, EyeIcon, FunnelIcon, PaperAirplaneIcon, ArrowTrendingUpIcon, CursorArrowRaysIcon } from '@heroicons/react/24/outline'
-import { useState } from 'react';
+} from "@/components/ui/select";
+import {
+  ArrowDownTrayIcon,
+  EyeIcon,
+  FunnelIcon,
+  PaperAirplaneIcon,
+  ArrowTrendingUpIcon,
+  CursorArrowRaysIcon,
+} from "@heroicons/react/24/outline";
+import { useState } from "react";
 
 interface CampaignAnalyticsProps {
   campaignId?: string;
@@ -34,31 +41,31 @@ const mockCampaignData = {
     unsubscribed: 12,
   },
   performance: [
-    { name: 'Week 1', sent: 2200, delivered: 2167, opened: 520, clicked: 68 },
-    { name: 'Week 2', sent: 2400, delivered: 2364, opened: 580, clicked: 77 },
-    { name: 'Week 3', sent: 2100, delivered: 2079, opened: 510, clicked: 67 },
-    { name: 'Week 4', sent: 2300, delivered: 2265, opened: 545, clicked: 71 },
-    { name: 'Week 5', sent: 2500, delivered: 2463, opened: 595, clicked: 78 },
-    { name: 'Week 6', sent: 1920, delivered: 1849, opened: 495, clicked: 65 },
+    { name: "Week 1", sent: 2200, delivered: 2167, opened: 520, clicked: 68 },
+    { name: "Week 2", sent: 2400, delivered: 2364, opened: 580, clicked: 77 },
+    { name: "Week 3", sent: 2100, delivered: 2079, opened: 510, clicked: 67 },
+    { name: "Week 4", sent: 2300, delivered: 2265, opened: 545, clicked: 71 },
+    { name: "Week 5", sent: 2500, delivered: 2463, opened: 595, clicked: 78 },
+    { name: "Week 6", sent: 1920, delivered: 1849, opened: 495, clicked: 65 },
   ],
   channelBreakdown: [
-    { name: 'Email', sent: 8500, delivered: 8415, opened: 2040, clicked: 267 },
-    { name: 'SMS', sent: 3200, delivered: 3168, opened: 950, clicked: 114 },
-    { name: 'Push', sent: 2100, delivered: 2058, opened: 515, clicked: 72 },
-    { name: 'In-App', sent: 1620, delivered: 1546, opened: 240, clicked: 40 },
+    { name: "Email", sent: 8500, delivered: 8415, opened: 2040, clicked: 267 },
+    { name: "SMS", sent: 3200, delivered: 3168, opened: 950, clicked: 114 },
+    { name: "Push", sent: 2100, delivered: 2058, opened: 515, clicked: 72 },
+    { name: "In-App", sent: 1620, delivered: 1546, opened: 240, clicked: 40 },
   ],
   deviceBreakdown: [
-    { name: 'Mobile', value: 65 },
-    { name: 'Desktop', value: 28 },
-    { name: 'Tablet', value: 7 },
+    { name: "Mobile", value: 65 },
+    { name: "Desktop", value: 28 },
+    { name: "Tablet", value: 7 },
   ],
   geographicData: [
-    { name: 'United States', value: 45 },
-    { name: 'United Kingdom', value: 18 },
-    { name: 'Canada', value: 12 },
-    { name: 'Australia', value: 8 },
-    { name: 'Germany', value: 7 },
-    { name: 'Others', value: 10 },
+    { name: "United States", value: 45 },
+    { name: "United Kingdom", value: 18 },
+    { name: "Canada", value: 12 },
+    { name: "Australia", value: 8 },
+    { name: "Germany", value: 7 },
+    { name: "Others", value: 10 },
   ],
 };
 
@@ -67,14 +74,14 @@ export function CampaignAnalytics({ campaignId }: CampaignAnalyticsProps) {
     from: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
     to: new Date(),
   });
-  const [selectedChannel, setSelectedChannel] = useState<string>('all');
-  const [selectedCampaign, setSelectedCampaign] = useState<string>(campaignId || 'all');
+  const [selectedChannel, setSelectedChannel] = useState<string>("all");
+  const [selectedCampaign, setSelectedCampaign] = useState<string>(campaignId || "all");
 
   const data = mockCampaignData;
 
   const handleExport = () => {
     // TODO: Implement data export functionality
-    alert('Export functionality will be implemented soon');
+    alert("Export functionality will be implemented soon");
   };
 
   return (
@@ -84,11 +91,7 @@ export function CampaignAnalytics({ campaignId }: CampaignAnalyticsProps) {
         <div className="flex flex-col space-y-4 md:flex-row md:space-y-0 md:space-x-4 md:items-end">
           <div className="flex-1">
             <label className="text-sm font-medium mb-2 block">Date Range</label>
-            <DateRangePicker
-              value={dateRange}
-              onChange={setDateRange}
-              className="w-full md:w-64"
-            />
+            <DateRangePicker value={dateRange} onChange={setDateRange} className="w-full md:w-64" />
           </div>
           <div className="flex-1">
             <label className="text-sm font-medium mb-2 block">Campaign</label>
@@ -164,14 +167,14 @@ export function CampaignAnalytics({ campaignId }: CampaignAnalyticsProps) {
       <div className="grid gap-6 lg:grid-cols-2">
         <DashboardChart
           title="Campaign Performance Over Time"
-          data={data.performance.map(item => ({ ...item, value: item.opened }))}
+          data={data.performance.map((item) => ({ ...item, value: item.opened }))}
           type="line"
           dataKey="opened"
           height={300}
         />
         <DashboardChart
           title="Channel Performance"
-          data={data.channelBreakdown.map(item => ({ ...item, value: item.opened }))}
+          data={data.channelBreakdown.map((item) => ({ ...item, value: item.opened }))}
           type="bar"
           dataKey="opened"
           height={300}

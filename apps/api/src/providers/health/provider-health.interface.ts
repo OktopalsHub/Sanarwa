@@ -1,4 +1,4 @@
-import { Channel, ProviderHealthStatus } from '../types';
+import { Channel, ProviderHealthStatus } from "../types";
 
 export interface ProviderHealthMetrics {
   providerId: string;
@@ -24,10 +24,7 @@ export interface IProviderHealthMonitor {
   /**
    * Check health of a specific provider
    */
-  checkProviderHealth(
-    providerId: string,
-    channel: Channel,
-  ): Promise<HealthCheckResult>;
+  checkProviderHealth(providerId: string, channel: Channel): Promise<HealthCheckResult>;
 
   /**
    * Check health of all providers for a channel
@@ -42,28 +39,17 @@ export interface IProviderHealthMonitor {
   /**
    * Get health metrics for a provider
    */
-  getProviderMetrics(
-    providerId: string,
-    channel: Channel,
-  ): Promise<ProviderHealthMetrics>;
+  getProviderMetrics(providerId: string, channel: Channel): Promise<ProviderHealthMetrics>;
 
   /**
    * Record a successful request
    */
-  recordSuccess(
-    providerId: string,
-    channel: Channel,
-    responseTime: number,
-  ): Promise<void>;
+  recordSuccess(providerId: string, channel: Channel, responseTime: number): Promise<void>;
 
   /**
    * Record a failed request
    */
-  recordFailure(
-    providerId: string,
-    channel: Channel,
-    error: string,
-  ): Promise<void>;
+  recordFailure(providerId: string, channel: Channel, error: string): Promise<void>;
 
   /**
    * Get providers sorted by health score

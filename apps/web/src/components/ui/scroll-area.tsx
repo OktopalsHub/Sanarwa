@@ -1,1 +1,1 @@
-export * from '@sanarwa/ui/scroll-area';
+export * from "@sanarwa/ui/scroll-area";

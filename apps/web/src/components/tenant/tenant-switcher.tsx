@@ -1,11 +1,19 @@
-'use client';
+"use client";
 
-import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
-import { useTenant } from '@/contexts/tenant-context';
-import { cn } from '@/lib/utils';
-import { BuildingOfficeIcon, CheckIcon, PlusIcon, ChevronUpDownIcon } from '@heroicons/react/24/outline'
-import { useState } from 'react';
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { useTenant } from "@/contexts/tenant-context";
+import { getTenantPathSegment } from "@/lib/tenant-path";
+import { cn } from "@/lib/utils";
+import {
+  BuildingOfficeIcon,
+  CheckIcon,
+  PlusIcon,
+  ChevronUpDownIcon,
+} from "@heroicons/react/24/outline";
+import { useNavigate } from "@tanstack/react-router";
+import { usePathname } from "@/compat/next-navigation";
+import { useState } from "react";
 
 interface TenantSwitcherProps {
   className?: string;
@@ -14,6 +22,8 @@ interface TenantSwitcherProps {
 export function TenantSwitcher({ className }: TenantSwitcherProps) {
   const { currentTenant, tenants, switchTenant, isLoading } = useTenant();
   const [isOpen, setIsOpen] = useState(false);
+  const navigate = useNavigate();
+  const pathname = usePathname();
 
   const handleTenantSwitch = async (tenantId: string) => {
     if (tenantId === currentTenant?.id) {
@@ -23,14 +33,20 @@ export function TenantSwitcher({ className }: TenantSwitcherProps) {
 
     try {
       await switchTenant(tenantId);
+      const tenant = tenants.find((t) => t.id === tenantId);
+      if (tenant) {
+        const segment = getTenantPathSegment(tenant);
+        const rest = pathname.replace(/^\/[^/]+/, "") || "/dashboard";
+        navigate({ to: `/${segment}${rest}` as any });
+      }
       setIsOpen(false);
     } catch (error) {
-      console.error('Failed to switch tenant:', error);
+      console.error("Failed to switch tenant:", error);
     }
   };
 
   return (
-    <div className={cn('relative', className)}>
+    <div className={cn("relative", className)}>
       <Button
         variant="outline"
         role="combobox"
@@ -42,22 +58,15 @@ export function TenantSwitcher({ className }: TenantSwitcherProps) {
       >
         <div className="flex items-center space-x-2">
           <BuildingOfficeIcon className="h-4 w-4" />
-          <span className="truncate">
-            {currentTenant?.name || 'Select tenant'}
-          </span>
+          <span className="truncate">{currentTenant?.name || "Select tenant"}</span>
         </div>
         <ChevronUpDownIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
       </Button>
 
       {isOpen && (
         <>
-          {/* Backdrop */}
-          <div
-            className="fixed inset-0 z-40"
-            onClick={() => setIsOpen(false)}
-          />
+          <div className="fixed inset-0 z-40" onClick={() => setIsOpen(false)} />
 
-          {/* Dropdown */}
           <Card className="absolute top-full left-0 right-0 z-50 mt-1 p-1">
             <div className="max-h-64 overflow-auto">
               {tenants.length === 0 ? (
@@ -70,22 +79,20 @@ export function TenantSwitcher({ className }: TenantSwitcherProps) {
                     key={tenant.id}
                     onClick={() => handleTenantSwitch(tenant.id)}
                     className={cn(
-                      'w-full flex items-center justify-between px-3 py-2 text-sm rounded-md hover:bg-accent hover:text-accent-foreground transition-colors',
-                      currentTenant?.id === tenant.id && 'bg-accent text-accent-foreground'
+                      "w-full flex items-center justify-between px-3 py-2 text-sm rounded-md hover:bg-accent hover:text-accent-foreground transition-colors",
+                      currentTenant?.id === tenant.id && "bg-accent text-accent-foreground",
                     )}
                   >
                     <div className="flex items-center space-x-2">
                       <BuildingOfficeIcon className="h-4 w-4" />
                       <div className="text-left">
                         <div className="font-medium">{tenant.name}</div>
-                        <div className="text-xs text-muted-foreground">
-                          {tenant.slug}
+                        <div className="text-xs text-muted-foreground font-mono">
+                          {getTenantPathSegment(tenant)}
                         </div>
                       </div>
                     </div>
-                    {currentTenant?.id === tenant.id && (
-                      <CheckIcon className="h-4 w-4" />
-                    )}
+                    {currentTenant?.id === tenant.id && <CheckIcon className="h-4 w-4" />}
                   </button>
                 ))
               )}
@@ -94,7 +101,6 @@ export function TenantSwitcher({ className }: TenantSwitcherProps) {
                 <button
                   onClick={() => {
                     setIsOpen(false);
-                    // TODO: Open create tenant modal
                   }}
                   className="w-full flex items-center space-x-2 px-3 py-2 text-sm rounded-md hover:bg-accent hover:text-accent-foreground transition-colors"
                 >

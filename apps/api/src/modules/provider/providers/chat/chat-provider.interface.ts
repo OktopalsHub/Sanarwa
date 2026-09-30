@@ -3,7 +3,7 @@ export interface ChatPayload {
   message: string;
   attachments?: Array<{
     url: string;
-    type: 'image' | 'file' | 'video';
+    type: "image" | "file" | "video";
     filename?: string;
   }>;
   metadata?: Record<string, any>;

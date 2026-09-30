@@ -1,9 +1,9 @@
-'use client';
+"use client";
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { useTenantBasePath } from '@/hooks/use-tenant-slug';
-import Link from '@/compat/next-link';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { useTenantBasePath } from "@/hooks/use-tenant-slug";
+import Link from "@/compat/next-link";
 
 export function ProjectWebhooks({ projectId: _projectId }: { projectId: string }) {
   const basePath = useTenantBasePath();

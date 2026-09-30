@@ -2309,7 +2309,6 @@ paths:
         "200":
           description: Provider performance metrics retrieved
 
-
   # Configuration Management Endpoints
   /configurations:
     post:
@@ -3309,14 +3308,7 @@ paths:
           description: Filter by alert type
           schema:
             type: string
-            enum:
-              [
-                high_response_time,
-                low_throughput,
-                high_error_rate,
-                memory_usage,
-                disk_usage,
-              ]
+            enum: [high_response_time, low_throughput, high_error_rate, memory_usage, disk_usage]
       responses:
         "200":
           description: Performance alerts retrieved successfully
@@ -5477,14 +5469,7 @@ components:
           type: string
         type:
           type: string
-          enum:
-            [
-              high_response_time,
-              low_throughput,
-              high_error_rate,
-              memory_usage,
-              disk_usage,
-            ]
+          enum: [high_response_time, low_throughput, high_error_rate, memory_usage, disk_usage]
         severity:
           type: string
           enum: [low, medium, high, critical]

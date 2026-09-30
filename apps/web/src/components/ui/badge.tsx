@@ -1,1 +1,1 @@
-export * from '@sanarwa/ui/badge';
+export * from "@sanarwa/ui/badge";

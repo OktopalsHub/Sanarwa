@@ -1,17 +1,17 @@
-'use client';
+"use client";
 
-import { Filter } from '@/lib/icons';
+import { Filter } from "@/lib/icons";
 
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { useTenant } from '@/contexts/tenant-context';
-import { Tenant } from '@/lib/types/tenant';
-import { PlusIcon, UsersIcon } from '@heroicons/react/24/outline'
-import { useState } from 'react';
-import { InviteMemberDialog } from './invite-member-dialog';
-import { MemberInvitations } from './member-invitations';
-import { MemberList } from './member-list';
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useTenant } from "@/contexts/tenant-context";
+import { Tenant } from "@/lib/types/tenant";
+import { PlusIcon, UsersIcon } from "@heroicons/react/24/outline";
+import { useState } from "react";
+import { InviteMemberDialog } from "./invite-member-dialog";
+import { MemberInvitations } from "./member-invitations";
+import { MemberList } from "./member-list";
 
 interface TeamManagementProps {
   tenant: Tenant;
@@ -22,9 +22,9 @@ export function TeamManagement({ tenant }: TeamManagementProps) {
   const [inviteDialogOpen, setInviteDialogOpen] = useState(false);
 
   // Filter memberships for current tenant
-  const tenantMembers = memberships.filter(member => member.tenantId === tenant.id);
-  const activeMembers = tenantMembers.filter(member => member.status === 'active');
-  const pendingInvitations = invitations.filter(invitation => invitation.tenantId === tenant.id);
+  const tenantMembers = memberships.filter((member) => member.tenantId === tenant.id);
+  const activeMembers = tenantMembers.filter((member) => member.status === "active");
+  const pendingInvitations = invitations.filter((invitation) => invitation.tenantId === tenant.id);
 
   return (
     <div className="space-y-6">
@@ -50,9 +50,7 @@ export function TeamManagement({ tenant }: TeamManagementProps) {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{pendingInvitations.length}</div>
-            <p className="text-xs text-muted-foreground">
-              Awaiting acceptance
-            </p>
+            <p className="text-xs text-muted-foreground">Awaiting acceptance</p>
           </CardContent>
         </Card>
 
@@ -62,9 +60,7 @@ export function TeamManagement({ tenant }: TeamManagementProps) {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">5</div>
-            <p className="text-xs text-muted-foreground">
-              Owner, Admin, Manager, Member, Viewer
-            </p>
+            <p className="text-xs text-muted-foreground">Owner, Admin, Manager, Member, Viewer</p>
           </CardContent>
         </Card>
       </div>
@@ -73,12 +69,8 @@ export function TeamManagement({ tenant }: TeamManagementProps) {
       <Tabs defaultValue="members" className="space-y-6">
         <div className="flex items-center justify-between">
           <TabsList>
-            <TabsTrigger value="members">
-              Members ({activeMembers.length})
-            </TabsTrigger>
-            <TabsTrigger value="invitations">
-              Invitations ({pendingInvitations.length})
-            </TabsTrigger>
+            <TabsTrigger value="members">Members ({activeMembers.length})</TabsTrigger>
+            <TabsTrigger value="invitations">Invitations ({pendingInvitations.length})</TabsTrigger>
           </TabsList>
 
           <Button
@@ -94,9 +86,7 @@ export function TeamManagement({ tenant }: TeamManagementProps) {
           <Card>
             <CardHeader>
               <CardTitle>Team Members</CardTitle>
-              <CardDescription>
-                Manage roles and permissions for your team members.
-              </CardDescription>
+              <CardDescription>Manage roles and permissions for your team members.</CardDescription>
             </CardHeader>
             <CardContent>
               <MemberList members={activeMembers} tenant={tenant} />

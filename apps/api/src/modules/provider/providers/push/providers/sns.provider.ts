@@ -1,7 +1,7 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import { SNSClient, PublishCommand, CreatePlatformEndpointCommand } from '@aws-sdk/client-sns';
-import { IPushProvider, PushPayload, PushResponse } from '../push-provider.interface';
+import { Injectable, Logger } from "@nestjs/common";
+import { ConfigService } from "@nestjs/config";
+import { SNSClient, PublishCommand, CreatePlatformEndpointCommand } from "@aws-sdk/client-sns";
+import { IPushProvider, PushPayload, PushResponse } from "../push-provider.interface";
 
 @Injectable()
 export class SNSProvider implements IPushProvider {
@@ -10,22 +10,24 @@ export class SNSProvider implements IPushProvider {
   private readonly platformApplicationArn: string;
 
   constructor(private configService: ConfigService) {
-    const accessKeyId = this.configService.get('AWS_ACCESS_KEY_ID') || '';
-    const secretAccessKey = this.configService.get('AWS_SECRET_ACCESS_KEY') || '';
+    const accessKeyId = this.configService.get("AWS_ACCESS_KEY_ID") || "";
+    const secretAccessKey = this.configService.get("AWS_SECRET_ACCESS_KEY") || "";
 
     this.snsClient = new SNSClient({
-      region: this.configService.get('AWS_REGION', 'us-east-1'),
+      region: this.configService.get("AWS_REGION", "us-east-1"),
       credentials: {
         accessKeyId,
         secretAccessKey,
       },
     });
-    this.platformApplicationArn = this.configService.get('SNS_PLATFORM_APPLICATION_ARN') || '';
+    this.platformApplicationArn = this.configService.get("SNS_PLATFORM_APPLICATION_ARN") || "";
   }
 
   async sendPushNotification(payload: PushPayload): Promise<PushResponse> {
     try {
-      const tokens = Array.isArray(payload.deviceTokens) ? payload.deviceTokens : [payload.deviceTokens];
+      const tokens = Array.isArray(payload.deviceTokens)
+        ? payload.deviceTokens
+        : [payload.deviceTokens];
       let successCount = 0;
       let failureCount = 0;
       const failedTokens: string[] = [];
@@ -60,7 +62,7 @@ export class SNSProvider implements IPushProvider {
             title: payload.title,
             body: payload.body,
             image: payload.imageUrl,
-            sound: payload.sound || 'default',
+            sound: payload.sound || "default",
             click_action: payload.clickAction || payload.deepLink?.url,
             ...(payload.android && {
               channel_id: payload.android.channelId,
@@ -71,7 +73,7 @@ export class SNSProvider implements IPushProvider {
             }),
           },
           data: gcmData,
-          priority: payload.priority || 'high',
+          priority: payload.priority || "high",
           time_to_live: payload.ttl || 3600,
         }),
 
@@ -82,15 +84,17 @@ export class SNSProvider implements IPushProvider {
               title: payload.title,
               body: payload.body,
               ...(payload.ios?.subtitle && { subtitle: payload.ios.subtitle }),
-              ...(payload.ios?.launchImage && { 'launch-image': payload.ios.launchImage }),
+              ...(payload.ios?.launchImage && { "launch-image": payload.ios.launchImage }),
             },
             badge: payload.badge,
-            sound: payload.sound || 'default',
+            sound: payload.sound || "default",
             category: payload.category || payload.deepLink?.iosCategory,
-            ...(payload.ios?.threadId && { 'thread-id': payload.ios.threadId }),
-            ...(payload.ios?.mutableContent && { 'mutable-content': 1 }),
-            ...(payload.ios?.contentAvailable && { 'content-available': 1 }),
-            ...(payload.ios?.interruptionLevel && { 'interruption-level': payload.ios.interruptionLevel }),
+            ...(payload.ios?.threadId && { "thread-id": payload.ios.threadId }),
+            ...(payload.ios?.mutableContent && { "mutable-content": 1 }),
+            ...(payload.ios?.contentAvailable && { "content-available": 1 }),
+            ...(payload.ios?.interruptionLevel && {
+              "interruption-level": payload.ios.interruptionLevel,
+            }),
           },
           ...apnsData,
         }),
@@ -104,7 +108,7 @@ export class SNSProvider implements IPushProvider {
               ...(payload.ios?.subtitle && { subtitle: payload.ios.subtitle }),
             },
             badge: payload.badge,
-            sound: payload.sound || 'default',
+            sound: payload.sound || "default",
             category: payload.category || payload.deepLink?.iosCategory,
           },
           ...apnsData,
@@ -125,7 +129,7 @@ export class SNSProvider implements IPushProvider {
           const publishCommand = new PublishCommand({
             TargetArn: endpointResult.EndpointArn,
             Message: JSON.stringify(message),
-            MessageStructure: 'json',
+            MessageStructure: "json",
           });
 
           await this.snsClient.send(publishCommand);
@@ -144,14 +148,14 @@ export class SNSProvider implements IPushProvider {
         successCount,
         failureCount,
         failedTokens,
-        provider: 'sns',
+        provider: "sns",
       };
     } catch (error) {
       this.logger.error(`Failed to send SNS push: ${error.message}`, error.stack);
       return {
         success: false,
         error: error.message,
-        provider: 'sns',
+        provider: "sns",
       };
     }
   }
@@ -161,6 +165,6 @@ export class SNSProvider implements IPushProvider {
   }
 
   getProviderName(): string {
-    return 'sns';
+    return "sns";
   }
 }

@@ -1,12 +1,12 @@
-'use client';
+"use client";
 
-import { Button } from '@/components/ui/button';
-import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
-import { Bars3Icon } from '@heroicons/react/24/outline'
-import { useState } from 'react';
-import { AppHeader } from './app-header';
-import { AppSidebar } from './app-sidebar';
-import { Breadcrumbs } from './breadcrumbs';
+import { Button } from "@/components/ui/button";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { Bars3Icon } from "@heroicons/react/24/outline";
+import { useState } from "react";
+import { AppHeader } from "./app-header";
+import { AppSidebar } from "./app-sidebar";
+import { Breadcrumbs } from "./breadcrumbs";
 
 interface AppShellProps {
   children: React.ReactNode;
@@ -20,11 +20,7 @@ export function AppShell({ children }: AppShellProps) {
       {/* Mobile sidebar */}
       <Sheet open={sidebarOpen} onOpenChange={setSidebarOpen}>
         <SheetTrigger asChild>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="fixed top-4 left-4 z-50 md:hidden"
-          >
+          <Button variant="ghost" size="icon" className="fixed top-4 left-4 z-50 md:hidden">
             <Bars3Icon className="h-5 w-5" />
             <span className="sr-only">Toggle navigation menu</span>
           </Button>
@@ -53,9 +49,7 @@ export function AppShell({ children }: AppShellProps) {
           </div>
 
           {/* Page content */}
-          <main className="flex-1">
-            {children}
-          </main>
+          <main className="flex-1">{children}</main>
         </div>
       </div>
     </div>

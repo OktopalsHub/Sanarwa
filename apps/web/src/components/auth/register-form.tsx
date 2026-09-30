@@ -1,17 +1,18 @@
-'use client';
+"use client";
 
-import { User } from '@/lib/icons';
-
-import { AuthDivider } from '@/components/auth/auth-page-shell';
-import { AuthOAuthButtons } from '@/components/auth/auth-oauth-buttons';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { useAuth } from '@/contexts/auth-context';
-import { RegisterCredentials } from '@/lib/types/auth';
-import { formatTokens, WELCOME_SIGNUP_TOKENS } from '@/lib/pricing';
-import Link from '@/compat/next-link';
-import { useRouter } from '@/compat/next-navigation';
-import { useState } from 'react';
+import { AuthDivider } from "@/components/auth/auth-page-shell";
+import { AuthOAuthButtons } from "@/components/auth/auth-oauth-buttons";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { useAuth } from "@/contexts/auth-context";
+import { redirectAfterAuth } from "@/lib/auth/post-auth-redirect";
+import { getTenantPathSegment } from "@/lib/tenant-path";
+import { RegisterCredentials } from "@/lib/types/auth";
+import { toastApiError } from "@/lib/utils/api-error-message";
+import { formatTokens, WELCOME_SIGNUP_TOKENS } from "@/lib/pricing";
+import Link from "@/compat/next-link";
+import { useRouter } from "@/compat/next-navigation";
+import { useState } from "react";
 
 function FieldLabel({ htmlFor, children }: { htmlFor: string; children: React.ReactNode }) {
   return (
@@ -24,16 +25,16 @@ function FieldLabel({ htmlFor, children }: { htmlFor: string; children: React.Re
   );
 }
 
-export function RegisterForm() {
+export function RegisterForm({ variant = "standalone" }: { variant?: "standalone" | "dual" }) {
   const router = useRouter();
-  const { register, isLoading, error } = useAuth();
+  const { register, isLoading } = useAuth();
 
   const [formData, setFormData] = useState<RegisterCredentials>({
-    firstName: '',
-    lastName: '',
-    email: '',
-    password: '',
-    confirmPassword: '',
+    firstName: "",
+    lastName: "",
+    email: "",
+    password: "",
+    confirmPassword: "",
   });
 
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
@@ -42,60 +43,52 @@ export function RegisterForm() {
     const errors: Record<string, string> = {};
 
     if (!formData.email) {
-      errors.email = 'Email is required';
+      errors.email = "Email is required";
     } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-      errors.email = 'Enter a valid email address';
+      errors.email = "Enter a valid email address";
     }
 
     if (!formData.password) {
-      errors.password = 'Password is required';
+      errors.password = "Password is required";
     } else if (formData.password.length < 8) {
-      errors.password = 'Use at least 8 characters';
+      errors.password = "Use at least 8 characters";
     } else if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(formData.password)) {
-      errors.password = 'Include uppercase, lowercase, and a number';
+      errors.password = "Include uppercase, lowercase, and a number";
     }
 
     setFormErrors(errors);
+    if (Object.keys(errors).length > 0) {
+      toastApiError(new Error(Object.values(errors)[0]!), "Check the highlighted fields");
+    }
     return Object.keys(errors).length === 0;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
-    if (!validateForm()) {
-      return;
-    }
+    if (!validateForm()) return;
 
     try {
       const registrationData = {
         ...formData,
-        firstName: formData.firstName || 'User',
-        lastName: formData.lastName || 'Account',
+        firstName: formData.firstName || "User",
+        lastName: formData.lastName || "Account",
       };
 
       const response = await register(registrationData);
 
-      const tenantSlug =
-        response.tenantSlug ||
-        response.tenant?.subdomain ||
-        response.tenant?.slug;
-
-      if (tenantSlug) {
-        router.push(`/${tenantSlug}/dashboard`);
+      if (response.tenant) {
+        router.push(`/${getTenantPathSegment(response.tenant)}/dashboard`);
         return;
       }
 
-      const { tenantApi } = await import('@/lib/api/tenant');
-      const tenants = await tenantApi.getTenants();
-      const firstTenant = tenants[0];
-      if (firstTenant) {
-        const slug = firstTenant.slug || firstTenant.subdomain || firstTenant.id;
-        router.push(`/${slug}/dashboard`);
-      } else {
-        router.push('/onboarding');
+      if (response.tenantSlug) {
+        router.push(`/${response.tenantSlug}/dashboard`);
+        return;
       }
+
+      await redirectAfterAuth(router);
     } catch (err) {
-      console.error('Registration failed:', err);
+      toastApiError(err, "Could not create your account");
     }
   };
 
@@ -104,19 +97,19 @@ export function RegisterForm() {
     setFormData((prev) => ({ ...prev, [name]: value }));
 
     if (formErrors[name]) {
-      setFormErrors((prev) => ({ ...prev, [name]: '' }));
+      setFormErrors((prev) => ({ ...prev, [name]: "" }));
     }
   };
 
   const inputClass =
-    'h-11 rounded-[var(--radius-input)] border-[var(--color-rule)] bg-[var(--color-paper-2)] text-[var(--color-ink)] shadow-[var(--shadow-card)] transition-[border-color,box-shadow] duration-[var(--dur-micro)] ease-[var(--ease-out)] placeholder:text-[var(--color-muted)] focus-visible:border-[var(--color-focus)] focus-visible:ring-2 focus-visible:ring-[var(--color-focus)]/25';
+    "h-11 rounded-[var(--radius-input)] border-[var(--color-rule)] bg-[var(--color-paper-2)] text-[var(--color-ink)] shadow-[var(--shadow-card)] transition-[border-color,box-shadow] duration-[var(--dur-micro)] ease-[var(--ease-out)] placeholder:text-[var(--color-muted)] focus-visible:border-[var(--color-focus)] focus-visible:ring-2 focus-visible:ring-[var(--color-focus)]/25";
 
   return (
     <div className="flex flex-col gap-6">
       <header className="space-y-1.5">
         <h2
           className="font-[family-name:var(--font-display)] text-[length:var(--text-2xl)] font-bold leading-tight tracking-[var(--tracking-display)] text-[var(--color-ink)]"
-          style={{ fontStyle: 'normal' }}
+          style={{ fontStyle: "normal" }}
         >
           Create account
         </h2>
@@ -176,12 +169,6 @@ export function RegisterForm() {
               </p>
             )}
           </div>
-
-          {error && !formErrors.email && !formErrors.password && (
-            <p className="rounded-[var(--radius-input)] border border-[var(--color-danger)]/25 bg-[var(--color-danger)]/5 px-3 py-2 text-sm text-[var(--color-danger)]" role="alert">
-              {error.message}
-            </p>
-          )}
         </div>
 
         <Button
@@ -190,16 +177,21 @@ export function RegisterForm() {
           disabled={isLoading}
           className="h-11 w-full rounded-[var(--radius-input)] bg-[var(--hm-accent)] font-semibold text-[var(--color-accent-ink)] shadow-[var(--shadow-card)] transition-opacity duration-[var(--dur-micro)] ease-[var(--ease-out)] hover:opacity-90 focus-visible:ring-2 focus-visible:ring-[var(--color-focus)] focus-visible:ring-offset-2 active:translate-y-px disabled:opacity-50"
         >
-          {isLoading ? 'Creating account…' : 'Create account'}
+          {isLoading ? "Creating account…" : "Create account"}
         </Button>
       </form>
 
-      <p className="hidden text-center text-sm text-[var(--color-muted)] lg:block">
-        Have an account?{' '}
-        <Link href="/login" className="font-medium text-[var(--color-ink)] underline-offset-2 hover:text-[var(--hm-accent)] hover:underline">
-          Sign in
-        </Link>
-      </p>
+      {variant === "standalone" && (
+        <p className="hidden text-center text-sm text-[var(--color-muted)] lg:block">
+          Have an account?{" "}
+          <Link
+            href="/login"
+            className="font-medium text-[var(--color-ink)] underline-offset-2 hover:text-[var(--hm-accent)] hover:underline"
+          >
+            Sign in
+          </Link>
+        </p>
+      )}
     </div>
   );
 }

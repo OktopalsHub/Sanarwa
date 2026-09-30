@@ -1,10 +1,17 @@
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  CreateDateColumn,
+  UpdateDateColumn,
+  ManyToOne,
+  JoinColumn,
+} from "typeorm";
+import { WABAConfig } from "./waba-config.entity";
 
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, ManyToOne, JoinColumn } from 'typeorm';
-import { WABAConfig } from './waba-config.entity';
-
-@Entity('tenant_waba_assignments')
+@Entity("tenant_waba_assignments")
 export class TenantWABAAssignment {
-  @PrimaryGeneratedColumn('uuid')
+  @PrimaryGeneratedColumn("uuid")
   id: string;
 
   @Column()
@@ -13,8 +20,8 @@ export class TenantWABAAssignment {
   @Column()
   wabaId: string;
 
-  @ManyToOne(() => WABAConfig, waba => waba.assignments)
-  @JoinColumn({ name: 'wabaId' })
+  @ManyToOne(() => WABAConfig, (waba) => waba.assignments)
+  @JoinColumn({ name: "wabaId" })
   waba: WABAConfig;
 
   @Column({ default: true })
@@ -26,7 +33,7 @@ export class TenantWABAAssignment {
   @Column({ default: 0 })
   templatesUsed: number;
 
-  @Column({ type: 'decimal', precision: 10, scale: 4, default: 0 })
+  @Column({ type: "decimal", precision: 10, scale: 4, default: 0 })
   totalCost: number;
 
   @Column({ nullable: true })
@@ -39,20 +46,16 @@ export class TenantWABAAssignment {
   @Column({ nullable: true })
   phoneNumberId: string;
 
+  @Column({ default: "PENDING" })
+  status: "PENDING" | "ACTIVE" | "SUSPENDED" | "REJECTED";
 
-
-
-
-  @Column({ default: 'PENDING' })
-  status: 'PENDING' | 'ACTIVE' | 'SUSPENDED' | 'REJECTED';
-
-  @Column({ default: 'UNVERIFIED' })
-  verificationStatus: 'UNVERIFIED' | 'PENDING' | 'VERIFIED';
+  @Column({ default: "UNVERIFIED" })
+  verificationStatus: "UNVERIFIED" | "PENDING" | "VERIFIED";
 
   @Column({ nullable: true })
   lastSyncAt: Date;
 
-  @Column('json', { nullable: true })
+  @Column("json", { nullable: true })
   usage: {
     dailyMessages?: number;
     monthlyMessages?: number;
@@ -96,11 +99,15 @@ export class TenantWABAAssignment {
       this.usage.templateBreakdown = {};
     }
 
-    this.usage.templateBreakdown[templateName] = (this.usage.templateBreakdown[templateName] || 0) + 1;
+    this.usage.templateBreakdown[templateName] =
+      (this.usage.templateBreakdown[templateName] || 0) + 1;
   }
 
   getAverageMessagesPerDay(): number {
-    const daysSinceAssignment = Math.max(1, Math.floor((Date.now() - this.assignedAt.getTime()) / (1000 * 60 * 60 * 24)));
+    const daysSinceAssignment = Math.max(
+      1,
+      Math.floor((Date.now() - this.assignedAt.getTime()) / (1000 * 60 * 60 * 24)),
+    );
     return this.messagesSent / daysSinceAssignment;
   }
 

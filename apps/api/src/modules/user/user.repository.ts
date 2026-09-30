@@ -1,8 +1,8 @@
-import { Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { BaseRepository } from '../../database/repositories/base.repository';
-import { User } from './entities/user.entity';
+import { Injectable } from "@nestjs/common";
+import { InjectRepository } from "@nestjs/typeorm";
+import { Repository } from "typeorm";
+import { BaseRepository } from "../../database/repositories/base.repository";
+import { User } from "./entities/user.entity";
 
 @Injectable()
 export class UserRepository extends BaseRepository<User> {
@@ -17,10 +17,7 @@ export class UserRepository extends BaseRepository<User> {
     return this.findById(email);
   }
 
-  async findByProviderId(
-    provider: string,
-    providerId: string,
-  ): Promise<User | null> {
+  async findByProviderId(provider: string, providerId: string): Promise<User | null> {
     const field = `${provider.toLowerCase()}Id`;
     const where: any = { [field]: providerId };
 

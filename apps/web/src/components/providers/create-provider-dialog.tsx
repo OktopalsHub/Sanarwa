@@ -1,19 +1,32 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { providerApi } from '@/lib/api/provider';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Textarea } from '@/components/ui/textarea';
-import { useForm, Controller } from 'react-hook-form';
-import { CreateProviderRequest, ProviderType } from '@/lib/types/provider';
-import { useTenant } from '@/contexts/tenant-context';
-import { toast } from 'sonner';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { useState } from "react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { providerApi } from "@/lib/api/provider";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
+import { useForm, Controller } from "react-hook-form";
+import { CreateProviderRequest, ProviderType } from "@/lib/types/provider";
+import { useTenant } from "@/contexts/tenant-context";
+import { toast } from "sonner";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
 interface CreateProviderDialogProps {
   open: boolean;
@@ -21,38 +34,38 @@ interface CreateProviderDialogProps {
 }
 
 const providerTypes = [
-  { value: ProviderType.EMAIL, label: 'Email', description: 'Send email notifications' },
-  { value: ProviderType.SMS, label: 'SMS', description: 'Send text messages' },
-  { value: ProviderType.PUSH, label: 'Push', description: 'Send push notifications' },
-  { value: ProviderType.VOICE, label: 'Voice', description: 'Send voice calls' },
-  { value: ProviderType.WHATSAPP, label: 'WhatsApp', description: 'Send WhatsApp messages' },
+  { value: ProviderType.EMAIL, label: "Email", description: "Send email notifications" },
+  { value: ProviderType.SMS, label: "SMS", description: "Send text messages" },
+  { value: ProviderType.PUSH, label: "Push", description: "Send push notifications" },
+  { value: ProviderType.VOICE, label: "Voice", description: "Send voice calls" },
+  { value: ProviderType.WHATSAPP, label: "WhatsApp", description: "Send WhatsApp messages" },
 ];
 
 const providerSubtypes: Partial<Record<ProviderType, Array<{ value: string; label: string }>>> = {
   [ProviderType.EMAIL]: [
-    { value: 'aws_ses', label: 'Amazon SES' },
-    { value: 'sendgrid', label: 'SendGrid' },
-    { value: 'mailgun', label: 'Mailgun' },
-    { value: 'postmark', label: 'Postmark' },
+    { value: "aws_ses", label: "Amazon SES" },
+    { value: "sendgrid", label: "SendGrid" },
+    { value: "mailgun", label: "Mailgun" },
+    { value: "postmark", label: "Postmark" },
   ],
   [ProviderType.SMS]: [
-    { value: 'twilio', label: 'Twilio' },
-    { value: 'aws_sns', label: 'Amazon SNS' },
-    { value: 'vonage', label: 'Vonage' },
-    { value: 'africas_talking', label: 'Africa\'s Talking' },
+    { value: "twilio", label: "Twilio" },
+    { value: "aws_sns", label: "Amazon SNS" },
+    { value: "vonage", label: "Vonage" },
+    { value: "africas_talking", label: "Africa's Talking" },
   ],
   [ProviderType.PUSH]: [
-    { value: 'firebase', label: 'Firebase FCM' },
-    { value: 'apns', label: 'Apple Push Notification' },
-    { value: 'web_push', label: 'Web Push' },
+    { value: "firebase", label: "Firebase FCM" },
+    { value: "apns", label: "Apple Push Notification" },
+    { value: "web_push", label: "Web Push" },
   ],
   [ProviderType.VOICE]: [
-    { value: 'twilio_voice', label: 'Twilio Voice' },
-    { value: 'aws_polly', label: 'Amazon Polly' },
+    { value: "twilio_voice", label: "Twilio Voice" },
+    { value: "aws_polly", label: "Amazon Polly" },
   ],
   [ProviderType.WHATSAPP]: [
-    { value: 'twilio_whatsapp', label: 'Twilio WhatsApp' },
-    { value: 'whatsapp_business', label: 'WhatsApp Business API' },
+    { value: "twilio_whatsapp", label: "Twilio WhatsApp" },
+    { value: "whatsapp_business", label: "WhatsApp Business API" },
   ],
 };
 
@@ -60,7 +73,7 @@ export function CreateProviderDialog({ open, onOpenChange }: CreateProviderDialo
   const { selectedTenant } = useTenant();
   const queryClient = useQueryClient();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [selectedType, setSelectedType] = useState<ProviderType | ''>('');
+  const [selectedType, setSelectedType] = useState<ProviderType | "">("");
 
   const {
     register,
@@ -71,19 +84,19 @@ export function CreateProviderDialog({ open, onOpenChange }: CreateProviderDialo
     formState: { errors },
   } = useForm<CreateProviderRequest>();
 
-  const watchedType = watch('type');
+  const watchedType = watch("type");
 
   const createProviderMutation = useMutation({
     mutationFn: (data: CreateProviderRequest) => providerApi.createProvider(data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['providers'] });
-      toast.success('Provider created successfully');
+      queryClient.invalidateQueries({ queryKey: ["providers"] });
+      toast.success("Provider created successfully");
       reset();
-      setSelectedType('');
+      setSelectedType("");
       onOpenChange(false);
     },
     onError: (error: any) => {
-      toast.error(error.message || 'Failed to create provider');
+      toast.error(error.message || "Failed to create provider");
     },
     onSettled: () => {
       setIsSubmitting(false);
@@ -92,7 +105,7 @@ export function CreateProviderDialog({ open, onOpenChange }: CreateProviderDialo
 
   const onSubmit = async (data: CreateProviderRequest) => {
     if (!selectedTenant) {
-      toast.error('No tenant selected');
+      toast.error("No tenant selected");
       return;
     }
 
@@ -103,7 +116,7 @@ export function CreateProviderDialog({ open, onOpenChange }: CreateProviderDialo
   const handleClose = () => {
     if (!isSubmitting) {
       reset();
-      setSelectedType('');
+      setSelectedType("");
       onOpenChange(false);
     }
   };
@@ -131,17 +144,18 @@ export function CreateProviderDialog({ open, onOpenChange }: CreateProviderDialo
               {providerTypes.map((type) => (
                 <Card
                   key={type.value}
-                  className={`cursor-pointer transition-colors ${selectedType === type.value
-                      ? 'border-primary bg-primary/5'
-                      : 'hover:border-primary/50'
-                    }`}
+                  className={`cursor-pointer transition-colors ${
+                    selectedType === type.value
+                      ? "border-primary bg-primary/5"
+                      : "hover:border-primary/50"
+                  }`}
                   onClick={() => setSelectedType(type.value)}
                 >
                   <CardHeader className="pb-2">
                     <div className="flex items-center gap-2">
                       <input
                         type="radio"
-                        {...register('type', { required: 'Provider type is required' })}
+                        {...register("type", { required: "Provider type is required" })}
                         value={type.value}
                         checked={selectedType === type.value}
                         onChange={() => setSelectedType(type.value)}
@@ -149,16 +163,12 @@ export function CreateProviderDialog({ open, onOpenChange }: CreateProviderDialo
                       />
                       <CardTitle className="text-sm">{type.label}</CardTitle>
                     </div>
-                    <CardDescription className="text-xs">
-                      {type.description}
-                    </CardDescription>
+                    <CardDescription className="text-xs">{type.description}</CardDescription>
                   </CardHeader>
                 </Card>
               ))}
             </div>
-            {errors.type && (
-              <p className="text-sm text-destructive">{errors.type.message}</p>
-            )}
+            {errors.type && <p className="text-sm text-destructive">{errors.type.message}</p>}
           </div>
 
           {/* Provider Subtype */}
@@ -168,7 +178,7 @@ export function CreateProviderDialog({ open, onOpenChange }: CreateProviderDialo
               <Controller
                 name="subtype"
                 control={control}
-                rules={{ required: 'Service provider is required' }}
+                rules={{ required: "Service provider is required" }}
                 render={({ field }) => (
                   <Select onValueChange={field.onChange} value={field.value}>
                     <SelectTrigger>
@@ -197,18 +207,16 @@ export function CreateProviderDialog({ open, onOpenChange }: CreateProviderDialo
               <Input
                 id="name"
                 placeholder="e.g., Production Email Provider"
-                {...register('name', {
-                  required: 'Provider name is required',
+                {...register("name", {
+                  required: "Provider name is required",
                   minLength: {
                     value: 2,
-                    message: 'Provider name must be at least 2 characters',
+                    message: "Provider name must be at least 2 characters",
                   },
                 })}
                 disabled={isSubmitting}
               />
-              {errors.name && (
-                <p className="text-sm text-destructive">{errors.name.message}</p>
-              )}
+              {errors.name && <p className="text-sm text-destructive">{errors.name.message}</p>}
             </div>
 
             <div className="space-y-2">
@@ -217,7 +225,7 @@ export function CreateProviderDialog({ open, onOpenChange }: CreateProviderDialo
                 id="description"
                 placeholder="Describe this provider configuration"
                 rows={2}
-                {...register('description')}
+                {...register("description")}
                 disabled={isSubmitting}
               />
             </div>
@@ -230,10 +238,10 @@ export function CreateProviderDialog({ open, onOpenChange }: CreateProviderDialo
                 min="0"
                 max="100"
                 placeholder="0-100 (higher = higher priority)"
-                {...register('priority', {
+                {...register("priority", {
                   valueAsNumber: true,
-                  min: { value: 0, message: 'Priority must be at least 0' },
-                  max: { value: 100, message: 'Priority must be at most 100' },
+                  min: { value: 0, message: "Priority must be at least 0" },
+                  max: { value: 100, message: "Priority must be at most 100" },
                 })}
                 disabled={isSubmitting}
               />
@@ -259,7 +267,9 @@ export function CreateProviderDialog({ open, onOpenChange }: CreateProviderDialo
                     return template.requiredFields.map((field) => (
                       <div key={field} className="flex items-center gap-2">
                         <div className="w-2 h-2 bg-primary rounded-full"></div>
-                        <span className="capitalize">{field.replace(/([A-Z])/g, ' $1').trim()}</span>
+                        <span className="capitalize">
+                          {field.replace(/([A-Z])/g, " $1").trim()}
+                        </span>
                       </div>
                     ));
                   })()}
@@ -269,16 +279,11 @@ export function CreateProviderDialog({ open, onOpenChange }: CreateProviderDialo
           )}
 
           <DialogFooter>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={handleClose}
-              disabled={isSubmitting}
-            >
+            <Button type="button" variant="outline" onClick={handleClose} disabled={isSubmitting}>
               Cancel
             </Button>
             <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? 'Creating...' : 'Create Provider'}
+              {isSubmitting ? "Creating..." : "Create Provider"}
             </Button>
           </DialogFooter>
         </form>

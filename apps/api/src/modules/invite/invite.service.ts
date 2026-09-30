@@ -1,26 +1,22 @@
-import {
-  BadRequestException,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
-import { EventEmitter2 } from '@nestjs/event-emitter';
-import * as crypto from 'crypto';
-import { getPaginationSummary } from 'src/common/dto/pagination.dto';
-import { AuthProvider } from 'src/common/enums';
-import { PasswordService } from 'src/common/helpers/password.service';
-import { IPaginatedData } from 'src/common/interfaces';
-import { TenantMemberService } from '../tenant-member/tenant-member.service';
-import { UserService } from '../user/user.service';
-import { AcceptInviteResponseDto } from './dto/accept-invite-response.dto';
-import { AcceptInviteDto } from './dto/accept-invite.dto';
-import { CreateInviteDto } from './dto/create-invite.dto';
-import { Invite, InviteStatus } from './entities/invite.entity';
+import { BadRequestException, Injectable, NotFoundException } from "@nestjs/common";
+import { EventEmitter2 } from "@nestjs/event-emitter";
+import * as crypto from "crypto";
+import { getPaginationSummary } from "src/common/dto/pagination.dto";
+import { AuthProvider } from "src/common/enums";
+import { PasswordService } from "src/common/helpers/password.service";
+import { IPaginatedData } from "src/common/interfaces";
+import { TenantMemberService } from "../tenant-member/tenant-member.service";
+import { UserService } from "../user/user.service";
+import { AcceptInviteResponseDto } from "./dto/accept-invite-response.dto";
+import { AcceptInviteDto } from "./dto/accept-invite.dto";
+import { CreateInviteDto } from "./dto/create-invite.dto";
+import { Invite, InviteStatus } from "./entities/invite.entity";
 import {
   InviteAcceptedEvent,
   InviteCreatedEvent,
   InviteDeclinedEvent,
-} from './events/invite.events';
-import { InviteRepository } from './invite.repository';
+} from "./events/invite.events";
+import { InviteRepository } from "./invite.repository";
 
 @Injectable()
 export class InviteService {
@@ -43,22 +39,16 @@ export class InviteService {
     const { email, role } = createInviteDto;
 
     // Check if user is already a member of this tenant
-    const existingMember = await this.tenantMemberService.findByUserEmail(
-      tenantId,
-      email,
-    );
+    const existingMember = await this.tenantMemberService.findByUserEmail(tenantId, email);
     if (existingMember) {
-      throw new BadRequestException('User is already a member of this tenant');
+      throw new BadRequestException("User is already a member of this tenant");
     }
 
     // Check if there's already a pending invitation
-    const existingInvite = await this.inviteRepository.findByEmailAndTenant(
-      email,
-      tenantId,
-    );
+    const existingInvite = await this.inviteRepository.findByEmailAndTenant(email, tenantId);
 
     if (existingInvite) {
-      throw new BadRequestException('Invitation already sent to this email');
+      throw new BadRequestException("Invitation already sent to this email");
     }
 
     // Generate unique token
@@ -80,14 +70,8 @@ export class InviteService {
 
     // Emit event for email notification
     this.eventEmitter.emit(
-      'invite.created',
-      new InviteCreatedEvent(
-        savedInvite.id,
-        email,
-        tenantId,
-        token,
-        invitedById,
-      ),
+      "invite.created",
+      new InviteCreatedEvent(savedInvite.id, email, tenantId, token, invitedById),
     );
 
     return savedInvite;
@@ -96,16 +80,14 @@ export class InviteService {
   /**
    * Accept an invitation
    */
-  async acceptInvite(
-    acceptInviteDto: AcceptInviteDto,
-  ): Promise<AcceptInviteResponseDto> {
+  async acceptInvite(acceptInviteDto: AcceptInviteDto): Promise<AcceptInviteResponseDto> {
     const { token, firstName, lastName, password } = acceptInviteDto;
 
     // Find the invitation
     const invite = await this.inviteRepository.findByToken(token);
 
     if (!invite || invite.status !== InviteStatus.PENDING) {
-      throw new NotFoundException('Invalid or expired invitation');
+      throw new NotFoundException("Invalid or expired invitation");
     }
 
     // Check if invitation has expired
@@ -113,7 +95,7 @@ export class InviteService {
       await this.inviteRepository.update(invite.id, {
         status: InviteStatus.EXPIRED,
       });
-      throw new BadRequestException('Invitation has expired');
+      throw new BadRequestException("Invitation has expired");
     }
 
     // Check if user already exists
@@ -129,8 +111,7 @@ export class InviteService {
       // Handle authentication method based on password presence
       if (password) {
         // Email/password authentication flow
-        const hashedPassword =
-          await this.passwordService.hashPassword(password);
+        const hashedPassword = await this.passwordService.hashPassword(password);
         userData.password = hashedPassword;
         userData.authProvider = AuthProvider.LOCAL;
       } else {
@@ -146,8 +127,7 @@ export class InviteService {
       if (password && !user.password) {
         // User exists but doesn't have a password (was created via OAuth)
         // Allow them to set a password for local authentication
-        const hashedPassword =
-          await this.passwordService.hashPassword(password);
+        const hashedPassword = await this.passwordService.hashPassword(password);
         await this.userService.updateUserInternal(user.id, {
           password: hashedPassword,
           name: user.name || `${firstName} ${lastName}`.trim(),
@@ -163,13 +143,10 @@ export class InviteService {
     }
 
     // Create tenant member
-    const tenantMember = await this.tenantMemberService.createTenantMember(
-      invite.tenant.id,
-      {
-        role: invite.role,
-        user,
-      },
-    );
+    const tenantMember = await this.tenantMemberService.createTenantMember(invite.tenant.id, {
+      role: invite.role,
+      user,
+    });
 
     // Update invitation status
     await this.inviteRepository.update(invite.id, {
@@ -179,27 +156,22 @@ export class InviteService {
 
     // Emit event
     this.eventEmitter.emit(
-      'invite.accepted',
-      new InviteAcceptedEvent(
-        invite.id,
-        user.id,
-        invite.tenant.id,
-        invite.role,
-      ),
+      "invite.accepted",
+      new InviteAcceptedEvent(invite.id, user.id, invite.tenant.id, invite.role),
     );
 
     // Return clean response
     return {
-      message: 'Invitation accepted successfully',
+      message: "Invitation accepted successfully",
       user: {
         id: user.id,
         email: user.email,
-        firstName: user.name.split(' ')[0] || '',
-        lastName: user.name.split(' ').slice(1).join(' ') || '',
+        firstName: user.name.split(" ")[0] || "",
+        lastName: user.name.split(" ").slice(1).join(" ") || "",
       },
       tenant: {
         id: invite.tenant.id,
-        name: invite.tenant.name || 'Unknown Tenant',
+        name: invite.tenant.name || "Unknown Tenant",
       },
       membership: {
         role: tenantMember.role,
@@ -215,7 +187,7 @@ export class InviteService {
     const invite = await this.inviteRepository.findByToken(token);
 
     if (!invite || invite.status !== InviteStatus.PENDING) {
-      throw new NotFoundException('Invalid or expired invitation');
+      throw new NotFoundException("Invalid or expired invitation");
     }
 
     await this.inviteRepository.update(invite.id, {
@@ -225,7 +197,7 @@ export class InviteService {
 
     // Emit event
     this.eventEmitter.emit(
-      'invite.declined',
+      "invite.declined",
       new InviteDeclinedEvent(invite.id, invite.email, invite.tenant.id),
     );
   }
@@ -237,7 +209,7 @@ export class InviteService {
     const invite = await this.inviteRepository.findByToken(token);
 
     if (!invite) {
-      throw new NotFoundException('Invitation not found');
+      throw new NotFoundException("Invitation not found");
     }
 
     return invite;
@@ -246,33 +218,30 @@ export class InviteService {
   /**
    * Get all invitations for a tenant with pagination
    */
-  async getTenantInvites(
-    tenantId: string,
-    query?: any,
-  ): Promise<IPaginatedData<Partial<Invite>>> {
+  async getTenantInvites(tenantId: string, query?: any): Promise<IPaginatedData<Partial<Invite>>> {
     const page = query?.page || 1;
     const limit = query?.limit || 10;
 
     const queryBuilder = this.inviteRepository
-      .createQueryBuilder('invite')
-      .leftJoin('invite.invitedBy', 'invitedBy')
-      .leftJoin('invitedBy.user', 'inviterUser')
+      .createQueryBuilder("invite")
+      .leftJoin("invite.invitedBy", "invitedBy")
+      .leftJoin("invitedBy.user", "inviterUser")
       .select([
-        'invite.id',
-        'invite.email',
-        'invite.role',
-        'invite.status',
-        'invite.expiresAt',
-        'invite.createdAt',
-        'invite.acceptedAt',
-        'invite.declinedAt',
-        'invitedBy.id',
-        'inviterUser.id',
-        'inviterUser.email',
-        'inviterUser.name',
+        "invite.id",
+        "invite.email",
+        "invite.role",
+        "invite.status",
+        "invite.expiresAt",
+        "invite.createdAt",
+        "invite.acceptedAt",
+        "invite.declinedAt",
+        "invitedBy.id",
+        "inviterUser.id",
+        "inviterUser.email",
+        "inviterUser.name",
       ])
-      .where('invite.tenantId = :tenantId', { tenantId })
-      .orderBy('invite.createdAt', 'DESC')
+      .where("invite.tenantId = :tenantId", { tenantId })
+      .orderBy("invite.createdAt", "DESC")
       .skip((page - 1) * limit)
       .take(limit);
 
@@ -297,12 +266,7 @@ export class InviteService {
         : null,
     }));
 
-    return getPaginationSummary(
-      sanitizedInvites,
-      total,
-      { page, limit },
-      'invites',
-    );
+    return getPaginationSummary(sanitizedInvites, total, { page, limit }, "invites");
   }
 
   /**
@@ -314,11 +278,11 @@ export class InviteService {
     });
 
     if (!invite) {
-      throw new NotFoundException('Invitation not found');
+      throw new NotFoundException("Invitation not found");
     }
 
     if (invite.status !== InviteStatus.PENDING) {
-      throw new BadRequestException('Can only cancel pending invitations');
+      throw new BadRequestException("Can only cancel pending invitations");
     }
 
     await this.inviteRepository.update(inviteId, {
@@ -348,6 +312,6 @@ export class InviteService {
    * Generate a secure invitation token
    */
   private generateInviteToken(): string {
-    return crypto.randomBytes(32).toString('hex');
+    return crypto.randomBytes(32).toString("hex");
   }
 }

@@ -1,9 +1,12 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { OnEvent } from '@nestjs/event-emitter';
-import { NotificationCenterItem, NotificationCenterStatus } from '../entities/notification-center.entity';
-import { NotificationGateway } from '../gateways/notification.gateway';
+import { Injectable, Logger } from "@nestjs/common";
+import { InjectRepository } from "@nestjs/typeorm";
+import { Repository } from "typeorm";
+import { OnEvent } from "@nestjs/event-emitter";
+import {
+  NotificationCenterItem,
+  NotificationCenterStatus,
+} from "../entities/notification-center.entity";
+import { NotificationGateway } from "../gateways/notification.gateway";
 
 export interface NotificationQueue {
   subscriberId: string;
@@ -15,7 +18,7 @@ export interface NotificationQueue {
 export class NotificationRealtimeService {
   private readonly logger = new Logger(NotificationRealtimeService.name);
   private readonly offlineQueue = new Map<string, NotificationCenterItem[]>();
-  private readonly connectionStates = new Map<string, 'online' | 'offline'>();
+  private readonly connectionStates = new Map<string, "online" | "offline">();
 
   constructor(
     @InjectRepository(NotificationCenterItem)
@@ -42,7 +45,7 @@ export class NotificationRealtimeService {
         `Queued notification for offline subscriber ${subscriberId} (queue size: ${queue.length})`,
       );
     } catch (error) {
-      this.logger.error('Failed to queue offline notification', error);
+      this.logger.error("Failed to queue offline notification", error);
     }
   }
 
@@ -56,17 +59,13 @@ export class NotificationRealtimeService {
         return 0;
       }
 
-      this.logger.log(
-        `Delivering ${queue.length} queued notifications to ${subscriberId}`,
-      );
+      this.logger.log(`Delivering ${queue.length} queued notifications to ${subscriberId}`);
 
       // Send all queued notifications
       for (const notification of queue) {
-        this.notificationGateway.broadcastToSubscriber(
-          subscriberId,
-          'queued_notification',
-          { notification },
-        );
+        this.notificationGateway.broadcastToSubscriber(subscriberId, "queued_notification", {
+          notification,
+        });
       }
 
       // Clear queue
@@ -74,10 +73,7 @@ export class NotificationRealtimeService {
 
       return queue.length;
     } catch (error) {
-      this.logger.error(
-        `Failed to deliver queued notifications for ${subscriberId}`,
-        error,
-      );
+      this.logger.error(`Failed to deliver queued notifications for ${subscriberId}`, error);
       return 0;
     }
   }
@@ -86,7 +82,7 @@ export class NotificationRealtimeService {
    * Mark subscriber as online
    */
   markSubscriberOnline(subscriberId: string): void {
-    this.connectionStates.set(subscriberId, 'online');
+    this.connectionStates.set(subscriberId, "online");
     this.logger.log(`Subscriber ${subscriberId} marked as online`);
 
     // Deliver queued notifications
@@ -97,7 +93,7 @@ export class NotificationRealtimeService {
    * Mark subscriber as offline
    */
   markSubscriberOffline(subscriberId: string): void {
-    this.connectionStates.set(subscriberId, 'offline');
+    this.connectionStates.set(subscriberId, "offline");
     this.logger.log(`Subscriber ${subscriberId} marked as offline`);
   }
 
@@ -105,7 +101,7 @@ export class NotificationRealtimeService {
    * Check if subscriber is online
    */
   isSubscriberOnline(subscriberId: string): boolean {
-    return this.connectionStates.get(subscriberId) === 'online';
+    return this.connectionStates.get(subscriberId) === "online";
   }
 
   /**
@@ -129,7 +125,7 @@ export class NotificationRealtimeService {
         return timeA - timeB;
       });
     } catch (error) {
-      this.logger.error('Failed to order notifications', error);
+      this.logger.error("Failed to order notifications", error);
       return notifications;
     }
   }
@@ -150,11 +146,9 @@ export class NotificationRealtimeService {
           // Check if subscriber is online
           if (this.isSubscriberOnline(subscriberId)) {
             // Send directly
-            this.notificationGateway.broadcastToSubscriber(
-              subscriberId,
-              'bulk_notifications',
-              { notifications },
-            );
+            this.notificationGateway.broadcastToSubscriber(subscriberId, "bulk_notifications", {
+              notifications,
+            });
             processed++;
           } else {
             // Queue for offline delivery
@@ -164,21 +158,16 @@ export class NotificationRealtimeService {
             processed++;
           }
         } catch (error) {
-          this.logger.error(
-            `Failed to process notification for subscriber ${subscriberId}`,
-            error,
-          );
+          this.logger.error(`Failed to process notification for subscriber ${subscriberId}`, error);
           failed++;
         }
       }
 
-      this.logger.log(
-        `Bulk notification processing: ${processed} processed, ${failed} failed`,
-      );
+      this.logger.log(`Bulk notification processing: ${processed} processed, ${failed} failed`);
 
       return { processed, failed };
     } catch (error) {
-      this.logger.error('Failed to process bulk notifications', error);
+      this.logger.error("Failed to process bulk notifications", error);
       return { processed: 0, failed: subscriberIds.length };
     }
   }
@@ -228,7 +217,7 @@ export class NotificationRealtimeService {
 
       return count;
     } catch (error) {
-      this.logger.error('Failed to cleanup expired notifications', error);
+      this.logger.error("Failed to cleanup expired notifications", error);
       return 0;
     }
   }
@@ -246,7 +235,7 @@ export class NotificationRealtimeService {
     let totalQueued = 0;
 
     for (const [, state] of this.connectionStates) {
-      if (state === 'online') {
+      if (state === "online") {
         totalOnline++;
       } else {
         totalOffline++;
@@ -263,45 +252,42 @@ export class NotificationRealtimeService {
   /**
    * Event listener: Notification created
    */
-  @OnEvent('notification.created')
+  @OnEvent("notification.created")
   async onNotificationCreated(payload: {
     subscriberId: string;
     notification: NotificationCenterItem;
   }) {
     try {
       if (!this.isSubscriberOnline(payload.subscriberId)) {
-        await this.queueOfflineNotification(
-          payload.subscriberId,
-          payload.notification,
-        );
+        await this.queueOfflineNotification(payload.subscriberId, payload.notification);
       }
     } catch (error) {
-      this.logger.error('Error in notification created event', error);
+      this.logger.error("Error in notification created event", error);
     }
   }
 
   /**
    * Event listener: Subscriber connected
    */
-  @OnEvent('subscriber.connected')
+  @OnEvent("subscriber.connected")
   async onSubscriberConnected(payload: { subscriberId: string }) {
     try {
       this.markSubscriberOnline(payload.subscriberId);
       await this.deliverQueuedNotifications(payload.subscriberId);
     } catch (error) {
-      this.logger.error('Error in subscriber connected event', error);
+      this.logger.error("Error in subscriber connected event", error);
     }
   }
 
   /**
    * Event listener: Subscriber disconnected
    */
-  @OnEvent('subscriber.disconnected')
+  @OnEvent("subscriber.disconnected")
   async onSubscriberDisconnected(payload: { subscriberId: string }) {
     try {
       this.markSubscriberOffline(payload.subscriberId);
     } catch (error) {
-      this.logger.error('Error in subscriber disconnected event', error);
+      this.logger.error("Error in subscriber disconnected event", error);
     }
   }
 }

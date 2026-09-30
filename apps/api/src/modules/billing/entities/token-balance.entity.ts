@@ -7,46 +7,46 @@ import {
   ManyToOne,
   JoinColumn,
   Index,
-} from 'typeorm';
-import { Tenant } from '../../tenant/entities/tenant.entity';
+} from "typeorm";
+import { Tenant } from "../../tenant/entities/tenant.entity";
 
 export enum TokenTransactionType {
-  PURCHASE = 'purchase',
-  USAGE = 'usage',
-  REFUND = 'refund',
-  BONUS = 'bonus',
-  EXPIRY = 'expiry',
+  PURCHASE = "purchase",
+  USAGE = "usage",
+  REFUND = "refund",
+  BONUS = "bonus",
+  EXPIRY = "expiry",
 }
 
-@Entity('token_balances')
-@Index(['tenantId'], { unique: true })
+@Entity("token_balances")
+@Index(["tenantId"], { unique: true })
 export class TokenBalance {
-  @PrimaryGeneratedColumn('uuid')
+  @PrimaryGeneratedColumn("uuid")
   id: string;
 
-  @Column({ type: 'uuid', name: 'tenant_id' })
+  @Column({ type: "uuid", name: "tenant_id" })
   tenantId: string;
 
-  @ManyToOne(() => Tenant, { onDelete: 'CASCADE' })
-  @JoinColumn({ name: 'tenant_id' })
+  @ManyToOne(() => Tenant, { onDelete: "CASCADE" })
+  @JoinColumn({ name: "tenant_id" })
   tenant: Tenant;
 
-  @Column({ type: 'bigint', default: 0 })
+  @Column({ type: "bigint", default: 0 })
   totalTokens: number;
 
-  @Column({ type: 'bigint', default: 0 })
+  @Column({ type: "bigint", default: 0 })
   usedTokens: number;
 
-  @Column({ type: 'bigint', default: 0 })
+  @Column({ type: "bigint", default: 0 })
   availableTokens: number;
 
-  @Column({ type: 'bigint', default: 0 })
+  @Column({ type: "bigint", default: 0 })
   reservedTokens: number;
 
-  @Column({ type: 'timestamp', nullable: true })
+  @Column({ type: "timestamp", nullable: true })
   lastUsage: Date;
 
-  @Column({ type: 'timestamp', nullable: true })
+  @Column({ type: "timestamp", nullable: true })
   lastPurchase: Date;
 
   @CreateDateColumn()
@@ -56,35 +56,35 @@ export class TokenBalance {
   updatedAt: Date;
 }
 
-@Entity('token_transactions')
-@Index(['tenantId', 'createdAt'])
+@Entity("token_transactions")
+@Index(["tenantId", "createdAt"])
 export class TokenTransaction {
-  @PrimaryGeneratedColumn('uuid')
+  @PrimaryGeneratedColumn("uuid")
   id: string;
 
-  @Column({ type: 'uuid', name: 'tenant_id' })
+  @Column({ type: "uuid", name: "tenant_id" })
   tenantId: string;
 
-  @ManyToOne(() => Tenant, { onDelete: 'CASCADE' })
-  @JoinColumn({ name: 'tenant_id' })
+  @ManyToOne(() => Tenant, { onDelete: "CASCADE" })
+  @JoinColumn({ name: "tenant_id" })
   tenant: Tenant;
 
   @Column({
-    type: 'enum',
+    type: "enum",
     enum: TokenTransactionType,
   })
   type: TokenTransactionType;
 
-  @Column({ type: 'bigint' })
+  @Column({ type: "bigint" })
   amount: number;
 
-  @Column({ type: 'bigint' })
+  @Column({ type: "bigint" })
   balanceAfter: number;
 
   @Column({ nullable: true })
   description: string;
 
-  @Column({ type: 'json', nullable: true })
+  @Column({ type: "json", nullable: true })
   metadata: Record<string, unknown> | null;
 
   @Column({ nullable: true })

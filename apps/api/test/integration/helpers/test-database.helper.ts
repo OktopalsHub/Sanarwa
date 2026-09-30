@@ -1,25 +1,20 @@
-import { DataSource } from 'typeorm';
+import { DataSource } from "typeorm";
 import {
   assertSafeTestDatabase,
   createSqliteTestDataSource,
-} from '../../../src/test/sqlite-test-data-source';
-import {
-  Column,
-  CreateDateColumn,
-  Entity,
-  PrimaryGeneratedColumn,
-} from 'typeorm';
+} from "../../../src/test/sqlite-test-data-source";
+import { Column, CreateDateColumn, Entity, PrimaryGeneratedColumn } from "typeorm";
 
 /** Isolated entity for helper-based SQLite tests (avoids app entity graph). */
-@Entity('test_helper_rows')
+@Entity("test_helper_rows")
 export class TestHelperRow {
-  @PrimaryGeneratedColumn('uuid')
+  @PrimaryGeneratedColumn("uuid")
   id!: string;
 
-  @Column({ type: 'varchar', length: 255 })
+  @Column({ type: "varchar", length: 255 })
   label!: string;
 
-  @CreateDateColumn({ type: 'datetime' })
+  @CreateDateColumn({ type: "datetime" })
   createdAt!: Date;
 }
 

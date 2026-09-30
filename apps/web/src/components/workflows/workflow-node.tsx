@@ -1,15 +1,26 @@
-'use client';
+"use client";
 
-import { Bell, Clock, GitBranch, Mail, MessageSquare, Phone, Zap } from '@/lib/icons';
+import { Bell, Clock, GitBranch, Mail, MessageSquare, Phone, Zap } from "@/lib/icons";
 
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
-import { WorkflowNode, WorkflowNodeType } from '@/lib/types/workflow';
-import { cn } from '@/lib/utils';
-import { useDraggable } from '@dnd-kit/core';
-import { BellIcon, ClockIcon, CodeBracketSquareIcon, EnvelopeIcon, ChatBubbleLeftRightIcon, PhoneIcon, PlusIcon, Cog6ToothIcon, TrashIcon, BoltIcon } from '@heroicons/react/24/outline'
-import React from 'react';
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { WorkflowNode, WorkflowNodeType } from "@/lib/types/workflow";
+import { cn } from "@/lib/utils";
+import { useDraggable } from "@dnd-kit/core";
+import {
+  BellIcon,
+  ClockIcon,
+  CodeBracketSquareIcon,
+  EnvelopeIcon,
+  ChatBubbleLeftRightIcon,
+  PhoneIcon,
+  PlusIcon,
+  Cog6ToothIcon,
+  TrashIcon,
+  BoltIcon,
+} from "@heroicons/react/24/outline";
+import React from "react";
 
 interface WorkflowNodeComponentProps {
   node: WorkflowNode;
@@ -33,11 +44,11 @@ const NODE_ICONS: Record<WorkflowNodeType, React.ComponentType<{ className?: str
 };
 
 const NODE_COLORS: Record<WorkflowNodeType, string> = {
-  trigger: 'border-green-500 bg-green-50 dark:bg-green-950',
-  action: 'border-blue-500 bg-blue-50 dark:bg-blue-950',
-  condition: 'border-yellow-500 bg-yellow-50 dark:bg-yellow-950',
-  delay: 'border-purple-500 bg-purple-50 dark:bg-purple-950',
-  split: 'border-orange-500 bg-orange-50 dark:bg-orange-950',
+  trigger: "border-green-500 bg-green-50 dark:bg-green-950",
+  action: "border-blue-500 bg-blue-50 dark:bg-blue-950",
+  condition: "border-yellow-500 bg-yellow-50 dark:bg-yellow-950",
+  delay: "border-purple-500 bg-purple-50 dark:bg-purple-950",
+  split: "border-orange-500 bg-orange-50 dark:bg-orange-950",
 };
 
 const ACTION_ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
@@ -76,7 +87,7 @@ export function WorkflowNodeComponent({
 
   // Get action-specific icon for action nodes
   const getActionIcon = () => {
-    if (node.type === 'action' && 'type' in node.data.config) {
+    if (node.type === "action" && "type" in node.data.config) {
       const actionType = (node.data.config as any).type;
       const ActionIcon = ACTION_ICONS[actionType];
       return ActionIcon || Mail;
@@ -110,15 +121,17 @@ export function WorkflowNodeComponent({
     onConfigure?.(node.id);
   };
 
-  const style = transform ? {
-    transform: `translate3d(${transform.x}px, ${transform.y}px, 0)`,
-  } : undefined;
+  const style = transform
+    ? {
+        transform: `translate3d(${transform.x}px, ${transform.y}px, 0)`,
+      }
+    : undefined;
 
   return (
     <div
       ref={setNodeRef}
       style={{
-        position: 'absolute',
+        position: "absolute",
         left: node.position.x,
         top: node.position.y,
         ...style,
@@ -126,7 +139,7 @@ export function WorkflowNodeComponent({
       className={cn(
         "group cursor-pointer transition-all duration-200",
         isDragging && "opacity-50",
-        isDndDragging && "z-50"
+        isDndDragging && "z-50",
       )}
       {...listeners}
       {...attributes}
@@ -136,7 +149,7 @@ export function WorkflowNodeComponent({
           "w-48 border-2 transition-all duration-200 hover:shadow-md",
           nodeColorClass,
           isSelected && "ring-2 ring-primary ring-offset-2",
-          isConnecting && "ring-2 ring-blue-400 ring-offset-2"
+          isConnecting && "ring-2 ring-blue-400 ring-offset-2",
         )}
         onClick={handleClick}
       >
@@ -160,12 +173,7 @@ export function WorkflowNodeComponent({
                 >
                   <Cog6ToothIcon className="h-3 w-3" />
                 </Button>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-6 w-6"
-                  onClick={handleDeleteClick}
-                >
+                <Button variant="ghost" size="icon" className="h-6 w-6" onClick={handleDeleteClick}>
                   <TrashIcon className="h-3 w-3" />
                 </Button>
               </div>
@@ -174,30 +182,26 @@ export function WorkflowNodeComponent({
 
           {/* Node Content */}
           <div className="space-y-2">
-            <h4 className="font-medium text-sm truncate">
-              {node.data.label}
-            </h4>
+            <h4 className="font-medium text-sm truncate">{node.data.label}</h4>
 
             {node.data.description && (
-              <p className="text-xs text-muted-foreground line-clamp-2">
-                {node.data.description}
-              </p>
+              <p className="text-xs text-muted-foreground line-clamp-2">{node.data.description}</p>
             )}
 
             {/* Node-specific content */}
-            {node.type === 'trigger' && 'type' in node.data.config && (
+            {node.type === "trigger" && "type" in node.data.config && (
               <Badge variant="outline" className="text-xs">
                 {(node.data.config as any).type}
               </Badge>
             )}
 
-            {node.type === 'action' && 'type' in node.data.config && (
+            {node.type === "action" && "type" in node.data.config && (
               <Badge variant="outline" className="text-xs">
                 {(node.data.config as any).type}
               </Badge>
             )}
 
-            {node.type === 'delay' && 'duration' in node.data.config && (
+            {node.type === "delay" && "duration" in node.data.config && (
               <Badge variant="outline" className="text-xs">
                 {(node.data.config as any).duration} {(node.data.config as any).unit}
               </Badge>
@@ -219,7 +223,7 @@ export function WorkflowNodeComponent({
           )}
 
           {/* Input connection point */}
-          {node.type !== 'trigger' && (
+          {node.type !== "trigger" && (
             <div className="absolute -left-2 top-1/2 -translate-y-1/2">
               <div className="h-3 w-3 rounded-full bg-background border-2 border-muted-foreground" />
             </div>

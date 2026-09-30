@@ -1,6 +1,6 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { BrandService } from '../../brand/brand.service';
-import { PushPayload } from '../providers/push/push-provider.interface';
+import { Injectable, Logger } from "@nestjs/common";
+import { BrandService } from "../../brand/brand.service";
+import { PushPayload } from "../providers/push/push-provider.interface";
 
 @Injectable()
 export class BrandedPushService {
@@ -14,14 +14,16 @@ export class BrandedPushService {
   async enhancePushWithBrand(
     tenantId: string,
     payload: PushPayload,
-    brandId?: string
+    brandId?: string,
   ): Promise<PushPayload> {
     try {
       // If no brand ID provided, try to find a default brand for the tenant
       if (!brandId) {
         const brands = await this.brandService.getBrands(tenantId, { limit: 1 });
         if (!brands.records || brands.records.length === 0) {
-          this.logger.warn(`No brand found for tenant ${tenantId}, using default push configuration`);
+          this.logger.warn(
+            `No brand found for tenant ${tenantId}, using default push configuration`,
+          );
           return payload;
         }
         brandId = brands.records[0].id;
@@ -65,11 +67,15 @@ export class BrandedPushService {
         ...(brand.domain && { brandDomain: brand.domain }),
       };
 
-      this.logger.log(`Enhanced push notification with brand ${brandId} configuration for tenant ${tenantId}`);
+      this.logger.log(
+        `Enhanced push notification with brand ${brandId} configuration for tenant ${tenantId}`,
+      );
       return enhancedPayload;
-
     } catch (error) {
-      this.logger.error(`Failed to enhance push notification with brand configuration: ${error.message}`, error);
+      this.logger.error(
+        `Failed to enhance push notification with brand configuration: ${error.message}`,
+        error,
+      );
       // Return original payload if brand enhancement fails
       return payload;
     }
@@ -78,11 +84,14 @@ export class BrandedPushService {
   /**
    * Get push notification recommendations for a brand
    */
-  async getPushRecommendations(tenantId: string, brandId: string): Promise<{
-    status: 'excellent' | 'good' | 'needs_improvement' | 'poor';
+  async getPushRecommendations(
+    tenantId: string,
+    brandId: string,
+  ): Promise<{
+    status: "excellent" | "good" | "needs_improvement" | "poor";
     score: number;
     recommendations: Array<{
-      priority: 'high' | 'medium' | 'low';
+      priority: "high" | "medium" | "low";
       title: string;
       description: string;
       action: string;
@@ -91,7 +100,7 @@ export class BrandedPushService {
     try {
       const brand = await this.brandService.getBrandById(tenantId, brandId);
       const recommendations: Array<{
-        priority: 'high' | 'medium' | 'low';
+        priority: "high" | "medium" | "low";
         title: string;
         description: string;
         action: string;
@@ -104,10 +113,10 @@ export class BrandedPushService {
         score += 20;
       } else {
         recommendations.push({
-          priority: 'high',
-          title: 'Set Brand Name',
-          description: 'Brand name will be used in push notification titles',
-          action: 'Add brand name in brand settings',
+          priority: "high",
+          title: "Set Brand Name",
+          description: "Brand name will be used in push notification titles",
+          action: "Add brand name in brand settings",
         });
       }
 
@@ -116,10 +125,10 @@ export class BrandedPushService {
         score += 20;
       } else {
         recommendations.push({
-          priority: 'medium',
-          title: 'Add Brand Colors',
-          description: 'Brand colors will be used in Android push notifications',
-          action: 'Set primary color in brand settings',
+          priority: "medium",
+          title: "Add Brand Colors",
+          description: "Brand colors will be used in Android push notifications",
+          action: "Set primary color in brand settings",
         });
       }
 
@@ -128,10 +137,10 @@ export class BrandedPushService {
         score += 20;
       } else {
         recommendations.push({
-          priority: 'medium',
-          title: 'Upload Brand Logo',
-          description: 'Brand logo will be used as push notification icon',
-          action: 'Upload logo in brand settings',
+          priority: "medium",
+          title: "Upload Brand Logo",
+          description: "Brand logo will be used as push notification icon",
+          action: "Upload logo in brand settings",
         });
       }
 
@@ -140,10 +149,10 @@ export class BrandedPushService {
         score += 20;
       } else {
         recommendations.push({
-          priority: 'low',
-          title: 'Configure Domain',
-          description: 'Domain enables branded deep linking in push notifications',
-          action: 'Set domain in brand settings',
+          priority: "low",
+          title: "Configure Domain",
+          description: "Domain enables branded deep linking in push notifications",
+          action: "Set domain in brand settings",
         });
       }
 
@@ -152,38 +161,37 @@ export class BrandedPushService {
         score += 20;
       } else {
         recommendations.push({
-          priority: 'low',
-          title: 'Add Brand Description',
-          description: 'Description helps with push notification context',
-          action: 'Add description in brand settings',
+          priority: "low",
+          title: "Add Brand Description",
+          description: "Description helps with push notification context",
+          action: "Add description in brand settings",
         });
       }
 
       // Determine status based on score
-      let status: 'excellent' | 'good' | 'needs_improvement' | 'poor';
+      let status: "excellent" | "good" | "needs_improvement" | "poor";
       if (score >= 90) {
-        status = 'excellent';
+        status = "excellent";
       } else if (score >= 70) {
-        status = 'good';
+        status = "good";
       } else if (score >= 50) {
-        status = 'needs_improvement';
+        status = "needs_improvement";
       } else {
-        status = 'poor';
+        status = "poor";
       }
 
       return { status, score, recommendations };
-
     } catch (error) {
       this.logger.error(`Failed to get push recommendations: ${error.message}`, error);
       return {
-        status: 'poor',
+        status: "poor",
         score: 0,
         recommendations: [
           {
-            priority: 'high',
-            title: 'Fix Brand Configuration',
-            description: 'Unable to analyze brand configuration due to an error',
-            action: 'Check brand settings and try again',
+            priority: "high",
+            title: "Fix Brand Configuration",
+            description: "Unable to analyze brand configuration due to an error",
+            action: "Check brand settings and try again",
           },
         ],
       };
@@ -193,14 +201,11 @@ export class BrandedPushService {
   /**
    * Create branded push notification template
    */
-  createBrandedPushTemplate(
-    brand: any,
-    basePayload: Partial<PushPayload>
-  ): PushPayload {
+  createBrandedPushTemplate(brand: any, basePayload: Partial<PushPayload>): PushPayload {
     return {
       deviceTokens: [],
-      title: brand.name || 'Notification',
-      body: '',
+      title: brand.name || "Notification",
+      body: "",
       ...basePayload,
       data: {
         ...basePayload.data,
@@ -218,8 +223,8 @@ export class BrandedPushService {
         threadId: brand.id,
       },
       deepLink: {
-        url: `https://${brand.domain || 'app.example.com'}/notifications`,
-        fallbackUrl: `https://${brand.domain || 'example.com'}`,
+        url: `https://${brand.domain || "app.example.com"}/notifications`,
+        fallbackUrl: `https://${brand.domain || "example.com"}`,
         ...basePayload.deepLink,
       },
     };

@@ -1,11 +1,11 @@
-'use client';
+"use client";
 
-import { AppShell } from '@/components/layout';
-import { MessageDetail } from '@/components/messages/message-detail';
-import { useParams } from '@tanstack/react-router';
+import { AppShell } from "@/components/layout";
+import { MessageDetail } from "@/components/messages/message-detail";
+import { useParams } from "@tanstack/react-router";
 
 export default function MessageDetailPage() {
-  const { id = '' } = useParams({ strict: false }) as { id?: string };
+  const { id = "" } = useParams({ strict: false }) as { id?: string };
 
   return (
     <AppShell>

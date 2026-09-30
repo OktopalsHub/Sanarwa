@@ -8,9 +8,9 @@ import {
   NotificationQueryParams,
   NotificationResponse,
   NotificationStatusUpdate,
-  QueueStatus
-} from './types/notification';
-import { ApiClient, createApiClient } from './client';
+  QueueStatus,
+} from "./types/notification";
+import { ApiClient, createApiClient } from "./client";
 
 /**
  * Notification API client for handling all notification-related operations
@@ -32,7 +32,7 @@ class NotificationApiClient {
    * @returns Notification response with ID and status
    */
   async sendNotification(data: CreateNotificationRequest): Promise<NotificationResponse> {
-    return this.apiClient.post<NotificationResponse>('/notifications', data);
+    return this.apiClient.post<NotificationResponse>("/notifications", data);
   }
 
   /**
@@ -41,7 +41,7 @@ class NotificationApiClient {
    * @returns Bulk notification response with success/failure details
    */
   async sendBulkNotifications(data: BulkNotificationRequest): Promise<BulkNotificationResponse> {
-    return this.apiClient.post<BulkNotificationResponse>('/notifications/bulk', data);
+    return this.apiClient.post<BulkNotificationResponse>("/notifications/bulk", data);
   }
 
   /**
@@ -78,7 +78,7 @@ class NotificationApiClient {
       hasPrev: boolean;
     };
   }> {
-    return this.apiClient.get('/notifications', params);
+    return this.apiClient.get("/notifications", params);
   }
 
   /**
@@ -116,7 +116,7 @@ class NotificationApiClient {
     if (params?.endDate) queryParams.endDate = params.endDate.toISOString();
     if (params?.status) queryParams.status = params.status;
 
-    return this.apiClient.get<NotificationMetrics>('/notifications/delivery-stats', queryParams);
+    return this.apiClient.get<NotificationMetrics>("/notifications/delivery-stats", queryParams);
   }
 
   // In-App Notification Methods (notifications module)
@@ -128,7 +128,7 @@ class NotificationApiClient {
    */
   async createInAppNotification(data: CreateInAppNotificationRequest): Promise<InAppNotification> {
     // Note: This uses a different endpoint path to distinguish from the notification module
-    return this.apiClient.post<InAppNotification>('/notifications', data);
+    return this.apiClient.post<InAppNotification>("/notifications", data);
   }
 
   /**
@@ -145,7 +145,7 @@ class NotificationApiClient {
       error: string;
     }>;
   }> {
-    return this.apiClient.post('/notifications/bulk', data);
+    return this.apiClient.post("/notifications/bulk", data);
   }
 
   /**
@@ -171,7 +171,7 @@ class NotificationApiClient {
       hasPrev: boolean;
     };
   }> {
-    return this.apiClient.get('/notifications', params);
+    return this.apiClient.get("/notifications", params);
   }
 
   /**
@@ -188,7 +188,7 @@ class NotificationApiClient {
    * @returns Success response
    */
   async markAllNotificationsAsRead(): Promise<{ message: string; count: number }> {
-    return this.apiClient.patch('/notifications/read-all', {});
+    return this.apiClient.patch("/notifications/read-all", {});
   }
 
   /**
@@ -212,7 +212,7 @@ class NotificationApiClient {
     if (startDate) params.startDate = startDate.toISOString();
     if (endDate) params.endDate = endDate.toISOString();
 
-    return this.apiClient.get<NotificationMetrics>('/notifications/stats', params);
+    return this.apiClient.get<NotificationMetrics>("/notifications/stats", params);
   }
 
   /**
@@ -224,7 +224,7 @@ class NotificationApiClient {
     channel?: string;
     startDate?: Date;
     endDate?: Date;
-    groupBy?: 'hour' | 'day' | 'week' | 'month';
+    groupBy?: "hour" | "day" | "week" | "month";
   }): Promise<NotificationMetrics> {
     const queryParams: Record<string, string> = {};
     if (params?.channel) queryParams.channel = params.channel;
@@ -232,7 +232,7 @@ class NotificationApiClient {
     if (params?.endDate) queryParams.endDate = params.endDate.toISOString();
     if (params?.groupBy) queryParams.groupBy = params.groupBy;
 
-    return this.apiClient.get<NotificationMetrics>('/notifications/metrics/delivery', queryParams);
+    return this.apiClient.get<NotificationMetrics>("/notifications/metrics/delivery", queryParams);
   }
 
   /**
@@ -244,7 +244,7 @@ class NotificationApiClient {
     channel?: string;
     startDate?: Date;
     endDate?: Date;
-    groupBy?: 'hour' | 'day' | 'week' | 'month';
+    groupBy?: "hour" | "day" | "week" | "month";
   }): Promise<{
     opens: number;
     clicks: number;
@@ -261,7 +261,7 @@ class NotificationApiClient {
     if (params?.endDate) queryParams.endDate = params.endDate.toISOString();
     if (params?.groupBy) queryParams.groupBy = params.groupBy;
 
-    return this.apiClient.get('/notifications/metrics/engagement', queryParams);
+    return this.apiClient.get("/notifications/metrics/engagement", queryParams);
   }
 
   // Queue Management Methods
@@ -271,7 +271,7 @@ class NotificationApiClient {
    * @returns Current queue status for all channels
    */
   async getQueueStatus(): Promise<QueueStatus[]> {
-    return this.apiClient.get<QueueStatus[]>('/notifications/queue/status');
+    return this.apiClient.get<QueueStatus[]>("/notifications/queue/status");
   }
 
   /**
@@ -286,7 +286,7 @@ class NotificationApiClient {
     totalDelayed: number;
     queues: QueueStatus[];
   }> {
-    return this.apiClient.get('/notifications/queue/stats');
+    return this.apiClient.get("/notifications/queue/stats");
   }
 
   /**
@@ -320,11 +320,11 @@ class NotificationApiClient {
   }
 
   async getNotificationMetrics(filters: any): Promise<any> {
-    return this.apiClient.get<any>('/notifications/metrics', filters);
+    return this.apiClient.get<any>("/notifications/metrics", filters);
   }
 
   async getUserSubscriptions(): Promise<any[]> {
-    return this.apiClient.get<any[]>('/notifications/subscriptions');
+    return this.apiClient.get<any[]>("/notifications/subscriptions");
   }
 
   async updateSubscription(subscriptionId: string, updates: any): Promise<any> {
@@ -336,11 +336,11 @@ class NotificationApiClient {
   }
 
   async markAllAsRead(): Promise<void> {
-    return this.apiClient.patch<void>('/notifications/read-all', {});
+    return this.apiClient.patch<void>("/notifications/read-all", {});
   }
 
   async bulkDeleteNotifications(notificationIds: string[]): Promise<void> {
-    return this.apiClient.post<void>('/notifications/bulk-delete', { notificationIds });
+    return this.apiClient.post<void>("/notifications/bulk-delete", { notificationIds });
   }
 
   // Utility Methods
@@ -358,12 +358,12 @@ class NotificationApiClient {
 
     // Validate channels
     if (!data.channels || data.channels.length === 0) {
-      errors.push('At least one notification channel is required');
+      errors.push("At least one notification channel is required");
     }
 
     // Validate recipients
     if (!data.recipients || data.recipients.length === 0) {
-      errors.push('At least one recipient is required');
+      errors.push("At least one recipient is required");
     } else {
       data.recipients.forEach((recipient, index) => {
         if (!recipient.id) {
@@ -371,26 +371,30 @@ class NotificationApiClient {
         }
 
         // Validate channel-specific recipient data
-        data.channels.forEach(channel => {
+        data.channels.forEach((channel) => {
           switch (channel) {
-            case 'email':
+            case "email":
               if (!recipient.email) {
                 errors.push(`Recipient ${index + 1}: Email is required for email channel`);
               }
               break;
-            case 'sms':
+            case "sms":
               if (!recipient.phone) {
                 errors.push(`Recipient ${index + 1}: Phone number is required for SMS channel`);
               }
               break;
-            case 'push':
+            case "push":
               if (!recipient.deviceToken) {
-                errors.push(`Recipient ${index + 1}: Device token is required for push notifications`);
+                errors.push(
+                  `Recipient ${index + 1}: Device token is required for push notifications`,
+                );
               }
               break;
-            case 'whatsapp':
+            case "whatsapp":
               if (!recipient.whatsappNumber) {
-                errors.push(`Recipient ${index + 1}: WhatsApp number is required for WhatsApp channel`);
+                errors.push(
+                  `Recipient ${index + 1}: WhatsApp number is required for WhatsApp channel`,
+                );
               }
               break;
           }
@@ -400,12 +404,12 @@ class NotificationApiClient {
 
     // Validate content
     if (!data.templateId && !data.content) {
-      errors.push('Either templateId or content is required');
+      errors.push("Either templateId or content is required");
     }
 
     // Validate scheduled date
     if (data.scheduledAt && data.scheduledAt < new Date()) {
-      errors.push('Scheduled date cannot be in the past');
+      errors.push("Scheduled date cannot be in the past");
     }
 
     return {
@@ -426,31 +430,31 @@ class NotificationApiClient {
     const errors: string[] = [];
 
     if (!data.title || data.title.trim().length === 0) {
-      errors.push('Title is required');
+      errors.push("Title is required");
     }
 
     if (!data.message || data.message.trim().length === 0) {
-      errors.push('Message is required');
+      errors.push("Message is required");
     }
 
     if (data.title && data.title.length > 100) {
-      errors.push('Title must be less than 100 characters');
+      errors.push("Title must be less than 100 characters");
     }
 
     if (data.message && data.message.length > 1000) {
-      errors.push('Message must be less than 1000 characters');
+      errors.push("Message must be less than 1000 characters");
     }
 
     if (data.scheduledAt && data.scheduledAt < new Date()) {
-      errors.push('Scheduled date cannot be in the past');
+      errors.push("Scheduled date cannot be in the past");
     }
 
     if (data.expiresAt && data.expiresAt < new Date()) {
-      errors.push('Expiration date cannot be in the past');
+      errors.push("Expiration date cannot be in the past");
     }
 
     if (data.scheduledAt && data.expiresAt && data.scheduledAt >= data.expiresAt) {
-      errors.push('Expiration date must be after scheduled date');
+      errors.push("Expiration date must be after scheduled date");
     }
 
     return {
@@ -467,7 +471,7 @@ class NotificationApiClient {
    * @returns True if notification can be retried
    */
   canRetryNotification(status: string, retryCount: number, maxRetries: number = 3): boolean {
-    return status === 'failed' && retryCount < maxRetries;
+    return status === "failed" && retryCount < maxRetries;
   }
 
   /**
@@ -502,7 +506,7 @@ class NotificationApiClient {
 
     let timeAgo: string;
     if (diffMins < 1) {
-      timeAgo = 'Just now';
+      timeAgo = "Just now";
     } else if (diffMins < 60) {
       timeAgo = `${diffMins}m ago`;
     } else if (diffHours < 24) {
@@ -516,8 +520,8 @@ class NotificationApiClient {
       message: notification.message,
       timeAgo,
       isRead: !!notification.readAt,
-      priority: notification.priority || 'normal',
-      type: notification.type || 'info',
+      priority: notification.priority || "normal",
+      type: notification.type || "info",
     };
   }
 }

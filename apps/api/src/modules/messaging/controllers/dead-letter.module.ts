@@ -1,8 +1,9 @@
-import { BullModule } from '@nestjs/bull';
-import { Module } from '@nestjs/common';
-import { NotificationQueueModule, NOTIFICATION_QUEUE } from '../queue/notification-queue.module';
-import { DeadLetterProcessor } from '../queue/dead-letter.processor';
-import { DeadLetterController } from './dead-letter.controller';
+import { BullModule } from "@nestjs/bull";
+import { Module } from "@nestjs/common";
+import { NOTIFICATION_QUEUE } from "../queue/notification-queue.constants";
+import { NotificationQueueModule } from "../queue/notification-queue.module";
+import { DeadLetterProcessor } from "../queue/dead-letter.processor";
+import { DeadLetterController } from "./dead-letter.controller";
 
 @Module({
   imports: [
@@ -14,4 +15,4 @@ import { DeadLetterController } from './dead-letter.controller';
   controllers: [DeadLetterController],
   providers: [DeadLetterProcessor],
 })
-export class DeadLetterModule { }
+export class DeadLetterModule {}

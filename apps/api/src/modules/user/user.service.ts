@@ -1,50 +1,47 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
-import {
-  getPaginationSummary,
-  IPaginatedData,
-} from '../../common/dto/pagination.dto';
-import { DeepPartial } from 'typeorm';
-import { UpdateUserDto, UserQueryDto } from './dto';
-import { User } from './entities/user.entity';
-import { UserRepository } from './user.repository';
-import { StructuredLoggerService } from '../../common/logging/structured-logger.service';
-import { LogPerformance } from '../../common/logging/decorators/log-performance.decorator';
+import { Injectable, NotFoundException } from "@nestjs/common";
+import { getPaginationSummary, IPaginatedData } from "../../common/dto/pagination.dto";
+import { DeepPartial } from "typeorm";
+import { UpdateUserDto, UserQueryDto } from "./dto";
+import { User } from "./entities/user.entity";
+import { UserRepository } from "./user.repository";
+import { StructuredLoggerService } from "../../common/logging/structured-logger.service";
+import { LogPerformance } from "../../common/logging/decorators/log-performance.decorator";
 
 @Injectable()
 export class UserService {
   constructor(
     private readonly userRepository: UserRepository,
     private readonly logger: StructuredLoggerService,
-  ) { }
+  ) {}
 
-  @LogPerformance({ operation: 'getUserById', category: 'user_service' })
+  @LogPerformance({ operation: "getUserById", category: "user_service" })
   async getUserById(id: string): Promise<User> {
     const startTime = Date.now();
-    
+
     try {
       const user = await this.userRepository.findOne({
         where: { id },
       });
 
       if (!user) {
-        this.logger.warn('User not found', {
+        this.logger.warn("User not found", {
           userId: id,
-          operation: 'getUserById',
-          category: 'user_service',
+          operation: "getUserById",
+          category: "user_service",
         });
-        throw new NotFoundException('User not found');
+        throw new NotFoundException("User not found");
       }
 
-      this.logger.logDatabaseQuery('SELECT user by ID', Date.now() - startTime, {
+      this.logger.logDatabaseQuery("SELECT user by ID", Date.now() - startTime, {
         userId: id,
-        operation: 'getUserById',
+        operation: "getUserById",
       });
 
       return user;
     } catch (error) {
-      this.logger.error('Failed to get user by ID', error.stack, {
+      this.logger.error("Failed to get user by ID", error.stack, {
         userId: id,
-        operation: 'getUserById',
+        operation: "getUserById",
         duration: Date.now() - startTime,
       });
       throw error;
@@ -64,62 +61,62 @@ export class UserService {
   async getByEmailWithPassword(email: string): Promise<User | null> {
     return this.userRepository.findOne({
       where: { email },
-      select: ['id', 'email', 'name', 'password'] as any,
+      select: ["id", "email", "name", "password"] as any,
     });
   }
 
   async getUserByIdWithPassword(id: string): Promise<User | null> {
     return this.userRepository.findOne({
       where: { id },
-      select: ['id', 'email', 'password'] as any,
+      select: ["id", "email", "password"] as any,
     });
   }
 
-  @LogPerformance({ operation: 'createUser', category: 'user_service' })
+  @LogPerformance({ operation: "createUser", category: "user_service" })
   async createUser(userData: DeepPartial<User>): Promise<User> {
     const startTime = Date.now();
-    
+
     try {
       const user = await this.userRepository.create(userData);
-      
-      this.logger.logBusinessEvent('user_created', {
+
+      this.logger.logBusinessEvent("user_created", {
         userId: user.id,
         email: user.email,
-        operation: 'createUser',
+        operation: "createUser",
         duration: Date.now() - startTime,
       });
 
       return user;
     } catch (error) {
-      this.logger.error('Failed to create user', error.stack, {
+      this.logger.error("Failed to create user", error.stack, {
         email: userData.email,
-        operation: 'createUser',
+        operation: "createUser",
         duration: Date.now() - startTime,
       });
       throw error;
     }
   }
 
-  @LogPerformance({ operation: 'updateUser', category: 'user_service' })
+  @LogPerformance({ operation: "updateUser", category: "user_service" })
   async updateUser(id: string, data: UpdateUserDto): Promise<User> {
     const startTime = Date.now();
-    
+
     try {
       await this.userRepository.update(id, data as any);
       const updatedUser = await this.getUserById(id);
-      
-      this.logger.logBusinessEvent('user_updated', {
+
+      this.logger.logBusinessEvent("user_updated", {
         userId: id,
         updatedFields: Object.keys(data),
-        operation: 'updateUser',
+        operation: "updateUser",
         duration: Date.now() - startTime,
       });
 
       return updatedUser;
     } catch (error) {
-      this.logger.error('Failed to update user', error.stack, {
+      this.logger.error("Failed to update user", error.stack, {
         userId: id,
-        operation: 'updateUser',
+        operation: "updateUser",
         duration: Date.now() - startTime,
       });
       throw error;
@@ -136,32 +133,18 @@ export class UserService {
     await this.userRepository.delete(id);
   }
 
-
   async getUsers(query: UserQueryDto): Promise<IPaginatedData<User>> {
-    const {
-      page = 1,
-      limit = 10,
-      search,
-      sortBy = 'createdAt',
-      sortOrder = 'DESC',
-    } = query;
+    const { page = 1, limit = 10, search, sortBy = "createdAt", sortOrder = "DESC" } = query;
 
     const queryBuilder = this.userRepository
-      .createQueryBuilder('user')
-      .select([
-        'user.id',
-        'user.email',
-        'user.name',
-        'user.createdAt',
-        'user.updatedAt',
-      ]);
+      .createQueryBuilder("user")
+      .select(["user.id", "user.email", "user.name", "user.createdAt", "user.updatedAt"]);
 
     // Apply filters
     if (search) {
-      queryBuilder.andWhere(
-        '(user.name ILIKE :search OR user.email ILIKE :search)',
-        { search: `%${search}%` },
-      );
+      queryBuilder.andWhere("(user.name ILIKE :search OR user.email ILIKE :search)", {
+        search: `%${search}%`,
+      });
     }
 
     // Apply sorting
@@ -172,6 +155,6 @@ export class UserService {
 
     const [data, total] = await queryBuilder.getManyAndCount();
 
-    return getPaginationSummary(data, total, { page, limit }, 'users');
+    return getPaginationSummary(data, total, { page, limit }, "users");
   }
 }

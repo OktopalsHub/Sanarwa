@@ -1,15 +1,15 @@
-import { Module } from '@nestjs/common';
-import { EventEmitterModule } from '@nestjs/event-emitter';
-import { TypeOrmModule } from '@nestjs/typeorm';
-import { SecurityModule } from 'src/common/security/security.module';
-import { AuthModule } from '../auth/auth.module';
-import { ConfigurationController } from './controllers/configuration.controller';
-import { ConfigurationVersion } from './entities/configuration-version.entity';
-import { Configuration } from './entities/configuration.entity';
-import { ConfigurationCacheService } from './services/configuration-cache.service';
-import { ConfigurationValidationService } from './services/configuration-validation.service';
-import { ConfigurationWatcherService } from './services/configuration-watcher.service';
-import { ConfigurationService } from './services/configuration.service';
+import { Module } from "@nestjs/common";
+import { EventEmitterModule } from "@nestjs/event-emitter";
+import { TypeOrmModule } from "@nestjs/typeorm";
+import { SecurityModule } from "src/common/security/security.module";
+import { AuthModule } from "../auth/auth.module";
+import { ConfigurationController } from "./controllers/configuration.controller";
+import { ConfigurationVersion } from "./entities/configuration-version.entity";
+import { Configuration } from "./entities/configuration.entity";
+import { ConfigurationCacheService } from "./services/configuration-cache.service";
+import { ConfigurationValidationService } from "./services/configuration-validation.service";
+import { ConfigurationWatcherService } from "./services/configuration-watcher.service";
+import { ConfigurationService } from "./services/configuration.service";
 
 @Module({
   imports: [

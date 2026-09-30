@@ -1,7 +1,4 @@
-import {
-  BaseProviderPayload,
-  IBaseProvider,
-} from '../base/base-provider.interface';
+import { BaseProviderPayload, IBaseProvider } from "../base/base-provider.interface";
 
 export interface EmailPayload extends BaseProviderPayload {
   recipient: string; // email address
@@ -18,7 +15,7 @@ export interface EmailAttachment {
   filename: string;
   content: Buffer | string;
   contentType: string;
-  disposition?: 'attachment' | 'inline';
+  disposition?: "attachment" | "inline";
   contentId?: string;
 }
 
@@ -32,5 +29,5 @@ export interface EmailConfig {
 }
 
 export interface IEmailProvider extends IBaseProvider {
-  send(payload: EmailPayload): Promise<import('../types').ProviderResponse>;
+  send(payload: EmailPayload): Promise<import("../types").ProviderResponse>;
 }

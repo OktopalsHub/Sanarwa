@@ -1,11 +1,11 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Injectable, Logger } from "@nestjs/common";
+import { InjectRepository } from "@nestjs/typeorm";
+import { Repository } from "typeorm";
 import {
   SecurityEventEntity,
   SecurityEventSeverity,
   SecurityEventType,
-} from '../entities/security-event.entity';
+} from "../entities/security-event.entity";
 
 export interface CreateSecurityEventDto {
   tenantId?: string;
@@ -64,14 +64,11 @@ export class SecurityEventService {
   /**
    * Log a security event
    */
-  async logEvent(
-    eventData: CreateSecurityEventDto,
-  ): Promise<SecurityEventEntity> {
+  async logEvent(eventData: CreateSecurityEventDto): Promise<SecurityEventEntity> {
     try {
       const securityEvent = this.securityEventRepository.create({
         ...eventData,
-        severity:
-          eventData.severity || this.determineSeverity(eventData.eventType),
+        severity: eventData.severity || this.determineSeverity(eventData.eventType),
       });
 
       const savedEvent = await this.securityEventRepository.save(securityEvent);
@@ -94,10 +91,7 @@ export class SecurityEventService {
 
       return savedEvent;
     } catch (error) {
-      this.logger.error(
-        `Failed to log security event: ${error.message}`,
-        error.stack,
-      );
+      this.logger.error(`Failed to log security event: ${error.message}`, error.stack);
       throw error;
     }
   }
@@ -117,7 +111,7 @@ export class SecurityEventService {
       tenantId,
       eventType: SecurityEventType.LOGIN_SUCCESS,
       severity: SecurityEventSeverity.LOW,
-      description: 'User logged in successfully',
+      description: "User logged in successfully",
       ipAddress,
       userAgent,
       sessionId,
@@ -138,7 +132,7 @@ export class SecurityEventService {
       tenantId,
       eventType: SecurityEventType.LOGIN_FAILURE,
       severity: SecurityEventSeverity.MEDIUM,
-      description: `Login failed for ${email}${reason ? `: ${reason}` : ''}`,
+      description: `Login failed for ${email}${reason ? `: ${reason}` : ""}`,
       ipAddress,
       userAgent,
       metadata: { email, reason },
@@ -268,7 +262,7 @@ export class SecurityEventService {
    * Log encryption/decryption events
    */
   async logEncryptionEvent(
-    action: 'encrypt' | 'decrypt',
+    action: "encrypt" | "decrypt",
     resourceType: string,
     resourceId: string,
     userId?: string,
@@ -277,18 +271,14 @@ export class SecurityEventService {
     error?: string,
   ): Promise<void> {
     const eventType =
-      action === 'encrypt'
-        ? SecurityEventType.DATA_ENCRYPTION
-        : SecurityEventType.DATA_DECRYPTION;
+      action === "encrypt" ? SecurityEventType.DATA_ENCRYPTION : SecurityEventType.DATA_DECRYPTION;
 
     await this.logEvent({
       userId,
       tenantId,
       eventType,
-      severity: success
-        ? SecurityEventSeverity.LOW
-        : SecurityEventSeverity.MEDIUM,
-      description: `Data ${action}ion ${success ? 'successful' : 'failed'} for ${resourceType}:${resourceId}`,
+      severity: success ? SecurityEventSeverity.LOW : SecurityEventSeverity.MEDIUM,
+      description: `Data ${action}ion ${success ? "successful" : "failed"} for ${resourceType}:${resourceId}`,
       resourceType,
       resourceId,
       metadata: { action, success, error },
@@ -299,7 +289,7 @@ export class SecurityEventService {
    * Log API key events
    */
   async logApiKeyEvent(
-    action: 'created' | 'used' | 'revoked',
+    action: "created" | "used" | "revoked",
     apiKeyId: string,
     userId?: string,
     tenantId?: string,
@@ -326,7 +316,7 @@ export class SecurityEventService {
       description: `API key ${action}: ${apiKeyId}`,
       ipAddress,
       userAgent,
-      resourceType: 'api_key',
+      resourceType: "api_key",
       resourceId: apiKeyId,
     });
   }
@@ -340,46 +330,45 @@ export class SecurityEventService {
     page: number;
     limit: number;
   }> {
-    const queryBuilder =
-      this.securityEventRepository.createQueryBuilder('event');
+    const queryBuilder = this.securityEventRepository.createQueryBuilder("event");
 
     // Apply filters
     if (query.tenantId) {
-      queryBuilder.andWhere('event.tenantId = :tenantId', {
+      queryBuilder.andWhere("event.tenantId = :tenantId", {
         tenantId: query.tenantId,
       });
     }
 
     if (query.userId) {
-      queryBuilder.andWhere('event.userId = :userId', { userId: query.userId });
+      queryBuilder.andWhere("event.userId = :userId", { userId: query.userId });
     }
 
     if (query.eventType) {
-      queryBuilder.andWhere('event.eventType = :eventType', {
+      queryBuilder.andWhere("event.eventType = :eventType", {
         eventType: query.eventType,
       });
     }
 
     if (query.severity) {
-      queryBuilder.andWhere('event.severity = :severity', {
+      queryBuilder.andWhere("event.severity = :severity", {
         severity: query.severity,
       });
     }
 
     if (query.startDate) {
-      queryBuilder.andWhere('event.createdAt >= :startDate', {
+      queryBuilder.andWhere("event.createdAt >= :startDate", {
         startDate: query.startDate,
       });
     }
 
     if (query.endDate) {
-      queryBuilder.andWhere('event.createdAt <= :endDate', {
+      queryBuilder.andWhere("event.createdAt <= :endDate", {
         endDate: query.endDate,
       });
     }
 
     if (query.resolved !== undefined) {
-      queryBuilder.andWhere('event.resolved = :resolved', {
+      queryBuilder.andWhere("event.resolved = :resolved", {
         resolved: query.resolved,
       });
     }
@@ -392,7 +381,7 @@ export class SecurityEventService {
     const offset = query.offset || 0;
     const page = Math.floor(offset / limit) + 1;
 
-    queryBuilder.orderBy('event.createdAt', 'DESC').skip(offset).take(limit);
+    queryBuilder.orderBy("event.createdAt", "DESC").skip(offset).take(limit);
 
     const events = await queryBuilder.getMany();
 
@@ -412,19 +401,18 @@ export class SecurityEventService {
     startDate?: Date,
     endDate?: Date,
   ): Promise<SecurityEventStats> {
-    const queryBuilder =
-      this.securityEventRepository.createQueryBuilder('event');
+    const queryBuilder = this.securityEventRepository.createQueryBuilder("event");
 
     if (tenantId) {
-      queryBuilder.andWhere('event.tenantId = :tenantId', { tenantId });
+      queryBuilder.andWhere("event.tenantId = :tenantId", { tenantId });
     }
 
     if (startDate) {
-      queryBuilder.andWhere('event.createdAt >= :startDate', { startDate });
+      queryBuilder.andWhere("event.createdAt >= :startDate", { startDate });
     }
 
     if (endDate) {
-      queryBuilder.andWhere('event.createdAt <= :endDate', { endDate });
+      queryBuilder.andWhere("event.createdAt <= :endDate", { endDate });
     }
 
     const events = await queryBuilder.getMany();
@@ -459,10 +447,8 @@ export class SecurityEventService {
     // Events over time (daily)
     const eventsOverTime = events.reduce(
       (acc, event) => {
-        const date = event.createdAt.toISOString().split('T')[0];
-        const existing = acc.find(
-          (item) => item.date === date && item.severity === event.severity,
-        );
+        const date = event.createdAt.toISOString().split("T")[0];
+        const existing = acc.find((item) => item.date === date && item.severity === event.severity);
 
         if (existing) {
           existing.count++;
@@ -518,26 +504,20 @@ export class SecurityEventService {
   /**
    * Get unresolved high-severity events
    */
-  async getUnresolvedHighSeverityEvents(
-    tenantId?: string,
-  ): Promise<SecurityEventEntity[]> {
-    const queryBuilder =
-      this.securityEventRepository.createQueryBuilder('event');
+  async getUnresolvedHighSeverityEvents(tenantId?: string): Promise<SecurityEventEntity[]> {
+    const queryBuilder = this.securityEventRepository.createQueryBuilder("event");
 
     queryBuilder
-      .where('event.resolved = :resolved', { resolved: false })
-      .andWhere('event.severity IN (:...severities)', {
-        severities: [
-          SecurityEventSeverity.HIGH,
-          SecurityEventSeverity.CRITICAL,
-        ],
+      .where("event.resolved = :resolved", { resolved: false })
+      .andWhere("event.severity IN (:...severities)", {
+        severities: [SecurityEventSeverity.HIGH, SecurityEventSeverity.CRITICAL],
       });
 
     if (tenantId) {
-      queryBuilder.andWhere('event.tenantId = :tenantId', { tenantId });
+      queryBuilder.andWhere("event.tenantId = :tenantId", { tenantId });
     }
 
-    queryBuilder.orderBy('event.createdAt', 'DESC');
+    queryBuilder.orderBy("event.createdAt", "DESC");
 
     return queryBuilder.getMany();
   }
@@ -552,8 +532,8 @@ export class SecurityEventService {
     const result = await this.securityEventRepository
       .createQueryBuilder()
       .delete()
-      .where('createdAt < :cutoffDate', { cutoffDate })
-      .andWhere('resolved = :resolved', { resolved: true })
+      .where("createdAt < :cutoffDate", { cutoffDate })
+      .andWhere("resolved = :resolved", { resolved: true })
       .execute();
 
     this.logger.log(`Cleaned up ${result.affected} old security events`);
@@ -564,9 +544,7 @@ export class SecurityEventService {
    * Private helper methods
    */
 
-  private determineSeverity(
-    eventType: SecurityEventType,
-  ): SecurityEventSeverity {
+  private determineSeverity(eventType: SecurityEventType): SecurityEventSeverity {
     const severityMap: Record<SecurityEventType, SecurityEventSeverity> = {
       [SecurityEventType.LOGIN_SUCCESS]: SecurityEventSeverity.LOW,
       [SecurityEventType.LOGIN_FAILURE]: SecurityEventSeverity.MEDIUM,
@@ -590,8 +568,7 @@ export class SecurityEventService {
       [SecurityEventType.SESSION_INVALIDATED]: SecurityEventSeverity.MEDIUM,
       [SecurityEventType.RATE_LIMIT_EXCEEDED]: SecurityEventSeverity.MEDIUM,
       [SecurityEventType.IP_BLOCKED]: SecurityEventSeverity.HIGH,
-      [SecurityEventType.SECURITY_SCAN_DETECTED]:
-        SecurityEventSeverity.CRITICAL,
+      [SecurityEventType.SECURITY_SCAN_DETECTED]: SecurityEventSeverity.CRITICAL,
     };
 
     return severityMap[eventType] || SecurityEventSeverity.MEDIUM;

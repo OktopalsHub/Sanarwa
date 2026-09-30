@@ -1,20 +1,29 @@
-'use client';
+"use client";
 
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { Input } from '@/components/ui/input';
-import { toast } from '@/lib/utils/toast';
-import { ExclamationTriangleIcon, CheckIcon, CheckCircleIcon, ChevronDownIcon, ChevronRightIcon, DocumentDuplicateIcon, ArrowTopRightOnSquareIcon, MagnifyingGlassIcon } from '@heroicons/react/24/outline'
-import { useState } from 'react';
-import { CodeBlock } from './code-block';
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { Input } from "@/components/ui/input";
+import { toast } from "@/lib/utils/toast";
+import {
+  ExclamationTriangleIcon,
+  CheckIcon,
+  CheckCircleIcon,
+  ChevronDownIcon,
+  ChevronRightIcon,
+  DocumentDuplicateIcon,
+  ArrowTopRightOnSquareIcon,
+  MagnifyingGlassIcon,
+} from "@heroicons/react/24/outline";
+import { useState } from "react";
+import { CodeBlock } from "./code-block";
 
 interface TroubleshootingItem {
   id: string;
   title: string;
-  category: 'authentication' | 'api' | 'sdk' | 'integration' | 'performance' | 'general';
-  severity: 'low' | 'medium' | 'high' | 'critical';
+  category: "authentication" | "api" | "sdk" | "integration" | "performance" | "general";
+  severity: "low" | "medium" | "high" | "critical";
   description: string;
   symptoms: string[];
   causes: string[];
@@ -37,36 +46,37 @@ interface TroubleshootingGuideProps {
 }
 
 const severityColors = {
-  low: 'bg-blue-100 text-blue-800 border-blue-200',
-  medium: 'bg-yellow-100 text-yellow-800 border-yellow-200',
-  high: 'bg-orange-100 text-orange-800 border-orange-200',
-  critical: 'bg-red-100 text-red-800 border-red-200'
+  low: "bg-blue-100 text-blue-800 border-blue-200",
+  medium: "bg-yellow-100 text-yellow-800 border-yellow-200",
+  high: "bg-orange-100 text-orange-800 border-orange-200",
+  critical: "bg-red-100 text-red-800 border-red-200",
 };
 
 const categoryColors = {
-  authentication: 'bg-purple-100 text-purple-800',
-  api: 'bg-green-100 text-green-800',
-  sdk: 'bg-blue-100 text-blue-800',
-  integration: 'bg-indigo-100 text-indigo-800',
-  performance: 'bg-orange-100 text-orange-800',
-  general: 'bg-gray-100 text-gray-800'
+  authentication: "bg-purple-100 text-purple-800",
+  api: "bg-green-100 text-green-800",
+  sdk: "bg-blue-100 text-blue-800",
+  integration: "bg-indigo-100 text-indigo-800",
+  performance: "bg-orange-100 text-orange-800",
+  general: "bg-gray-100 text-gray-800",
 };
 
 export function TroubleshootingGuide({ items }: TroubleshootingGuideProps) {
-  const [searchTerm, setSearchTerm] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState<string>('all');
-  const [selectedSeverity, setSelectedSeverity] = useState<string>('all');
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState<string>("all");
+  const [selectedSeverity, setSelectedSeverity] = useState<string>("all");
   const [openItems, setOpenItems] = useState<Set<string>>(new Set());
-  const [copiedCode, setCopiedCode] = useState<string>('');
+  const [copiedCode, setCopiedCode] = useState<string>("");
 
-  const filteredItems = items.filter(item => {
-    const matchesSearch = searchTerm === '' ||
+  const filteredItems = items.filter((item) => {
+    const matchesSearch =
+      searchTerm === "" ||
       item.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
       item.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      item.tags.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase()));
+      item.tags.some((tag) => tag.toLowerCase().includes(searchTerm.toLowerCase()));
 
-    const matchesCategory = selectedCategory === 'all' || item.category === selectedCategory;
-    const matchesSeverity = selectedSeverity === 'all' || item.severity === selectedSeverity;
+    const matchesCategory = selectedCategory === "all" || item.category === selectedCategory;
+    const matchesSeverity = selectedSeverity === "all" || item.severity === selectedSeverity;
 
     return matchesSearch && matchesCategory && matchesSeverity;
   });
@@ -85,15 +95,15 @@ export function TroubleshootingGuide({ items }: TroubleshootingGuideProps) {
     try {
       await navigator.clipboard.writeText(code);
       setCopiedCode(solutionId);
-      toast.success('Code copied to clipboard');
-      setTimeout(() => setCopiedCode(''), 2000);
+      toast.success("Code copied to clipboard");
+      setTimeout(() => setCopiedCode(""), 2000);
     } catch (err) {
-      toast.error('Failed to copy code');
+      toast.error("Failed to copy code");
     }
   };
 
-  const categories = ['all', ...Array.from(new Set(items.map(item => item.category)))];
-  const severities = ['all', 'low', 'medium', 'high', 'critical'];
+  const categories = ["all", ...Array.from(new Set(items.map((item) => item.category)))];
+  const severities = ["all", "low", "medium", "high", "critical"];
 
   return (
     <div className="space-y-6">
@@ -112,10 +122,10 @@ export function TroubleshootingGuide({ items }: TroubleshootingGuideProps) {
         <div className="flex flex-wrap gap-2">
           <div className="flex items-center gap-2">
             <span className="text-sm font-medium">Category:</span>
-            {categories.map(category => (
+            {categories.map((category) => (
               <Button
                 key={category}
-                variant={selectedCategory === category ? 'default' : 'outline'}
+                variant={selectedCategory === category ? "default" : "outline"}
                 size="sm"
                 onClick={() => setSelectedCategory(category)}
                 className="capitalize"
@@ -129,10 +139,10 @@ export function TroubleshootingGuide({ items }: TroubleshootingGuideProps) {
         <div className="flex flex-wrap gap-2">
           <div className="flex items-center gap-2">
             <span className="text-sm font-medium">Severity:</span>
-            {severities.map(severity => (
+            {severities.map((severity) => (
               <Button
                 key={severity}
-                variant={selectedSeverity === severity ? 'default' : 'outline'}
+                variant={selectedSeverity === severity ? "default" : "outline"}
                 size="sm"
                 onClick={() => setSelectedSeverity(severity)}
                 className="capitalize"
@@ -153,10 +163,7 @@ export function TroubleshootingGuide({ items }: TroubleshootingGuideProps) {
       <div className="space-y-4">
         {filteredItems.map((item) => (
           <Card key={item.id} className="overflow-hidden">
-            <Collapsible
-              open={openItems.has(item.id)}
-              onOpenChange={() => toggleItem(item.id)}
-            >
+            <Collapsible open={openItems.has(item.id)} onOpenChange={() => toggleItem(item.id)}>
               <CollapsibleTrigger asChild>
                 <CardHeader className="cursor-pointer hover:bg-accent/50 transition-colors">
                   <div className="flex items-start justify-between">
@@ -171,19 +178,13 @@ export function TroubleshootingGuide({ items }: TroubleshootingGuideProps) {
                       </div>
                       <p className="text-sm text-muted-foreground">{item.description}</p>
                       <div className="flex flex-wrap gap-2">
-                        <Badge
-                          variant="outline"
-                          className={categoryColors[item.category]}
-                        >
+                        <Badge variant="outline" className={categoryColors[item.category]}>
                           {item.category}
                         </Badge>
-                        <Badge
-                          variant="outline"
-                          className={severityColors[item.severity]}
-                        >
+                        <Badge variant="outline" className={severityColors[item.severity]}>
                           {item.severity}
                         </Badge>
-                        {item.tags.map(tag => (
+                        {item.tags.map((tag) => (
                           <Badge key={tag} variant="secondary" className="text-xs">
                             {tag}
                           </Badge>
@@ -248,7 +249,9 @@ export function TroubleshootingGuide({ items }: TroubleshootingGuideProps) {
                               <Button
                                 size="sm"
                                 variant="outline"
-                                onClick={() => handleCopyCode(solution.code!, `${item.id}-${index}`)}
+                                onClick={() =>
+                                  handleCopyCode(solution.code!, `${item.id}-${index}`)
+                                }
                                 className="h-8 w-8 p-0"
                               >
                                 {copiedCode === `${item.id}-${index}` ? (
@@ -259,7 +262,7 @@ export function TroubleshootingGuide({ items }: TroubleshootingGuideProps) {
                               </Button>
                             </div>
                             <CodeBlock
-                              language={solution.language || 'javascript'}
+                              language={solution.language || "javascript"}
                               showLineNumbers={false}
                             >
                               {solution.code}
@@ -299,13 +302,15 @@ export function TroubleshootingGuide({ items }: TroubleshootingGuideProps) {
 
       {filteredItems.length === 0 && (
         <div className="text-center py-8">
-          <p className="text-muted-foreground">No troubleshooting guides found matching your criteria.</p>
+          <p className="text-muted-foreground">
+            No troubleshooting guides found matching your criteria.
+          </p>
           <Button
             variant="outline"
             onClick={() => {
-              setSearchTerm('');
-              setSelectedCategory('all');
-              setSelectedSeverity('all');
+              setSearchTerm("");
+              setSelectedCategory("all");
+              setSelectedSeverity("all");
             }}
             className="mt-2"
           >

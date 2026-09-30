@@ -9,18 +9,18 @@
     "./icons/*": "./src/icons/*",
     "./favicon/*": "./src/favicon/*"
   },
-  "peerDependencies": {
-    "react": "^19.0.0",
-    "react-dom": "^19.0.0"
-  },
-  "devDependencies": {
-    "@types/react": "^19",
-    "typescript": "^5.9.3"
-  },
   "scripts": {
     "type-check": "tsc --noEmit",
     "build": "tsc --noEmit",
     "lint": "echo 'lint skipped'",
     "test": "echo 'no tests'"
+  },
+  "devDependencies": {
+    "@types/react": "^19",
+    "typescript": "^5.9.3"
+  },
+  "peerDependencies": {
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
   }
 }

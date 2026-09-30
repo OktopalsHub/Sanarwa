@@ -1,16 +1,16 @@
-'use client';
+"use client";
 
-import { apiClient } from '@/lib/api/client';
-import { billingApi } from '@/lib/api';
-import { useTenant } from '@/contexts/tenant-context';
-import { useQuery } from '@tanstack/react-query';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { apiClient } from "@/lib/api/client";
+import { billingApi } from "@/lib/api";
+import { useTenant } from "@/contexts/tenant-context";
+import { useQuery } from "@tanstack/react-query";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
 export function BillingHistory() {
   const { selectedTenant } = useTenant();
 
   const { data, isLoading } = useQuery({
-    queryKey: ['billing-transactions', selectedTenant?.id],
+    queryKey: ["billing-transactions", selectedTenant?.id],
     queryFn: async () => {
       if (selectedTenant?.id) {
         apiClient.setTenant(selectedTenant.id);
@@ -39,12 +39,10 @@ export function BillingHistory() {
               <li key={tx.id} className="flex items-center justify-between py-3 text-sm">
                 <div>
                   <p className="font-medium">{tx.description || tx.type}</p>
-                  <p className="text-muted-foreground">
-                    {new Date(tx.createdAt).toLocaleString()}
-                  </p>
+                  <p className="text-muted-foreground">{new Date(tx.createdAt).toLocaleString()}</p>
                 </div>
-                <span className={tx.amount >= 0 ? 'text-green-600' : 'text-red-600'}>
-                  {tx.amount >= 0 ? '+' : ''}
+                <span className={tx.amount >= 0 ? "text-green-600" : "text-red-600"}>
+                  {tx.amount >= 0 ? "+" : ""}
                   {tx.amount.toLocaleString()}
                 </span>
               </li>

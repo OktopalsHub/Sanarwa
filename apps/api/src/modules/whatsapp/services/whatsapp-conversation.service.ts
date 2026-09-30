@@ -1,7 +1,7 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { EventEmitter2 } from '@nestjs/event-emitter';
+import { Injectable, Logger } from "@nestjs/common";
+import { InjectRepository } from "@nestjs/typeorm";
+import { Repository } from "typeorm";
+import { EventEmitter2 } from "@nestjs/event-emitter";
 
 export interface WhatsAppConversation {
   id: string;
@@ -10,7 +10,7 @@ export interface WhatsAppConversation {
   subscriberId?: string;
   lastMessageAt: Date;
   messageCount: number;
-  status: 'active' | 'inactive' | 'archived';
+  status: "active" | "inactive" | "archived";
   metadata?: Record<string, any>;
 }
 
@@ -20,8 +20,8 @@ export interface ConversationMessage {
   from: string;
   to: string;
   content: string;
-  messageType: 'text' | 'image' | 'video' | 'document' | 'audio' | 'location';
-  direction: 'inbound' | 'outbound';
+  messageType: "text" | "image" | "video" | "document" | "audio" | "location";
+  direction: "inbound" | "outbound";
   timestamp: Date;
   metadata?: Record<string, any>;
 }
@@ -55,17 +55,15 @@ export class WhatsAppConversationService {
       subscriberId,
       lastMessageAt: new Date(),
       messageCount: 0,
-      status: 'active',
+      status: "active",
     };
 
     this.conversations.set(key, conversation);
     this.messages.set(conversation.id, []);
 
-    this.logger.log(
-      `Created conversation ${conversation.id} for ${phoneNumber}`,
-    );
+    this.logger.log(`Created conversation ${conversation.id} for ${phoneNumber}`);
 
-    this.eventEmitter.emit('whatsapp.conversation.created', conversation);
+    this.eventEmitter.emit("whatsapp.conversation.created", conversation);
 
     return conversation;
   }
@@ -75,10 +73,10 @@ export class WhatsAppConversationService {
    */
   async addMessage(
     conversationId: string,
-    message: Omit<ConversationMessage, 'id'>,
+    message: Omit<ConversationMessage, "id">,
   ): Promise<ConversationMessage> {
     const conversation = Array.from(this.conversations.values()).find(
-      c => c.id === conversationId,
+      (c) => c.id === conversationId,
     );
 
     if (!conversation) {
@@ -100,11 +98,9 @@ export class WhatsAppConversationService {
     conversation.lastMessageAt = new Date();
     conversation.messageCount++;
 
-    this.logger.log(
-      `Added message to conversation ${conversationId}: ${fullMessage.id}`,
-    );
+    this.logger.log(`Added message to conversation ${conversationId}: ${fullMessage.id}`);
 
-    this.eventEmitter.emit('whatsapp.conversation.message_added', fullMessage);
+    this.eventEmitter.emit("whatsapp.conversation.message_added", fullMessage);
 
     return fullMessage;
   }
@@ -127,12 +123,9 @@ export class WhatsAppConversationService {
   /**
    * Search conversations
    */
-  async searchConversations(
-    tenantId: string,
-    query: string,
-  ): Promise<WhatsAppConversation[]> {
+  async searchConversations(tenantId: string, query: string): Promise<WhatsAppConversation[]> {
     return Array.from(this.conversations.values()).filter(
-      c =>
+      (c) =>
         c.tenantId === tenantId &&
         (c.phoneNumber.includes(query) ||
           c.subscriberId?.includes(query) ||
@@ -145,26 +138,24 @@ export class WhatsAppConversationService {
    */
   async archiveConversation(conversationId: string): Promise<void> {
     const conversation = Array.from(this.conversations.values()).find(
-      c => c.id === conversationId,
+      (c) => c.id === conversationId,
     );
 
     if (!conversation) {
       throw new Error(`Conversation ${conversationId} not found`);
     }
 
-    conversation.status = 'archived';
+    conversation.status = "archived";
 
     this.logger.log(`Archived conversation ${conversationId}`);
 
-    this.eventEmitter.emit('whatsapp.conversation.archived', conversation);
+    this.eventEmitter.emit("whatsapp.conversation.archived", conversation);
   }
 
   /**
    * Get conversation statistics
    */
-  async getConversationStats(
-    tenantId: string,
-  ): Promise<{
+  async getConversationStats(tenantId: string): Promise<{
     total: number;
     active: number;
     inactive: number;
@@ -172,18 +163,15 @@ export class WhatsAppConversationService {
     totalMessages: number;
   }> {
     const conversations = Array.from(this.conversations.values()).filter(
-      c => c.tenantId === tenantId,
+      (c) => c.tenantId === tenantId,
     );
 
     const stats = {
       total: conversations.length,
-      active: conversations.filter(c => c.status === 'active').length,
-      inactive: conversations.filter(c => c.status === 'inactive').length,
-      archived: conversations.filter(c => c.status === 'archived').length,
-      totalMessages: Array.from(this.messages.values()).reduce(
-        (sum, msgs) => sum + msgs.length,
-        0,
-      ),
+      active: conversations.filter((c) => c.status === "active").length,
+      inactive: conversations.filter((c) => c.status === "inactive").length,
+      archived: conversations.filter((c) => c.status === "archived").length,
+      totalMessages: Array.from(this.messages.values()).reduce((sum, msgs) => sum + msgs.length, 0),
     };
 
     return stats;
@@ -194,18 +182,18 @@ export class WhatsAppConversationService {
    */
   async markInactive(conversationId: string): Promise<void> {
     const conversation = Array.from(this.conversations.values()).find(
-      c => c.id === conversationId,
+      (c) => c.id === conversationId,
     );
 
     if (!conversation) {
       throw new Error(`Conversation ${conversationId} not found`);
     }
 
-    conversation.status = 'inactive';
+    conversation.status = "inactive";
 
     this.logger.log(`Marked conversation ${conversationId} as inactive`);
 
-    this.eventEmitter.emit('whatsapp.conversation.inactive', conversation);
+    this.eventEmitter.emit("whatsapp.conversation.inactive", conversation);
   }
 
   /**
@@ -216,7 +204,7 @@ export class WhatsAppConversationService {
     limit: number = 20,
   ): Promise<WhatsAppConversation[]> {
     return Array.from(this.conversations.values())
-      .filter(c => c.tenantId === tenantId)
+      .filter((c) => c.tenantId === tenantId)
       .toSorted((a, b) => b.lastMessageAt.getTime() - a.lastMessageAt.getTime())
       .slice(0, limit);
   }
@@ -237,6 +225,6 @@ export class WhatsAppConversationService {
 
     this.logger.log(`Deleted conversation ${conversationId}`);
 
-    this.eventEmitter.emit('whatsapp.conversation.deleted', { id: conversationId });
+    this.eventEmitter.emit("whatsapp.conversation.deleted", { id: conversationId });
   }
 }

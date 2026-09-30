@@ -1,30 +1,34 @@
-'use client';
+"use client";
 
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Separator } from '@/components/ui/separator';
-import { Switch } from '@/components/ui/switch';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { useTenant } from '@/contexts/tenant-context';
-import { Tenant } from '@/lib/types/tenant';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { ArrowDownTrayIcon, BookmarkIcon } from '@heroicons/react/24/outline'
-import { useState } from 'react';
-import { useForm } from 'react-hook-form';
-import { toast } from 'sonner';
-import { z } from 'zod';
-import { TenantBillingSettings } from './tenant-billing-settings';
-import { TenantDangerZone } from './tenant-danger-zone';
-import { TenantFeatureToggles } from './tenant-feature-toggles';
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Separator } from "@/components/ui/separator";
+import { Switch } from "@/components/ui/switch";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useTenant } from "@/contexts/tenant-context";
+import { Tenant } from "@/lib/types/tenant";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { ArrowDownTrayIcon, BookmarkIcon } from "@heroicons/react/24/outline";
+import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { toast } from "sonner";
+import { z } from "zod";
+import { TenantBillingSettings } from "./tenant-billing-settings";
+import { TenantDangerZone } from "./tenant-danger-zone";
+import { TenantFeatureToggles } from "./tenant-feature-toggles";
 
 const tenantProfileSchema = z.object({
-  name: z.string().min(1, 'Tenant name is required').max(100, 'Name must be less than 100 characters'),
-  slug: z.string()
-    .min(3, 'Slug must be at least 3 characters')
-    .max(50, 'Slug must be less than 50 characters')
-    .regex(/^[a-z0-9-]+$/, 'Slug can only contain lowercase letters, numbers, and hyphens'),
+  name: z
+    .string()
+    .min(1, "Tenant name is required")
+    .max(100, "Name must be less than 100 characters"),
+  slug: z
+    .string()
+    .min(3, "Slug must be at least 3 characters")
+    .max(50, "Slug must be less than 50 characters")
+    .regex(/^[a-z0-9-]+$/, "Slug can only contain lowercase letters, numbers, and hyphens"),
 });
 
 const tenantSettingsSchema = z.object({
@@ -67,10 +71,10 @@ export function TenantSettings({ tenant }: TenantSettingsProps) {
         name: data.name,
         slug: data.slug,
       });
-      toast.success('Tenant profile updated successfully');
+      toast.success("Tenant profile updated successfully");
     } catch (error) {
-      toast.error('Failed to update tenant profile');
-      console.error('Profile update error:', error);
+      toast.error("Failed to update tenant profile");
+      console.error("Profile update error:", error);
     }
   };
 
@@ -82,10 +86,10 @@ export function TenantSettings({ tenant }: TenantSettingsProps) {
           ...data,
         },
       });
-      toast.success('Tenant settings updated successfully');
+      toast.success("Tenant settings updated successfully");
     } catch (error) {
-      toast.error('Failed to update tenant settings');
-      console.error('Settings update error:', error);
+      toast.error("Failed to update tenant settings");
+      console.error("Settings update error:", error);
     }
   };
 
@@ -94,28 +98,28 @@ export function TenantSettings({ tenant }: TenantSettingsProps) {
     try {
       // This would typically call an API endpoint to generate and download tenant data
       const response = await fetch(`/api/tenants/${tenant.id}/export`, {
-        method: 'POST',
-        credentials: 'include',
+        method: "POST",
+        credentials: "include",
       });
 
       if (!response.ok) {
-        throw new Error('Failed to export data');
+        throw new Error("Failed to export data");
       }
 
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
+      const a = document.createElement("a");
       a.href = url;
-      a.download = `${tenant.slug}-data-export-${new Date().toISOString().split('T')[0]}.zip`;
+      a.download = `${tenant.slug}-data-export-${new Date().toISOString().split("T")[0]}.zip`;
       document.body.appendChild(a);
       a.click();
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
 
-      toast.success('Data export completed successfully');
+      toast.success("Data export completed successfully");
     } catch (error) {
-      toast.error('Failed to export data');
-      console.error('Export error:', error);
+      toast.error("Failed to export data");
+      console.error("Export error:", error);
     } finally {
       setIsExporting(false);
     }
@@ -146,7 +150,7 @@ export function TenantSettings({ tenant }: TenantSettingsProps) {
                   <Label htmlFor="name">Organization Name</Label>
                   <Input
                     id="name"
-                    {...profileForm.register('name')}
+                    {...profileForm.register("name")}
                     placeholder="Enter organization name"
                   />
                   {profileForm.formState.errors.name && (
@@ -160,7 +164,7 @@ export function TenantSettings({ tenant }: TenantSettingsProps) {
                   <Label htmlFor="slug">URL Slug</Label>
                   <Input
                     id="slug"
-                    {...profileForm.register('slug')}
+                    {...profileForm.register("slug")}
                     placeholder="organization-slug"
                   />
                   {profileForm.formState.errors.slug && (
@@ -169,7 +173,8 @@ export function TenantSettings({ tenant }: TenantSettingsProps) {
                     </p>
                   )}
                   <p className="text-xs text-muted-foreground">
-                    This will be used in your organization's URL: app.notifi.com/{profileForm.watch('slug')}
+                    This will be used in your organization's URL: app.notifi.com/
+                    {profileForm.watch("slug")}
                   </p>
                 </div>
               </div>
@@ -177,12 +182,12 @@ export function TenantSettings({ tenant }: TenantSettingsProps) {
               <div className="space-y-2">
                 <Label>Created</Label>
                 <p className="text-sm text-muted-foreground">
-                  {new Date(tenant.createdAt).toLocaleDateString('en-US', {
-                    year: 'numeric',
-                    month: 'long',
-                    day: 'numeric',
-                    hour: '2-digit',
-                    minute: '2-digit',
+                  {new Date(tenant.createdAt).toLocaleDateString("en-US", {
+                    year: "numeric",
+                    month: "long",
+                    day: "numeric",
+                    hour: "2-digit",
+                    minute: "2-digit",
                   })}
                 </p>
               </div>
@@ -190,12 +195,12 @@ export function TenantSettings({ tenant }: TenantSettingsProps) {
               <div className="space-y-2">
                 <Label>Last Updated</Label>
                 <p className="text-sm text-muted-foreground">
-                  {new Date(tenant.updatedAt).toLocaleDateString('en-US', {
-                    year: 'numeric',
-                    month: 'long',
-                    day: 'numeric',
-                    hour: '2-digit',
-                    minute: '2-digit',
+                  {new Date(tenant.updatedAt).toLocaleDateString("en-US", {
+                    year: "numeric",
+                    month: "long",
+                    day: "numeric",
+                    hour: "2-digit",
+                    minute: "2-digit",
                   })}
                 </p>
               </div>
@@ -238,7 +243,7 @@ export function TenantSettings({ tenant }: TenantSettingsProps) {
                 className="w-full sm:w-auto"
               >
                 <ArrowDownTrayIcon className="mr-2 h-4 w-4" />
-                {isExporting ? 'Exporting...' : 'Export Data'}
+                {isExporting ? "Exporting..." : "Export Data"}
               </Button>
             </div>
           </CardContent>
@@ -265,8 +270,10 @@ export function TenantSettings({ tenant }: TenantSettingsProps) {
                   </div>
                   <Switch
                     id="allowMemberInvites"
-                    checked={settingsForm.watch('allowMemberInvites')}
-                    onCheckedChange={(checked) => settingsForm.setValue('allowMemberInvites', checked)}
+                    checked={settingsForm.watch("allowMemberInvites")}
+                    onCheckedChange={(checked) =>
+                      settingsForm.setValue("allowMemberInvites", checked)
+                    }
                   />
                 </div>
 
@@ -281,8 +288,10 @@ export function TenantSettings({ tenant }: TenantSettingsProps) {
                   </div>
                   <Switch
                     id="requireEmailVerification"
-                    checked={settingsForm.watch('requireEmailVerification')}
-                    onCheckedChange={(checked) => settingsForm.setValue('requireEmailVerification', checked)}
+                    checked={settingsForm.watch("requireEmailVerification")}
+                    onCheckedChange={(checked) =>
+                      settingsForm.setValue("requireEmailVerification", checked)
+                    }
                   />
                 </div>
 
@@ -295,7 +304,7 @@ export function TenantSettings({ tenant }: TenantSettingsProps) {
                     type="number"
                     min="1"
                     max="1000"
-                    {...settingsForm.register('maxMembers', { valueAsNumber: true })}
+                    {...settingsForm.register("maxMembers", { valueAsNumber: true })}
                     className="w-32"
                   />
                   {settingsForm.formState.errors.maxMembers && (

@@ -1,30 +1,53 @@
-'use client';
+"use client";
 
-import { Filter } from '@/lib/icons';
+import { Filter } from "@/lib/icons";
 
-import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { EllipsisHorizontalIcon, MagnifyingGlassIcon, DocumentDuplicateIcon, EyeIcon, EyeSlashIcon, TrashIcon, Cog6ToothIcon } from '@heroicons/react/24/outline'
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { useTenant } from '@/contexts/tenant-context';
-import { apiClient } from '@/lib/api/client';
-import { apiKeyApi } from '@/lib/api/api-key';
-import { projectApi } from '@/lib/api/project';
-import { toast } from 'sonner';
+import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  EllipsisHorizontalIcon,
+  MagnifyingGlassIcon,
+  DocumentDuplicateIcon,
+  EyeIcon,
+  EyeSlashIcon,
+  TrashIcon,
+  Cog6ToothIcon,
+} from "@heroicons/react/24/outline";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { useTenant } from "@/contexts/tenant-context";
+import { apiClient } from "@/lib/api/client";
+import { apiKeyApi } from "@/lib/api/api-key";
+import { projectApi } from "@/lib/api/project";
+import { toast } from "sonner";
 
 export function ApiKeyList() {
   const { selectedTenant } = useTenant();
-  const [searchQuery, setSearchQuery] = useState('');
-  const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState<string>("all");
   const [visibleKeys, setVisibleKeys] = useState<Set<string>>(new Set());
 
-  const { data: apiKeys = [], isLoading, error } = useQuery({
-    queryKey: ['api-keys', selectedTenant?.id, searchQuery, statusFilter],
+  const {
+    data: apiKeys = [],
+    isLoading,
+    error,
+  } = useQuery({
+    queryKey: ["api-keys", selectedTenant?.id, searchQuery, statusFilter],
     queryFn: async () => {
       if (selectedTenant?.id) {
         apiClient.setTenant(selectedTenant.id);
@@ -51,13 +74,13 @@ export function ApiKeyList() {
           allKeys.push({
             id: key.id,
             name: key.name,
-            key: key.keyPrefix || '••••••••',
+            key: key.keyPrefix || "••••••••",
             permissions: key.permissions || [],
             projectId: project.id,
             projectName: project.name,
             lastUsed: key.lastUsedAt ? new Date(key.lastUsedAt) : null,
             createdAt: new Date(key.createdAt),
-            isActive: key.status === 'active',
+            isActive: key.status === "active",
             usageCount: key.usageCount || 0,
           });
         }
@@ -68,9 +91,9 @@ export function ApiKeyList() {
           key.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
           key.projectName.toLowerCase().includes(searchQuery.toLowerCase());
         const matchesStatus =
-          statusFilter === 'all' ||
-          (statusFilter === 'active' && key.isActive) ||
-          (statusFilter === 'inactive' && !key.isActive);
+          statusFilter === "all" ||
+          (statusFilter === "active" && key.isActive) ||
+          (statusFilter === "inactive" && !key.isActive);
         return matchesSearch && matchesStatus;
       });
     },
@@ -90,29 +113,29 @@ export function ApiKeyList() {
   const copyToClipboard = async (text: string) => {
     try {
       await navigator.clipboard.writeText(text);
-      toast.success('API key copied to clipboard');
+      toast.success("API key copied to clipboard");
     } catch (error) {
-      toast.error('Failed to copy API key');
+      toast.error("Failed to copy API key");
     }
   };
 
   const maskApiKey = (key: string) => {
     if (key.length <= 12) return key;
-    return key.substring(0, 12) + '•'.repeat(key.length - 16) + key.substring(key.length - 4);
+    return key.substring(0, 12) + "•".repeat(key.length - 16) + key.substring(key.length - 4);
   };
 
   const formatDate = (date: Date | null) => {
-    if (!date) return 'Never';
-    return new Date(date).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
+    if (!date) return "Never";
+    return new Date(date).toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
     });
   };
 
   const formatNumber = (num: number) => {
-    if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M';
-    if (num >= 1000) return (num / 1000).toFixed(1) + 'K';
+    if (num >= 1000000) return (num / 1000000).toFixed(1) + "M";
+    if (num >= 1000) return (num / 1000).toFixed(1) + "K";
     return num.toString();
   };
 
@@ -121,7 +144,7 @@ export function ApiKeyList() {
       // TODO: Implement API key revocation
       toast.success(`${keyName} has been revoked`);
     } catch (error) {
-      toast.error('Failed to revoke API key');
+      toast.error("Failed to revoke API key");
     }
   };
 
@@ -187,9 +210,9 @@ export function ApiKeyList() {
             <div className="text-center py-8">
               <h3 className="text-lg font-semibold mb-2">No API keys found</h3>
               <p className="text-muted-foreground mb-4">
-                {searchQuery || statusFilter !== 'all'
-                  ? 'Try adjusting your search or filters'
-                  : 'Create your first API key to start using the API'}
+                {searchQuery || statusFilter !== "all"
+                  ? "Try adjusting your search or filters"
+                  : "Create your first API key to start using the API"}
               </p>
             </div>
           </CardContent>
@@ -202,12 +225,10 @@ export function ApiKeyList() {
                 <div className="flex items-start justify-between">
                   <div className="space-y-1">
                     <CardTitle className="text-lg">{apiKey.name}</CardTitle>
-                    <CardDescription>
-                      Project: {apiKey.projectName}
-                    </CardDescription>
+                    <CardDescription>Project: {apiKey.projectName}</CardDescription>
                     <div className="flex items-center gap-2">
-                      <Badge variant={apiKey.isActive ? 'default' : 'secondary'}>
-                        {apiKey.isActive ? 'Active' : 'Inactive'}
+                      <Badge variant={apiKey.isActive ? "default" : "secondary"}>
+                        {apiKey.isActive ? "Active" : "Inactive"}
                       </Badge>
                       <div className="flex gap-1">
                         {apiKey.permissions.map((permission) => (
@@ -225,9 +246,7 @@ export function ApiKeyList() {
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
-                      <DropdownMenuItem
-                        onClick={() => copyToClipboard(apiKey.key)}
-                      >
+                      <DropdownMenuItem onClick={() => copyToClipboard(apiKey.key)}>
                         <DocumentDuplicateIcon className="h-4 w-4 mr-2" />
                         Copy Key
                       </DropdownMenuItem>
@@ -266,11 +285,7 @@ export function ApiKeyList() {
                         <EyeIcon className="h-4 w-4" />
                       )}
                     </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => copyToClipboard(apiKey.key)}
-                    >
+                    <Button variant="outline" size="sm" onClick={() => copyToClipboard(apiKey.key)}>
                       <DocumentDuplicateIcon className="h-4 w-4" />
                     </Button>
                   </div>

@@ -1,16 +1,22 @@
-'use client';
+"use client";
 
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Textarea } from '@/components/ui/textarea';
-import { toast } from '@/lib/utils/toast';
-import { ExclamationCircleIcon, CheckIcon, DocumentDuplicateIcon, ArrowPathIcon, PlayIcon } from '@heroicons/react/24/outline'
-import { useState } from 'react';
-import { CodeBlock } from './code-block';
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Textarea } from "@/components/ui/textarea";
+import { toast } from "@/lib/utils/toast";
+import {
+  ExclamationCircleIcon,
+  CheckIcon,
+  DocumentDuplicateIcon,
+  ArrowPathIcon,
+  PlayIcon,
+} from "@heroicons/react/24/outline";
+import { useState } from "react";
+import { CodeBlock } from "./code-block";
 
 interface CodeExample {
   id: string;
@@ -35,8 +41,8 @@ interface InteractiveCodeExampleProps {
 
 export function InteractiveCodeExample({ example, onRun }: InteractiveCodeExampleProps) {
   const [isRunning, setIsRunning] = useState(false);
-  const [output, setOutput] = useState<string>('');
-  const [error, setError] = useState<string>('');
+  const [output, setOutput] = useState<string>("");
+  const [error, setError] = useState<string>("");
   const [parameters, setParameters] = useState<Record<string, any>>({});
   const [copied, setCopied] = useState(false);
 
@@ -44,10 +50,10 @@ export function InteractiveCodeExample({ example, onRun }: InteractiveCodeExampl
     try {
       await navigator.clipboard.writeText(example.code);
       setCopied(true);
-      toast.success('Code copied to clipboard');
+      toast.success("Code copied to clipboard");
       setTimeout(() => setCopied(false), 2000);
     } catch (err) {
-      toast.error('Failed to copy code');
+      toast.error("Failed to copy code");
     }
   };
 
@@ -55,21 +61,21 @@ export function InteractiveCodeExample({ example, onRun }: InteractiveCodeExampl
     if (!onRun) return;
 
     setIsRunning(true);
-    setError('');
-    setOutput('');
+    setError("");
+    setOutput("");
 
     try {
       const result = await onRun(example.code, parameters);
       setOutput(JSON.stringify(result, null, 2));
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred');
+      setError(err instanceof Error ? err.message : "An error occurred");
     } finally {
       setIsRunning(false);
     }
   };
 
   const handleParameterChange = (name: string, value: any) => {
-    setParameters(prev => ({ ...prev, [name]: value }));
+    setParameters((prev) => ({ ...prev, [name]: value }));
   };
 
   return (
@@ -93,19 +99,11 @@ export function InteractiveCodeExample({ example, onRun }: InteractiveCodeExampl
 
           <TabsContent value="code" className="space-y-4">
             <div className="relative">
-              <CodeBlock
-                language={example.language}
-                showLineNumbers
-              >
+              <CodeBlock language={example.language} showLineNumbers>
                 {example.code}
               </CodeBlock>
               <div className="absolute top-2 right-2 flex gap-2">
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={handleCopy}
-                  className="h-8 w-8 p-0"
-                >
+                <Button size="sm" variant="outline" onClick={handleCopy} className="h-8 w-8 p-0">
                   {copied ? (
                     <CheckIcon className="h-3 w-3" />
                   ) : (
@@ -113,18 +111,13 @@ export function InteractiveCodeExample({ example, onRun }: InteractiveCodeExampl
                   )}
                 </Button>
                 {onRun && (
-                  <Button
-                    size="sm"
-                    onClick={handleRun}
-                    disabled={isRunning}
-                    className="h-8 px-3"
-                  >
+                  <Button size="sm" onClick={handleRun} disabled={isRunning} className="h-8 px-3">
                     {isRunning ? (
                       <ArrowPathIcon className="h-3 w-3 animate-spin" />
                     ) : (
                       <PlayIcon className="h-3 w-3" />
                     )}
-                    {isRunning ? 'Running...' : 'Run'}
+                    {isRunning ? "Running..." : "Run"}
                   </Button>
                 )}
               </div>
@@ -138,21 +131,25 @@ export function InteractiveCodeExample({ example, onRun }: InteractiveCodeExampl
                   <div key={param.name} className="space-y-2">
                     <Label htmlFor={param.name} className="flex items-center gap-2">
                       {param.name}
-                      {param.required && <Badge variant="destructive" className="text-xs">Required</Badge>}
+                      {param.required && (
+                        <Badge variant="destructive" className="text-xs">
+                          Required
+                        </Badge>
+                      )}
                     </Label>
                     <div className="space-y-1">
-                      {param.type === 'string' ? (
+                      {param.type === "string" ? (
                         <Input
                           id={param.name}
                           placeholder={param.defaultValue || `Enter ${param.name}`}
-                          value={parameters[param.name] || ''}
+                          value={parameters[param.name] || ""}
                           onChange={(e) => handleParameterChange(param.name, e.target.value)}
                         />
-                      ) : param.type === 'text' ? (
+                      ) : param.type === "text" ? (
                         <Textarea
                           id={param.name}
                           placeholder={param.defaultValue || `Enter ${param.name}`}
-                          value={parameters[param.name] || ''}
+                          value={parameters[param.name] || ""}
                           onChange={(e) => handleParameterChange(param.name, e.target.value)}
                           rows={3}
                         />
@@ -161,7 +158,7 @@ export function InteractiveCodeExample({ example, onRun }: InteractiveCodeExampl
                           id={param.name}
                           type={param.type}
                           placeholder={param.defaultValue || `Enter ${param.name}`}
-                          value={parameters[param.name] || ''}
+                          value={parameters[param.name] || ""}
                           onChange={(e) => handleParameterChange(param.name, e.target.value)}
                         />
                       )}
@@ -181,32 +178,30 @@ export function InteractiveCodeExample({ example, onRun }: InteractiveCodeExampl
                 <ExclamationCircleIcon className="h-4 w-4 text-destructive mt-0.5" />
                 <div>
                   <p className="font-medium text-destructive">Error</p>
-                  <pre className="text-sm text-destructive/80 mt-1 whitespace-pre-wrap">{error}</pre>
+                  <pre className="text-sm text-destructive/80 mt-1 whitespace-pre-wrap">
+                    {error}
+                  </pre>
                 </div>
               </div>
             ) : output ? (
               <div className="space-y-2">
                 <p className="text-sm font-medium">Response:</p>
-                <CodeBlock
-                  language="json"
-                  showLineNumbers={false}
-                >
+                <CodeBlock language="json" showLineNumbers={false}>
                   {output}
                 </CodeBlock>
               </div>
             ) : example.expectedOutput ? (
               <div className="space-y-2">
                 <p className="text-sm font-medium">Expected Output:</p>
-                <CodeBlock
-                  language="json"
-                  showLineNumbers={false}
-                >
+                <CodeBlock language="json" showLineNumbers={false}>
                   {example.expectedOutput}
                 </CodeBlock>
               </div>
             ) : (
               <p className="text-muted-foreground">
-                {onRun ? 'Click "Run" to see the output.' : 'Output will be shown here when available.'}
+                {onRun
+                  ? 'Click "Run" to see the output.'
+                  : "Output will be shown here when available."}
               </p>
             )}
           </TabsContent>

@@ -1,18 +1,18 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
+import { Injectable, Logger } from "@nestjs/common";
+import { InjectRepository } from "@nestjs/typeorm";
+import { Repository } from "typeorm";
+import { QueryDeepPartialEntity } from "typeorm/query-builder/QueryPartialEntity";
 import {
   MessageDeliveryStatus as DeliveryStatus,
   MessageDelivery as NotificationDelivery,
-} from '../messaging/message-delivery.entity';
+} from "../messaging/message-delivery.entity";
 import {
   Message as Notification,
   MessageChannel as NotificationChannel,
   MessageStatus as NotificationStatus,
-} from '../messaging/message.entity';
-import { AuditLogService } from './audit-log.service';
-import { WebhookService } from './webhook.service';
+} from "../messaging/message.entity";
+import { AuditLogService } from "./audit-log.service";
+import { WebhookService } from "./webhook.service";
 
 export interface DeliveryStatusUpdate {
   deliveryId: string;
@@ -50,21 +50,15 @@ export class DeliveryTrackingService {
    * Update delivery status with real-time tracking
    */
   async updateDeliveryStatus(update: DeliveryStatusUpdate): Promise<void> {
-    const {
-      deliveryId,
-      status,
-      providerMessageId,
-      providerResponse,
-      errorMessage,
-      metadata,
-    } = update;
+    const { deliveryId, status, providerMessageId, providerResponse, errorMessage, metadata } =
+      update;
 
     this.logger.log(`Updating delivery ${deliveryId} status to ${status}`);
 
     // Find the delivery record
     const delivery = await this.deliveryRepository.findOne({
       where: { id: deliveryId },
-      relations: ['notification'],
+      relations: ["notification"],
     });
 
     if (!delivery) {
@@ -130,23 +124,20 @@ export class DeliveryTrackingService {
     );
 
     // Send webhook notification if configured
-    await this.webhookService.sendDeliveryStatusWebhook(
-      delivery.message.tenantId,
-      {
-        deliveryId,
-        notificationId: delivery.messageId,
-        channel: delivery.channel,
-        recipient: delivery.recipient,
-        oldStatus: delivery.status,
-        newStatus: status,
-        timestamp: now,
-        providerMessageId,
-        errorMessage,
-        metadata,
-        tenantId: delivery.message.tenantId,
-        projectId: delivery.message.metadata?.projectId || 'unknown', // Try to get from metadata
-      },
-    );
+    await this.webhookService.sendDeliveryStatusWebhook(delivery.message.tenantId, {
+      deliveryId,
+      notificationId: delivery.messageId,
+      channel: delivery.channel,
+      recipient: delivery.recipient,
+      oldStatus: delivery.status,
+      newStatus: status,
+      timestamp: now,
+      providerMessageId,
+      errorMessage,
+      metadata,
+      tenantId: delivery.message.tenantId,
+      projectId: delivery.message.metadata?.projectId || "unknown", // Try to get from metadata
+    });
 
     this.logger.log(`Delivery ${deliveryId} status updated successfully`);
   }
@@ -156,12 +147,12 @@ export class DeliveryTrackingService {
    */
   async trackDeliveryEvent(
     deliveryId: string,
-    eventType: 'opened' | 'clicked' | 'unsubscribed',
+    eventType: "opened" | "clicked" | "unsubscribed",
     metadata?: Record<string, any>,
   ): Promise<void> {
     const delivery = await this.deliveryRepository.findOne({
       where: { id: deliveryId },
-      relations: ['notification'],
+      relations: ["notification"],
     });
 
     if (!delivery) {
@@ -178,15 +169,15 @@ export class DeliveryTrackingService {
     let newStatus: DeliveryStatus;
 
     switch (eventType) {
-      case 'opened':
+      case "opened":
         updateData.openedAt = now;
         newStatus = DeliveryStatus.OPENED;
         break;
-      case 'clicked':
+      case "clicked":
         updateData.clickedAt = now;
         newStatus = DeliveryStatus.CLICKED;
         break;
-      case 'unsubscribed':
+      case "unsubscribed":
         newStatus = DeliveryStatus.UNSUBSCRIBED;
         break;
     }
@@ -207,22 +198,17 @@ export class DeliveryTrackingService {
     );
 
     // Send webhook notification
-    await this.webhookService.sendDeliveryEventWebhook(
-      delivery.message.tenantId,
-      {
-        deliveryId,
-        notificationId: delivery.messageId,
-        eventType,
-        timestamp: now,
-        metadata,
-        tenantId: delivery.message.tenantId,
-        projectId: delivery.message.metadata?.projectId || 'unknown',
-      },
-    );
+    await this.webhookService.sendDeliveryEventWebhook(delivery.message.tenantId, {
+      deliveryId,
+      notificationId: delivery.messageId,
+      eventType,
+      timestamp: now,
+      metadata,
+      tenantId: delivery.message.tenantId,
+      projectId: delivery.message.metadata?.projectId || "unknown",
+    });
 
-    this.logger.log(
-      `Delivery event ${eventType} tracked for delivery ${deliveryId}`,
-    );
+    this.logger.log(`Delivery event ${eventType} tracked for delivery ${deliveryId}`);
   }
 
   /**
@@ -235,41 +221,33 @@ export class DeliveryTrackingService {
     endDate?: Date,
   ): Promise<DeliveryTrackingStats> {
     const queryBuilder = this.deliveryRepository
-      .createQueryBuilder('delivery')
-      .innerJoin('delivery.notification', 'notification')
-      .where('notification.tenantId = :tenantId', { tenantId });
+      .createQueryBuilder("delivery")
+      .innerJoin("delivery.notification", "notification")
+      .where("notification.tenantId = :tenantId", { tenantId });
 
     if (channel) {
-      queryBuilder.andWhere('delivery.channel = :channel', { channel });
+      queryBuilder.andWhere("delivery.channel = :channel", { channel });
     }
 
     if (startDate) {
-      queryBuilder.andWhere('delivery.createdAt >= :startDate', { startDate });
+      queryBuilder.andWhere("delivery.createdAt >= :startDate", { startDate });
     }
 
     if (endDate) {
-      queryBuilder.andWhere('delivery.createdAt <= :endDate', { endDate });
+      queryBuilder.andWhere("delivery.createdAt <= :endDate", { endDate });
     }
 
     const deliveries = await queryBuilder.getMany();
 
     const totalDeliveries = deliveries.length;
-    const deliveredCount = deliveries.filter(
-      (d) => d.status === DeliveryStatus.DELIVERED,
-    ).length;
+    const deliveredCount = deliveries.filter((d) => d.status === DeliveryStatus.DELIVERED).length;
     const failedCount = deliveries.filter(
-      (d) =>
-        d.status === DeliveryStatus.FAILED ||
-        d.status === DeliveryStatus.BOUNCED,
+      (d) => d.status === DeliveryStatus.FAILED || d.status === DeliveryStatus.BOUNCED,
     ).length;
-    const pendingCount = deliveries.filter(
-      (d) => d.status === DeliveryStatus.PENDING,
-    ).length;
+    const pendingCount = deliveries.filter((d) => d.status === DeliveryStatus.PENDING).length;
 
-    const deliveryRate =
-      totalDeliveries > 0 ? (deliveredCount / totalDeliveries) * 100 : 0;
-    const failureRate =
-      totalDeliveries > 0 ? (failedCount / totalDeliveries) * 100 : 0;
+    const deliveryRate = totalDeliveries > 0 ? (deliveredCount / totalDeliveries) * 100 : 0;
+    const failureRate = totalDeliveries > 0 ? (failedCount / totalDeliveries) * 100 : 0;
 
     // Calculate average delivery time for delivered messages
     const deliveredMessages = deliveries.filter(
@@ -279,8 +257,7 @@ export class DeliveryTrackingService {
     let averageDeliveryTime: number | undefined;
     if (deliveredMessages.length > 0) {
       const totalDeliveryTime = deliveredMessages.reduce((sum, delivery) => {
-        const deliveryTime =
-          delivery.deliveredAt!.getTime() - delivery.sentAt!.getTime();
+        const deliveryTime = delivery.deliveredAt!.getTime() - delivery.sentAt!.getTime();
         return sum + deliveryTime;
       }, 0);
       averageDeliveryTime = totalDeliveryTime / deliveredMessages.length;
@@ -305,16 +282,16 @@ export class DeliveryTrackingService {
     tenantId?: string,
   ): Promise<NotificationDelivery[]> {
     const queryBuilder = this.deliveryRepository
-      .createQueryBuilder('delivery')
-      .where('delivery.messageId = :notificationId', { notificationId });
+      .createQueryBuilder("delivery")
+      .where("delivery.messageId = :notificationId", { notificationId });
 
     if (tenantId) {
       queryBuilder
-        .innerJoin('delivery.notification', 'notification')
-        .andWhere('notification.tenantId = :tenantId', { tenantId });
+        .innerJoin("delivery.notification", "notification")
+        .andWhere("notification.tenantId = :tenantId", { tenantId });
     }
 
-    return queryBuilder.orderBy('delivery.createdAt', 'ASC').getMany();
+    return queryBuilder.orderBy("delivery.createdAt", "ASC").getMany();
   }
 
   /**
@@ -325,15 +302,15 @@ export class DeliveryTrackingService {
     tenantId?: string,
   ): Promise<Record<string, NotificationDelivery[]>> {
     const queryBuilder = this.deliveryRepository
-      .createQueryBuilder('delivery')
-      .where('delivery.messageId IN (:...notificationIds)', {
+      .createQueryBuilder("delivery")
+      .where("delivery.messageId IN (:...notificationIds)", {
         notificationIds,
       });
 
     if (tenantId) {
       queryBuilder
-        .innerJoin('delivery.notification', 'notification')
-        .andWhere('notification.tenantId = :tenantId', { tenantId });
+        .innerJoin("delivery.notification", "notification")
+        .andWhere("notification.tenantId = :tenantId", { tenantId });
     }
 
     const deliveries = await queryBuilder.getMany();
@@ -354,9 +331,7 @@ export class DeliveryTrackingService {
   /**
    * Private helper to update notification status based on deliveries
    */
-  private async updateNotificationStatusFromDeliveries(
-    notificationId: string,
-  ): Promise<void> {
+  private async updateNotificationStatusFromDeliveries(notificationId: string): Promise<void> {
     const deliveries = await this.deliveryRepository.find({
       where: { messageId: notificationId },
     });
@@ -369,21 +344,17 @@ export class DeliveryTrackingService {
     const deliveryStatuses = deliveries.map((d) => d.status);
     let notificationStatus: NotificationStatus;
 
-    if (
-      deliveryStatuses.every((status) => status === DeliveryStatus.DELIVERED)
-    ) {
+    if (deliveryStatuses.every((status) => status === DeliveryStatus.DELIVERED)) {
       notificationStatus = NotificationStatus.DELIVERED;
     } else if (
       deliveryStatuses.some(
-        (status) =>
-          status === DeliveryStatus.DELIVERED || status === DeliveryStatus.SENT,
+        (status) => status === DeliveryStatus.DELIVERED || status === DeliveryStatus.SENT,
       )
     ) {
       notificationStatus = NotificationStatus.SENT;
     } else if (
       deliveryStatuses.every(
-        (status) =>
-          status === DeliveryStatus.FAILED || status === DeliveryStatus.BOUNCED,
+        (status) => status === DeliveryStatus.FAILED || status === DeliveryStatus.BOUNCED,
       )
     ) {
       notificationStatus = NotificationStatus.FAILED;

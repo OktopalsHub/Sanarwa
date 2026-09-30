@@ -1,13 +1,13 @@
-import { Tenant, TenantStatus } from '../entities/tenant.entity';
-import { TenantQuotas } from '../../../common/interfaces';
+import { Tenant, TenantStatus } from "../entities/tenant.entity";
+import { TenantQuotas } from "../../../common/interfaces";
 
-describe('Tenant Entity', () => {
+describe("Tenant Entity", () => {
   let tenant: Tenant;
 
   beforeEach(() => {
     tenant = new Tenant();
-    tenant.id = '123e4567-e89b-12d3-a456-426614174000';
-    tenant.name = 'Test Tenant';
+    tenant.id = "123e4567-e89b-12d3-a456-426614174000";
+    tenant.name = "Test Tenant";
     // tenant.apiKey = 'api-key-123'; // Removed as apiKey is not a property of Tenant
     tenant.status = TenantStatus.ACTIVE;
     tenant.quotas = {
@@ -24,18 +24,18 @@ describe('Tenant Entity', () => {
     tenant.updatedAt = new Date();
   });
 
-  it('should be defined', () => {
+  it("should be defined", () => {
     expect(tenant).toBeDefined();
   });
 
-  it('should support all tenant statuses', () => {
+  it("should support all tenant statuses", () => {
     const statuses = Object.values(TenantStatus);
     expect(statuses).toContain(TenantStatus.ACTIVE);
     expect(statuses).toContain(TenantStatus.SUSPENDED);
     expect(statuses).toContain(TenantStatus.INACTIVE);
   });
 
-  it('should handle quotas correctly', () => {
+  it("should handle quotas correctly", () => {
     const quotas: TenantQuotas = {
       notifications: {
         daily: 1000,
@@ -64,12 +64,12 @@ describe('Tenant Entity', () => {
     expect(tenant.quotas.channels.email?.daily).toBe(500);
   });
 
-  it('should handle settings correctly', () => {
+  it("should handle settings correctly", () => {
     tenant.settings = {
-      timezone: 'UTC',
-      defaultFromEmail: 'noreply@example.com',
-      defaultFromName: 'Test Company',
-      webhookUrl: 'https://example.com/webhook',
+      timezone: "UTC",
+      defaultFromEmail: "noreply@example.com",
+      defaultFromName: "Test Company",
+      webhookUrl: "https://example.com/webhook",
       retryPolicy: {
         maxRetries: 3,
         retryDelay: 1000,
@@ -82,30 +82,30 @@ describe('Tenant Entity', () => {
       },
     };
 
-    expect(tenant.settings.timezone).toBe('UTC');
+    expect(tenant.settings.timezone).toBe("UTC");
     expect(tenant.settings.retryPolicy?.maxRetries).toBe(3);
     expect(tenant.settings.rateLimiting?.enabled).toBe(true);
   });
 
-  it('should handle billing info correctly', () => {
+  it("should handle billing info correctly", () => {
     tenant.billingInfo = {
-      plan: 'premium',
-      billingEmail: 'billing@example.com',
+      plan: "premium",
+      billingEmail: "billing@example.com",
       billingAddress: {
-        street: '123 Main St',
-        city: 'New York',
-        state: 'NY',
-        country: 'US',
-        postalCode: '10001',
+        street: "123 Main St",
+        city: "New York",
+        state: "NY",
+        country: "US",
+        postalCode: "10001",
       },
-      paymentMethod: 'credit_card',
+      paymentMethod: "credit_card",
     };
 
-    expect(tenant.billingInfo.plan).toBe('premium');
-    expect(tenant.billingInfo.billingAddress?.city).toBe('New York');
+    expect(tenant.billingInfo.plan).toBe("premium");
+    expect(tenant.billingInfo.billingAddress?.city).toBe("New York");
   });
 
-  it('should handle usage tracking', () => {
+  it("should handle usage tracking", () => {
     tenant.usage = {
       currentMonth: {
         notifications: 500,

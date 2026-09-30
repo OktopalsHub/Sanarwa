@@ -1,62 +1,80 @@
-import { IsString, IsNumber, IsBoolean, IsOptional, IsEnum, validateSync, ValidatorConstraint, ValidatorConstraintInterface, Validate } from 'class-validator';
-import { Transform, plainToClass } from 'class-transformer';
+import {
+  IsString,
+  IsNumber,
+  IsBoolean,
+  IsOptional,
+  IsEnum,
+  validateSync,
+  ValidatorConstraint,
+  ValidatorConstraintInterface,
+  Validate,
+} from "class-validator";
+import { Transform, plainToClass } from "class-transformer";
 
 enum NodeEnvironment {
-  DEVELOPMENT = 'development',
-  PRODUCTION = 'production',
-  TEST = 'test',
+  DEVELOPMENT = "development",
+  PRODUCTION = "production",
+  TEST = "test",
 }
 
-@ValidatorConstraint({ name: 'isDatabaseUrl', async: false })
+@ValidatorConstraint({ name: "isDatabaseUrl", async: false })
 export class IsDatabaseUrlConstraint implements ValidatorConstraintInterface {
   validate(value: string): boolean {
     if (!value) return true; // Optional field
 
     // Remove quotes if present
-    const cleanValue = value.replace(/^["']|["']$/g, '');
+    const cleanValue = value.replace(/^["']|["']$/g, "");
 
     // Check if it's a valid database URL format
     try {
       const url = new URL(cleanValue);
       // Allow common database protocols
       const validProtocols = [
-        'postgres:', 'postgresql:', 'mysql:', 'mysql2:', 'mariadb:',
-        'sqlite:', 'mongodb:', 'redis:', 'rediss:', 'mssql:'
+        "postgres:",
+        "postgresql:",
+        "mysql:",
+        "mysql2:",
+        "mariadb:",
+        "sqlite:",
+        "mongodb:",
+        "redis:",
+        "rediss:",
+        "mssql:",
       ];
       return validProtocols.includes(url.protocol);
     } catch {
       // If URL parsing fails, it might still be a valid connection string
       // Allow basic patterns like host:port or more complex connection strings
-      return cleanValue.length > 0 && typeof cleanValue === 'string';
+      return cleanValue.length > 0 && typeof cleanValue === "string";
     }
   }
 
   defaultMessage(): string {
-    return 'DATABASE_URL must be a valid database connection string';
+    return "DATABASE_URL must be a valid database connection string";
   }
 }
 
-@ValidatorConstraint({ name: 'isRedisUrl', async: false })
+@ValidatorConstraint({ name: "isRedisUrl", async: false })
 export class IsRedisUrlConstraint implements ValidatorConstraintInterface {
   validate(value: string): boolean {
     if (!value) return true; // Optional field
 
     // Remove quotes if present
-    const cleanValue = value.replace(/^["']|["']$/g, '');
+    const cleanValue = value.replace(/^["']|["']$/g, "");
 
     // Check if it's a valid Redis URL format
     try {
       const url = new URL(cleanValue);
-      return ['redis:', 'rediss:'].includes(url.protocol);
+      return ["redis:", "rediss:"].includes(url.protocol);
     } catch {
       // If URL parsing fails, it might still be a valid connection string
       // Allow basic patterns like host:port or more complex connection strings
-      return cleanValue.length > 0 && typeof cleanValue === 'string';
+      return cleanValue.length > 0 && typeof cleanValue === "string";
     }
   }
 
   defaultMessage(): string {
-    return 'REDIS_URL must be a valid Redis connection string';
+    return "REDIS_URL must be a valid Redis connection string";
   }
 }
 
@@ -69,7 +87,7 @@ export class EnvironmentVariables {
   PORT: number = 3000;
 
   @IsString()
-  API_PREFIX: string = 'api/v1';
+  API_PREFIX: string = "api/v1";
 
   // Database Configuration
   @IsOptional()
@@ -129,11 +147,11 @@ export class EnvironmentVariables {
 
   @IsOptional()
   @IsString()
-  JWT_EXPIRES_IN?: string = '24h';
+  JWT_EXPIRES_IN?: string = "24h";
 
   @IsOptional()
   @IsString()
-  JWT_REFRESH_EXPIRES_IN?: string = '30d';
+  JWT_REFRESH_EXPIRES_IN?: string = "30d";
 
   // Session Configuration
   @IsString()
@@ -150,7 +168,7 @@ export class EnvironmentVariables {
 
   @IsOptional()
   @IsString()
-  ENCRYPTION_KEY_VERSION?: string = 'v1';
+  ENCRYPTION_KEY_VERSION?: string = "v1";
 
   // Rate Limiting
   @IsOptional()
@@ -170,12 +188,12 @@ export class EnvironmentVariables {
 
   @IsOptional()
   @IsBoolean()
-  @Transform(({ value }) => value === 'true')
+  @Transform(({ value }) => value === "true")
   SLACK_ALERTS_ENABLED?: boolean = false;
 
   @IsOptional()
   @IsString()
-  SLACK_ALERT_CHANNEL?: string = '#alerts';
+  SLACK_ALERT_CHANNEL?: string = "#alerts";
 
   @IsOptional()
   @IsString()
@@ -183,7 +201,7 @@ export class EnvironmentVariables {
 
   @IsOptional()
   @IsBoolean()
-  @Transform(({ value }) => value === 'true')
+  @Transform(({ value }) => value === "true")
   DISCORD_ALERTS_ENABLED?: boolean = false;
 
   @IsOptional()
@@ -193,37 +211,37 @@ export class EnvironmentVariables {
   // Logging
   @IsOptional()
   @IsString()
-  LOG_LEVEL?: string = 'info';
+  LOG_LEVEL?: string = "info";
 
   @IsOptional()
   @IsString()
-  LOG_DIR?: string = 'logs';
+  LOG_DIR?: string = "logs";
 
   // Performance Configuration
   @IsOptional()
   @IsNumber()
   @Transform(({ value }) => parseInt(value, 10))
-  BATCH_MAX_SIZE?: number = 100;
+  BATCH_MAX_SIZE?: number = 250; // Minimal 250 plan for ZeptoMail (was 100)
 
   @IsOptional()
   @IsNumber()
   @Transform(({ value }) => parseInt(value, 10))
-  BATCH_MAX_WAIT_TIME?: number = 5000;
+  BATCH_MAX_WAIT_TIME?: number = 2000; // Faster flush for low latency (was 5000)
 
   @IsOptional()
   @IsNumber()
   @Transform(({ value }) => parseInt(value, 10))
-  BATCH_MAX_CONCURRENCY?: number = 10;
+  BATCH_MAX_CONCURRENCY?: number = 5; // 4GB shared box safe (was 10)
 
   @IsOptional()
   @IsNumber()
   @Transform(({ value }) => parseInt(value, 10))
-  HTTP_POOL_MAX_SOCKETS?: number = 50;
+  HTTP_POOL_MAX_SOCKETS?: number = 20; // Shared box safe (was 50)
 
   @IsOptional()
   @IsNumber()
   @Transform(({ value }) => parseInt(value, 10))
-  HTTP_POOL_MAX_FREE_SOCKETS?: number = 10;
+  HTTP_POOL_MAX_FREE_SOCKETS?: number = 5; // Shared box safe (was 10)
 
   @IsOptional()
   @IsNumber()
@@ -278,12 +296,12 @@ export function validate(config: Record<string, unknown>): EnvironmentVariables 
   });
 
   if (errors.length > 0) {
-    const errorMessages = errors.map(error => {
+    const errorMessages = errors.map((error) => {
       const constraints = error.constraints ? Object.values(error.constraints) : [];
-      return `${error.property}: ${constraints.join(', ')}`;
+      return `${error.property}: ${constraints.join(", ")}`;
     });
 
-    throw new Error(`Environment validation failed:\n${errorMessages.join('\n')}`);
+    throw new Error(`Environment validation failed:\n${errorMessages.join("\n")}`);
   }
 
   return validatedConfig;

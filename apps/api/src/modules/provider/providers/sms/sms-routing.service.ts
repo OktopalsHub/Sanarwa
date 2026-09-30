@@ -1,7 +1,7 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import { parsePhoneNumberWithError, CountryCode, } from 'libphonenumber-js';
-import { ISMSProvider } from './sms-provider.interface';
+import { Injectable, Logger } from "@nestjs/common";
+import { ConfigService } from "@nestjs/config";
+import { parsePhoneNumberWithError, CountryCode } from "libphonenumber-js";
+import { ISMSProvider } from "./sms-provider.interface";
 
 interface ProviderCost {
   provider: ISMSProvider;
@@ -16,7 +16,7 @@ export class SMSRoutingService {
   private defaultProvider: string;
 
   constructor(private configService: ConfigService) {
-    this.defaultProvider = this.configService.get('DEFAULT_SMS_PROVIDER') || 'termii';
+    this.defaultProvider = this.configService.get("DEFAULT_SMS_PROVIDER") || "termii";
   }
 
   registerProvider(provider: ISMSProvider): void {
@@ -36,9 +36,10 @@ export class SMSRoutingService {
       const countryCode = parsedNumber.country as string;
 
       // Get all providers that support this country with their costs
-      const availableProviders: ProviderCost[] = this.providers.map(provider => {
+      const availableProviders: ProviderCost[] = this.providers.map((provider) => {
         const supportedCountries = provider.getSupportedCountries();
-        const supported = supportedCountries.includes(countryCode) || supportedCountries.includes('*');
+        const supported =
+          supportedCountries.includes(countryCode) || supportedCountries.includes("*");
         const cost = supported ? provider.getCostPerMessage(countryCode) : Infinity;
 
         return {
@@ -50,17 +51,19 @@ export class SMSRoutingService {
 
       // Filter supported providers and sort by cost (ascending)
       const supportedProviders = availableProviders
-        .filter(p => p.supported)
+        .filter((p) => p.supported)
         .toSorted((a, b) => a.cost - b.cost);
 
       if (supportedProviders.length === 0) {
-        this.logger.warn(`No SMS provider supports country: ${countryCode}, using default provider`);
+        this.logger.warn(
+          `No SMS provider supports country: ${countryCode}, using default provider`,
+        );
         return this.getDefaultProvider();
       }
 
       const bestProvider = supportedProviders[0];
       this.logger.log(
-        `Selected ${bestProvider.provider.getProviderName()} for ${countryCode} (cost: $${bestProvider.cost})`
+        `Selected ${bestProvider.provider.getProviderName()} for ${countryCode} (cost: $${bestProvider.cost})`,
       );
 
       return bestProvider.provider;
@@ -71,7 +74,7 @@ export class SMSRoutingService {
   }
 
   getProviderByName(name: string): ISMSProvider | null {
-    return this.providers.find(p => p.getProviderName() === name) || null;
+    return this.providers.find((p) => p.getProviderName() === name) || null;
   }
 
   getDefaultProvider(): ISMSProvider | null {
@@ -83,11 +86,13 @@ export class SMSRoutingService {
 
     // If default provider not found, use first available
     if (this.providers.length > 0) {
-      this.logger.warn(`Default provider '${this.defaultProvider}' not found, using first available: ${this.providers[0].getProviderName()}`);
+      this.logger.warn(
+        `Default provider '${this.defaultProvider}' not found, using first available: ${this.providers[0].getProviderName()}`,
+      );
       return this.providers[0];
     }
 
-    this.logger.error('No SMS providers available');
+    this.logger.error("No SMS providers available");
     return null;
   }
 

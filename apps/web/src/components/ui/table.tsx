@@ -1,1 +1,1 @@
-export * from '@sanarwa/ui/table';
+export * from "@sanarwa/ui/table";

@@ -1,7 +1,4 @@
-import {
-  BaseProviderPayload,
-  IBaseProvider,
-} from '../base/base-provider.interface';
+import { BaseProviderPayload, IBaseProvider } from "../base/base-provider.interface";
 
 export interface WhatsAppPayload extends BaseProviderPayload {
   recipient: string; // WhatsApp number in E.164 format
@@ -12,19 +9,19 @@ export interface WhatsAppPayload extends BaseProviderPayload {
 }
 
 export interface WhatsAppMessage {
-  type: 'text' | 'template' | 'media' | 'interactive';
+  type: "text" | "template" | "media" | "interactive";
   text?: string;
   mediaUrl?: string;
-  mediaType?: 'image' | 'video' | 'audio' | 'document';
+  mediaType?: "image" | "video" | "audio" | "document";
   caption?: string;
   filename?: string;
   interactive?: WhatsAppInteractive;
 }
 
 export interface WhatsAppInteractive {
-  type: 'button' | 'list';
+  type: "button" | "list";
   header?: {
-    type: 'text' | 'image' | 'video' | 'document';
+    type: "text" | "image" | "video" | "document";
     text?: string;
     mediaUrl?: string;
   };
@@ -44,7 +41,7 @@ export interface WhatsAppAction {
 }
 
 export interface WhatsAppButton {
-  type: 'reply';
+  type: "reply";
   reply: {
     id: string;
     title: string;
@@ -79,12 +76,12 @@ export interface WhatsAppTemplate {
 }
 
 export interface WhatsAppTemplateComponent {
-  type: 'header' | 'body' | 'footer' | 'button';
+  type: "header" | "body" | "footer" | "button";
   parameters?: WhatsAppTemplateParameter[];
 }
 
 export interface WhatsAppTemplateParameter {
-  type: 'text' | 'currency' | 'date_time' | 'image' | 'document' | 'video';
+  type: "text" | "currency" | "date_time" | "image" | "document" | "video";
   text?: string;
   currency?: {
     fallback_value: string;
@@ -107,7 +104,7 @@ export interface WhatsAppTemplateParameter {
 }
 
 export interface IWhatsAppProvider extends IBaseProvider {
-  send(payload: WhatsAppPayload): Promise<import('../types').ProviderResponse>;
+  send(payload: WhatsAppPayload): Promise<import("../types").ProviderResponse>;
 
   /**
    * Send a template message
@@ -116,7 +113,7 @@ export interface IWhatsAppProvider extends IBaseProvider {
     recipient: string,
     template: WhatsAppTemplate,
     parameters?: Record<string, any>,
-  ): Promise<import('../types').ProviderResponse>;
+  ): Promise<import("../types").ProviderResponse>;
 
   /**
    * Validate WhatsApp number format

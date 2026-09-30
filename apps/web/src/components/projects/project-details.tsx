@@ -1,44 +1,54 @@
-'use client';
+"use client";
 
-import { Activity } from '@/lib/icons';
+import { Activity } from "@/lib/icons";
 
-import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { projectApi } from '@/lib/api/project';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Cog6ToothIcon, UsersIcon, KeyIcon, ChartBarIcon, LinkIcon } from '@heroicons/react/24/outline'
-import { ProjectSettings } from './project-settings';
-import { ProjectMembers } from './project-members';
-import { ProjectApiKeys } from './project-api-keys';
-import { ProjectAnalytics } from './project-analytics';
-import { ProjectWebhooks } from './project-webhooks';
-import { ProjectStatus } from '@/lib/types/project';
+import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { projectApi } from "@/lib/api/project";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Cog6ToothIcon,
+  UsersIcon,
+  KeyIcon,
+  ChartBarIcon,
+  LinkIcon,
+} from "@heroicons/react/24/outline";
+import { ProjectSettings } from "./project-settings";
+import { ProjectMembers } from "./project-members";
+import { ProjectApiKeys } from "./project-api-keys";
+import { ProjectAnalytics } from "./project-analytics";
+import { ProjectWebhooks } from "./project-webhooks";
+import { ProjectStatus } from "@/lib/types/project";
 
 interface ProjectDetailsProps {
   projectId: string;
 }
 
 export function ProjectDetails({ projectId }: ProjectDetailsProps) {
-  const [activeTab, setActiveTab] = useState('overview');
+  const [activeTab, setActiveTab] = useState("overview");
 
-  const { data: project, isLoading, error } = useQuery({
-    queryKey: ['project', projectId],
+  const {
+    data: project,
+    isLoading,
+    error,
+  } = useQuery({
+    queryKey: ["project", projectId],
     queryFn: () => projectApi.getProject(projectId),
   });
 
   const getStatusColor = (status: ProjectStatus) => {
     switch (status) {
       case ProjectStatus.ACTIVE:
-        return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300';
+        return "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300";
       case ProjectStatus.INACTIVE:
-        return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300';
+        return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300";
       case ProjectStatus.ARCHIVED:
-        return 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300';
+        return "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300";
       default:
-        return 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300';
+        return "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300";
     }
   };
 
@@ -79,12 +89,10 @@ export function ProjectDetails({ projectId }: ProjectDetailsProps) {
             <div className="space-y-2">
               <div className="flex items-center gap-3">
                 <CardTitle className="text-2xl">{project.name}</CardTitle>
-                <Badge className={getStatusColor(project.status)}>
-                  {project.status}
-                </Badge>
+                <Badge className={getStatusColor(project.status)}>{project.status}</Badge>
               </div>
               <CardDescription className="text-base">
-                {project.description || 'No description provided'}
+                {project.description || "No description provided"}
               </CardDescription>
             </div>
             <div className="flex gap-2">
@@ -99,16 +107,14 @@ export function ProjectDetails({ projectId }: ProjectDetailsProps) {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
             <div>
               <p className="text-muted-foreground">Created</p>
-              <p className="font-medium">
-                {new Date(project.createdAt).toLocaleDateString()}
-              </p>
+              <p className="font-medium">{new Date(project.createdAt).toLocaleDateString()}</p>
             </div>
             <div>
               <p className="text-muted-foreground">Last Activity</p>
               <p className="font-medium">
                 {project.lastActivity
                   ? new Date(project.lastActivity).toLocaleDateString()
-                  : 'No activity'}
+                  : "No activity"}
               </p>
             </div>
             <div>

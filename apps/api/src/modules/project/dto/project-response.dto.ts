@@ -1,24 +1,24 @@
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { ProjectStatus } from '../../../common/enums';
+import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
+import { ProjectStatus } from "../../../common/enums";
 
 export class ProjectTenantDto {
   @ApiProperty({
-    description: 'Tenant unique identifier',
-    example: '123e4567-e89b-12d3-a456-426614174000',
+    description: "Tenant unique identifier",
+    example: "123e4567-e89b-12d3-a456-426614174000",
     type: String,
   })
   id: string;
 
   @ApiProperty({
-    description: 'Tenant name',
-    example: 'Acme Corporation',
+    description: "Tenant name",
+    example: "Acme Corporation",
     type: String,
   })
   name: string;
 
   @ApiProperty({
-    description: 'Tenant subdomain',
-    example: 'acme-corp',
+    description: "Tenant subdomain",
+    example: "acme-corp",
     type: String,
   })
   subdomain: string;
@@ -26,19 +26,19 @@ export class ProjectTenantDto {
 
 export class ProjectCreatedByDto {
   @ApiProperty({
-    description: 'Tenant member unique identifier',
-    example: '123e4567-e89b-12d3-a456-426614174000',
+    description: "Tenant member unique identifier",
+    example: "123e4567-e89b-12d3-a456-426614174000",
     type: String,
   })
   id: string;
 
   @ApiProperty({
-    description: 'User information',
+    description: "User information",
     type: Object,
     example: {
-      id: '123e4567-e89b-12d3-a456-426614174000',
-      email: 'user@example.com',
-      name: 'John Doe',
+      id: "123e4567-e89b-12d3-a456-426614174000",
+      email: "user@example.com",
+      name: "John Doe",
     },
   })
   user: {
@@ -50,28 +50,28 @@ export class ProjectCreatedByDto {
 
 export class ProjectResponseDto {
   @ApiProperty({
-    description: 'Project unique identifier',
-    example: '123e4567-e89b-12d3-a456-426614174000',
+    description: "Project unique identifier",
+    example: "123e4567-e89b-12d3-a456-426614174000",
     type: String,
   })
   id: string;
 
   @ApiProperty({
-    description: 'Project name',
-    example: 'My Project',
+    description: "Project name",
+    example: "My Project",
     type: String,
   })
   name: string;
 
   @ApiPropertyOptional({
-    description: 'Project description',
-    example: 'A description of the project',
+    description: "Project description",
+    example: "A description of the project",
     type: String,
   })
   description?: string;
 
   @ApiProperty({
-    description: 'Project status',
+    description: "Project status",
     enum: ProjectStatus,
     example: ProjectStatus.ACTIVE,
     type: String,
@@ -79,7 +79,7 @@ export class ProjectResponseDto {
   status: ProjectStatus;
 
   @ApiPropertyOptional({
-    description: 'Project settings',
+    description: "Project settings",
     type: Object,
     nullable: true,
   })
@@ -97,34 +97,34 @@ export class ProjectResponseDto {
   };
 
   @ApiPropertyOptional({
-    description: 'Additional metadata',
+    description: "Additional metadata",
     type: Object,
     nullable: true,
   })
   metadata?: Record<string, any>;
 
   @ApiProperty({
-    description: 'Tenant information',
+    description: "Tenant information",
     type: ProjectTenantDto,
   })
   tenant: ProjectTenantDto;
 
   @ApiPropertyOptional({
-    description: 'Created by information',
+    description: "Created by information",
     type: ProjectCreatedByDto,
   })
   createdBy?: ProjectCreatedByDto;
 
   @ApiProperty({
-    description: 'Project creation timestamp',
-    example: '2024-01-01T00:00:00.000Z',
+    description: "Project creation timestamp",
+    example: "2024-01-01T00:00:00.000Z",
     type: Date,
   })
   createdAt: Date;
 
   @ApiProperty({
-    description: 'Project last update timestamp',
-    example: '2024-01-01T00:00:00.000Z',
+    description: "Project last update timestamp",
+    example: "2024-01-01T00:00:00.000Z",
     type: Date,
   })
   updatedAt: Date;
@@ -132,28 +132,28 @@ export class ProjectResponseDto {
 
 export class ProjectListResponseDto {
   @ApiProperty({
-    description: 'Project unique identifier',
-    example: '123e4567-e89b-12d3-a456-426614174000',
+    description: "Project unique identifier",
+    example: "123e4567-e89b-12d3-a456-426614174000",
     type: String,
   })
   id: string;
 
   @ApiProperty({
-    description: 'Project name',
-    example: 'My Project',
+    description: "Project name",
+    example: "My Project",
     type: String,
   })
   name: string;
 
   @ApiPropertyOptional({
-    description: 'Project description',
-    example: 'A description of the project',
+    description: "Project description",
+    example: "A description of the project",
     type: String,
   })
   description?: string;
 
   @ApiProperty({
-    description: 'Project status',
+    description: "Project status",
     enum: ProjectStatus,
     example: ProjectStatus.ACTIVE,
     type: String,
@@ -161,8 +161,8 @@ export class ProjectListResponseDto {
   status: ProjectStatus;
 
   @ApiProperty({
-    description: 'Project creation timestamp',
-    example: '2024-01-01T00:00:00.000Z',
+    description: "Project creation timestamp",
+    example: "2024-01-01T00:00:00.000Z",
     type: Date,
   })
   createdAt: Date;

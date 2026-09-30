@@ -1,12 +1,12 @@
-import { LoginForm } from '@/components/auth/login-form';
-import { AuthPageShell } from '@/components/auth/auth-page-shell';
-import { Suspense } from 'react';
+import { LoginForm } from "@/components/auth/login-form";
+import { LoginPageLayout } from "@/components/auth/login-page-layout";
+import { Suspense } from "react";
 
 function LoginPageContent() {
   return (
-    <AuthPageShell>
+    <LoginPageLayout>
       <LoginForm />
-    </AuthPageShell>
+    </LoginPageLayout>
   );
 }
 
@@ -25,6 +25,6 @@ export default function LoginPage() {
 }
 
 export const metadata = {
-  title: 'Sign In - Sanarwa',
-  description: 'Sign in to your Sanarwa account',
+  title: "Sign In - Sanarwa",
+  description: "Sign in to your Sanarwa account",
 };

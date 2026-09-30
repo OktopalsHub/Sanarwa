@@ -3,9 +3,9 @@
  */
 
 export enum ProjectStatus {
-  ACTIVE = 'active',
-  INACTIVE = 'inactive',
-  ARCHIVED = 'archived',
+  ACTIVE = "active",
+  INACTIVE = "inactive",
+  ARCHIVED = "archived",
 }
 
 export interface Project {
@@ -64,8 +64,8 @@ export interface ProjectQueryParams {
   brandId?: string;
   page?: number;
   limit?: number;
-  sortBy?: 'name' | 'createdAt' | 'updatedAt' | 'status';
-  sortOrder?: 'asc' | 'desc';
+  sortBy?: "name" | "createdAt" | "updatedAt" | "status";
+  sortOrder?: "asc" | "desc";
 }
 
 export interface ProjectStats {
@@ -107,20 +107,20 @@ export interface ProjectMember {
 }
 
 export enum ProjectRole {
-  OWNER = 'owner',
-  ADMIN = 'admin',
-  DEVELOPER = 'developer',
-  VIEWER = 'viewer',
+  OWNER = "owner",
+  ADMIN = "admin",
+  DEVELOPER = "developer",
+  VIEWER = "viewer",
 }
 
 export enum ProjectPermission {
-  READ = 'read',
-  WRITE = 'write',
-  DELETE = 'delete',
-  MANAGE_API_KEYS = 'manage_api_keys',
-  MANAGE_PROVIDERS = 'manage_providers',
-  MANAGE_SETTINGS = 'manage_settings',
-  MANAGE_MEMBERS = 'manage_members',
+  READ = "read",
+  WRITE = "write",
+  DELETE = "delete",
+  MANAGE_API_KEYS = "manage_api_keys",
+  MANAGE_PROVIDERS = "manage_providers",
+  MANAGE_SETTINGS = "manage_settings",
+  MANAGE_MEMBERS = "manage_members",
 }
 
 export interface ProjectInvitation {
@@ -132,7 +132,7 @@ export interface ProjectInvitation {
   invitedBy: string;
   invitedAt: Date;
   expiresAt: Date;
-  status: 'pending' | 'accepted' | 'declined' | 'expired';
+  status: "pending" | "accepted" | "declined" | "expired";
 }
 
 export interface ProjectUsage {
@@ -162,7 +162,7 @@ export interface ProjectUsage {
 
 export interface ProjectBilling {
   projectId: string;
-  plan: 'free' | 'starter' | 'pro' | 'enterprise';
+  plan: "free" | "starter" | "pro" | "enterprise";
   usage: ProjectUsage;
   limits: {
     notifications: number;

@@ -1,12 +1,12 @@
-import * as React from "react"
+import * as React from "react";
 
-import { cn } from "./utils"
+import { cn } from "./utils";
 
 function Input({
   className,
   type,
-  'aria-describedby': ariaDescribedBy,
-  'aria-invalid': ariaInvalid,
+  "aria-describedby": ariaDescribedBy,
+  "aria-invalid": ariaInvalid,
   ...props
 }: React.ComponentProps<"input">) {
   return (
@@ -20,11 +20,11 @@ function Input({
         "focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] focus-visible:ring-offset-2",
         "aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive",
         "high-contrast:border-2 high-contrast:border-foreground",
-        className
+        className,
       )}
       {...props}
     />
-  )
+  );
 }
 
-export { Input }
+export { Input };

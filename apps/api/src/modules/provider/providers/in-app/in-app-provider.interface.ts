@@ -2,20 +2,20 @@ export interface InAppPayload {
   userId: string | string[];
   title: string;
   message: string;
-  type?: 'info' | 'success' | 'warning' | 'error';
-  priority?: 'low' | 'normal' | 'high' | 'urgent';
+  type?: "info" | "success" | "warning" | "error";
+  priority?: "low" | "normal" | "high" | "urgent";
   data?: Record<string, any>;
   actions?: Array<{
     label: string;
     action: string;
-    style?: 'primary' | 'secondary' | 'danger';
+    style?: "primary" | "secondary" | "danger";
   }>;
   persistent?: boolean;
   expiresAt?: Date;
   roomId?: string; // For room-based notifications
   callData?: {
     roomId: string;
-    callType: 'audio' | 'video';
+    callType: "audio" | "video";
     participants: string[];
   };
 }

@@ -1,7 +1,7 @@
-'use client';
+"use client";
 
-import { AppShell } from '@/components/layout';
-import { MessageList } from '@/components/messages/message-list';
+import { AppShell } from "@/components/layout";
+import { MessageList } from "@/components/messages/message-list";
 
 export default function MessagesPage() {
   return (

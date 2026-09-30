@@ -1,7 +1,7 @@
-import { Provider, Type } from '@nestjs/common';
-import { getRepositoryToken } from '@nestjs/typeorm';
-import { ObjectLiteral, Repository } from 'typeorm';
-import { BaseRepository } from './base.repository';
+import { Provider, Type } from "@nestjs/common";
+import { getRepositoryToken } from "@nestjs/typeorm";
+import { ObjectLiteral, Repository } from "typeorm";
+import { BaseRepository } from "./base.repository";
 
 /** Provide BaseRepository without empty per-entity repository files. */
 export function provideBaseRepository<T extends ObjectLiteral>(

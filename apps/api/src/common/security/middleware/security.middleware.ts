@@ -1,7 +1,7 @@
-import { Injectable, Logger, NestMiddleware } from '@nestjs/common';
-import { NextFunction, Request, Response } from 'express';
-import { InputSanitizationService } from '../services/input-sanitization.service';
-import { SecurityEventService } from '../services/security-event.service';
+import { Injectable, Logger, NestMiddleware } from "@nestjs/common";
+import { NextFunction, Request, Response } from "express";
+import { InputSanitizationService } from "../services/input-sanitization.service";
+import { SecurityEventService } from "../services/security-event.service";
 
 @Injectable()
 export class SecurityMiddleware implements NestMiddleware {
@@ -17,26 +17,20 @@ export class SecurityMiddleware implements NestMiddleware {
 
     try {
       // Sanitize request body
-      if (req.body && typeof req.body === 'object') {
-        const sanitizationResult = this.inputSanitizationService.sanitizeObject(
-          req.body,
-          {
-            preventSqlInjection: true,
-            preventXss: true,
-            preventCommandInjection: true,
-            maxLength: 10000,
-          },
-        );
+      if (req.body && typeof req.body === "object") {
+        const sanitizationResult = this.inputSanitizationService.sanitizeObject(req.body, {
+          preventSqlInjection: true,
+          preventXss: true,
+          preventCommandInjection: true,
+          maxLength: 10000,
+        });
 
         if (sanitizationResult.wasModified) {
-          this.logger.warn(
-            `Request body sanitized for ${req.method} ${req.path}`,
-            {
-              modifiedFields: sanitizationResult.modifiedFields,
-              ip: req.ip,
-              userAgent: req.get('User-Agent'),
-            },
-          );
+          this.logger.warn(`Request body sanitized for ${req.method} ${req.path}`, {
+            modifiedFields: sanitizationResult.modifiedFields,
+            ip: req.ip,
+            userAgent: req.get("User-Agent"),
+          });
 
           // Log suspicious activity
           await this.securityEventService.logSuspiciousActivity(
@@ -44,7 +38,7 @@ export class SecurityMiddleware implements NestMiddleware {
             undefined,
             undefined,
             req.ip,
-            req.get('User-Agent'),
+            req.get("User-Agent"),
             {
               method: req.method,
               path: req.path,
@@ -57,11 +51,11 @@ export class SecurityMiddleware implements NestMiddleware {
       }
 
       // Sanitize query parameters
-      if (req.query && typeof req.query === 'object') {
+      if (req.query && typeof req.query === "object") {
         let queryModified = false;
 
         for (const [key, value] of Object.entries(req.query)) {
-          if (typeof value === 'string') {
+          if (typeof value === "string") {
             const result = this.inputSanitizationService.sanitize(value, {
               preventSqlInjection: true,
               preventXss: true,
@@ -78,20 +72,17 @@ export class SecurityMiddleware implements NestMiddleware {
         }
 
         if (queryModified) {
-          this.logger.warn(
-            `Query parameters sanitized for ${req.method} ${req.path}`,
-            {
-              ip: req.ip,
-              userAgent: req.get('User-Agent'),
-            },
-          );
+          this.logger.warn(`Query parameters sanitized for ${req.method} ${req.path}`, {
+            ip: req.ip,
+            userAgent: req.get("User-Agent"),
+          });
 
           await this.securityEventService.logSuspiciousActivity(
             `Malicious input detected in query parameters`,
             undefined,
             undefined,
             req.ip,
-            req.get('User-Agent'),
+            req.get("User-Agent"),
             {
               method: req.method,
               path: req.path,
@@ -109,34 +100,30 @@ export class SecurityMiddleware implements NestMiddleware {
 
       next();
     } catch (error) {
-      this.logger.error(
-        `Security middleware error: ${error.message}`,
-        error.stack,
-      );
+      this.logger.error(`Security middleware error: ${error.message}`, error.stack);
       next(error);
     }
   }
 
   private async checkSuspiciousHeaders(req: Request): Promise<void> {
     const suspiciousHeaders = [
-      'x-forwarded-for',
-      'x-real-ip',
-      'x-originating-ip',
-      'x-cluster-client-ip',
+      "x-forwarded-for",
+      "x-real-ip",
+      "x-originating-ip",
+      "x-cluster-client-ip",
     ];
 
     for (const header of suspiciousHeaders) {
       const value = req.get(header);
       if (value) {
-        const result =
-          this.inputSanitizationService.detectSuspiciousPatterns(value);
+        const result = this.inputSanitizationService.detectSuspiciousPatterns(value);
         if (result.isSuspicious) {
           await this.securityEventService.logSuspiciousActivity(
             `Suspicious patterns detected in ${header} header`,
             undefined,
             undefined,
             req.ip,
-            req.get('User-Agent'),
+            req.get("User-Agent"),
             {
               header,
               value,
@@ -151,30 +138,24 @@ export class SecurityMiddleware implements NestMiddleware {
 
   private addSecurityHeaders(res: Response): void {
     // Prevent clickjacking
-    res.setHeader('X-Frame-Options', 'DENY');
+    res.setHeader("X-Frame-Options", "DENY");
 
     // Prevent MIME type sniffing
-    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.setHeader("X-Content-Type-Options", "nosniff");
 
     // Enable XSS protection
-    res.setHeader('X-XSS-Protection', '1; mode=block');
+    res.setHeader("X-XSS-Protection", "1; mode=block");
 
     // Strict transport security
-    res.setHeader(
-      'Strict-Transport-Security',
-      'max-age=31536000; includeSubDomains',
-    );
+    res.setHeader("Strict-Transport-Security", "max-age=31536000; includeSubDomains");
 
     // Content security policy
-    res.setHeader('Content-Security-Policy', "default-src 'self'");
+    res.setHeader("Content-Security-Policy", "default-src 'self'");
 
     // Referrer policy
-    res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+    res.setHeader("Referrer-Policy", "strict-origin-when-cross-origin");
 
     // Permissions policy
-    res.setHeader(
-      'Permissions-Policy',
-      'geolocation=(), microphone=(), camera=()',
-    );
+    res.setHeader("Permissions-Policy", "geolocation=(), microphone=(), camera=()");
   }
 }

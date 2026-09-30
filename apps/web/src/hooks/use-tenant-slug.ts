@@ -1,9 +1,10 @@
-'use client';
+"use client";
 
-import { apiClient } from '@/lib/api/client';
-import { useTenant } from '@/contexts/tenant-context';
-import { useParams } from '@tanstack/react-router';
-import { useEffect, useMemo } from 'react';
+import { apiClient } from "@/lib/api/client";
+import { getTenantPathSegment, matchesTenantPathSegment } from "@/lib/tenant-path";
+import { useTenant } from "@/contexts/tenant-context";
+import { useNavigate, useParams } from "@tanstack/react-router";
+import { useEffect, useMemo } from "react";
 
 export function useTenantSlug(): string | undefined {
   const params = useParams({ strict: false }) as { tenantSlug?: string };
@@ -11,29 +12,19 @@ export function useTenantSlug(): string | undefined {
 }
 
 export function useTenantBasePath(): string {
-  const slug = useTenantSlug();
   const { selectedTenant } = useTenant();
-  const resolved =
-    slug ||
-    selectedTenant?.subdomain ||
-    selectedTenant?.slug ||
-    selectedTenant?.id ||
-    '';
-  return resolved ? `/${resolved}` : '';
+  const segment = selectedTenant ? getTenantPathSegment(selectedTenant) : useTenantSlug() || "";
+  return segment ? `/${segment}` : "";
 }
 
 export function useEnsureTenantFromSlug() {
   const tenantSlug = useTenantSlug();
+  const navigate = useNavigate();
   const { tenants, selectedTenant, switchTenant, isLoading } = useTenant();
 
   const matchedTenant = useMemo(() => {
     if (!tenantSlug) return null;
-    return tenants.find(
-      (t) =>
-        t.slug === tenantSlug ||
-        t.subdomain === tenantSlug ||
-        t.id === tenantSlug,
-    );
+    return tenants.find((t) => matchesTenantPathSegment(t, tenantSlug)) ?? null;
   }, [tenantSlug, tenants]);
 
   useEffect(() => {
@@ -45,6 +36,15 @@ export function useEnsureTenantFromSlug() {
       apiClient.setTenant(matchedTenant.id);
     }
   }, [matchedTenant, selectedTenant, switchTenant, isLoading]);
+
+  useEffect(() => {
+    if (!matchedTenant || !tenantSlug || isLoading) return;
+    const canonical = getTenantPathSegment(matchedTenant);
+    if (canonical && tenantSlug !== canonical) {
+      const rest = window.location.pathname.replace(`/${tenantSlug}`, "") || "/dashboard";
+      navigate({ to: `/${canonical}${rest}` as any, replace: true });
+    }
+  }, [matchedTenant, tenantSlug, isLoading, navigate]);
 
   return { tenantSlug, matchedTenant, isLoading };
 }

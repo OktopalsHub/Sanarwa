@@ -1,11 +1,11 @@
-import { ApiPropertyOptional } from '@nestjs/swagger';
-import { IsEnum, IsOptional, IsString } from 'class-validator';
-import { PaginationDto } from 'src/common/dto/pagination.dto';
-import { TenantMemberRole } from '../../../common/enums';
+import { ApiPropertyOptional } from "@nestjs/swagger";
+import { IsEnum, IsOptional, IsString } from "class-validator";
+import { PaginationDto } from "src/common/dto/pagination.dto";
+import { TenantMemberRole } from "../../../common/enums";
 
 export class TenantMemberQueryDto extends PaginationDto {
   @ApiPropertyOptional({
-    description: 'Filter by member role',
+    description: "Filter by member role",
     enum: TenantMemberRole,
   })
   @IsOptional()
@@ -13,26 +13,26 @@ export class TenantMemberQueryDto extends PaginationDto {
   role?: TenantMemberRole;
 
   @ApiPropertyOptional({
-    description: 'Search in user name or email',
+    description: "Search in user name or email",
   })
   @IsOptional()
   @IsString()
   search?: string;
 
   @ApiPropertyOptional({
-    description: 'Field to sort by',
-    default: 'createdAt',
+    description: "Field to sort by",
+    default: "createdAt",
   })
   @IsOptional()
   @IsString()
   sortBy?: string;
 
   @ApiPropertyOptional({
-    description: 'Sort order',
-    enum: ['ASC', 'DESC'],
-    default: 'DESC',
+    description: "Sort order",
+    enum: ["ASC", "DESC"],
+    default: "DESC",
   })
   @IsOptional()
-  @IsEnum(['ASC', 'DESC'])
-  sortOrder?: 'ASC' | 'DESC';
+  @IsEnum(["ASC", "DESC"])
+  sortOrder?: "ASC" | "DESC";
 }

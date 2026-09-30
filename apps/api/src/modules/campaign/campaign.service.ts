@@ -1,10 +1,10 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { Campaign } from './entities/campaign.entity';
-import { CreateCampaignDto } from './dto/create-campaign.dto';
-import { UpdateCampaignDto } from './dto/update-campaign.dto';
-import { CampaignQueryDto } from './dto/campaign-query.dto';
+import { Injectable, NotFoundException } from "@nestjs/common";
+import { InjectRepository } from "@nestjs/typeorm";
+import { Repository } from "typeorm";
+import { Campaign } from "./entities/campaign.entity";
+import { CreateCampaignDto } from "./dto/create-campaign.dto";
+import { UpdateCampaignDto } from "./dto/update-campaign.dto";
+import { CampaignQueryDto } from "./dto/campaign-query.dto";
 
 const defaultAnalytics = {
   totalSent: 0,
@@ -32,11 +32,11 @@ export class CampaignService {
       tenantId,
       name: dto.name,
       description: dto.description,
-      type: dto.type || 'one_time',
-      status: dto.status || 'draft',
+      type: dto.type || "one_time",
+      status: dto.status || "draft",
       channels: dto.channels || [],
-      audience: dto.audience || { type: 'all' },
-      schedule: dto.schedule || { type: 'immediate' },
+      audience: dto.audience || { type: "all" },
+      schedule: dto.schedule || { type: "immediate" },
       templates: dto.templates || [],
       analytics: defaultAnalytics,
       createdById,
@@ -48,20 +48,20 @@ export class CampaignService {
     const page = query.page || 1;
     const limit = query.limit || 20;
     const qb = this.campaignRepository
-      .createQueryBuilder('campaign')
-      .where('campaign.tenant_id = :tenantId', { tenantId });
+      .createQueryBuilder("campaign")
+      .where("campaign.tenant_id = :tenantId", { tenantId });
 
     if (query.status) {
-      qb.andWhere('campaign.status = :status', { status: query.status });
+      qb.andWhere("campaign.status = :status", { status: query.status });
     }
     if (query.search) {
-      qb.andWhere('(campaign.name ILIKE :search OR campaign.description ILIKE :search)', {
+      qb.andWhere("(campaign.name ILIKE :search OR campaign.description ILIKE :search)", {
         search: `%${query.search}%`,
       });
     }
 
-    const sortBy = query.sortBy || 'createdAt';
-    const sortOrder = (query.sortOrder || 'desc').toUpperCase() as 'ASC' | 'DESC';
+    const sortBy = query.sortBy || "createdAt";
+    const sortOrder = (query.sortOrder || "desc").toUpperCase() as "ASC" | "DESC";
     qb.orderBy(`campaign.${sortBy}`, sortOrder);
 
     qb.skip((page - 1) * limit).take(limit);
@@ -81,7 +81,7 @@ export class CampaignService {
       where: { id, tenantId },
     });
     if (!campaign) {
-      throw new NotFoundException('Campaign not found');
+      throw new NotFoundException("Campaign not found");
     }
     return campaign;
   }
@@ -112,7 +112,7 @@ export class CampaignService {
       analytics: campaign.analytics,
       createdAt: campaign.createdAt,
       updatedAt: campaign.updatedAt,
-      createdBy: campaign.createdById || '',
+      createdBy: campaign.createdById || "",
     };
   }
 }

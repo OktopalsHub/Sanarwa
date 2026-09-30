@@ -1,5 +1,5 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
+import { Injectable, Logger } from "@nestjs/common";
+import { ConfigService } from "@nestjs/config";
 
 export interface ResendVerificationResult {
   verified: boolean;
@@ -12,13 +12,13 @@ export interface ResendVerificationResult {
     priority?: number;
   }>;
   error?: string;
-  status?: 'not_started' | 'pending' | 'verified' | 'failed';
+  status?: "not_started" | "pending" | "verified" | "failed";
 }
 
 export interface ResendDomainInfo {
   id: string;
   name: string;
-  status: 'not_started' | 'pending' | 'verified' | 'failed';
+  status: "not_started" | "pending" | "verified" | "failed";
   created_at: string;
   records: Array<{
     record: string;
@@ -51,7 +51,7 @@ interface ResendListDomainsResponse {
 @Injectable()
 export class ResendVerificationService {
   private readonly logger = new Logger(ResendVerificationService.name);
-  private readonly baseUrl = 'https://api.resend.com';
+  private readonly baseUrl = "https://api.resend.com";
 
   constructor(private readonly configService: ConfigService) {}
 
@@ -63,10 +63,10 @@ export class ResendVerificationService {
       this.logger.log(`Adding domain to Resend: ${domain}`);
 
       const response = await fetch(`${this.baseUrl}/domains`, {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Authorization': `Bearer ${apiKey}`,
-          'Content-Type': 'application/json',
+          Authorization: `Bearer ${apiKey}`,
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({ name: domain }),
       });
@@ -86,14 +86,14 @@ export class ResendVerificationService {
         verified: false,
         domainId: successData.id,
         dnsRecords: successData.records || [],
-        status: 'pending',
+        status: "pending",
       };
     } catch (error) {
       this.logger.error(`Failed to add domain to Resend ${domain}:`, error);
       return {
         verified: false,
         error: error.message,
-        status: 'failed',
+        status: "failed",
       };
     }
   }
@@ -101,15 +101,18 @@ export class ResendVerificationService {
   /**
    * Check domain verification status with Resend
    */
-  async checkDomainVerificationStatus(domain: string, apiKey: string): Promise<ResendVerificationResult> {
+  async checkDomainVerificationStatus(
+    domain: string,
+    apiKey: string,
+  ): Promise<ResendVerificationResult> {
     try {
       this.logger.log(`Checking Resend domain verification status for: ${domain}`);
 
       // First get all domains
       const domainsResponse = await fetch(`${this.baseUrl}/domains`, {
-        method: 'GET',
+        method: "GET",
         headers: {
-          'Authorization': `Bearer ${apiKey}`,
+          Authorization: `Bearer ${apiKey}`,
         },
       });
 
@@ -128,12 +131,12 @@ export class ResendVerificationService {
       if (!domainInfo) {
         return {
           verified: false,
-          error: 'Domain not found in Resend',
-          status: 'not_started',
+          error: "Domain not found in Resend",
+          status: "not_started",
         };
       }
 
-      const isVerified = domainInfo.status === 'verified';
+      const isVerified = domainInfo.status === "verified";
 
       this.logger.log(`Resend domain verification status for ${domain}: ${domainInfo.status}`);
 
@@ -148,7 +151,7 @@ export class ResendVerificationService {
       return {
         verified: false,
         error: error.message,
-        status: 'failed',
+        status: "failed",
       };
     }
   }
@@ -159,9 +162,9 @@ export class ResendVerificationService {
   async getDomainDetails(domainId: string, apiKey: string): Promise<ResendDomainInfo | null> {
     try {
       const response = await fetch(`${this.baseUrl}/domains/${domainId}`, {
-        method: 'GET',
+        method: "GET",
         headers: {
-          'Authorization': `Bearer ${apiKey}`,
+          Authorization: `Bearer ${apiKey}`,
         },
       });
 
@@ -187,9 +190,9 @@ export class ResendVerificationService {
       this.logger.log(`Removing domain from Resend: ${domainId}`);
 
       const response = await fetch(`${this.baseUrl}/domains/${domainId}`, {
-        method: 'DELETE',
+        method: "DELETE",
         headers: {
-          'Authorization': `Bearer ${apiKey}`,
+          Authorization: `Bearer ${apiKey}`,
         },
       });
 
@@ -216,9 +219,9 @@ export class ResendVerificationService {
   }> {
     try {
       const response = await fetch(`${this.baseUrl}/domains`, {
-        method: 'GET',
+        method: "GET",
         headers: {
-          'Authorization': `Bearer ${apiKey}`,
+          Authorization: `Bearer ${apiKey}`,
         },
       });
 
@@ -230,7 +233,7 @@ export class ResendVerificationService {
         configured: true,
       };
     } catch (error) {
-      this.logger.error('Resend configuration validation failed:', error);
+      this.logger.error("Resend configuration validation failed:", error);
       return {
         configured: false,
         error: error.message,
@@ -241,7 +244,10 @@ export class ResendVerificationService {
   /**
    * Check if domain can send emails through Resend
    */
-  async canSendEmails(domain: string, apiKey: string): Promise<{
+  async canSendEmails(
+    domain: string,
+    apiKey: string,
+  ): Promise<{
     canSend: boolean;
     reason?: string;
     verificationStatus?: string;
@@ -252,7 +258,7 @@ export class ResendVerificationService {
       if (!verificationResult.verified) {
         return {
           canSend: false,
-          reason: 'Domain not verified with Resend',
+          reason: "Domain not verified with Resend",
           verificationStatus: verificationResult.status,
         };
       }
@@ -272,13 +278,16 @@ export class ResendVerificationService {
   /**
    * Generate DNS instructions for domain verification
    */
-  generateDomainVerificationInstructions(domain: string, dnsRecords: Array<{
-    record: string;
-    name: string;
-    type: string;
-    value: string;
-    priority?: number;
-  }>): {
+  generateDomainVerificationInstructions(
+    domain: string,
+    dnsRecords: Array<{
+      record: string;
+      name: string;
+      type: string;
+      value: string;
+      priority?: number;
+    }>,
+  ): {
     domain: string;
     instructions: Array<{
       recordType: string;
@@ -288,7 +297,7 @@ export class ResendVerificationService {
       priority?: number;
     }>;
   } {
-    const instructions = dnsRecords.map(record => ({
+    const instructions = dnsRecords.map((record) => ({
       recordType: record.type,
       name: record.name,
       value: record.value,

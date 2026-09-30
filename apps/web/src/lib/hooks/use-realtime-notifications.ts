@@ -1,11 +1,7 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
-import type { Notification } from '../types/notification';
-import type {
-  NotificationUpdate,
-  QueueStatus,
-  SystemHealth
-} from '../types/websocket';
-import { useWebSocketSubscription } from './use-websocket';
+import { useCallback, useEffect, useRef, useState } from "react";
+import type { Notification } from "../types/notification";
+import type { NotificationUpdate, QueueStatus, SystemHealth } from "../types/websocket";
+import { useWebSocketSubscription } from "./use-websocket";
 
 interface RealtimeNotificationState {
   notifications: Notification[];
@@ -34,69 +30,68 @@ interface UseRealtimeNotificationsReturn extends RealtimeNotificationState {
  * Hook for managing real-time notification updates
  */
 export function useRealtimeNotifications(
-  options: UseRealtimeNotificationsOptions = {}
+  options: UseRealtimeNotificationsOptions = {},
 ): UseRealtimeNotificationsReturn {
-  const {
-    enabled = true,
-    maxNotifications = 1000,
-    autoConnect = true
-  } = options;
+  const { enabled = true, maxNotifications = 1000, autoConnect = true } = options;
 
   const [state, setState] = useState<RealtimeNotificationState>({
     notifications: [],
     queueStatus: [],
     systemHealth: null,
     isConnected: false,
-    lastUpdate: null
+    lastUpdate: null,
   });
 
   const notificationsRef = useRef<Map<string, Notification>>(new Map());
 
   // Subscribe to notification updates
   const { isConnected: wsConnected } = useWebSocketSubscription(
-    'notifications',
-    useCallback((update: NotificationUpdate) => {
-      setState(prevState => {
-        const existingNotification = notificationsRef.current.get(update.id);
-        if (!existingNotification) {
-          console.warn('Received update for unknown notification:', update.id);
-          return prevState;
-        }
-
-        const updatedNotification: Notification = {
-          ...existingNotification,
-          status: update.status as any,
-          metadata: {
-            ...existingNotification.metadata,
-            ...update.metadata,
-            failureReason: update.failureReason,
-            deliveredAt: update.deliveredAt
+    "notifications",
+    useCallback(
+      (update: NotificationUpdate) => {
+        setState((prevState) => {
+          const existingNotification = notificationsRef.current.get(update.id);
+          if (!existingNotification) {
+            console.warn("Received update for unknown notification:", update.id);
+            return prevState;
           }
-        };
 
-        notificationsRef.current.set(update.id, updatedNotification);
+          const updatedNotification: Notification = {
+            ...existingNotification,
+            status: update.status as any,
+            metadata: {
+              ...existingNotification.metadata,
+              ...update.metadata,
+              failureReason: update.failureReason,
+              deliveredAt: update.deliveredAt,
+            },
+          };
 
-        const updatedNotifications = Array.from(notificationsRef.current.values())
-          .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-          .slice(0, maxNotifications);
+          notificationsRef.current.set(update.id, updatedNotification);
 
-        return {
-          ...prevState,
-          notifications: updatedNotifications,
-          lastUpdate: new Date()
-        };
-      });
-    }, [maxNotifications]),
-    { enabled: enabled && autoConnect }
+          const updatedNotifications = Array.from(notificationsRef.current.values())
+            .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+            .slice(0, maxNotifications);
+
+          return {
+            ...prevState,
+            notifications: updatedNotifications,
+            lastUpdate: new Date(),
+          };
+        });
+      },
+      [maxNotifications],
+    ),
+    { enabled: enabled && autoConnect },
   );
 
   // Subscribe to queue status updates
   useWebSocketSubscription(
-    'queue-status',
+    "queue-status",
     useCallback((queueUpdate: QueueStatus) => {
-      setState(prevState => {
+      setState((prevState) => {
         const existingQueueIndex = prevState.queueStatus.findIndex(
-          q => q.channel === queueUpdate.channel
+          (q) => q.channel === queueUpdate.channel,
         );
 
         let updatedQueueStatus: QueueStatus[];
@@ -110,94 +105,100 @@ export function useRealtimeNotifications(
         return {
           ...prevState,
           queueStatus: updatedQueueStatus,
-          lastUpdate: new Date()
+          lastUpdate: new Date(),
         };
       });
     }, []),
-    { enabled: enabled && autoConnect }
+    { enabled: enabled && autoConnect },
   );
 
   // Subscribe to system health updates
   useWebSocketSubscription(
-    'system-health',
+    "system-health",
     useCallback((healthUpdate: SystemHealth) => {
-      setState(prevState => ({
+      setState((prevState) => ({
         ...prevState,
         systemHealth: healthUpdate,
-        lastUpdate: new Date()
+        lastUpdate: new Date(),
       }));
     }, []),
-    { enabled: enabled && autoConnect }
+    { enabled: enabled && autoConnect },
   );
 
   // Update connection state
   useEffect(() => {
-    setState(prevState => ({
+    setState((prevState) => ({
       ...prevState,
-      isConnected: wsConnected
+      isConnected: wsConnected,
     }));
   }, [wsConnected]);
 
   // Notification management functions
-  const updateNotification = useCallback((update: NotificationUpdate) => {
-    const existingNotification = notificationsRef.current.get(update.id);
-    if (!existingNotification) return;
+  const updateNotification = useCallback(
+    (update: NotificationUpdate) => {
+      const existingNotification = notificationsRef.current.get(update.id);
+      if (!existingNotification) return;
 
-    const updatedNotification: Notification = {
-      ...existingNotification,
-      status: update.status as any,
-      metadata: {
-        ...existingNotification.metadata,
-        ...update.metadata,
-        failureReason: update.failureReason,
-        deliveredAt: update.deliveredAt
-      }
-    };
-
-    notificationsRef.current.set(update.id, updatedNotification);
-
-    setState(prevState => ({
-      ...prevState,
-      notifications: Array.from(notificationsRef.current.values())
-        .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-        .slice(0, maxNotifications),
-      lastUpdate: new Date()
-    }));
-  }, [maxNotifications]);
-
-  const addNotification = useCallback((notification: Notification) => {
-    notificationsRef.current.set(notification.id, notification);
-
-    setState(prevState => {
-      const updatedNotifications = Array.from(notificationsRef.current.values())
-        .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-        .slice(0, maxNotifications);
-
-      return {
-        ...prevState,
-        notifications: updatedNotifications,
-        lastUpdate: new Date()
+      const updatedNotification: Notification = {
+        ...existingNotification,
+        status: update.status as any,
+        metadata: {
+          ...existingNotification.metadata,
+          ...update.metadata,
+          failureReason: update.failureReason,
+          deliveredAt: update.deliveredAt,
+        },
       };
-    });
-  }, [maxNotifications]);
+
+      notificationsRef.current.set(update.id, updatedNotification);
+
+      setState((prevState) => ({
+        ...prevState,
+        notifications: Array.from(notificationsRef.current.values())
+          .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+          .slice(0, maxNotifications),
+        lastUpdate: new Date(),
+      }));
+    },
+    [maxNotifications],
+  );
+
+  const addNotification = useCallback(
+    (notification: Notification) => {
+      notificationsRef.current.set(notification.id, notification);
+
+      setState((prevState) => {
+        const updatedNotifications = Array.from(notificationsRef.current.values())
+          .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+          .slice(0, maxNotifications);
+
+        return {
+          ...prevState,
+          notifications: updatedNotifications,
+          lastUpdate: new Date(),
+        };
+      });
+    },
+    [maxNotifications],
+  );
 
   const removeNotification = useCallback((notificationId: string) => {
     notificationsRef.current.delete(notificationId);
 
-    setState(prevState => ({
+    setState((prevState) => ({
       ...prevState,
-      notifications: prevState.notifications.filter(n => n.id !== notificationId),
-      lastUpdate: new Date()
+      notifications: prevState.notifications.filter((n) => n.id !== notificationId),
+      lastUpdate: new Date(),
     }));
   }, []);
 
   const clearNotifications = useCallback(() => {
     notificationsRef.current.clear();
 
-    setState(prevState => ({
+    setState((prevState) => ({
       ...prevState,
       notifications: [],
-      lastUpdate: new Date()
+      lastUpdate: new Date(),
     }));
   }, []);
 
@@ -206,7 +207,7 @@ export function useRealtimeNotifications(
   }, []);
 
   const getNotificationsByStatus = useCallback((status: string): Notification[] => {
-    return Array.from(notificationsRef.current.values()).filter(n => n.status === status);
+    return Array.from(notificationsRef.current.values()).filter((n) => n.status === status);
   }, []);
 
   return {
@@ -216,7 +217,7 @@ export function useRealtimeNotifications(
     removeNotification,
     clearNotifications,
     getNotificationById,
-    getNotificationsByStatus
+    getNotificationsByStatus,
   };
 }
 
@@ -229,10 +230,10 @@ export function useNotificationQueueStatus(options: { enabled?: boolean } = {}) 
   const [isConnected, setIsConnected] = useState(false);
 
   const { isConnected: wsConnected } = useWebSocketSubscription(
-    'queue-status',
+    "queue-status",
     useCallback((queueUpdate: QueueStatus) => {
-      setQueueStatus(prevStatus => {
-        const existingIndex = prevStatus.findIndex(q => q.channel === queueUpdate.channel);
+      setQueueStatus((prevStatus) => {
+        const existingIndex = prevStatus.findIndex((q) => q.channel === queueUpdate.channel);
 
         if (existingIndex >= 0) {
           const updated = [...prevStatus];
@@ -243,7 +244,7 @@ export function useNotificationQueueStatus(options: { enabled?: boolean } = {}) 
         }
       });
     }, []),
-    { enabled }
+    { enabled },
   );
 
   useEffect(() => {
@@ -262,9 +263,12 @@ export function useNotificationQueueStatus(options: { enabled?: boolean } = {}) 
     return queueStatus.reduce((total, queue) => total + queue.failed, 0);
   }, [queueStatus]);
 
-  const getQueueByChannel = useCallback((channel: string) => {
-    return queueStatus.find(q => q.channel === channel);
-  }, [queueStatus]);
+  const getQueueByChannel = useCallback(
+    (channel: string) => {
+      return queueStatus.find((q) => q.channel === channel);
+    },
+    [queueStatus],
+  );
 
   const getAverageProcessingTime = useCallback(() => {
     if (queueStatus.length === 0) return 0;
@@ -280,7 +284,7 @@ export function useNotificationQueueStatus(options: { enabled?: boolean } = {}) 
     getTotalProcessing,
     getTotalFailed,
     getQueueByChannel,
-    getAverageProcessingTime
+    getAverageProcessingTime,
   };
 }
 
@@ -294,12 +298,12 @@ export function useSystemHealth(options: { enabled?: boolean } = {}) {
   const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
 
   const { isConnected: wsConnected } = useWebSocketSubscription(
-    'system-health',
+    "system-health",
     useCallback((healthUpdate: SystemHealth) => {
       setSystemHealth(healthUpdate);
       setLastUpdate(new Date());
     }, []),
-    { enabled }
+    { enabled },
   );
 
   useEffect(() => {
@@ -307,20 +311,23 @@ export function useSystemHealth(options: { enabled?: boolean } = {}) {
   }, [wsConnected]);
 
   const isHealthy = useCallback(() => {
-    return systemHealth?.status === 'healthy';
+    return systemHealth?.status === "healthy";
   }, [systemHealth]);
 
   const isDegraded = useCallback(() => {
-    return systemHealth?.status === 'degraded';
+    return systemHealth?.status === "degraded";
   }, [systemHealth]);
 
   const isDown = useCallback(() => {
-    return systemHealth?.status === 'down';
+    return systemHealth?.status === "down";
   }, [systemHealth]);
 
-  const getServiceStatus = useCallback((serviceName: string) => {
-    return systemHealth?.services[serviceName as keyof typeof systemHealth.services];
-  }, [systemHealth]);
+  const getServiceStatus = useCallback(
+    (serviceName: string) => {
+      return systemHealth?.services[serviceName as keyof typeof systemHealth.services];
+    },
+    [systemHealth],
+  );
 
   const getMetrics = useCallback(() => {
     return systemHealth?.metrics;
@@ -334,6 +341,6 @@ export function useSystemHealth(options: { enabled?: boolean } = {}) {
     isDegraded,
     isDown,
     getServiceStatus,
-    getMetrics
+    getMetrics,
   };
 }

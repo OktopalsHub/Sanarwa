@@ -1,13 +1,20 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { providerApi } from '@/lib/api/provider';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { ArrowPathIcon, CheckCircleIcon, ExclamationTriangleIcon, ClockIcon, SignalIcon, XCircleIcon } from '@heroicons/react/24/outline'
-import { toast } from 'sonner';
+import { useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { providerApi } from "@/lib/api/provider";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import {
+  ArrowPathIcon,
+  CheckCircleIcon,
+  ExclamationTriangleIcon,
+  ClockIcon,
+  SignalIcon,
+  XCircleIcon,
+} from "@heroicons/react/24/outline";
+import { toast } from "sonner";
 
 interface ProviderHealthCheckProps {
   providerId: string;
@@ -18,23 +25,24 @@ export function ProviderHealthCheck({ providerId }: ProviderHealthCheckProps) {
   const [isChecking, setIsChecking] = useState(false);
 
   const { data: healthStatus, isLoading } = useQuery({
-    queryKey: ['provider-health', providerId],
+    queryKey: ["provider-health", providerId],
     queryFn: () => providerApi.checkProviderHealth(providerId),
     refetchInterval: 30000, // Refresh every 30 seconds
   });
 
   const { data: healthHistory } = useQuery({
-    queryKey: ['provider-health-history', providerId],
-    queryFn: () => providerApi.getProviderHealthHistory(providerId, {
-      limit: 10,
-    }),
+    queryKey: ["provider-health-history", providerId],
+    queryFn: () =>
+      providerApi.getProviderHealthHistory(providerId, {
+        limit: 10,
+      }),
   });
 
   const triggerHealthCheckMutation = useMutation({
     mutationFn: () => providerApi.triggerHealthCheck(providerId),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['provider-health', providerId] });
-      toast.success('Health check completed');
+      queryClient.invalidateQueries({ queryKey: ["provider-health", providerId] });
+      toast.success("Health check completed");
     },
     onError: (error: any) => {
       toast.error(`Health check failed: ${error.message}`);
@@ -51,11 +59,11 @@ export function ProviderHealthCheck({ providerId }: ProviderHealthCheckProps) {
 
   const getHealthIcon = (status: string) => {
     switch (status) {
-      case 'healthy':
+      case "healthy":
         return <CheckCircleIcon className="h-5 w-5 text-green-500" />;
-      case 'degraded':
+      case "degraded":
         return <ExclamationTriangleIcon className="h-5 w-5 text-yellow-500" />;
-      case 'unhealthy':
+      case "unhealthy":
         return <XCircleIcon className="h-5 w-5 text-red-500" />;
       default:
         return <ClockIcon className="h-5 w-5 text-gray-500" />;
@@ -64,14 +72,14 @@ export function ProviderHealthCheck({ providerId }: ProviderHealthCheckProps) {
 
   const getHealthColor = (status: string) => {
     switch (status) {
-      case 'healthy':
-        return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300';
-      case 'degraded':
-        return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300';
-      case 'unhealthy':
-        return 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300';
+      case "healthy":
+        return "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300";
+      case "degraded":
+        return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300";
+      case "unhealthy":
+        return "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300";
       default:
-        return 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300';
+        return "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300";
     }
   };
 
@@ -104,14 +112,9 @@ export function ProviderHealthCheck({ providerId }: ProviderHealthCheckProps) {
             Monitor the health and availability of this provider
           </p>
         </div>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={handleManualHealthCheck}
-          disabled={isChecking}
-        >
-          <ArrowPathIcon className={`h-4 w-4 mr-2 ${isChecking ? 'animate-spin' : ''}`} />
-          {isChecking ? 'Checking...' : 'Check Now'}
+        <Button variant="outline" size="sm" onClick={handleManualHealthCheck} disabled={isChecking}>
+          <ArrowPathIcon className={`h-4 w-4 mr-2 ${isChecking ? "animate-spin" : ""}`} />
+          {isChecking ? "Checking..." : "Check Now"}
         </Button>
       </div>
 
@@ -130,9 +133,7 @@ export function ProviderHealthCheck({ providerId }: ProviderHealthCheckProps) {
           <CardContent className="space-y-4">
             <div className="flex items-center justify-between">
               <span className="font-medium">Overall Status</span>
-              <Badge className={getHealthColor(healthStatus.status)}>
-                {healthStatus.status}
-              </Badge>
+              <Badge className={getHealthColor(healthStatus.status)}>{healthStatus.status}</Badge>
             </div>
 
             {healthStatus.responseTime && (
@@ -154,13 +155,20 @@ export function ProviderHealthCheck({ providerId }: ProviderHealthCheckProps) {
                 <span className="font-medium">Health Checks</span>
                 <div className="space-y-2">
                   {Object.entries(healthStatus.details).map(([check, result]) => (
-                    <div key={check} className="flex items-center justify-between p-2 border rounded">
-                      <span className="text-sm capitalize">{check.replace(/([A-Z])/g, ' $1').trim()}</span>
+                    <div
+                      key={check}
+                      className="flex items-center justify-between p-2 border rounded"
+                    >
+                      <span className="text-sm capitalize">
+                        {check.replace(/([A-Z])/g, " $1").trim()}
+                      </span>
                       <div className="flex items-center gap-2">
-                        {typeof result === 'object' && result !== null ? (
+                        {typeof result === "object" && result !== null ? (
                           <>
                             {getHealthIcon((result as any).status)}
-                            <span className="text-sm">{(result as any).message || (result as any).status}</span>
+                            <span className="text-sm">
+                              {(result as any).message || (result as any).status}
+                            </span>
                           </>
                         ) : (
                           <span className="text-sm">{String(result)}</span>
@@ -179,15 +187,16 @@ export function ProviderHealthCheck({ providerId }: ProviderHealthCheckProps) {
       <Card>
         <CardHeader>
           <CardTitle>Health History</CardTitle>
-          <CardDescription>
-            Recent health check results for this provider
-          </CardDescription>
+          <CardDescription>Recent health check results for this provider</CardDescription>
         </CardHeader>
         <CardContent>
           {healthHistory && healthHistory.length > 0 ? (
             <div className="space-y-3">
               {healthHistory.map((check, index) => (
-                <div key={index} className="flex items-center justify-between p-3 border rounded-lg">
+                <div
+                  key={index}
+                  className="flex items-center justify-between p-3 border rounded-lg"
+                >
                   <div className="flex items-center gap-3">
                     {getHealthIcon(check.status)}
                     <div>
@@ -198,9 +207,7 @@ export function ProviderHealthCheck({ providerId }: ProviderHealthCheckProps) {
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
-                    <Badge className={getHealthColor(check.status)}>
-                      {check.status}
-                    </Badge>
+                    <Badge className={getHealthColor(check.status)}>{check.status}</Badge>
                     {check.responseTime && (
                       <span className="text-sm text-muted-foreground">
                         {formatDuration(check.responseTime)}

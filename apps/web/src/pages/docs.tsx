@@ -1,22 +1,26 @@
-import { Send } from '@/lib/icons';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowRightIcon, BoltIcon, BookOpenIcon, CodeBracketIcon } from '@heroicons/react/24/outline'
+import { Send } from "@/lib/icons";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  ArrowRightIcon,
+  BoltIcon,
+  BookOpenIcon,
+  CodeBracketIcon,
+} from "@heroicons/react/24/outline";
 
-import Link from '@/compat/next-link';
+import Link from "@/compat/next-link";
 
 export default function DocsPage() {
   return (
     <div className="space-y-8">
       {/* Hero Section */}
       <div className="space-y-4">
-        <h1 className="text-4xl font-bold tracking-tight">
-          Notifi Documentation
-        </h1>
+        <h1 className="text-4xl font-bold tracking-tight">Notifi Documentation</h1>
         <p className="text-xl text-muted-foreground max-w-3xl">
-          Everything you need to integrate multi-channel communication into your application.
-          Send emails, SMS, push notifications, in-app messages, and voice calls with our powerful APIs and SDKs.
+          Everything you need to integrate multi-channel communication into your application. Send
+          emails, SMS, push notifications, in-app messages, and voice calls with our powerful APIs
+          and SDKs.
         </p>
       </div>
 
@@ -28,9 +32,7 @@ export default function DocsPage() {
               <BookOpenIcon className="h-5 w-5 text-primary" />
               <CardTitle className="text-lg">Quick Start</CardTitle>
             </div>
-            <CardDescription>
-              Get up and running with Notifi in under 5 minutes
-            </CardDescription>
+            <CardDescription>Get up and running with Notifi in under 5 minutes</CardDescription>
           </CardHeader>
           <CardContent>
             <Link href="/docs/quick-start">
@@ -48,9 +50,7 @@ export default function DocsPage() {
               <CodeBracketIcon className="h-5 w-5 text-primary" />
               <CardTitle className="text-lg">SDK Guides</CardTitle>
             </div>
-            <CardDescription>
-              Language-specific integration guides and examples
-            </CardDescription>
+            <CardDescription>Language-specific integration guides and examples</CardDescription>
           </CardHeader>
           <CardContent>
             <Link href="/docs/sdks/javascript">
@@ -68,9 +68,7 @@ export default function DocsPage() {
               <BoltIcon className="h-5 w-5 text-primary" />
               <CardTitle className="text-lg">API Reference</CardTitle>
             </div>
-            <CardDescription>
-              Complete API documentation with interactive examples
-            </CardDescription>
+            <CardDescription>Complete API documentation with interactive examples</CardDescription>
           </CardHeader>
           <CardContent>
             <Link href="/docs/api">
@@ -158,19 +156,23 @@ export default function DocsPage() {
         <h2 className="text-2xl font-semibold">Supported Languages</h2>
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {[
-            { name: 'JavaScript/Node.js', href: '/docs/sdks/javascript', popular: true },
-            { name: 'Python', href: '/docs/sdks/python', popular: true },
-            { name: 'PHP', href: '/docs/sdks/php' },
-            { name: 'Java', href: '/docs/sdks/java' },
-            { name: 'Go', href: '/docs/sdks/go' },
-            { name: '.NET', href: '/docs/sdks/dotnet' },
+            { name: "JavaScript/Node.js", href: "/docs/sdks/javascript", popular: true },
+            { name: "Python", href: "/docs/sdks/python", popular: true },
+            { name: "PHP", href: "/docs/sdks/php" },
+            { name: "Java", href: "/docs/sdks/java" },
+            { name: "Go", href: "/docs/sdks/go" },
+            { name: ".NET", href: "/docs/sdks/dotnet" },
           ].map((sdk) => (
             <Link key={sdk.name} href={sdk.href} className="group">
               <div className="flex items-center justify-between p-3 rounded-lg border hover:bg-accent transition-colors">
                 <span className="font-medium group-hover:text-primary transition-colors">
                   {sdk.name}
                 </span>
-                {sdk.popular && <Badge variant="outline" className="text-xs">Popular</Badge>}
+                {sdk.popular && (
+                  <Badge variant="outline" className="text-xs">
+                    Popular
+                  </Badge>
+                )}
               </div>
             </Link>
           ))}
@@ -182,11 +184,11 @@ export default function DocsPage() {
         <h2 className="text-2xl font-semibold">Communication Channels</h2>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
           {[
-            { name: 'Email', href: '/docs/channels/email', icon: '📧' },
-            { name: 'SMS', href: '/docs/channels/sms', icon: '💬' },
-            { name: 'Push', href: '/docs/channels/push', icon: '🔔' },
-            { name: 'In-App', href: '/docs/channels/in-app', icon: '📱' },
-            { name: 'Voice', href: '/docs/channels/voice', icon: '📞' },
+            { name: "Email", href: "/docs/channels/email", icon: "📧" },
+            { name: "SMS", href: "/docs/channels/sms", icon: "💬" },
+            { name: "Push", href: "/docs/channels/push", icon: "🔔" },
+            { name: "In-App", href: "/docs/channels/in-app", icon: "📱" },
+            { name: "Voice", href: "/docs/channels/voice", icon: "📞" },
           ].map((channel) => (
             <Link key={channel.name} href={channel.href} className="group">
               <Card className="text-center hover:shadow-md transition-shadow">

@@ -1,44 +1,48 @@
-'use client';
+"use client";
 
-import { Bell, Mail, MessageCircle, MessageSquare, Phone, Send, Target, Users } from '@/lib/icons';
+import { CHANNEL_ICONS } from "../campaign-status";
 
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import type { CampaignWizardData } from '@/lib/types/campaign';
-import { ExclamationCircleIcon, BellIcon, CalendarIcon, CheckCircleIcon, PencilIcon, DocumentTextIcon, InformationCircleIcon, EnvelopeIcon, ChatBubbleLeftRightIcon, PhoneIcon, UsersIcon } from '@heroicons/react/24/outline'
-import React from 'react';
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import type { CampaignWizardData } from "@/lib/types/campaign";
+import {
+  ExclamationCircleIcon,
+  BellIcon,
+  CalendarIcon,
+  CheckCircleIcon,
+  PencilIcon,
+  DocumentTextIcon,
+  InformationCircleIcon,
+  EnvelopeIcon,
+  ChatBubbleLeftRightIcon,
+  PhoneIcon,
+  UsersIcon,
+} from "@heroicons/react/24/outline";
+import React from "react";
 
 interface ReviewStepProps {
-  data: CampaignWizardData['data'];
+  data: CampaignWizardData["data"];
   onUpdate: (data: any) => void;
 }
 
-const CHANNEL_ICONS = {
-  email: Mail,
-  sms: MessageSquare,
-  push: Bell,
-  in_app: MessageCircle,
-  voice: Phone,
-};
-
 const CAMPAIGN_TYPE_LABELS = {
-  one_time: 'One-time Campaign',
-  recurring: 'Recurring Campaign',
-  triggered: 'Triggered Campaign',
-  drip: 'Drip Campaign',
+  one_time: "One-time Campaign",
+  recurring: "Recurring Campaign",
+  triggered: "Triggered Campaign",
+  drip: "Drip Campaign",
 };
 
 const AUDIENCE_TYPE_LABELS = {
-  all: 'All Users',
-  segment: 'Saved Segments',
-  custom: 'Custom Filters',
+  all: "All Users",
+  segment: "Saved Segments",
+  custom: "Custom Filters",
 };
 
 const SCHEDULE_TYPE_LABELS = {
-  immediate: 'Send Immediately',
-  scheduled: 'Scheduled',
-  recurring: 'Recurring',
+  immediate: "Send Immediately",
+  scheduled: "Scheduled",
+  recurring: "Recurring",
 };
 
 export function ReviewStep({ data }: ReviewStepProps) {
@@ -47,76 +51,76 @@ export function ReviewStep({ data }: ReviewStepProps) {
   const getValidationIssues = () => {
     const issues = [];
 
-    if (!basic?.name) issues.push('Campaign name is required');
-    if (!basic?.type) issues.push('Campaign type is required');
-    if (!channels?.selectedChannels?.length) issues.push('At least one channel must be selected');
-    if (!audience?.type) issues.push('Audience targeting is required');
-    if (!schedule?.type) issues.push('Schedule configuration is required');
+    if (!basic?.name) issues.push("Campaign name is required");
+    if (!basic?.type) issues.push("Campaign type is required");
+    if (!channels?.selectedChannels?.length) issues.push("At least one channel must be selected");
+    if (!audience?.type) issues.push("Audience targeting is required");
+    if (!schedule?.type) issues.push("Schedule configuration is required");
 
-    if (schedule?.type === 'scheduled' && !schedule?.scheduledAt) {
-      issues.push('Scheduled date and time is required');
+    if (schedule?.type === "scheduled" && !schedule?.scheduledAt) {
+      issues.push("Scheduled date and time is required");
     }
 
-    if (schedule?.type === 'recurring' && !schedule?.recurring) {
-      issues.push('Recurring configuration is required');
+    if (schedule?.type === "recurring" && !schedule?.recurring) {
+      issues.push("Recurring configuration is required");
     }
 
     return issues;
   };
 
   const formatScheduleDisplay = () => {
-    if (!schedule) return 'Not configured';
+    if (!schedule) return "Not configured";
 
-    if (schedule.type === 'immediate') {
-      return 'Send immediately after creation';
+    if (schedule.type === "immediate") {
+      return "Send immediately after creation";
     }
 
-    if (schedule.type === 'scheduled' && schedule.scheduledAt) {
+    if (schedule.type === "scheduled" && schedule.scheduledAt) {
       const date = new Date(schedule.scheduledAt);
-      return `${date.toLocaleDateString()} at ${date.toLocaleTimeString()} (${schedule.timezone || 'UTC'})`;
+      return `${date.toLocaleDateString()} at ${date.toLocaleTimeString()} (${schedule.timezone || "UTC"})`;
     }
 
-    if (schedule.type === 'recurring' && schedule.recurring) {
+    if (schedule.type === "recurring" && schedule.recurring) {
       const { frequency, interval, daysOfWeek } = schedule.recurring;
 
-      if (frequency === 'daily') {
-        return `Every ${interval === 1 ? 'day' : `${interval} days`}`;
+      if (frequency === "daily") {
+        return `Every ${interval === 1 ? "day" : `${interval} days`}`;
       }
 
-      if (frequency === 'weekly' && daysOfWeek) {
-        const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-        const days = daysOfWeek.map(d => dayNames[d]).join(', ');
-        return `Every ${interval === 1 ? 'week' : `${interval} weeks`} on ${days}`;
+      if (frequency === "weekly" && daysOfWeek) {
+        const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+        const days = daysOfWeek.map((d) => dayNames[d]).join(", ");
+        return `Every ${interval === 1 ? "week" : `${interval} weeks`} on ${days}`;
       }
 
-      if (frequency === 'monthly') {
-        return `Every ${interval === 1 ? 'month' : `${interval} months`}`;
+      if (frequency === "monthly") {
+        return `Every ${interval === 1 ? "month" : `${interval} months`}`;
       }
 
-      if (frequency === 'yearly') {
-        return `Every ${interval === 1 ? 'year' : `${interval} years`}`;
+      if (frequency === "yearly") {
+        return `Every ${interval === 1 ? "year" : `${interval} years`}`;
       }
     }
 
-    return 'Configuration incomplete';
+    return "Configuration incomplete";
   };
 
   const formatAudienceDisplay = () => {
-    if (!audience) return 'Not configured';
+    if (!audience) return "Not configured";
 
-    if (audience.type === 'all') {
-      return 'All users in your database';
+    if (audience.type === "all") {
+      return "All users in your database";
     }
 
-    if (audience.type === 'segment' && audience.segmentIds) {
-      return `${audience.segmentIds.length} saved segment${audience.segmentIds.length > 1 ? 's' : ''}`;
+    if (audience.type === "segment" && audience.segmentIds) {
+      return `${audience.segmentIds.length} saved segment${audience.segmentIds.length > 1 ? "s" : ""}`;
     }
 
-    if (audience.type === 'custom' && audience.customFilters) {
-      return `${audience.customFilters.length} custom filter${audience.customFilters.length > 1 ? 's' : ''}`;
+    if (audience.type === "custom" && audience.customFilters) {
+      return `${audience.customFilters.length} custom filter${audience.customFilters.length > 1 ? "s" : ""}`;
     }
 
-    return 'Configuration incomplete';
+    return "Configuration incomplete";
   };
 
   const validationIssues = getValidationIssues();
@@ -150,9 +154,7 @@ export function ReviewStep({ data }: ReviewStepProps) {
             <div className="flex items-center gap-3">
               <CheckCircleIcon className="w-5 h-5 text-green-600 dark:text-green-400" />
               <div>
-                <h4 className="font-medium text-green-700 dark:text-green-400">
-                  Ready to Launch
-                </h4>
+                <h4 className="font-medium text-green-700 dark:text-green-400">Ready to Launch</h4>
                 <p className="text-sm text-green-600 dark:text-green-500">
                   Your campaign is properly configured and ready to be created.
                 </p>
@@ -174,13 +176,13 @@ export function ReviewStep({ data }: ReviewStepProps) {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
               <Label className="text-sm font-medium text-muted-foreground">Campaign Name</Label>
-              <p className="text-lg font-medium">{basic?.name || 'Not set'}</p>
+              <p className="text-lg font-medium">{basic?.name || "Not set"}</p>
             </div>
 
             <div>
               <Label className="text-sm font-medium text-muted-foreground">Campaign Type</Label>
               <p className="text-lg font-medium">
-                {basic?.type ? CAMPAIGN_TYPE_LABELS[basic.type] : 'Not set'}
+                {basic?.type ? CAMPAIGN_TYPE_LABELS[basic.type] : "Not set"}
               </p>
             </div>
           </div>
@@ -224,7 +226,9 @@ export function ReviewStep({ data }: ReviewStepProps) {
                   <div className="text-sm text-muted-foreground space-y-1">
                     {Object.entries(config).map(([key, value]) => (
                       <div key={key} className="flex justify-between">
-                        <span className="capitalize">{key.replace(/([A-Z])/g, ' $1').toLowerCase()}:</span>
+                        <span className="capitalize">
+                          {key.replace(/([A-Z])/g, " $1").toLowerCase()}:
+                        </span>
                         <span>{String(value)}</span>
                       </div>
                     ))}
@@ -250,11 +254,9 @@ export function ReviewStep({ data }: ReviewStepProps) {
           <div>
             <Label className="text-sm font-medium text-muted-foreground">Audience Type</Label>
             <p className="font-medium">
-              {audience?.type ? AUDIENCE_TYPE_LABELS[audience.type] : 'Not configured'}
+              {audience?.type ? AUDIENCE_TYPE_LABELS[audience.type] : "Not configured"}
             </p>
-            <p className="text-sm text-muted-foreground mt-1">
-              {formatAudienceDisplay()}
-            </p>
+            <p className="text-sm text-muted-foreground mt-1">{formatAudienceDisplay()}</p>
           </div>
 
           {audience?.estimatedSize && (
@@ -266,7 +268,7 @@ export function ReviewStep({ data }: ReviewStepProps) {
             </div>
           )}
 
-          {audience?.type === 'custom' && audience.customFilters && (
+          {audience?.type === "custom" && audience.customFilters && (
             <div>
               <Label className="text-sm font-medium text-muted-foreground">Custom Filters</Label>
               <div className="space-y-2 mt-2">
@@ -295,7 +297,7 @@ export function ReviewStep({ data }: ReviewStepProps) {
           <div>
             <Label className="text-sm font-medium text-muted-foreground">Schedule Type</Label>
             <p className="font-medium">
-              {schedule?.type ? SCHEDULE_TYPE_LABELS[schedule.type] : 'Not configured'}
+              {schedule?.type ? SCHEDULE_TYPE_LABELS[schedule.type] : "Not configured"}
             </p>
           </div>
 
@@ -325,7 +327,10 @@ export function ReviewStep({ data }: ReviewStepProps) {
           {templates && templates.length > 0 ? (
             <div className="space-y-3">
               {templates.map((template, index) => (
-                <div key={index} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
+                <div
+                  key={index}
+                  className="flex items-center justify-between p-3 bg-muted/50 rounded-lg"
+                >
                   <div className="flex items-center gap-3">
                     {React.createElement(CHANNEL_ICONS[template.channel], { className: "w-4 h-4" })}
                     <div>
@@ -361,7 +366,9 @@ export function ReviewStep({ data }: ReviewStepProps) {
                 Before You Launch
               </h4>
               <ul className="space-y-1 text-blue-600 dark:text-blue-500">
-                <li>• Double-check your audience targeting to ensure you're reaching the right users</li>
+                <li>
+                  • Double-check your audience targeting to ensure you're reaching the right users
+                </li>
                 <li>• Verify your schedule settings, especially timezone configurations</li>
                 <li>• You can save as draft to make changes later, or launch immediately</li>
                 <li>• Templates can be selected and configured after campaign creation</li>
@@ -376,7 +383,7 @@ export function ReviewStep({ data }: ReviewStepProps) {
 
 function Label({ className, children, ...props }: React.ComponentProps<"label">) {
   return (
-    <label className={`text-sm font-medium ${className || ''}`} {...props}>
+    <label className={`text-sm font-medium ${className || ""}`} {...props}>
       {children}
     </label>
   );

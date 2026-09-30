@@ -1,15 +1,20 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { EventEmitter2, OnEvent } from '@nestjs/event-emitter';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { Message, MessageChannel, MessageStatus, MessagePriority } from '../../messaging/message.entity';
-import { MessageDelivery, MessageDeliveryStatus } from '../../messaging/message-delivery.entity';
-import { SmartSMSRouterService } from './smart-sms-router.service';
-import { TwilioProvider } from '../providers/sms/providers/twilio.provider';
-import { TermiiProvider } from '../providers/sms/providers/termii.provider';
-import { TelnyxProvider } from '../providers/sms/providers/telnyx.provider';
-import { InfobipProvider } from '../providers/sms/providers/infobip.provider';
-import { InboundSMSPayload, SMSStatusPayload } from '../controllers/sms-webhook.controller';
+import { Injectable, Logger } from "@nestjs/common";
+import { EventEmitter2, OnEvent } from "@nestjs/event-emitter";
+import { InjectRepository } from "@nestjs/typeorm";
+import { Repository } from "typeorm";
+import {
+  Message,
+  MessageChannel,
+  MessageStatus,
+  MessagePriority,
+} from "../../messaging/message.entity";
+import { MessageDelivery, MessageDeliveryStatus } from "../../messaging/message-delivery.entity";
+import { SmartSMSRouterService } from "./smart-sms-router.service";
+import { TwilioProvider } from "../providers/sms/providers/twilio.provider";
+import { TermiiProvider } from "../providers/sms/providers/termii.provider";
+import { TelnyxProvider } from "../providers/sms/providers/telnyx.provider";
+import { InfobipProvider } from "../providers/sms/providers/infobip.provider";
+import { InboundSMSPayload, SMSStatusPayload } from "../controllers/sms-webhook.controller";
 
 export interface OutboundSMSRequest {
   to: string;
@@ -43,7 +48,7 @@ export class SMSService {
     private readonly telnyxProvider: TelnyxProvider,
     private readonly infobipProvider: InfobipProvider,
     private readonly eventEmitter: EventEmitter2,
-  ) { }
+  ) {}
 
   /**
    * Send outbound SMS using smart routing
@@ -57,7 +62,7 @@ export class SMSService {
       const routingResult = await this.smartRouter.selectProvider(request.to, preferredProvider);
 
       this.logger.log(
-        `Routing SMS to ${request.to} via ${routingResult.providerId} (${routingResult.region})${preferredProvider ? ' [conversation continuity]' : ''}`
+        `Routing SMS to ${request.to} via ${routingResult.providerId} (${routingResult.region})${preferredProvider ? " [conversation continuity]" : ""}`,
       );
 
       // Get provider instance
@@ -75,14 +80,14 @@ export class SMSService {
       });
 
       if (!result.success) {
-        throw new Error(result.error || 'SMS sending failed');
+        throw new Error(result.error || "SMS sending failed");
       }
 
       // Store message record
       const message = await this.storeOutboundMessage(request, result, routingResult);
 
       // Emit success event
-      this.eventEmitter.emit('sms.outbound.sent', {
+      this.eventEmitter.emit("sms.outbound.sent", {
         messageId: result.messageId,
         tenantId: request.tenantId,
         provider: routingResult.providerId,
@@ -100,7 +105,7 @@ export class SMSService {
       this.logger.error(`Failed to send SMS: ${error.message}`, error.stack);
 
       // Emit failure event
-      this.eventEmitter.emit('sms.outbound.failed', {
+      this.eventEmitter.emit("sms.outbound.failed", {
         tenantId: request.tenantId,
         recipient: request.to,
         error: error.message,
@@ -141,13 +146,15 @@ export class SMSService {
       });
 
       const batchResults = await Promise.allSettled(batchPromises);
-      results.push(...batchResults.map(r =>
-        r.status === 'fulfilled' ? r.value : { success: false, error: 'Promise rejected' }
-      ));
+      results.push(
+        ...batchResults.map((r) =>
+          r.status === "fulfilled" ? r.value : { success: false, error: "Promise rejected" },
+        ),
+      );
 
       // Small delay between batches
       if (i + batchSize < requests.length) {
-        await new Promise(resolve => setTimeout(resolve, 100));
+        await new Promise((resolve) => setTimeout(resolve, 100));
       }
     }
 
@@ -159,7 +166,7 @@ export class SMSService {
   /**
    * Handle inbound SMS messages
    */
-  @OnEvent('sms.inbound.received')
+  @OnEvent("sms.inbound.received")
   async handleInboundSMS(payload: InboundSMSPayload): Promise<void> {
     try {
       this.logger.log(`Processing inbound SMS from ${payload.from} via ${payload.provider}`);
@@ -171,7 +178,7 @@ export class SMSService {
       await this.routeReplyToOriginalProvider(payload);
 
       // Emit event for application logic to handle
-      this.eventEmitter.emit('sms.inbound.processed', {
+      this.eventEmitter.emit("sms.inbound.processed", {
         messageId: payload.messageId,
         from: payload.from,
         to: payload.to,
@@ -184,7 +191,6 @@ export class SMSService {
 
       // Auto-reply logic can be implemented here
       await this.processAutoReply(payload);
-
     } catch (error) {
       this.logger.error(`Failed to process inbound SMS: ${error.message}`, error.stack);
     }
@@ -193,7 +199,7 @@ export class SMSService {
   /**
    * Handle SMS status updates
    */
-  @OnEvent('sms.status.updated')
+  @OnEvent("sms.status.updated")
   async handleSMSStatusUpdate(payload: SMSStatusPayload): Promise<void> {
     try {
       this.logger.log(`Processing SMS status update: ${payload.messageId} -> ${payload.status}`);
@@ -202,7 +208,7 @@ export class SMSService {
       await this.updateMessageDeliveryStatus(payload);
 
       // Emit event for analytics and webhooks
-      this.eventEmitter.emit('sms.status.processed', {
+      this.eventEmitter.emit("sms.status.processed", {
         messageId: payload.messageId,
         status: payload.status,
         provider: payload.provider,
@@ -210,7 +216,6 @@ export class SMSService {
         errorCode: payload.errorCode,
         errorMessage: payload.errorMessage,
       });
-
     } catch (error) {
       this.logger.error(`Failed to process SMS status update: ${error.message}`, error.stack);
     }
@@ -219,7 +224,11 @@ export class SMSService {
   /**
    * Get SMS analytics for a tenant
    */
-  async getSMSAnalytics(tenantId: string, startDate: Date, endDate: Date): Promise<{
+  async getSMSAnalytics(
+    tenantId: string,
+    startDate: Date,
+    endDate: Date,
+  ): Promise<{
     totalSent: number;
     totalReceived: number;
     deliveryRate: number;
@@ -228,12 +237,12 @@ export class SMSService {
     countryBreakdown: Record<string, number>;
   }> {
     const queryBuilder = this.messageRepository
-      .createQueryBuilder('message')
-      .leftJoinAndSelect('message.deliveries', 'delivery')
-      .where('message.tenantId = :tenantId', { tenantId })
-      .andWhere('message.channels @> :channels', { channels: JSON.stringify([MessageChannel.SMS]) })
-      .andWhere('message.createdAt >= :startDate', { startDate })
-      .andWhere('message.createdAt <= :endDate', { endDate });
+      .createQueryBuilder("message")
+      .leftJoinAndSelect("message.deliveries", "delivery")
+      .where("message.tenantId = :tenantId", { tenantId })
+      .andWhere("message.channels @> :channels", { channels: JSON.stringify([MessageChannel.SMS]) })
+      .andWhere("message.createdAt >= :startDate", { startDate })
+      .andWhere("message.createdAt <= :endDate", { endDate });
 
     const messages = await queryBuilder.getMany();
 
@@ -245,7 +254,7 @@ export class SMSService {
     const countryBreakdown: Record<string, number> = {};
 
     for (const message of messages) {
-      const isInbound = message.metadata?.direction === 'inbound';
+      const isInbound = message.metadata?.direction === "inbound";
 
       if (isInbound) {
         totalReceived++;
@@ -257,7 +266,7 @@ export class SMSService {
         totalCost += cost;
 
         // Provider breakdown
-        const provider = message.metadata?.provider || 'unknown';
+        const provider = message.metadata?.provider || "unknown";
         providerBreakdown[provider] = (providerBreakdown[provider] || 0) + 1;
 
         // Country breakdown (extract from phone number)
@@ -293,10 +302,10 @@ export class SMSService {
    */
   private getProviderInstance(providerId: string): any {
     const providers = {
-      'twilio': this.twilioProvider,
-      'termii': this.termiiProvider,
-      'telnyx': this.telnyxProvider,
-      'infobip': this.infobipProvider,
+      twilio: this.twilioProvider,
+      termii: this.termiiProvider,
+      telnyx: this.telnyxProvider,
+      infobip: this.infobipProvider,
     };
 
     return providers[providerId];
@@ -308,17 +317,19 @@ export class SMSService {
   private async storeOutboundMessage(
     request: OutboundSMSRequest,
     result: any,
-    routing: any
+    routing: any,
   ): Promise<Message> {
     const message = this.messageRepository.create({
       tenantId: request.tenantId,
       channels: [MessageChannel.SMS],
-      recipients: [{
-        id: `sms_${Date.now()}`,
-        phone: request.to,
-        userId: request.userId,
-        metadata: request.metadata,
-      }],
+      recipients: [
+        {
+          id: `sms_${Date.now()}`,
+          phone: request.to,
+          userId: request.userId,
+          metadata: request.metadata,
+        },
+      ],
       data: {
         message: request.message,
         from: request.from,
@@ -332,7 +343,7 @@ export class SMSService {
         provider: routing.providerId,
         providerMessageId: result.messageId,
         cost: routing.costPerSMS,
-        direction: 'outbound',
+        direction: "outbound",
         conversationId: this.generateConversationId(request.to, routing.providerId),
       },
     });
@@ -365,16 +376,18 @@ export class SMSService {
    */
   private async storeInboundMessage(payload: InboundSMSPayload): Promise<Message> {
     // Find tenant based on the phone number or use a default system tenant
-    const tenantId = await this.findTenantByPhoneNumber(payload.to) || 'system';
+    const tenantId = (await this.findTenantByPhoneNumber(payload.to)) || "system";
 
     const message = this.messageRepository.create({
       tenantId,
       channels: [MessageChannel.SMS],
-      recipients: [{
-        id: `sms_inbound_${Date.now()}`,
-        phone: payload.to,
-        metadata: payload.metadata,
-      }],
+      recipients: [
+        {
+          id: `sms_inbound_${Date.now()}`,
+          phone: payload.to,
+          metadata: payload.metadata,
+        },
+      ],
       data: {
         message: payload.text,
         from: payload.from,
@@ -388,7 +401,7 @@ export class SMSService {
       metadata: {
         provider: payload.provider,
         providerMessageId: payload.messageId,
-        direction: 'inbound',
+        direction: "inbound",
         conversationId: this.generateConversationId(payload.from, payload.provider),
         originalPayload: payload.metadata,
       },
@@ -408,7 +421,7 @@ export class SMSService {
       sentAt: payload.timestamp,
       deliveredAt: payload.timestamp,
       metadata: {
-        direction: 'inbound',
+        direction: "inbound",
         originalTo: payload.to,
       },
     });
@@ -424,7 +437,7 @@ export class SMSService {
   private async updateMessageDeliveryStatus(payload: SMSStatusPayload): Promise<void> {
     const delivery = await this.messageDeliveryRepository.findOne({
       where: { providerMessageId: payload.messageId },
-      relations: ['message'],
+      relations: ["message"],
     });
 
     if (delivery) {
@@ -435,7 +448,7 @@ export class SMSService {
       delivery.errorMessage = payload.errorMessage;
 
       // Set timestamps based on status
-      if (payload.status === 'delivered' && !delivery.deliveredAt) {
+      if (payload.status === "delivered" && !delivery.deliveredAt) {
         delivery.deliveredAt = payload.timestamp;
       }
 
@@ -471,9 +484,9 @@ export class SMSService {
     const lowerText = payload.text.toLowerCase().trim();
 
     // Example: STOP keyword handling
-    if (lowerText === 'stop' || lowerText === 'unsubscribe') {
+    if (lowerText === "stop" || lowerText === "unsubscribe") {
       // Handle unsubscribe request
-      this.eventEmitter.emit('sms.unsubscribe.requested', {
+      this.eventEmitter.emit("sms.unsubscribe.requested", {
         phoneNumber: payload.from,
         provider: payload.provider,
         timestamp: payload.timestamp,
@@ -481,13 +494,13 @@ export class SMSService {
     }
 
     // Example: HELP keyword handling
-    if (lowerText === 'help' || lowerText === 'info') {
+    if (lowerText === "help" || lowerText === "info") {
       // Send help message
       await this.sendSMS({
         to: payload.from,
-        message: 'For support, visit our website or call customer service.',
-        tenantId: 'system', // Use system tenant for auto-replies
-        metadata: { type: 'auto-reply', trigger: 'help' },
+        message: "For support, visit our website or call customer service.",
+        tenantId: "system", // Use system tenant for auto-replies
+        metadata: { type: "auto-reply", trigger: "help" },
       });
     }
   }
@@ -513,25 +526,25 @@ export class SMSService {
     // Test outbound SMS
     try {
       const testResult = await this.sendSMS({
-        to: '+1234567890', // Test number
-        message: 'Test message from SMS service',
-        tenantId: 'test',
+        to: "+1234567890", // Test number
+        message: "Test message from SMS service",
+        tenantId: "test",
         metadata: { test: true },
       });
 
       result.outbound = {
         success: testResult.success,
-        ...(testResult.error && { error: testResult.error })
+        ...(testResult.error && { error: testResult.error }),
       };
     } catch (error) {
       result.outbound = {
         success: false,
-        error: error.message
+        error: error.message,
       };
     }
 
     // Test provider availability
-    const providers = ['twilio', 'termii', 'telnyx', 'infobip'];
+    const providers = ["twilio", "termii", "telnyx", "infobip"];
     for (const providerId of providers) {
       const provider = this.getProviderInstance(providerId);
       result.providers[providerId] = {
@@ -548,7 +561,7 @@ export class SMSService {
    */
   private generateConversationId(phoneNumber: string, provider: string): string {
     // Create a consistent conversation ID that allows routing replies back to the same provider
-    const normalized = phoneNumber.replace(/[^\d]/g, '');
+    const normalized = phoneNumber.replace(/[^\d]/g, "");
     return `${provider}_${normalized}`;
   }
 
@@ -558,12 +571,12 @@ export class SMSService {
   private async findTenantByPhoneNumber(phoneNumber: string): Promise<string | null> {
     // Look for recent outbound messages to this number to determine tenant
     const recentMessage = await this.messageRepository
-      .createQueryBuilder('message')
-      .where('message.recipients @> :recipients', {
-        recipients: JSON.stringify([{ phone: phoneNumber }])
+      .createQueryBuilder("message")
+      .where("message.recipients @> :recipients", {
+        recipients: JSON.stringify([{ phone: phoneNumber }]),
       })
-      .andWhere('message.metadata->\'direction\' = :direction', { direction: 'outbound' })
-      .orderBy('message.createdAt', 'DESC')
+      .andWhere("message.metadata->'direction' = :direction", { direction: "outbound" })
+      .orderBy("message.createdAt", "DESC")
       .limit(1)
       .getOne();
 
@@ -575,10 +588,10 @@ export class SMSService {
    */
   private mapStatusToDeliveryStatus(status: string): MessageDeliveryStatus {
     const statusMap: Record<string, MessageDeliveryStatus> = {
-      'sent': MessageDeliveryStatus.SENT,
-      'delivered': MessageDeliveryStatus.DELIVERED,
-      'failed': MessageDeliveryStatus.FAILED,
-      'received': MessageDeliveryStatus.DELIVERED,
+      sent: MessageDeliveryStatus.SENT,
+      delivered: MessageDeliveryStatus.DELIVERED,
+      failed: MessageDeliveryStatus.FAILED,
+      received: MessageDeliveryStatus.DELIVERED,
     };
 
     return statusMap[status] || MessageDeliveryStatus.FAILED;
@@ -590,15 +603,17 @@ export class SMSService {
   private async updateMessageStatus(messageId: string): Promise<void> {
     const message = await this.messageRepository.findOne({
       where: { id: messageId },
-      relations: ['deliveries'],
+      relations: ["deliveries"],
     });
 
     if (!message) return;
 
     const deliveries = message.deliveries;
     const totalDeliveries = deliveries.length;
-    const deliveredCount = deliveries.filter(d => d.status === MessageDeliveryStatus.DELIVERED).length;
-    const failedCount = deliveries.filter(d => d.status === MessageDeliveryStatus.FAILED).length;
+    const deliveredCount = deliveries.filter(
+      (d) => d.status === MessageDeliveryStatus.DELIVERED,
+    ).length;
+    const failedCount = deliveries.filter((d) => d.status === MessageDeliveryStatus.FAILED).length;
 
     let newStatus: MessageStatus;
     if (deliveredCount === totalDeliveries) {
@@ -621,35 +636,38 @@ export class SMSService {
    */
   private extractCountryFromPhone(phoneNumber: string): string {
     // Simple country extraction - in production use libphonenumber-js
-    if (phoneNumber.startsWith('+1')) return 'US';
-    if (phoneNumber.startsWith('+44')) return 'GB';
-    if (phoneNumber.startsWith('+49')) return 'DE';
-    if (phoneNumber.startsWith('+234')) return 'NG';
-    if (phoneNumber.startsWith('+91')) return 'IN';
-    if (phoneNumber.startsWith('+33')) return 'FR';
-    if (phoneNumber.startsWith('+61')) return 'AU';
-    if (phoneNumber.startsWith('+55')) return 'BR';
-    return 'OTHER';
+    if (phoneNumber.startsWith("+1")) return "US";
+    if (phoneNumber.startsWith("+44")) return "GB";
+    if (phoneNumber.startsWith("+49")) return "DE";
+    if (phoneNumber.startsWith("+234")) return "NG";
+    if (phoneNumber.startsWith("+91")) return "IN";
+    if (phoneNumber.startsWith("+33")) return "FR";
+    if (phoneNumber.startsWith("+61")) return "AU";
+    if (phoneNumber.startsWith("+55")) return "BR";
+    return "OTHER";
   }
 
   /**
    * Handle conversation routing for replies
    */
   async routeReplyToOriginalProvider(inboundPayload: InboundSMSPayload): Promise<void> {
-    const conversationId = this.generateConversationId(inboundPayload.from, inboundPayload.provider);
+    const conversationId = this.generateConversationId(
+      inboundPayload.from,
+      inboundPayload.provider,
+    );
 
     // Find the original conversation to maintain provider consistency
     const originalMessage = await this.messageRepository
-      .createQueryBuilder('message')
-      .where('message.metadata->\'conversationId\' = :conversationId', { conversationId })
-      .andWhere('message.metadata->\'direction\' = :direction', { direction: 'outbound' })
-      .orderBy('message.createdAt', 'DESC')
+      .createQueryBuilder("message")
+      .where("message.metadata->'conversationId' = :conversationId", { conversationId })
+      .andWhere("message.metadata->'direction' = :direction", { direction: "outbound" })
+      .orderBy("message.createdAt", "DESC")
       .limit(1)
       .getOne();
 
     if (originalMessage) {
       // Emit event with conversation context
-      this.eventEmitter.emit('sms.conversation.reply', {
+      this.eventEmitter.emit("sms.conversation.reply", {
         inboundMessage: inboundPayload,
         originalMessage,
         conversationId,
@@ -664,20 +682,20 @@ export class SMSService {
   async sendConversationReply(
     conversationId: string,
     replyMessage: string,
-    tenantId: string
+    tenantId: string,
   ): Promise<OutboundSMSResponse> {
     // Find the conversation to get the phone number and preferred provider
     const originalMessage = await this.messageRepository
-      .createQueryBuilder('message')
-      .where('message.metadata->\'conversationId\' = :conversationId', { conversationId })
-      .orderBy('message.createdAt', 'DESC')
+      .createQueryBuilder("message")
+      .where("message.metadata->'conversationId' = :conversationId", { conversationId })
+      .orderBy("message.createdAt", "DESC")
       .limit(1)
       .getOne();
 
     if (!originalMessage) {
       return {
         success: false,
-        error: 'Conversation not found',
+        error: "Conversation not found",
       };
     }
 
@@ -687,7 +705,7 @@ export class SMSService {
     if (!phoneNumber) {
       return {
         success: false,
-        error: 'Phone number not found in conversation',
+        error: "Phone number not found in conversation",
       };
     }
 

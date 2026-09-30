@@ -1,10 +1,15 @@
-'use client';
+"use client";
 
-import { BrandingColors, useBranding } from '@/contexts/branding-context';
-import { getAccessibilityLevel, validateColorPalette } from '@/lib/utils/color-contrast';
-import { applyThemeConfig, createThemeConfig, createThemeTransition, prefersReducedMotion } from '@/lib/utils/theme';
-import { useTheme } from 'next-themes';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { BrandingColors, useBranding } from "@/contexts/branding-context";
+import { getAccessibilityLevel, validateColorPalette } from "@/lib/utils/color-contrast";
+import {
+  applyThemeConfig,
+  createThemeConfig,
+  createThemeTransition,
+  prefersReducedMotion,
+} from "@/lib/utils/theme";
+import { useTheme } from "next-themes";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 export interface ThemeCustomization {
   colors: BrandingColors;
@@ -19,7 +24,7 @@ export interface AccessibilityReport {
   isValid: boolean;
   issues: Array<{
     combination: string;
-    level: 'AAA' | 'AA' | 'FAIL';
+    level: "AAA" | "AA" | "FAIL";
     ratio: number;
     suggestion?: string;
   }>;
@@ -32,7 +37,7 @@ export function useThemeCustomization() {
   const [previewMode, setPreviewMode] = useState(false);
   const [previewConfig, setPreviewConfig] = useState<ThemeCustomization | null>(null);
 
-  const isDark = resolvedTheme === 'dark';
+  const isDark = resolvedTheme === "dark";
 
   // Generate accessibility report for current colors
   const accessibilityReport = useMemo((): AccessibilityReport => {
@@ -46,8 +51,8 @@ export function useThemeCustomization() {
       background: colors.background,
       foreground: colors.foreground,
       secondary: colors.secondary,
-      muted: colors.muted || '#f1f5f9',
-      mutedForeground: colors.mutedForeground || '#64748b',
+      muted: colors.muted || "#f1f5f9",
+      mutedForeground: colors.mutedForeground || "#64748b",
     });
   }, [branding?.colors, previewConfig?.colors]);
 
@@ -68,7 +73,7 @@ export function useThemeCustomization() {
         const themeConfig = createThemeConfig(
           customization.colors,
           customization.typography,
-          isDark
+          isDark,
         );
 
         // Apply theme configuration
@@ -76,10 +81,10 @@ export function useThemeCustomization() {
 
         // Apply custom CSS if provided
         if (customization.customCss) {
-          let styleElement = document.getElementById('custom-theme-styles');
+          let styleElement = document.getElementById("custom-theme-styles");
           if (!styleElement) {
-            styleElement = document.createElement('style');
-            styleElement.id = 'custom-theme-styles';
+            styleElement = document.createElement("style");
+            styleElement.id = "custom-theme-styles";
             document.head.appendChild(styleElement);
           }
           styleElement.textContent = customization.customCss;
@@ -97,14 +102,14 @@ export function useThemeCustomization() {
         }
 
         // Small delay to ensure smooth transition
-        await new Promise(resolve => setTimeout(resolve, 50));
+        await new Promise((resolve) => setTimeout(resolve, 50));
       } catch (error) {
-        console.error('Failed to apply theme:', error);
+        console.error("Failed to apply theme:", error);
       } finally {
         setIsApplying(false);
       }
     },
-    [isApplying, isDark, branding, applyBranding]
+    [isApplying, isDark, branding, applyBranding],
   );
 
   // Preview theme changes without applying permanently
@@ -114,7 +119,7 @@ export function useThemeCustomization() {
       setPreviewMode(true);
       applyTheme(customization, false);
     },
-    [applyTheme]
+    [applyTheme],
   );
 
   // Apply theme changes permanently
@@ -124,7 +129,7 @@ export function useThemeCustomization() {
       setPreviewMode(false);
       setPreviewConfig(null);
     },
-    [applyTheme]
+    [applyTheme],
   );
 
   // Cancel preview and revert to original theme
@@ -163,26 +168,26 @@ export function useThemeCustomization() {
         updateColors({ [colorKey]: value });
       }
     },
-    [branding?.colors, previewConfig, previewMode, updateColors, applyTheme]
+    [branding?.colors, previewConfig, previewMode, updateColors, applyTheme],
   );
 
   // Reset to default theme
   const resetToDefault = useCallback(() => {
     const defaultCustomization: ThemeCustomization = {
       colors: {
-        primary: 'oklch(0.65 0.18 45)', // NectarHR Orange
-        secondary: 'oklch(0.97 0 0)',
-        accent: 'oklch(0.6 0.15 240)', // Complementary Blue
-        background: isDark ? 'oklch(0.145 0 0)' : 'oklch(1 0 0)',
-        foreground: isDark ? 'oklch(0.985 0 0)' : 'oklch(0.145 0 0)',
-        muted: isDark ? 'oklch(0.269 0 0)' : 'oklch(0.97 0 0)',
-        mutedForeground: isDark ? 'oklch(0.708 0 0)' : 'oklch(0.556 0 0)',
-        border: isDark ? 'oklch(1 0 0 / 10%)' : 'oklch(0.922 0 0)',
-        destructive: 'oklch(0.577 0.245 27.325)',
+        primary: "oklch(0.65 0.18 45)", // NectarHR Orange
+        secondary: "oklch(0.97 0 0)",
+        accent: "oklch(0.6 0.15 240)", // Complementary Blue
+        background: isDark ? "oklch(0.145 0 0)" : "oklch(1 0 0)",
+        foreground: isDark ? "oklch(0.985 0 0)" : "oklch(0.145 0 0)",
+        muted: isDark ? "oklch(0.269 0 0)" : "oklch(0.97 0 0)",
+        mutedForeground: isDark ? "oklch(0.708 0 0)" : "oklch(0.556 0 0)",
+        border: isDark ? "oklch(1 0 0 / 10%)" : "oklch(0.922 0 0)",
+        destructive: "oklch(0.577 0.245 27.325)",
       },
       typography: {
-        fontFamily: 'var(--font-geist-sans)',
-        headingFont: 'var(--font-geist-sans)',
+        fontFamily: "var(--font-geist-sans)",
+        headingFont: "var(--font-geist-sans)",
       },
     };
 
@@ -198,21 +203,25 @@ export function useThemeCustomization() {
     (foreground: string, background: string, isLargeText = false) => {
       return getAccessibilityLevel(foreground, background, isLargeText);
     },
-    []
+    [],
   );
 
   // Export theme configuration
   const exportTheme = useCallback(() => {
-    const currentConfig = previewConfig || (branding ? {
-      colors: branding.colors,
-      typography: branding.typography,
-      customCss: branding.customCss,
-    } : null);
+    const currentConfig =
+      previewConfig ||
+      (branding
+        ? {
+            colors: branding.colors,
+            typography: branding.typography,
+            customCss: branding.customCss,
+          }
+        : null);
 
     if (!currentConfig) return null;
 
     return {
-      name: branding?.name || 'Custom Theme',
+      name: branding?.name || "Custom Theme",
       config: currentConfig,
       accessibility: accessibilityReport,
       exportedAt: new Date().toISOString(),
@@ -224,7 +233,7 @@ export function useThemeCustomization() {
     (themeData: { config: ThemeCustomization }) => {
       previewTheme(themeData.config);
     },
-    [previewTheme]
+    [previewTheme],
   );
 
   // Apply theme when branding changes or theme mode changes
@@ -244,11 +253,15 @@ export function useThemeCustomization() {
     isLoading,
     isApplying,
     previewMode,
-    currentTheme: previewConfig || (branding ? {
-      colors: branding.colors,
-      typography: branding.typography,
-      customCss: branding.customCss,
-    } : null),
+    currentTheme:
+      previewConfig ||
+      (branding
+        ? {
+            colors: branding.colors,
+            typography: branding.typography,
+            customCss: branding.customCss,
+          }
+        : null),
     accessibilityReport,
     isDark,
 

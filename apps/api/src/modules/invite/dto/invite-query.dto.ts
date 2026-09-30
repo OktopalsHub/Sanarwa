@@ -1,17 +1,17 @@
-import { ApiPropertyOptional } from '@nestjs/swagger';
-import { IsEnum, IsOptional, IsString } from 'class-validator';
-import { PaginationDto } from 'src/common/dto/pagination.dto';
+import { ApiPropertyOptional } from "@nestjs/swagger";
+import { IsEnum, IsOptional, IsString } from "class-validator";
+import { PaginationDto } from "src/common/dto/pagination.dto";
 
 export enum InviteStatus {
-  PENDING = 'pending',
-  ACCEPTED = 'accepted',
-  EXPIRED = 'expired',
-  CANCELLED = 'cancelled',
+  PENDING = "pending",
+  ACCEPTED = "accepted",
+  EXPIRED = "expired",
+  CANCELLED = "cancelled",
 }
 
 export class InviteQueryDto extends PaginationDto {
   @ApiPropertyOptional({
-    description: 'Filter by invite status',
+    description: "Filter by invite status",
     enum: InviteStatus,
   })
   @IsOptional()
@@ -19,25 +19,25 @@ export class InviteQueryDto extends PaginationDto {
   status?: InviteStatus;
 
   @ApiPropertyOptional({
-    description: 'Search in email or inviter name',
+    description: "Search in email or inviter name",
   })
   @IsOptional()
   @IsString()
   search?: string;
 
   @ApiPropertyOptional({
-    description: 'Field to sort by',
-    default: 'createdAt',
+    description: "Field to sort by",
+    default: "createdAt",
   })
   @IsOptional()
   @IsString()
   sortBy?: string;
 
   @ApiPropertyOptional({
-    description: 'Sort order',
-    enum: ['ASC', 'DESC'],
-    default: 'DESC',
+    description: "Sort order",
+    enum: ["ASC", "DESC"],
+    default: "DESC",
   })
   @IsOptional()
-  sortOrder?: 'ASC' | 'DESC';
+  sortOrder?: "ASC" | "DESC";
 }

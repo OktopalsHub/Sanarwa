@@ -93,7 +93,9 @@ export class DeviceRegistrations1760919969818 implements MigrationInterface {
 
   public async down(queryRunner: QueryRunner): Promise<void> {
     // Drop trigger and function
-    await queryRunner.query(`DROP TRIGGER IF EXISTS update_device_registrations_updated_at ON device_registrations;`);
+    await queryRunner.query(
+      `DROP TRIGGER IF EXISTS update_device_registrations_updated_at ON device_registrations;`,
+    );
     await queryRunner.query(`DROP FUNCTION IF EXISTS update_updated_at_column();`);
 
     // Drop table

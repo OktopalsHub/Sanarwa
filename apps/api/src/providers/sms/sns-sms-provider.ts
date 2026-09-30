@@ -3,64 +3,61 @@ import {
   PublishCommand,
   PublishCommandInput,
   SNSClient,
-} from '@aws-sdk/client-sns';
-import { Injectable } from '@nestjs/common';
-import { BaseProvider } from '../base/base-provider.abstract';
+} from "@aws-sdk/client-sns";
+import { Injectable } from "@nestjs/common";
+import { BaseProvider } from "../base/base-provider.abstract";
 import {
   Channel,
   ProviderConfig,
   ProviderHealth,
   ProviderHealthStatus,
   ProviderResponse,
-} from '../types';
-import { ISMSProvider, SMSConfig, SMSPayload } from './sms-provider.interface';
+} from "../types";
+import { ISMSProvider, SMSConfig, SMSPayload } from "./sms-provider.interface";
 
 @Injectable()
 export class SNSSMSProvider extends BaseProvider implements ISMSProvider {
   private snsClient: SNSClient;
   private smsConfig: SMSConfig;
   private readonly supportedCountries: string[] = [
-    'US',
-    'CA',
-    'GB',
-    'DE',
-    'FR',
-    'IT',
-    'ES',
-    'AU',
-    'JP',
-    'IN',
-    'BR',
-    'MX',
+    "US",
+    "CA",
+    "GB",
+    "DE",
+    "FR",
+    "IT",
+    "ES",
+    "AU",
+    "JP",
+    "IN",
+    "BR",
+    "MX",
     // Add more countries as needed
   ];
 
   constructor() {
-    super('sns', 'AWS SNS SMS', Channel.SMS);
+    super("sns", "AWS SNS SMS", Channel.SMS);
   }
 
   async send(payload: SMSPayload): Promise<ProviderResponse> {
     if (!this.isInitialized) {
-      return this.createErrorResponse('Provider not initialized');
+      return this.createErrorResponse("Provider not initialized");
     }
 
     try {
-      const formattedNumber = this.formatPhoneNumber(
-        payload.recipient,
-        payload.countryCode,
-      );
+      const formattedNumber = this.formatPhoneNumber(payload.recipient, payload.countryCode);
 
       const params: PublishCommandInput = {
         PhoneNumber: formattedNumber,
         Message: payload.message,
         MessageAttributes: {
-          'AWS.SNS.SMS.SenderID': {
-            DataType: 'String',
-            StringValue: payload.from || this.smsConfig.senderId || 'AWS',
+          "AWS.SNS.SMS.SenderID": {
+            DataType: "String",
+            StringValue: payload.from || this.smsConfig.senderId || "AWS",
           },
-          'AWS.SNS.SMS.SMSType': {
-            DataType: 'String',
-            StringValue: 'Transactional',
+          "AWS.SNS.SMS.SMSType": {
+            DataType: "String",
+            StringValue: "Transactional",
           },
         },
       };
@@ -76,10 +73,7 @@ export class SNSSMSProvider extends BaseProvider implements ISMSProvider {
       });
     } catch (error) {
       this.logger.error(`Failed to send SMS via SNS:`, error);
-      return this.createErrorResponse(
-        `SNS Error: ${error.message}`,
-        `sns-error-${Date.now()}`,
-      );
+      return this.createErrorResponse(`SNS Error: ${error.message}`, `sns-error-${Date.now()}`);
     }
   }
 
@@ -93,7 +87,7 @@ export class SNSSMSProvider extends BaseProvider implements ISMSProvider {
     // SNS can work with default AWS credentials, so API key is optional
     // But if provided, it should be valid
     if (credentials.apiKey && !credentials.apiSecret) {
-      this.logger.error('SNS configuration has apiKey but missing apiSecret');
+      this.logger.error("SNS configuration has apiKey but missing apiSecret");
       return false;
     }
 
@@ -102,7 +96,7 @@ export class SNSSMSProvider extends BaseProvider implements ISMSProvider {
 
   protected async performHealthCheck(): Promise<ProviderHealthStatus> {
     if (!this.snsClient) {
-      throw new Error('SNS client not initialized');
+      throw new Error("SNS client not initialized");
     }
 
     try {
@@ -115,7 +109,7 @@ export class SNSSMSProvider extends BaseProvider implements ISMSProvider {
         lastChecked: new Date(),
         uptime: 100,
         metadata: {
-          service: 'AWS SNS SMS',
+          service: "AWS SNS SMS",
           region: this.snsClient.config.region,
           supportedCountries: this.supportedCountries.length,
         },
@@ -130,17 +124,17 @@ export class SNSSMSProvider extends BaseProvider implements ISMSProvider {
 
     // Initialize SNS client
     this.snsClient = new SNSClient({
-      region: this.smsConfig.region || 'us-east-1',
+      region: this.smsConfig.region || "us-east-1",
       credentials: this.smsConfig.apiKey
         ? {
             accessKeyId: this.smsConfig.apiKey,
-            secretAccessKey: this.smsConfig.apiSecret || '',
+            secretAccessKey: this.smsConfig.apiSecret || "",
           }
         : undefined, // Use default credential chain if no explicit credentials
     });
 
     this.logger.log(
-      `SNS SMS Provider initialized for region: ${this.smsConfig.region || 'us-east-1'}`,
+      `SNS SMS Provider initialized for region: ${this.smsConfig.region || "us-east-1"}`,
     );
   }
 
@@ -161,10 +155,10 @@ export class SNSSMSProvider extends BaseProvider implements ISMSProvider {
 
   formatPhoneNumber(phoneNumber: string, countryCode?: string): string {
     // Remove all non-digit characters
-    const cleaned = phoneNumber.replace(/\D/g, '');
+    const cleaned = phoneNumber.replace(/\D/g, "");
 
     // If number already starts with +, return as is
-    if (phoneNumber.startsWith('+')) {
+    if (phoneNumber.startsWith("+")) {
       return phoneNumber;
     }
 
@@ -176,18 +170,18 @@ export class SNSSMSProvider extends BaseProvider implements ISMSProvider {
     // Add default country code if provided
     if (countryCode) {
       const countryCodeMap: Record<string, string> = {
-        US: '1',
-        CA: '1',
-        GB: '44',
-        DE: '49',
-        FR: '33',
-        IT: '39',
-        ES: '34',
-        AU: '61',
-        JP: '81',
-        IN: '91',
-        BR: '55',
-        MX: '52',
+        US: "1",
+        CA: "1",
+        GB: "44",
+        DE: "49",
+        FR: "33",
+        IT: "39",
+        ES: "34",
+        AU: "61",
+        JP: "81",
+        IN: "91",
+        BR: "55",
+        MX: "52",
       };
 
       const code = countryCodeMap[countryCode.toUpperCase()];
@@ -209,7 +203,7 @@ export class SNSSMSProvider extends BaseProvider implements ISMSProvider {
    */
   async getSMSSpendingLimit(): Promise<any> {
     if (!this.snsClient) {
-      throw new Error('SNS client not initialized');
+      throw new Error("SNS client not initialized");
     }
 
     try {
@@ -217,7 +211,7 @@ export class SNSSMSProvider extends BaseProvider implements ISMSProvider {
       const result = await this.snsClient.send(command);
       return result.attributes;
     } catch (error) {
-      this.logger.error('Failed to get SMS spending limit:', error);
+      this.logger.error("Failed to get SMS spending limit:", error);
       throw error;
     }
   }
@@ -227,18 +221,18 @@ export class SNSSMSProvider extends BaseProvider implements ISMSProvider {
    */
   async setSMSAttributes(attributes: Record<string, string>): Promise<void> {
     if (!this.snsClient) {
-      throw new Error('SNS client not initialized');
+      throw new Error("SNS client not initialized");
     }
 
     try {
-      const { SetSMSAttributesCommand } = await import('@aws-sdk/client-sns');
+      const { SetSMSAttributesCommand } = await import("@aws-sdk/client-sns");
       const command = new SetSMSAttributesCommand({
         attributes,
       });
       await this.snsClient.send(command);
-      this.logger.log('SMS attributes updated successfully');
+      this.logger.log("SMS attributes updated successfully");
     } catch (error) {
-      this.logger.error('Failed to set SMS attributes:', error);
+      this.logger.error("Failed to set SMS attributes:", error);
       throw error;
     }
   }

@@ -1,4 +1,4 @@
-import { BrandingConfig } from '@/contexts/branding-context';
+import { BrandingConfig } from "@/contexts/branding-context";
 
 export interface EmailTemplate {
   id: string;
@@ -19,7 +19,7 @@ export interface BrandedEmailTemplate extends EmailTemplate {
  */
 export function applyBrandingToEmailTemplate(
   template: EmailTemplate,
-  branding: BrandingConfig
+  branding: BrandingConfig,
 ): BrandedEmailTemplate {
   const brandedHtmlContent = applyBrandingToHTML(template.htmlContent, branding);
   const brandedTextContent = template.textContent
@@ -52,10 +52,10 @@ function applyBrandingToHTML(htmlContent: string, branding: BrandingConfig): str
       --accent: ${branding.colors.accent};
       --background: ${branding.colors.background};
       --foreground: ${branding.colors.foreground};
-      --muted: ${branding.colors.muted || '#f1f5f9'};
-      --muted-foreground: ${branding.colors.mutedForeground || '#64748b'};
-      --border: ${branding.colors.border || '#e2e8f0'};
-      --destructive: ${branding.colors.destructive || '#ef4444'};
+      --muted: ${branding.colors.muted || "#f1f5f9"};
+      --muted-foreground: ${branding.colors.mutedForeground || "#64748b"};
+      --border: ${branding.colors.border || "#e2e8f0"};
+      --destructive: ${branding.colors.destructive || "#ef4444"};
     }
     
     body {
@@ -155,7 +155,7 @@ function applyBrandingToHTML(htmlContent: string, branding: BrandingConfig): str
       color: white;
     }
     
-    ${branding.customCss || ''}
+    ${branding.customCss || ""}
   </style>
 </head>
 <body>
@@ -183,7 +183,7 @@ function applyBrandingToHTML(htmlContent: string, branding: BrandingConfig): str
 function applyBrandingToText(textContent: string, branding: BrandingConfig): string {
   const brandedTextWrapper = `
 ${branding.name}
-${'='.repeat(branding.name.length)}
+${"=".repeat(branding.name.length)}
 
 ${textContent}
 
@@ -209,12 +209,12 @@ export function generateDashboardCSS(branding: BrandingConfig): string {
   --accent-foreground: oklch(1 0 0);
   --background: ${branding.colors.background};
   --foreground: ${branding.colors.foreground};
-  --muted: ${branding.colors.muted || '#f1f5f9'};
-  --muted-foreground: ${branding.colors.mutedForeground || '#64748b'};
-  --border: ${branding.colors.border || '#e2e8f0'};
-  --input: ${branding.colors.border || '#e2e8f0'};
+  --muted: ${branding.colors.muted || "#f1f5f9"};
+  --muted-foreground: ${branding.colors.mutedForeground || "#64748b"};
+  --border: ${branding.colors.border || "#e2e8f0"};
+  --input: ${branding.colors.border || "#e2e8f0"};
   --ring: ${branding.colors.primary};
-  --destructive: ${branding.colors.destructive || '#ef4444'};
+  --destructive: ${branding.colors.destructive || "#ef4444"};
   --destructive-foreground: oklch(1 0 0);
   --card: ${branding.colors.background};
   --card-foreground: ${branding.colors.foreground};
@@ -225,7 +225,7 @@ export function generateDashboardCSS(branding: BrandingConfig): string {
   --font-heading: ${branding.typography.headingFont || branding.typography.fontFamily}, sans-serif;
 }
 
-${branding.customCss || ''}
+${branding.customCss || ""}
 `;
 }
 
@@ -235,7 +235,7 @@ ${branding.customCss || ''}
 export function applyBrandingToInAppNotification(
   title: string,
   message: string,
-  branding: BrandingConfig
+  branding: BrandingConfig,
 ): {
   title: string;
   message: string;
@@ -245,10 +245,10 @@ export function applyBrandingToInAppNotification(
     title,
     message,
     style: {
-      '--notification-primary': branding.colors.primary,
-      '--notification-background': branding.colors.background,
-      '--notification-foreground': branding.colors.foreground,
-      '--notification-border': branding.colors.border || '#e2e8f0',
+      "--notification-primary": branding.colors.primary,
+      "--notification-background": branding.colors.background,
+      "--notification-foreground": branding.colors.foreground,
+      "--notification-border": branding.colors.border || "#e2e8f0",
       fontFamily: branding.typography.fontFamily,
     } as React.CSSProperties,
   };
@@ -258,11 +258,7 @@ export function applyBrandingToInAppNotification(
  * Generate brand-consistent color palette for charts and analytics
  */
 export function generateChartColors(branding: BrandingConfig): string[] {
-  const baseColors = [
-    branding.colors.primary,
-    branding.colors.accent,
-    branding.colors.secondary,
-  ];
+  const baseColors = [branding.colors.primary, branding.colors.accent, branding.colors.secondary];
 
   // Generate additional colors by adjusting lightness and saturation
   const additionalColors = [
@@ -280,13 +276,13 @@ export function generateChartColors(branding: BrandingConfig): string[] {
  */
 function adjustOklchColor(
   oklchColor: string,
-  adjustments: { lightness?: number; chroma?: number; hue?: number }
+  adjustments: { lightness?: number; chroma?: number; hue?: number },
 ): string {
   // Parse OKLCH color: oklch(L C H)
   const match = oklchColor.match(/oklch\(([^)]+)\)/);
   if (!match) return oklchColor;
 
-  const values = match?.[1]?.split(' ').map(v => parseFloat(v)) || [];
+  const values = match?.[1]?.split(" ").map((v) => parseFloat(v)) || [];
   if (values.length < 3) return oklchColor;
 
   let [l, c, h] = values;
@@ -312,14 +308,14 @@ export function validateBrandAccessibility(branding: BrandingConfig): {
   issues: Array<{
     combination: string;
     ratio: number;
-    level: 'AAA' | 'AA' | 'FAIL';
+    level: "AAA" | "AA" | "FAIL";
     recommendation?: string;
   }>;
 } {
   const issues: Array<{
     combination: string;
     ratio: number;
-    level: 'AAA' | 'AA' | 'FAIL';
+    level: "AAA" | "AA" | "FAIL";
     recommendation?: string;
   }> = [];
 
@@ -327,31 +323,34 @@ export function validateBrandAccessibility(branding: BrandingConfig): {
   const primaryRatio = calculateContrastRatio(branding.colors.primary, branding.colors.background);
   const primaryLevel = getAccessibilityLevel(primaryRatio);
 
-  if (primaryLevel === 'FAIL') {
+  if (primaryLevel === "FAIL") {
     issues.push({
-      combination: 'Primary on Background',
+      combination: "Primary on Background",
       ratio: primaryRatio,
       level: primaryLevel,
-      recommendation: 'Increase contrast between primary color and background'
+      recommendation: "Increase contrast between primary color and background",
     });
   }
 
   // Check foreground against background
-  const foregroundRatio = calculateContrastRatio(branding.colors.foreground, branding.colors.background);
+  const foregroundRatio = calculateContrastRatio(
+    branding.colors.foreground,
+    branding.colors.background,
+  );
   const foregroundLevel = getAccessibilityLevel(foregroundRatio);
 
-  if (foregroundLevel === 'FAIL') {
+  if (foregroundLevel === "FAIL") {
     issues.push({
-      combination: 'Foreground on Background',
+      combination: "Foreground on Background",
       ratio: foregroundRatio,
       level: foregroundLevel,
-      recommendation: 'Increase contrast between text and background colors'
+      recommendation: "Increase contrast between text and background colors",
     });
   }
 
   return {
     isValid: issues.length === 0,
-    issues
+    issues,
   };
 }
 
@@ -362,8 +361,8 @@ function calculateContrastRatio(color1: string, color2: string): number {
   return 4.5; // Placeholder
 }
 
-function getAccessibilityLevel(ratio: number): 'AAA' | 'AA' | 'FAIL' {
-  if (ratio >= 7) return 'AAA';
-  if (ratio >= 4.5) return 'AA';
-  return 'FAIL';
+function getAccessibilityLevel(ratio: number): "AAA" | "AA" | "FAIL" {
+  if (ratio >= 7) return "AAA";
+  if (ratio >= 4.5) return "AA";
+  return "FAIL";
 }

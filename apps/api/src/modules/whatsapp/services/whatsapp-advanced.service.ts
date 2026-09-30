@@ -1,10 +1,10 @@
-import { Injectable, Logger, BadRequestException } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { EventEmitter2 } from '@nestjs/event-emitter';
-import { WhatsAppBusinessAPIService } from './whatsapp-business-api.service';
-import { WhatsAppMediaService } from './whatsapp-media.service';
-import { Message } from '../../messaging/message.entity';
+import { Injectable, Logger, BadRequestException } from "@nestjs/common";
+import { InjectRepository } from "@nestjs/typeorm";
+import { Repository } from "typeorm";
+import { EventEmitter2 } from "@nestjs/event-emitter";
+import { WhatsAppBusinessAPIService } from "./whatsapp-business-api.service";
+import { WhatsAppMediaService } from "./whatsapp-media.service";
+import { Message } from "../../messaging/message.entity";
 
 export interface WhatsAppConversation {
   conversationId: string;
@@ -12,14 +12,14 @@ export interface WhatsAppConversation {
   lastMessage: string;
   lastMessageTime: Date;
   messageCount: number;
-  status: 'active' | 'archived' | 'closed';
+  status: "active" | "archived" | "closed";
 }
 
 export interface WhatsAppTemplate {
   name: string;
-  category: 'AUTHENTICATION' | 'MARKETING' | 'UTILITY';
+  category: "AUTHENTICATION" | "MARKETING" | "UTILITY";
   language: string;
-  status: 'APPROVED' | 'PENDING' | 'REJECTED';
+  status: "APPROVED" | "PENDING" | "REJECTED";
   components: any[];
 }
 
@@ -49,7 +49,7 @@ export class WhatsAppAdvancedService {
    */
   async sendInteractiveMessage(
     phoneNumber: string,
-    interactiveType: 'button' | 'list',
+    interactiveType: "button" | "list",
     content: {
       header?: string;
       body: string;
@@ -61,29 +61,27 @@ export class WhatsAppAdvancedService {
     tenantId: string,
   ): Promise<{ success: boolean; externalId?: string; error?: string }> {
     try {
-      this.logger.log(
-        `Sending interactive ${interactiveType} message to ${phoneNumber}`,
-      );
+      this.logger.log(`Sending interactive ${interactiveType} message to ${phoneNumber}`);
 
       // Check rate limit
       const rateLimitCheck = this.checkRateLimit(tenantId);
       if (!rateLimitCheck.allowed) {
-        throw new BadRequestException('Rate limit exceeded');
+        throw new BadRequestException("Rate limit exceeded");
       }
 
       const payload = {
-        messaging_product: 'whatsapp',
+        messaging_product: "whatsapp",
         to: phoneNumber,
-        type: 'interactive',
+        type: "interactive",
         interactive: {
           type: interactiveType,
-          header: content.header ? { type: 'text', text: content.header } : undefined,
+          header: content.header ? { type: "text", text: content.header } : undefined,
           body: { text: content.body },
           footer: content.footer ? { text: content.footer } : undefined,
-          ...(interactiveType === 'button' && {
+          ...(interactiveType === "button" && {
             action: {
               buttons: content.buttons?.map((btn, idx) => ({
-                type: 'reply',
+                type: "reply",
                 reply: {
                   id: btn.id,
                   title: btn.title,
@@ -91,12 +89,12 @@ export class WhatsAppAdvancedService {
               })),
             },
           }),
-          ...(interactiveType === 'list' && {
+          ...(interactiveType === "list" && {
             action: {
-              button: 'Select',
+              button: "Select",
               sections: [
                 {
-                  rows: content.listItems?.map(item => ({
+                  rows: content.listItems?.map((item) => ({
                     id: item.id,
                     title: item.title,
                     description: item.description,
@@ -111,7 +109,7 @@ export class WhatsAppAdvancedService {
       // Send via API (simulated)
       this.logger.log(`Interactive message prepared for ${phoneNumber}`);
 
-      this.eventEmitter.emit('whatsapp.interactive.sent', {
+      this.eventEmitter.emit("whatsapp.interactive.sent", {
         messageId,
         phoneNumber,
         type: interactiveType,
@@ -120,10 +118,7 @@ export class WhatsAppAdvancedService {
 
       return { success: true, externalId: `interactive_${messageId}` };
     } catch (error) {
-      this.logger.error(
-        `Failed to send interactive message to ${phoneNumber}`,
-        error.message,
-      );
+      this.logger.error(`Failed to send interactive message to ${phoneNumber}`, error.message);
       return { success: false, error: error.message };
     }
   }
@@ -144,9 +139,9 @@ export class WhatsAppAdvancedService {
       this.logger.log(`Sending location message to ${phoneNumber}`);
 
       const payload = {
-        messaging_product: 'whatsapp',
+        messaging_product: "whatsapp",
         to: phoneNumber,
-        type: 'location',
+        type: "location",
         location: {
           latitude,
           longitude,
@@ -157,7 +152,7 @@ export class WhatsAppAdvancedService {
 
       this.logger.log(`Location message prepared for ${phoneNumber}`);
 
-      this.eventEmitter.emit('whatsapp.location.sent', {
+      this.eventEmitter.emit("whatsapp.location.sent", {
         messageId,
         phoneNumber,
         latitude,
@@ -167,10 +162,7 @@ export class WhatsAppAdvancedService {
 
       return { success: true, externalId: `location_${messageId}` };
     } catch (error) {
-      this.logger.error(
-        `Failed to send location message to ${phoneNumber}`,
-        error.message,
-      );
+      this.logger.error(`Failed to send location message to ${phoneNumber}`, error.message);
       return { success: false, error: error.message };
     }
   }
@@ -178,10 +170,7 @@ export class WhatsAppAdvancedService {
   /**
    * Get conversation history
    */
-  async getConversationHistory(
-    phoneNumber: string,
-    limit: number = 50,
-  ): Promise<Message[]> {
+  async getConversationHistory(phoneNumber: string, limit: number = 50): Promise<Message[]> {
     try {
       const messages = await this.messageRepository.find({
         where: {
@@ -189,16 +178,13 @@ export class WhatsAppAdvancedService {
             whatsappPhone: phoneNumber,
           },
         },
-        order: { createdAt: 'DESC' },
+        order: { createdAt: "DESC" },
         take: limit,
       });
 
       return messages;
     } catch (error) {
-      this.logger.error(
-        `Failed to get conversation history for ${phoneNumber}`,
-        error,
-      );
+      this.logger.error(`Failed to get conversation history for ${phoneNumber}`, error);
       return [];
     }
   }
@@ -217,7 +203,7 @@ export class WhatsAppAdvancedService {
       // Call WhatsApp API to mark as read
       // This would be implemented in the business API service
 
-      this.eventEmitter.emit('whatsapp.message.read', {
+      this.eventEmitter.emit("whatsapp.message.read", {
         messageId,
         timestamp: new Date(),
       });
@@ -232,19 +218,16 @@ export class WhatsAppAdvancedService {
   /**
    * Get conversation list
    */
-  async getConversationList(
-    tenantId: string,
-    limit: number = 20,
-  ): Promise<WhatsAppConversation[]> {
+  async getConversationList(tenantId: string, limit: number = 20): Promise<WhatsAppConversation[]> {
     try {
       const conversations = Array.from(this.conversationCache.values())
-        .filter(c => c.status !== 'closed')
+        .filter((c) => c.status !== "closed")
         .toSorted((a, b) => b.lastMessageTime.getTime() - a.lastMessageTime.getTime())
         .slice(0, limit);
 
       return conversations;
     } catch (error) {
-      this.logger.error('Failed to get conversation list', error);
+      this.logger.error("Failed to get conversation list", error);
       return [];
     }
   }
@@ -256,7 +239,7 @@ export class WhatsAppAdvancedService {
     try {
       const conversation = this.conversationCache.get(conversationId);
       if (conversation) {
-        conversation.status = 'archived';
+        conversation.status = "archived";
         this.conversationCache.set(conversationId, conversation);
       }
 
@@ -313,18 +296,16 @@ export class WhatsAppAdvancedService {
     from: string;
   }): Promise<void> {
     try {
-      this.logger.log(
-        `Message reaction: ${payload.messageId} - ${payload.reaction}`,
-      );
+      this.logger.log(`Message reaction: ${payload.messageId} - ${payload.reaction}`);
 
-      this.eventEmitter.emit('whatsapp.message.reaction', {
+      this.eventEmitter.emit("whatsapp.message.reaction", {
         messageId: payload.messageId,
         reaction: payload.reaction,
         from: payload.from,
         timestamp: new Date(),
       });
     } catch (error) {
-      this.logger.error('Failed to handle message reaction', error);
+      this.logger.error("Failed to handle message reaction", error);
     }
   }
 
@@ -339,13 +320,13 @@ export class WhatsAppAdvancedService {
     try {
       this.logger.log(`Message edited: ${payload.messageId}`);
 
-      this.eventEmitter.emit('whatsapp.message.edited', {
+      this.eventEmitter.emit("whatsapp.message.edited", {
         messageId: payload.messageId,
         newText: payload.newText,
         editedAt: new Date(payload.editedTimestamp * 1000),
       });
     } catch (error) {
-      this.logger.error('Failed to handle message edit', error);
+      this.logger.error("Failed to handle message edit", error);
     }
   }
 
@@ -359,12 +340,12 @@ export class WhatsAppAdvancedService {
     try {
       this.logger.log(`Message deleted: ${payload.messageId}`);
 
-      this.eventEmitter.emit('whatsapp.message.deleted', {
+      this.eventEmitter.emit("whatsapp.message.deleted", {
         messageId: payload.messageId,
         deletedAt: new Date(payload.deletedTimestamp * 1000),
       });
     } catch (error) {
-      this.logger.error('Failed to handle message deletion', error);
+      this.logger.error("Failed to handle message deletion", error);
     }
   }
 
@@ -388,9 +369,9 @@ export class WhatsAppAdvancedService {
       });
 
       const sent = messages.length;
-      const delivered = messages.filter(m => m.metadata?.status === 'delivered').length;
-      const read = messages.filter(m => m.metadata?.status === 'read').length;
-      const failed = messages.filter(m => m.metadata?.status === 'failed').length;
+      const delivered = messages.filter((m) => m.metadata?.status === "delivered").length;
+      const read = messages.filter((m) => m.metadata?.status === "read").length;
+      const failed = messages.filter((m) => m.metadata?.status === "failed").length;
 
       return {
         sent,
@@ -408,10 +389,7 @@ export class WhatsAppAdvancedService {
   /**
    * Update conversation metadata
    */
-  updateConversationMetadata(
-    conversationId: string,
-    metadata: Record<string, any>,
-  ): void {
+  updateConversationMetadata(conversationId: string, metadata: Record<string, any>): void {
     const conversation = this.conversationCache.get(conversationId);
     if (conversation) {
       // Store metadata in conversation

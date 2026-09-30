@@ -1,11 +1,11 @@
-import { ApiPropertyOptional } from '@nestjs/swagger';
-import { IsEnum, IsOptional, IsString } from 'class-validator';
-import { PaginationDto } from '../../../common/dto/pagination.dto';
-import { ProjectStatus } from '../../../common/enums';
+import { ApiPropertyOptional } from "@nestjs/swagger";
+import { IsEnum, IsOptional, IsString } from "class-validator";
+import { PaginationDto } from "../../../common/dto/pagination.dto";
+import { ProjectStatus } from "../../../common/enums";
 
 export class ProjectQueryDto extends PaginationDto {
   @ApiPropertyOptional({
-    description: 'Filter by project status',
+    description: "Filter by project status",
     enum: ProjectStatus,
     example: ProjectStatus.ACTIVE,
     type: String,
@@ -15,8 +15,8 @@ export class ProjectQueryDto extends PaginationDto {
   status?: ProjectStatus;
 
   @ApiPropertyOptional({
-    description: 'Search in project name or description',
-    example: 'My Project',
+    description: "Search in project name or description",
+    example: "My Project",
     type: String,
   })
   @IsOptional()
@@ -24,9 +24,9 @@ export class ProjectQueryDto extends PaginationDto {
   search?: string;
 
   @ApiPropertyOptional({
-    description: 'Field to sort by',
-    default: 'createdAt',
-    example: 'createdAt',
+    description: "Field to sort by",
+    default: "createdAt",
+    example: "createdAt",
     type: String,
   })
   @IsOptional()
@@ -34,12 +34,12 @@ export class ProjectQueryDto extends PaginationDto {
   sortBy?: string;
 
   @ApiPropertyOptional({
-    description: 'Sort order',
-    enum: ['ASC', 'DESC'],
-    default: 'DESC',
+    description: "Sort order",
+    enum: ["ASC", "DESC"],
+    default: "DESC",
     type: String,
   })
   @IsOptional()
-  @IsEnum(['ASC', 'DESC'])
-  sortOrder?: 'ASC' | 'DESC';
+  @IsEnum(["ASC", "DESC"])
+  sortOrder?: "ASC" | "DESC";
 }

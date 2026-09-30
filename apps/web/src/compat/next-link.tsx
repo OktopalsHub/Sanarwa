@@ -1,1 +1,1 @@
-export { Link as default, Link } from './next-navigation';
+export { Link as default, Link } from "./next-navigation";

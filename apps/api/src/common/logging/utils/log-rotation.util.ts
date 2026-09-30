@@ -1,9 +1,9 @@
-import { Injectable } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import { Cron, CronExpression } from '@nestjs/schedule';
-import { StructuredLoggerService } from '../structured-logger.service';
-import * as fs from 'fs/promises';
-import * as path from 'path';
+import { Injectable } from "@nestjs/common";
+import { ConfigService } from "@nestjs/config";
+import { Cron, CronExpression } from "@nestjs/schedule";
+import { StructuredLoggerService } from "../structured-logger.service";
+import * as fs from "fs/promises";
+import * as path from "path";
 
 @Injectable()
 export class LogRotationService {
@@ -14,24 +14,24 @@ export class LogRotationService {
 
   @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT)
   async rotateLogFiles() {
-    const logFileEnabled = this.configService.get('logging.file.enabled');
+    const logFileEnabled = this.configService.get("logging.file.enabled");
     if (!logFileEnabled) {
       return;
     }
 
-    const logFilePath = this.configService.get('logging.file.path');
-    const maxFiles = this.configService.get('logging.file.maxFiles', 5);
+    const logFilePath = this.configService.get("logging.file.path");
+    const maxFiles = this.configService.get("logging.file.maxFiles", 5);
 
     try {
       await this.performRotation(logFilePath, maxFiles);
-      this.logger.log('Log rotation completed successfully', {
-        operation: 'log_rotation',
+      this.logger.log("Log rotation completed successfully", {
+        operation: "log_rotation",
         logFilePath,
         maxFiles,
       });
     } catch (error) {
-      this.logger.error('Log rotation failed', error.stack, {
-        operation: 'log_rotation',
+      this.logger.error("Log rotation failed", error.stack, {
+        operation: "log_rotation",
         logFilePath,
         error: error.message,
       });
@@ -53,8 +53,8 @@ export class LogRotationService {
 
     // Get file stats to check if rotation is needed
     const stats = await fs.stat(logFilePath);
-    const maxSize = this.parseSize(this.configService.get('logging.file.maxSize', '10m'));
-    
+    const maxSize = this.parseSize(this.configService.get("logging.file.maxSize", "10m"));
+
     if (stats.size < maxSize) {
       // File is not large enough to rotate
       return;
@@ -89,9 +89,9 @@ export class LogRotationService {
 
   private async compressFile(filePath: string) {
     try {
-      const zlib = await import('zlib');
-      const { createReadStream, createWriteStream } = await import('fs');
-      const { pipeline } = await import('stream/promises');
+      const zlib = await import("zlib");
+      const { createReadStream, createWriteStream } = await import("fs");
+      const { pipeline } = await import("stream/promises");
 
       const gzipPath = `${filePath}.gz`;
       const readStream = createReadStream(filePath);
@@ -103,14 +103,14 @@ export class LogRotationService {
       // Remove original file after compression
       await fs.unlink(filePath);
 
-      this.logger.log('Log file compressed', {
-        operation: 'log_compression',
+      this.logger.log("Log file compressed", {
+        operation: "log_compression",
         originalFile: filePath,
         compressedFile: gzipPath,
       });
     } catch (error) {
-      this.logger.warn('Failed to compress log file', {
-        operation: 'log_compression',
+      this.logger.warn("Failed to compress log file", {
+        operation: "log_compression",
         filePath,
         error: error.message,
       });
@@ -135,18 +135,18 @@ export class LogRotationService {
   }
 
   async getLogFileStats() {
-    const logFileEnabled = this.configService.get('logging.file.enabled');
+    const logFileEnabled = this.configService.get("logging.file.enabled");
     if (!logFileEnabled) {
       return { enabled: false };
     }
 
-    const logFilePath = this.configService.get('logging.file.path');
+    const logFilePath = this.configService.get("logging.file.path");
     const logDir = path.dirname(logFilePath);
 
     try {
       const files = await fs.readdir(logDir);
-      const logFiles = files.filter(file => 
-        file.startsWith(path.basename(logFilePath, path.extname(logFilePath)))
+      const logFiles = files.filter((file) =>
+        file.startsWith(path.basename(logFilePath, path.extname(logFilePath))),
       );
 
       const fileStats = await Promise.all(
@@ -159,7 +159,7 @@ export class LogRotationService {
             created: stats.birthtime,
             modified: stats.mtime,
           };
-        })
+        }),
       );
 
       return {

@@ -1,1 +1,1 @@
-export * from '@sanarwa/ui/checkbox';
+export * from "@sanarwa/ui/checkbox";

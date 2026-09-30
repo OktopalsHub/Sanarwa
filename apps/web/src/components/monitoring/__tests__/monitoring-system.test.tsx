@@ -1,36 +1,36 @@
-import { alertManager } from '@/lib/services/alert-manager';
-import { analyticsTracker } from '@/lib/services/analytics-tracker';
-import { monitoringService } from '@/lib/services/monitoring';
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import MonitoringDashboard from '../monitoring-dashboard';
-import RealTimeAlerts from '../real-time-alerts';
-import UserBehaviorTracker from '../user-behavior-tracker';
+import { alertManager } from "@/lib/services/alert-manager";
+import { analyticsTracker } from "@/lib/services/analytics-tracker";
+import { monitoringService } from "@/lib/services/monitoring";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import MonitoringDashboard from "../monitoring-dashboard";
+import RealTimeAlerts from "../real-time-alerts";
+import UserBehaviorTracker from "../user-behavior-tracker";
 
 // Mock the monitoring services
-vi.mock('@/lib/services/monitoring');
-vi.mock('@/lib/services/analytics-tracker');
-vi.mock('@/lib/services/alert-manager');
+vi.mock("@/lib/services/monitoring");
+vi.mock("@/lib/services/analytics-tracker");
+vi.mock("@/lib/services/alert-manager");
 
 // Mock Next.js router
-vi.mock('next/navigation', () => ({
-  usePathname: () => '/test',
+vi.mock("next/navigation", () => ({
+  usePathname: () => "/test",
 }));
 
 // Mock auth and tenant contexts
-vi.mock('@/contexts/auth-context', () => ({
+vi.mock("@/contexts/auth-context", () => ({
   useAuth: () => ({
-    user: { id: 'test-user', email: 'test@example.com' },
+    user: { id: "test-user", email: "test@example.com" },
   }),
 }));
 
-vi.mock('@/contexts/tenant-context', () => ({
+vi.mock("@/contexts/tenant-context", () => ({
   useTenant: () => ({
-    selectedTenant: { id: 'test-tenant', name: 'Test Tenant' },
+    selectedTenant: { id: "test-tenant", name: "Test Tenant" },
   }),
 }));
 
-describe('Monitoring System', () => {
+describe("Monitoring System", () => {
   beforeEach(() => {
     vi.clearAllMocks();
 
@@ -39,7 +39,7 @@ describe('Monitoring System', () => {
       Promise.resolve({
         ok: true,
         json: () => Promise.resolve({}),
-      })
+      }),
     ) as any;
   });
 
@@ -47,75 +47,77 @@ describe('Monitoring System', () => {
     vi.restoreAllMocks();
   });
 
-  describe('MonitoringDashboard', () => {
-    it('renders monitoring dashboard with key metrics', async () => {
+  describe("MonitoringDashboard", () => {
+    it("renders monitoring dashboard with key metrics", async () => {
       render(<MonitoringDashboard />);
 
-      expect(screen.getByText('System Monitoring')).toBeInTheDocument();
-      expect(screen.getByText('Real-time monitoring and alerting dashboard')).toBeInTheDocument();
+      expect(screen.getByText("System Monitoring")).toBeInTheDocument();
+      expect(screen.getByText("Real-time monitoring and alerting dashboard")).toBeInTheDocument();
 
       // Check for metric cards
       await waitFor(() => {
-        expect(screen.getByText('Error Rate')).toBeInTheDocument();
-        expect(screen.getByText('Avg Response Time')).toBeInTheDocument();
-        expect(screen.getByText('Active Users')).toBeInTheDocument();
-        expect(screen.getByText('Uptime')).toBeInTheDocument();
+        expect(screen.getByText("Error Rate")).toBeInTheDocument();
+        expect(screen.getByText("Avg Response Time")).toBeInTheDocument();
+        expect(screen.getByText("Active Users")).toBeInTheDocument();
+        expect(screen.getByText("Uptime")).toBeInTheDocument();
       });
     });
 
-    it('displays tabs for different monitoring views', async () => {
+    it("displays tabs for different monitoring views", async () => {
       render(<MonitoringDashboard />);
 
       await waitFor(() => {
-        expect(screen.getByText('Active Alerts')).toBeInTheDocument();
-        expect(screen.getByText('Performance')).toBeInTheDocument();
-        expect(screen.getByText('Error Tracking')).toBeInTheDocument();
-        expect(screen.getByText('User Analytics')).toBeInTheDocument();
+        expect(screen.getByText("Active Alerts")).toBeInTheDocument();
+        expect(screen.getByText("Performance")).toBeInTheDocument();
+        expect(screen.getByText("Error Tracking")).toBeInTheDocument();
+        expect(screen.getByText("User Analytics")).toBeInTheDocument();
       });
     });
 
-    it('refreshes data when refresh button is clicked', async () => {
+    it("refreshes data when refresh button is clicked", async () => {
       render(<MonitoringDashboard />);
 
-      const refreshButton = await screen.findByText('Refresh');
+      const refreshButton = await screen.findByText("Refresh");
       fireEvent.click(refreshButton);
 
       // Verify that the component attempts to reload data
       await waitFor(() => {
-        expect(screen.getByText('Refresh')).toBeInTheDocument();
+        expect(screen.getByText("Refresh")).toBeInTheDocument();
       });
     });
   });
 
-  describe('RealTimeAlerts', () => {
-    it('renders real-time alerts component', () => {
+  describe("RealTimeAlerts", () => {
+    it("renders real-time alerts component", () => {
       render(<RealTimeAlerts />);
 
-      expect(screen.getByText('Real-time Alerts')).toBeInTheDocument();
-      expect(screen.getByText('Live monitoring alerts and system notifications')).toBeInTheDocument();
+      expect(screen.getByText("Real-time Alerts")).toBeInTheDocument();
+      expect(
+        screen.getByText("Live monitoring alerts and system notifications"),
+      ).toBeInTheDocument();
     });
 
-    it('shows no alerts message when there are no alerts', () => {
+    it("shows no alerts message when there are no alerts", () => {
       render(<RealTimeAlerts />);
 
-      expect(screen.getByText('No alerts at this time')).toBeInTheDocument();
+      expect(screen.getByText("No alerts at this time")).toBeInTheDocument();
     });
 
-    it('allows enabling and disabling alerts', () => {
+    it("allows enabling and disabling alerts", () => {
       render(<RealTimeAlerts />);
 
-      const toggleButton = screen.getByText('Disable');
+      const toggleButton = screen.getByText("Disable");
       fireEvent.click(toggleButton);
 
-      expect(screen.getByText('Enable')).toBeInTheDocument();
+      expect(screen.getByText("Enable")).toBeInTheDocument();
     });
 
-    it('can clear all alerts', async () => {
+    it("can clear all alerts", async () => {
       render(<RealTimeAlerts />);
 
       // Wait for potential alerts to load
       await waitFor(() => {
-        const clearButton = screen.queryByText('Clear All');
+        const clearButton = screen.queryByText("Clear All");
         if (clearButton) {
           fireEvent.click(clearButton);
         }
@@ -123,8 +125,8 @@ describe('Monitoring System', () => {
     });
   });
 
-  describe('UserBehaviorTracker', () => {
-    it('tracks user interactions', () => {
+  describe("UserBehaviorTracker", () => {
+    it("tracks user interactions", () => {
       const TestComponent = () => (
         <UserBehaviorTracker>
           <button>Test Button</button>
@@ -133,19 +135,19 @@ describe('Monitoring System', () => {
 
       render(<TestComponent />);
 
-      const button = screen.getByText('Test Button');
+      const button = screen.getByText("Test Button");
       fireEvent.click(button);
 
       // Verify that analytics tracker was called
       expect(analyticsTracker.trackEvent).toHaveBeenCalledWith(
-        'user_interaction',
+        "user_interaction",
         expect.objectContaining({
-          type: 'click',
-        })
+          type: "click",
+        }),
       );
     });
 
-    it('tracks form submissions', () => {
+    it("tracks form submissions", () => {
       const TestComponent = () => (
         <UserBehaviorTracker>
           <form onSubmit={(e) => e.preventDefault()}>
@@ -157,18 +159,18 @@ describe('Monitoring System', () => {
 
       render(<TestComponent />);
 
-      const form = screen.getByRole('button', { name: 'Submit' }).closest('form');
+      const form = screen.getByRole("button", { name: "Submit" }).closest("form");
       fireEvent.submit(form!);
 
       expect(analyticsTracker.trackEvent).toHaveBeenCalledWith(
-        'form_submission',
+        "form_submission",
         expect.objectContaining({
-          formMethod: 'get',
-        })
+          formMethod: "get",
+        }),
       );
     });
 
-    it('tracks keyboard shortcuts', () => {
+    it("tracks keyboard shortcuts", () => {
       const TestComponent = () => (
         <UserBehaviorTracker>
           <div>Test Content</div>
@@ -177,50 +179,48 @@ describe('Monitoring System', () => {
 
       render(<TestComponent />);
 
-      fireEvent.keyDown(document, { key: 'Enter', ctrlKey: true });
+      fireEvent.keyDown(document, { key: "Enter", ctrlKey: true });
 
       expect(analyticsTracker.trackEvent).toHaveBeenCalledWith(
-        'keyboard_shortcut',
+        "keyboard_shortcut",
         expect.objectContaining({
-          key: 'Enter',
+          key: "Enter",
           ctrlKey: true,
-        })
+        }),
       );
     });
   });
 
-  describe('Error Reporting', () => {
-    it('reports JavaScript errors', () => {
+  describe("Error Reporting", () => {
+    it("reports JavaScript errors", () => {
       const TestComponent = () => {
-        throw new Error('Test error');
+        throw new Error("Test error");
       };
 
-      const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
+      const consoleSpy = jest.spyOn(console, "error").mockImplementation();
 
       expect(() => {
         render(<TestComponent />);
-      }).toThrow('Test error');
+      }).toThrow("Test error");
 
       consoleSpy.mockRestore();
     });
 
-    it('handles API errors gracefully', async () => {
+    it("handles API errors gracefully", async () => {
       // Mock a failed API call
-      global.fetch = jest.fn(() =>
-        Promise.reject(new Error('API Error'))
-      ) as jest.Mock;
+      global.fetch = jest.fn(() => Promise.reject(new Error("API Error"))) as jest.Mock;
 
       render(<MonitoringDashboard />);
 
       // The component should handle the error gracefully
       await waitFor(() => {
-        expect(screen.getByText('System Monitoring')).toBeInTheDocument();
+        expect(screen.getByText("System Monitoring")).toBeInTheDocument();
       });
     });
   });
 
-  describe('Performance Monitoring', () => {
-    it('tracks performance metrics', () => {
+  describe("Performance Monitoring", () => {
+    it("tracks performance metrics", () => {
       const TestComponent = () => (
         <UserBehaviorTracker>
           <div>Performance Test</div>
@@ -233,7 +233,7 @@ describe('Monitoring System', () => {
       expect(monitoringService.initialize).toHaveBeenCalled();
     });
 
-    it('measures component render times', async () => {
+    it("measures component render times", async () => {
       const TestComponent = () => {
         // Simulate a slow component
         const start = performance.now();
@@ -246,44 +246,44 @@ describe('Monitoring System', () => {
       render(<TestComponent />);
 
       await waitFor(() => {
-        expect(screen.getByText('Slow Component')).toBeInTheDocument();
+        expect(screen.getByText("Slow Component")).toBeInTheDocument();
       });
     });
   });
 
-  describe('Alert Management', () => {
-    it('creates alerts for critical errors', () => {
-      const criticalError = new Error('Critical system failure');
+  describe("Alert Management", () => {
+    it("creates alerts for critical errors", () => {
+      const criticalError = new Error("Critical system failure");
 
       // Simulate a critical error
-      monitoringService.reportError(criticalError, { severity: 'critical' });
+      monitoringService.reportError(criticalError, { severity: "critical" });
 
       expect(alertManager.createCustomAlert).toHaveBeenCalledWith(
-        'error',
-        'critical',
-        expect.stringContaining('Critical error'),
-        expect.any(Object)
+        "error",
+        "critical",
+        expect.stringContaining("Critical error"),
+        expect.any(Object),
       );
     });
 
-    it('creates alerts for performance issues', () => {
+    it("creates alerts for performance issues", () => {
       // Simulate a slow API call
-      monitoringService.trackPerformance('api_call', 5000, {
-        endpoint: '/api/test',
+      monitoringService.trackPerformance("api_call", 5000, {
+        endpoint: "/api/test",
         threshold: 3000,
       });
 
       expect(alertManager.createCustomAlert).toHaveBeenCalledWith(
-        'performance',
+        "performance",
         expect.any(String),
-        expect.stringContaining('Performance'),
-        expect.any(Object)
+        expect.stringContaining("Performance"),
+        expect.any(Object),
       );
     });
   });
 
-  describe('Integration Tests', () => {
-    it('integrates all monitoring components together', async () => {
+  describe("Integration Tests", () => {
+    it("integrates all monitoring components together", async () => {
       const IntegratedApp = () => (
         <UserBehaviorTracker>
           <div>
@@ -297,31 +297,31 @@ describe('Monitoring System', () => {
 
       // Verify all components render
       await waitFor(() => {
-        expect(screen.getByText('System Monitoring')).toBeInTheDocument();
-        expect(screen.getByText('Real-time Alerts')).toBeInTheDocument();
+        expect(screen.getByText("System Monitoring")).toBeInTheDocument();
+        expect(screen.getByText("Real-time Alerts")).toBeInTheDocument();
       });
 
       // Simulate user interaction
-      const refreshButton = screen.getByText('Refresh');
+      const refreshButton = screen.getByText("Refresh");
       fireEvent.click(refreshButton);
 
       // Verify tracking
       expect(analyticsTracker.trackEvent).toHaveBeenCalled();
     });
 
-    it('handles monitoring service failures gracefully', async () => {
+    it("handles monitoring service failures gracefully", async () => {
       // Mock monitoring service to throw errors
       (monitoringService.initialize as any).mockImplementation(() => {
-        throw new Error('Monitoring service failed');
+        throw new Error("Monitoring service failed");
       });
 
-      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => { });
+      const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
 
       render(<MonitoringDashboard />);
 
       // Component should still render despite monitoring failure
       await waitFor(() => {
-        expect(screen.getByText('System Monitoring')).toBeInTheDocument();
+        expect(screen.getByText("System Monitoring")).toBeInTheDocument();
       });
 
       consoleSpy.mockRestore();

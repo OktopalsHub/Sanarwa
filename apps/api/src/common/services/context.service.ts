@@ -1,11 +1,10 @@
-import { Injectable } from '@nestjs/common';
-import { AsyncLocalStorage } from 'async_hooks';
-import { AsyncMemberContext } from '../interfaces/request-context.interface';
+import { Injectable } from "@nestjs/common";
+import { AsyncLocalStorage } from "async_hooks";
+import { AsyncMemberContext } from "../interfaces/request-context.interface";
 
 @Injectable()
 export class ContextService {
-  private static asyncLocalStorage =
-    new AsyncLocalStorage<AsyncMemberContext>();
+  private static asyncLocalStorage = new AsyncLocalStorage<AsyncMemberContext>();
 
   /**
    * Run a function with member context

@@ -1,19 +1,13 @@
-import {
-  Injectable,
-  NestInterceptor,
-  ExecutionContext,
-  CallHandler,
-  Logger,
-} from '@nestjs/common';
-import { Observable } from 'rxjs';
-import { tap, catchError } from 'rxjs/operators';
-import { MetricsService } from '../metrics.service';
+import { Injectable, NestInterceptor, ExecutionContext, CallHandler, Logger } from "@nestjs/common";
+import { Observable } from "rxjs";
+import { tap, catchError } from "rxjs/operators";
+import { MetricsService } from "../metrics.service";
 
 @Injectable()
 export class MetricsInterceptor implements NestInterceptor {
   private readonly logger = new Logger(MetricsInterceptor.name);
 
-  constructor(private readonly metricsService: MetricsService) { }
+  constructor(private readonly metricsService: MetricsService) {}
 
   intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
     const startTime = Date.now();
@@ -44,7 +38,7 @@ export class MetricsInterceptor implements NestInterceptor {
       // You can add custom success metrics here
       this.logger.debug(`${method} ${route} completed in ${duration}ms`);
     } catch (error) {
-      this.logger.error('Failed to record success metrics', error);
+      this.logger.error("Failed to record success metrics", error);
     }
   }
 
@@ -53,7 +47,7 @@ export class MetricsInterceptor implements NestInterceptor {
       // You can add custom error metrics here
       this.logger.error(`${method} ${route} failed in ${duration}ms: ${error.message}`);
     } catch (metricsError) {
-      this.logger.error('Failed to record error metrics', metricsError);
+      this.logger.error("Failed to record error metrics", metricsError);
     }
   }
 }

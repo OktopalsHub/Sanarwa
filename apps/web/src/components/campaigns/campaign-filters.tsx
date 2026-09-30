@@ -1,26 +1,26 @@
-'use client';
+"use client";
 
-import { Input } from '@/components/ui/input';
+import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
-import { MagnifyingGlassIcon } from '@heroicons/react/24/outline';
+} from "@/components/ui/select";
+import { IconSearch } from "@tabler/icons-react";
 
 interface CampaignFiltersProps {
   searchTerm: string;
   statusFilter: string;
   typeFilter: string;
-  sortBy: 'name' | 'createdAt' | 'updatedAt' | 'status';
-  sortOrder: 'asc' | 'desc';
+  sortBy: "name" | "createdAt" | "updatedAt" | "status";
+  sortOrder: "asc" | "desc";
   onSearchChange: (value: string) => void;
   onStatusChange: (value: string) => void;
   onTypeChange: (value: string) => void;
-  onSortByChange: (value: 'name' | 'createdAt' | 'updatedAt' | 'status') => void;
-  onSortOrderChange: (value: 'asc' | 'desc') => void;
+  onSortByChange: (value: "name" | "createdAt" | "updatedAt" | "status") => void;
+  onSortOrderChange: (value: "asc" | "desc") => void;
 }
 
 export function CampaignFilters({
@@ -38,7 +38,7 @@ export function CampaignFilters({
   return (
     <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
       <div className="relative flex-1 max-w-sm">
-        <MagnifyingGlassIcon className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+        <IconSearch className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
         <Input
           placeholder="Search campaigns..."
           value={searchTerm}
@@ -72,7 +72,10 @@ export function CampaignFilters({
             <SelectItem value="triggered">Triggered</SelectItem>
           </SelectContent>
         </Select>
-        <Select value={sortBy} onValueChange={(v) => onSortByChange(v as CampaignFiltersProps['sortBy'])}>
+        <Select
+          value={sortBy}
+          onValueChange={(v) => onSortByChange(v as CampaignFiltersProps["sortBy"])}
+        >
           <SelectTrigger className="w-[140px]">
             <SelectValue placeholder="Sort by" />
           </SelectTrigger>
@@ -83,7 +86,7 @@ export function CampaignFilters({
             <SelectItem value="status">Status</SelectItem>
           </SelectContent>
         </Select>
-        <Select value={sortOrder} onValueChange={(v) => onSortOrderChange(v as 'asc' | 'desc')}>
+        <Select value={sortOrder} onValueChange={(v) => onSortOrderChange(v as "asc" | "desc")}>
           <SelectTrigger className="w-[120px]">
             <SelectValue />
           </SelectTrigger>

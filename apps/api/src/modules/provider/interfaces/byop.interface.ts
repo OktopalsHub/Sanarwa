@@ -4,7 +4,7 @@
  */
 
 export interface ProviderCostModel {
-  type: 'per_message' | 'monthly' | 'hybrid' | 'custom';
+  type: "per_message" | "monthly" | "hybrid" | "custom";
   baseRate: number;
   currency: string;
   tiers?: ProviderCostTier[];
@@ -35,18 +35,18 @@ export interface ProviderTemplate {
   costModel?: ProviderCostModel;
   regions?: string[];
   isPopular?: boolean;
-  difficulty: 'easy' | 'medium' | 'hard';
+  difficulty: "easy" | "medium" | "hard";
 }
 
 export interface ProviderConfigSchema {
-  type: 'object';
+  type: "object";
   properties: Record<string, ProviderConfigProperty>;
   required: string[];
   additionalProperties?: boolean;
 }
 
 export interface ProviderConfigProperty {
-  type: 'string' | 'number' | 'boolean' | 'object' | 'array';
+  type: "string" | "number" | "boolean" | "object" | "array";
   title: string;
   description: string;
   format?: string;
@@ -97,27 +97,27 @@ export interface ProviderFailoverRule {
 }
 
 export interface ProviderFailoverCondition {
-  type: 'error_rate' | 'latency' | 'cost' | 'quota' | 'health_check';
-  operator: 'gt' | 'lt' | 'eq' | 'gte' | 'lte';
+  type: "error_rate" | "latency" | "cost" | "quota" | "health_check";
+  operator: "gt" | "lt" | "eq" | "gte" | "lte";
   value: number;
   timeWindow?: number; // in minutes
 }
 
 export interface ProviderFailoverAction {
-  type: 'switch_provider' | 'disable_provider' | 'alert' | 'scale_down';
+  type: "switch_provider" | "disable_provider" | "alert" | "scale_down";
   targetProviderId?: string;
   alertChannels?: string[];
   parameters?: Record<string, any>;
 }
 
 export interface ProviderLoadBalancingStrategy {
-  type: 'round_robin' | 'weighted' | 'cost_optimized' | 'latency_based' | 'custom';
+  type: "round_robin" | "weighted" | "cost_optimized" | "latency_based" | "custom";
   weights?: Record<string, number>;
   parameters?: Record<string, any>;
 }
 
 export interface ProviderQuota {
-  type: 'daily' | 'monthly' | 'hourly';
+  type: "daily" | "monthly" | "hourly";
   limit: number;
   current: number;
   resetAt: Date;
@@ -125,12 +125,16 @@ export interface ProviderQuota {
 }
 
 export interface ProviderWebhookEvent {
-  type: 'provider.status.changed' | 'provider.quota.exceeded' | 'provider.cost.threshold' | 'provider.failover.triggered';
+  type:
+    | "provider.status.changed"
+    | "provider.quota.exceeded"
+    | "provider.cost.threshold"
+    | "provider.failover.triggered";
   providerId: string;
   channel: string;
   timestamp: Date;
   data: Record<string, any>;
-  severity: 'info' | 'warning' | 'error' | 'critical';
+  severity: "info" | "warning" | "error" | "critical";
 }
 
 export interface ProviderAnalytics {
@@ -139,7 +143,7 @@ export interface ProviderAnalytics {
   timeRange: {
     start: Date;
     end: Date;
-    granularity: 'hour' | 'day' | 'week' | 'month';
+    granularity: "hour" | "day" | "week" | "month";
   };
   metrics: {
     volume: TimeSeriesData[];

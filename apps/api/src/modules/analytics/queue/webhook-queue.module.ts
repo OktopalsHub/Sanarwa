@@ -1,10 +1,10 @@
-import { BullModule } from '@nestjs/bull';
-import { Module } from '@nestjs/common';
-import { WEBHOOK_RETRY_QUEUE } from './webhook-queue.constants';
-import { WebhookQueueService } from './webhook-queue.service';
-import { WebhookRetryProcessor } from './webhook-retry.processor';
+import { BullModule } from "@nestjs/bull";
+import { Module } from "@nestjs/common";
+import { WEBHOOK_RETRY_QUEUE } from "./webhook-queue.constants";
+import { WebhookQueueService } from "./webhook-queue.service";
+import { WebhookRetryProcessor } from "./webhook-retry.processor";
 
-export { WEBHOOK_RETRY_QUEUE } from './webhook-queue.constants';
+export { WEBHOOK_RETRY_QUEUE } from "./webhook-queue.constants";
 
 @Module({
   imports: [
@@ -15,7 +15,7 @@ export { WEBHOOK_RETRY_QUEUE } from './webhook-queue.constants';
         removeOnFail: 50,
         attempts: 5,
         backoff: {
-          type: 'exponential',
+          type: "exponential",
           delay: 2000,
         },
       },

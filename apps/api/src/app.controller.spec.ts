@@ -1,10 +1,10 @@
-import { ConfigModule } from '@nestjs/config';
-import { Test, TestingModule } from '@nestjs/testing';
-import { AppController } from './app.controller';
-import { AppService } from './app.service';
-import { appConfig } from './config';
+import { ConfigModule } from "@nestjs/config";
+import { Test, TestingModule } from "@nestjs/testing";
+import { AppController } from "./app.controller";
+import { AppService } from "./app.service";
+import { appConfig } from "./config";
 
-describe('AppController', () => {
+describe("AppController", () => {
   let appController: AppController;
 
   beforeEach(async () => {
@@ -21,14 +21,14 @@ describe('AppController', () => {
     appController = app.get<AppController>(AppController);
   });
 
-  describe('root', () => {
-    it('returns the health payload', () => {
+  describe("root", () => {
+    it("returns the health payload", () => {
       const response = appController.getHello();
 
       expect(response).toMatchObject({
-        status: 'ok',
-        message: 'Sanarwa Server is running!',
-        version: '1.0.0',
+        status: "ok",
+        message: "Sanarwa Server is running!",
+        version: "1.0.0",
       });
       expect(response.timestamp).toBeDefined();
     });

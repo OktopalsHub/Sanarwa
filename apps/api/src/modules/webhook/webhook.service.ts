@@ -3,13 +3,13 @@ import {
   Injectable,
   NotFoundException,
   BadRequestException,
-} from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { assertSafeWebhookUrl } from '../../common/security/utils/safe-url';
-import { CreateWebhookDto } from './dto/create-webhook.dto';
-import { UpdateWebhookDto } from './dto/update-webhook.dto';
-import { Webhook } from './entities/webhook.entity';
+} from "@nestjs/common";
+import { InjectRepository } from "@nestjs/typeorm";
+import { Repository } from "typeorm";
+import { assertSafeWebhookUrl } from "../../common/security/utils/safe-url";
+import { CreateWebhookDto } from "./dto/create-webhook.dto";
+import { UpdateWebhookDto } from "./dto/update-webhook.dto";
+import { Webhook } from "./entities/webhook.entity";
 
 @Injectable()
 export class WebhookService {
@@ -18,16 +18,11 @@ export class WebhookService {
     private readonly webhookRepository: Repository<Webhook>,
   ) {}
 
-  async create(
-    tenantId: string,
-    createWebhookDto: CreateWebhookDto,
-  ): Promise<Webhook> {
+  async create(tenantId: string, createWebhookDto: CreateWebhookDto): Promise<Webhook> {
     try {
       assertSafeWebhookUrl(createWebhookDto.url);
     } catch (error) {
-      throw new BadRequestException(
-        error instanceof Error ? error.message : 'Invalid webhook URL',
-      );
+      throw new BadRequestException(error instanceof Error ? error.message : "Invalid webhook URL");
     }
 
     // Check if webhook with same URL already exists for this tenant
@@ -52,7 +47,7 @@ export class WebhookService {
   async findAll(tenantId: string): Promise<Webhook[]> {
     return this.webhookRepository.find({
       where: { tenantId },
-      order: { createdAt: 'DESC' },
+      order: { createdAt: "DESC" },
     });
   }
 
@@ -68,11 +63,7 @@ export class WebhookService {
     return webhook;
   }
 
-  async update(
-    tenantId: string,
-    id: string,
-    updateWebhookDto: UpdateWebhookDto,
-  ): Promise<Webhook> {
+  async update(tenantId: string, id: string, updateWebhookDto: UpdateWebhookDto): Promise<Webhook> {
     const webhook = await this.findOne(tenantId, id);
 
     // Check URL uniqueness if URL is being updated
@@ -81,7 +72,7 @@ export class WebhookService {
         assertSafeWebhookUrl(updateWebhookDto.url);
       } catch (error) {
         throw new BadRequestException(
-          error instanceof Error ? error.message : 'Invalid webhook URL',
+          error instanceof Error ? error.message : "Invalid webhook URL",
         );
       }
       const existing = await this.webhookRepository.findOne({
@@ -104,15 +95,12 @@ export class WebhookService {
     await this.webhookRepository.remove(webhook);
   }
 
-  async findActiveWebhooksForEvent(
-    tenantId: string,
-    event: string,
-  ): Promise<Webhook[]> {
+  async findActiveWebhooksForEvent(tenantId: string, event: string): Promise<Webhook[]> {
     return this.webhookRepository
-      .createQueryBuilder('webhook')
-      .where('webhook.tenantId = :tenantId', { tenantId })
-      .andWhere('webhook.active = true')
-      .andWhere(':event = ANY(webhook.events)', { event })
+      .createQueryBuilder("webhook")
+      .where("webhook.tenantId = :tenantId", { tenantId })
+      .andWhere("webhook.active = true")
+      .andWhere(":event = ANY(webhook.events)", { event })
       .getMany();
   }
 }

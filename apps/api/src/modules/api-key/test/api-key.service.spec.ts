@@ -1,8 +1,8 @@
-import { Test, TestingModule } from '@nestjs/testing';
-import { ApiKeyService } from '../api-key.service';
-import type { Mock } from 'vitest';
+import { Test, TestingModule } from "@nestjs/testing";
+import { ApiKeyService } from "../api-key.service";
+import type { Mock } from "vitest";
 
-describe('ApiKeyService', () => {
+describe("ApiKeyService", () => {
   let service: ApiKeyService;
 
   beforeEach(async () => {
@@ -20,7 +20,7 @@ describe('ApiKeyService', () => {
     service = module.get<ApiKeyService>(ApiKeyService);
   });
 
-  it('should be defined', () => {
+  it("should be defined", () => {
     expect(service).toBeDefined();
   });
 });

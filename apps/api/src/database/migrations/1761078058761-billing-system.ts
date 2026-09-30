@@ -1,7 +1,7 @@
-import { MigrationInterface, QueryRunner } from 'typeorm';
+import { MigrationInterface, QueryRunner } from "typeorm";
 
 export class BillingSystem1761078058761 implements MigrationInterface {
-  name = 'BillingSystem1761078058761';
+  name = "BillingSystem1761078058761";
 
   public async up(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.query(`CREATE EXTENSION IF NOT EXISTS "uuid-ossp"`);
@@ -53,12 +53,38 @@ export class BillingSystem1761078058761 implements MigrationInterface {
     `);
 
     await queryRunner.query(`
+      CREATE TABLE IF NOT EXISTS tenant_payment_methods (
+        id UUID NOT NULL DEFAULT gen_random_uuid(),
+        tenant_id UUID NOT NULL,
+        provider VARCHAR(16) NOT NULL,
+        currency VARCHAR(8) NOT NULL,
+        external_customer_id VARCHAR(255) NOT NULL,
+        external_payment_method_id VARCHAR(255),
+        external_subscription_id VARCHAR(255),
+        card_brand VARCHAR(32),
+        card_last4 VARCHAR(4),
+        card_exp_month INTEGER,
+        card_exp_year INTEGER,
+        status VARCHAR(16) NOT NULL DEFAULT 'active',
+        is_default BOOLEAN NOT NULL DEFAULT false,
+        created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        PRIMARY KEY (id),
+        CONSTRAINT FK_tenant_payment_methods_tenant FOREIGN KEY (tenant_id) REFERENCES tenants(id) ON DELETE CASCADE
+      )
+    `);
+
+    await queryRunner.query(`
       CREATE TABLE IF NOT EXISTS auto_topup_configs (
         id UUID NOT NULL DEFAULT uuid_generate_v4(),
         tenant_id UUID NOT NULL UNIQUE,
         enabled BOOLEAN NOT NULL DEFAULT true,
         trigger VARCHAR(32) NOT NULL DEFAULT 'threshold',
         threshold_amount INTEGER,
+        package_id VARCHAR(64),
+        currency VARCHAR(8),
+        payment_method_id UUID,
+        setup_reference VARCHAR(128),
         topup_amount INTEGER,
         schedule_frequency VARCHAR(32),
         scheduled_amount INTEGER,
@@ -74,14 +100,15 @@ export class BillingSystem1761078058761 implements MigrationInterface {
         created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
         PRIMARY KEY (id),
-        CONSTRAINT FK_auto_topup_configs_tenant FOREIGN KEY (tenant_id) REFERENCES tenants(id) ON DELETE CASCADE
+        CONSTRAINT FK_auto_topup_configs_tenant FOREIGN KEY (tenant_id) REFERENCES tenants(id) ON DELETE CASCADE,
+        CONSTRAINT FK_auto_topup_configs_payment_method FOREIGN KEY (payment_method_id) REFERENCES tenant_payment_methods(id) ON DELETE SET NULL
       )
     `);
 
     await queryRunner.query(`
       CREATE TABLE IF NOT EXISTS token_balances (
         id UUID NOT NULL DEFAULT uuid_generate_v4(),
-        tenant_id UUID NOT NULL UNIQUE,
+        tenant_id UUID NOT NULL,
         total_tokens BIGINT NOT NULL DEFAULT 0,
         used_tokens BIGINT NOT NULL DEFAULT 0,
         available_tokens BIGINT NOT NULL DEFAULT 0,
@@ -111,16 +138,35 @@ export class BillingSystem1761078058761 implements MigrationInterface {
       )
     `);
 
-    await queryRunner.query(`CREATE INDEX IF NOT EXISTS IDX_subscriptions_tenant_id ON subscriptions (tenant_id)`);
-    await queryRunner.query(`CREATE INDEX IF NOT EXISTS IDX_token_purchases_tenant_id ON token_purchases (tenant_id)`);
-    await queryRunner.query(`CREATE INDEX IF NOT EXISTS IDX_token_balances_tenant_id ON token_balances (tenant_id)`);
-    await queryRunner.query(`CREATE INDEX IF NOT EXISTS IDX_token_transactions_tenant_created ON token_transactions (tenant_id, created_at)`);
+    await queryRunner.query(
+      `CREATE INDEX IF NOT EXISTS IDX_subscriptions_tenant_id ON subscriptions (tenant_id)`,
+    );
+    await queryRunner.query(
+      `CREATE INDEX IF NOT EXISTS IDX_token_purchases_tenant_id ON token_purchases (tenant_id)`,
+    );
+    await queryRunner.query(
+      `CREATE INDEX IF NOT EXISTS IDX_tenant_payment_methods_tenant ON tenant_payment_methods (tenant_id)`,
+    );
+    await queryRunner.query(
+      `CREATE INDEX IF NOT EXISTS IDX_tenant_payment_methods_tenant_default ON tenant_payment_methods (tenant_id, is_default)`,
+    );
+    await queryRunner.query(
+      `CREATE INDEX IF NOT EXISTS IDX_token_balances_tenant_id ON token_balances (tenant_id)`,
+    );
+    await queryRunner.query(
+      `CREATE UNIQUE INDEX IF NOT EXISTS UQ_token_balances_tenant_id ON token_balances (tenant_id)`,
+    );
+    await queryRunner.query(
+      `CREATE INDEX IF NOT EXISTS IDX_token_transactions_tenant_created ON token_transactions (tenant_id, created_at)`,
+    );
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.query(`DROP TABLE IF EXISTS token_transactions`);
+    await queryRunner.query(`DROP INDEX IF EXISTS UQ_token_balances_tenant_id`);
     await queryRunner.query(`DROP TABLE IF EXISTS token_balances`);
     await queryRunner.query(`DROP TABLE IF EXISTS auto_topup_configs`);
+    await queryRunner.query(`DROP TABLE IF EXISTS tenant_payment_methods`);
     await queryRunner.query(`DROP TABLE IF EXISTS token_purchases`);
     await queryRunner.query(`DROP TABLE IF EXISTS subscriptions`);
   }

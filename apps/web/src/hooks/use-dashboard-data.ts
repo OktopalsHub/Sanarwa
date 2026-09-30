@@ -1,10 +1,10 @@
-'use client';
+"use client";
 
-import { apiClient } from '@/lib/api/client';
-import { analyticsApi } from '@/lib/api/analytics';
-import { messagingApi } from '@/lib/api/messaging';
-import { useTenant } from '@/contexts/tenant-context';
-import { useQuery } from '@tanstack/react-query';
+import { apiClient } from "@/lib/api/client";
+import { analyticsApi } from "@/lib/api/analytics";
+import { messagingApi } from "@/lib/api/messaging";
+import { useTenant } from "@/contexts/tenant-context";
+import { useQuery } from "@tanstack/react-query";
 
 export interface DashboardMetrics {
   totalCampaigns: number;
@@ -31,7 +31,7 @@ export function useDashboardData() {
   const { selectedTenant } = useTenant();
 
   const { data, isLoading, error, refetch } = useQuery({
-    queryKey: ['dashboard', selectedTenant?.id],
+    queryKey: ["dashboard", selectedTenant?.id],
     queryFn: async (): Promise<DashboardData> => {
       if (selectedTenant?.id) {
         apiClient.setTenant(selectedTenant.id);
@@ -41,17 +41,19 @@ export function useDashboardData() {
       start.setDate(start.getDate() - 30);
       const [raw, stats] = await Promise.all([
         analyticsApi.getTenantAnalytics(start, end).catch(() => ({})),
-        messagingApi.stats({
-          startDate: start.toISOString(),
-          endDate: end.toISOString(),
-        }).catch(() => ({
-          total: 0,
-          sent: 0,
-          delivered: 0,
-          failed: 0,
-          queued: 0,
-          deliveryRate: 0,
-        })),
+        messagingApi
+          .stats({
+            startDate: start.toISOString(),
+            endDate: end.toISOString(),
+          })
+          .catch(() => ({
+            total: 0,
+            sent: 0,
+            delivered: 0,
+            failed: 0,
+            queued: 0,
+            deliveryRate: 0,
+          })),
       ]);
       const summary = ((raw as Record<string, unknown>).summary || raw) as Record<string, number>;
       return {
@@ -65,7 +67,9 @@ export function useDashboardData() {
           clickRate: summary.clickRate ?? 0,
         },
         channelDistribution: Array.isArray((raw as Record<string, unknown>).channels)
-          ? ((raw as Record<string, unknown>).channels as Array<{ channel: string; sent: number }>).map((c) => ({
+          ? (
+              (raw as Record<string, unknown>).channels as Array<{ channel: string; sent: number }>
+            ).map((c) => ({
               name: c.channel,
               value: c.sent,
             }))

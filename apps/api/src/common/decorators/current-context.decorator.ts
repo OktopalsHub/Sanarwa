@@ -1,12 +1,9 @@
-import { createParamDecorator, ExecutionContext } from '@nestjs/common';
-import { AsyncMemberContext } from '../interfaces/request-context.interface';
-import { ContextService } from '../services/context.service';
+import { createParamDecorator, ExecutionContext } from "@nestjs/common";
+import { AsyncMemberContext } from "../interfaces/request-context.interface";
+import { ContextService } from "../services/context.service";
 
 export const CurrentContext = createParamDecorator(
-  (
-    data: keyof AsyncMemberContext | undefined,
-    ctx: ExecutionContext,
-  ): AsyncMemberContext | any => {
+  (data: keyof AsyncMemberContext | undefined, ctx: ExecutionContext): AsyncMemberContext | any => {
     const context = ContextService.getCurrentMemberContext();
 
     if (!context) {

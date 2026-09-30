@@ -1,19 +1,19 @@
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsEnum, IsObject, IsOptional, IsString } from 'class-validator';
-import { ProjectStatus } from 'src/common/enums';
+import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
+import { IsEnum, IsObject, IsOptional, IsString } from "class-validator";
+import { ProjectStatus } from "src/common/enums";
 
 export class CreateProjectDto {
   @ApiProperty({
-    description: 'Project name',
-    example: 'My Project',
+    description: "Project name",
+    example: "My Project",
     type: String,
   })
   @IsString()
   name: string;
 
   @ApiPropertyOptional({
-    description: 'Project description',
-    example: 'A description of the project',
+    description: "Project description",
+    example: "A description of the project",
     type: String,
   })
   @IsOptional()
@@ -21,7 +21,7 @@ export class CreateProjectDto {
   description?: string;
 
   @ApiPropertyOptional({
-    description: 'Project status',
+    description: "Project status",
     enum: ProjectStatus,
     example: ProjectStatus.ACTIVE,
     type: String,
@@ -31,8 +31,8 @@ export class CreateProjectDto {
   status?: ProjectStatus;
 
   @ApiPropertyOptional({
-    description: 'Brand ID associated with the project',
-    example: '123e4567-e89b-12d3-a456-426614174000',
+    description: "Brand ID associated with the project",
+    example: "123e4567-e89b-12d3-a456-426614174000",
     type: String,
   })
   @IsOptional()
@@ -40,7 +40,7 @@ export class CreateProjectDto {
   brandId?: string;
 
   @ApiPropertyOptional({
-    description: 'Additional project metadata',
+    description: "Additional project metadata",
     type: Object,
   })
   @IsOptional()

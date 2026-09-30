@@ -1,7 +1,7 @@
-import { MigrationInterface, QueryRunner } from 'typeorm';
+import { MigrationInterface, QueryRunner } from "typeorm";
 
 export class ApiKeys1759217839563 implements MigrationInterface {
-  name = 'ApiKeys1759217839563';
+  name = "ApiKeys1759217839563";
 
   public async up(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.query(`
@@ -45,6 +45,6 @@ export class ApiKeys1759217839563 implements MigrationInterface {
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {
-    await queryRunner.dropTable('api_keys');
+    await queryRunner.dropTable("api_keys");
   }
 }

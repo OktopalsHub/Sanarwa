@@ -1,6 +1,6 @@
-import { createFileRoute } from '@tanstack/react-router';
-import VerifyEmailPage from '@/pages/verify-email';
+import { createFileRoute } from "@tanstack/react-router";
+import VerifyEmailPage from "@/pages/verify-email";
 
-export const Route = createFileRoute('/verify-email')({
+export const Route = createFileRoute("/verify-email")({
   component: VerifyEmailPage,
 });

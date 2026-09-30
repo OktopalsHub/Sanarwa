@@ -1,31 +1,52 @@
-'use client';
+"use client";
 
-import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Separator } from '@/components/ui/separator';
-import { Textarea } from '@/components/ui/textarea';
-import { BrandingConfig, useBranding } from '@/contexts/branding-context';
-import { useBrandApplication } from '@/hooks/use-brand-application';
-import { useThemeCustomization } from '@/hooks/use-theme-customization';
-import { cn } from '@/lib/utils';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@radix-ui/react-select';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@radix-ui/react-tabs';
-import { ExclamationTriangleIcon, CheckIcon, DocumentDuplicateIcon, ArrowDownTrayIcon, ArrowTopRightOnSquareIcon, EyeIcon, SwatchIcon, ArrowPathIcon, BookmarkIcon, LanguageIcon, ArrowUpTrayIcon, XMarkIcon, CodeBracketIcon, PhotoIcon } from '@heroicons/react/24/outline'
-import { useCallback, useState } from 'react';
-import { ColorPicker } from './color-picker';
-import { FontSelector } from './font-selector';
-import { LogoUploader } from './logo-uploader';
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Separator } from "@/components/ui/separator";
+import { Textarea } from "@/components/ui/textarea";
+import { BrandingConfig, useBranding } from "@/contexts/branding-context";
+import { useBrandApplication } from "@/hooks/use-brand-application";
+import { useThemeCustomization } from "@/hooks/use-theme-customization";
+import { cn } from "@/lib/utils";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@radix-ui/react-select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@radix-ui/react-tabs";
+import {
+  ExclamationTriangleIcon,
+  CheckIcon,
+  DocumentDuplicateIcon,
+  ArrowDownTrayIcon,
+  ArrowTopRightOnSquareIcon,
+  EyeIcon,
+  SwatchIcon,
+  ArrowPathIcon,
+  BookmarkIcon,
+  LanguageIcon,
+  ArrowUpTrayIcon,
+  XMarkIcon,
+  CodeBracketIcon,
+  PhotoIcon,
+} from "@heroicons/react/24/outline";
+import { useCallback, useState } from "react";
+import { ColorPicker } from "./color-picker";
+import { FontSelector } from "./font-selector";
+import { LogoUploader } from "./logo-uploader";
 
 // NectarHR Orange color presets
 const NECTAR_ORANGE_PRESETS = [
-  { name: 'Primary Orange', value: 'oklch(0.65 0.18 45)', description: 'Main brand color' },
-  { name: 'Light Orange', value: 'oklch(0.75 0.15 45)', description: 'Lighter variant' },
-  { name: 'Dark Orange', value: 'oklch(0.55 0.20 45)', description: 'Darker variant' },
-  { name: 'Vibrant Orange', value: 'oklch(0.70 0.22 40)', description: 'More vibrant' },
-  { name: 'Warm Orange', value: 'oklch(0.65 0.18 50)', description: 'Warmer tone' },
-  { name: 'Soft Orange', value: 'oklch(0.80 0.12 45)', description: 'Softer variant' },
+  { name: "Primary Orange", value: "oklch(0.65 0.18 45)", description: "Main brand color" },
+  { name: "Light Orange", value: "oklch(0.75 0.15 45)", description: "Lighter variant" },
+  { name: "Dark Orange", value: "oklch(0.55 0.20 45)", description: "Darker variant" },
+  { name: "Vibrant Orange", value: "oklch(0.70 0.22 40)", description: "More vibrant" },
+  { name: "Warm Orange", value: "oklch(0.65 0.18 50)", description: "Warmer tone" },
+  { name: "Soft Orange", value: "oklch(0.80 0.12 45)", description: "Softer variant" },
 ];
 
 interface BrandingConfiguratorProps {
@@ -55,7 +76,7 @@ export function BrandingConfigurator({ className }: BrandingConfiguratorProps) {
         applyBranding(updatedBranding);
       }
     },
-    [localBranding, previewMode, applyBranding]
+    [localBranding, previewMode, applyBranding],
   );
 
   const handleColorChange = useCallback(
@@ -69,7 +90,7 @@ export function BrandingConfigurator({ className }: BrandingConfiguratorProps) {
 
       handleBrandingChange({ colors: updatedColors });
     },
-    [localBranding, handleBrandingChange]
+    [localBranding, handleBrandingChange],
   );
 
   const handlePreview = useCallback(() => {
@@ -88,7 +109,7 @@ export function BrandingConfigurator({ className }: BrandingConfiguratorProps) {
       setPreviewMode(false);
       // In a real application, you would save to the backend here
     } catch (error) {
-      console.error('Failed to save branding:', error);
+      console.error("Failed to save branding:", error);
     } finally {
       setIsApplying(false);
     }
@@ -105,26 +126,26 @@ export function BrandingConfigurator({ className }: BrandingConfiguratorProps) {
   const handleReset = useCallback(() => {
     // Reset to default branding
     const defaultBranding: BrandingConfig = {
-      id: 'default',
-      name: 'NectarHR Default',
+      id: "default",
+      name: "NectarHR Default",
       logo: {
-        light: '/logo-light.svg',
-        dark: '/logo-dark.svg',
+        light: "/logo-light.svg",
+        dark: "/logo-dark.svg",
       },
       colors: {
-        primary: 'oklch(0.65 0.18 45)',
-        secondary: 'oklch(0.97 0 0)',
-        accent: 'oklch(0.6 0.15 240)',
-        background: isDark ? 'oklch(0.145 0 0)' : 'oklch(1 0 0)',
-        foreground: isDark ? 'oklch(0.985 0 0)' : 'oklch(0.145 0 0)',
-        muted: isDark ? 'oklch(0.269 0 0)' : 'oklch(0.97 0 0)',
-        mutedForeground: isDark ? 'oklch(0.708 0 0)' : 'oklch(0.556 0 0)',
-        border: isDark ? 'oklch(1 0 0 / 10%)' : 'oklch(0.922 0 0)',
-        destructive: 'oklch(0.577 0.245 27.325)',
+        primary: "oklch(0.65 0.18 45)",
+        secondary: "oklch(0.97 0 0)",
+        accent: "oklch(0.6 0.15 240)",
+        background: isDark ? "oklch(0.145 0 0)" : "oklch(1 0 0)",
+        foreground: isDark ? "oklch(0.985 0 0)" : "oklch(0.145 0 0)",
+        muted: isDark ? "oklch(0.269 0 0)" : "oklch(0.97 0 0)",
+        mutedForeground: isDark ? "oklch(0.708 0 0)" : "oklch(0.556 0 0)",
+        border: isDark ? "oklch(1 0 0 / 10%)" : "oklch(0.922 0 0)",
+        destructive: "oklch(0.577 0.245 27.325)",
       },
       typography: {
-        fontFamily: 'var(--font-geist-sans)',
-        headingFont: 'var(--font-geist-sans)',
+        fontFamily: "var(--font-geist-sans)",
+        headingFont: "var(--font-geist-sans)",
       },
       isActive: true,
     };
@@ -146,12 +167,12 @@ export function BrandingConfigurator({ className }: BrandingConfiguratorProps) {
     };
 
     const blob = new Blob([JSON.stringify(exportData, null, 2)], {
-      type: 'application/json',
+      type: "application/json",
     });
     const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
+    const a = document.createElement("a");
     a.href = url;
-    a.download = `${localBranding.name.toLowerCase().replace(/\s+/g, '-')}-branding.json`;
+    a.download = `${localBranding.name.toLowerCase().replace(/\s+/g, "-")}-branding.json`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -160,7 +181,7 @@ export function BrandingConfigurator({ className }: BrandingConfiguratorProps) {
 
   if (isLoading || !localBranding) {
     return (
-      <Card className={cn('p-6', className)}>
+      <Card className={cn("p-6", className)}>
         <div className="text-center text-muted-foreground">
           <SwatchIcon className="h-12 w-12 mx-auto mb-4 opacity-50" />
           <p>Loading branding configuration...</p>
@@ -170,7 +191,7 @@ export function BrandingConfigurator({ className }: BrandingConfiguratorProps) {
   }
 
   return (
-    <Card className={cn('p-6', className)}>
+    <Card className={cn("p-6", className)}>
       <div className="space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
@@ -201,10 +222,13 @@ export function BrandingConfigurator({ className }: BrandingConfiguratorProps) {
             </div>
             <div className="space-y-1">
               {[...accessibilityReport.issues, ...brandAccessibilityReport.issues]
-                .filter(issue => issue.level === 'FAIL')
+                .filter((issue) => issue.level === "FAIL")
                 .map((issue, index) => (
                   <p key={index} className="text-xs text-red-700 dark:text-red-300">
-                    {issue.combination}: {(issue as any).suggestion || (issue as any).recommendation || `Contrast ratio ${issue.ratio.toFixed(2)} is too low`}
+                    {issue.combination}:{" "}
+                    {(issue as any).suggestion ||
+                      (issue as any).recommendation ||
+                      `Contrast ratio ${issue.ratio.toFixed(2)} is too low`}
                   </p>
                 ))}
             </div>
@@ -274,7 +298,7 @@ export function BrandingConfigurator({ className }: BrandingConfiguratorProps) {
                 <ColorPicker
                   label="Primary Color"
                   value={localBranding.colors.primary}
-                  onChange={(value) => handleColorChange('primary', value)}
+                  onChange={(value) => handleColorChange("primary", value)}
                   presets={NECTAR_ORANGE_PRESETS}
                   showAccessibility
                   contrastBase={localBranding.colors.background}
@@ -282,45 +306,45 @@ export function BrandingConfigurator({ className }: BrandingConfiguratorProps) {
                 <ColorPicker
                   label="Secondary Color"
                   value={localBranding.colors.secondary}
-                  onChange={(value) => handleColorChange('secondary', value)}
+                  onChange={(value) => handleColorChange("secondary", value)}
                   showAccessibility
                   contrastBase={localBranding.colors.background}
                 />
                 <ColorPicker
                   label="Accent Color"
                   value={localBranding.colors.accent}
-                  onChange={(value) => handleColorChange('accent', value)}
+                  onChange={(value) => handleColorChange("accent", value)}
                   showAccessibility
                   contrastBase={localBranding.colors.background}
                 />
                 <ColorPicker
                   label="Background Color"
                   value={localBranding.colors.background}
-                  onChange={(value) => handleColorChange('background', value)}
+                  onChange={(value) => handleColorChange("background", value)}
                 />
                 <ColorPicker
                   label="Foreground Color"
                   value={localBranding.colors.foreground}
-                  onChange={(value) => handleColorChange('foreground', value)}
+                  onChange={(value) => handleColorChange("foreground", value)}
                   showAccessibility
                   contrastBase={localBranding.colors.background}
                 />
                 <ColorPicker
                   label="Muted Color"
-                  value={localBranding.colors.muted || '#f1f5f9'}
-                  onChange={(value) => handleColorChange('muted', value)}
+                  value={localBranding.colors.muted || "#f1f5f9"}
+                  onChange={(value) => handleColorChange("muted", value)}
                 />
                 <ColorPicker
                   label="Muted Foreground"
-                  value={localBranding.colors.mutedForeground || '#64748b'}
-                  onChange={(value) => handleColorChange('mutedForeground', value)}
+                  value={localBranding.colors.mutedForeground || "#64748b"}
+                  onChange={(value) => handleColorChange("mutedForeground", value)}
                   showAccessibility
-                  contrastBase={localBranding.colors.muted || '#f1f5f9'}
+                  contrastBase={localBranding.colors.muted || "#f1f5f9"}
                 />
                 <ColorPicker
                   label="Border Color"
-                  value={localBranding.colors.border || '#e2e8f0'}
-                  onChange={(value) => handleColorChange('border', value)}
+                  value={localBranding.colors.border || "#e2e8f0"}
+                  onChange={(value) => handleColorChange("border", value)}
                 />
               </div>
             </div>
@@ -356,14 +380,16 @@ export function BrandingConfigurator({ className }: BrandingConfiguratorProps) {
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => window.open('https://developer.mozilla.org/en-US/docs/Web/CSS', '_blank')}
+                  onClick={() =>
+                    window.open("https://developer.mozilla.org/en-US/docs/Web/CSS", "_blank")
+                  }
                 >
                   <ArrowTopRightOnSquareIcon className="h-4 w-4 mr-2" />
                   CSS Reference
                 </Button>
               </div>
               <Textarea
-                value={localBranding.customCss || ''}
+                value={localBranding.customCss || ""}
                 onChange={(e) => handleBrandingChange({ customCss: e.target.value })}
                 placeholder={`/* Add custom CSS here */
 :root {
@@ -377,7 +403,8 @@ export function BrandingConfigurator({ className }: BrandingConfiguratorProps) {
                 className="font-mono text-sm min-h-[200px]"
               />
               <div className="text-xs text-muted-foreground">
-                Custom CSS will be applied globally. Use CSS custom properties for better maintainability.
+                Custom CSS will be applied globally. Use CSS custom properties for better
+                maintainability.
               </div>
             </div>
           </TabsContent>

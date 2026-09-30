@@ -10,12 +10,12 @@ import {
   Logger,
   BadRequestException,
   UnauthorizedException,
-} from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import { EventEmitter2 } from '@nestjs/event-emitter';
-import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { SkipThrottle } from '@nestjs/throttler';
-import { Public } from '../../auth/decorators/public.decorator';
+} from "@nestjs/common";
+import { ConfigService } from "@nestjs/config";
+import { EventEmitter2 } from "@nestjs/event-emitter";
+import { ApiTags, ApiOperation, ApiResponse } from "@nestjs/swagger";
+import { SkipThrottle } from "@nestjs/throttler";
+import { Public } from "../../auth/decorators/public.decorator";
 
 export interface WhatsAppWebhookEntry {
   id: string;
@@ -47,7 +47,7 @@ export interface WhatsAppWebhookEntry {
       }>;
       statuses?: Array<{
         id: string;
-        status: 'sent' | 'delivered' | 'read' | 'failed';
+        status: "sent" | "delivered" | "read" | "failed";
         timestamp: string;
         recipient_id: string;
         errors?: Array<{
@@ -80,7 +80,7 @@ export interface InboundWhatsAppMessage {
 
 export interface WhatsAppStatusUpdate {
   messageId: string;
-  status: 'sent' | 'delivered' | 'read' | 'failed';
+  status: "sent" | "delivered" | "read" | "failed";
   timestamp: Date;
   recipient: string;
   provider: string;
@@ -88,8 +88,8 @@ export interface WhatsAppStatusUpdate {
   errorMessage?: string;
 }
 
-@ApiTags('WhatsApp Webhooks')
-@Controller('webhooks/whatsapp')
+@ApiTags("WhatsApp Webhooks")
+@Controller("webhooks/whatsapp")
 @Public()
 @SkipThrottle()
 export class WhatsAppWebhookController {
@@ -98,48 +98,48 @@ export class WhatsAppWebhookController {
   constructor(
     private readonly configService: ConfigService,
     private readonly eventEmitter: EventEmitter2,
-  ) { }
+  ) {}
 
   @Get()
-  @ApiOperation({ summary: 'Verify WhatsApp webhook' })
-  @ApiResponse({ status: 200, description: 'Webhook verified successfully' })
+  @ApiOperation({ summary: "Verify WhatsApp webhook" })
+  @ApiResponse({ status: 200, description: "Webhook verified successfully" })
   verifyWebhook(
-    @Query('hub.mode') mode: string,
-    @Query('hub.verify_token') verifyToken: string,
-    @Query('hub.challenge') challenge: string,
+    @Query("hub.mode") mode: string,
+    @Query("hub.verify_token") verifyToken: string,
+    @Query("hub.challenge") challenge: string,
   ): string {
-    const expectedToken = this.configService.get('WHATSAPP_WEBHOOK_VERIFY_TOKEN');
+    const expectedToken = this.configService.get("WHATSAPP_WEBHOOK_VERIFY_TOKEN");
 
-    if (mode === 'subscribe' && verifyToken === expectedToken) {
-      this.logger.log('WhatsApp webhook verified successfully');
+    if (mode === "subscribe" && verifyToken === expectedToken) {
+      this.logger.log("WhatsApp webhook verified successfully");
       return challenge;
     }
 
-    this.logger.error('WhatsApp webhook verification failed');
-    throw new UnauthorizedException('Invalid verification token');
+    this.logger.error("WhatsApp webhook verification failed");
+    throw new UnauthorizedException("Invalid verification token");
   }
 
   @Post()
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Handle WhatsApp webhook events' })
-  @ApiResponse({ status: 200, description: 'Webhook processed successfully' })
+  @ApiOperation({ summary: "Handle WhatsApp webhook events" })
+  @ApiResponse({ status: 200, description: "Webhook processed successfully" })
   async handleWebhook(
     @Body() payload: WhatsAppWebhookPayload,
-    @Headers('x-hub-signature-256') signature?: string,
+    @Headers("x-hub-signature-256") signature?: string,
   ): Promise<{ success: boolean }> {
     try {
       // Validate webhook signature if configured
       if (signature && !this.validateSignature(JSON.stringify(payload), signature)) {
-        throw new UnauthorizedException('Invalid webhook signature');
+        throw new UnauthorizedException("Invalid webhook signature");
       }
 
-      if (payload.object !== 'whatsapp_business_account') {
-        throw new BadRequestException('Invalid webhook object type');
+      if (payload.object !== "whatsapp_business_account") {
+        throw new BadRequestException("Invalid webhook object type");
       }
 
       for (const entry of payload.entry) {
         for (const change of entry.changes) {
-          if (change.field === 'messages') {
+          if (change.field === "messages") {
             await this.processMessages(change.value);
             await this.processStatuses(change.value);
           }
@@ -149,7 +149,7 @@ export class WhatsAppWebhookController {
       return { success: true };
     } catch (error) {
       this.logger.error(`Failed to process WhatsApp webhook: ${error.message}`, error.stack);
-      throw new BadRequestException('Failed to process webhook');
+      throw new BadRequestException("Failed to process webhook");
     }
   }
 
@@ -164,9 +164,9 @@ export class WhatsAppWebhookController {
           messageId: message.id,
           from: message.from,
           to: value.metadata.phone_number_id,
-          text: message.text?.body || '',
+          text: message.text?.body || "",
           timestamp: new Date(parseInt(message.timestamp) * 1000),
-          provider: 'whatsapp',
+          provider: "whatsapp",
           contactName: contact?.profile?.name,
           messageType: message.type,
           metadata: {
@@ -182,11 +182,11 @@ export class WhatsAppWebhookController {
         }
         inboundMessage.metadata.conversationId = this.generateConversationId(
           inboundMessage.from,
-          'whatsapp'
+          "whatsapp",
         );
 
         // Emit event for processing
-        this.eventEmitter.emit('whatsapp.message.received', inboundMessage);
+        this.eventEmitter.emit("whatsapp.message.received", inboundMessage);
 
         this.logger.log(`Inbound WhatsApp message received: ${message.id} from ${message.from}`);
       } catch (error) {
@@ -205,16 +205,16 @@ export class WhatsAppWebhookController {
           status: status.status,
           timestamp: new Date(parseInt(status.timestamp) * 1000),
           recipient: status.recipient_id,
-          provider: 'whatsapp',
+          provider: "whatsapp",
           errorCode: status.errors?.[0]?.code,
           errorMessage: status.errors?.[0]?.message,
         };
 
         // Emit event for processing
-        this.eventEmitter.emit('whatsapp.status.updated', statusUpdate);
+        this.eventEmitter.emit("whatsapp.status.updated", statusUpdate);
 
         this.logger.log(
-          `WhatsApp message status updated: ${status.id} -> ${status.status} for ${status.recipient_id}`
+          `WhatsApp message status updated: ${status.id} -> ${status.status} for ${status.recipient_id}`,
         );
       } catch (error) {
         this.logger.error(`Failed to process WhatsApp status: ${error.message}`, error.stack);
@@ -224,30 +224,30 @@ export class WhatsAppWebhookController {
 
   private validateSignature(body: string, signature: string): boolean {
     // WhatsApp uses HMAC SHA256 for signature validation
-    const crypto = require('crypto');
-    const appSecret = this.configService.get('WHATSAPP_APP_SECRET');
+    const crypto = require("crypto");
+    const appSecret = this.configService.get("WHATSAPP_APP_SECRET");
 
     if (!appSecret) {
-      this.logger.warn('WhatsApp app secret not configured, skipping signature validation');
+      this.logger.warn("WhatsApp app secret not configured, skipping signature validation");
       return true;
     }
 
     const expectedSignature = crypto
-      .createHmac('sha256', appSecret)
-      .update(body, 'utf8')
-      .digest('hex');
+      .createHmac("sha256", appSecret)
+      .update(body, "utf8")
+      .digest("hex");
 
-    const providedSignature = signature.replace('sha256=', '');
+    const providedSignature = signature.replace("sha256=", "");
 
     return crypto.timingSafeEqual(
-      Buffer.from(expectedSignature, 'hex'),
-      Buffer.from(providedSignature, 'hex')
+      Buffer.from(expectedSignature, "hex"),
+      Buffer.from(providedSignature, "hex"),
     );
   }
 
   private generateConversationId(phoneNumber: string, provider: string): string {
     // Create a consistent conversation ID for message threading
-    const normalized = phoneNumber.replace(/[^\d]/g, '');
+    const normalized = phoneNumber.replace(/[^\d]/g, "");
     return `${provider}_${normalized}`;
   }
 }

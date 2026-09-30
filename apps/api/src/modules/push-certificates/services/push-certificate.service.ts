@@ -1,8 +1,12 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { PushCertificate, CertificateType, CertificateStatus } from '../entities/push-certificate.entity';
-import { EventEmitter2 } from '@nestjs/event-emitter';
+import { Injectable, Logger } from "@nestjs/common";
+import { InjectRepository } from "@nestjs/typeorm";
+import { Repository } from "typeorm";
+import {
+  PushCertificate,
+  CertificateType,
+  CertificateStatus,
+} from "../entities/push-certificate.entity";
+import { EventEmitter2 } from "@nestjs/event-emitter";
 
 @Injectable()
 export class PushCertificateService {
@@ -26,7 +30,7 @@ export class PushCertificateService {
     });
 
     if (!certificate) {
-      throw new Error('Certificate not found');
+      throw new Error("Certificate not found");
     }
 
     const validation = certificate.validateCertificate();
@@ -47,7 +51,7 @@ export class PushCertificateService {
 
     await this.certificateRepository.save(certificate);
 
-    this.eventEmitter.emit('certificate.validated', {
+    this.eventEmitter.emit("certificate.validated", {
       certificateId,
       isValid: validation.isValid,
       errors: validation.errors,
@@ -70,11 +74,11 @@ export class PushCertificateService {
     });
 
     if (!certificate) {
-      throw new Error('Certificate not found');
+      throw new Error("Certificate not found");
     }
 
     if (!certificate.isActive()) {
-      throw new Error('Certificate is not active');
+      throw new Error("Certificate is not active");
     }
 
     try {
@@ -99,14 +103,13 @@ export class PushCertificateService {
 
       await this.certificateRepository.save(certificate);
 
-      this.eventEmitter.emit('certificate.tested', {
+      this.eventEmitter.emit("certificate.tested", {
         certificateId,
         success: testResult.success,
         messageId: testResult.messageId,
       });
 
       return testResult;
-
     } catch (error) {
       const testResult = {
         success: false,
@@ -120,7 +123,7 @@ export class PushCertificateService {
 
       await this.certificateRepository.save(certificate);
 
-      this.eventEmitter.emit('certificate.test_failed', {
+      this.eventEmitter.emit("certificate.test_failed", {
         certificateId,
         error: error.message,
       });
@@ -152,10 +155,12 @@ export class PushCertificateService {
           await this.certificateRepository.save(certificate);
         }
 
-        this.eventEmitter.emit('certificate.needs_rotation', {
+        this.eventEmitter.emit("certificate.needs_rotation", {
           certificateId: certificate.id,
           expiresAt: certificate.expiresAt,
-          daysUntilExpiry: Math.ceil((certificate.expiresAt!.getTime() - Date.now()) / (1000 * 60 * 60 * 24)),
+          daysUntilExpiry: Math.ceil(
+            (certificate.expiresAt!.getTime() - Date.now()) / (1000 * 60 * 60 * 24),
+          ),
         });
       }
     }
@@ -176,7 +181,7 @@ export class PushCertificateService {
     });
 
     if (!oldCertificate) {
-      throw new Error('Certificate not found');
+      throw new Error("Certificate not found");
     }
 
     // Deactivate old certificate
@@ -195,13 +200,13 @@ export class PushCertificateService {
       projectId: oldCertificate.projectId,
       project: oldCertificate.project,
       allowedProjects: oldCertificate.allowedProjects,
-      tags: [...(oldCertificate.tags || []), 'rotated'],
+      tags: [...(oldCertificate.tags || []), "rotated"],
       status: CertificateStatus.PENDING_VALIDATION,
     });
 
     const savedCertificate = await this.certificateRepository.save(newCertificate);
 
-    this.eventEmitter.emit('certificate.rotated', {
+    this.eventEmitter.emit("certificate.rotated", {
       oldCertificateId: certificateId,
       newCertificateId: savedCertificate.id,
     });
@@ -218,7 +223,7 @@ export class PushCertificateService {
     });
 
     if (!certificate) {
-      throw new Error('Certificate not found');
+      throw new Error("Certificate not found");
     }
 
     // In a real implementation, this would query notification logs
@@ -238,7 +243,7 @@ export class PushCertificateService {
    */
   async updateCertificateUsage(certificateId: string): Promise<void> {
     await this.certificateRepository.update(certificateId, {
-      totalNotificationsSent: () => 'total_notifications_sent + 1',
+      totalNotificationsSent: () => "total_notifications_sent + 1",
       lastUsedAt: new Date(),
     });
   }
@@ -251,9 +256,9 @@ export class PushCertificateService {
     expiryDate.setDate(expiryDate.getDate() + days);
 
     return this.certificateRepository
-      .createQueryBuilder('certificate')
-      .where('certificate.expires_at <= :expiryDate', { expiryDate })
-      .andWhere('certificate.status = :status', { status: CertificateStatus.ACTIVE })
+      .createQueryBuilder("certificate")
+      .where("certificate.expires_at <= :expiryDate", { expiryDate })
+      .andWhere("certificate.status = :status", { status: CertificateStatus.ACTIVE })
       .getMany();
   }
 
@@ -270,7 +275,7 @@ export class PushCertificateService {
 
     for (const certificate of certificates) {
       try {
-        await this.validateCertificate(certificate.id);
+        await this.validateCertificate(certificate.id, certificate.tenantId);
         validated++;
       } catch (error) {
         this.logger.error(`Failed to validate certificate ${certificate.id}:`, error);

@@ -1,7 +1,7 @@
 // Central monitoring service that coordinates all monitoring components
-import { alertManager } from './alert-manager';
-import { analyticsTracker } from './analytics-tracker';
-import { performanceMonitor } from './performance-monitor';
+import { alertManager } from "./alert-manager";
+import { analyticsTracker } from "./analytics-tracker";
+import { performanceMonitor } from "./performance-monitor";
 
 interface MonitoringConfig {
   enablePerformanceMonitoring: boolean;
@@ -19,14 +19,14 @@ class MonitoringService {
 
   constructor(config: Partial<MonitoringConfig> = {}) {
     // Disable monitoring in development by default
-    const isDevelopment = process.env.NODE_ENV === 'development';
-    
+    const isDevelopment = process.env.NODE_ENV === "development";
+
     this.config = {
       enablePerformanceMonitoring: !isDevelopment,
       enableAnalytics: !isDevelopment,
       enableAlerting: !isDevelopment,
       enableErrorReporting: !isDevelopment,
-      apiEndpoint: '/api/monitoring',
+      apiEndpoint: "/api/monitoring",
       batchSize: 20,
       flushInterval: 30000,
       ...config,
@@ -35,12 +35,12 @@ class MonitoringService {
 
   public initialize() {
     if (this.isInitialized) {
-      console.warn('Monitoring service is already initialized');
+      console.warn("Monitoring service is already initialized");
       return;
     }
 
-    if (typeof window === 'undefined') {
-      console.warn('Monitoring service can only be initialized in browser environment');
+    if (typeof window === "undefined") {
+      console.warn("Monitoring service can only be initialized in browser environment");
       return;
     }
 
@@ -48,32 +48,32 @@ class MonitoringService {
       // Initialize performance monitoring
       if (this.config.enablePerformanceMonitoring) {
         performanceMonitor.enable();
-        if (process.env.NODE_ENV !== 'development') {
-          console.log('Performance monitoring enabled');
+        if (process.env.NODE_ENV !== "development") {
+          console.log("Performance monitoring enabled");
         }
       }
 
       // Initialize analytics tracking
       if (this.config.enableAnalytics) {
         analyticsTracker.enable();
-        if (process.env.NODE_ENV !== 'development') {
-          console.log('Analytics tracking enabled');
+        if (process.env.NODE_ENV !== "development") {
+          console.log("Analytics tracking enabled");
         }
       }
 
       // Initialize alerting
       if (this.config.enableAlerting) {
         alertManager.enable();
-        if (process.env.NODE_ENV !== 'development') {
-          console.log('Alert manager enabled');
+        if (process.env.NODE_ENV !== "development") {
+          console.log("Alert manager enabled");
         }
       }
 
       // Set up global error handling
       if (this.config.enableErrorReporting) {
         this.setupGlobalErrorHandling();
-        if (process.env.NODE_ENV !== 'development') {
-          console.log('Global error handling enabled');
+        if (process.env.NODE_ENV !== "development") {
+          console.log("Global error handling enabled");
         }
       }
 
@@ -83,60 +83,57 @@ class MonitoringService {
       }
 
       this.isInitialized = true;
-      if (process.env.NODE_ENV !== 'development') {
-        console.log('Monitoring service initialized successfully');
+      if (process.env.NODE_ENV !== "development") {
+        console.log("Monitoring service initialized successfully");
       }
     } catch (error) {
-      console.error('Failed to initialize monitoring service:', error);
+      console.error("Failed to initialize monitoring service:", error);
     }
   }
 
   private setupGlobalErrorHandling() {
     // Handle uncaught JavaScript errors
-    window.addEventListener('error', (event) => {
+    window.addEventListener("error", (event) => {
       const error = event.error || new Error(event.message);
       this.reportError(error, {
         filename: event.filename,
         lineno: event.lineno,
         colno: event.colno,
-        type: 'javascript_error',
+        type: "javascript_error",
       });
     });
 
     // Handle unhandled promise rejections
-    window.addEventListener('unhandledrejection', (event) => {
+    window.addEventListener("unhandledrejection", (event) => {
       const error = event.reason instanceof Error ? event.reason : new Error(String(event.reason));
       this.reportError(error, {
-        type: 'unhandled_promise_rejection',
+        type: "unhandled_promise_rejection",
       });
     });
 
     // Only intercept console errors in production
-    if (process.env.NODE_ENV === 'production') {
+    if (process.env.NODE_ENV === "production") {
       const originalConsoleError = console.error;
       console.error = (...args) => {
         originalConsoleError.apply(console, args);
 
         // Only report if it looks like an actual error
-        if (args.length > 0 && (args[0] instanceof Error || typeof args[0] === 'string')) {
-          this.reportError(
-            args[0] instanceof Error ? args[0] : new Error(String(args[0])),
-            {
-              type: 'console_error',
-              args: args.slice(1),
-            }
-          );
+        if (args.length > 0 && (args[0] instanceof Error || typeof args[0] === "string")) {
+          this.reportError(args[0] instanceof Error ? args[0] : new Error(String(args[0])), {
+            type: "console_error",
+            args: args.slice(1),
+          });
         }
       };
     }
   }
 
   private async requestNotificationPermission() {
-    if ('Notification' in window && Notification.permission === 'default') {
+    if ("Notification" in window && Notification.permission === "default") {
       try {
         await Notification.requestPermission();
       } catch (error) {
-        console.warn('Failed to request notification permission:', error);
+        console.warn("Failed to request notification permission:", error);
       }
     }
   }
@@ -154,20 +151,15 @@ class MonitoringService {
       if (this.config.enableAlerting) {
         const isCritical = this.isCriticalError(error, context);
         if (isCritical) {
-          alertManager.createCustomAlert(
-            'error',
-            'critical',
-            `Critical error: ${error.message}`,
-            {
-              error: error.message,
-              stack: error.stack,
-              context,
-            }
-          );
+          alertManager.createCustomAlert("error", "critical", `Critical error: ${error.message}`, {
+            error: error.message,
+            stack: error.stack,
+            context,
+          });
         }
       }
     } catch (monitoringError) {
-      console.error('Failed to report error to monitoring service:', monitoringError);
+      console.error("Failed to report error to monitoring service:", monitoringError);
     }
   }
 
@@ -183,7 +175,7 @@ class MonitoringService {
     ];
 
     const errorMessage = error.message.toLowerCase();
-    return criticalPatterns.some(pattern => pattern.test(errorMessage));
+    return criticalPatterns.some((pattern) => pattern.test(errorMessage));
   }
 
   public trackEvent(name: string, properties?: Record<string, any>) {
@@ -223,10 +215,16 @@ class MonitoringService {
   }
 
   public createAlert(
-    type: 'error' | 'performance' | 'security' | 'availability' | 'user_experience' | 'business_metric',
-    severity: 'low' | 'medium' | 'high' | 'critical',
+    type:
+      | "error"
+      | "performance"
+      | "security"
+      | "availability"
+      | "user_experience"
+      | "business_metric",
+    severity: "low" | "medium" | "high" | "critical",
     message: string,
-    context?: Record<string, any>
+    context?: Record<string, any>,
   ) {
     if (this.config.enableAlerting) {
       alertManager.createCustomAlert(type, severity, message, context);
@@ -278,9 +276,9 @@ class MonitoringService {
       // alertManager doesn't need explicit cleanup
 
       this.isInitialized = false;
-      console.log('Monitoring service destroyed');
+      console.log("Monitoring service destroyed");
     } catch (error) {
-      console.error('Error destroying monitoring service:', error);
+      console.error("Error destroying monitoring service:", error);
     }
   }
 }
@@ -292,24 +290,21 @@ export const monitoringService = new MonitoringService();
 export { alertManager, analyticsTracker, performanceMonitor };
 
 // Utility functions for common monitoring tasks
-export function withMonitoring<T extends (...args: any[]) => any>(
-  name: string,
-  fn: T
-): T {
+export function withMonitoring<T extends (...args: any[]) => any>(name: string, fn: T): T {
   return ((...args: any[]) => {
     return monitoringService.measurePerformance(name, () => fn(...args));
   }) as T;
 }
 
 export function trackUserAction(action: string, context?: Record<string, any>) {
-  monitoringService.trackEvent('user_action', {
+  monitoringService.trackEvent("user_action", {
     action,
     ...context,
   });
 }
 
 export function trackFeatureUsage(feature: string, action: string, context?: Record<string, any>) {
-  monitoringService.trackEvent('feature_usage', {
+  monitoringService.trackEvent("feature_usage", {
     feature,
     action,
     ...context,
@@ -318,10 +313,9 @@ export function trackFeatureUsage(feature: string, action: string, context?: Rec
 
 export function reportCriticalError(error: Error, context?: Record<string, any>) {
   monitoringService.reportError(error, context);
-  monitoringService.createAlert(
-    'error',
-    'critical',
-    `Critical error: ${error.message}`,
-    { error: error.message, stack: error.stack, ...context }
-  );
+  monitoringService.createAlert("error", "critical", `Critical error: ${error.message}`, {
+    error: error.message,
+    stack: error.stack,
+    ...context,
+  });
 }

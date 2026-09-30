@@ -1,4 +1,4 @@
-import { ApiClient, createApiClient } from './client';
+import { ApiClient, createApiClient } from "./client";
 
 export interface TokenBalance {
   balance: number;
@@ -42,8 +42,8 @@ export interface TokenPackagesResponse {
 }
 
 export interface CheckoutContextResponse {
-  defaultCurrency: 'USD' | 'NGN';
-  availableCurrencies: Array<'USD' | 'NGN'>;
+  defaultCurrency: "USD" | "NGN";
+  availableCurrencies: Array<"USD" | "NGN">;
   bachsConfigured: boolean;
   nombaConfigured: boolean;
   providers: string[];
@@ -62,7 +62,7 @@ export interface TokenPurchaseStatusResponse {
   status: string;
   tokenAmount: number;
   totalPrice: number;
-  currency?: 'USD' | 'NGN';
+  currency?: "USD" | "NGN";
   provider?: string;
   completedAt?: string;
 }
@@ -70,7 +70,7 @@ export interface TokenPurchaseStatusResponse {
 export interface SavedPaymentMethod {
   id: string;
   provider: string;
-  currency: 'USD' | 'NGN';
+  currency: "USD" | "NGN";
   cardBrand?: string;
   cardLast4?: string;
   cardExpMonth?: number;
@@ -90,11 +90,11 @@ export interface AutoTopupConfigResponse {
   trigger?: string;
   thresholdAmount?: number;
   packageId?: string;
-  currency?: 'USD' | 'NGN';
+  currency?: "USD" | "NGN";
   paymentMethodId?: string;
   paymentMethod?: Pick<
     SavedPaymentMethod,
-    'id' | 'provider' | 'currency' | 'cardBrand' | 'cardLast4' | 'cardExpMonth' | 'cardExpYear'
+    "id" | "provider" | "currency" | "cardBrand" | "cardLast4" | "cardExpMonth" | "cardExpYear"
   >;
   maxMonthlySpend?: number;
   lastTriggered?: string;
@@ -113,7 +113,7 @@ class BillingApiClient {
     availableTokens: number;
     reservedTokens?: number;
   }> {
-    return this.apiClient.get('/billing/tokens/balance');
+    return this.apiClient.get("/billing/tokens/balance");
   }
 
   async getTransactions(params?: {
@@ -121,10 +121,9 @@ class BillingApiClient {
     offset?: number;
     type?: string;
   }): Promise<{ data: TokenTransaction[]; total?: number }> {
-    const result = await this.apiClient.get<TokenTransaction[] | { data: TokenTransaction[]; total?: number }>(
-      '/billing/tokens/transactions',
-      params,
-    );
+    const result = await this.apiClient.get<
+      TokenTransaction[] | { data: TokenTransaction[]; total?: number }
+    >("/billing/tokens/transactions", params);
     if (Array.isArray(result)) {
       return { data: result };
     }
@@ -132,27 +131,35 @@ class BillingApiClient {
   }
 
   async getUsageStats(startDate: string, endDate: string): Promise<TokenUsageStats> {
-    return this.apiClient.get<TokenUsageStats>('/billing/tokens/usage-stats', {
+    return this.apiClient.get<TokenUsageStats>("/billing/tokens/usage-stats", {
       startDate,
       endDate,
     });
   }
 
   async getTokenPackages(): Promise<TokenPackagesResponse> {
-    return this.apiClient.get<TokenPackagesResponse>('/billing/token-packages', {}, { tenantScoped: false });
+    return this.apiClient.get<TokenPackagesResponse>(
+      "/billing/token-packages",
+      {},
+      { tenantScoped: false },
+    );
   }
 
   async getCheckoutContext(): Promise<CheckoutContextResponse> {
-    return this.apiClient.get<CheckoutContextResponse>('/billing/checkout/context', {}, { tenantScoped: false });
+    return this.apiClient.get<CheckoutContextResponse>(
+      "/billing/checkout/context",
+      {},
+      { tenantScoped: false },
+    );
   }
 
   async purchaseTokens(data: {
     packageId: string;
-    currency: 'USD' | 'NGN';
+    currency: "USD" | "NGN";
     customerEmail?: string;
     customerName?: string;
   }): Promise<TokenPurchaseCheckoutResponse> {
-    return this.apiClient.post('/billing/tokens/purchase', data);
+    return this.apiClient.post("/billing/tokens/purchase", data);
   }
 
   async getPurchaseStatus(purchaseId: string): Promise<TokenPurchaseStatusResponse> {
@@ -163,12 +170,12 @@ class BillingApiClient {
     return this.apiClient.post(`/billing/tokens/purchase/${purchaseId}/sync`);
   }
 
-  async startPaymentMethodSetup(currency: 'USD' | 'NGN'): Promise<PaymentMethodSetupResponse> {
-    return this.apiClient.post('/billing/payment-methods/setup', { currency });
+  async startPaymentMethodSetup(currency: "USD" | "NGN"): Promise<PaymentMethodSetupResponse> {
+    return this.apiClient.post("/billing/payment-methods/setup", { currency });
   }
 
   async listPaymentMethods(): Promise<{ data: SavedPaymentMethod[] }> {
-    return this.apiClient.get('/billing/payment-methods');
+    return this.apiClient.get("/billing/payment-methods");
   }
 
   async revokePaymentMethod(paymentMethodId: string): Promise<{ message: string }> {
@@ -179,15 +186,15 @@ class BillingApiClient {
     enabled: boolean;
     thresholdAmount?: number;
     packageId?: string;
-    currency?: 'USD' | 'NGN';
+    currency?: "USD" | "NGN";
     paymentMethodId?: string;
     maxMonthlySpend?: number;
   }): Promise<AutoTopupConfigResponse> {
-    return this.apiClient.post('/billing/auto-topup', data);
+    return this.apiClient.post("/billing/auto-topup", data);
   }
 
   async getAutoTopupConfig(): Promise<AutoTopupConfigResponse> {
-    return this.apiClient.get('/billing/auto-topup');
+    return this.apiClient.get("/billing/auto-topup");
   }
 }
 

@@ -1,11 +1,11 @@
-'use client';
+"use client";
 
-import { User } from '@/lib/icons';
+import { User } from "@/lib/icons";
 
-import { useAuth } from '@/contexts/auth-context';
-import { useTenant } from '@/contexts/tenant-context';
-import { Permission, PermissionCheck, ROLE_PERMISSIONS } from '@/lib/types/permissions';
-import { useMemo } from 'react';
+import { useAuth } from "@/contexts/auth-context";
+import { useTenant } from "@/contexts/tenant-context";
+import { Permission, PermissionCheck, ROLE_PERMISSIONS } from "@/lib/types/permissions";
+import { useMemo } from "react";
 
 export function usePermissions() {
   const { user } = useAuth();
@@ -15,10 +15,10 @@ export function usePermissions() {
     if (!user || !currentTenant) return null;
 
     return memberships.find(
-      membership =>
+      (membership) =>
         membership.userId === user.id &&
         membership.tenantId === currentTenant.id &&
-        membership.status === 'active'
+        membership.status === "active",
     );
   }, [user, currentTenant, memberships]);
 
@@ -41,23 +41,23 @@ export function usePermissions() {
 
   const hasPermission = (permission: Permission): PermissionCheck => {
     if (!user) {
-      return { hasPermission: false, reason: 'User not authenticated' };
+      return { hasPermission: false, reason: "User not authenticated" };
     }
 
     if (!currentTenant) {
-      return { hasPermission: false, reason: 'No tenant selected' };
+      return { hasPermission: false, reason: "No tenant selected" };
     }
 
     if (!currentMembership) {
-      return { hasPermission: false, reason: 'User is not a member of this tenant' };
+      return { hasPermission: false, reason: "User is not a member of this tenant" };
     }
 
-    if (currentMembership.status !== 'active') {
-      return { hasPermission: false, reason: 'User membership is not active' };
+    if (currentMembership.status !== "active") {
+      return { hasPermission: false, reason: "User membership is not active" };
     }
 
     // Check if user has admin permission (grants all permissions)
-    if (userPermissions.includes('admin')) {
+    if (userPermissions.includes("admin")) {
       return { hasPermission: true };
     }
 
@@ -71,28 +71,28 @@ export function usePermissions() {
 
   const hasAnyPermission = (permissions: Permission[]): PermissionCheck => {
     if (!user) {
-      return { hasPermission: false, reason: 'User not authenticated' };
+      return { hasPermission: false, reason: "User not authenticated" };
     }
 
     if (!currentTenant) {
-      return { hasPermission: false, reason: 'No tenant selected' };
+      return { hasPermission: false, reason: "No tenant selected" };
     }
 
     if (!currentMembership) {
-      return { hasPermission: false, reason: 'User is not a member of this tenant' };
+      return { hasPermission: false, reason: "User is not a member of this tenant" };
     }
 
-    if (currentMembership.status !== 'active') {
-      return { hasPermission: false, reason: 'User membership is not active' };
+    if (currentMembership.status !== "active") {
+      return { hasPermission: false, reason: "User membership is not active" };
     }
 
     // Check if user has admin permission (grants all permissions)
-    if (userPermissions.includes('admin')) {
+    if (userPermissions.includes("admin")) {
       return { hasPermission: true };
     }
 
     // Check if user has any of the specified permissions
-    const hasAny = permissions.some(permission => userPermissions.includes(permission));
+    const hasAny = permissions.some((permission) => userPermissions.includes(permission));
 
     if (hasAny) {
       return { hasPermission: true };
@@ -100,35 +100,35 @@ export function usePermissions() {
 
     return {
       hasPermission: false,
-      reason: `Missing any of permissions: ${permissions.join(', ')}`
+      reason: `Missing any of permissions: ${permissions.join(", ")}`,
     };
   };
 
   const hasAllPermissions = (permissions: Permission[]): PermissionCheck => {
     if (!user) {
-      return { hasPermission: false, reason: 'User not authenticated' };
+      return { hasPermission: false, reason: "User not authenticated" };
     }
 
     if (!currentTenant) {
-      return { hasPermission: false, reason: 'No tenant selected' };
+      return { hasPermission: false, reason: "No tenant selected" };
     }
 
     if (!currentMembership) {
-      return { hasPermission: false, reason: 'User is not a member of this tenant' };
+      return { hasPermission: false, reason: "User is not a member of this tenant" };
     }
 
-    if (currentMembership.status !== 'active') {
-      return { hasPermission: false, reason: 'User membership is not active' };
+    if (currentMembership.status !== "active") {
+      return { hasPermission: false, reason: "User membership is not active" };
     }
 
     // Check if user has admin permission (grants all permissions)
-    if (userPermissions.includes('admin')) {
+    if (userPermissions.includes("admin")) {
       return { hasPermission: true };
     }
 
     // Check if user has all specified permissions
-    const missingPermissions = permissions.filter(permission =>
-      !userPermissions.includes(permission)
+    const missingPermissions = permissions.filter(
+      (permission) => !userPermissions.includes(permission),
     );
 
     if (missingPermissions.length === 0) {
@@ -137,7 +137,7 @@ export function usePermissions() {
 
     return {
       hasPermission: false,
-      reason: `Missing permissions: ${missingPermissions.join(', ')}`
+      reason: `Missing permissions: ${missingPermissions.join(", ")}`,
     };
   };
 
@@ -155,9 +155,9 @@ export function usePermissions() {
     hasAnyPermission,
     hasAllPermissions,
     canAccessRoute,
-    isOwner: userRole === 'owner',
-    isAdmin: userRole === 'admin' || userRole === 'owner',
-    isManager: ['manager', 'admin', 'owner'].includes(userRole || ''),
-    isMember: ['member', 'manager', 'admin', 'owner'].includes(userRole || ''),
+    isOwner: userRole === "owner",
+    isAdmin: userRole === "admin" || userRole === "owner",
+    isManager: ["manager", "admin", "owner"].includes(userRole || ""),
+    isMember: ["member", "manager", "admin", "owner"].includes(userRole || ""),
   };
 }

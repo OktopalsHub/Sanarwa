@@ -1,6 +1,6 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-const Telnyx = require('telnyx');
+import { Injectable, Logger } from "@nestjs/common";
+import { ConfigService } from "@nestjs/config";
+const Telnyx = require("telnyx");
 
 export interface TelnyxCallResult {
   success: boolean;
@@ -25,14 +25,14 @@ export class TelnyxVoiceProvider {
   private readonly webhookUrl: string;
 
   constructor(private configService: ConfigService) {
-    const apiKey = this.configService.get('TELNYX_API_KEY') || '';
-    this.fromNumber = this.configService.get('TELNYX_FROM_NUMBER') || '';
-    this.connectionId = this.configService.get('TELNYX_CONNECTION_ID') || '';
-    this.webhookUrl = this.configService.get('TELNYX_WEBHOOK_URL') || '';
+    const apiKey = this.configService.get("TELNYX_API_KEY") || "";
+    this.fromNumber = this.configService.get("TELNYX_FROM_NUMBER") || "";
+    this.connectionId = this.configService.get("TELNYX_CONNECTION_ID") || "";
+    this.webhookUrl = this.configService.get("TELNYX_WEBHOOK_URL") || "";
 
     // Initialize Telnyx client
     this.client = new Telnyx(apiKey);
-    this.logger.log('Telnyx Voice Provider initialized');
+    this.logger.log("Telnyx Voice Provider initialized");
   }
 
   /**
@@ -52,11 +52,11 @@ export class TelnyxVoiceProvider {
           // Store message in custom headers to be used when call is answered
           custom_headers: [
             {
-              name: 'X-TTS-Message',
-              value: Buffer.from(message).toString('base64')
-            }
-          ]
-        })
+              name: "X-TTS-Message",
+              value: Buffer.from(message).toString("base64"),
+            },
+          ],
+        }),
       });
 
       this.logger.log(`Call created successfully: ${response.data.call_control_id}`);
@@ -102,7 +102,7 @@ export class TelnyxVoiceProvider {
       // Use Telnyx SDK speak command
       const response = await this.client.callCommands(callControlId).speak({
         payload: text,
-        voice: voice || 'Telnyx.Natural.abbie',
+        voice: voice || "Telnyx.Natural.abbie",
       });
 
       const characterCount = text.length;
@@ -114,7 +114,10 @@ export class TelnyxVoiceProvider {
         messageId: response.data?.command_id,
       };
     } catch (error) {
-      this.logger.error(`Failed to send TTS to call ${callControlId}: ${error.message}`, error.stack);
+      this.logger.error(
+        `Failed to send TTS to call ${callControlId}: ${error.message}`,
+        error.stack,
+      );
       return {
         success: false,
         error: error.message,
@@ -127,22 +130,24 @@ export class TelnyxVoiceProvider {
    */
   async getAvailableVoices(): Promise<{ success: boolean; voices?: any[]; error?: string }> {
     try {
-      this.logger.log('Fetching available voices from Telnyx API');
+      this.logger.log("Fetching available voices from Telnyx API");
 
-      const response = await fetch('https://api.telnyx.com/v2/ai/text_to_speech/voices', {
-        method: 'GET',
+      const response = await fetch("https://api.telnyx.com/v2/ai/text_to_speech/voices", {
+        method: "GET",
         headers: {
-          'Authorization': `Bearer ${this.client.apiKey}`,
-          'Content-Type': 'application/json',
+          Authorization: `Bearer ${this.client.apiKey}`,
+          "Content-Type": "application/json",
         },
       });
 
       if (!response.ok) {
-        const result = await response.json() as { errors?: { detail: string }[] };
-        throw new Error(`Failed to fetch voices: ${result.errors?.[0]?.detail || response.statusText}`);
+        const result = (await response.json()) as { errors?: { detail: string }[] };
+        throw new Error(
+          `Failed to fetch voices: ${result.errors?.[0]?.detail || response.statusText}`,
+        );
       }
 
-      const result = await response.json() as { data?: any[] };
+      const result = (await response.json()) as { data?: any[] };
       this.logger.log(`Retrieved ${result.data?.length || 0} voices from Telnyx`);
 
       return {
@@ -169,6 +174,6 @@ export class TelnyxVoiceProvider {
    * Get provider name
    */
   getProviderName(): string {
-    return 'telnyx';
+    return "telnyx";
   }
 }

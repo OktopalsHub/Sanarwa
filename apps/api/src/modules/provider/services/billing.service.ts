@@ -1,11 +1,11 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
+import { Injectable, Logger } from "@nestjs/common";
+import { ConfigService } from "@nestjs/config";
 import {
   BillingMode,
   channelTokenCosts,
   normalizeBillingChannel,
   resolveTokenCost,
-} from '../../billing/constants/token-pricing';
+} from "../../billing/constants/token-pricing";
 
 export interface BillingResult {
   charged: boolean;
@@ -26,7 +26,7 @@ export interface VoiceUsageData {
 export class BillingService {
   private readonly logger = new Logger(BillingService.name);
 
-  constructor(private readonly configService: ConfigService) { }
+  constructor(private readonly configService: ConfigService) {}
 
   /**
    * Calculate token cost for a notification event
@@ -36,13 +36,15 @@ export class BillingService {
     eventType: string,
     eventCount: number = 1,
     metadata?: Record<string, any>,
-    billingMode: BillingMode = 'managed',
+    billingMode: BillingMode = "managed",
   ): Promise<BillingResult> {
     try {
       const channel = normalizeBillingChannel(eventType);
       const units =
-        channel === 'voice'
-          ? Math.ceil(Number(metadata?.durationMinutes ?? metadata?.voiceMinutes ?? eventCount) || 1)
+        channel === "voice"
+          ? Math.ceil(
+              Number(metadata?.durationMinutes ?? metadata?.voiceMinutes ?? eventCount) || 1,
+            )
           : eventCount;
       const tokensRequired = resolveTokenCost(channel, billingMode, units);
       const costs = channelTokenCosts(billingMode);
@@ -50,7 +52,7 @@ export class BillingService {
       return {
         charged: true,
         amount: tokensRequired,
-        currency: 'tokens',
+        currency: "tokens",
         reason: `${billingMode} ${eventType} notification requires ${tokensRequired} token(s)`,
         metadata: {
           eventType,
@@ -64,13 +66,13 @@ export class BillingService {
       return {
         charged: false,
         amount: 0,
-        currency: 'tokens',
+        currency: "tokens",
         reason: `Billing error: ${error.message}`,
       };
     }
   }
 
-  getTokenPricing(mode: BillingMode = 'managed'): Record<string, number> {
+  getTokenPricing(mode: BillingMode = "managed"): Record<string, number> {
     return channelTokenCosts(mode);
   }
 
@@ -79,7 +81,7 @@ export class BillingService {
    */
   async calculateTotalCost(
     events: Array<{ type: string; count: number }>,
-    billingMode: BillingMode = 'managed',
+    billingMode: BillingMode = "managed",
   ): Promise<number> {
     let totalCost = 0;
 
@@ -97,7 +99,7 @@ export class BillingService {
   async deductVoiceUsage(tenantId: string, usage: VoiceUsageData): Promise<void> {
     try {
       this.logger.log(
-        `Deducting voice usage for tenant ${tenantId}: ${usage.voiceMinutes} minutes, ${usage.ttsCharacters} TTS chars`
+        `Deducting voice usage for tenant ${tenantId}: ${usage.voiceMinutes} minutes, ${usage.ttsCharacters} TTS chars`,
       );
 
       // Here you would integrate with your actual billing/quota system
@@ -141,6 +143,6 @@ export class BillingService {
    * Check if billing is enabled
    */
   isBillingEnabled(): boolean {
-    return this.configService.get<boolean>('BILLING_ENABLED', true);
+    return this.configService.get<boolean>("BILLING_ENABLED", true);
   }
 }

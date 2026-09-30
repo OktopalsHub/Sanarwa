@@ -1,1 +1,1 @@
-export * from '@sanarwa/ui/tooltip';
+export * from "@sanarwa/ui/tooltip";

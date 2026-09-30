@@ -1,10 +1,17 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, OneToMany } from 'typeorm';
-import { TenantWABAConfig } from './tenant-waba-config.entity';
-import { TenantWABAAssignment } from './tenant-waba-assignment.entity';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  CreateDateColumn,
+  UpdateDateColumn,
+  OneToMany,
+} from "typeorm";
+import { TenantWABAConfig } from "./tenant-waba-config.entity";
+import { TenantWABAAssignment } from "./tenant-waba-assignment.entity";
 
-@Entity('waba_configs')
+@Entity("waba_configs")
 export class WABAConfig {
-  @PrimaryGeneratedColumn('uuid')
+  @PrimaryGeneratedColumn("uuid")
   id: string;
 
   @Column({ nullable: true })
@@ -28,7 +35,7 @@ export class WABAConfig {
   @Column({ default: false })
   isByop: boolean; // Tenant-owned vs platform-managed
 
-  @Column({ default: 'global' })
+  @Column({ default: "global" })
   region: string;
 
   @Column({ default: 0 })
@@ -37,12 +44,10 @@ export class WABAConfig {
   @Column({ default: 6000 })
   maxTemplates: number;
 
-
-
   @Column({ nullable: true })
   lastUsedAt: Date;
 
-  @Column('json', { nullable: true })
+  @Column("json", { nullable: true })
   metadata: {
     displayName?: string;
     description?: string;
@@ -51,10 +56,10 @@ export class WABAConfig {
     businessProfile?: any;
   };
 
-  @OneToMany(() => TenantWABAConfig, config => config.waba)
+  @OneToMany(() => TenantWABAConfig, (config) => config.waba)
   tenantConfigs: TenantWABAConfig[];
 
-  @OneToMany(() => TenantWABAAssignment, assignment => assignment.waba)
+  @OneToMany(() => TenantWABAAssignment, (assignment) => assignment.waba)
   assignments: TenantWABAAssignment[];
 
   @CreateDateColumn()

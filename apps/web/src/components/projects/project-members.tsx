@@ -1,18 +1,29 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Input } from '@/components/ui/input';
-import { PlusIcon, MagnifyingGlassIcon, EllipsisHorizontalIcon, UserMinusIcon, Cog6ToothIcon } from '@heroicons/react/24/outline'
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { toast } from 'sonner';
-import { useTenant } from '@/contexts/tenant-context';
-import { tenantApi } from '@/lib/api/tenant';
-import { apiClient } from '@/lib/api/client';
+import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Input } from "@/components/ui/input";
+import {
+  PlusIcon,
+  MagnifyingGlassIcon,
+  EllipsisHorizontalIcon,
+  UserMinusIcon,
+  Cog6ToothIcon,
+} from "@heroicons/react/24/outline";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { toast } from "sonner";
+import { useTenant } from "@/contexts/tenant-context";
+import { tenantApi } from "@/lib/api/tenant";
+import { apiClient } from "@/lib/api/client";
 
 interface ProjectMembersProps {
   projectId: string;
@@ -20,18 +31,18 @@ interface ProjectMembersProps {
 
 export function ProjectMembers({ projectId: _projectId }: ProjectMembersProps) {
   const { selectedTenant } = useTenant();
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState("");
 
   const { data: members = [], isLoading } = useQuery({
-    queryKey: ['project-members', selectedTenant?.id, searchQuery],
+    queryKey: ["project-members", selectedTenant?.id, searchQuery],
     queryFn: async () => {
       if (!selectedTenant?.id) return [];
       apiClient.setTenant(selectedTenant.id);
       const tenantMembers = await tenantApi.getTenantMembers(selectedTenant.id);
       return tenantMembers
         .filter((member) => {
-          const name = member.user?.name || '';
-          const email = member.user?.email || '';
+          const name = member.user?.name || "";
+          const email = member.user?.email || "";
           const q = searchQuery.toLowerCase();
           return name.toLowerCase().includes(q) || email.toLowerCase().includes(q);
         })
@@ -54,32 +65,32 @@ export function ProjectMembers({ projectId: _projectId }: ProjectMembersProps) {
 
   const getRoleColor = (role: string) => {
     switch (role) {
-      case 'owner':
-        return 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300';
-      case 'admin':
-        return 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300';
-      case 'developer':
-        return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300';
-      case 'viewer':
-        return 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300';
+      case "owner":
+        return "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300";
+      case "admin":
+        return "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300";
+      case "developer":
+        return "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300";
+      case "viewer":
+        return "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300";
       default:
-        return 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300';
+        return "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300";
     }
   };
 
   const formatDate = (date: Date) => {
-    return new Date(date).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
+    return new Date(date).toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
     });
   };
 
   const getInitials = (name: string) => {
     return name
-      .split(' ')
-      .map(n => n[0])
-      .join('')
+      .split(" ")
+      .map((n) => n[0])
+      .join("")
       .toUpperCase()
       .slice(0, 2);
   };
@@ -89,7 +100,7 @@ export function ProjectMembers({ projectId: _projectId }: ProjectMembersProps) {
       // TODO: Implement member removal API call
       toast.success(`${memberName} has been removed from the project`);
     } catch (error) {
-      toast.error('Failed to remove member');
+      toast.error("Failed to remove member");
     }
   };
 
@@ -146,7 +157,9 @@ export function ProjectMembers({ projectId: _projectId }: ProjectMembersProps) {
             <div className="text-center py-8">
               <h4 className="text-lg font-semibold mb-2">No members found</h4>
               <p className="text-muted-foreground mb-4">
-                {searchQuery ? 'Try adjusting your search' : 'Invite members to collaborate on this project'}
+                {searchQuery
+                  ? "Try adjusting your search"
+                  : "Invite members to collaborate on this project"}
               </p>
               {!searchQuery && (
                 <Button>
@@ -166,20 +179,14 @@ export function ProjectMembers({ projectId: _projectId }: ProjectMembersProps) {
                   <div className="flex items-center space-x-4">
                     <Avatar>
                       <AvatarImage src={member.user.avatar || undefined} />
-                      <AvatarFallback>
-                        {getInitials(member.user.name)}
-                      </AvatarFallback>
+                      <AvatarFallback>{getInitials(member.user.name)}</AvatarFallback>
                     </Avatar>
                     <div className="space-y-1">
                       <div className="flex items-center gap-2">
                         <h4 className="font-semibold">{member.user.name}</h4>
-                        <Badge className={getRoleColor(member.role)}>
-                          {member.role}
-                        </Badge>
+                        <Badge className={getRoleColor(member.role)}>{member.role}</Badge>
                       </div>
-                      <p className="text-sm text-muted-foreground">
-                        {member.user.email}
-                      </p>
+                      <p className="text-sm text-muted-foreground">{member.user.email}</p>
                       <div className="flex items-center gap-4 text-xs text-muted-foreground">
                         <span>Joined {formatDate(member.joinedAt)}</span>
                         <span>Last active {formatDate(member.lastActive)}</span>
@@ -196,7 +203,7 @@ export function ProjectMembers({ projectId: _projectId }: ProjectMembersProps) {
                       ))}
                     </div>
 
-                    {member.role !== 'owner' && (
+                    {member.role !== "owner" && (
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                           <Button variant="ghost" size="sm">

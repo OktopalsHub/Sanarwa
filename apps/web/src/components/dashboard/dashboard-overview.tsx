@@ -1,27 +1,28 @@
-'use client';
+"use client";
 
-import { Card } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { SendSnippet } from '@/components/messages/send-snippet';
-import { useDashboardData } from '@/hooks/use-dashboard-data';
-import { useTenantBasePath } from '@/hooks/use-tenant-slug';
-import { useTenant } from '@/contexts/tenant-context';
-import { apiClient } from '@/lib/api/client';
-import { providerApi } from '@/lib/api/provider';
-import { projectApi } from '@/lib/api/project';
-import { apiKeyApi } from '@/lib/api/api-key';
-import { DashboardChart } from './dashboard-chart';
-import { MetricCard } from './metric-card';
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
+import { useDashboardData } from "@/hooks/use-dashboard-data";
+import { useTenantBasePath } from "@/hooks/use-tenant-slug";
+import { useTenant } from "@/contexts/tenant-context";
+import { apiClient } from "@/lib/api/client";
+import { providerApi } from "@/lib/api/provider";
+import { projectApi } from "@/lib/api/project";
+import { apiKeyApi } from "@/lib/api/api-key";
+import { DashboardChart } from "./dashboard-chart";
+import { DashboardEmpty, DashboardSetup } from "./dashboard-states";
+import { MetricCard } from "./metric-card";
 import {
-  ChatBubbleLeftRightIcon,
-  ExclamationCircleIcon,
-  ArrowTrendingUpIcon,
-  BoltIcon,
-  InboxIcon,
-  KeyIcon,
-} from '@heroicons/react/24/outline';
-import { useQuery } from '@tanstack/react-query';
-import Link from '@/compat/next-link';
+  IconAlertCircle,
+  IconBolt,
+  IconInbox,
+  IconKey,
+  IconMessage,
+  IconTrendingUp,
+} from "@tabler/icons-react";
+import { useQuery } from "@tanstack/react-query";
+import Link from "@/compat/next-link";
 
 export function DashboardOverview() {
   const { data, isLoading } = useDashboardData();
@@ -29,7 +30,7 @@ export function DashboardOverview() {
   const { selectedTenant } = useTenant();
 
   const setup = useQuery({
-    queryKey: ['dashboard-setup', selectedTenant?.id],
+    queryKey: ["dashboard-setup", selectedTenant?.id],
     queryFn: async () => {
       if (selectedTenant?.id) apiClient.setTenant(selectedTenant.id);
       const [providers, projects] = await Promise.all([
@@ -52,15 +53,11 @@ export function DashboardOverview() {
 
   if (isLoading) {
     return (
-      <div className="space-y-6">
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-          {[...Array(4)].map((_, i) => (
-            <Card key={i} className="animate-pulse p-6">
-              <div className="bg-muted mb-3 h-4 w-3/4 rounded-lg" />
-              <div className="bg-muted h-8 w-1/2 rounded-lg" />
-            </Card>
-          ))}
-        </div>
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+        <Skeleton className="h-28" />
+        <Skeleton className="h-28" />
+        <Skeleton className="h-28" />
+        <Skeleton className="h-28" />
       </div>
     );
   }
@@ -70,77 +67,48 @@ export function DashboardOverview() {
   const empty = !metrics || metrics.totalMessages === 0;
 
   return (
-    <div className="space-y-6">
+    <div className="flex flex-col gap-6">
       {needsSetup ? (
-        <Card className="border-dashed p-6">
-          <h3 className="mb-4 text-lg font-semibold">Finish setup to send</h3>
-          <div className="grid gap-3 md:grid-cols-2">
-            <SetupStep
-              done={Boolean(setup.data?.hasProvider)}
-              href={`${basePath}/providers`}
-              label="Add a provider"
-              detail="Email domain, SMS number, WhatsApp, or push."
-            />
-            <SetupStep
-              done={Boolean(setup.data?.hasApiKey)}
-              href={`${basePath}/api-keys`}
-              label="Create an API key"
-              detail="Authenticate POST /v1/messages from your app."
-            />
-          </div>
-        </Card>
+        <DashboardSetup
+          hasProvider={Boolean(setup.data?.hasProvider)}
+          hasApiKey={Boolean(setup.data?.hasApiKey)}
+          basePath={basePath}
+        />
       ) : null}
 
       {empty ? (
-        <Card className="space-y-4 border-dashed p-8">
-          <div className="text-center">
-            <InboxIcon className="mx-auto mb-3 h-10 w-10 text-muted-foreground" />
-            <h3 className="text-lg font-semibold">No messages yet</h3>
-            <p className="text-sm text-muted-foreground">
-              Send from your app. Delivery events show up in Messages.
-            </p>
-          </div>
-          <SendSnippet />
-          <div className="flex justify-center gap-2">
-            <Button asChild variant="outline">
-              <Link href={`${basePath}/messages`}>Open messages</Link>
-            </Button>
-            <Button asChild>
-              <Link href={`${basePath}/providers`}>Add a provider</Link>
-            </Button>
-          </div>
-        </Card>
+        <DashboardEmpty basePath={basePath} />
       ) : (
         <>
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             <MetricCard
               title="Messages Sent"
               value={(metrics?.totalMessages ?? 0).toLocaleString()}
-              icon={ChatBubbleLeftRightIcon}
+              icon={IconMessage}
               description="Last 30 days"
             />
             <MetricCard
               title="Delivery Rate"
               value={`${metrics?.deliveryRate ?? 0}%`}
-              icon={ArrowTrendingUpIcon}
+              icon={IconTrendingUp}
               description="Last 30 days"
             />
             <MetricCard
               title="Failed"
               value={metrics?.failed ?? 0}
-              icon={ExclamationCircleIcon}
+              icon={IconAlertCircle}
               description="Last 30 days"
             />
             <MetricCard
               title="Active Campaigns"
               value={metrics?.activeCampaigns ?? 0}
-              icon={BoltIcon}
+              icon={IconBolt}
               description="Currently running"
             />
           </div>
 
-          <div className="grid gap-6 lg:grid-cols-3">
-            <div className="lg:col-span-2">
+          <div className="grid min-w-0 gap-4 lg:grid-cols-3">
+            <div className="min-w-0 lg:col-span-2">
               <DashboardChart
                 title="Channel Distribution"
                 data={data?.channelDistribution ?? []}
@@ -148,24 +116,25 @@ export function DashboardOverview() {
                 height={300}
               />
             </div>
-            <Card className="p-6">
-              <h3 className="mb-4 text-lg font-semibold">Quick actions</h3>
-              <div className="space-y-2">
+            <Card className="border-border bg-card p-6">
+              <h3 className="mb-1 text-base font-semibold">Quick actions</h3>
+              <p className="mb-4 text-sm text-muted-foreground">Common workspace tasks</p>
+              <div className="flex flex-col gap-2">
                 <Button asChild variant="outline" className="w-full justify-start">
                   <Link href={`${basePath}/messages`}>
-                    <InboxIcon className="mr-2 h-4 w-4" />
+                    <IconInbox data-icon="inline-start" />
                     View messages
                   </Link>
                 </Button>
                 <Button asChild variant="outline" className="w-full justify-start">
                   <Link href={`${basePath}/providers`}>
-                    <BoltIcon className="mr-2 h-4 w-4" />
+                    <IconBolt data-icon="inline-start" />
                     Manage providers
                   </Link>
                 </Button>
                 <Button asChild variant="outline" className="w-full justify-start">
                   <Link href={`${basePath}/api-keys`}>
-                    <KeyIcon className="mr-2 h-4 w-4" />
+                    <IconKey data-icon="inline-start" />
                     API keys
                   </Link>
                 </Button>
@@ -178,30 +147,5 @@ export function DashboardOverview() {
         </>
       )}
     </div>
-  );
-}
-
-function SetupStep({
-  done,
-  href,
-  label,
-  detail,
-}: {
-  done: boolean;
-  href: string;
-  label: string;
-  detail: string;
-}) {
-  return (
-    <Link
-      href={href}
-      className="flex items-start justify-between rounded-md border p-4 hover:bg-muted/40"
-    >
-      <div>
-        <p className="font-medium">{label}</p>
-        <p className="text-sm text-muted-foreground">{detail}</p>
-      </div>
-      <span className="text-sm text-muted-foreground">{done ? 'Done' : 'Set up'}</span>
-    </Link>
   );
 }

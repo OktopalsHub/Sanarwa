@@ -1,6 +1,6 @@
 "use client";
 
-import { ComputerDesktopIcon, MoonIcon, SunIcon } from '@heroicons/react/24/outline'
+import { ComputerDesktopIcon, MoonIcon, SunIcon } from "@heroicons/react/24/outline";
 import { useTheme } from "next-themes";
 import { useEffect, useState } from "react";
 
@@ -9,7 +9,7 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuTrigger
+  DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { createThemeTransition, prefersReducedMotion } from "@/lib/utils/theme";
 
@@ -45,10 +45,14 @@ export function ThemeToggle() {
   }
 
   const getThemeIcon = () => {
-    if (theme === 'system') {
+    if (theme === "system") {
       return <ComputerDesktopIcon className="h-4 w-4" />;
     }
-    return resolvedTheme === 'dark' ? <MoonIcon className="h-4 w-4" /> : <SunIcon className="h-4 w-4" />;
+    return resolvedTheme === "dark" ? (
+      <MoonIcon className="h-4 w-4" />
+    ) : (
+      <SunIcon className="h-4 w-4" />
+    );
   };
 
   const isActive = (themeOption: string) => theme === themeOption;
@@ -65,22 +69,25 @@ export function ThemeToggle() {
           >
             <div className="relative w-4 h-4">
               <SunIcon
-                className={`h-4 w-4 absolute inset-0 transition-all duration-500 ease-in-out ${resolvedTheme === "light" && theme !== 'system'
-                  ? "rotate-0 scale-100 opacity-100"
-                  : "rotate-90 scale-0 opacity-0"
-                  }`}
+                className={`h-4 w-4 absolute inset-0 transition-all duration-500 ease-in-out ${
+                  resolvedTheme === "light" && theme !== "system"
+                    ? "rotate-0 scale-100 opacity-100"
+                    : "rotate-90 scale-0 opacity-0"
+                }`}
               />
               <MoonIcon
-                className={`h-4 w-4 absolute inset-0 transition-all duration-500 ease-in-out ${resolvedTheme === "dark" && theme !== 'system'
-                  ? "rotate-0 scale-100 opacity-100"
-                  : "-rotate-90 scale-0 opacity-0"
-                  }`}
+                className={`h-4 w-4 absolute inset-0 transition-all duration-500 ease-in-out ${
+                  resolvedTheme === "dark" && theme !== "system"
+                    ? "rotate-0 scale-100 opacity-100"
+                    : "-rotate-90 scale-0 opacity-0"
+                }`}
               />
               <ComputerDesktopIcon
-                className={`h-4 w-4 absolute inset-0 transition-all duration-500 ease-in-out ${theme === 'system'
-                  ? "rotate-0 scale-100 opacity-100"
-                  : "rotate-180 scale-0 opacity-0"
-                  }`}
+                className={`h-4 w-4 absolute inset-0 transition-all duration-500 ease-in-out ${
+                  theme === "system"
+                    ? "rotate-0 scale-100 opacity-100"
+                    : "rotate-180 scale-0 opacity-0"
+                }`}
               />
             </div>
             <span className="sr-only">Toggle theme</span>
@@ -92,40 +99,36 @@ export function ThemeToggle() {
         >
           <DropdownMenuItem
             onClick={() => handleThemeChange("light")}
-            className={`cursor-pointer transition-colors duration-200 hover:bg-accent hover:text-accent-foreground ${isActive('light') ? 'bg-accent text-accent-foreground' : ''
-              }`}
+            className={`cursor-pointer transition-colors duration-200 hover:bg-accent hover:text-accent-foreground ${
+              isActive("light") ? "bg-accent text-accent-foreground" : ""
+            }`}
           >
             <SunIcon className="mr-2 h-4 w-4" />
             <span>Light</span>
-            {isActive('light') && (
-              <div className="ml-auto w-2 h-2 rounded-full bg-primary" />
-            )}
+            {isActive("light") && <div className="ml-auto w-2 h-2 rounded-full bg-primary" />}
           </DropdownMenuItem>
           <DropdownMenuItem
             onClick={() => handleThemeChange("dark")}
-            className={`cursor-pointer transition-colors duration-200 hover:bg-accent hover:text-accent-foreground ${isActive('dark') ? 'bg-accent text-accent-foreground' : ''
-              }`}
+            className={`cursor-pointer transition-colors duration-200 hover:bg-accent hover:text-accent-foreground ${
+              isActive("dark") ? "bg-accent text-accent-foreground" : ""
+            }`}
           >
             <MoonIcon className="mr-2 h-4 w-4" />
             <span>Dark</span>
-            {isActive('dark') && (
-              <div className="ml-auto w-2 h-2 rounded-full bg-primary" />
-            )}
+            {isActive("dark") && <div className="ml-auto w-2 h-2 rounded-full bg-primary" />}
           </DropdownMenuItem>
           <DropdownMenuItem
             onClick={() => handleThemeChange("system")}
-            className={`cursor-pointer transition-colors duration-200 hover:bg-accent hover:text-accent-foreground ${isActive('system') ? 'bg-accent text-accent-foreground' : ''
-              }`}
+            className={`cursor-pointer transition-colors duration-200 hover:bg-accent hover:text-accent-foreground ${
+              isActive("system") ? "bg-accent text-accent-foreground" : ""
+            }`}
           >
             <ComputerDesktopIcon className="mr-2 h-4 w-4" />
             <span>System</span>
-            {isActive('system') && (
-              <div className="ml-auto w-2 h-2 rounded-full bg-primary" />
-            )}
+            {isActive("system") && <div className="ml-auto w-2 h-2 rounded-full bg-primary" />}
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
-
     </div>
   );
 }

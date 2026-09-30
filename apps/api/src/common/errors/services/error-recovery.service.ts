@@ -1,6 +1,6 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { ClassifiedError, RecoveryStrategy } from '../types/error.types';
-import { CircuitBreakerService } from './circuit-breaker.service';
+import { Injectable, Logger } from "@nestjs/common";
+import { ClassifiedError, RecoveryStrategy } from "../types/error.types";
+import { CircuitBreakerService } from "./circuit-breaker.service";
 
 @Injectable()
 export class ErrorRecoveryService {
@@ -27,18 +27,11 @@ export class ErrorRecoveryService {
 
     for (const strategy of strategies) {
       try {
-        const result = await this.executeStrategy(
-          strategy,
-          operation,
-          lastError,
-        );
+        const result = await this.executeStrategy(strategy, operation, lastError);
         this.logger.log(`Recovery successful using strategy: ${strategy.type}`);
         return result;
       } catch (strategyError) {
-        this.logger.warn(
-          `Recovery strategy ${strategy.type} failed:`,
-          strategyError.message,
-        );
+        this.logger.warn(`Recovery strategy ${strategy.type} failed:`, strategyError.message);
         lastError = strategyError;
       }
     }
@@ -56,18 +49,14 @@ export class ErrorRecoveryService {
     error: ClassifiedError,
   ): Promise<T> {
     switch (strategy.type) {
-      case 'retry':
+      case "retry":
         return this.executeRetryStrategy(strategy, operation, error);
-      case 'fallback':
+      case "fallback":
         return this.executeFallbackStrategy(strategy, operation, error);
-      case 'circuit_breaker':
+      case "circuit_breaker":
         return this.executeCircuitBreakerStrategy(strategy, operation, error);
-      case 'graceful_degradation':
-        return this.executeGracefulDegradationStrategy(
-          strategy,
-          operation,
-          error,
-        );
+      case "graceful_degradation":
+        return this.executeGracefulDegradationStrategy(strategy, operation, error);
       default:
         throw new Error(`Unknown recovery strategy: ${strategy.type}`);
     }
@@ -93,9 +82,7 @@ export class ErrorRecoveryService {
       attempt++;
 
       if (attempt > 1) {
-        this.logger.debug(
-          `Retry attempt ${attempt}/${maxAttempts} after ${delay}ms delay`,
-        );
+        this.logger.debug(`Retry attempt ${attempt}/${maxAttempts} after ${delay}ms delay`);
         await this.sleep(delay);
         delay = Math.min(delay * backoffMultiplier, maxDelay);
       }
@@ -112,10 +99,7 @@ export class ErrorRecoveryService {
           throw retryError;
         }
 
-        this.logger.warn(
-          `Retry attempt ${attempt} failed:`,
-          retryError.message,
-        );
+        this.logger.warn(`Retry attempt ${attempt} failed:`, retryError.message);
       }
     }
 
@@ -133,7 +117,7 @@ export class ErrorRecoveryService {
     try {
       return await operation();
     } catch (operationError) {
-      this.logger.warn('Primary operation failed, using fallback value');
+      this.logger.warn("Primary operation failed, using fallback value");
 
       if (strategy.fallbackValue !== undefined) {
         return strategy.fallbackValue;
@@ -151,14 +135,9 @@ export class ErrorRecoveryService {
     operation: () => Promise<T>,
     error: ClassifiedError,
   ): Promise<T> {
-    const serviceName =
-      error.context.metadata?.serviceName || 'unknown-service';
+    const serviceName = error.context.metadata?.serviceName || "unknown-service";
 
-    return this.circuitBreakerService.execute(
-      serviceName,
-      operation,
-      error.context,
-    );
+    return this.circuitBreakerService.execute(serviceName, operation, error.context);
   }
 
   /**
@@ -172,11 +151,11 @@ export class ErrorRecoveryService {
     try {
       return await operation();
     } catch (operationError) {
-      this.logger.warn('Operation failed, attempting graceful degradation');
+      this.logger.warn("Operation failed, attempting graceful degradation");
 
       // Return a degraded but functional response
       if (strategy.fallbackValue !== undefined) {
-        this.logger.log('Using degraded fallback response');
+        this.logger.log("Using degraded fallback response");
         return strategy.fallbackValue;
       }
 
@@ -194,7 +173,7 @@ export class ErrorRecoveryService {
     // Add retry strategy for retryable errors
     if (error.retryable) {
       strategies.push({
-        type: 'retry',
+        type: "retry",
         maxAttempts: 3,
         initialDelay: 1000,
         backoffMultiplier: 2,
@@ -204,16 +183,16 @@ export class ErrorRecoveryService {
     }
 
     // Add circuit breaker for provider errors
-    if (error.category === 'provider') {
+    if (error.category === "provider") {
       strategies.push({
-        type: 'circuit_breaker',
+        type: "circuit_breaker",
       });
     }
 
     // Add graceful degradation for recoverable errors
     if (error.recoverable) {
       strategies.push({
-        type: 'graceful_degradation',
+        type: "graceful_degradation",
         fallbackValue: this.createDegradedResponse(error),
       });
     }
@@ -230,7 +209,7 @@ export class ErrorRecoveryService {
     const degradedResponse = {
       success: false,
       degraded: true,
-      message: 'Service is operating in degraded mode',
+      message: "Service is operating in degraded mode",
       error: {
         code: error.code,
         message: error.userMessage,
@@ -253,15 +232,12 @@ export class ErrorRecoveryService {
    */
   shouldAttemptRecovery(error: ClassifiedError): boolean {
     // Don't attempt recovery for validation errors
-    if (error.category === 'validation') {
+    if (error.category === "validation") {
       return false;
     }
 
     // Don't attempt recovery for authentication/authorization errors
-    if (
-      error.category === 'authentication' ||
-      error.category === 'authorization'
-    ) {
+    if (error.category === "authentication" || error.category === "authorization") {
       return false;
     }
 

@@ -1,1 +1,1 @@
-export * from '@sanarwa/ui/date-range-picker';
+export * from "@sanarwa/ui/date-range-picker";

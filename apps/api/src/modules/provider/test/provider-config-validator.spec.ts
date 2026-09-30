@@ -1,10 +1,10 @@
-import { Test, TestingModule } from '@nestjs/testing';
-import { Channel } from '../../providers/types';
-import { ProviderConfigValidator } from './provider-config-validator';
-import { ProviderConfig, ProviderType } from './provider-config.entity';
-import type { Mock } from 'vitest';
+import { Test, TestingModule } from "@nestjs/testing";
+import { Channel } from "../../providers/types";
+import { ProviderConfigValidator } from "./provider-config-validator";
+import { ProviderConfig, ProviderType } from "./provider-config.entity";
+import type { Mock } from "vitest";
 
-describe('ProviderConfigValidator', () => {
+describe("ProviderConfigValidator", () => {
   let validator: ProviderConfigValidator;
 
   beforeEach(async () => {
@@ -15,18 +15,18 @@ describe('ProviderConfigValidator', () => {
     validator = module.get<ProviderConfigValidator>(ProviderConfigValidator);
   });
 
-  describe('validate', () => {
+  describe("validate", () => {
     const baseConfig: ProviderConfig = {
-      id: 'config-1',
-      tenantId: 'tenant-1',
-      providerId: 'aws_ses',
-      providerName: 'AWS SES',
+      id: "config-1",
+      tenantId: "tenant-1",
+      providerId: "aws_ses",
+      providerName: "AWS SES",
       providerType: ProviderType.AWS_SES,
       channel: Channel.EMAIL,
       config: {
-        accessKeyId: 'AKIAIOSFODNN7EXAMPLE',
-        secretAccessKey: 'wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY',
-        region: 'us-east-1',
+        accessKeyId: "AKIAIOSFODNN7EXAMPLE",
+        secretAccessKey: "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
+        region: "us-east-1",
       },
       priority: 1,
       isActive: true,
@@ -35,18 +35,18 @@ describe('ProviderConfigValidator', () => {
       updatedAt: new Date(),
     };
 
-    it('should validate valid AWS SES configuration', async () => {
+    it("should validate valid AWS SES configuration", async () => {
       const result = await validator.validateDetailed(baseConfig);
 
       expect(result.isValid).toBe(true);
       expect(result.errors).toHaveLength(0);
     });
 
-    it('should reject configuration with missing required fields', async () => {
+    it("should reject configuration with missing required fields", async () => {
       const invalidConfig = {
         ...baseConfig,
         config: {
-          accessKeyId: 'AKIAIOSFODNN7EXAMPLE',
+          accessKeyId: "AKIAIOSFODNN7EXAMPLE",
           // Missing secretAccessKey and region
         },
       };
@@ -54,19 +54,17 @@ describe('ProviderConfigValidator', () => {
       const result = await validator.validateDetailed(invalidConfig);
 
       expect(result.isValid).toBe(false);
-      expect(result.errors).toContain(
-        "Required field 'secretAccessKey' is missing",
-      );
+      expect(result.errors).toContain("Required field 'secretAccessKey' is missing");
       expect(result.errors).toContain("Required field 'region' is missing");
     });
 
-    it('should reject configuration with invalid field values', async () => {
+    it("should reject configuration with invalid field values", async () => {
       const invalidConfig = {
         ...baseConfig,
         config: {
-          accessKeyId: '', // Empty string
-          secretAccessKey: 'valid-secret',
-          region: 'invalid-region-format!', // Invalid format
+          accessKeyId: "", // Empty string
+          secretAccessKey: "valid-secret",
+          region: "invalid-region-format!", // Invalid format
         },
       };
 
@@ -77,17 +75,17 @@ describe('ProviderConfigValidator', () => {
       expect(result.errors).toContain("Invalid value for field 'region'");
     });
 
-    it('should validate Termii SMS configuration', async () => {
+    it("should validate Termii SMS configuration", async () => {
       const termiiConfig: ProviderConfig = {
         ...baseConfig,
-        providerId: 'termii',
+        providerId: "termii",
         providerType: ProviderType.TERMII,
         channel: Channel.SMS,
         config: {
-          apiKey: 'TL123456789',
-          senderId: 'MyApp',
-          channel: 'generic',
-          type: 'plain',
+          apiKey: "TL123456789",
+          senderId: "MyApp",
+          channel: "generic",
+          type: "plain",
         },
       };
 
@@ -97,17 +95,17 @@ describe('ProviderConfigValidator', () => {
       expect(result.errors).toHaveLength(0);
     });
 
-    it('should validate WhatsApp Business configuration', async () => {
+    it("should validate WhatsApp Business configuration", async () => {
       const whatsappConfig: ProviderConfig = {
         ...baseConfig,
-        providerId: 'whatsapp_business',
+        providerId: "whatsapp_business",
         providerType: ProviderType.WHATSAPP_BUSINESS,
         channel: Channel.WHATSAPP,
         config: {
-          accessToken: 'EAABwzLixnjYBOZCZCZC...',
-          phoneNumberId: '1234567890123456',
-          businessAccountId: '9876543210987654',
-          apiVersion: 'v17.0',
+          accessToken: "EAABwzLixnjYBOZCZCZC...",
+          phoneNumberId: "1234567890123456",
+          businessAccountId: "9876543210987654",
+          apiVersion: "v17.0",
         },
       };
 
@@ -117,12 +115,12 @@ describe('ProviderConfigValidator', () => {
       expect(result.errors).toHaveLength(0);
     });
 
-    it('should warn about unknown configuration fields', async () => {
+    it("should warn about unknown configuration fields", async () => {
       const configWithUnknownFields = {
         ...baseConfig,
         config: {
           ...baseConfig.config,
-          unknownField: 'some value',
+          unknownField: "some value",
           anotherUnknownField: 123,
         },
       };
@@ -130,22 +128,18 @@ describe('ProviderConfigValidator', () => {
       const result = await validator.validateDetailed(configWithUnknownFields);
 
       expect(result.isValid).toBe(true);
-      expect(result.warnings).toContain(
-        "Unknown field 'unknownField' in configuration",
-      );
-      expect(result.warnings).toContain(
-        "Unknown field 'anotherUnknownField' in configuration",
-      );
+      expect(result.warnings).toContain("Unknown field 'unknownField' in configuration");
+      expect(result.warnings).toContain("Unknown field 'anotherUnknownField' in configuration");
     });
   });
 
-  describe('basic structure validation', () => {
-    it('should reject configuration without provider ID', async () => {
+  describe("basic structure validation", () => {
+    it("should reject configuration without provider ID", async () => {
       const config = {
-        id: 'config-1',
-        tenantId: 'tenant-1',
-        providerId: '', // Empty provider ID
-        providerName: 'Test Provider',
+        id: "config-1",
+        tenantId: "tenant-1",
+        providerId: "", // Empty provider ID
+        providerName: "Test Provider",
         providerType: ProviderType.AWS_SES,
         channel: Channel.EMAIL,
         config: {},
@@ -159,15 +153,15 @@ describe('ProviderConfigValidator', () => {
       const result = await validator.validateDetailed(config);
 
       expect(result.isValid).toBe(false);
-      expect(result.errors).toContain('Provider ID is required');
+      expect(result.errors).toContain("Provider ID is required");
     });
 
-    it('should reject configuration without provider name', async () => {
+    it("should reject configuration without provider name", async () => {
       const config = {
-        id: 'config-1',
-        tenantId: 'tenant-1',
-        providerId: 'aws_ses',
-        providerName: '', // Empty provider name
+        id: "config-1",
+        tenantId: "tenant-1",
+        providerId: "aws_ses",
+        providerName: "", // Empty provider name
         providerType: ProviderType.AWS_SES,
         channel: Channel.EMAIL,
         config: {},
@@ -181,15 +175,15 @@ describe('ProviderConfigValidator', () => {
       const result = await validator.validateDetailed(config);
 
       expect(result.isValid).toBe(false);
-      expect(result.errors).toContain('Provider name is required');
+      expect(result.errors).toContain("Provider name is required");
     });
 
-    it('should reject configuration with invalid priority', async () => {
+    it("should reject configuration with invalid priority", async () => {
       const config = {
-        id: 'config-1',
-        tenantId: 'tenant-1',
-        providerId: 'aws_ses',
-        providerName: 'AWS SES',
+        id: "config-1",
+        tenantId: "tenant-1",
+        providerId: "aws_ses",
+        providerName: "AWS SES",
         providerType: ProviderType.AWS_SES,
         channel: Channel.EMAIL,
         config: {},
@@ -203,15 +197,15 @@ describe('ProviderConfigValidator', () => {
       const result = await validator.validateDetailed(config);
 
       expect(result.isValid).toBe(false);
-      expect(result.errors).toContain('Priority must be greater than 0');
+      expect(result.errors).toContain("Priority must be greater than 0");
     });
 
-    it('should reject configuration without config object', async () => {
+    it("should reject configuration without config object", async () => {
       const config = {
-        id: 'config-1',
-        tenantId: 'tenant-1',
-        providerId: 'aws_ses',
-        providerName: 'AWS SES',
+        id: "config-1",
+        tenantId: "tenant-1",
+        providerId: "aws_ses",
+        providerName: "AWS SES",
         providerType: ProviderType.AWS_SES,
         channel: Channel.EMAIL,
         config: null, // Missing config
@@ -225,24 +219,22 @@ describe('ProviderConfigValidator', () => {
       const result = await validator.validateDetailed(config);
 
       expect(result.isValid).toBe(false);
-      expect(result.errors).toContain(
-        'Provider configuration object is required',
-      );
+      expect(result.errors).toContain("Provider configuration object is required");
     });
   });
 
-  describe('rate limits validation', () => {
+  describe("rate limits validation", () => {
     const baseConfig: ProviderConfig = {
-      id: 'config-1',
-      tenantId: 'tenant-1',
-      providerId: 'aws_ses',
-      providerName: 'AWS SES',
+      id: "config-1",
+      tenantId: "tenant-1",
+      providerId: "aws_ses",
+      providerName: "AWS SES",
       providerType: ProviderType.AWS_SES,
       channel: Channel.EMAIL,
       config: {
-        accessKeyId: 'test',
-        secretAccessKey: 'test',
-        region: 'us-east-1',
+        accessKeyId: "test",
+        secretAccessKey: "test",
+        region: "us-east-1",
       },
       priority: 1,
       isActive: true,
@@ -251,7 +243,7 @@ describe('ProviderConfigValidator', () => {
       updatedAt: new Date(),
     };
 
-    it('should validate valid rate limits', async () => {
+    it("should validate valid rate limits", async () => {
       const configWithRateLimits = {
         ...baseConfig,
         rateLimits: {
@@ -268,33 +260,25 @@ describe('ProviderConfigValidator', () => {
       expect(result.errors).toHaveLength(0);
     });
 
-    it('should reject invalid rate limit values', async () => {
+    it("should reject invalid rate limit values", async () => {
       const configWithInvalidRateLimits = {
         ...baseConfig,
         rateLimits: {
           requestsPerSecond: -1, // Negative value
           requestsPerMinute: 0, // Zero value
-          requestsPerHour: 'invalid', // Non-numeric value
+          requestsPerHour: "invalid", // Non-numeric value
         },
       };
 
-      const result = await validator.validateDetailed(
-        configWithInvalidRateLimits,
-      );
+      const result = await validator.validateDetailed(configWithInvalidRateLimits);
 
       expect(result.isValid).toBe(false);
-      expect(result.errors).toContain(
-        "Rate limit 'requestsPerSecond' must be a positive number",
-      );
-      expect(result.errors).toContain(
-        "Rate limit 'requestsPerMinute' must be a positive number",
-      );
-      expect(result.errors).toContain(
-        "Rate limit 'requestsPerHour' must be a positive number",
-      );
+      expect(result.errors).toContain("Rate limit 'requestsPerSecond' must be a positive number");
+      expect(result.errors).toContain("Rate limit 'requestsPerMinute' must be a positive number");
+      expect(result.errors).toContain("Rate limit 'requestsPerHour' must be a positive number");
     });
 
-    it('should warn about illogical rate limits', async () => {
+    it("should warn about illogical rate limits", async () => {
       const configWithIllogicalRateLimits = {
         ...baseConfig,
         rateLimits: {
@@ -303,17 +287,15 @@ describe('ProviderConfigValidator', () => {
         },
       };
 
-      const result = await validator.validateDetailed(
-        configWithIllogicalRateLimits,
-      );
+      const result = await validator.validateDetailed(configWithIllogicalRateLimits);
 
       expect(result.isValid).toBe(true);
       expect(result.warnings).toContain(
-        'Requests per second * 60 exceeds requests per minute limit',
+        "Requests per second * 60 exceeds requests per minute limit",
       );
     });
 
-    it('should warn about unknown rate limit fields', async () => {
+    it("should warn about unknown rate limit fields", async () => {
       const configWithUnknownRateLimit = {
         ...baseConfig,
         rateLimits: {
@@ -322,29 +304,25 @@ describe('ProviderConfigValidator', () => {
         },
       };
 
-      const result = await validator.validateDetailed(
-        configWithUnknownRateLimit,
-      );
+      const result = await validator.validateDetailed(configWithUnknownRateLimit);
 
       expect(result.isValid).toBe(true);
-      expect(result.warnings).toContain(
-        'Unknown rate limit field: requestsPerYear',
-      );
+      expect(result.warnings).toContain("Unknown rate limit field: requestsPerYear");
     });
   });
 
-  describe('health check validation', () => {
+  describe("health check validation", () => {
     const baseConfig: ProviderConfig = {
-      id: 'config-1',
-      tenantId: 'tenant-1',
-      providerId: 'aws_ses',
-      providerName: 'AWS SES',
+      id: "config-1",
+      tenantId: "tenant-1",
+      providerId: "aws_ses",
+      providerName: "AWS SES",
       providerType: ProviderType.AWS_SES,
       channel: Channel.EMAIL,
       config: {
-        accessKeyId: 'test',
-        secretAccessKey: 'test',
-        region: 'us-east-1',
+        accessKeyId: "test",
+        secretAccessKey: "test",
+        region: "us-east-1",
       },
       priority: 1,
       isActive: true,
@@ -353,11 +331,11 @@ describe('ProviderConfigValidator', () => {
       updatedAt: new Date(),
     };
 
-    it('should validate valid health check configuration', async () => {
+    it("should validate valid health check configuration", async () => {
       const configWithHealthCheck = {
         ...baseConfig,
         healthCheck: {
-          url: 'https://api.example.com/health',
+          url: "https://api.example.com/health",
           interval: 60000,
           timeout: 5000,
           retries: 3,
@@ -370,7 +348,7 @@ describe('ProviderConfigValidator', () => {
       expect(result.errors).toHaveLength(0);
     });
 
-    it('should reject invalid health check values', async () => {
+    it("should reject invalid health check values", async () => {
       const configWithInvalidHealthCheck = {
         ...baseConfig,
         healthCheck: {
@@ -381,24 +359,16 @@ describe('ProviderConfigValidator', () => {
         },
       };
 
-      const result = await validator.validateDetailed(
-        configWithInvalidHealthCheck,
-      );
+      const result = await validator.validateDetailed(configWithInvalidHealthCheck);
 
       expect(result.isValid).toBe(false);
-      expect(result.errors).toContain('Health check URL must be a string');
-      expect(result.errors).toContain(
-        'Health check interval must be a positive number',
-      );
-      expect(result.errors).toContain(
-        'Health check timeout must be a positive number',
-      );
-      expect(result.errors).toContain(
-        'Health check retries must be a non-negative number',
-      );
+      expect(result.errors).toContain("Health check URL must be a string");
+      expect(result.errors).toContain("Health check interval must be a positive number");
+      expect(result.errors).toContain("Health check timeout must be a positive number");
+      expect(result.errors).toContain("Health check retries must be a non-negative number");
     });
 
-    it('should warn about illogical health check configuration', async () => {
+    it("should warn about illogical health check configuration", async () => {
       const configWithIllogicalHealthCheck = {
         ...baseConfig,
         healthCheck: {
@@ -407,26 +377,22 @@ describe('ProviderConfigValidator', () => {
         },
       };
 
-      const result = await validator.validateDetailed(
-        configWithIllogicalHealthCheck,
-      );
+      const result = await validator.validateDetailed(configWithIllogicalHealthCheck);
 
       expect(result.isValid).toBe(true);
-      expect(result.warnings).toContain(
-        'Health check timeout should be less than interval',
-      );
+      expect(result.warnings).toContain("Health check timeout should be less than interval");
     });
   });
 
-  describe('supported countries validation', () => {
+  describe("supported countries validation", () => {
     const baseConfig: ProviderConfig = {
-      id: 'config-1',
-      tenantId: 'tenant-1',
-      providerId: 'termii',
-      providerName: 'Termii SMS',
+      id: "config-1",
+      tenantId: "tenant-1",
+      providerId: "termii",
+      providerName: "Termii SMS",
       providerType: ProviderType.TERMII,
       channel: Channel.SMS,
-      config: { apiKey: 'test', senderId: 'test' },
+      config: { apiKey: "test", senderId: "test" },
       priority: 1,
       isActive: true,
       isDefault: false,
@@ -434,10 +400,10 @@ describe('ProviderConfigValidator', () => {
       updatedAt: new Date(),
     };
 
-    it('should validate valid country codes', async () => {
+    it("should validate valid country codes", async () => {
       const configWithCountries = {
         ...baseConfig,
-        supportedCountries: ['US', 'CA', 'GB', 'NG', 'KE'],
+        supportedCountries: ["US", "CA", "GB", "NG", "KE"],
       };
 
       const result = await validator.validateDetailed(configWithCountries);
@@ -446,38 +412,34 @@ describe('ProviderConfigValidator', () => {
       expect(result.errors).toHaveLength(0);
     });
 
-    it('should reject non-array supported countries', async () => {
+    it("should reject non-array supported countries", async () => {
       const configWithInvalidCountries = {
         ...baseConfig,
-        supportedCountries: 'US,CA,GB', // String instead of array
+        supportedCountries: "US,CA,GB", // String instead of array
       };
 
-      const result = await validator.validateDetailed(
-        configWithInvalidCountries,
-      );
+      const result = await validator.validateDetailed(configWithInvalidCountries);
 
       expect(result.isValid).toBe(false);
-      expect(result.errors).toContain('Supported countries must be an array');
+      expect(result.errors).toContain("Supported countries must be an array");
     });
 
-    it('should reject non-string country codes', async () => {
+    it("should reject non-string country codes", async () => {
       const configWithInvalidCountryCodes = {
         ...baseConfig,
-        supportedCountries: ['US', 123, 'GB'], // Number in array
+        supportedCountries: ["US", 123, "GB"], // Number in array
       };
 
-      const result = await validator.validateDetailed(
-        configWithInvalidCountryCodes,
-      );
+      const result = await validator.validateDetailed(configWithInvalidCountryCodes);
 
       expect(result.isValid).toBe(false);
-      expect(result.errors).toContain('Country codes must be strings');
+      expect(result.errors).toContain("Country codes must be strings");
     });
 
-    it('should warn about invalid country code format', async () => {
+    it("should warn about invalid country code format", async () => {
       const configWithInvalidFormat = {
         ...baseConfig,
-        supportedCountries: ['USA', 'CAN', 'GB'], // 3-letter codes instead of 2-letter
+        supportedCountries: ["USA", "CAN", "GB"], // 3-letter codes instead of 2-letter
       };
 
       const result = await validator.validateDetailed(configWithInvalidFormat);
@@ -491,45 +453,43 @@ describe('ProviderConfigValidator', () => {
       );
     });
 
-    it('should warn about unknown country codes', async () => {
+    it("should warn about unknown country codes", async () => {
       const configWithUnknownCountries = {
         ...baseConfig,
-        supportedCountries: ['US', 'XX', 'YY'], // XX and YY are not valid ISO codes
+        supportedCountries: ["US", "XX", "YY"], // XX and YY are not valid ISO codes
       };
 
-      const result = await validator.validateDetailed(
-        configWithUnknownCountries,
-      );
+      const result = await validator.validateDetailed(configWithUnknownCountries);
 
       expect(result.isValid).toBe(true);
-      expect(result.warnings).toContain('Unknown country code: XX');
-      expect(result.warnings).toContain('Unknown country code: YY');
+      expect(result.warnings).toContain("Unknown country code: XX");
+      expect(result.warnings).toContain("Unknown country code: YY");
     });
   });
 
-  describe('email validation', () => {
-    it('should validate correct email format', async () => {
+  describe("email validation", () => {
+    it("should validate correct email format", async () => {
       const validator = new ProviderConfigValidator();
       const isValidEmail = (validator as any).isValidEmail;
 
-      expect(isValidEmail('test@example.com')).toBe(true);
-      expect(isValidEmail('user.name+tag@domain.co.uk')).toBe(true);
-      expect(isValidEmail('user123@test-domain.org')).toBe(true);
+      expect(isValidEmail("test@example.com")).toBe(true);
+      expect(isValidEmail("user.name+tag@domain.co.uk")).toBe(true);
+      expect(isValidEmail("user123@test-domain.org")).toBe(true);
     });
 
-    it('should reject invalid email format', async () => {
+    it("should reject invalid email format", async () => {
       const validator = new ProviderConfigValidator();
       const isValidEmail = (validator as any).isValidEmail;
 
-      expect(isValidEmail('invalid-email')).toBe(false);
-      expect(isValidEmail('test@')).toBe(false);
-      expect(isValidEmail('@domain.com')).toBe(false);
-      expect(isValidEmail('test..test@domain.com')).toBe(false);
+      expect(isValidEmail("invalid-email")).toBe(false);
+      expect(isValidEmail("test@")).toBe(false);
+      expect(isValidEmail("@domain.com")).toBe(false);
+      expect(isValidEmail("test..test@domain.com")).toBe(false);
     });
   });
 
-  describe('error handling', () => {
-    it('should handle validation errors gracefully', async () => {
+  describe("error handling", () => {
+    it("should handle validation errors gracefully", async () => {
       const invalidConfig = {
         // Missing required fields
       } as any;
@@ -540,19 +500,16 @@ describe('ProviderConfigValidator', () => {
       expect(result.errors.length).toBeGreaterThan(0);
     });
 
-    it('should handle exceptions during validation', async () => {
+    it("should handle exceptions during validation", async () => {
       // Mock a method to throw an error
-      const originalValidateChannelConfig = (validator as any)
-        .validateChannelConfig;
-      (validator as any).validateChannelConfig = vi
-        .fn()
-        .mockRejectedValue(new Error('Test error'));
+      const originalValidateChannelConfig = (validator as any).validateChannelConfig;
+      (validator as any).validateChannelConfig = vi.fn().mockRejectedValue(new Error("Test error"));
 
       const config = {
-        id: 'config-1',
-        tenantId: 'tenant-1',
-        providerId: 'aws_ses',
-        providerName: 'AWS SES',
+        id: "config-1",
+        tenantId: "tenant-1",
+        providerId: "aws_ses",
+        providerName: "AWS SES",
         providerType: ProviderType.AWS_SES,
         channel: Channel.EMAIL,
         config: {},
@@ -566,7 +523,7 @@ describe('ProviderConfigValidator', () => {
       const result = await validator.validateDetailed(config);
 
       expect(result.isValid).toBe(false);
-      expect(result.errors).toContain('Validation failed: Test error');
+      expect(result.errors).toContain("Validation failed: Test error");
 
       // Restore original method
       (validator as any).validateChannelConfig = originalValidateChannelConfig;

@@ -1,5 +1,5 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
+import { Injectable, Logger } from "@nestjs/common";
+import { ConfigService } from "@nestjs/config";
 import {
   SESClient,
   VerifyDomainIdentityCommand,
@@ -10,14 +10,14 @@ import {
   ListIdentitiesCommand,
   GetIdentityPoliciesCommand,
   PutIdentityPolicyCommand,
-} from '@aws-sdk/client-ses';
+} from "@aws-sdk/client-ses";
 
 export interface SESVerificationResult {
   verified: boolean;
   verificationToken?: string;
   dkimTokens?: string[];
   error?: string;
-  status?: 'Pending' | 'Success' | 'Failed' | 'TemporaryFailure' | 'NotStarted';
+  status?: "Pending" | "Success" | "Failed" | "TemporaryFailure" | "NotStarted";
 }
 
 export interface SESDKIMResult {
@@ -29,7 +29,7 @@ export interface SESDKIMResult {
 
 export interface SESIdentityInfo {
   identity: string;
-  type: 'Domain' | 'EmailAddress';
+  type: "Domain" | "EmailAddress";
   verificationStatus: string;
   dkimEnabled: boolean;
   dkimVerified: boolean;
@@ -42,12 +42,14 @@ export class SESVerificationService {
   private readonly sesClient: SESClient;
 
   constructor(private readonly configService: ConfigService) {
-    const awsRegion = this.configService.get<string>('AWS_REGION') || 'us-east-1';
-    const awsAccessKeyId = this.configService.get<string>('AWS_ACCESS_KEY_ID');
-    const awsSecretAccessKey = this.configService.get<string>('AWS_SECRET_ACCESS_KEY');
+    const awsRegion = this.configService.get<string>("AWS_REGION") || "us-east-1";
+    const awsAccessKeyId = this.configService.get<string>("AWS_ACCESS_KEY_ID");
+    const awsSecretAccessKey = this.configService.get<string>("AWS_SECRET_ACCESS_KEY");
 
     if (!awsAccessKeyId || !awsSecretAccessKey) {
-      this.logger.warn('AWS credentials not configured. SES client will use default credential chain.');
+      this.logger.warn(
+        "AWS credentials not configured. SES client will use default credential chain.",
+      );
       this.sesClient = new SESClient({ region: awsRegion });
     } else {
       this.sesClient = new SESClient({
@@ -74,19 +76,21 @@ export class SESVerificationService {
 
       const response = await this.sesClient.send(command);
 
-      this.logger.log(`SES domain verification started for ${domain}, token: ${response.VerificationToken}`);
+      this.logger.log(
+        `SES domain verification started for ${domain}, token: ${response.VerificationToken}`,
+      );
 
       return {
         verified: false, // Verification is pending
         verificationToken: response.VerificationToken,
-        status: 'Pending',
+        status: "Pending",
       };
     } catch (error) {
       this.logger.error(`Failed to start SES domain verification for ${domain}:`, error);
       return {
         verified: false,
         error: error.message,
-        status: 'Failed',
+        status: "Failed",
       };
     }
   }
@@ -108,14 +112,16 @@ export class SESVerificationService {
       if (!attributes) {
         return {
           verified: false,
-          error: 'Domain not found in SES identities',
-          status: 'NotStarted',
+          error: "Domain not found in SES identities",
+          status: "NotStarted",
         };
       }
 
-      const isVerified = attributes.VerificationStatus === 'Success';
+      const isVerified = attributes.VerificationStatus === "Success";
 
-      this.logger.log(`SES domain verification status for ${domain}: ${attributes.VerificationStatus}`);
+      this.logger.log(
+        `SES domain verification status for ${domain}: ${attributes.VerificationStatus}`,
+      );
 
       return {
         verified: isVerified,
@@ -127,7 +133,7 @@ export class SESVerificationService {
       return {
         verified: false,
         error: error.message,
-        status: 'Failed',
+        status: "Failed",
       };
     }
   }
@@ -181,13 +187,13 @@ export class SESVerificationService {
         return {
           enabled: false,
           verified: false,
-          error: 'Domain not found or DKIM not configured',
+          error: "Domain not found or DKIM not configured",
         };
       }
 
       return {
         enabled: dkimAttributes.DkimEnabled || false,
-        verified: dkimAttributes.DkimVerificationStatus === 'Success',
+        verified: dkimAttributes.DkimVerificationStatus === "Success",
         dkimTokens: dkimAttributes.DkimTokens,
       };
     } catch (error) {
@@ -213,7 +219,9 @@ export class SESVerificationService {
 
       const response = await this.sesClient.send(command);
 
-      this.logger.log(`DKIM verification initiated for ${domain}, tokens: ${response.DkimTokens?.length || 0}`);
+      this.logger.log(
+        `DKIM verification initiated for ${domain}, tokens: ${response.DkimTokens?.length || 0}`,
+      );
 
       return {
         enabled: true,
@@ -235,7 +243,7 @@ export class SESVerificationService {
    */
   async getVerifiedIdentities(): Promise<SESIdentityInfo[]> {
     try {
-      this.logger.log('Retrieving all SES verified identities');
+      this.logger.log("Retrieving all SES verified identities");
 
       const listCommand = new ListIdentitiesCommand({});
       const listResponse = await this.sesClient.send(listCommand);
@@ -264,10 +272,10 @@ export class SESVerificationService {
 
         return {
           identity,
-          type: identity.includes('@') ? 'EmailAddress' : 'Domain',
-          verificationStatus: verificationAttrs?.VerificationStatus || 'NotStarted',
+          type: identity.includes("@") ? "EmailAddress" : "Domain",
+          verificationStatus: verificationAttrs?.VerificationStatus || "NotStarted",
           dkimEnabled: dkimAttrs?.DkimEnabled || false,
-          dkimVerified: dkimAttrs?.DkimVerificationStatus === 'Success',
+          dkimVerified: dkimAttrs?.DkimVerificationStatus === "Success",
           dkimTokens: dkimAttrs?.DkimTokens,
         };
       });
@@ -275,7 +283,7 @@ export class SESVerificationService {
       this.logger.log(`Retrieved ${identities.length} SES identities`);
       return identities;
     } catch (error) {
-      this.logger.error('Failed to retrieve SES identities:', error);
+      this.logger.error("Failed to retrieve SES identities:", error);
       return [];
     }
   }
@@ -304,7 +312,10 @@ export class SESVerificationService {
   /**
    * Generate DNS instructions for domain verification
    */
-  generateDomainVerificationInstructions(domain: string, verificationToken: string): {
+  generateDomainVerificationInstructions(
+    domain: string,
+    verificationToken: string,
+  ): {
     domain: string;
     verificationToken: string;
     instructions: {
@@ -318,10 +329,10 @@ export class SESVerificationService {
       domain,
       verificationToken,
       instructions: {
-        recordType: 'TXT',
+        recordType: "TXT",
         name: `_amazonses.${domain}`,
         value: verificationToken,
-        description: 'Add this TXT record to your DNS to verify domain ownership with Amazon SES',
+        description: "Add this TXT record to your DNS to verify domain ownership with Amazon SES",
       },
     };
   }
@@ -329,7 +340,10 @@ export class SESVerificationService {
   /**
    * Generate DNS instructions for DKIM setup
    */
-  generateDKIMInstructions(domain: string, dkimTokens: string[]): {
+  generateDKIMInstructions(
+    domain: string,
+    dkimTokens: string[],
+  ): {
     domain: string;
     instructions: Array<{
       recordType: string;
@@ -339,7 +353,7 @@ export class SESVerificationService {
     }>;
   } {
     const instructions = dkimTokens.map((token, index) => ({
-      recordType: 'CNAME',
+      recordType: "CNAME",
       name: `${token}._domainkey.${domain}`,
       value: `${token}.dkim.amazonses.com`,
       description: `DKIM CNAME record ${index + 1} of ${dkimTokens.length}`,
@@ -366,10 +380,10 @@ export class SESVerificationService {
 
       return {
         configured: true,
-        region: this.configService.get<string>('AWS_REGION') || 'us-east-1',
+        region: this.configService.get<string>("AWS_REGION") || "us-east-1",
       };
     } catch (error) {
-      this.logger.error('SES configuration validation failed:', error);
+      this.logger.error("SES configuration validation failed:", error);
       return {
         configured: false,
         error: error.message,
@@ -391,7 +405,7 @@ export class SESVerificationService {
       if (!verificationResult.verified) {
         return {
           canSend: false,
-          reason: 'Domain not verified with SES',
+          reason: "Domain not verified with SES",
           verificationStatus: verificationResult.status,
         };
       }

@@ -1,15 +1,39 @@
-'use client';
+"use client";
 
-import { Bell, Calendar, Clock, GitBranch, Mail, MessageSquare, Phone, Send, Webhook, Zap } from '@/lib/icons';
+import {
+  Bell,
+  Calendar,
+  Clock,
+  GitBranch,
+  Mail,
+  MessageSquare,
+  Phone,
+  Send,
+  Webhook,
+  Zap,
+} from "@/lib/icons";
 
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Separator } from '@/components/ui/separator';
-import { WorkflowPosition } from '@/lib/types/workflow';
-import { cn } from '@/lib/utils';
-import { BellIcon, CalendarIcon, ChevronDownIcon, ChevronRightIcon, ClockIcon, CodeBracketSquareIcon, EnvelopeIcon, ChatBubbleLeftRightIcon, PhoneIcon, BoltIcon, CursorArrowRaysIcon, LinkIcon } from '@heroicons/react/24/outline'
-import React, { useState } from 'react';
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Separator } from "@/components/ui/separator";
+import { WorkflowPosition } from "@/lib/types/workflow";
+import { cn } from "@/lib/utils";
+import {
+  BellIcon,
+  CalendarIcon,
+  ChevronDownIcon,
+  ChevronRightIcon,
+  ClockIcon,
+  CodeBracketSquareIcon,
+  EnvelopeIcon,
+  ChatBubbleLeftRightIcon,
+  PhoneIcon,
+  BoltIcon,
+  CursorArrowRaysIcon,
+  LinkIcon,
+} from "@heroicons/react/24/outline";
+import React, { useState } from "react";
 
 interface WorkflowNodePaletteProps {
   onAddNode: (nodeType: string, position: WorkflowPosition) => void;
@@ -28,111 +52,108 @@ interface NodeTemplate {
 const NODE_TEMPLATES: Record<string, NodeTemplate[]> = {
   triggers: [
     {
-      type: 'trigger',
-      subtype: 'event',
-      label: 'Event Trigger',
-      description: 'Triggered by user actions or system events',
+      type: "trigger",
+      subtype: "event",
+      label: "Event Trigger",
+      description: "Triggered by user actions or system events",
       icon: Zap,
-      color: 'text-green-600',
+      color: "text-green-600",
     },
     {
-      type: 'trigger',
-      subtype: 'time',
-      label: 'Time Trigger',
-      description: 'Triggered at specific times or intervals',
+      type: "trigger",
+      subtype: "time",
+      label: "Time Trigger",
+      description: "Triggered at specific times or intervals",
       icon: Calendar,
-      color: 'text-green-600',
+      color: "text-green-600",
     },
     {
-      type: 'trigger',
-      subtype: 'api',
-      label: 'API Trigger',
-      description: 'Triggered by API calls',
+      type: "trigger",
+      subtype: "api",
+      label: "API Trigger",
+      description: "Triggered by API calls",
       icon: Webhook,
-      color: 'text-green-600',
+      color: "text-green-600",
     },
   ],
   actions: [
     {
-      type: 'action',
-      subtype: 'email',
-      label: 'Send Email',
-      description: 'Send email notifications',
+      type: "action",
+      subtype: "email",
+      label: "Send Email",
+      description: "Send email notifications",
       icon: Mail,
-      color: 'text-blue-600',
+      color: "text-blue-600",
     },
     {
-      type: 'action',
-      subtype: 'sms',
-      label: 'Send SMS',
-      description: 'Send SMS messages',
+      type: "action",
+      subtype: "sms",
+      label: "Send SMS",
+      description: "Send SMS messages",
       icon: MessageSquare,
-      color: 'text-blue-600',
+      color: "text-blue-600",
     },
     {
-      type: 'action',
-      subtype: 'push',
-      label: 'Push Notification',
-      description: 'Send push notifications',
+      type: "action",
+      subtype: "push",
+      label: "Push Notification",
+      description: "Send push notifications",
       icon: Bell,
-      color: 'text-blue-600',
+      color: "text-blue-600",
     },
     {
-      type: 'action',
-      subtype: 'in_app',
-      label: 'In-App Message',
-      description: 'Show in-app notifications',
+      type: "action",
+      subtype: "in_app",
+      label: "In-App Message",
+      description: "Show in-app notifications",
       icon: Bell,
-      color: 'text-blue-600',
+      color: "text-blue-600",
     },
     {
-      type: 'action',
-      subtype: 'voice',
-      label: 'Voice Call',
-      description: 'Make voice calls',
+      type: "action",
+      subtype: "voice",
+      label: "Voice Call",
+      description: "Make voice calls",
       icon: Phone,
-      color: 'text-blue-600',
+      color: "text-blue-600",
     },
     {
-      type: 'action',
-      subtype: 'webhook',
-      label: 'Webhook',
-      description: 'Send HTTP requests',
+      type: "action",
+      subtype: "webhook",
+      label: "Webhook",
+      description: "Send HTTP requests",
       icon: Webhook,
-      color: 'text-blue-600',
+      color: "text-blue-600",
     },
   ],
   logic: [
     {
-      type: 'condition',
-      label: 'Condition',
-      description: 'Branch based on conditions',
+      type: "condition",
+      label: "Condition",
+      description: "Branch based on conditions",
       icon: GitBranch,
-      color: 'text-yellow-600',
+      color: "text-yellow-600",
     },
     {
-      type: 'delay',
-      label: 'Delay',
-      description: 'Wait for a specified time',
+      type: "delay",
+      label: "Delay",
+      description: "Wait for a specified time",
       icon: Clock,
-      color: 'text-purple-600',
+      color: "text-purple-600",
     },
     {
-      type: 'split',
-      label: 'A/B Split',
-      description: 'Split traffic for testing',
+      type: "split",
+      label: "A/B Split",
+      description: "Split traffic for testing",
       icon: GitBranch,
-      color: 'text-orange-600',
+      color: "text-orange-600",
     },
   ],
 };
 
-export function WorkflowNodePalette({
-  onAddNode,
-  className,
-}: WorkflowNodePaletteProps) {
+export function WorkflowNodePalette({ onAddNode, className }: WorkflowNodePaletteProps) {
   const [expandedSections, setExpandedSections] = useState<Set<string>>(
-    new Set(['triggers', 'actions', 'logic'])
+    new Set(["triggers", "actions", "logic"]),
   );
   const [isMinimized, setIsMinimized] = useState(false);
 
@@ -147,11 +168,14 @@ export function WorkflowNodePalette({
   };
 
   const handleNodeDrag = (template: NodeTemplate, event: React.DragEvent) => {
-    event.dataTransfer.setData('application/json', JSON.stringify({
-      type: template.type,
-      subtype: template.subtype,
-      label: template.label,
-    }));
+    event.dataTransfer.setData(
+      "application/json",
+      JSON.stringify({
+        type: template.type,
+        subtype: template.subtype,
+        label: template.label,
+      }),
+    );
   };
 
   const handleNodeClick = (template: NodeTemplate) => {
@@ -197,9 +221,7 @@ export function WorkflowNodePalette({
                   onClick={() => toggleSection(sectionKey)}
                   className="w-full justify-between p-2 h-auto"
                 >
-                  <span className="font-medium text-sm capitalize">
-                    {sectionKey}
-                  </span>
+                  <span className="font-medium text-sm capitalize">{sectionKey}</span>
                   {expandedSections.has(sectionKey) ? (
                     <ChevronDownIcon className="h-3 w-3" />
                   ) : (
@@ -219,9 +241,7 @@ export function WorkflowNodePalette({
                       >
                         <template.icon className={cn("h-4 w-4", template.color)} />
                         <div className="flex-1 min-w-0">
-                          <div className="text-xs font-medium truncate">
-                            {template.label}
-                          </div>
+                          <div className="text-xs font-medium truncate">{template.label}</div>
                           <div className="text-xs text-muted-foreground truncate">
                             {template.description}
                           </div>
@@ -231,7 +251,7 @@ export function WorkflowNodePalette({
                   </div>
                 )}
 
-                {sectionKey !== 'logic' && <Separator className="mt-2" />}
+                {sectionKey !== "logic" && <Separator className="mt-2" />}
               </div>
             ))}
           </div>

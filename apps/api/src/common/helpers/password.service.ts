@@ -1,5 +1,5 @@
-import { Injectable } from '@nestjs/common';
-import * as argon2 from 'argon2';
+import { Injectable } from "@nestjs/common";
+import * as argon2 from "argon2";
 
 @Injectable()
 export class PasswordService {
@@ -34,9 +34,8 @@ export class PasswordService {
    * Generate a secure random password
    */
   generateRandomPassword(length: number = 16): string {
-    const charset =
-      'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*';
-    let password = '';
+    const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*";
+    let password = "";
 
     for (let i = 0; i < length; i++) {
       const randomIndex = Math.floor(Math.random() * charset.length);
@@ -59,35 +58,35 @@ export class PasswordService {
 
     // Minimum length
     if (password.length < 8) {
-      errors.push('Password must be at least 8 characters long');
+      errors.push("Password must be at least 8 characters long");
     } else {
       score += 1;
     }
 
     // Contains lowercase
     if (!/[a-z]/.test(password)) {
-      errors.push('Password must contain at least one lowercase letter');
+      errors.push("Password must contain at least one lowercase letter");
     } else {
       score += 1;
     }
 
     // Contains uppercase
     if (!/[A-Z]/.test(password)) {
-      errors.push('Password must contain at least one uppercase letter');
+      errors.push("Password must contain at least one uppercase letter");
     } else {
       score += 1;
     }
 
     // Contains number
     if (!/\d/.test(password)) {
-      errors.push('Password must contain at least one number');
+      errors.push("Password must contain at least one number");
     } else {
       score += 1;
     }
 
     // Contains special character
     if (!/[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/.test(password)) {
-      errors.push('Password must contain at least one special character');
+      errors.push("Password must contain at least one special character");
     } else {
       score += 1;
     }

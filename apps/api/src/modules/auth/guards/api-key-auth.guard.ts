@@ -6,9 +6,9 @@ import {
   ForbiddenException,
   BadRequestException,
   Optional,
-} from '@nestjs/common';
-import { ApiKeyService } from '../../api-key/api-key.service';
-import { TokenManagementService } from '../../token-management/services/token-management.service';
+} from "@nestjs/common";
+import { ApiKeyService } from "../../api-key/api-key.service";
+import { TokenManagementService } from "../../token-management/services/token-management.service";
 
 @Injectable()
 export class ApiKeyAuthGuard implements CanActivate {
@@ -22,39 +22,33 @@ export class ApiKeyAuthGuard implements CanActivate {
     const apiKey = this.extractApiKey(request);
 
     if (!apiKey) {
-      throw new UnauthorizedException('Missing API key');
+      throw new UnauthorizedException("Missing API key");
     }
 
     // Get client IP address
     const ipAddress = this.getClientIp(request);
 
     // Validate API key
-    const validatedKey = await this.apiKeyService.validateApiKey(
-      apiKey,
-      undefined,
-      ipAddress,
-    );
+    const validatedKey = await this.apiKeyService.validateApiKey(apiKey, undefined, ipAddress);
 
     if (!validatedKey) {
-      throw new UnauthorizedException('Invalid or inactive API key');
+      throw new UnauthorizedException("Invalid or inactive API key");
     }
 
     // Check if key is expired
     if (validatedKey.isExpired) {
-      throw new ForbiddenException('API key has expired');
+      throw new ForbiddenException("API key has expired");
     }
 
     // Check if key is revoked
-    if (validatedKey.status === 'revoked') {
-      throw new ForbiddenException('API key has been revoked');
+    if (validatedKey.status === "revoked") {
+      throw new ForbiddenException("API key has been revoked");
     }
 
     // Check IP whitelist
     if (validatedKey.ipWhitelist && validatedKey.ipWhitelist.length > 0) {
       if (!validatedKey.ipWhitelist.includes(ipAddress)) {
-        throw new ForbiddenException(
-          `IP address ${ipAddress} is not whitelisted for this API key`,
-        );
+        throw new ForbiddenException(`IP address ${ipAddress} is not whitelisted for this API key`);
       }
     }
 
@@ -91,13 +85,13 @@ export class ApiKeyAuthGuard implements CanActivate {
   private extractApiKey(request: any): string | null {
     // Check Authorization header first (Bearer token)
     const authHeader = request.headers.authorization;
-    if (authHeader && authHeader.startsWith('Bearer ')) {
+    if (authHeader && authHeader.startsWith("Bearer ")) {
       return authHeader.substring(7);
     }
 
     // Check X-API-Key header
-    if (request.headers['x-api-key']) {
-      return request.headers['x-api-key'];
+    if (request.headers["x-api-key"]) {
+      return request.headers["x-api-key"];
     }
 
     // Check query parameter (less secure, use with caution)
@@ -113,26 +107,23 @@ export class ApiKeyAuthGuard implements CanActivate {
    */
   private getClientIp(request: any): string {
     return (
-      request.headers['x-forwarded-for']?.split(',')[0].trim() ||
-      request.headers['x-real-ip'] ||
+      request.headers["x-forwarded-for"]?.split(",")[0].trim() ||
+      request.headers["x-real-ip"] ||
       request.connection.remoteAddress ||
       request.socket.remoteAddress ||
       request.ip ||
-      'unknown'
+      "unknown"
     );
   }
 
   /**
    * Check rate limits for API key
    */
-  private async checkRateLimits(
-    apiKeyId: string,
-    apiKey: any,
-  ): Promise<void> {
+  private async checkRateLimits(apiKeyId: string, apiKey: any): Promise<void> {
     // TODO: Implement rate limiting with Redis
     // For now, just check the configured limits exist
     if (!apiKey.rateLimitPerMinute || !apiKey.rateLimitPerHour || !apiKey.rateLimitPerDay) {
-      throw new BadRequestException('API key rate limits not configured');
+      throw new BadRequestException("API key rate limits not configured");
     }
   }
 
@@ -149,9 +140,7 @@ export class ApiKeyAuthGuard implements CanActivate {
       const balance = await this.tokenManagementService.getBalance(tenantId);
 
       if (balance.availableTokens <= 0) {
-        throw new ForbiddenException(
-          'Insufficient token balance. Please purchase more tokens.',
-        );
+        throw new ForbiddenException("Insufficient token balance. Please purchase more tokens.");
       }
 
       // Warn if tokens are running low (less than 10% available)
@@ -165,7 +154,7 @@ export class ApiKeyAuthGuard implements CanActivate {
       if (error instanceof ForbiddenException) {
         throw error;
       }
-      throw new BadRequestException('Failed to check token quota');
+      throw new BadRequestException("Failed to check token quota");
     }
   }
 
@@ -179,21 +168,21 @@ export class ApiKeyAuthGuard implements CanActivate {
 
     // Map routes to required permissions
     const permissionMap: Record<string, string[]> = {
-      'POST /notifications': ['notifications:send'],
-      'GET /notifications': ['notifications:read'],
-      'POST /templates': ['templates:create'],
-      'GET /templates': ['templates:read'],
-      'PUT /templates': ['templates:update'],
-      'DELETE /templates': ['templates:delete'],
-      'POST /messages': ['messages:send'],
-      'GET /messages': ['messages:read'],
-      'POST /webhooks': ['webhooks:manage'],
-      'GET /webhooks': ['webhooks:read'],
+      "POST /notifications": ["notifications:send"],
+      "GET /notifications": ["notifications:read"],
+      "POST /templates": ["templates:create"],
+      "GET /templates": ["templates:read"],
+      "PUT /templates": ["templates:update"],
+      "DELETE /templates": ["templates:delete"],
+      "POST /messages": ["messages:send"],
+      "GET /messages": ["messages:read"],
+      "POST /webhooks": ["webhooks:manage"],
+      "GET /webhooks": ["webhooks:read"],
     };
 
     // Check for matching route
     for (const [route, permissions] of Object.entries(permissionMap)) {
-      const [routeMethod, routePath] = route.split(' ');
+      const [routeMethod, routePath] = route.split(" ");
       if (method === routeMethod && path.startsWith(routePath)) {
         return permissions;
       }
@@ -205,21 +194,16 @@ export class ApiKeyAuthGuard implements CanActivate {
   /**
    * Check if API key has required permissions
    */
-  private checkPermissions(
-    keyPermissions: string[],
-    requiredPermissions: string[],
-  ): void {
-    const hasAllPermissions = requiredPermissions.every((required) =>
-      keyPermissions.includes(required) || keyPermissions.includes('*'),
+  private checkPermissions(keyPermissions: string[], requiredPermissions: string[]): void {
+    const hasAllPermissions = requiredPermissions.every(
+      (required) => keyPermissions.includes(required) || keyPermissions.includes("*"),
     );
 
     if (!hasAllPermissions) {
       const missingPermissions = requiredPermissions.filter(
         (required) => !keyPermissions.includes(required),
       );
-      throw new ForbiddenException(
-        `Missing permissions: ${missingPermissions.join(', ')}`,
-      );
+      throw new ForbiddenException(`Missing permissions: ${missingPermissions.join(", ")}`);
     }
   }
 }

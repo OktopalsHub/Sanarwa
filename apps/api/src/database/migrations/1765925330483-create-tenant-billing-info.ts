@@ -1,9 +1,8 @@
 import { MigrationInterface, QueryRunner } from "typeorm";
 
 export class CreateTenantBillingInfo1765925330483 implements MigrationInterface {
-
-    public async up(queryRunner: QueryRunner): Promise<void> {
-        await queryRunner.query(`
+  public async up(queryRunner: QueryRunner): Promise<void> {
+    await queryRunner.query(`
             CREATE TABLE IF NOT EXISTS tenant_billing_info (
                 id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
                 tenant_id UUID NOT NULL UNIQUE,
@@ -21,12 +20,15 @@ export class CreateTenantBillingInfo1765925330483 implements MigrationInterface 
             )
         `);
 
-        await queryRunner.query(`CREATE INDEX IF NOT EXISTS IDX_tenant_billing_info_tenant_id ON tenant_billing_info (tenant_id)`);
-        await queryRunner.query(`CREATE INDEX IF NOT EXISTS IDX_tenant_billing_info_payment_status ON tenant_billing_info (payment_status)`);
-    }
+    await queryRunner.query(
+      `CREATE INDEX IF NOT EXISTS IDX_tenant_billing_info_tenant_id ON tenant_billing_info (tenant_id)`,
+    );
+    await queryRunner.query(
+      `CREATE INDEX IF NOT EXISTS IDX_tenant_billing_info_payment_status ON tenant_billing_info (payment_status)`,
+    );
+  }
 
-    public async down(queryRunner: QueryRunner): Promise<void> {
-        await queryRunner.query(`DROP TABLE IF EXISTS tenant_billing_info`);
-    }
-
+  public async down(queryRunner: QueryRunner): Promise<void> {
+    await queryRunner.query(`DROP TABLE IF EXISTS tenant_billing_info`);
+  }
 }

@@ -1,11 +1,30 @@
-'use client';
+"use client";
 
-import { Activity, Eye, MessageSquare, Send, TrendingUp } from '@/lib/icons';
+import { Activity, Eye, MessageSquare, Send, TrendingUp } from "@/lib/icons";
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { SignalIcon, EyeIcon, ChatBubbleLeftRightIcon, PaperAirplaneIcon, ArrowTrendingUpIcon } from '@heroicons/react/24/outline'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  SignalIcon,
+  EyeIcon,
+  ChatBubbleLeftRightIcon,
+  PaperAirplaneIcon,
+  ArrowTrendingUpIcon,
+} from "@heroicons/react/24/outline";
 
-import { Bar, BarChart, CartesianGrid, Cell, Line, LineChart, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
+import {
+  Bar,
+  BarChart,
+  CartesianGrid,
+  Cell,
+  Line,
+  LineChart,
+  Pie,
+  PieChart,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from "recharts";
 
 // Simple demo data
 const demoMetrics = {
@@ -18,28 +37,28 @@ const demoMetrics = {
 };
 
 const campaignData = [
-  { name: 'Jan', messages: 2400, opens: 643, clicks: 99 },
-  { name: 'Feb', messages: 3200, opens: 857, clicks: 131 },
-  { name: 'Mar', messages: 2800, opens: 750, clicks: 115 },
-  { name: 'Apr', messages: 4100, opens: 1099, clicks: 168 },
-  { name: 'May', messages: 3600, opens: 965, clicks: 148 },
-  { name: 'Jun', messages: 4800, opens: 1286, clicks: 197 },
+  { name: "Jan", messages: 2400, opens: 643, clicks: 99 },
+  { name: "Feb", messages: 3200, opens: 857, clicks: 131 },
+  { name: "Mar", messages: 2800, opens: 750, clicks: 115 },
+  { name: "Apr", messages: 4100, opens: 1099, clicks: 168 },
+  { name: "May", messages: 3600, opens: 965, clicks: 148 },
+  { name: "Jun", messages: 4800, opens: 1286, clicks: 197 },
 ];
 
 const channelData = [
-  { name: 'Email', value: 18500, color: '#3b82f6' },
-  { name: 'SMS', value: 7200, color: '#64748b' },
-  { name: 'Push', value: 4100, color: '#8b5cf6' },
-  { name: 'In-App', value: 1800, color: '#10b981' },
+  { name: "Email", value: 18500, color: "#3b82f6" },
+  { name: "SMS", value: 7200, color: "#64748b" },
+  { name: "Push", value: 4100, color: "#8b5cf6" },
+  { name: "In-App", value: 1800, color: "#10b981" },
 ];
 
 const recentActivity = [
-  { name: '00:00', value: 67 },
-  { name: '04:00', value: 34 },
-  { name: '08:00', value: 156 },
-  { name: '12:00', value: 298 },
-  { name: '16:00', value: 189 },
-  { name: '20:00', value: 123 },
+  { name: "00:00", value: 67 },
+  { name: "04:00", value: 34 },
+  { name: "08:00", value: 156 },
+  { name: "12:00", value: 298 },
+  { name: "16:00", value: 189 },
+  { name: "20:00", value: 123 },
 ];
 
 function MetricCard({ title, value, icon: Icon, description }: any) {
@@ -49,9 +68,7 @@ function MetricCard({ title, value, icon: Icon, description }: any) {
         <div className="flex-1">
           <p className="text-sm font-medium text-muted-foreground">{title}</p>
           <p className="text-2xl font-bold">{value}</p>
-          {description && (
-            <p className="text-xs text-muted-foreground mt-1">{description}</p>
-          )}
+          {description && <p className="text-xs text-muted-foreground mt-1">{description}</p>}
         </div>
         <div className="ml-4">
           <Icon className="h-8 w-8 text-muted-foreground" />

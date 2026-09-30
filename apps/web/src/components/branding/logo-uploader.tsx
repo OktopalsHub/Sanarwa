@@ -1,11 +1,11 @@
-'use client';
+"use client";
 
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { cn } from '@/lib/utils';
-import { ArrowUpTrayIcon, XMarkIcon } from '@heroicons/react/24/outline';
-import { useCallback, useRef, useState } from 'react';
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { cn } from "@/lib/utils";
+import { ArrowUpTrayIcon, XMarkIcon } from "@heroicons/react/24/outline";
+import { useCallback, useRef, useState } from "react";
 
 interface LogoUploaderProps {
   label: string;
@@ -20,14 +20,14 @@ export function LogoUploader({ label, value, onChange }: LogoUploaderProps) {
   const handleFileChange = useCallback(
     (event: React.ChangeEvent<HTMLInputElement>) => {
       const file = event.target.files?.[0];
-      if (!file?.type.startsWith('image/')) return;
+      if (!file?.type.startsWith("image/")) return;
       if (file.size > 5 * 1024 * 1024) {
-        alert('File size must be less than 5MB');
+        alert("File size must be less than 5MB");
         return;
       }
       onChange(URL.createObjectURL(file));
     },
-    [onChange]
+    [onChange],
   );
 
   const handleDrop = useCallback(
@@ -35,11 +35,11 @@ export function LogoUploader({ label, value, onChange }: LogoUploaderProps) {
       event.preventDefault();
       setDragOver(false);
       const file = event.dataTransfer.files[0];
-      if (file?.type.startsWith('image/')) {
+      if (file?.type.startsWith("image/")) {
         onChange(URL.createObjectURL(file));
       }
     },
-    [onChange]
+    [onChange],
   );
 
   return (
@@ -47,12 +47,15 @@ export function LogoUploader({ label, value, onChange }: LogoUploaderProps) {
       <Label className="text-sm font-medium">{label}</Label>
       <div
         className={cn(
-          'border-2 border-dashed rounded-lg p-4 transition-colors',
-          dragOver ? 'border-primary bg-primary/5' : 'border-border',
-          'hover:border-primary/50'
+          "border-2 border-dashed rounded-lg p-4 transition-colors",
+          dragOver ? "border-primary bg-primary/5" : "border-border",
+          "hover:border-primary/50",
         )}
         onDrop={handleDrop}
-        onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+        onDragOver={(e) => {
+          e.preventDefault();
+          setDragOver(true);
+        }}
         onDragLeave={() => setDragOver(false)}
       >
         <div className="flex items-center gap-4">
@@ -70,18 +73,29 @@ export function LogoUploader({ label, value, onChange }: LogoUploaderProps) {
               placeholder="https://example.com/logo.png"
             />
             <div className="flex gap-2">
-              <Button type="button" variant="outline" size="sm" onClick={() => fileInputRef.current?.click()}>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => fileInputRef.current?.click()}
+              >
                 Upload
               </Button>
               {value && (
-                <Button type="button" variant="ghost" size="sm" onClick={() => onChange('')}>
+                <Button type="button" variant="ghost" size="sm" onClick={() => onChange("")}>
                   <XMarkIcon className="h-4 w-4" />
                 </Button>
               )}
             </div>
           </div>
         </div>
-        <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleFileChange} />
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*"
+          className="hidden"
+          onChange={handleFileChange}
+        />
       </div>
     </div>
   );

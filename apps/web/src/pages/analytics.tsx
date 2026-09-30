@@ -1,7 +1,7 @@
-'use client';
+"use client";
 
-import { AnalyticsDashboard } from '@/components/analytics';
-import { AppShell } from '@/components/layout';
+import { AnalyticsDashboard } from "@/components/analytics";
+import { AppShell } from "@/components/layout";
 
 function AnalyticsContent() {
   return (

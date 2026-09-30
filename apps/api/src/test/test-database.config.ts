@@ -1,21 +1,16 @@
-import { DataSource } from 'typeorm';
-import {
-  Column,
-  CreateDateColumn,
-  Entity,
-  PrimaryGeneratedColumn,
-} from 'typeorm';
-import { assertSafeTestDatabase, createSqliteTestDataSource } from './sqlite-test-data-source';
+import { DataSource } from "typeorm";
+import { Column, CreateDateColumn, Entity, PrimaryGeneratedColumn } from "typeorm";
+import { assertSafeTestDatabase, createSqliteTestDataSource } from "./sqlite-test-data-source";
 
-@Entity('test_config_rows')
+@Entity("test_config_rows")
 class TestConfigRow {
-  @PrimaryGeneratedColumn('uuid')
+  @PrimaryGeneratedColumn("uuid")
   id!: string;
 
-  @Column({ type: 'varchar', length: 255 })
+  @Column({ type: "varchar", length: 255 })
   label!: string;
 
-  @CreateDateColumn({ type: 'datetime' })
+  @CreateDateColumn({ type: "datetime" })
   createdAt!: Date;
 }
 

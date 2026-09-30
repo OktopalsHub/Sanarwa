@@ -1,8 +1,8 @@
-'use client';
+"use client";
 
-import { usePermissions } from '@/hooks/use-permissions';
-import { Permission } from '@/lib/types/permissions';
-import React from 'react';
+import { usePermissions } from "@/hooks/use-permissions";
+import { Permission } from "@/lib/types/permissions";
+import React from "react";
 
 interface PermissionGateProps {
   children: React.ReactNode;
@@ -49,7 +49,11 @@ interface ConditionalRenderProps {
   fallback?: React.ReactNode;
 }
 
-export function ConditionalRender({ children, condition, fallback = null }: ConditionalRenderProps) {
+export function ConditionalRender({
+  children,
+  condition,
+  fallback = null,
+}: ConditionalRenderProps) {
   return condition ? <>{children}</> : <>{fallback}</>;
 }
 
@@ -57,7 +61,7 @@ export function ConditionalRender({ children, condition, fallback = null }: Cond
 export function withPermissions<P extends object>(
   Component: React.ComponentType<P>,
   requiredPermissions: Permission[],
-  requireAll = false
+  requireAll = false,
 ) {
   return function PermissionWrappedComponent(props: P) {
     return (

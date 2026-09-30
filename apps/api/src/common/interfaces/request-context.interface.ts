@@ -1,4 +1,4 @@
-import { Request } from 'express';
+import { Request } from "express";
 
 /**
  * Authentication context interface
@@ -7,7 +7,7 @@ import { Request } from 'express';
 export interface AuthContext {
   principalId: string; // The authenticated user's ID
   sessionId?: string;
-  tokenType?: 'jwt' | 'api-key';
+  tokenType?: "jwt" | "api-key";
   issuedAt?: Date;
   expiresAt?: Date;
 }

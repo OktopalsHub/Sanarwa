@@ -1,5 +1,5 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { DateTimeHelper } from '../../../common/utils/datetime.helper';
+import { Injectable, Logger } from "@nestjs/common";
+import { DateTimeHelper } from "../../../common/utils/datetime.helper";
 
 export interface ScheduleConfig {
   timezone: string;
@@ -18,7 +18,7 @@ export interface ScheduledNotification {
   content: any;
   metadata?: Record<string, any>;
   recurring?: {
-    frequency: 'daily' | 'weekly' | 'monthly';
+    frequency: "daily" | "weekly" | "monthly";
     endDate?: Date;
   };
 }
@@ -52,15 +52,11 @@ export class SchedulingService {
     const { timezone, sendTime, recurringDays } = config;
 
     if (!sendTime) {
-      throw new Error('sendTime is required for scheduling');
+      throw new Error("sendTime is required for scheduling");
     }
 
     // Schedule for the specified time using helper
-    const scheduledForUTC = DateTimeHelper.scheduleForTime(
-      sendTime,
-      timezone,
-      recurringDays,
-    );
+    const scheduledForUTC = DateTimeHelper.scheduleForTime(sendTime, timezone, recurringDays);
 
     const scheduled: ScheduledNotification = {
       ...notification,
@@ -71,10 +67,7 @@ export class SchedulingService {
     const key = `${notification.tenantId}:${notification.subscriberId}:${notification.id}`;
     this.scheduledNotifications.set(key, scheduled);
 
-    const localTime = DateTimeHelper.convertToSubscriberTimezone(
-      scheduledForUTC,
-      timezone,
-    );
+    const localTime = DateTimeHelper.convertToSubscriberTimezone(scheduledForUTC, timezone);
 
     this.logger.log(
       `Scheduled notification for ${notification.subscriberId} at ${DateTimeHelper.formatInTimezone(localTime, timezone)}`,
@@ -93,14 +86,12 @@ export class SchedulingService {
   ): string {
     if (!engagementData || engagementData.length === 0) {
       // Default optimal time: 9 AM
-      return '09:00';
+      return "09:00";
     }
 
     // Find time with highest engagement
     const bestTime = engagementData.reduce((best, current) =>
-      current.openRate + current.clickRate > best.openRate + best.clickRate
-        ? current
-        : best,
+      current.openRate + current.clickRate > best.openRate + best.clickRate ? current : best,
     );
 
     return bestTime.time;
@@ -162,15 +153,11 @@ export class SchedulingService {
       const nextSend = this.getNextSendTime(notification);
       if (nextSend) {
         notification.scheduledFor = nextSend;
-        this.logger.log(
-          `Rescheduled recurring notification for ${notification.subscriberId}`,
-        );
+        this.logger.log(`Rescheduled recurring notification for ${notification.subscriberId}`);
       } else {
         // End of recurrence
         this.scheduledNotifications.delete(key);
-        this.logger.log(
-          `Recurring notification ended for ${notification.subscriberId}`,
-        );
+        this.logger.log(`Recurring notification ended for ${notification.subscriberId}`);
       }
     } else {
       // Remove one-time notification
@@ -185,10 +172,7 @@ export class SchedulingService {
     const pending: ScheduledNotification[] = [];
 
     for (const notification of this.scheduledNotifications.values()) {
-      if (
-        notification.subscriberId === subscriberId &&
-        notification.tenantId === tenantId
-      ) {
+      if (notification.subscriberId === subscriberId && notification.tenantId === tenantId) {
         pending.push(notification);
       }
     }
@@ -222,8 +206,7 @@ export class SchedulingService {
     const byTimezone: Record<string, number> = {};
 
     for (const notification of this.scheduledNotifications.values()) {
-      byTimezone[notification.timezone] =
-        (byTimezone[notification.timezone] || 0) + 1;
+      byTimezone[notification.timezone] = (byTimezone[notification.timezone] || 0) + 1;
     }
 
     return {

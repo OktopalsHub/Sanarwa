@@ -1,17 +1,14 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { EventEmitter2 } from '@nestjs/event-emitter';
-import { NotificationLog } from '../entities/notification-log.entity';
-import { NotificationCenterItem } from '../entities/notification-center.entity';
-import { TenantSettings } from '../../tenant/entities/tenant-settings.entity';
-import { Message, MessagePriority, MessageStatus } from '../../messaging/message.entity';
-import {
-  MessageDelivery,
-  MessageDeliveryStatus,
-} from '../../messaging/message-delivery.entity';
-import { NotificationStoragePolicy } from '../enums/notification-storage-policy.enum';
-import { NotificationChannel } from '../engine/notification-engine.types';
+import { Injectable, Logger } from "@nestjs/common";
+import { InjectRepository } from "@nestjs/typeorm";
+import { Repository } from "typeorm";
+import { EventEmitter2 } from "@nestjs/event-emitter";
+import { NotificationLog } from "../entities/notification-log.entity";
+import { NotificationCenterItem } from "../entities/notification-center.entity";
+import { TenantSettings } from "../../tenant/entities/tenant-settings.entity";
+import { Message, MessagePriority, MessageStatus } from "../../messaging/message.entity";
+import { MessageDelivery, MessageDeliveryStatus } from "../../messaging/message-delivery.entity";
+import { NotificationStoragePolicy } from "../enums/notification-storage-policy.enum";
+import { NotificationChannel } from "../engine/notification-engine.types";
 
 export interface PersistSendContextInput {
   tenantId: string;
@@ -22,7 +19,7 @@ export interface PersistSendContextInput {
   title?: string;
   message: string;
   policy: NotificationStoragePolicy;
-  priority?: 'low' | 'normal' | 'high';
+  priority?: "low" | "normal" | "high";
   scheduledAt?: Date;
   expiresAt?: Date;
   templateId?: string;
@@ -62,10 +59,7 @@ export class NotificationStorageService {
       where: { tenantId },
     });
 
-    return (
-      settings?.notificationStoragePolicy ??
-      NotificationStoragePolicy.METADATA_ONLY
-    );
+    return settings?.notificationStoragePolicy ?? NotificationStoragePolicy.METADATA_ONLY;
   }
 
   async getContentRetentionDays(tenantId: string): Promise<number> {
@@ -106,7 +100,7 @@ export class NotificationStorageService {
     channel: NotificationChannel;
     to: string;
     trackingId: string;
-    priority?: 'low' | 'normal' | 'high';
+    priority?: "low" | "normal" | "high";
     scheduledAt?: Date;
     templateId?: string;
     messageId?: string;
@@ -118,7 +112,7 @@ export class NotificationStorageService {
         to: input.to,
         tenantId: input.tenantId,
         projectId: input.projectId,
-        status: 'queued',
+        status: "queued",
         scheduledAt: input.scheduledAt,
         metadata: {
           templateId: input.templateId,
@@ -129,9 +123,7 @@ export class NotificationStorageService {
     );
   }
 
-  async persistSendContext(
-    input: PersistSendContextInput,
-  ): Promise<PersistSendContextResult> {
+  async persistSendContext(input: PersistSendContextInput): Promise<PersistSendContextResult> {
     const persistBody = this.shouldPersistBody(input.policy);
     const persistMetadata = this.shouldPersistMetadata(input.policy);
 
@@ -158,9 +150,7 @@ export class NotificationStorageService {
           content: persistBody ? input.message : undefined,
           scheduledAt: input.scheduledAt,
           priority: messagePriority,
-          status: input.scheduledAt
-            ? MessageStatus.PENDING
-            : MessageStatus.PROCESSING,
+          status: input.scheduledAt ? MessageStatus.PENDING : MessageStatus.PROCESSING,
           metadata: {
             ...input.metadata,
             projectId: input.projectId,
@@ -175,7 +165,7 @@ export class NotificationStorageService {
         this.deliveryRepository.create({
           messageId: message.id,
           channel: messageChannel,
-          providerId: 'pending',
+          providerId: "pending",
           recipient: input.to,
           status: MessageDeliveryStatus.PENDING,
           metadata: {
@@ -195,7 +185,7 @@ export class NotificationStorageService {
           to: input.to,
           tenantId: input.tenantId,
           projectId: input.projectId,
-          status: 'queued',
+          status: "queued",
           scheduledAt: input.scheduledAt,
           metadata: {
             templateId: input.templateId,
@@ -213,7 +203,7 @@ export class NotificationStorageService {
         to: input.to,
         tenantId: input.tenantId,
         projectId: input.projectId,
-        status: 'queued',
+        status: "queued",
         createdAt: new Date(),
       } as NotificationLog;
     }
@@ -223,13 +213,12 @@ export class NotificationStorageService {
       centerItem = await this.writeNotificationCenter({
         tenantId: input.tenantId,
         subscriberId: input.subscriberId ?? input.to,
-        title: input.title ?? 'Notification',
+        title: input.title ?? "Notification",
         content: input.message,
         channel: input.channel,
         templateId: input.templateId,
         messageId: message?.id,
-        expiresAt:
-          input.expiresAt ?? (await this.buildExpiresAt(input.tenantId)),
+        expiresAt: input.expiresAt ?? (await this.buildExpiresAt(input.tenantId)),
         metadata: input.metadata,
       });
     }
@@ -250,8 +239,7 @@ export class NotificationStorageService {
     actionUrl?: string;
     imageUrl?: string;
   }): Promise<NotificationCenterItem> {
-    const expiresAt =
-      input.expiresAt ?? (await this.buildExpiresAt(input.tenantId));
+    const expiresAt = input.expiresAt ?? (await this.buildExpiresAt(input.tenantId));
 
     const item = await this.centerRepository.save(
       this.centerRepository.create({
@@ -269,7 +257,7 @@ export class NotificationStorageService {
       }),
     );
 
-    this.eventEmitter.emit('notification.created', {
+    this.eventEmitter.emit("notification.created", {
       subscriberId: input.subscriberId,
       notification: item,
     });
@@ -295,7 +283,7 @@ export class NotificationStorageService {
     deliveryId: string | undefined,
     logId: string | undefined,
     outcome: {
-      status: 'sent' | 'delivered' | 'failed';
+      status: "sent" | "delivered" | "failed";
       externalId?: string;
       error?: string;
       providerId?: string;
@@ -304,26 +292,26 @@ export class NotificationStorageService {
     if (deliveryId) {
       const deliveryUpdate: Partial<MessageDelivery> = {
         status:
-          outcome.status === 'failed'
+          outcome.status === "failed"
             ? MessageDeliveryStatus.FAILED
-            : outcome.status === 'delivered'
+            : outcome.status === "delivered"
               ? MessageDeliveryStatus.DELIVERED
               : MessageDeliveryStatus.SENT,
         providerMessageId: outcome.externalId,
         errorMessage: outcome.error,
-        providerId: outcome.providerId ?? 'auto-select',
+        providerId: outcome.providerId ?? "auto-select",
       };
 
-      if (outcome.status === 'sent' || outcome.status === 'delivered') {
+      if (outcome.status === "sent" || outcome.status === "delivered") {
         deliveryUpdate.sentAt = new Date();
       }
-      if (outcome.status === 'delivered') {
+      if (outcome.status === "delivered") {
         deliveryUpdate.deliveredAt = new Date();
       }
 
       await this.deliveryRepository.update(
         deliveryId,
-        deliveryUpdate as Parameters<Repository<MessageDelivery>['update']>[1],
+        deliveryUpdate as Parameters<Repository<MessageDelivery>["update"]>[1],
       );
     }
 
@@ -333,9 +321,9 @@ export class NotificationStorageService {
         externalId: outcome.externalId,
         error: outcome.error,
       };
-      if (outcome.status === 'sent') logUpdate.sentAt = new Date();
-      if (outcome.status === 'delivered') logUpdate.deliveredAt = new Date();
-      if (outcome.status === 'failed') logUpdate.failedAt = new Date();
+      if (outcome.status === "sent") logUpdate.sentAt = new Date();
+      if (outcome.status === "delivered") logUpdate.deliveredAt = new Date();
+      if (outcome.status === "failed") logUpdate.failedAt = new Date();
 
       await this.logRepository.update(logId, logUpdate);
     }
@@ -361,21 +349,19 @@ export class NotificationStorageService {
   }
 
   private isInAppChannel(channel: NotificationChannel): boolean {
-    return channel === 'in_app';
+    return channel === "in_app";
   }
 
-  private toMessageChannel(
-    channel: NotificationChannel,
-  ): Message['channels'][number] | null {
+  private toMessageChannel(channel: NotificationChannel): Message["channels"][number] | null {
     switch (channel) {
-      case 'email':
-        return 'email' as Message['channels'][number];
-      case 'sms':
-        return 'sms' as Message['channels'][number];
-      case 'push':
-        return 'push' as Message['channels'][number];
-      case 'whatsapp':
-        return 'whatsapp' as Message['channels'][number];
+      case "email":
+        return "email" as Message["channels"][number];
+      case "sms":
+        return "sms" as Message["channels"][number];
+      case "push":
+        return "push" as Message["channels"][number];
+      case "whatsapp":
+        return "whatsapp" as Message["channels"][number];
       default:
         return null;
     }
@@ -383,11 +369,11 @@ export class NotificationStorageService {
 
   private toMessagePriority(priority?: string): MessagePriority {
     switch (priority) {
-      case 'high':
+      case "high":
         return MessagePriority.HIGH;
-      case 'low':
+      case "low":
         return MessagePriority.LOW;
-      case 'urgent':
+      case "urgent":
         return MessagePriority.URGENT;
       default:
         return MessagePriority.NORMAL;

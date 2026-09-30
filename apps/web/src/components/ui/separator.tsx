@@ -1,1 +1,1 @@
-export * from '@sanarwa/ui/separator';
+export * from "@sanarwa/ui/separator";

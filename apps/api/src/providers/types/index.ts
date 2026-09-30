@@ -1,27 +1,27 @@
 export enum Channel {
-  EMAIL = 'email',
-  SMS = 'sms',
-  PUSH = 'push',
-  WHATSAPP = 'whatsapp',
-  IN_APP = 'in_app',
-  VOICE = 'voice',
+  EMAIL = "email",
+  SMS = "sms",
+  PUSH = "push",
+  WHATSAPP = "whatsapp",
+  IN_APP = "in_app",
+  VOICE = "voice",
 }
 
 export enum DeliveryStatus {
-  PENDING = 'pending',
-  SENT = 'sent',
-  DELIVERED = 'delivered',
-  FAILED = 'failed',
-  BOUNCED = 'bounced',
-  OPENED = 'opened',
-  CLICKED = 'clicked',
+  PENDING = "pending",
+  SENT = "sent",
+  DELIVERED = "delivered",
+  FAILED = "failed",
+  BOUNCED = "bounced",
+  OPENED = "opened",
+  CLICKED = "clicked",
 }
 
 export enum ProviderHealth {
-  HEALTHY = 'healthy',
-  DEGRADED = 'degraded',
-  UNHEALTHY = 'unhealthy',
-  UNKNOWN = 'unknown',
+  HEALTHY = "healthy",
+  DEGRADED = "degraded",
+  UNHEALTHY = "unhealthy",
+  UNKNOWN = "unknown",
 }
 
 export interface Recipient {

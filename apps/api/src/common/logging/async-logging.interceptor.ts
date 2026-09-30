@@ -1,13 +1,7 @@
-import {
-  Injectable,
-  NestInterceptor,
-  ExecutionContext,
-  CallHandler,
-  Logger,
-} from '@nestjs/common';
-import { Observable } from 'rxjs';
-import { tap, catchError } from 'rxjs/operators';
-import { Request, Response } from 'express';
+import { Injectable, NestInterceptor, ExecutionContext, CallHandler, Logger } from "@nestjs/common";
+import { Observable } from "rxjs";
+import { tap, catchError } from "rxjs/operators";
+import { Request, Response } from "express";
 
 interface LogData {
   correlationId: string;
@@ -37,10 +31,10 @@ export class AsyncLoggingInterceptor implements NestInterceptor {
     const response = context.switchToHttp().getResponse<Response>();
 
     const logData: Partial<LogData> = {
-      correlationId: request.headers['x-correlation-id'] as string,
+      correlationId: request.headers["x-correlation-id"] as string,
       method: request.method,
       url: request.url,
-      userAgent: request.headers['user-agent'],
+      userAgent: request.headers["user-agent"],
       ip: request.ip || request.connection.remoteAddress,
       userId: (request as any).user?.id,
       tenantId: (request as any).user?.tenantId,
@@ -54,7 +48,7 @@ export class AsyncLoggingInterceptor implements NestInterceptor {
             ...logData,
             statusCode: response.statusCode,
             responseTime: Date.now() - startTime,
-            contentLength: response.getHeader('content-length') as number,
+            contentLength: response.getHeader("content-length") as number,
           } as LogData);
         });
       }),
@@ -91,23 +85,17 @@ export class AsyncLoggingInterceptor implements NestInterceptor {
         },
       );
     } else if (statusCode >= 400) {
-      this.logger.warn(
-        `${data.method} ${data.url} - ${statusCode} - ${responseTime}ms`,
-        {
-          ...logContext,
-          responseTime,
-          statusCode,
-        },
-      );
+      this.logger.warn(`${data.method} ${data.url} - ${statusCode} - ${responseTime}ms`, {
+        ...logContext,
+        responseTime,
+        statusCode,
+      });
     } else {
-      this.logger.log(
-        `${data.method} ${data.url} - ${statusCode} - ${responseTime}ms`,
-        {
-          ...logContext,
-          responseTime,
-          statusCode,
-        },
-      );
+      this.logger.log(`${data.method} ${data.url} - ${statusCode} - ${responseTime}ms`, {
+        ...logContext,
+        responseTime,
+        statusCode,
+      });
     }
   }
 }

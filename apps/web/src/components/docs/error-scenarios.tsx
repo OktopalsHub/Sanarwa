@@ -1,25 +1,47 @@
-'use client';
+"use client";
 
-import { AlertTriangle, Bug, ExternalLink, Zap } from '@/lib/icons';
+import { AlertTriangle, Bug, ExternalLink, Zap } from "@/lib/icons";
 
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { toast } from '@/lib/utils/toast';
-import { ExclamationTriangleIcon, BugAntIcon, CheckIcon, ChevronDownIcon, ChevronRightIcon, DocumentDuplicateIcon, ArrowTopRightOnSquareIcon, MagnifyingGlassIcon, BoltIcon } from '@heroicons/react/24/outline'
-import { useState } from 'react';
-import { CodeBlock } from './code-block';
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { toast } from "@/lib/utils/toast";
+import {
+  ExclamationTriangleIcon,
+  BugAntIcon,
+  CheckIcon,
+  ChevronDownIcon,
+  ChevronRightIcon,
+  DocumentDuplicateIcon,
+  ArrowTopRightOnSquareIcon,
+  MagnifyingGlassIcon,
+  BoltIcon,
+} from "@heroicons/react/24/outline";
+import { useState } from "react";
+import { CodeBlock } from "./code-block";
 
 interface ErrorScenario {
   id: string;
   title: string;
   errorCode: string;
   httpStatus?: number;
-  category: 'authentication' | 'validation' | 'rate-limiting' | 'network' | 'server' | 'integration';
-  severity: 'low' | 'medium' | 'high' | 'critical';
+  category:
+    | "authentication"
+    | "validation"
+    | "rate-limiting"
+    | "network"
+    | "server"
+    | "integration";
+  severity: "low" | "medium" | "high" | "critical";
   description: string;
   commonCauses: string[];
   errorExample: {
@@ -45,18 +67,18 @@ interface ErrorScenariosProps {
 
 const defaultScenarios: ErrorScenario[] = [
   {
-    id: 'auth-401-invalid-key',
-    title: 'Invalid API Key',
-    errorCode: 'INVALID_API_KEY',
+    id: "auth-401-invalid-key",
+    title: "Invalid API Key",
+    errorCode: "INVALID_API_KEY",
     httpStatus: 401,
-    category: 'authentication',
-    severity: 'high',
-    description: 'The provided API key is invalid, expired, or malformed',
+    category: "authentication",
+    severity: "high",
+    description: "The provided API key is invalid, expired, or malformed",
     commonCauses: [
-      'API key is incorrect or contains typos',
-      'API key has been revoked or expired',
-      'Using wrong environment API key (dev vs prod)',
-      'Missing "Bearer" prefix in Authorization header'
+      "API key is incorrect or contains typos",
+      "API key has been revoked or expired",
+      "Using wrong environment API key (dev vs prod)",
+      'Missing "Bearer" prefix in Authorization header',
     ],
     errorExample: {
       request: `curl -X POST https://api.notifi.com/v1/notifications/email \\
@@ -74,12 +96,12 @@ const defaultScenarios: ErrorScenario[] = [
   },
   "request_id": "req_1234567890"
 }`,
-      language: 'json'
+      language: "json",
     },
     solutions: [
       {
-        title: 'Verify API Key Format',
-        description: 'Ensure your API key follows the correct format and is properly configured.',
+        title: "Verify API Key Format",
+        description: "Ensure your API key follows the correct format and is properly configured.",
         code: `// Check API key format
 const apiKey = process.env.NOTIFI_API_KEY;
 
@@ -98,11 +120,11 @@ const client = new NotifiClient({
     ? 'https://api.notifi.com' 
     : 'https://api-sandbox.notifi.com'
 });`,
-        language: 'javascript'
+        language: "javascript",
       },
       {
-        title: 'Test API Key Validity',
-        description: 'Use the auth verification endpoint to test your API key.',
+        title: "Test API Key Validity",
+        description: "Use the auth verification endpoint to test your API key.",
         code: `// Test API key
 async function verifyApiKey() {
   try {
@@ -126,31 +148,31 @@ async function verifyApiKey() {
     return false;
   }
 }`,
-        language: 'javascript'
-      }
+        language: "javascript",
+      },
     ],
     prevention: [
-      'Store API keys securely in environment variables',
-      'Use different keys for different environments',
-      'Regularly rotate API keys',
-      'Monitor API key usage and expiration dates'
+      "Store API keys securely in environment variables",
+      "Use different keys for different environments",
+      "Regularly rotate API keys",
+      "Monitor API key usage and expiration dates",
     ],
-    relatedErrors: ['EXPIRED_API_KEY', 'INSUFFICIENT_PERMISSIONS'],
-    tags: ['authentication', 'api-key', '401', 'unauthorized']
+    relatedErrors: ["EXPIRED_API_KEY", "INSUFFICIENT_PERMISSIONS"],
+    tags: ["authentication", "api-key", "401", "unauthorized"],
   },
   {
-    id: 'validation-400-missing-field',
-    title: 'Missing Required Field',
-    errorCode: 'VALIDATION_ERROR',
+    id: "validation-400-missing-field",
+    title: "Missing Required Field",
+    errorCode: "VALIDATION_ERROR",
     httpStatus: 400,
-    category: 'validation',
-    severity: 'medium',
-    description: 'A required field is missing from the request payload',
+    category: "validation",
+    severity: "medium",
+    description: "A required field is missing from the request payload",
     commonCauses: [
-      'Required field not included in request body',
-      'Field name is misspelled',
-      'Field value is null or undefined',
-      'Incorrect request structure'
+      "Required field not included in request body",
+      "Field name is misspelled",
+      "Field value is null or undefined",
+      "Incorrect request structure",
     ],
     errorExample: {
       request: `{
@@ -170,12 +192,12 @@ async function verifyApiKey() {
   },
   "request_id": "req_1234567890"
 }`,
-      language: 'json'
+      language: "json",
     },
     solutions: [
       {
-        title: 'Validate Request Data',
-        description: 'Implement client-side validation before sending requests.',
+        title: "Validate Request Data",
+        description: "Implement client-side validation before sending requests.",
         code: `// Request validation function
 function validateEmailRequest(data) {
   const required = ['to', 'subject'];
@@ -207,30 +229,30 @@ try {
 } catch (error) {
   console.error('Validation error:', error.message);
 }`,
-        language: 'javascript'
-      }
+        language: "javascript",
+      },
     ],
     prevention: [
-      'Use TypeScript for compile-time type checking',
-      'Implement request validation schemas',
-      'Use form validation libraries',
-      'Test with invalid data during development'
+      "Use TypeScript for compile-time type checking",
+      "Implement request validation schemas",
+      "Use form validation libraries",
+      "Test with invalid data during development",
     ],
-    tags: ['validation', 'required-fields', '400', 'bad-request']
+    tags: ["validation", "required-fields", "400", "bad-request"],
   },
   {
-    id: 'rate-limit-429',
-    title: 'Rate Limit Exceeded',
-    errorCode: 'RATE_LIMIT_EXCEEDED',
+    id: "rate-limit-429",
+    title: "Rate Limit Exceeded",
+    errorCode: "RATE_LIMIT_EXCEEDED",
     httpStatus: 429,
-    category: 'rate-limiting',
-    severity: 'medium',
-    description: 'Too many requests sent in a given time period',
+    category: "rate-limiting",
+    severity: "medium",
+    description: "Too many requests sent in a given time period",
     commonCauses: [
-      'Sending requests too frequently',
-      'Burst traffic exceeding rate limits',
-      'Multiple instances making concurrent requests',
-      'Not implementing proper backoff strategies'
+      "Sending requests too frequently",
+      "Burst traffic exceeding rate limits",
+      "Multiple instances making concurrent requests",
+      "Not implementing proper backoff strategies",
     ],
     errorExample: {
       response: `{
@@ -245,12 +267,12 @@ try {
   },
   "request_id": "req_1234567890"
 }`,
-      language: 'json'
+      language: "json",
     },
     solutions: [
       {
-        title: 'Implement Exponential Backoff',
-        description: 'Add retry logic with exponential backoff to handle rate limits gracefully.',
+        title: "Implement Exponential Backoff",
+        description: "Add retry logic with exponential backoff to handle rate limits gracefully.",
         code: `class RateLimitHandler {
   constructor(maxRetries = 3, baseDelay = 1000) {
     this.maxRetries = maxRetries;
@@ -292,35 +314,36 @@ const result = await rateLimitHandler.executeWithRetry(() =>
     content: 'Hello World'
   })
 );`,
-        language: 'javascript'
-      }
+        language: "javascript",
+      },
     ],
     prevention: [
-      'Monitor rate limit headers in responses',
-      'Implement request queuing',
-      'Use batch operations when available',
-      'Cache frequently accessed data'
+      "Monitor rate limit headers in responses",
+      "Implement request queuing",
+      "Use batch operations when available",
+      "Cache frequently accessed data",
     ],
-    tags: ['rate-limiting', '429', 'throttling', 'retry', 'backoff']
-  }
+    tags: ["rate-limiting", "429", "throttling", "retry", "backoff"],
+  },
 ];
 
 export function ErrorScenarios({ scenarios = defaultScenarios }: ErrorScenariosProps) {
-  const [searchTerm, setSearchTerm] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState<string>('all');
-  const [selectedSeverity, setSelectedSeverity] = useState<string>('all');
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState<string>("all");
+  const [selectedSeverity, setSelectedSeverity] = useState<string>("all");
   const [openScenarios, setOpenScenarios] = useState<Set<string>>(new Set());
-  const [copiedCode, setCopiedCode] = useState<string>('');
+  const [copiedCode, setCopiedCode] = useState<string>("");
 
-  const filteredScenarios = scenarios.filter(scenario => {
-    const matchesSearch = searchTerm === '' ||
+  const filteredScenarios = scenarios.filter((scenario) => {
+    const matchesSearch =
+      searchTerm === "" ||
       scenario.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
       scenario.errorCode.toLowerCase().includes(searchTerm.toLowerCase()) ||
       scenario.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      scenario.tags.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase()));
+      scenario.tags.some((tag) => tag.toLowerCase().includes(searchTerm.toLowerCase()));
 
-    const matchesCategory = selectedCategory === 'all' || scenario.category === selectedCategory;
-    const matchesSeverity = selectedSeverity === 'all' || scenario.severity === selectedSeverity;
+    const matchesCategory = selectedCategory === "all" || scenario.category === selectedCategory;
+    const matchesSeverity = selectedSeverity === "all" || scenario.severity === selectedSeverity;
 
     return matchesSearch && matchesCategory && matchesSeverity;
   });
@@ -339,30 +362,30 @@ export function ErrorScenarios({ scenarios = defaultScenarios }: ErrorScenariosP
     try {
       await navigator.clipboard.writeText(code);
       setCopiedCode(scenarioId);
-      toast.success('Code copied to clipboard');
-      setTimeout(() => setCopiedCode(''), 2000);
+      toast.success("Code copied to clipboard");
+      setTimeout(() => setCopiedCode(""), 2000);
     } catch (err) {
-      toast.error('Failed to copy code');
+      toast.error("Failed to copy code");
     }
   };
 
-  const categories = ['all', ...Array.from(new Set(scenarios.map(s => s.category)))];
-  const severities = ['all', 'low', 'medium', 'high', 'critical'];
+  const categories = ["all", ...Array.from(new Set(scenarios.map((s) => s.category)))];
+  const severities = ["all", "low", "medium", "high", "critical"];
 
   const severityColors = {
-    low: 'bg-blue-100 text-blue-800',
-    medium: 'bg-yellow-100 text-yellow-800',
-    high: 'bg-orange-100 text-orange-800',
-    critical: 'bg-red-100 text-red-800'
+    low: "bg-blue-100 text-blue-800",
+    medium: "bg-yellow-100 text-yellow-800",
+    high: "bg-orange-100 text-orange-800",
+    critical: "bg-red-100 text-red-800",
   };
 
   const categoryIcons = {
     authentication: AlertTriangle,
     validation: Bug,
-    'rate-limiting': Zap,
+    "rate-limiting": Zap,
     network: ExternalLink,
     server: AlertTriangle,
-    integration: ExternalLink
+    integration: ExternalLink,
   };
 
   return (
@@ -387,9 +410,9 @@ export function ErrorScenarios({ scenarios = defaultScenarios }: ErrorScenariosP
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {categories.map(category => (
+                {categories.map((category) => (
                   <SelectItem key={category} value={category} className="capitalize">
-                    {category.replace('-', ' ')}
+                    {category.replace("-", " ")}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -403,7 +426,7 @@ export function ErrorScenarios({ scenarios = defaultScenarios }: ErrorScenariosP
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {severities.map(severity => (
+                {severities.map((severity) => (
                   <SelectItem key={severity} value={severity} className="capitalize">
                     {severity}
                   </SelectItem>
@@ -458,7 +481,7 @@ export function ErrorScenarios({ scenarios = defaultScenarios }: ErrorScenariosP
                             {scenario.severity}
                           </Badge>
                           <Badge variant="secondary" className="text-xs capitalize">
-                            {scenario.category.replace('-', ' ')}
+                            {scenario.category.replace("-", " ")}
                           </Badge>
                         </div>
                       </div>
@@ -485,7 +508,7 @@ export function ErrorScenarios({ scenarios = defaultScenarios }: ErrorScenariosP
                         <div className="space-y-2">
                           <p className="text-sm font-medium">Request:</p>
                           <CodeBlock
-                            language={scenario.errorExample.language || 'bash'}
+                            language={scenario.errorExample.language || "bash"}
                             showLineNumbers={false}
                           >
                             {scenario.errorExample.request}
@@ -495,7 +518,7 @@ export function ErrorScenarios({ scenarios = defaultScenarios }: ErrorScenariosP
                       <div className="space-y-2">
                         <p className="text-sm font-medium">Response:</p>
                         <CodeBlock
-                          language={scenario.errorExample.language || 'json'}
+                          language={scenario.errorExample.language || "json"}
                           showLineNumbers={false}
                         >
                           {scenario.errorExample.response}
@@ -529,7 +552,9 @@ export function ErrorScenarios({ scenarios = defaultScenarios }: ErrorScenariosP
                                 <Button
                                   size="sm"
                                   variant="outline"
-                                  onClick={() => handleCopyCode(solution.code!, `${scenario.id}-${index}`)}
+                                  onClick={() =>
+                                    handleCopyCode(solution.code!, `${scenario.id}-${index}`)
+                                  }
                                   className="h-8 w-8 p-0"
                                 >
                                   {copiedCode === `${scenario.id}-${index}` ? (
@@ -540,7 +565,7 @@ export function ErrorScenarios({ scenarios = defaultScenarios }: ErrorScenariosP
                                 </Button>
                               </div>
                               <CodeBlock
-                                language={solution.language || 'javascript'}
+                                language={solution.language || "javascript"}
                                 showLineNumbers={false}
                               >
                                 {solution.code}
@@ -588,9 +613,9 @@ export function ErrorScenarios({ scenarios = defaultScenarios }: ErrorScenariosP
           <Button
             variant="outline"
             onClick={() => {
-              setSearchTerm('');
-              setSelectedCategory('all');
-              setSelectedSeverity('all');
+              setSearchTerm("");
+              setSelectedCategory("all");
+              setSelectedSeverity("all");
             }}
             className="mt-2"
           >

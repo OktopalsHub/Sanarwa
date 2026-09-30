@@ -1,4 +1,4 @@
-import { IsNotEmpty, IsOptional, IsString, MinLength } from 'class-validator';
+import { IsNotEmpty, IsOptional, IsString, MinLength } from "class-validator";
 
 export class AcceptInviteDto {
   @IsString()
@@ -14,6 +14,6 @@ export class AcceptInviteDto {
 
   @IsOptional()
   @IsString()
-  @MinLength(8, { message: 'Password must be at least 8 characters long' })
+  @MinLength(8, { message: "Password must be at least 8 characters long" })
   password?: string;
 }

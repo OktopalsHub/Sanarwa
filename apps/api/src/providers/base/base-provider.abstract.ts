@@ -1,4 +1,4 @@
-import { Logger } from '@nestjs/common';
+import { Logger } from "@nestjs/common";
 import {
   Channel,
   DeliveryStatus,
@@ -6,8 +6,8 @@ import {
   ProviderHealth,
   ProviderHealthStatus,
   ProviderResponse,
-} from '../types';
-import { BaseProviderPayload, IBaseProvider } from './base-provider.interface';
+} from "../types";
+import { BaseProviderPayload, IBaseProvider } from "./base-provider.interface";
 
 export abstract class BaseProvider implements IBaseProvider {
   protected readonly logger: Logger;
@@ -73,7 +73,7 @@ export abstract class BaseProvider implements IBaseProvider {
       return {
         status: ProviderHealth.UNHEALTHY,
         lastChecked: new Date(),
-        metadata: { error: 'Provider not initialized' },
+        metadata: { error: "Provider not initialized" },
       };
     }
 
@@ -91,10 +91,7 @@ export abstract class BaseProvider implements IBaseProvider {
         lastChecked: this._lastHealthCheck,
       };
     } catch (error) {
-      this.logger.error(
-        `Health check failed for provider ${this.name}:`,
-        error,
-      );
+      this.logger.error(`Health check failed for provider ${this.name}:`, error);
 
       this._healthStatus = ProviderHealth.UNHEALTHY;
       this._lastHealthCheck = new Date();
@@ -134,10 +131,7 @@ export abstract class BaseProvider implements IBaseProvider {
   /**
    * Create a standardized error response
    */
-  protected createErrorResponse(
-    error: string,
-    messageId?: string,
-  ): ProviderResponse {
+  protected createErrorResponse(error: string, messageId?: string): ProviderResponse {
     return {
       messageId: messageId || `error-${Date.now()}`,
       status: DeliveryStatus.FAILED,
@@ -175,7 +169,7 @@ export abstract class BaseProvider implements IBaseProvider {
       return false;
     }
 
-    if (typeof config.priority !== 'number' || config.priority < 0) {
+    if (typeof config.priority !== "number" || config.priority < 0) {
       return false;
     }
 

@@ -1,13 +1,20 @@
-'use client';
+"use client";
 
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Progress } from '@/components/ui/progress';
-import { Separator } from '@/components/ui/separator';
-import { Tenant } from '@/lib/types/tenant';
-import { CheckIcon, CreditCardIcon, ArrowDownTrayIcon, ArrowTopRightOnSquareIcon, StarIcon, BoltIcon } from '@heroicons/react/24/outline'
-import { useState } from 'react';
-import { toast } from 'sonner';
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Progress } from "@/components/ui/progress";
+import { Separator } from "@/components/ui/separator";
+import { Tenant } from "@/lib/types/tenant";
+import {
+  CheckIcon,
+  CreditCardIcon,
+  ArrowDownTrayIcon,
+  ArrowTopRightOnSquareIcon,
+  StarIcon,
+  BoltIcon,
+} from "@heroicons/react/24/outline";
+import { useState } from "react";
+import { toast } from "sonner";
 
 interface TenantBillingSettingsProps {
   tenant: Tenant;
@@ -23,7 +30,7 @@ interface SubscriptionPlan {
   id: string;
   name: string;
   price: number;
-  interval: 'month' | 'year';
+  interval: "month" | "year";
   features: PlanFeature[];
   popular?: boolean;
   current?: boolean;
@@ -31,56 +38,56 @@ interface SubscriptionPlan {
 
 const plans: SubscriptionPlan[] = [
   {
-    id: 'free',
-    name: 'Free',
+    id: "free",
+    name: "Free",
     price: 0,
-    interval: 'month',
+    interval: "month",
     features: [
-      { name: 'Up to 1,000 messages/month', included: true },
-      { name: 'Email & SMS channels', included: true },
-      { name: 'Basic templates', included: true },
-      { name: 'Up to 3 team members', included: true },
-      { name: 'Community support', included: true },
-      { name: 'Advanced analytics', included: false },
-      { name: 'Custom branding', included: false },
-      { name: 'API access', included: false },
-      { name: 'Priority support', included: false },
+      { name: "Up to 1,000 messages/month", included: true },
+      { name: "Email & SMS channels", included: true },
+      { name: "Basic templates", included: true },
+      { name: "Up to 3 team members", included: true },
+      { name: "Community support", included: true },
+      { name: "Advanced analytics", included: false },
+      { name: "Custom branding", included: false },
+      { name: "API access", included: false },
+      { name: "Priority support", included: false },
     ],
   },
   {
-    id: 'pro',
-    name: 'Pro',
+    id: "pro",
+    name: "Pro",
     price: 49,
-    interval: 'month',
+    interval: "month",
     popular: true,
     features: [
-      { name: 'Up to 50,000 messages/month', included: true },
-      { name: 'All communication channels', included: true },
-      { name: 'Advanced workflow builder', included: true },
-      { name: 'Up to 25 team members', included: true },
-      { name: 'Advanced analytics', included: true },
-      { name: 'Custom branding', included: true },
-      { name: 'API access', included: true },
-      { name: 'Priority support', included: true },
-      { name: 'A/B testing', included: true },
+      { name: "Up to 50,000 messages/month", included: true },
+      { name: "All communication channels", included: true },
+      { name: "Advanced workflow builder", included: true },
+      { name: "Up to 25 team members", included: true },
+      { name: "Advanced analytics", included: true },
+      { name: "Custom branding", included: true },
+      { name: "API access", included: true },
+      { name: "Priority support", included: true },
+      { name: "A/B testing", included: true },
     ],
   },
   {
-    id: 'enterprise',
-    name: 'Enterprise',
+    id: "enterprise",
+    name: "Enterprise",
     price: 199,
-    interval: 'month',
+    interval: "month",
     features: [
-      { name: 'Unlimited messages', included: true },
-      { name: 'All communication channels', included: true },
-      { name: 'Advanced workflow builder', included: true },
-      { name: 'Unlimited team members', included: true },
-      { name: 'Advanced analytics', included: true },
-      { name: 'Custom branding', included: true },
-      { name: 'API access', included: true },
-      { name: 'Dedicated support', included: true },
-      { name: 'Custom integrations', included: true },
-      { name: 'SLA guarantee', included: true },
+      { name: "Unlimited messages", included: true },
+      { name: "All communication channels", included: true },
+      { name: "Advanced workflow builder", included: true },
+      { name: "Unlimited team members", included: true },
+      { name: "Advanced analytics", included: true },
+      { name: "Custom branding", included: true },
+      { name: "API access", included: true },
+      { name: "Dedicated support", included: true },
+      { name: "Custom integrations", included: true },
+      { name: "SLA guarantee", included: true },
     ],
   },
 ];
@@ -106,28 +113,28 @@ const mockUsageData = {
 
 export function TenantBillingSettings({ tenant }: TenantBillingSettingsProps) {
   const [isLoading, setIsLoading] = useState(false);
-  const currentPlan = plans.find(plan => plan.id === tenant.subscription) || plans[0];
+  const currentPlan = plans.find((plan) => plan.id === tenant.subscription) || plans[0];
 
   const handleUpgrade = async (planId: string) => {
     setIsLoading(true);
     try {
       // In a real app, this would redirect to Stripe or handle payment
       const response = await fetch(`/api/billing/upgrade`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({ tenantId: tenant.id, planId }),
       });
 
       if (!response.ok) {
-        throw new Error('Failed to initiate upgrade');
+        throw new Error("Failed to initiate upgrade");
       }
 
       const { checkoutUrl } = await response.json();
       window.location.href = checkoutUrl;
     } catch (error) {
-      toast.error('Failed to upgrade subscription');
-      console.error('Upgrade error:', error);
+      toast.error("Failed to upgrade subscription");
+      console.error("Upgrade error:", error);
     } finally {
       setIsLoading(false);
     }
@@ -137,21 +144,21 @@ export function TenantBillingSettings({ tenant }: TenantBillingSettingsProps) {
     setIsLoading(true);
     try {
       const response = await fetch(`/api/billing/portal`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({ tenantId: tenant.id }),
       });
 
       if (!response.ok) {
-        throw new Error('Failed to access billing portal');
+        throw new Error("Failed to access billing portal");
       }
 
       const { portalUrl } = await response.json();
-      window.open(portalUrl, '_blank');
+      window.open(portalUrl, "_blank");
     } catch (error) {
-      toast.error('Failed to access billing portal');
-      console.error('Billing portal error:', error);
+      toast.error("Failed to access billing portal");
+      console.error("Billing portal error:", error);
     } finally {
       setIsLoading(false);
     }
@@ -160,28 +167,28 @@ export function TenantBillingSettings({ tenant }: TenantBillingSettingsProps) {
   const handleDownloadInvoice = async () => {
     try {
       const response = await fetch(`/api/billing/invoices/latest`, {
-        method: 'GET',
-        credentials: 'include',
+        method: "GET",
+        credentials: "include",
       });
 
       if (!response.ok) {
-        throw new Error('Failed to download invoice');
+        throw new Error("Failed to download invoice");
       }
 
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
+      const a = document.createElement("a");
       a.href = url;
-      a.download = `invoice-${tenant.slug || tenant.id}-${new Date().toISOString().split('T')[0]}.pdf`;
+      a.download = `invoice-${tenant.slug || tenant.id}-${new Date().toISOString().split("T")[0]}.pdf`;
       document.body.appendChild(a);
       a.click();
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
 
-      toast.success('Invoice downloaded successfully');
+      toast.success("Invoice downloaded successfully");
     } catch (error) {
-      toast.error('Failed to download invoice');
-      console.error('Invoice download error:', error);
+      toast.error("Failed to download invoice");
+      console.error("Invoice download error:", error);
     }
   };
 
@@ -192,32 +199,24 @@ export function TenantBillingSettings({ tenant }: TenantBillingSettingsProps) {
         <CardHeader>
           <CardTitle>Current Subscription</CardTitle>
           <CardDescription>
-            You are currently on the {currentPlan?.name || 'Free'} plan.
+            You are currently on the {currentPlan?.name || "Free"} plan.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
           <div className="flex items-center justify-between">
             <div>
-              <h3 className="text-2xl font-bold">{currentPlan?.name || 'Free'}</h3>
+              <h3 className="text-2xl font-bold">{currentPlan?.name || "Free"}</h3>
               <p className="text-muted-foreground">
-                ${currentPlan?.price || 0}/{currentPlan?.interval || 'month'}
+                ${currentPlan?.price || 0}/{currentPlan?.interval || "month"}
               </p>
             </div>
-            {tenant.subscription && tenant.subscription !== 'free' && (
+            {tenant.subscription && tenant.subscription !== "free" && (
               <div className="flex gap-2">
-                <Button
-                  onClick={handleManageBilling}
-                  variant="outline"
-                  disabled={isLoading}
-                >
+                <Button onClick={handleManageBilling} variant="outline" disabled={isLoading}>
                   <CreditCardIcon className="mr-2 h-4 w-4" />
                   Manage Billing
                 </Button>
-                <Button
-                  onClick={handleDownloadInvoice}
-                  variant="outline"
-                  disabled={isLoading}
-                >
+                <Button onClick={handleDownloadInvoice} variant="outline" disabled={isLoading}>
                   <ArrowDownTrayIcon className="mr-2 h-4 w-4" />
                   Download Invoice
                 </Button>
@@ -233,7 +232,10 @@ export function TenantBillingSettings({ tenant }: TenantBillingSettingsProps) {
               <div>
                 <div className="flex justify-between text-sm mb-1">
                   <span>Messages Sent</span>
-                  <span>{mockUsageData.messages.used.toLocaleString()} / {mockUsageData.messages.limit.toLocaleString()}</span>
+                  <span>
+                    {mockUsageData.messages.used.toLocaleString()} /{" "}
+                    {mockUsageData.messages.limit.toLocaleString()}
+                  </span>
                 </div>
                 <Progress value={mockUsageData.messages.percentage} className="h-2" />
               </div>
@@ -241,16 +243,21 @@ export function TenantBillingSettings({ tenant }: TenantBillingSettingsProps) {
               <div>
                 <div className="flex justify-between text-sm mb-1">
                   <span>Team Members</span>
-                  <span>{mockUsageData.members.used} / {mockUsageData.members.limit}</span>
+                  <span>
+                    {mockUsageData.members.used} / {mockUsageData.members.limit}
+                  </span>
                 </div>
                 <Progress value={mockUsageData.members.percentage} className="h-2" />
               </div>
 
-              {tenant.subscription && tenant.subscription !== 'free' && (
+              {tenant.subscription && tenant.subscription !== "free" && (
                 <div>
                   <div className="flex justify-between text-sm mb-1">
                     <span>API Calls</span>
-                    <span>{mockUsageData.apiCalls.used.toLocaleString()} / {mockUsageData.apiCalls.limit.toLocaleString()}</span>
+                    <span>
+                      {mockUsageData.apiCalls.used.toLocaleString()} /{" "}
+                      {mockUsageData.apiCalls.limit.toLocaleString()}
+                    </span>
                   </div>
                   <Progress value={mockUsageData.apiCalls.percentage} className="h-2" />
                 </div>
@@ -273,8 +280,9 @@ export function TenantBillingSettings({ tenant }: TenantBillingSettingsProps) {
             {plans.map((plan) => (
               <div
                 key={plan.id}
-                className={`relative rounded-lg border p-6 ${plan.popular ? 'border-primary shadow-md' : 'border-border'
-                  } ${plan.id === tenant.subscription ? 'bg-muted/50' : ''}`}
+                className={`relative rounded-lg border p-6 ${
+                  plan.popular ? "border-primary shadow-md" : "border-border"
+                } ${plan.id === tenant.subscription ? "bg-muted/50" : ""}`}
               >
                 {plan.popular && (
                   <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
@@ -297,12 +305,14 @@ export function TenantBillingSettings({ tenant }: TenantBillingSettingsProps) {
                   {plan.features.map((feature, index) => (
                     <li key={index} className="flex items-start gap-2">
                       <CheckIcon
-                        className={`h-4 w-4 mt-0.5 ${feature.included ? 'text-green-500' : 'text-muted-foreground'
-                          }`}
+                        className={`h-4 w-4 mt-0.5 ${
+                          feature.included ? "text-green-500" : "text-muted-foreground"
+                        }`}
                       />
                       <span
-                        className={`text-sm ${feature.included ? '' : 'text-muted-foreground line-through'
-                          }`}
+                        className={`text-sm ${
+                          feature.included ? "" : "text-muted-foreground line-through"
+                        }`}
                       >
                         {feature.name}
                       </span>
@@ -314,12 +324,12 @@ export function TenantBillingSettings({ tenant }: TenantBillingSettingsProps) {
                   onClick={() => handleUpgrade(plan.id)}
                   disabled={isLoading || plan.id === tenant.subscription}
                   className="w-full"
-                  variant={plan.id === tenant.subscription ? 'secondary' : 'default'}
+                  variant={plan.id === tenant.subscription ? "secondary" : "default"}
                 >
                   {plan.id === tenant.subscription ? (
-                    'Current Plan'
-                  ) : plan.id === 'free' ? (
-                    'Downgrade'
+                    "Current Plan"
+                  ) : plan.id === "free" ? (
+                    "Downgrade"
                   ) : (
                     <>
                       <BoltIcon className="mr-2 h-4 w-4" />
@@ -334,31 +344,25 @@ export function TenantBillingSettings({ tenant }: TenantBillingSettingsProps) {
       </Card>
 
       {/* Billing Information */}
-      {tenant.subscription && tenant.subscription !== 'free' && (
+      {tenant.subscription && tenant.subscription !== "free" && (
         <Card>
           <CardHeader>
             <CardTitle>Billing Information</CardTitle>
-            <CardDescription>
-              Manage your payment methods and billing details.
-            </CardDescription>
+            <CardDescription>Manage your payment methods and billing details.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex items-center justify-between">
               <div>
                 <p className="font-medium">Next billing date</p>
                 <p className="text-sm text-muted-foreground">
-                  {new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toLocaleDateString('en-US', {
-                    year: 'numeric',
-                    month: 'long',
-                    day: 'numeric',
+                  {new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toLocaleDateString("en-US", {
+                    year: "numeric",
+                    month: "long",
+                    day: "numeric",
                   })}
                 </p>
               </div>
-              <Button
-                onClick={handleManageBilling}
-                variant="outline"
-                disabled={isLoading}
-              >
+              <Button onClick={handleManageBilling} variant="outline" disabled={isLoading}>
                 <ArrowTopRightOnSquareIcon className="mr-2 h-4 w-4" />
                 Manage in Stripe
               </Button>
@@ -368,8 +372,8 @@ export function TenantBillingSettings({ tenant }: TenantBillingSettingsProps) {
 
             <div className="text-sm text-muted-foreground">
               <p>
-                Your subscription will automatically renew on the next billing date.
-                You can cancel or modify your subscription at any time through the billing portal.
+                Your subscription will automatically renew on the next billing date. You can cancel
+                or modify your subscription at any time through the billing portal.
               </p>
             </div>
           </CardContent>

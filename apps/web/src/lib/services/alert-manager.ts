@@ -14,14 +14,14 @@ interface Alert {
 }
 
 type AlertType =
-  | 'error'
-  | 'performance'
-  | 'security'
-  | 'availability'
-  | 'user_experience'
-  | 'business_metric';
+  | "error"
+  | "performance"
+  | "security"
+  | "availability"
+  | "user_experience"
+  | "business_metric";
 
-type AlertSeverity = 'low' | 'medium' | 'high' | 'critical';
+type AlertSeverity = "low" | "medium" | "high" | "critical";
 
 interface AlertRule {
   id: string;
@@ -59,7 +59,7 @@ class AlertManager {
 
     this.initializeDefaultRules();
 
-    if (typeof window !== 'undefined') {
+    if (typeof window !== "undefined") {
       this.initializeMonitoring();
     }
   }
@@ -67,56 +67,56 @@ class AlertManager {
   private initializeDefaultRules() {
     this.rules = [
       {
-        id: 'high_error_rate',
-        name: 'High Error Rate',
-        type: 'error',
+        id: "high_error_rate",
+        name: "High Error Rate",
+        type: "error",
         condition: (data) => data.errorRate > this.thresholds.errorRate,
-        severity: 'high',
+        severity: "high",
         cooldown: 5 * 60 * 1000, // 5 minutes
         enabled: true,
       },
       {
-        id: 'slow_response_time',
-        name: 'Slow Response Time',
-        type: 'performance',
+        id: "slow_response_time",
+        name: "Slow Response Time",
+        type: "performance",
         condition: (data) => data.responseTime > this.thresholds.responseTime,
-        severity: 'medium',
+        severity: "medium",
         cooldown: 2 * 60 * 1000, // 2 minutes
         enabled: true,
       },
       {
-        id: 'memory_leak',
-        name: 'High Memory Usage',
-        type: 'performance',
+        id: "memory_leak",
+        name: "High Memory Usage",
+        type: "performance",
         condition: (data) => data.memoryUsage > this.thresholds.memoryUsage,
-        severity: 'high',
+        severity: "high",
         cooldown: 10 * 60 * 1000, // 10 minutes
         enabled: true,
       },
       {
-        id: 'frequent_crashes',
-        name: 'Frequent Application Crashes',
-        type: 'availability',
+        id: "frequent_crashes",
+        name: "Frequent Application Crashes",
+        type: "availability",
         condition: (data) => data.crashRate > this.thresholds.crashRate,
-        severity: 'critical',
+        severity: "critical",
         cooldown: 1 * 60 * 1000, // 1 minute
         enabled: true,
       },
       {
-        id: 'user_dropoff',
-        name: 'High User Dropoff Rate',
-        type: 'user_experience',
+        id: "user_dropoff",
+        name: "High User Dropoff Rate",
+        type: "user_experience",
         condition: (data) => data.dropoffRate > this.thresholds.userDropoff,
-        severity: 'medium',
+        severity: "medium",
         cooldown: 15 * 60 * 1000, // 15 minutes
         enabled: true,
       },
       {
-        id: 'security_violation',
-        name: 'Security Policy Violation',
-        type: 'security',
+        id: "security_violation",
+        name: "Security Policy Violation",
+        type: "security",
         condition: (data) => data.securityViolation === true,
-        severity: 'critical',
+        severity: "critical",
         cooldown: 0, // No cooldown for security issues
         enabled: true,
       },
@@ -125,12 +125,12 @@ class AlertManager {
 
   private initializeMonitoring() {
     // Monitor JavaScript errors
-    window.addEventListener('error', (event) => {
+    window.addEventListener("error", (event) => {
       this.checkErrorAlert(event.error);
     });
 
     // Monitor unhandled promise rejections
-    window.addEventListener('unhandledrejection', (event) => {
+    window.addEventListener("unhandledrejection", (event) => {
       this.checkErrorAlert(event.reason);
     });
 
@@ -156,7 +156,12 @@ class AlertManager {
 
         this.checkPerformanceAlert({
           responseTime,
-          url: typeof args[0] === 'string' ? args[0] : args[0] instanceof Request ? args[0].url : args[0].toString(),
+          url:
+            typeof args[0] === "string"
+              ? args[0]
+              : args[0] instanceof Request
+                ? args[0].url
+                : args[0].toString(),
           status: response.status,
         });
 
@@ -169,7 +174,7 @@ class AlertManager {
   }
 
   private monitorMemoryUsage() {
-    if ('memory' in performance) {
+    if ("memory" in performance) {
       setInterval(() => {
         const memory = (performance as any).memory;
         if (memory) {
@@ -185,21 +190,24 @@ class AlertManager {
     let totalInteractions = 0;
 
     // Track user interactions and errors
-    document.addEventListener('click', () => {
+    document.addEventListener("click", () => {
       totalInteractions++;
     });
 
-    window.addEventListener('error', () => {
+    window.addEventListener("error", () => {
       errorCount++;
       const errorRate = errorCount / Math.max(totalInteractions, 1);
       this.checkUserExperienceAlert({ errorRate });
     });
 
     // Reset counters periodically
-    setInterval(() => {
-      errorCount = 0;
-      totalInteractions = 0;
-    }, 5 * 60 * 1000); // Reset every 5 minutes
+    setInterval(
+      () => {
+        errorCount = 0;
+        totalInteractions = 0;
+      },
+      5 * 60 * 1000,
+    ); // Reset every 5 minutes
   }
 
   private checkErrorAlert(error: any) {
@@ -208,35 +216,32 @@ class AlertManager {
       error: error instanceof Error ? error.message : String(error),
     };
 
-    this.evaluateRules('error', errorData);
+    this.evaluateRules("error", errorData);
   }
 
   private checkPerformanceAlert(data: any) {
-    this.evaluateRules('performance', data);
+    this.evaluateRules("performance", data);
   }
 
   private checkMemoryAlert(data: any) {
-    this.evaluateRules('performance', data);
+    this.evaluateRules("performance", data);
   }
 
   private checkUserExperienceAlert(data: any) {
-    this.evaluateRules('user_experience', data);
+    this.evaluateRules("user_experience", data);
   }
 
   private calculateErrorRate(): number {
     // Simple error rate calculation based on recent errors
     const recentErrors = this.alerts.filter(
-      alert => alert.type === 'error' &&
-        Date.now() - alert.timestamp < 5 * 60 * 1000 // Last 5 minutes
+      (alert) => alert.type === "error" && Date.now() - alert.timestamp < 5 * 60 * 1000, // Last 5 minutes
     );
 
     return recentErrors.length / 100; // Simplified calculation
   }
 
   private evaluateRules(type: AlertType, data: any) {
-    const relevantRules = this.rules.filter(rule =>
-      rule.enabled && rule.type === type
-    );
+    const relevantRules = this.rules.filter((rule) => rule.enabled && rule.type === type);
 
     for (const rule of relevantRules) {
       try {
@@ -278,7 +283,7 @@ class AlertManager {
     this.sendAlert(alert);
 
     // Show user notification for critical alerts
-    if (alert.severity === 'critical') {
+    if (alert.severity === "critical") {
       this.showCriticalAlertNotification(alert);
     }
   }
@@ -289,17 +294,17 @@ class AlertManager {
 
   private generateAlertMessage(rule: AlertRule, context: any): string {
     switch (rule.id) {
-      case 'high_error_rate':
+      case "high_error_rate":
         return `High error rate detected: ${(context.errorRate * 100).toFixed(1)}%`;
-      case 'slow_response_time':
+      case "slow_response_time":
         return `Slow response time detected: ${context.responseTime.toFixed(0)}ms for ${context.url}`;
-      case 'memory_leak':
+      case "memory_leak":
         return `High memory usage detected: ${(context.memoryUsage * 100).toFixed(1)}%`;
-      case 'frequent_crashes':
+      case "frequent_crashes":
         return `Frequent crashes detected: ${(context.crashRate * 100).toFixed(1)}% crash rate`;
-      case 'user_dropoff':
+      case "user_dropoff":
         return `High user dropoff rate detected: ${(context.dropoffRate * 100).toFixed(1)}%`;
-      case 'security_violation':
+      case "security_violation":
         return `Security policy violation detected: ${context.violation}`;
       default:
         return `Alert triggered: ${rule.name}`;
@@ -308,24 +313,24 @@ class AlertManager {
 
   private async sendAlert(alert: Alert) {
     try {
-      await fetch('/api/monitoring/alerts', {
-        method: 'POST',
+      await fetch("/api/monitoring/alerts", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify(alert),
       });
     } catch (error) {
-      console.error('Failed to send alert:', error);
+      console.error("Failed to send alert:", error);
     }
   }
 
   private showCriticalAlertNotification(alert: Alert) {
     // Show a non-intrusive notification for critical alerts
-    if ('Notification' in window && Notification.permission === 'granted') {
-      new Notification('Critical Issue Detected', {
+    if ("Notification" in window && Notification.permission === "granted") {
+      new Notification("Critical Issue Detected", {
         body: alert.message,
-        icon: '/favicon.ico',
+        icon: "/favicon.ico",
         tag: alert.id,
       });
     }
@@ -335,7 +340,7 @@ class AlertManager {
     type: AlertType,
     severity: AlertSeverity,
     message: string,
-    context: Record<string, any> = {}
+    context: Record<string, any> = {},
   ) {
     const alert: Alert = {
       id: this.generateAlertId(),
@@ -353,7 +358,7 @@ class AlertManager {
     this.alerts.push(alert);
     this.sendAlert(alert);
 
-    if (severity === 'critical') {
+    if (severity === "critical") {
       this.showCriticalAlertNotification(alert);
     }
   }
@@ -363,7 +368,7 @@ class AlertManager {
   }
 
   public removeRule(ruleId: string) {
-    this.rules = this.rules.filter(rule => rule.id !== ruleId);
+    this.rules = this.rules.filter((rule) => rule.id !== ruleId);
   }
 
   public updateThresholds(newThresholds: Partial<AlertThresholds>) {
@@ -371,7 +376,7 @@ class AlertManager {
   }
 
   public getAlerts(type?: AlertType, severity?: AlertSeverity): Alert[] {
-    return this.alerts.filter(alert => {
+    return this.alerts.filter((alert) => {
       if (type && alert.type !== type) return false;
       if (severity && alert.severity !== severity) return false;
       return true;
@@ -379,7 +384,7 @@ class AlertManager {
   }
 
   public resolveAlert(alertId: string) {
-    const alert = this.alerts.find(a => a.id === alertId);
+    const alert = this.alerts.find((a) => a.id === alertId);
     if (alert) {
       alert.resolved = true;
       alert.resolvedAt = Date.now();
@@ -388,7 +393,7 @@ class AlertManager {
 
   private getUserId(): string | null {
     try {
-      const authData = localStorage.getItem('auth');
+      const authData = localStorage.getItem("auth");
       if (authData) {
         const parsed = JSON.parse(authData);
         return parsed.user?.id || null;
@@ -401,7 +406,7 @@ class AlertManager {
 
   private getTenantId(): string | null {
     try {
-      const tenantData = localStorage.getItem('selectedTenant');
+      const tenantData = localStorage.getItem("selectedTenant");
       if (tenantData) {
         const parsed = JSON.parse(tenantData);
         return parsed.id || null;
@@ -426,28 +431,25 @@ export const alertManager = new AlertManager();
 
 // Utility functions for common alert scenarios
 export function alertCriticalError(error: Error, context?: Record<string, any>) {
-  alertManager.createCustomAlert(
-    'error',
-    'critical',
-    `Critical error: ${error.message}`,
-    { error: error.message, stack: error.stack, ...context }
-  );
+  alertManager.createCustomAlert("error", "critical", `Critical error: ${error.message}`, {
+    error: error.message,
+    stack: error.stack,
+    ...context,
+  });
 }
 
 export function alertPerformanceIssue(metric: string, value: number, threshold: number) {
   alertManager.createCustomAlert(
-    'performance',
-    'high',
+    "performance",
+    "high",
     `Performance issue: ${metric} is ${value}, exceeding threshold of ${threshold}`,
-    { metric, value, threshold }
+    { metric, value, threshold },
   );
 }
 
 export function alertSecurityViolation(violation: string, context?: Record<string, any>) {
-  alertManager.createCustomAlert(
-    'security',
-    'critical',
-    `Security violation: ${violation}`,
-    { violation, ...context }
-  );
+  alertManager.createCustomAlert("security", "critical", `Security violation: ${violation}`, {
+    violation,
+    ...context,
+  });
 }

@@ -1,18 +1,18 @@
-import { Injectable } from '@nestjs/common';
-import { BaseProvider } from '../base/base-provider.abstract';
+import { Injectable } from "@nestjs/common";
+import { BaseProvider } from "../base/base-provider.abstract";
 import {
   Channel,
   ProviderConfig,
   ProviderHealth,
   ProviderHealthStatus,
   ProviderResponse,
-} from '../types';
+} from "../types";
 import {
   IWhatsAppProvider,
   WhatsAppConfig,
   WhatsAppPayload,
   WhatsAppTemplate,
-} from './whatsapp-provider.interface';
+} from "./whatsapp-provider.interface";
 
 interface MetaWhatsAppRequest {
   messaging_product: string;
@@ -69,25 +69,22 @@ interface MetaWhatsAppError {
 }
 
 @Injectable()
-export class MetaWhatsAppProvider
-  extends BaseProvider
-  implements IWhatsAppProvider
-{
-  private readonly baseUrl = 'https://graph.facebook.com';
+export class MetaWhatsAppProvider extends BaseProvider implements IWhatsAppProvider {
+  private readonly baseUrl = "https://graph.facebook.com";
   private whatsappConfig: WhatsAppConfig;
 
   constructor() {
-    super('meta-whatsapp', 'Meta WhatsApp Business', Channel.WHATSAPP);
+    super("meta-whatsapp", "Meta WhatsApp Business", Channel.WHATSAPP);
   }
 
   async send(payload: WhatsAppPayload): Promise<ProviderResponse> {
     if (!this.isInitialized) {
-      return this.createErrorResponse('Provider not initialized');
+      return this.createErrorResponse("Provider not initialized");
     }
 
     try {
       if (!this.validateWhatsAppNumber(payload.recipient)) {
-        return this.createErrorResponse('Invalid WhatsApp number format');
+        return this.createErrorResponse("Invalid WhatsApp number format");
       }
 
       let requestData: MetaWhatsAppRequest;
@@ -112,8 +109,8 @@ export class MetaWhatsAppProvider
           messageType: payload.message.type,
         });
       } else {
-        this.logger.error('WhatsApp API returned no message ID');
-        return this.createErrorResponse('WhatsApp API returned no message ID');
+        this.logger.error("WhatsApp API returned no message ID");
+        return this.createErrorResponse("WhatsApp API returned no message ID");
       }
     } catch (error) {
       this.logger.error(`Failed to send WhatsApp message:`, error);
@@ -130,22 +127,22 @@ export class MetaWhatsAppProvider
     parameters?: Record<string, any>,
   ): Promise<ProviderResponse> {
     if (!this.isInitialized) {
-      return this.createErrorResponse('Provider not initialized');
+      return this.createErrorResponse("Provider not initialized");
     }
 
     try {
       if (!this.validateWhatsAppNumber(recipient)) {
-        return this.createErrorResponse('Invalid WhatsApp number format');
+        return this.createErrorResponse("Invalid WhatsApp number format");
       }
 
       if (!this.validateTemplate(template)) {
-        return this.createErrorResponse('Invalid template format');
+        return this.createErrorResponse("Invalid template format");
       }
 
       const requestData: MetaWhatsAppRequest = {
-        messaging_product: 'whatsapp',
+        messaging_product: "whatsapp",
         to: recipient,
-        type: 'template',
+        type: "template",
         template: {
           name: template.name,
           language: {
@@ -161,34 +158,28 @@ export class MetaWhatsAppProvider
         const messageId = response.messages[0].id;
         this.logger.log(`WhatsApp template sent successfully: ${messageId}`);
 
-        return this.createSuccessResponse(
-          `whatsapp-template-${Date.now()}`,
-          messageId,
-          {
-            recipient,
-            templateName: template.name,
-            waId: response.contacts[0]?.wa_id,
-          },
-        );
+        return this.createSuccessResponse(`whatsapp-template-${Date.now()}`, messageId, {
+          recipient,
+          templateName: template.name,
+          waId: response.contacts[0]?.wa_id,
+        });
       } else {
-        return this.createErrorResponse('WhatsApp API returned no message ID');
+        return this.createErrorResponse("WhatsApp API returned no message ID");
       }
     } catch (error) {
       this.logger.error(`Failed to send WhatsApp template:`, error);
-      return this.createErrorResponse(
-        `WhatsApp Template Error: ${error.message}`,
-      );
+      return this.createErrorResponse(`WhatsApp Template Error: ${error.message}`);
     }
   }
 
   validateWhatsAppNumber(number: string): boolean {
-    if (!number || typeof number !== 'string') {
+    if (!number || typeof number !== "string") {
       return false;
     }
 
     // WhatsApp numbers should be in E.164 format without the + sign
     // or with the + sign (we'll handle both)
-    const cleanNumber = number.replace(/^\+/, '');
+    const cleanNumber = number.replace(/^\+/, "");
 
     // Should be 10-15 digits
     const phoneRegex = /^\d{10,15}$/;
@@ -197,16 +188,16 @@ export class MetaWhatsAppProvider
 
   async getTemplates(): Promise<WhatsAppTemplate[]> {
     if (!this.isInitialized) {
-      throw new Error('Provider not initialized');
+      throw new Error("Provider not initialized");
     }
 
     try {
-      const url = `${this.baseUrl}/${this.whatsappConfig.apiVersion || 'v18.0'}/${this.whatsappConfig.businessAccountId}/message_templates`;
+      const url = `${this.baseUrl}/${this.whatsappConfig.apiVersion || "v18.0"}/${this.whatsappConfig.businessAccountId}/message_templates`;
 
       const response = await fetch(url, {
         headers: {
           Authorization: `Bearer ${this.whatsappConfig.accessToken}`,
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
       });
 
@@ -214,10 +205,10 @@ export class MetaWhatsAppProvider
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
 
-      const data = await response.json() as { data?: any[] };
+      const data = (await response.json()) as { data?: any[] };
       return this.mapApiTemplatesToWhatsAppTemplates(data.data || []);
     } catch (error) {
-      this.logger.error('Failed to get WhatsApp templates:', error);
+      this.logger.error("Failed to get WhatsApp templates:", error);
       throw error;
     }
   }
@@ -236,7 +227,7 @@ export class MetaWhatsAppProvider
     // Validate components if present
     if (template.components) {
       for (const component of template.components) {
-        if (!['header', 'body', 'footer', 'button'].includes(component.type)) {
+        if (!["header", "body", "footer", "button"].includes(component.type)) {
           return false;
         }
       }
@@ -253,17 +244,17 @@ export class MetaWhatsAppProvider
     const credentials = config.credentials as WhatsAppConfig;
 
     if (!credentials.accessToken) {
-      this.logger.error('WhatsApp configuration missing accessToken');
+      this.logger.error("WhatsApp configuration missing accessToken");
       return false;
     }
 
     if (!credentials.phoneNumberId) {
-      this.logger.error('WhatsApp configuration missing phoneNumberId');
+      this.logger.error("WhatsApp configuration missing phoneNumberId");
       return false;
     }
 
     if (!credentials.businessAccountId) {
-      this.logger.error('WhatsApp configuration missing businessAccountId');
+      this.logger.error("WhatsApp configuration missing businessAccountId");
       return false;
     }
 
@@ -272,12 +263,12 @@ export class MetaWhatsAppProvider
 
   protected async performHealthCheck(): Promise<ProviderHealthStatus> {
     if (!this.whatsappConfig.accessToken) {
-      throw new Error('WhatsApp access token not configured');
+      throw new Error("WhatsApp access token not configured");
     }
 
     try {
       // Test connectivity by getting phone number info
-      const url = `${this.baseUrl}/${this.whatsappConfig.apiVersion || 'v18.0'}/${this.whatsappConfig.phoneNumberId}`;
+      const url = `${this.baseUrl}/${this.whatsappConfig.apiVersion || "v18.0"}/${this.whatsappConfig.phoneNumberId}`;
 
       const response = await fetch(url, {
         headers: {
@@ -289,17 +280,20 @@ export class MetaWhatsAppProvider
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
 
-      const data = await response.json() as { display_phone_number?: string; verified_name?: string };
+      const data = (await response.json()) as {
+        display_phone_number?: string;
+        verified_name?: string;
+      };
 
       return {
         status: ProviderHealth.HEALTHY,
         lastChecked: new Date(),
         uptime: 100,
         metadata: {
-          service: 'Meta WhatsApp Business',
+          service: "Meta WhatsApp Business",
           phoneNumber: data.display_phone_number,
           verifiedName: data.verified_name,
-          apiVersion: this.whatsappConfig.apiVersion || 'v18.0',
+          apiVersion: this.whatsappConfig.apiVersion || "v18.0",
         },
       };
     } catch (error) {
@@ -316,38 +310,38 @@ export class MetaWhatsAppProvider
 
   private buildMessageRequest(payload: WhatsAppPayload): MetaWhatsAppRequest {
     const baseRequest: MetaWhatsAppRequest = {
-      messaging_product: 'whatsapp',
-      to: payload.recipient.replace(/^\+/, ''), // Remove + if present
+      messaging_product: "whatsapp",
+      to: payload.recipient.replace(/^\+/, ""), // Remove + if present
       type: payload.message.type,
     };
 
     switch (payload.message.type) {
-      case 'text':
+      case "text":
         baseRequest.text = {
-          body: payload.message.text || '',
+          body: payload.message.text || "",
         };
         break;
 
-      case 'media':
-        if (payload.message.mediaType === 'image') {
-          baseRequest.type = 'image';
+      case "media":
+        if (payload.message.mediaType === "image") {
+          baseRequest.type = "image";
           baseRequest.image = {
             link: payload.message.mediaUrl!,
             caption: payload.message.caption,
           };
-        } else if (payload.message.mediaType === 'video') {
-          baseRequest.type = 'video';
+        } else if (payload.message.mediaType === "video") {
+          baseRequest.type = "video";
           baseRequest.video = {
             link: payload.message.mediaUrl!,
             caption: payload.message.caption,
           };
-        } else if (payload.message.mediaType === 'audio') {
-          baseRequest.type = 'audio';
+        } else if (payload.message.mediaType === "audio") {
+          baseRequest.type = "audio";
           baseRequest.audio = {
             link: payload.message.mediaUrl!,
           };
-        } else if (payload.message.mediaType === 'document') {
-          baseRequest.type = 'document';
+        } else if (payload.message.mediaType === "document") {
+          baseRequest.type = "document";
           baseRequest.document = {
             link: payload.message.mediaUrl!,
             caption: payload.message.caption,
@@ -356,7 +350,7 @@ export class MetaWhatsAppProvider
         }
         break;
 
-      case 'interactive':
+      case "interactive":
         baseRequest.interactive = payload.message.interactive;
         break;
 
@@ -369,13 +363,13 @@ export class MetaWhatsAppProvider
 
   private buildTemplateRequest(payload: WhatsAppPayload): MetaWhatsAppRequest {
     return {
-      messaging_product: 'whatsapp',
-      to: payload.recipient.replace(/^\+/, ''),
-      type: 'template',
+      messaging_product: "whatsapp",
+      to: payload.recipient.replace(/^\+/, ""),
+      type: "template",
       template: {
         name: payload.templateName!,
         language: {
-          code: payload.templateLanguage || 'en',
+          code: payload.templateLanguage || "en",
         },
         components: payload.templateParameters
           ? this.buildTemplateParametersComponents(payload.templateParameters)
@@ -399,10 +393,10 @@ export class MetaWhatsAppProvider
 
       if (component.parameters && parameters) {
         mappedComponent.parameters = component.parameters.map((param) => {
-          if (param.type === 'text' && parameters[param.text || '']) {
+          if (param.type === "text" && parameters[param.text || ""]) {
             return {
-              type: 'text',
-              text: parameters[param.text || ''],
+              type: "text",
+              text: parameters[param.text || ""],
             };
           }
           return param;
@@ -416,25 +410,23 @@ export class MetaWhatsAppProvider
   private buildTemplateParametersComponents(parameters: string[]): any[] {
     return [
       {
-        type: 'body',
+        type: "body",
         parameters: parameters.map((param) => ({
-          type: 'text',
+          type: "text",
           text: param,
         })),
       },
     ];
   }
 
-  private async makeHttpRequest(
-    data: MetaWhatsAppRequest,
-  ): Promise<MetaWhatsAppResponse> {
-    const url = `${this.baseUrl}/${this.whatsappConfig.apiVersion || 'v18.0'}/${this.whatsappConfig.phoneNumberId}/messages`;
+  private async makeHttpRequest(data: MetaWhatsAppRequest): Promise<MetaWhatsAppResponse> {
+    const url = `${this.baseUrl}/${this.whatsappConfig.apiVersion || "v18.0"}/${this.whatsappConfig.phoneNumberId}/messages`;
 
     const response = await fetch(url, {
-      method: 'POST',
+      method: "POST",
       headers: {
         Authorization: `Bearer ${this.whatsappConfig.accessToken}`,
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
       },
       body: JSON.stringify(data),
     });
@@ -443,18 +435,13 @@ export class MetaWhatsAppProvider
 
     if (!response.ok) {
       const error = responseData as MetaWhatsAppError;
-      throw new Error(
-        error.error?.message ||
-          `HTTP ${response.status}: ${response.statusText}`,
-      );
+      throw new Error(error.error?.message || `HTTP ${response.status}: ${response.statusText}`);
     }
 
     return responseData as MetaWhatsAppResponse;
   }
 
-  private mapApiTemplatesToWhatsAppTemplates(
-    apiTemplates: any[],
-  ): WhatsAppTemplate[] {
+  private mapApiTemplatesToWhatsAppTemplates(apiTemplates: any[]): WhatsAppTemplate[] {
     return apiTemplates.map((template) => ({
       name: template.name,
       language: template.language,
@@ -467,11 +454,11 @@ export class MetaWhatsAppProvider
    */
   async getMessageStatus(messageId: string): Promise<any> {
     if (!this.isInitialized) {
-      throw new Error('Provider not initialized');
+      throw new Error("Provider not initialized");
     }
 
     try {
-      const url = `${this.baseUrl}/${this.whatsappConfig.apiVersion || 'v18.0'}/${messageId}`;
+      const url = `${this.baseUrl}/${this.whatsappConfig.apiVersion || "v18.0"}/${messageId}`;
 
       const response = await fetch(url, {
         headers: {
@@ -485,7 +472,7 @@ export class MetaWhatsAppProvider
 
       return response.json();
     } catch (error) {
-      this.logger.error('Failed to get WhatsApp message status:', error);
+      this.logger.error("Failed to get WhatsApp message status:", error);
       throw error;
     }
   }
@@ -495,19 +482,19 @@ export class MetaWhatsAppProvider
    */
   async uploadMedia(mediaUrl: string, mediaType: string): Promise<string> {
     if (!this.isInitialized) {
-      throw new Error('Provider not initialized');
+      throw new Error("Provider not initialized");
     }
 
     try {
-      const url = `${this.baseUrl}/${this.whatsappConfig.apiVersion || 'v18.0'}/${this.whatsappConfig.phoneNumberId}/media`;
+      const url = `${this.baseUrl}/${this.whatsappConfig.apiVersion || "v18.0"}/${this.whatsappConfig.phoneNumberId}/media`;
 
       const formData = new FormData();
-      formData.append('messaging_product', 'whatsapp');
-      formData.append('type', mediaType);
-      formData.append('file', mediaUrl); // In real implementation, this would be a file
+      formData.append("messaging_product", "whatsapp");
+      formData.append("type", mediaType);
+      formData.append("file", mediaUrl); // In real implementation, this would be a file
 
       const response = await fetch(url, {
-        method: 'POST',
+        method: "POST",
         headers: {
           Authorization: `Bearer ${this.whatsappConfig.accessToken}`,
         },
@@ -518,10 +505,10 @@ export class MetaWhatsAppProvider
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
 
-      const data = await response.json() as { id: string };
+      const data = (await response.json()) as { id: string };
       return data.id;
     } catch (error) {
-      this.logger.error('Failed to upload WhatsApp media:', error);
+      this.logger.error("Failed to upload WhatsApp media:", error);
       throw error;
     }
   }

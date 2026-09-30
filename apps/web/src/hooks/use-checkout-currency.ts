@@ -1,31 +1,31 @@
-'use client';
+"use client";
 
-import { useCallback, useEffect, useState } from 'react';
-import { billingApi } from '@/lib/api';
+import { useCallback, useEffect, useState } from "react";
+import { billingApi } from "@/lib/api";
 
 interface CheckoutContextResponse {
-  defaultCurrency: 'USD' | 'NGN';
-  availableCurrencies: Array<'USD' | 'NGN'>;
+  defaultCurrency: "USD" | "NGN";
+  availableCurrencies: Array<"USD" | "NGN">;
   bachsConfigured: boolean;
   nombaConfigured: boolean;
   providers: string[];
   countryCode?: string;
 }
 
-const NG_CURRENCIES = ['NGN', 'USD'] as const;
+const NG_CURRENCIES = ["NGN", "USD"] as const;
 
-function fallbackCurrencies(countryCode?: string | null): Array<'USD' | 'NGN'> {
-  return countryCode === 'NG' ? [...NG_CURRENCIES] : ['USD'];
+function fallbackCurrencies(countryCode?: string | null): Array<"USD" | "NGN"> {
+  return countryCode === "NG" ? [...NG_CURRENCIES] : ["USD"];
 }
 
-function defaultCurrencyForCountry(countryCode?: string | null): 'USD' | 'NGN' {
-  return countryCode === 'NG' ? 'NGN' : 'USD';
+function defaultCurrencyForCountry(countryCode?: string | null): "USD" | "NGN" {
+  return countryCode === "NG" ? "NGN" : "USD";
 }
 
 export function useCheckoutCurrency() {
   const [context, setContext] = useState<CheckoutContextResponse | null>(null);
   const [isPending, setIsPending] = useState(true);
-  const [selectedCurrency, setSelectedCurrency] = useState<'USD' | 'NGN' | null>(null);
+  const [selectedCurrency, setSelectedCurrency] = useState<"USD" | "NGN" | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -58,7 +58,7 @@ export function useCheckoutCurrency() {
   const defaultCurrency = context?.defaultCurrency ?? defaultCurrencyForCountry(countryCode);
   const isReady = !isPending;
 
-  const setCurrency = useCallback((next: 'USD' | 'NGN') => {
+  const setCurrency = useCallback((next: "USD" | "NGN") => {
     setSelectedCurrency(next);
   }, []);
 

@@ -1,17 +1,30 @@
-'use client';
+"use client";
 
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Textarea } from '@/components/ui/textarea';
-import { toast } from '@/lib/utils/toast';
-import { ExclamationCircleIcon, CheckIcon, DocumentDuplicateIcon, ArrowPathIcon, PlayIcon, Cog6ToothIcon } from '@heroicons/react/24/outline'
-import { useState } from 'react';
-import { CodeBlock } from './code-block';
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Textarea } from "@/components/ui/textarea";
+import { toast } from "@/lib/utils/toast";
+import {
+  ExclamationCircleIcon,
+  CheckIcon,
+  DocumentDuplicateIcon,
+  ArrowPathIcon,
+  PlayIcon,
+  Cog6ToothIcon,
+} from "@heroicons/react/24/outline";
+import { useState } from "react";
+import { CodeBlock } from "./code-block";
 
 interface CodeRunnerProps {
   language: string;
@@ -22,7 +35,7 @@ interface CodeRunnerProps {
 }
 
 interface RunConfig {
-  environment: 'sandbox' | 'live';
+  environment: "sandbox" | "live";
   timeout: number;
   apiKey?: string;
   baseUrl?: string;
@@ -38,30 +51,33 @@ interface RunResult {
 
 const defaultConfigs: Record<string, RunConfig> = {
   javascript: {
-    environment: 'sandbox',
+    environment: "sandbox",
     timeout: 10000,
-    baseUrl: 'https://api-sandbox.notifi.com'
+    baseUrl: "https://api-sandbox.notifi.com",
   },
   python: {
-    environment: 'sandbox',
+    environment: "sandbox",
     timeout: 15000,
-    baseUrl: 'https://api-sandbox.notifi.com'
+    baseUrl: "https://api-sandbox.notifi.com",
   },
   php: {
-    environment: 'sandbox',
+    environment: "sandbox",
     timeout: 15000,
-    baseUrl: 'https://api-sandbox.notifi.com'
-  }
+    baseUrl: "https://api-sandbox.notifi.com",
+  },
 };
 
 export function CodeRunner({ language, initialCode, title, description, onRun }: CodeRunnerProps) {
   const [code, setCode] = useState(initialCode);
   const [config, setConfig] = useState<RunConfig>(() => {
-    return defaultConfigs[language] ?? defaultConfigs.javascript ?? {
-      environment: 'sandbox',
-      timeout: 10000,
-      baseUrl: 'https://api-sandbox.notifi.com'
-    };
+    return (
+      defaultConfigs[language] ??
+      defaultConfigs.javascript ?? {
+        environment: "sandbox",
+        timeout: 10000,
+        baseUrl: "https://api-sandbox.notifi.com",
+      }
+    );
   });
   const [result, setResult] = useState<RunResult | null>(null);
   const [isRunning, setIsRunning] = useState(false);
@@ -78,34 +94,38 @@ export function CodeRunner({ language, initialCode, title, description, onRun }:
         const runResult = await onRun(code, config);
         setResult({
           ...runResult,
-          executionTime: Date.now() - startTime
+          executionTime: Date.now() - startTime,
         });
       } else {
         // Simulate code execution for demo
-        await new Promise(resolve => setTimeout(resolve, 1000 + Math.random() * 2000));
+        await new Promise((resolve) => setTimeout(resolve, 1000 + Math.random() * 2000));
 
         setResult({
           success: true,
-          output: JSON.stringify({
-            message: 'Code executed successfully in sandbox environment',
-            timestamp: new Date().toISOString(),
-            language,
-            environment: config.environment
-          }, null, 2),
+          output: JSON.stringify(
+            {
+              message: "Code executed successfully in sandbox environment",
+              timestamp: new Date().toISOString(),
+              language,
+              environment: config.environment,
+            },
+            null,
+            2,
+          ),
           executionTime: Date.now() - startTime,
           logs: [
-            'Initializing runtime environment...',
-            'Loading dependencies...',
-            'Executing code...',
-            'Code execution completed successfully'
-          ]
+            "Initializing runtime environment...",
+            "Loading dependencies...",
+            "Executing code...",
+            "Code execution completed successfully",
+          ],
         });
       }
     } catch (error) {
       setResult({
         success: false,
-        error: error instanceof Error ? error.message : 'Unknown error occurred',
-        executionTime: Date.now() - Date.now()
+        error: error instanceof Error ? error.message : "Unknown error occurred",
+        executionTime: Date.now() - Date.now(),
       });
     } finally {
       setIsRunning(false);
@@ -116,10 +136,10 @@ export function CodeRunner({ language, initialCode, title, description, onRun }:
     try {
       await navigator.clipboard.writeText(code);
       setCopied(true);
-      toast.success('Code copied to clipboard');
+      toast.success("Code copied to clipboard");
       setTimeout(() => setCopied(false), 2000);
     } catch (err) {
-      toast.error('Failed to copy code');
+      toast.error("Failed to copy code");
     }
   };
 
@@ -129,7 +149,7 @@ export function CodeRunner({ language, initialCode, title, description, onRun }:
   };
 
   const updateConfig = (key: keyof RunConfig, value: any) => {
-    setConfig(prev => ({ ...prev, [key]: value }));
+    setConfig((prev) => ({ ...prev, [key]: value }));
   };
 
   return (
@@ -142,7 +162,7 @@ export function CodeRunner({ language, initialCode, title, description, onRun }:
           </div>
           <div className="flex items-center gap-2">
             <Badge variant="outline">{language}</Badge>
-            <Badge variant={config.environment === 'live' ? 'destructive' : 'secondary'}>
+            <Badge variant={config.environment === "live" ? "destructive" : "secondary"}>
               {config.environment}
             </Badge>
           </div>
@@ -162,21 +182,11 @@ export function CodeRunner({ language, initialCode, title, description, onRun }:
               <div className="flex items-center justify-between">
                 <Label>Code Editor</Label>
                 <div className="flex gap-2">
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={handleReset}
-                    className="h-8 px-3"
-                  >
+                  <Button size="sm" variant="outline" onClick={handleReset} className="h-8 px-3">
                     <ArrowPathIcon className="h-3 w-3 mr-1" />
                     Reset
                   </Button>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={handleCopy}
-                    className="h-8 w-8 p-0"
-                  >
+                  <Button size="sm" variant="outline" onClick={handleCopy} className="h-8 w-8 p-0">
                     {copied ? (
                       <CheckIcon className="h-3 w-3" />
                     ) : (
@@ -204,10 +214,10 @@ export function CodeRunner({ language, initialCode, title, description, onRun }:
                 ) : (
                   <PlayIcon className="h-4 w-4" />
                 )}
-                {isRunning ? 'Running...' : 'Run Code'}
+                {isRunning ? "Running..." : "Run Code"}
               </Button>
 
-              {config.environment === 'live' && (
+              {config.environment === "live" && (
                 <div className="flex items-center gap-2 text-sm text-orange-600">
                   <ExclamationCircleIcon className="h-4 w-4" />
                   <span>Running in live environment</span>
@@ -222,7 +232,7 @@ export function CodeRunner({ language, initialCode, title, description, onRun }:
                 <Label>Environment</Label>
                 <Select
                   value={config.environment}
-                  onValueChange={(value: 'sandbox' | 'live') => updateConfig('environment', value)}
+                  onValueChange={(value: "sandbox" | "live") => updateConfig("environment", value)}
                 >
                   <SelectTrigger>
                     <SelectValue />
@@ -243,10 +253,9 @@ export function CodeRunner({ language, initialCode, title, description, onRun }:
                   </SelectContent>
                 </Select>
                 <p className="text-xs text-muted-foreground">
-                  {config.environment === 'sandbox'
-                    ? 'Safe environment for testing without real API calls'
-                    : 'Uses real API - charges may apply'
-                  }
+                  {config.environment === "sandbox"
+                    ? "Safe environment for testing without real API calls"
+                    : "Uses real API - charges may apply"}
                 </p>
               </div>
 
@@ -255,7 +264,7 @@ export function CodeRunner({ language, initialCode, title, description, onRun }:
                 <Input
                   type="number"
                   value={config.timeout}
-                  onChange={(e) => updateConfig('timeout', parseInt(e.target.value))}
+                  onChange={(e) => updateConfig("timeout", parseInt(e.target.value))}
                   min={1000}
                   max={30000}
                 />
@@ -265,8 +274,8 @@ export function CodeRunner({ language, initialCode, title, description, onRun }:
                 <Label>API Key</Label>
                 <Input
                   type="password"
-                  value={config.apiKey || ''}
-                  onChange={(e) => updateConfig('apiKey', e.target.value)}
+                  value={config.apiKey || ""}
+                  onChange={(e) => updateConfig("apiKey", e.target.value)}
                   placeholder="Enter your API key (optional for sandbox)"
                 />
                 <p className="text-xs text-muted-foreground">
@@ -277,8 +286,8 @@ export function CodeRunner({ language, initialCode, title, description, onRun }:
               <div className="space-y-2">
                 <Label>Base URL</Label>
                 <Input
-                  value={config.baseUrl || ''}
-                  onChange={(e) => updateConfig('baseUrl', e.target.value)}
+                  value={config.baseUrl || ""}
+                  onChange={(e) => updateConfig("baseUrl", e.target.value)}
                   placeholder="https://api.notifi.com"
                 />
               </div>
@@ -292,7 +301,7 @@ export function CodeRunner({ language, initialCode, title, description, onRun }:
               <div className="text-sm text-muted-foreground space-y-1">
                 <p>• Code runs in isolated {config.environment} environment</p>
                 <p>• Maximum execution time: {config.timeout / 1000}s</p>
-                <p>• Network access: {config.environment === 'live' ? 'Full' : 'Restricted'}</p>
+                <p>• Network access: {config.environment === "live" ? "Full" : "Restricted"}</p>
                 <p>• File system: Read-only</p>
               </div>
             </div>
@@ -303,10 +312,10 @@ export function CodeRunner({ language, initialCode, title, description, onRun }:
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <div className={`h-2 w-2 rounded-full ${result.success ? 'bg-green-500' : 'bg-red-500'}`} />
-                    <span className="font-medium">
-                      {result.success ? 'Success' : 'Error'}
-                    </span>
+                    <div
+                      className={`h-2 w-2 rounded-full ${result.success ? "bg-green-500" : "bg-red-500"}`}
+                    />
+                    <span className="font-medium">{result.success ? "Success" : "Error"}</span>
                     {result.executionTime && (
                       <Badge variant="outline" className="text-xs">
                         {result.executionTime}ms
@@ -330,19 +339,14 @@ export function CodeRunner({ language, initialCode, title, description, onRun }:
                 ) : result.output ? (
                   <div className="space-y-2">
                     <p className="text-sm font-medium">Output:</p>
-                    <CodeBlock
-                      language="json"
-                      showLineNumbers={false}
-                    >
+                    <CodeBlock language="json" showLineNumbers={false}>
                       {result.output}
                     </CodeBlock>
                   </div>
                 ) : null}
               </div>
             ) : (
-              <p className="text-muted-foreground">
-                Run your code to see the output here.
-              </p>
+              <p className="text-muted-foreground">Run your code to see the output here.</p>
             )}
           </TabsContent>
 
@@ -354,7 +358,7 @@ export function CodeRunner({ language, initialCode, title, description, onRun }:
                   {result.logs.map((log, index) => (
                     <div key={index} className="flex items-start gap-2">
                       <span className="text-muted-foreground text-xs">
-                        {String(index + 1).padStart(2, '0')}
+                        {String(index + 1).padStart(2, "0")}
                       </span>
                       <span>{log}</span>
                     </div>

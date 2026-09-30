@@ -1,6 +1,12 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { NotificationChannel } from '../../../../../common/enums/notification-channel.enum';
-import { BaseEmailProvider, EmailDeliveryResult, EmailMessage, EmailProviderConfig, EmailProviderStats } from '../email-provider.interface';
+import { Injectable, Logger } from "@nestjs/common";
+import { NotificationChannel } from "../../../../../common/enums/notification-channel.enum";
+import {
+  BaseEmailProvider,
+  EmailDeliveryResult,
+  EmailMessage,
+  EmailProviderConfig,
+  EmailProviderStats,
+} from "../email-provider.interface";
 
 interface ResendConfig {
   apiKey: string;
@@ -16,12 +22,12 @@ interface ResendEmailResponse {
 
 @Injectable()
 export class ResendProvider extends BaseEmailProvider {
-  readonly providerId = 'resend';
-  readonly name = 'Resend';
+  readonly providerId = "resend";
+  readonly name = "Resend";
   readonly channel = NotificationChannel.EMAIL;
 
   private readonly logger = new Logger(ResendProvider.name);
-  private readonly baseUrl = 'https://api.resend.com';
+  private readonly baseUrl = "https://api.resend.com";
   private isInitialized = false;
 
   constructor(config: EmailProviderConfig) {
@@ -32,13 +38,13 @@ export class ResendProvider extends BaseEmailProvider {
     try {
       const resendConfig = this.config.config as ResendConfig;
       if (!resendConfig.apiKey) {
-        throw new Error('Resend API key is required');
+        throw new Error("Resend API key is required");
       }
 
       this.isInitialized = true;
-      this.logger.log('Resend provider initialized successfully');
+      this.logger.log("Resend provider initialized successfully");
     } catch (error) {
-      this.logger.error('Failed to initialize Resend provider', error);
+      this.logger.error("Failed to initialize Resend provider", error);
       throw new Error(`Resend initialization failed: ${error.message}`, { cause: error });
     }
   }
@@ -64,15 +70,16 @@ export class ResendProvider extends BaseEmailProvider {
         bcc: message.bcc,
         reply_to: message.replyTo || resendConfig.replyToEmail,
         headers: message.headers,
-        attachments: message.attachments?.map(att => ({
+        attachments: message.attachments?.map((att) => ({
           filename: att.filename,
-          content: typeof att.content === 'string'
-            ? Buffer.from(att.content, 'utf8').toString('base64')
-            : att.content.toString('base64'),
+          content:
+            typeof att.content === "string"
+              ? Buffer.from(att.content, "utf8").toString("base64")
+              : att.content.toString("base64"),
           type: att.contentType,
-          disposition: att.cid ? 'inline' : 'attachment',
-          content_id: att.cid
-        }))
+          disposition: att.cid ? "inline" : "attachment",
+          content_id: att.cid,
+        })),
       };
 
       // Handle template emails (Resend supports React Email templates)
@@ -84,15 +91,15 @@ export class ResendProvider extends BaseEmailProvider {
       }
 
       const response = await fetch(`${this.baseUrl}/emails`, {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Authorization': `Bearer ${resendConfig.apiKey}`,
-          'Content-Type': 'application/json',
+          Authorization: `Bearer ${resendConfig.apiKey}`,
+          "Content-Type": "application/json",
         },
         body: JSON.stringify(payload),
       });
 
-      const responseData = await response.json() as ResendEmailResponse;
+      const responseData = (await response.json()) as ResendEmailResponse;
       const latency = Date.now() - startTime;
 
       if (!response.ok) {
@@ -101,35 +108,35 @@ export class ResendProvider extends BaseEmailProvider {
 
       return {
         messageId: responseData.id || `resend_${Date.now()}`,
-        status: 'sent',
+        status: "sent",
         providerId: this.providerId,
         timestamp: new Date(),
         cost: await this.calculateCost(Array.isArray(message.to) ? message.to.length : 1),
         metadata: {
           latency,
           statusCode: response.status,
-          resendId: responseData.id
-        }
+          resendId: responseData.id,
+        },
       };
     } catch (error) {
       const latency = Date.now() - startTime;
 
-      this.logger.error('Resend email send failed', {
+      this.logger.error("Resend email send failed", {
         error: error.message,
         to: message.to,
-        subject: message.subject
+        subject: message.subject,
       });
 
       return {
         messageId: `resend_failed_${Date.now()}`,
-        status: 'failed',
+        status: "failed",
         providerId: this.providerId,
         timestamp: new Date(),
         error: error.message,
         metadata: {
           latency,
-          errorType: 'send_failure'
-        }
+          errorType: "send_failure",
+        },
       };
     }
   }
@@ -145,13 +152,13 @@ export class ResendProvider extends BaseEmailProvider {
       } catch (error) {
         results.push({
           messageId: `resend_bulk_failed_${Date.now()}`,
-          status: 'failed',
+          status: "failed",
           providerId: this.providerId,
           timestamp: new Date(),
           error: error.message,
           metadata: {
-            errorType: 'bulk_send_failure'
-          }
+            errorType: "bulk_send_failure",
+          },
         });
       }
     }
@@ -159,49 +166,54 @@ export class ResendProvider extends BaseEmailProvider {
     return results;
   }
 
-  async validateConfig(config: Record<string, any>): Promise<{ isValid: boolean; errors: string[] }> {
+  async validateConfig(
+    config: Record<string, any>,
+  ): Promise<{ isValid: boolean; errors: string[] }> {
     const errors: string[] = [];
     const resendConfig = config as ResendConfig;
 
     if (!resendConfig.apiKey) {
-      errors.push('API key is required');
-    } else if (!resendConfig.apiKey.startsWith('re_')) {
-      errors.push('Invalid Resend API key format (should start with re_)');
+      errors.push("API key is required");
+    } else if (!resendConfig.apiKey.startsWith("re_")) {
+      errors.push("Invalid Resend API key format (should start with re_)");
     }
 
     if (resendConfig.fromEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(resendConfig.fromEmail)) {
-      errors.push('Invalid from email format');
+      errors.push("Invalid from email format");
     }
 
-    if (resendConfig.replyToEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(resendConfig.replyToEmail)) {
-      errors.push('Invalid reply-to email format');
+    if (
+      resendConfig.replyToEmail &&
+      !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(resendConfig.replyToEmail)
+    ) {
+      errors.push("Invalid reply-to email format");
     }
 
     // Test API key if provided
     if (resendConfig.apiKey && errors.length === 0) {
       try {
         const response = await fetch(`${this.baseUrl}/domains`, {
-          method: 'GET',
+          method: "GET",
           headers: {
-            'Authorization': `Bearer ${resendConfig.apiKey}`,
+            Authorization: `Bearer ${resendConfig.apiKey}`,
           },
         });
 
         if (!response.ok) {
           if (response.status === 401) {
-            errors.push('Invalid API key');
+            errors.push("Invalid API key");
           } else {
-            errors.push('API key validation failed');
+            errors.push("API key validation failed");
           }
         }
       } catch (error) {
-        errors.push('Unable to validate API key');
+        errors.push("Unable to validate API key");
       }
     }
 
     return {
       isValid: errors.length === 0,
-      errors
+      errors,
     };
   }
 
@@ -213,7 +225,7 @@ export class ResendProvider extends BaseEmailProvider {
       averageLatency: 0,
       deliveryRate: 0,
       lastUsed: new Date(),
-      costToDate: 0
+      costToDate: 0,
     };
   }
 
@@ -228,9 +240,9 @@ export class ResendProvider extends BaseEmailProvider {
       const resendConfig = this.config.config as ResendConfig;
 
       const response = await fetch(`${this.baseUrl}/domains`, {
-        method: 'GET',
+        method: "GET",
         headers: {
-          'Authorization': `Bearer ${resendConfig.apiKey}`,
+          Authorization: `Bearer ${resendConfig.apiKey}`,
         },
       });
 
@@ -240,13 +252,13 @@ export class ResendProvider extends BaseEmailProvider {
 
       return {
         healthy: true,
-        latency: Date.now() - startTime
+        latency: Date.now() - startTime,
       };
     } catch (error) {
       return {
         healthy: false,
         latency: Date.now() - startTime,
-        error: error.message
+        error: error.message,
       };
     }
   }
@@ -257,7 +269,7 @@ export class ResendProvider extends BaseEmailProvider {
 
   async getTemplates(): Promise<Array<{ id: string; name: string; subject: string }>> {
     // Resend doesn't have a template API in the same way, templates are handled via React Email
-    this.logger.warn('Template listing not implemented for Resend provider');
+    this.logger.warn("Template listing not implemented for Resend provider");
     return [];
   }
 

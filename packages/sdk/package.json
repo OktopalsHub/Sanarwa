@@ -2,6 +2,33 @@
   "name": "@sanarwa/sdk",
   "version": "0.2.0",
   "description": "Official TypeScript/JavaScript SDK for Sanarwa Notification Platform API",
+  "keywords": [
+    "api",
+    "email",
+    "notification",
+    "push",
+    "sanarwa",
+    "sdk",
+    "sms",
+    "voice",
+    "whatsapp"
+  ],
+  "homepage": "https://docs.sanarwa.com",
+  "bugs": {
+    "url": "https://github.com/sanarwa/sdk/issues"
+  },
+  "license": "MIT",
+  "author": "Sanarwa",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/sanarwa/sdk"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "QUICK-REFERENCE.md",
+    "RAW-HTML-GUIDE.md"
+  ],
   "type": "module",
   "main": "dist/index.cjs",
   "module": "dist/index.js",
@@ -13,12 +40,6 @@
       "types": "./dist/index.d.ts"
     }
   },
-  "files": [
-    "dist",
-    "README.md",
-    "QUICK-REFERENCE.md",
-    "RAW-HTML-GUIDE.md"
-  ],
   "scripts": {
     "build": "rollup -c",
     "dev": "rollup -c -w",
@@ -27,36 +48,15 @@
     "lint": "oxlint -c ../../oxlint.json src",
     "type-check": "tsc --noEmit"
   },
-  "keywords": [
-    "sanarwa",
-    "notification",
-    "api",
-    "sdk",
-    "email",
-    "sms",
-    "push",
-    "whatsapp",
-    "voice"
-  ],
-  "author": "Sanarwa",
-  "license": "MIT",
+  "dependencies": {
+    "axios": "^1.6.2",
+    "tslib": "^2.8.1"
+  },
   "devDependencies": {
     "@rollup/plugin-node-resolve": "^15.2.3",
     "@rollup/plugin-typescript": "^11.1.5",
     "rollup": "^4.6.1",
     "typescript": "^5.3.2",
     "vitest": "^3.0.0"
-  },
-  "dependencies": {
-    "axios": "^1.6.2",
-    "tslib": "^2.8.1"
-  },
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/sanarwa/sdk"
-  },
-  "bugs": {
-    "url": "https://github.com/sanarwa/sdk/issues"
-  },
-  "homepage": "https://docs.sanarwa.com"
+  }
 }

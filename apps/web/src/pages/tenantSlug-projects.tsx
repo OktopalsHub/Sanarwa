@@ -1,12 +1,12 @@
-'use client';
+"use client";
 
-import { ProjectList } from '@/components/projects/project-list';
-import { CreateProjectDialog } from '@/components/projects/create-project-dialog';
-import { AppShell } from '@/components/layout';
-import { Button } from '@/components/ui/button';
-import { PlusIcon } from '@heroicons/react/24/outline'
+import { ProjectList } from "@/components/projects/project-list";
+import { CreateProjectDialog } from "@/components/projects/create-project-dialog";
+import { AppShell } from "@/components/layout";
+import { Button } from "@/components/ui/button";
+import { PlusIcon } from "@heroicons/react/24/outline";
 
-import { useState } from 'react';
+import { useState } from "react";
 
 export default function ProjectsPage() {
   const [showCreateDialog, setShowCreateDialog] = useState(false);
@@ -30,10 +30,7 @@ export default function ProjectsPage() {
 
           <ProjectList />
 
-          <CreateProjectDialog
-            open={showCreateDialog}
-            onOpenChange={setShowCreateDialog}
-          />
+          <CreateProjectDialog open={showCreateDialog} onOpenChange={setShowCreateDialog} />
         </div>
       </div>
     </AppShell>

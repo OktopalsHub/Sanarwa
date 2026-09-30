@@ -1,7 +1,7 @@
-import { Injectable } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import * as winston from 'winston';
-import * as DailyRotateFile from 'winston-daily-rotate-file';
+import { Injectable } from "@nestjs/common";
+import { ConfigService } from "@nestjs/config";
+import * as winston from "winston";
+import * as DailyRotateFile from "winston-daily-rotate-file";
 
 export interface LogContext {
   tenantId?: string;
@@ -21,8 +21,8 @@ export class LoggingService {
   }
 
   private initializeLogger() {
-    const logLevel = this.configService.get<string>('LOG_LEVEL', 'info');
-    const logDir = this.configService.get<string>('LOG_DIR', 'logs');
+    const logLevel = this.configService.get<string>("LOG_LEVEL", "info");
+    const logDir = this.configService.get<string>("LOG_DIR", "logs");
 
     // Create custom format
     const customFormat = winston.format.combine(
@@ -48,22 +48,19 @@ export class LoggingService {
       // Console transport for development
       new winston.transports.Console({
         level: logLevel,
-        format: winston.format.combine(
-          winston.format.colorize(),
-          winston.format.simple(),
-        ),
+        format: winston.format.combine(winston.format.colorize(), winston.format.simple()),
       }),
     ];
 
     // File transports for production
-    if (this.configService.get<string>('NODE_ENV') === 'production') {
+    if (this.configService.get<string>("NODE_ENV") === "production") {
       // General application logs
       transports.push(
         new DailyRotateFile({
           filename: `${logDir}/application-%DATE%.log`,
-          datePattern: 'YYYY-MM-DD',
-          maxSize: '20m',
-          maxFiles: '14d',
+          datePattern: "YYYY-MM-DD",
+          maxSize: "20m",
+          maxFiles: "14d",
           level: logLevel,
           format: customFormat,
         }),
@@ -73,10 +70,10 @@ export class LoggingService {
       transports.push(
         new DailyRotateFile({
           filename: `${logDir}/error-%DATE%.log`,
-          datePattern: 'YYYY-MM-DD',
-          maxSize: '20m',
-          maxFiles: '30d',
-          level: 'error',
+          datePattern: "YYYY-MM-DD",
+          maxSize: "20m",
+          maxFiles: "30d",
+          level: "error",
           format: customFormat,
         }),
       );
@@ -85,9 +82,9 @@ export class LoggingService {
       transports.push(
         new DailyRotateFile({
           filename: `${logDir}/audit-%DATE%.log`,
-          datePattern: 'YYYY-MM-DD',
-          maxSize: '20m',
-          maxFiles: '90d',
+          datePattern: "YYYY-MM-DD",
+          maxSize: "20m",
+          maxFiles: "90d",
           format: customFormat,
         }),
       );
@@ -134,54 +131,45 @@ export class LoggingService {
   }
 
   // Structured logging for different components
-  logNotificationSent(
-    notificationId: string,
-    channel: string,
-    context?: LogContext,
-  ) {
-    this.info('Notification sent', {
+  logNotificationSent(notificationId: string, channel: string, context?: LogContext) {
+    this.info("Notification sent", {
       ...context,
       notificationId,
       channel,
-      component: 'notification',
-      operation: 'send',
+      component: "notification",
+      operation: "send",
     });
   }
 
   logProviderFailure(providerId: string, error: Error, context?: LogContext) {
-    this.error('Provider failure', error, {
+    this.error("Provider failure", error, {
       ...context,
       providerId,
-      component: 'provider',
-      operation: 'send',
+      component: "provider",
+      operation: "send",
     });
   }
 
   logSecurityEvent(
     event: string,
-    severity: 'low' | 'medium' | 'high' | 'critical',
+    severity: "low" | "medium" | "high" | "critical",
     context?: LogContext,
   ) {
     this.warn(`SECURITY: ${event}`, {
       ...context,
       severity,
-      component: 'security',
+      component: "security",
       security: true,
     });
   }
 
-  logPerformanceMetric(
-    metric: string,
-    value: number,
-    unit: string,
-    context?: LogContext,
-  ) {
+  logPerformanceMetric(metric: string, value: number, unit: string, context?: LogContext) {
     this.info(`PERFORMANCE: ${metric}`, {
       ...context,
       metric,
       value,
       unit,
-      component: 'performance',
+      component: "performance",
     });
   }
 }

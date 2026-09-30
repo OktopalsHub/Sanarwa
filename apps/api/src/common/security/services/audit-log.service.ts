@@ -1,7 +1,7 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, Between, In, LessThan } from 'typeorm';
-import { AuditLog, AuditAction, AuditResourceType } from '../entities/audit-log.entity';
+import { Injectable, Logger } from "@nestjs/common";
+import { InjectRepository } from "@nestjs/typeorm";
+import { Repository, Between, In, LessThan } from "typeorm";
+import { AuditLog, AuditAction, AuditResourceType } from "../entities/audit-log.entity";
 
 export interface CreateAuditLogDto {
   tenantId: string;
@@ -26,7 +26,7 @@ export interface CreateAuditLogDto {
   apiVersion?: string;
   clientVersion?: string;
   tags?: string[];
-  severity?: 'low' | 'medium' | 'high' | 'critical';
+  severity?: "low" | "medium" | "high" | "critical";
   complianceFlags?: string[];
 }
 
@@ -47,7 +47,7 @@ export interface AuditLogQuery {
   limit?: number;
   offset?: number;
   sortBy?: string;
-  sortOrder?: 'ASC' | 'DESC';
+  sortOrder?: "ASC" | "DESC";
 }
 
 @Injectable()
@@ -87,13 +87,13 @@ export class AuditLogService {
         apiVersion: data.apiVersion,
         clientVersion: data.clientVersion,
         tags: data.tags,
-        severity: data.severity || 'low',
+        severity: data.severity || "low",
         complianceFlags: data.complianceFlags,
       });
 
       return await this.auditLogRepository.save(auditLog);
     } catch (error) {
-      this.logger.error('Failed to create audit log', error);
+      this.logger.error("Failed to create audit log", error);
       throw error;
     }
   }
@@ -103,7 +103,7 @@ export class AuditLogService {
    */
   async createBulkAuditLogs(data: CreateAuditLogDto[]): Promise<void> {
     try {
-      const auditLogs = data.map(item =>
+      const auditLogs = data.map((item) =>
         this.auditLogRepository.create({
           tenantId: item.tenantId,
           tenantMemberId: item.tenantMemberId,
@@ -127,14 +127,14 @@ export class AuditLogService {
           apiVersion: item.apiVersion,
           clientVersion: item.clientVersion,
           tags: item.tags,
-          severity: item.severity || 'low',
+          severity: item.severity || "low",
           complianceFlags: item.complianceFlags,
         }),
       );
 
       await this.auditLogRepository.save(auditLogs);
     } catch (error) {
-      this.logger.error('Failed to create bulk audit logs', error);
+      this.logger.error("Failed to create bulk audit logs", error);
       throw error;
     }
   }
@@ -153,38 +153,47 @@ export class AuditLogService {
       const offset = query.offset || 0;
       const page = Math.floor(offset / limit) + 1;
 
-      const qb = this.auditLogRepository.createQueryBuilder('audit');
+      const qb = this.auditLogRepository.createQueryBuilder("audit");
 
-      if (query.tenantId) qb.andWhere('audit.tenantId = :tenantId', { tenantId: query.tenantId });
-      if (query.tenantMemberId) qb.andWhere('audit.tenantMemberId = :tenantMemberId', { tenantMemberId: query.tenantMemberId });
-      if (query.action) qb.andWhere('audit.action = :action', { action: query.action });
-      if (query.resourceType) qb.andWhere('audit.resourceType = :resourceType', { resourceType: query.resourceType });
-      if (query.resourceId) qb.andWhere('audit.resourceId = :resourceId', { resourceId: query.resourceId });
-      if (query.success !== undefined) qb.andWhere('audit.success = :success', { success: query.success });
-      if (query.ipAddress) qb.andWhere('audit.ipAddress = :ipAddress', { ipAddress: query.ipAddress });
-      if (query.sessionId) qb.andWhere('audit.sessionId = :sessionId', { sessionId: query.sessionId });
-      if (query.correlationId) qb.andWhere('audit.correlationId = :correlationId', { correlationId: query.correlationId });
-      if (query.severity) qb.andWhere('audit.severity = :severity', { severity: query.severity });
+      if (query.tenantId) qb.andWhere("audit.tenantId = :tenantId", { tenantId: query.tenantId });
+      if (query.tenantMemberId)
+        qb.andWhere("audit.tenantMemberId = :tenantMemberId", {
+          tenantMemberId: query.tenantMemberId,
+        });
+      if (query.action) qb.andWhere("audit.action = :action", { action: query.action });
+      if (query.resourceType)
+        qb.andWhere("audit.resourceType = :resourceType", { resourceType: query.resourceType });
+      if (query.resourceId)
+        qb.andWhere("audit.resourceId = :resourceId", { resourceId: query.resourceId });
+      if (query.success !== undefined)
+        qb.andWhere("audit.success = :success", { success: query.success });
+      if (query.ipAddress)
+        qb.andWhere("audit.ipAddress = :ipAddress", { ipAddress: query.ipAddress });
+      if (query.sessionId)
+        qb.andWhere("audit.sessionId = :sessionId", { sessionId: query.sessionId });
+      if (query.correlationId)
+        qb.andWhere("audit.correlationId = :correlationId", { correlationId: query.correlationId });
+      if (query.severity) qb.andWhere("audit.severity = :severity", { severity: query.severity });
 
       if (query.tags && query.tags.length > 0) {
-        qb.andWhere('audit.tags && :tags', { tags: query.tags });
+        qb.andWhere("audit.tags && :tags", { tags: query.tags });
       }
 
       if (query.startDate || query.endDate) {
         if (query.startDate && query.endDate) {
-          qb.andWhere('audit.createdAt BETWEEN :startDate AND :endDate', {
+          qb.andWhere("audit.createdAt BETWEEN :startDate AND :endDate", {
             startDate: query.startDate,
             endDate: query.endDate,
           });
         } else if (query.startDate) {
-          qb.andWhere('audit.createdAt >= :startDate', { startDate: query.startDate });
+          qb.andWhere("audit.createdAt >= :startDate", { startDate: query.startDate });
         } else if (query.endDate) {
-          qb.andWhere('audit.createdAt <= :endDate', { endDate: query.endDate });
+          qb.andWhere("audit.createdAt <= :endDate", { endDate: query.endDate });
         }
       }
 
-      const sortField = query.sortBy || 'createdAt';
-      const sortOrder = query.sortOrder || 'DESC';
+      const sortField = query.sortBy || "createdAt";
+      const sortOrder = query.sortOrder || "DESC";
       qb.orderBy(`audit.${sortField}`, sortOrder);
 
       qb.skip(offset).take(limit);
@@ -198,7 +207,7 @@ export class AuditLogService {
         limit,
       };
     } catch (error) {
-      this.logger.error('Failed to query audit logs', error);
+      this.logger.error("Failed to query audit logs", error);
       throw error;
     }
   }
@@ -219,11 +228,11 @@ export class AuditLogService {
           resourceType,
           resourceId,
         },
-        order: { createdAt: 'DESC' },
+        order: { createdAt: "DESC" },
         take: limit,
       });
     } catch (error) {
-      this.logger.error('Failed to get resource audit logs', error);
+      this.logger.error("Failed to get resource audit logs", error);
       throw error;
     }
   }
@@ -242,11 +251,11 @@ export class AuditLogService {
           tenantId,
           tenantMemberId,
         },
-        order: { createdAt: 'DESC' },
+        order: { createdAt: "DESC" },
         take: limit,
       });
     } catch (error) {
-      this.logger.error('Failed to get tenant member audit logs', error);
+      this.logger.error("Failed to get tenant member audit logs", error);
       throw error;
     }
   }
@@ -254,7 +263,11 @@ export class AuditLogService {
   /**
    * Get audit log statistics
    */
-  async getAuditLogStats(tenantId: string, startDate?: Date, endDate?: Date): Promise<{
+  async getAuditLogStats(
+    tenantId: string,
+    startDate?: Date,
+    endDate?: Date,
+  ): Promise<{
     totalLogs: number;
     successfulActions: number;
     failedActions: number;
@@ -263,35 +276,45 @@ export class AuditLogService {
     userBreakdown: Record<string, number>;
   }> {
     try {
-      const qb = this.auditLogRepository.createQueryBuilder('audit')
-        .where('audit.tenantId = :tenantId', { tenantId });
+      const qb = this.auditLogRepository
+        .createQueryBuilder("audit")
+        .where("audit.tenantId = :tenantId", { tenantId });
 
       if (startDate && endDate) {
-        qb.andWhere('audit.createdAt BETWEEN :startDate AND :endDate', { startDate, endDate });
+        qb.andWhere("audit.createdAt BETWEEN :startDate AND :endDate", { startDate, endDate });
       }
 
       const logs = await qb.getMany();
 
       const totalLogs = logs.length;
-      const successfulActions = logs.filter(l => l.success).length;
-      const failedActions = logs.filter(l => !l.success).length;
+      const successfulActions = logs.filter((l) => l.success).length;
+      const failedActions = logs.filter((l) => !l.success).length;
 
-      const actionBreakdown = logs.reduce((acc, log) => {
-        acc[log.action] = (acc[log.action] || 0) + 1;
-        return acc;
-      }, {} as Record<string, number>);
+      const actionBreakdown = logs.reduce(
+        (acc, log) => {
+          acc[log.action] = (acc[log.action] || 0) + 1;
+          return acc;
+        },
+        {} as Record<string, number>,
+      );
 
-      const resourceBreakdown = logs.reduce((acc, log) => {
-        acc[log.resourceType] = (acc[log.resourceType] || 0) + 1;
-        return acc;
-      }, {} as Record<string, number>);
+      const resourceBreakdown = logs.reduce(
+        (acc, log) => {
+          acc[log.resourceType] = (acc[log.resourceType] || 0) + 1;
+          return acc;
+        },
+        {} as Record<string, number>,
+      );
 
       const tenantMemberBreakdown = logs
-        .filter(l => l.tenantMemberId)
-        .reduce((acc, log) => {
-          acc[log.tenantMemberId] = (acc[log.tenantMemberId] || 0) + 1;
-          return acc;
-        }, {} as Record<string, number>);
+        .filter((l) => l.tenantMemberId)
+        .reduce(
+          (acc, log) => {
+            acc[log.tenantMemberId] = (acc[log.tenantMemberId] || 0) + 1;
+            return acc;
+          },
+          {} as Record<string, number>,
+        );
 
       return {
         totalLogs,
@@ -302,7 +325,7 @@ export class AuditLogService {
         userBreakdown: tenantMemberBreakdown,
       };
     } catch (error) {
-      this.logger.error('Failed to get audit log stats', error);
+      this.logger.error("Failed to get audit log stats", error);
       throw error;
     }
   }
@@ -319,7 +342,7 @@ export class AuditLogService {
       this.logger.log(`Deleted ${result.affected} old audit logs`);
       return result.affected || 0;
     } catch (error) {
-      this.logger.error('Failed to delete old audit logs', error);
+      this.logger.error("Failed to delete old audit logs", error);
       throw error;
     }
   }
@@ -327,50 +350,49 @@ export class AuditLogService {
   /**
    * Export audit logs in specified format
    */
-  async exportAuditLogs(
-    query: AuditLogQuery,
-    format: 'json' | 'csv' = 'json',
-  ): Promise<string> {
+  async exportAuditLogs(query: AuditLogQuery, format: "json" | "csv" = "json"): Promise<string> {
     try {
       const result = await this.queryAuditLogs({
         ...query,
         limit: query.limit || 10000,
       });
 
-      if (format === 'csv') {
+      if (format === "csv") {
         const headers = [
-          'Timestamp',
-          'User ID',
-          'Action',
-          'Resource Type',
-          'Resource ID',
-          'Description',
-          'Success',
-          'IP Address',
-          'User Agent',
+          "Timestamp",
+          "User ID",
+          "Action",
+          "Resource Type",
+          "Resource ID",
+          "Description",
+          "Success",
+          "IP Address",
+          "User Agent",
         ];
 
         const csvRows = [
-          headers.join(','),
-          ...result.data.map(log => [
-            log.createdAt?.toISOString() || '',
-            log.tenantMemberId || '',
-            log.action || '',
-            log.resourceType || '',
-            log.resourceId || '',
-            `"${log.description?.replace(/"/g, '""') || ''}"`,
-            log.success?.toString() || 'true',
-            log.ipAddress || '',
-            `"${log.userAgent?.replace(/"/g, '""') || ''}"`,
-          ].join(',')),
+          headers.join(","),
+          ...result.data.map((log) =>
+            [
+              log.createdAt?.toISOString() || "",
+              log.tenantMemberId || "",
+              log.action || "",
+              log.resourceType || "",
+              log.resourceId || "",
+              `"${log.description?.replace(/"/g, '""') || ""}"`,
+              log.success?.toString() || "true",
+              log.ipAddress || "",
+              `"${log.userAgent?.replace(/"/g, '""') || ""}"`,
+            ].join(","),
+          ),
         ];
 
-        return csvRows.join('\n');
+        return csvRows.join("\n");
       }
 
       return JSON.stringify(result, null, 2);
     } catch (error) {
-      this.logger.error('Failed to export audit logs', error);
+      this.logger.error("Failed to export audit logs", error);
       throw error;
     }
   }
@@ -401,28 +423,37 @@ export class AuditLogService {
           tenantMemberId,
           createdAt: MoreThanOrEqual(startDate),
         },
-        order: { createdAt: 'DESC' },
+        order: { createdAt: "DESC" },
       });
 
       const totalActions = logs.length;
-      const successfulActions = logs.filter(l => l.success).length;
-      const failedActions = logs.filter(l => !l.success).length;
+      const successfulActions = logs.filter((l) => l.success).length;
+      const failedActions = logs.filter((l) => !l.success).length;
 
-      const actionBreakdown = logs.reduce((acc, log) => {
-        acc[log.action] = (acc[log.action] || 0) + 1;
-        return acc;
-      }, {} as Record<string, number>);
+      const actionBreakdown = logs.reduce(
+        (acc, log) => {
+          acc[log.action] = (acc[log.action] || 0) + 1;
+          return acc;
+        },
+        {} as Record<string, number>,
+      );
 
-      const resourceBreakdown = logs.reduce((acc, log) => {
-        acc[log.resourceType] = (acc[log.resourceType] || 0) + 1;
-        return acc;
-      }, {} as Record<string, number>);
+      const resourceBreakdown = logs.reduce(
+        (acc, log) => {
+          acc[log.resourceType] = (acc[log.resourceType] || 0) + 1;
+          return acc;
+        },
+        {} as Record<string, number>,
+      );
 
-      const dailyActivityMap = logs.reduce((acc, log) => {
-        const date = log.createdAt.toISOString().split('T')[0];
-        acc[date] = (acc[date] || 0) + 1;
-        return acc;
-      }, {} as Record<string, number>);
+      const dailyActivityMap = logs.reduce(
+        (acc, log) => {
+          const date = log.createdAt.toISOString().split("T")[0];
+          acc[date] = (acc[date] || 0) + 1;
+          return acc;
+        },
+        {} as Record<string, number>,
+      );
 
       const dailyActivity = Object.entries(dailyActivityMap)
         .map(([date, count]) => ({ date, count }))
@@ -438,7 +469,7 @@ export class AuditLogService {
         lastActivity: logs[0]?.createdAt,
       };
     } catch (error) {
-      this.logger.error('Failed to get user activity summary', error);
+      this.logger.error("Failed to get user activity summary", error);
       throw error;
     }
   }
@@ -446,22 +477,18 @@ export class AuditLogService {
   /**
    * Get audit logs for a specific user
    */
-  async getUserAuditLogs(
-    tenantId: string,
-    userId: string,
-    limit = 100,
-  ): Promise<AuditLog[]> {
+  async getUserAuditLogs(tenantId: string, userId: string, limit = 100): Promise<AuditLog[]> {
     try {
       return await this.auditLogRepository.find({
         where: {
           tenantId,
           tenantMemberId: userId,
         },
-        order: { createdAt: 'DESC' },
+        order: { createdAt: "DESC" },
         take: limit,
       });
     } catch (error) {
-      this.logger.error('Failed to get user audit logs', error);
+      this.logger.error("Failed to get user audit logs", error);
       throw error;
     }
   }
@@ -469,32 +496,29 @@ export class AuditLogService {
   /**
    * Get user activity summary
    */
-  async getUserActivitySummary(
-    userId: string,
-    startDate?: Date,
-    endDate?: Date,
-  ): Promise<any> {
+  async getUserActivitySummary(userId: string, startDate?: Date, endDate?: Date): Promise<any> {
     try {
-      const qb = this.auditLogRepository.createQueryBuilder('audit')
-        .where('audit.tenantMemberId = :userId', { userId });
+      const qb = this.auditLogRepository
+        .createQueryBuilder("audit")
+        .where("audit.tenantMemberId = :userId", { userId });
 
       if (startDate && endDate) {
-        qb.andWhere('audit.createdAt BETWEEN :startDate AND :endDate', { startDate, endDate });
+        qb.andWhere("audit.createdAt BETWEEN :startDate AND :endDate", { startDate, endDate });
       }
 
-      const logs = await qb.orderBy('audit.createdAt', 'DESC').getMany();
+      const logs = await qb.orderBy("audit.createdAt", "DESC").getMany();
 
       return {
         totalActions: logs.length,
-        successfulActions: logs.filter(l => l.success).length,
-        failedActions: logs.filter(l => !l.success).length,
+        successfulActions: logs.filter((l) => l.success).length,
+        failedActions: logs.filter((l) => !l.success).length,
         lastActivity: logs[0]?.createdAt,
       };
     } catch (error) {
-      this.logger.error('Failed to get user activity summary', error);
+      this.logger.error("Failed to get user activity summary", error);
       throw error;
     }
   }
 }
 
-import { MoreThanOrEqual } from 'typeorm';
+import { MoreThanOrEqual } from "typeorm";

@@ -1,4 +1,4 @@
-import { authApi } from '@/lib/api/auth';
+import { authApi } from "@/lib/api/auth";
 import type {
   AuthResponse,
   EmailVerificationRequest,
@@ -6,13 +6,13 @@ import type {
   LoginCredentials,
   PasswordResetConfirm,
   PasswordResetRequest,
-  RegisterCredentials
-} from '@/lib/types/auth';
-import { UserRole } from '@/lib/types/auth';
-import type { Permission, PermissionCheck, TenantRole } from '@/lib/types/permissions';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import React from 'react';
-import { invalidateQueries, queryKeys } from '../query-client';
+  RegisterCredentials,
+} from "@/lib/types/auth";
+import { UserRole } from "@/lib/types/auth";
+import type { Permission, PermissionCheck, TenantRole } from "@/lib/types/permissions";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import React from "react";
+import { invalidateQueries, queryKeys } from "../query-client";
 
 // Query hook for current user
 export function useCurrentUser() {
@@ -45,7 +45,7 @@ export function useLogin() {
       queryClient.invalidateQueries();
     },
     onError: (error) => {
-      console.error('Login failed:', error);
+      console.error("Login failed:", error);
     },
   });
 }
@@ -65,7 +65,7 @@ export function useRegister() {
       queryClient.invalidateQueries();
     },
     onError: (error) => {
-      console.error('Registration failed:', error);
+      console.error("Registration failed:", error);
     },
   });
 }
@@ -80,16 +80,16 @@ export function useLogout() {
       // Clear all cached data
       queryClient.clear();
       // Redirect to login page
-      if (typeof window !== 'undefined') {
-        window.location.href = '/login';
+      if (typeof window !== "undefined") {
+        window.location.href = "/login";
       }
     },
     onError: (error) => {
-      console.error('Logout failed:', error);
+      console.error("Logout failed:", error);
       // Even if logout fails on server, clear local cache
       queryClient.clear();
-      if (typeof window !== 'undefined') {
-        window.location.href = '/login';
+      if (typeof window !== "undefined") {
+        window.location.href = "/login";
       }
     },
   });
@@ -100,7 +100,7 @@ export function usePasswordResetRequest() {
   return useMutation({
     mutationFn: (data: PasswordResetRequest) => authApi.requestPasswordReset(data),
     onError: (error) => {
-      console.error('Password reset request failed:', error);
+      console.error("Password reset request failed:", error);
     },
   });
 }
@@ -110,7 +110,7 @@ export function usePasswordResetConfirm() {
   return useMutation({
     mutationFn: (data: PasswordResetConfirm) => authApi.confirmPasswordReset(data),
     onError: (error) => {
-      console.error('Password reset confirmation failed:', error);
+      console.error("Password reset confirmation failed:", error);
     },
   });
 }
@@ -126,7 +126,7 @@ export function useEmailVerification() {
       invalidateQueries.auth();
     },
     onError: (error) => {
-      console.error('Email verification failed:', error);
+      console.error("Email verification failed:", error);
     },
   });
 }
@@ -136,7 +136,7 @@ export function useResendVerificationEmail() {
   return useMutation({
     mutationFn: () => authApi.resendVerificationEmail(),
     onError: (error) => {
-      console.error('Resend verification email failed:', error);
+      console.error("Resend verification email failed:", error);
     },
   });
 }
@@ -184,16 +184,16 @@ export function useRoleBasedAccess(tenantId?: string) {
   };
 
   const hasAnyPermission = (requiredPermissions: Permission[]): boolean => {
-    return requiredPermissions.some(permission => permissions.includes(permission));
+    return requiredPermissions.some((permission) => permissions.includes(permission));
   };
 
   const hasAllPermissions = (requiredPermissions: Permission[]): boolean => {
-    return requiredPermissions.every(permission => permissions.includes(permission));
+    return requiredPermissions.every((permission) => permissions.includes(permission));
   };
 
   const canAccess = (resource: string, action: string): PermissionCheck => {
     const permissionKey = `${resource}:${action}` as Permission;
-    const hasAccess = hasPermission(permissionKey) || hasPermission('admin');
+    const hasAccess = hasPermission(permissionKey) || hasPermission("admin");
 
     return {
       hasPermission: hasAccess,
@@ -210,15 +210,15 @@ export function useRoleBasedAccess(tenantId?: string) {
   };
 
   const canManageMembers = (): boolean => {
-    return hasPermission('members:write') || hasPermission('admin');
+    return hasPermission("members:write") || hasPermission("admin");
   };
 
   const canInviteMembers = (): boolean => {
-    return hasPermission('members:invite') || hasPermission('admin');
+    return hasPermission("members:invite") || hasPermission("admin");
   };
 
   const canManageBilling = (): boolean => {
-    return hasPermission('billing') || isOwner();
+    return hasPermission("billing") || isOwner();
   };
 
   return {
@@ -252,11 +252,11 @@ export function useSession() {
       invalidateQueries.auth();
     },
     onError: (error) => {
-      console.error('Session refresh failed:', error);
+      console.error("Session refresh failed:", error);
       // Clear tokens and redirect to login
       authApi.clearTokens();
-      if (typeof window !== 'undefined') {
-        window.location.href = '/login';
+      if (typeof window !== "undefined") {
+        window.location.href = "/login";
       }
     },
   });
@@ -267,7 +267,7 @@ export function useSession() {
 
     try {
       // Decode JWT to check expiration
-      const tokenPart = token.split('.')[1];
+      const tokenPart = token.split(".")[1];
       if (!tokenPart) return { token, isExpired: true };
       const payload = JSON.parse(atob(tokenPart)) as JwtPayload;
       const isExpired = Date.now() >= payload.exp * 1000;
@@ -286,7 +286,7 @@ export function useSession() {
     if (!token) return 0;
 
     try {
-      const tokenPart = token.split('.')[1];
+      const tokenPart = token.split(".")[1];
       if (!tokenPart) return 0;
       const payload = JSON.parse(atob(tokenPart)) as JwtPayload;
       return Math.max(0, payload.exp * 1000 - Date.now());

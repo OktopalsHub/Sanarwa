@@ -1,10 +1,15 @@
 /**
  * Next.js compatibility shims for TanStack Router migration
  */
-import { Link as TanStackLink, useNavigate, useParams as useTanStackParams, useRouterState } from '@tanstack/react-router';
-import type { ComponentProps } from 'react';
+import {
+  Link as TanStackLink,
+  useNavigate,
+  useParams as useTanStackParams,
+  useRouterState,
+} from "@tanstack/react-router";
+import type { ComponentProps } from "react";
 
-type LinkProps = Omit<ComponentProps<typeof TanStackLink>, 'to'> & {
+type LinkProps = Omit<ComponentProps<typeof TanStackLink>, "to"> & {
   href: string;
 };
 
@@ -44,4 +49,4 @@ export function useParams<T extends Record<string, string> = Record<string, stri
   return useTanStackParams(options as never) as T;
 }
 
-export { redirect } from '@tanstack/react-router';
+export { redirect } from "@tanstack/react-router";

@@ -1,9 +1,9 @@
-import { Module } from '@nestjs/common';
-import { TypeOrmModule } from '@nestjs/typeorm';
-import { AuthModule } from '../../modules/auth/auth.module';
-import { AuditLog } from './entities/audit-log.entity';
-import { AuditLogService } from './services/audit-log.service';
-import { AuditLogController } from './controllers/audit-log.controller';
+import { Module } from "@nestjs/common";
+import { TypeOrmModule } from "@nestjs/typeorm";
+import { AuthModule } from "../../modules/auth/auth.module";
+import { AuditLog } from "./entities/audit-log.entity";
+import { AuditLogService } from "./services/audit-log.service";
+import { AuditLogController } from "./controllers/audit-log.controller";
 
 @Module({
   imports: [TypeOrmModule.forFeature([AuditLog]), AuthModule],

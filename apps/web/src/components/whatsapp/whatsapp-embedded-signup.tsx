@@ -21,14 +21,12 @@ export function WhatsAppEmbeddedSignup() {
 
   const [form, setForm] = useState({ businessName: "", businessEmail: "", businessPhone: "", businessWebsite: "" });
 
-  // Handle redirect ?code & state from Meta after Embedded Signup
-  useEffect(() => {
+  useEffect((): void => {
     const params = new URLSearchParams(window.location.search);
     const code = params.get("code");
     const state = params.get("state");
     if (code && state) {
-      complete({ code, state }, { onSuccess: () => { toast.success("WhatsApp WABA connected"); refetch(); }, onError: (e:any)=> toast.error(e.message) });
-      // clean url
+      complete({ code, state }, { onSuccess: () => { toast.success("WhatsApp WABA connected"); refetch(); }, onError: (e: any) => toast.error(e.message) });
       window.history.replaceState({}, "", window.location.pathname);
     }
   }, []);
@@ -57,17 +55,26 @@ export function WhatsAppEmbeddedSignup() {
     );
   }
 
-  const handleInitiate = () => {
-    if (!tenantId) return toast.error("Select tenant first");
-    if (!form.businessName || !form.businessEmail || !form.businessPhone) return toast.error("Fill business name, email, phone");
+  const handleInitiate = (): void => {
+    if (!tenantId) {
+      toast.error("Select tenant first");
+      return;
+    }
+    if (!form.businessName || !form.businessEmail || !form.businessPhone) {
+      toast.error("Fill business name, email, phone");
+      return;
+    }
     const redirectUri = window.location.origin + window.location.pathname;
-    initiate({ tenantId, businessName: form.businessName, businessEmail: form.businessEmail, businessPhone: form.businessPhone, businessWebsite: form.businessWebsite, redirectUri }, {
-      onSuccess: (res: any) => {
-        toast.success("Opening Meta signup...");
-        window.open(res.signupUrl, "_blank", "width=600,height=700");
+    initiate(
+      { tenantId, businessName: form.businessName, businessEmail: form.businessEmail, businessPhone: form.businessPhone, businessWebsite: form.businessWebsite, redirectUri },
+      {
+        onSuccess: (res: any) => {
+          toast.success("Opening Meta signup...");
+          window.open(res.signupUrl, "_blank", "width=600,height=700");
+        },
+        onError: (e: any) => toast.error(e.message),
       },
-      onError: (e:any)=> toast.error(e.message),
-    });
+    );
   };
 
   return (

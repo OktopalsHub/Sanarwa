@@ -13,42 +13,95 @@ concurrency:
   group: sanarwa-ci-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+env:
+  PNPM_VERSION: 10.25.0
+  NODE_VERSION: 22
+
 jobs:
-  quality:
+  lint:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
       - uses: pnpm/action-setup@v4
         with:
-          version: 10.25.0
-
+          version: ${{ env.PNPM_VERSION }}
       - uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: ${{ env.NODE_VERSION }}
           cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm lint
 
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+  circular:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm deps:circular
 
-      - name: Lint
-        run: pnpm lint
+  fallow:
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm fallow
 
-      - name: Circular dependencies
-        run: pnpm deps:circular
+  type-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm type-check
 
-      - name: Fallow report
-        run: pnpm fallow
-        continue-on-error: true
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm test
 
-      - name: Type check
-        run: pnpm type-check
-
-      - name: Test
-        run: pnpm test
-
-      - name: Build
-        run: pnpm build
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm build
 
   migrations:
     runs-on: ubuntu-latest
@@ -66,31 +119,19 @@ jobs:
           --health-interval 5s
           --health-timeout 5s
           --health-retries 20
-
     env:
       DATABASE_URL: postgresql://sanarwa:sanarwa@localhost:5432/sanarwa_ci
       NODE_ENV: test
-
     steps:
       - uses: actions/checkout@v4
-
       - uses: pnpm/action-setup@v4
         with:
-          version: 10.25.0
-
+          version: ${{ env.PNPM_VERSION }}
       - uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: ${{ env.NODE_VERSION }}
           cache: pnpm
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Run migrations
-        run: pnpm --filter @sanarwa/api migration:run
-
-      - name: Revert latest migration
-        run: pnpm --filter @sanarwa/api migration:revert
-
-      - name: Re-run migrations
-        run: pnpm --filter @sanarwa/api migration:run
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter @sanarwa/api migration:run
+      - run: pnpm --filter @sanarwa/api migration:revert
+      - run: pnpm --filter @sanarwa/api migration:run

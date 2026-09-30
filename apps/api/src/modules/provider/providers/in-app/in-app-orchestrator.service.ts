@@ -2,7 +2,7 @@ import { Injectable, Logger } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { EventEmitter2 } from "@nestjs/event-emitter";
 import { InjectRepository } from "@nestjs/typeorm";
-import { Repository } from "typeorm";
+import { DeepPartial, Repository } from "typeorm";
 import { InAppNotification } from "../../../messaging/entities/in-app-notification.entity";
 import { IInAppProvider, InAppPayload, InAppResponse } from "./in-app-provider.interface";
 import { WebSocketProvider } from "./providers/websocket.provider";
@@ -42,7 +42,7 @@ export class InAppOrchestratorService {
     }
 
     const tenantId = (payload as any).tenantId || payload.data?.tenantId || "unknown";
-    const n = this.inAppRepo.create({
+    const notificationInput: DeepPartial<InAppNotification> = {
       title: payload.title,
       message: payload.message,
       type: (payload.type as any) || "info",
@@ -60,7 +60,8 @@ export class InAppOrchestratorService {
       priority: payload.priority || "normal",
       avatar: payload.data?.avatar,
       expiresAt: payload.expiresAt,
-    } as any);
+    };
+    const n = this.inAppRepo.create(notificationInput);
     const saved = await this.inAppRepo.save(n);
     this.logger.log(`In-App persisted ${saved.id} for ${subscriberId} feed:${saved.feedId}`);
     return saved;

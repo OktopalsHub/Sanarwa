@@ -1,5 +1,13 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsIn, IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import {
+  ArrayNotEmpty,
+  IsArray,
+  IsIn,
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+  ValidateIf,
+} from 'class-validator';
 
 export const PUBLIC_SEND_CHANNELS = [
   'email',
@@ -23,8 +31,15 @@ export class PublicSendMessageDto {
   @ApiProperty({
     description: 'Recipient address (email, phone, device token, etc.)',
     example: 'amaka@halo.ng',
+    oneOf: [{ type: 'string' }, { type: 'array', items: { type: 'string' } }],
   })
+  @ValidateIf(({ to }) => !Array.isArray(to))
+  @IsString()
   @IsNotEmpty()
+  @ValidateIf(({ to }) => Array.isArray(to))
+  @IsArray()
+  @ArrayNotEmpty()
+  @IsString({ each: true })
   to: string | string[];
 
   @ApiPropertyOptional({

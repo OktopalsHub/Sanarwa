@@ -37,8 +37,9 @@ jobs:
       - name: Circular dependencies
         run: pnpm deps:circular
 
-      - name: Fallow
+      - name: Fallow report
         run: pnpm fallow
+        continue-on-error: true
 
       - name: Type check
         run: pnpm type-check

@@ -56,8 +56,8 @@ function editorToAssignments(templates: TemplatePerChannel, existing: TemplateAs
       templateId: previous?.templateId || "",
       templateName: previous?.templateName || `${typedChannel} campaign template`,
       variables: {
-        ...(previous?.variables || {}),
-        ...(template.data || {}),
+        ...previous?.variables,
+        ...template.data,
         content: template.content,
         ...(template.subject ? { subject: template.subject } : {}),
       },

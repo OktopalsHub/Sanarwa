@@ -40,6 +40,8 @@ export { notificationApi } from './notification';
 export { analyticsApi } from './analytics';
 export { billingApi } from './billing';
 export { templateApi } from './template';
+export * from './messaging';
+export * from './webhook';
 export * from './demo';
 
 // WebRTC API

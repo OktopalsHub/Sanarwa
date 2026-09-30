@@ -36,6 +36,8 @@ import { Route as TenantSlugBillingRouteImport } from './routes/$tenantSlug/bill
 import { Route as TenantSlugCampaignsRouteImport } from './routes/$tenantSlug/campaigns'
 import { Route as TenantSlugDashboardRouteImport } from './routes/$tenantSlug/dashboard'
 import { Route as TenantSlugMonitoringRouteImport } from './routes/$tenantSlug/monitoring'
+import { Route as TenantSlugMessagesRouteImport } from './routes/$tenantSlug/messages'
+import { Route as TenantSlugWebhooksRouteImport } from './routes/$tenantSlug/webhooks'
 import { Route as TenantSlugProjectsRouteImport } from './routes/$tenantSlug/projects'
 import { Route as TenantSlugProvidersRouteImport } from './routes/$tenantSlug/providers'
 import { Route as TenantSlugSettingsRouteImport } from './routes/$tenantSlug/settings'
@@ -52,6 +54,7 @@ import { Route as SettingsTeamRouteImport } from './routes/settings/team'
 import { Route as SettingsTenantRouteImport } from './routes/settings/tenant'
 import { Route as TemplatesEmailRouteImport } from './routes/templates/email'
 import { Route as TenantSlugCampaignsIdRouteImport } from './routes/$tenantSlug/campaigns/$id'
+import { Route as TenantSlugMessagesIdRouteImport } from './routes/$tenantSlug/messages/$id'
 import { Route as TenantSlugProjectsProjectIdRouteImport } from './routes/$tenantSlug/projects/$projectId'
 import { Route as TenantSlugProvidersProviderIdRouteImport } from './routes/$tenantSlug/providers/$providerId'
 import { Route as DocsSdksJavascriptRouteImport } from './routes/docs/sdks/javascript'
@@ -191,6 +194,16 @@ const TenantSlugMonitoringRoute = TenantSlugMonitoringRouteImport.update({
   path: '/monitoring',
   getParentRoute: () => TenantSlugRoute,
 } as any)
+const TenantSlugMessagesRoute = TenantSlugMessagesRouteImport.update({
+  id: '/messages',
+  path: '/messages',
+  getParentRoute: () => TenantSlugRoute,
+} as any)
+const TenantSlugWebhooksRoute = TenantSlugWebhooksRouteImport.update({
+  id: '/webhooks',
+  path: '/webhooks',
+  getParentRoute: () => TenantSlugRoute,
+} as any)
 const TenantSlugProjectsRoute = TenantSlugProjectsRouteImport.update({
   id: '/projects',
   path: '/projects',
@@ -271,6 +284,11 @@ const TenantSlugCampaignsIdRoute = TenantSlugCampaignsIdRouteImport.update({
   path: '/$id',
   getParentRoute: () => TenantSlugCampaignsRoute,
 } as any)
+const TenantSlugMessagesIdRoute = TenantSlugMessagesIdRouteImport.update({
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => TenantSlugMessagesRoute,
+} as any)
 const TenantSlugProjectsProjectIdRoute =
   TenantSlugProjectsProjectIdRouteImport.update({
     id: '/$projectId',
@@ -317,6 +335,8 @@ export interface FileRoutesByFullPath {
   '/$tenantSlug/campaigns': typeof TenantSlugCampaignsRouteWithChildren
   '/$tenantSlug/dashboard': typeof TenantSlugDashboardRoute
   '/$tenantSlug/monitoring': typeof TenantSlugMonitoringRoute
+  '/$tenantSlug/messages': typeof TenantSlugMessagesRouteWithChildren
+  '/$tenantSlug/webhooks': typeof TenantSlugWebhooksRoute
   '/$tenantSlug/projects': typeof TenantSlugProjectsRouteWithChildren
   '/$tenantSlug/providers': typeof TenantSlugProvidersRouteWithChildren
   '/$tenantSlug/settings': typeof TenantSlugSettingsRoute
@@ -333,6 +353,7 @@ export interface FileRoutesByFullPath {
   '/settings/tenant': typeof SettingsTenantRoute
   '/templates/email': typeof TemplatesEmailRoute
   '/$tenantSlug/campaigns/$id': typeof TenantSlugCampaignsIdRoute
+  '/$tenantSlug/messages/$id': typeof TenantSlugMessagesIdRoute
   '/$tenantSlug/projects/$projectId': typeof TenantSlugProjectsProjectIdRoute
   '/$tenantSlug/providers/$providerId': typeof TenantSlugProvidersProviderIdRoute
   '/docs/sdks/javascript': typeof DocsSdksJavascriptRoute
@@ -365,6 +386,8 @@ export interface FileRoutesByTo {
   '/$tenantSlug/campaigns': typeof TenantSlugCampaignsRouteWithChildren
   '/$tenantSlug/dashboard': typeof TenantSlugDashboardRoute
   '/$tenantSlug/monitoring': typeof TenantSlugMonitoringRoute
+  '/$tenantSlug/messages': typeof TenantSlugMessagesRouteWithChildren
+  '/$tenantSlug/webhooks': typeof TenantSlugWebhooksRoute
   '/$tenantSlug/projects': typeof TenantSlugProjectsRouteWithChildren
   '/$tenantSlug/providers': typeof TenantSlugProvidersRouteWithChildren
   '/$tenantSlug/settings': typeof TenantSlugSettingsRoute
@@ -381,6 +404,7 @@ export interface FileRoutesByTo {
   '/settings/tenant': typeof SettingsTenantRoute
   '/templates/email': typeof TemplatesEmailRoute
   '/$tenantSlug/campaigns/$id': typeof TenantSlugCampaignsIdRoute
+  '/$tenantSlug/messages/$id': typeof TenantSlugMessagesIdRoute
   '/$tenantSlug/projects/$projectId': typeof TenantSlugProjectsProjectIdRoute
   '/$tenantSlug/providers/$providerId': typeof TenantSlugProvidersProviderIdRoute
   '/docs/sdks/javascript': typeof DocsSdksJavascriptRoute
@@ -414,6 +438,8 @@ export interface FileRoutesById {
   '/$tenantSlug/campaigns': typeof TenantSlugCampaignsRouteWithChildren
   '/$tenantSlug/dashboard': typeof TenantSlugDashboardRoute
   '/$tenantSlug/monitoring': typeof TenantSlugMonitoringRoute
+  '/$tenantSlug/messages': typeof TenantSlugMessagesRouteWithChildren
+  '/$tenantSlug/webhooks': typeof TenantSlugWebhooksRoute
   '/$tenantSlug/projects': typeof TenantSlugProjectsRouteWithChildren
   '/$tenantSlug/providers': typeof TenantSlugProvidersRouteWithChildren
   '/$tenantSlug/settings': typeof TenantSlugSettingsRoute
@@ -430,6 +456,7 @@ export interface FileRoutesById {
   '/settings/tenant': typeof SettingsTenantRoute
   '/templates/email': typeof TemplatesEmailRoute
   '/$tenantSlug/campaigns/$id': typeof TenantSlugCampaignsIdRoute
+  '/$tenantSlug/messages/$id': typeof TenantSlugMessagesIdRoute
   '/$tenantSlug/projects/$projectId': typeof TenantSlugProjectsProjectIdRoute
   '/$tenantSlug/providers/$providerId': typeof TenantSlugProvidersProviderIdRoute
   '/docs/sdks/javascript': typeof DocsSdksJavascriptRoute
@@ -464,6 +491,8 @@ export interface FileRouteTypes {
     | '/$tenantSlug/campaigns'
     | '/$tenantSlug/dashboard'
     | '/$tenantSlug/monitoring'
+    | '/$tenantSlug/messages'
+    | '/$tenantSlug/webhooks'
     | '/$tenantSlug/projects'
     | '/$tenantSlug/providers'
     | '/$tenantSlug/settings'
@@ -480,6 +509,7 @@ export interface FileRouteTypes {
     | '/settings/tenant'
     | '/templates/email'
     | '/$tenantSlug/campaigns/$id'
+    | '/$tenantSlug/messages/$id'
     | '/$tenantSlug/projects/$projectId'
     | '/$tenantSlug/providers/$providerId'
     | '/docs/sdks/javascript'
@@ -512,6 +542,8 @@ export interface FileRouteTypes {
     | '/$tenantSlug/campaigns'
     | '/$tenantSlug/dashboard'
     | '/$tenantSlug/monitoring'
+    | '/$tenantSlug/messages'
+    | '/$tenantSlug/webhooks'
     | '/$tenantSlug/projects'
     | '/$tenantSlug/providers'
     | '/$tenantSlug/settings'
@@ -528,6 +560,7 @@ export interface FileRouteTypes {
     | '/settings/tenant'
     | '/templates/email'
     | '/$tenantSlug/campaigns/$id'
+    | '/$tenantSlug/messages/$id'
     | '/$tenantSlug/projects/$projectId'
     | '/$tenantSlug/providers/$providerId'
     | '/docs/sdks/javascript'
@@ -560,6 +593,8 @@ export interface FileRouteTypes {
     | '/$tenantSlug/campaigns'
     | '/$tenantSlug/dashboard'
     | '/$tenantSlug/monitoring'
+    | '/$tenantSlug/messages'
+    | '/$tenantSlug/webhooks'
     | '/$tenantSlug/projects'
     | '/$tenantSlug/providers'
     | '/$tenantSlug/settings'
@@ -576,6 +611,7 @@ export interface FileRouteTypes {
     | '/settings/tenant'
     | '/templates/email'
     | '/$tenantSlug/campaigns/$id'
+    | '/$tenantSlug/messages/$id'
     | '/$tenantSlug/projects/$projectId'
     | '/$tenantSlug/providers/$providerId'
     | '/docs/sdks/javascript'
@@ -800,6 +836,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TenantSlugMonitoringRouteImport
       parentRoute: typeof TenantSlugRoute
     }
+    '/$tenantSlug/messages': {
+      id: '/$tenantSlug/messages'
+      path: '/messages'
+      fullPath: '/$tenantSlug/messages'
+      preLoaderRoute: typeof TenantSlugMessagesRouteImport
+      parentRoute: typeof TenantSlugRoute
+    }
+    '/$tenantSlug/webhooks': {
+      id: '/$tenantSlug/webhooks'
+      path: '/webhooks'
+      fullPath: '/$tenantSlug/webhooks'
+      preLoaderRoute: typeof TenantSlugWebhooksRouteImport
+      parentRoute: typeof TenantSlugRoute
+    }
     '/$tenantSlug/projects': {
       id: '/$tenantSlug/projects'
       path: '/projects'
@@ -912,6 +962,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TenantSlugCampaignsIdRouteImport
       parentRoute: typeof TenantSlugCampaignsRoute
     }
+    '/$tenantSlug/messages/$id': {
+      id: '/$tenantSlug/messages/$id'
+      path: '/$id'
+      fullPath: '/$tenantSlug/messages/$id'
+      preLoaderRoute: typeof TenantSlugMessagesIdRouteImport
+      parentRoute: typeof TenantSlugMessagesRoute
+    }
     '/$tenantSlug/projects/$projectId': {
       id: '/$tenantSlug/projects/$projectId'
       path: '/$projectId'
@@ -947,6 +1004,17 @@ const TenantSlugCampaignsRouteChildren: TenantSlugCampaignsRouteChildren = {
 const TenantSlugCampaignsRouteWithChildren =
   TenantSlugCampaignsRoute._addFileChildren(TenantSlugCampaignsRouteChildren)
 
+interface TenantSlugMessagesRouteChildren {
+  TenantSlugMessagesIdRoute: typeof TenantSlugMessagesIdRoute
+}
+
+const TenantSlugMessagesRouteChildren: TenantSlugMessagesRouteChildren = {
+  TenantSlugMessagesIdRoute: TenantSlugMessagesIdRoute,
+}
+
+const TenantSlugMessagesRouteWithChildren =
+  TenantSlugMessagesRoute._addFileChildren(TenantSlugMessagesRouteChildren)
+
 interface TenantSlugProjectsRouteChildren {
   TenantSlugProjectsProjectIdRoute: typeof TenantSlugProjectsProjectIdRoute
 }
@@ -976,6 +1044,8 @@ interface TenantSlugRouteChildren {
   TenantSlugCampaignsRoute: typeof TenantSlugCampaignsRouteWithChildren
   TenantSlugDashboardRoute: typeof TenantSlugDashboardRoute
   TenantSlugMonitoringRoute: typeof TenantSlugMonitoringRoute
+  TenantSlugMessagesRoute: typeof TenantSlugMessagesRouteWithChildren
+  TenantSlugWebhooksRoute: typeof TenantSlugWebhooksRoute
   TenantSlugProjectsRoute: typeof TenantSlugProjectsRouteWithChildren
   TenantSlugProvidersRoute: typeof TenantSlugProvidersRouteWithChildren
   TenantSlugSettingsRoute: typeof TenantSlugSettingsRoute
@@ -990,6 +1060,8 @@ const TenantSlugRouteChildren: TenantSlugRouteChildren = {
   TenantSlugCampaignsRoute: TenantSlugCampaignsRouteWithChildren,
   TenantSlugDashboardRoute: TenantSlugDashboardRoute,
   TenantSlugMonitoringRoute: TenantSlugMonitoringRoute,
+  TenantSlugMessagesRoute: TenantSlugMessagesRouteWithChildren,
+  TenantSlugWebhooksRoute: TenantSlugWebhooksRoute,
   TenantSlugProjectsRoute: TenantSlugProjectsRouteWithChildren,
   TenantSlugProvidersRoute: TenantSlugProvidersRouteWithChildren,
   TenantSlugSettingsRoute: TenantSlugSettingsRoute,

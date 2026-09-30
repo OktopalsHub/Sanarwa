@@ -2,6 +2,7 @@
 
 import { apiClient } from '@/lib/api/client';
 import { analyticsApi } from '@/lib/api/analytics';
+import { messagingApi } from '@/lib/api/messaging';
 import { useTenant } from '@/contexts/tenant-context';
 import { useQuery } from '@tanstack/react-query';
 
@@ -10,11 +11,9 @@ export interface DashboardMetrics {
   activeCampaigns: number;
   totalMessages: number;
   deliveryRate: number;
+  failed: number;
   openRate: number;
   clickRate: number;
-  campaignsChange: number;
-  messagesChange: number;
-  deliveryRateChange: number;
 }
 
 export interface ChartData {
@@ -25,34 +24,7 @@ export interface ChartData {
 
 export interface DashboardData {
   metrics: DashboardMetrics;
-  campaignPerformance: ChartData[];
   channelDistribution: ChartData[];
-  recentActivity: ChartData[];
-}
-
-function mapAnalyticsToDashboard(raw: Record<string, unknown>): DashboardData {
-  const summary = (raw.summary || raw) as Record<string, number>;
-  return {
-    metrics: {
-      totalCampaigns: summary.totalCampaigns ?? 0,
-      activeCampaigns: summary.activeCampaigns ?? 0,
-      totalMessages: summary.totalSent ?? summary.totalMessages ?? 0,
-      deliveryRate: summary.deliveryRate ?? 0,
-      openRate: summary.openRate ?? 0,
-      clickRate: summary.clickRate ?? 0,
-      campaignsChange: 0,
-      messagesChange: 0,
-      deliveryRateChange: 0,
-    },
-    campaignPerformance: [],
-    channelDistribution: Array.isArray(raw.channels)
-      ? (raw.channels as Array<{ channel: string; sent: number }>).map((c) => ({
-          name: c.channel,
-          value: c.sent,
-        }))
-      : [],
-    recentActivity: [],
-  };
 }
 
 export function useDashboardData() {
@@ -67,8 +39,38 @@ export function useDashboardData() {
       const end = new Date();
       const start = new Date();
       start.setDate(start.getDate() - 30);
-      const raw = await analyticsApi.getTenantAnalytics(start, end);
-      return mapAnalyticsToDashboard(raw as Record<string, unknown>);
+      const [raw, stats] = await Promise.all([
+        analyticsApi.getTenantAnalytics(start, end).catch(() => ({})),
+        messagingApi.stats({
+          startDate: start.toISOString(),
+          endDate: end.toISOString(),
+        }).catch(() => ({
+          total: 0,
+          sent: 0,
+          delivered: 0,
+          failed: 0,
+          queued: 0,
+          deliveryRate: 0,
+        })),
+      ]);
+      const summary = ((raw as Record<string, unknown>).summary || raw) as Record<string, number>;
+      return {
+        metrics: {
+          totalCampaigns: summary.totalCampaigns ?? 0,
+          activeCampaigns: summary.activeCampaigns ?? 0,
+          totalMessages: stats.total || summary.totalSent || 0,
+          deliveryRate: stats.deliveryRate || summary.deliveryRate || 0,
+          failed: stats.failed || 0,
+          openRate: summary.openRate ?? 0,
+          clickRate: summary.clickRate ?? 0,
+        },
+        channelDistribution: Array.isArray((raw as Record<string, unknown>).channels)
+          ? ((raw as Record<string, unknown>).channels as Array<{ channel: string; sent: number }>).map((c) => ({
+              name: c.channel,
+              value: c.sent,
+            }))
+          : [],
+      };
     },
     enabled: !!selectedTenant?.id,
     staleTime: 5 * 60 * 1000,

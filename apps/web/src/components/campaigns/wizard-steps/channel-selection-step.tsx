@@ -42,6 +42,14 @@ const CHANNELS = [
     popular: true,
   },
   {
+    id: 'whatsapp' as const,
+    name: 'WhatsApp',
+    description: 'Send WhatsApp Business messages',
+    icon: MessageCircle,
+    features: ['Template messages', 'Session replies', 'Media', 'Read receipts'],
+    popular: true,
+  },
+  {
     id: 'push' as const,
     name: 'Push Notifications',
     description: 'Send notifications to mobile and web apps',

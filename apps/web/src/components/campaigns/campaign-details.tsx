@@ -19,6 +19,7 @@ import { toast } from '@/lib/utils/toast';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { ChartBarIcon, DocumentDuplicateIcon, PencilIcon, EnvelopeIcon, ChatBubbleLeftRightIcon, EllipsisHorizontalIcon, PauseIcon, PlayIcon, Cog6ToothIcon, DevicePhoneMobileIcon, StopIcon, UsersIcon, SpeakerWaveIcon, ArrowLeftIcon } from '@heroicons/react/24/outline'
 import { useRouter } from '@/compat/next-navigation';
+import { useTenantBasePath } from '@/hooks/use-tenant-slug';
 import React from 'react';
 import { CampaignControlPanel } from './campaign-control-panel';
 import { CampaignStatusMonitor } from './campaign-status-monitor';
@@ -34,6 +35,7 @@ const CHANNEL_ICONS = {
   push: Smartphone,
   in_app: Users,
   voice: Volume2,
+  whatsapp: MessageSquare,
 };
 
 const STATUS_COLORS = {
@@ -47,6 +49,7 @@ const STATUS_COLORS = {
 
 export function CampaignDetails({ campaignId, onEdit }: CampaignDetailsProps) {
   const router = useRouter();
+  const basePath = useTenantBasePath();
   const queryClient = useQueryClient();
 
   // Fetch campaign data
@@ -94,7 +97,7 @@ export function CampaignDetails({ campaignId, onEdit }: CampaignDetailsProps) {
     onSuccess: (newCampaign) => {
       queryClient.invalidateQueries({ queryKey: ['campaigns'] });
       toast.success('Campaign duplicated successfully');
-      router.push(`/campaigns/${newCampaign.id}`);
+      router.push(`${basePath}/campaigns/${newCampaign.id}`);
     },
     onError: (error: Error) => {
       toast.error(error.message || 'Failed to duplicate campaign');
@@ -133,7 +136,7 @@ export function CampaignDetails({ campaignId, onEdit }: CampaignDetailsProps) {
       if (onEdit) {
         onEdit(campaign);
       } else {
-        router.push(`/campaigns/${campaignId}/edit`);
+        router.push(`${basePath}/campaigns/${campaignId}/edit`);
       }
     }
   };
@@ -284,7 +287,7 @@ export function CampaignDetails({ campaignId, onEdit }: CampaignDetailsProps) {
 
               <DropdownMenuSeparator />
 
-              <DropdownMenuItem onClick={() => router.push(`/campaigns/${campaignId}/settings`)}>
+              <DropdownMenuItem onClick={() => router.push(`${basePath}/campaigns/${campaignId}`)}>
                 <Cog6ToothIcon className="w-4 h-4 mr-2" />
                 Campaign Settings
               </DropdownMenuItem>

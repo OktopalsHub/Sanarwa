@@ -109,14 +109,13 @@ export function MessageDetail({ messageId }: { messageId: string }) {
 
       <Card>
         <CardHeader>
-          <CardTitle>Preview</CardTitle>
+          <CardTitle>Message body</CardTitle>
         </CardHeader>
         <CardContent>
           {data.hasContent && data.content ? (
-            <div
-              className="prose prose-sm max-w-none dark:prose-invert"
-              dangerouslySetInnerHTML={{ __html: data.content }}
-            />
+            <pre className="max-h-[32rem] overflow-auto whitespace-pre-wrap break-words rounded-md border bg-muted/20 p-4 text-sm">
+              {data.content}
+            </pre>
           ) : (
             <p className="text-sm text-muted-foreground">
               Metadata only — message body was not stored for this send.

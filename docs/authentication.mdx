@@ -1,0 +1,25 @@
+---
+title: "Authentication"
+description: "Authenticate Sanarwa API requests with a project API key."
+---
+
+All Developer API endpoints require a project API key. Keys are created in the dashboard and start with `sa_`.
+
+## Header
+
+Pass the key in the `X-API-Key` header (what the official SDKs use):
+
+```bash
+curl https://api.sanarwa.com/api/v1/notifications/health \
+  -H "X-API-Key: sa_..."
+```
+
+`Authorization: Bearer sa_...` is also accepted.
+
+## Playground
+
+On any API reference page, open the playground, set `X-API-Key` to your live key, and send. Requests go to `https://api.sanarwa.com/api/v1` — there is no sandbox toggle.
+
+## Permissions
+
+Keys are scoped to a project. Sending requires a key with notification send access for that project.

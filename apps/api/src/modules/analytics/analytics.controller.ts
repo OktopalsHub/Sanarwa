@@ -55,9 +55,12 @@ export class AnalyticsController {
   @ApiOperation({ summary: 'Get delivery rate analytics' })
   @ApiResponse({ status: 200, description: 'Delivery rates retrieved successfully' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
-  async getDeliveryRateAnalytics(@Query() query: AnalyticsQueryDto) {
+  async getDeliveryRateAnalytics(
+    @CurrentTenantId() tenantId: string,
+    @Query() query: AnalyticsQueryDto,
+  ) {
     const analyticsQuery = {
-      tenantId: query.tenantId,
+      tenantId,
       startDate: query.startDate ? new Date(query.startDate) : undefined,
       endDate: query.endDate ? new Date(query.endDate) : undefined,
       channel: query.channel,
@@ -78,9 +81,12 @@ export class AnalyticsController {
   @ApiOperation({ summary: 'Get channel analytics' })
   @ApiResponse({ status: 200, description: 'Channel analytics retrieved successfully' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
-  async getChannelAnalytics(@Query() query: AnalyticsQueryDto) {
+  async getChannelAnalytics(
+    @CurrentTenantId() tenantId: string,
+    @Query() query: AnalyticsQueryDto,
+  ) {
     const analyticsQuery = {
-      tenantId: query.tenantId,
+      tenantId,
       startDate: query.startDate ? new Date(query.startDate) : undefined,
       endDate: query.endDate ? new Date(query.endDate) : undefined,
     };
@@ -98,9 +104,12 @@ export class AnalyticsController {
   @ApiOperation({ summary: 'Get provider analytics' })
   @ApiResponse({ status: 200, description: 'Provider analytics retrieved successfully' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
-  async getProviderAnalytics(@Query() query: ProviderAnalyticsQueryDto) {
+  async getProviderAnalytics(
+    @CurrentTenantId() tenantId: string,
+    @Query() query: ProviderAnalyticsQueryDto,
+  ) {
     const analyticsQuery = {
-      tenantId: query.tenantId,
+      tenantId,
       startDate: query.startDate ? new Date(query.startDate) : undefined,
       endDate: query.endDate ? new Date(query.endDate) : undefined,
       channel: query.channel,
@@ -119,9 +128,12 @@ export class AnalyticsController {
   @ApiOperation({ summary: 'Get time series analytics data' })
   @ApiResponse({ status: 200, description: 'Time series data retrieved successfully' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
-  async getTimeSeriesData(@Query() query: TimeSeriesQueryDto) {
+  async getTimeSeriesData(
+    @CurrentTenantId() tenantId: string,
+    @Query() query: TimeSeriesQueryDto,
+  ) {
     const analyticsQuery = {
-      tenantId: query.tenantId,
+      tenantId,
       startDate: query.startDate ? new Date(query.startDate) : undefined,
       endDate: query.endDate ? new Date(query.endDate) : undefined,
       channel: query.channel,
@@ -189,7 +201,7 @@ export class AnalyticsController {
   @ApiResponse({ status: 200, description: 'Top providers retrieved successfully' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async getTopProviders(
-    @Query('tenantId') tenantId: string,
+    @CurrentTenantId() tenantId: string,
     @Query('limit') limit?: number,
     @Query('startDate') startDate?: string,
     @Query('endDate') endDate?: string,
@@ -212,9 +224,12 @@ export class AnalyticsController {
   @ApiOperation({ summary: 'Get delivery trends comparison' })
   @ApiResponse({ status: 200, description: 'Delivery trends retrieved successfully' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
-  async getDeliveryTrends(@Query() query: DeliveryTrendsQueryDto) {
+  async getDeliveryTrends(
+    @CurrentTenantId() tenantId: string,
+    @Query() query: DeliveryTrendsQueryDto,
+  ) {
     return this.analyticsService.getDeliveryTrends(
-      query.tenantId,
+      tenantId,
       new Date(query.currentPeriodStart),
       new Date(query.currentPeriodEnd),
       new Date(query.previousPeriodStart),
@@ -232,9 +247,12 @@ export class AnalyticsController {
   @ApiOperation({ summary: 'Get delivery statistics' })
   @ApiResponse({ status: 200, description: 'Delivery statistics retrieved successfully' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
-  async getDeliveryStats(@Query() query: DeliveryStatsQueryDto) {
+  async getDeliveryStats(
+    @CurrentTenantId() tenantId: string,
+    @Query() query: DeliveryStatsQueryDto,
+  ) {
     return this.deliveryTrackingService.getDeliveryStats(
-      query.tenantId,
+      tenantId,
       query.channel,
       query.startDate ? new Date(query.startDate) : undefined,
       query.endDate ? new Date(query.endDate) : undefined,
@@ -255,7 +273,7 @@ export class AnalyticsController {
   @ApiResponse({ status: 404, description: 'Notification not found' })
   async getDeliveryHistory(
     @Param('notificationId') notificationId: string,
-    @Query('tenantId') tenantId?: string,
+    @CurrentTenantId() tenantId: string,
   ) {
     return this.deliveryTrackingService.getDeliveryHistory(
       notificationId,
@@ -275,11 +293,12 @@ export class AnalyticsController {
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 400, description: 'Bad Request' })
   async getMultipleDeliveryStatus(
-    @Body() body: { notificationIds: string[]; tenantId?: string },
+    @CurrentTenantId() tenantId: string,
+    @Body() body: { notificationIds: string[] },
   ) {
     return this.deliveryTrackingService.getMultipleDeliveryStatus(
       body.notificationIds,
-      body.tenantId,
+      tenantId,
     );
   }
 
@@ -295,7 +314,10 @@ export class AnalyticsController {
   @ApiResponse({ status: 201, description: 'Webhook registered successfully' })
   @ApiResponse({ status: 400, description: 'Bad Request' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
-  async registerWebhook(@Body() dto: RegisterWebhookDto) {
+  async registerWebhook(
+    @CurrentTenantId() tenantId: string,
+    @Body() dto: RegisterWebhookDto,
+  ) {
     const config = {
       url: dto.url,
       secret: dto.secret,
@@ -304,11 +326,11 @@ export class AnalyticsController {
       timeout: dto.timeout,
     };
 
-    this.webhookService.registerWebhook(dto.tenantId, config);
+    this.webhookService.registerWebhook(tenantId, config);
 
     return {
       message: 'Webhook registered successfully',
-      tenantId: dto.tenantId,
+      tenantId,
       url: dto.url,
     };
   }
@@ -326,7 +348,7 @@ export class AnalyticsController {
   @ApiResponse({ status: 204, description: 'Webhook removed successfully' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 404, description: 'Webhook configuration not found' })
-  async removeWebhook(@Param('tenantId') tenantId: string) {
+  async removeWebhook(@CurrentTenantId() tenantId: string) {
     this.webhookService.removeWebhook(tenantId);
   }
 
@@ -342,7 +364,7 @@ export class AnalyticsController {
   @ApiResponse({ status: 200, description: 'Webhook test executed' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 404, description: 'Webhook configuration not found' })
-  async testWebhook(@Param('tenantId') tenantId: string) {
+  async testWebhook(@CurrentTenantId() tenantId: string) {
     const success = await this.webhookService.testWebhook(tenantId);
     return {
       success,
@@ -361,7 +383,7 @@ export class AnalyticsController {
   @ApiParam({ name: 'tenantId', description: 'Tenant ID' })
   @ApiResponse({ status: 200, description: 'Webhook configuration retrieved' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
-  async getWebhookConfig(@Param('tenantId') tenantId: string) {
+  async getWebhookConfig(@CurrentTenantId() tenantId: string) {
     const config = this.webhookService.getWebhookConfig(tenantId);
     if (!config) {
       return { configured: false };
@@ -386,9 +408,12 @@ export class AnalyticsController {
   @ApiOperation({ summary: 'Get audit logs' })
   @ApiResponse({ status: 200, description: 'Audit logs retrieved successfully' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
-  async getAuditLogs(@Query() query: AuditQueryDto) {
+  async getAuditLogs(
+    @CurrentTenantId() tenantId: string,
+    @Query() query: AuditQueryDto,
+  ) {
     const auditQuery = {
-      tenantId: query.tenantId,
+      tenantId,
       eventType: query.eventType,
       resourceType: query.resourceType,
       resourceId: query.resourceId,
@@ -416,7 +441,7 @@ export class AnalyticsController {
   @ApiResponse({ status: 404, description: 'Notification not found' })
   async getNotificationAuditTrail(
     @Param('notificationId') notificationId: string,
-    @Query('tenantId') tenantId: string,
+    @CurrentTenantId() tenantId: string,
   ) {
     return this.auditLogService.getNotificationAuditTrail(
       notificationId,
@@ -435,7 +460,7 @@ export class AnalyticsController {
   @ApiResponse({ status: 200, description: 'Audit statistics retrieved successfully' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async getAuditStatistics(
-    @Query('tenantId') tenantId: string,
+    @CurrentTenantId() tenantId: string,
     @Query('startDate') startDate?: string,
     @Query('endDate') endDate?: string,
   ) {
@@ -456,9 +481,12 @@ export class AnalyticsController {
   @ApiOperation({ summary: 'Export audit logs' })
   @ApiResponse({ status: 200, description: 'Audit logs exported successfully' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
-  async exportAuditLogs(@Query() query: AuditExportDto) {
+  async exportAuditLogs(
+    @CurrentTenantId() tenantId: string,
+    @Query() query: AuditExportDto,
+  ) {
     const auditQuery = {
-      tenantId: query.tenantId,
+      tenantId,
       eventType: query.eventType,
       resourceType: query.resourceType,
       resourceId: query.resourceId,
@@ -604,7 +632,7 @@ export class AnalyticsController {
   @ApiResponse({ status: 404, description: 'Project not found' })
   async getProjectAnalytics(
     @Param('projectId') projectId: string,
-    @Query('tenantId') tenantId: string,
+    @CurrentTenantId() tenantId: string,
     @Query('startDate') startDate?: string,
     @Query('endDate') endDate?: string,
   ) {
@@ -630,7 +658,7 @@ export class AnalyticsController {
   @ApiResponse({ status: 404, description: 'Brand not found' })
   async getBrandAnalytics(
     @Param('brandId') brandId: string,
-    @Query('tenantId') tenantId: string,
+    @CurrentTenantId() tenantId: string,
     @Query('startDate') startDate?: string,
     @Query('endDate') endDate?: string,
   ) {
@@ -653,7 +681,7 @@ export class AnalyticsController {
   @ApiResponse({ status: 200, description: 'Comparison data retrieved successfully' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async compareProjects(
-    @Query('tenantId') tenantId: string,
+    @CurrentTenantId() tenantId: string,
     @Query('projectIds') projectIds: string,
     @Query('startDate') startDate?: string,
     @Query('endDate') endDate?: string,
@@ -678,7 +706,7 @@ export class AnalyticsController {
   @ApiResponse({ status: 200, description: 'Comparison data retrieved successfully' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async compareBrands(
-    @Query('tenantId') tenantId: string,
+    @CurrentTenantId() tenantId: string,
     @Query('brandIds') brandIds: string,
     @Query('startDate') startDate?: string,
     @Query('endDate') endDate?: string,
@@ -705,7 +733,7 @@ export class AnalyticsController {
   @ApiResponse({ status: 200, description: 'Cohort analysis data retrieved successfully' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async getCohortAnalysis(
-    @Query('tenantId') tenantId: string,
+    @CurrentTenantId() tenantId: string,
     @Query('cohortType') cohortType?: 'weekly' | 'monthly',
     @Query('startDate') startDate?: string,
     @Query('endDate') endDate?: string,
@@ -733,7 +761,7 @@ export class AnalyticsController {
   @ApiResponse({ status: 404, description: 'User not found' })
   async getUserJourney(
     @Param('userIdentifier') userIdentifier: string,
-    @Query('tenantId') tenantId: string,
+    @CurrentTenantId() tenantId: string,
     @Query('limit') limit?: number,
   ) {
     return this.advancedAnalyticsService.getUserJourney(
@@ -754,7 +782,7 @@ export class AnalyticsController {
   @ApiResponse({ status: 200, description: 'Optimal send times data retrieved successfully' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async getOptimalSendTimes(
-    @Query('tenantId') tenantId: string,
+    @CurrentTenantId() tenantId: string,
     @Query('startDate') startDate?: string,
     @Query('endDate') endDate?: string,
   ) {
@@ -815,7 +843,7 @@ export class AnalyticsController {
   @ApiOperation({ summary: 'Get churn risk analysis' })
   @ApiResponse({ status: 200, description: 'Churn risk data retrieved successfully' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
-  async getChurnRiskAnalysis(@Query('tenantId') tenantId: string) {
+  async getChurnRiskAnalysis(@CurrentTenantId() tenantId: string) {
     return this.advancedAnalyticsService.getChurnRiskAnalysis(tenantId);
   }
 }

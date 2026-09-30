@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { billingApi } from '@/lib/api';
 import { apiClient } from '@/lib/api/client';
@@ -34,6 +34,11 @@ export function AutoTopupSettings() {
   const [thresholdAmount, setThresholdAmount] = useState('1000');
   const [packageId, setPackageId] = useState('');
   const [paymentMethodId, setPaymentMethodId] = useState('');
+  const configInitialized = useRef(false);
+
+  useEffect(() => {
+    configInitialized.current = false;
+  }, [selectedTenant?.id]);
 
   useEffect(() => {
     setSelectedCurrency(currency);
@@ -78,7 +83,8 @@ export function AutoTopupSettings() {
   });
 
   useEffect(() => {
-    if (!config) return;
+    if (!config || configInitialized.current) return;
+    configInitialized.current = true;
     setEnabled(config.enabled);
     if (config.thresholdAmount !== undefined) {
       setThresholdAmount(String(config.thresholdAmount));
@@ -88,13 +94,16 @@ export function AutoTopupSettings() {
     if (config.paymentMethodId) setPaymentMethodId(config.paymentMethodId);
   }, [config]);
 
+  const methods = (paymentMethods?.data ?? []).filter(
+    (method) => method.provider !== 'bachs',
+  );
+
   useEffect(() => {
-    const methods = paymentMethods?.data ?? [];
     if (!paymentMethodId && methods.length > 0) {
       const defaultMethod = methods.find((method) => method.isDefault) ?? methods[0];
       setPaymentMethodId(defaultMethod.id);
     }
-  }, [paymentMethods, paymentMethodId]);
+  }, [methods, paymentMethodId]);
 
   const saveMutation = useMutation({
     mutationFn: () =>
@@ -117,7 +126,6 @@ export function AutoTopupSettings() {
     },
   });
 
-  const methods = paymentMethods?.data ?? [];
   const isLoading = configLoading || methodsLoading;
 
   return (
@@ -134,7 +142,7 @@ export function AutoTopupSettings() {
           <div>
             <p className="font-medium">Enable auto top-up</p>
             <p className="text-sm text-muted-foreground">
-              Requires a saved card (Nomba for NGN, Bachs or Polar for USD).
+              Requires a saved card (Nomba for NGN, Polar for USD). Bachs cards cannot be charged off-session.
             </p>
           </div>
           <Switch checked={enabled} onCheckedChange={setEnabled} disabled={isLoading} />

@@ -1,5 +1,5 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
-import { Repository } from 'typeorm';
+import { In, Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { NotificationCenterItem, NotificationCenterStatus } from '../entities/notification-center.entity';
 import { getPaginationSummary } from '../../../common/dto/pagination.dto';
@@ -26,6 +26,14 @@ export interface NotificationCenterStats {
   unread: number;
   read: number;
   archived: number;
+}
+
+const MAX_PAGE_LIMIT = 100;
+
+function clampLimit(limit: number | undefined, fallback = 20): number {
+  const n = Number(limit);
+  if (!Number.isFinite(n) || n < 1) return fallback;
+  return Math.min(Math.floor(n), MAX_PAGE_LIMIT);
 }
 
 @Injectable()
@@ -57,10 +65,12 @@ export class NotificationCenterService {
   }
 
   /**
-   * Get notification by ID
+   * Get notification by ID (tenant-scoped)
    */
-  async getNotification(id: string): Promise<NotificationCenterItem> {
-    const notification = await this.repository.findOne({ where: { id } });
+  async getNotification(id: string, tenantId: string): Promise<NotificationCenterItem> {
+    const notification = await this.repository.findOne({
+      where: { id, tenantId },
+    });
 
     if (!notification) {
       throw new NotFoundException(`Notification ${id} not found`);
@@ -79,6 +89,9 @@ export class NotificationCenterService {
     limit: number = 20,
     status?: NotificationCenterStatus,
   ): Promise<IPaginatedData<NotificationCenterItem>> {
+    const safeLimit = clampLimit(limit);
+    const safePage = Math.max(1, Number(page) || 1);
+
     const query = this.repository.createQueryBuilder('notification')
       .where('notification.subscriberId = :subscriberId', { subscriberId })
       .andWhere('notification.tenantId = :tenantId', { tenantId });
@@ -96,14 +109,14 @@ export class NotificationCenterService {
 
     const notifications = await query
       .orderBy('notification.createdAt', 'DESC')
-      .skip((page - 1) * limit)
-      .take(limit)
+      .skip((safePage - 1) * safeLimit)
+      .take(safeLimit)
       .getMany();
 
     return getPaginationSummary(
       notifications,
       total,
-      { page, limit },
+      { page: safePage, limit: safeLimit },
       'notifications',
     );
   }
@@ -111,8 +124,8 @@ export class NotificationCenterService {
   /**
    * Mark notification as read
    */
-  async markAsRead(id: string): Promise<NotificationCenterItem> {
-    const notification = await this.getNotification(id);
+  async markAsRead(id: string, tenantId: string): Promise<NotificationCenterItem> {
+    const notification = await this.getNotification(id, tenantId);
 
     notification.status = NotificationCenterStatus.READ;
     notification.readAt = new Date();
@@ -126,9 +139,10 @@ export class NotificationCenterService {
   /**
    * Mark multiple notifications as read
    */
-  async markMultipleAsRead(ids: string[]): Promise<void> {
+  async markMultipleAsRead(ids: string[], tenantId: string): Promise<void> {
+    if (!ids.length) return;
     await this.repository.update(
-      { id: ids as any },
+      { id: In(ids), tenantId },
       {
         status: NotificationCenterStatus.READ,
         readAt: new Date(),
@@ -160,8 +174,8 @@ export class NotificationCenterService {
   /**
    * Archive notification
    */
-  async archiveNotification(id: string): Promise<NotificationCenterItem> {
-    const notification = await this.getNotification(id);
+  async archiveNotification(id: string, tenantId: string): Promise<NotificationCenterItem> {
+    const notification = await this.getNotification(id, tenantId);
 
     notification.status = NotificationCenterStatus.ARCHIVED;
     notification.archivedAt = new Date();
@@ -175,9 +189,10 @@ export class NotificationCenterService {
   /**
    * Archive multiple notifications
    */
-  async archiveMultiple(ids: string[]): Promise<void> {
+  async archiveMultiple(ids: string[], tenantId: string): Promise<void> {
+    if (!ids.length) return;
     await this.repository.update(
-      { id: ids as any },
+      { id: In(ids), tenantId },
       {
         status: NotificationCenterStatus.ARCHIVED,
         archivedAt: new Date(),
@@ -190,16 +205,20 @@ export class NotificationCenterService {
   /**
    * Delete notification
    */
-  async deleteNotification(id: string): Promise<void> {
-    await this.repository.delete(id);
+  async deleteNotification(id: string, tenantId: string): Promise<void> {
+    const result = await this.repository.delete({ id, tenantId });
+    if (!result.affected) {
+      throw new NotFoundException(`Notification ${id} not found`);
+    }
     this.logger.log(`Deleted notification ${id}`);
   }
 
   /**
    * Delete multiple notifications
    */
-  async deleteMultiple(ids: string[]): Promise<void> {
-    await this.repository.delete(ids);
+  async deleteMultiple(ids: string[], tenantId: string): Promise<void> {
+    if (!ids.length) return;
+    await this.repository.delete({ id: In(ids), tenantId });
     this.logger.log(`Deleted ${ids.length} notifications`);
   }
 
@@ -210,29 +229,23 @@ export class NotificationCenterService {
     subscriberId: string,
     tenantId: string,
   ): Promise<NotificationCenterStats> {
-    const baseQuery = this.repository.createQueryBuilder('notification')
-      .where('notification.subscriberId = :subscriberId', { subscriberId })
-      .andWhere('notification.tenantId = :tenantId', { tenantId })
-      .andWhere(
-        '(notification.expiresAt IS NULL OR notification.expiresAt > NOW())',
-      );
+    const baseWhere = {
+      subscriberId,
+      tenantId,
+    };
 
-    const total = await baseQuery.getCount();
-    const unread = await baseQuery
-      .andWhere('notification.status = :status', {
-        status: NotificationCenterStatus.UNREAD,
-      })
-      .getCount();
-    const read = await baseQuery
-      .andWhere('notification.status = :status', {
-        status: NotificationCenterStatus.READ,
-      })
-      .getCount();
-    const archived = await baseQuery
-      .andWhere('notification.status = :status', {
-        status: NotificationCenterStatus.ARCHIVED,
-      })
-      .getCount();
+    const [total, unread, read, archived] = await Promise.all([
+      this.repository.count({ where: baseWhere }),
+      this.repository.count({
+        where: { ...baseWhere, status: NotificationCenterStatus.UNREAD },
+      }),
+      this.repository.count({
+        where: { ...baseWhere, status: NotificationCenterStatus.READ },
+      }),
+      this.repository.count({
+        where: { ...baseWhere, status: NotificationCenterStatus.ARCHIVED },
+      }),
+    ]);
 
     return { total, unread, read, archived };
   }
@@ -260,6 +273,9 @@ export class NotificationCenterService {
     page: number = 1,
     limit: number = 20,
   ): Promise<IPaginatedData<NotificationCenterItem>> {
+    const safeLimit = clampLimit(limit);
+    const safePage = Math.max(1, Number(page) || 1);
+
     const qb = this.repository.createQueryBuilder('notification')
       .where('notification.subscriberId = :subscriberId', { subscriberId })
       .andWhere('notification.tenantId = :tenantId', { tenantId })
@@ -272,14 +288,14 @@ export class NotificationCenterService {
 
     const notifications = await qb
       .orderBy('notification.createdAt', 'DESC')
-      .skip((page - 1) * limit)
-      .take(limit)
+      .skip((safePage - 1) * safeLimit)
+      .take(safeLimit)
       .getMany();
 
     return getPaginationSummary(
       notifications,
       total,
-      { page, limit },
+      { page: safePage, limit: safeLimit },
       'notifications',
     );
   }
@@ -294,23 +310,26 @@ export class NotificationCenterService {
     page: number = 1,
     limit: number = 20,
   ): Promise<IPaginatedData<NotificationCenterItem>> {
-    const query = this.repository.createQueryBuilder('notification')
+    const safeLimit = clampLimit(limit);
+    const safePage = Math.max(1, Number(page) || 1);
+
+    const queryBuilder = this.repository.createQueryBuilder('notification')
       .where('notification.subscriberId = :subscriberId', { subscriberId })
       .andWhere('notification.tenantId = :tenantId', { tenantId })
       .andWhere('notification.channel = :channel', { channel });
 
-    const total = await query.getCount();
+    const total = await queryBuilder.getCount();
 
-    const notifications = await query
+    const notifications = await queryBuilder
       .orderBy('notification.createdAt', 'DESC')
-      .skip((page - 1) * limit)
-      .take(limit)
+      .skip((safePage - 1) * safeLimit)
+      .take(safeLimit)
       .getMany();
 
     return getPaginationSummary(
       notifications,
       total,
-      { page, limit },
+      { page: safePage, limit: safeLimit },
       'notifications',
     );
   }
@@ -319,9 +338,11 @@ export class NotificationCenterService {
    * Clean up expired notifications
    */
   async cleanupExpiredNotifications(): Promise<number> {
-    const result = await this.repository.delete({
-      expiresAt: { $lt: new Date() } as any,
-    });
+    const result = await this.repository
+      .createQueryBuilder()
+      .delete()
+      .where('expires_at IS NOT NULL AND expires_at < NOW()')
+      .execute();
 
     const count = result.affected || 0;
     this.logger.log(`Cleaned up ${count} expired notifications`);

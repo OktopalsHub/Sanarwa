@@ -1,4 +1,4 @@
-import { Module, forwardRef } from '@nestjs/common';
+import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ProviderFactory } from '../../providers/factory/provider-factory';
@@ -62,8 +62,7 @@ import { TwilioProvider, TermiiProvider, AfricasTalkingProvider } from './provid
 
 import { BrandModule } from '../brand/brand.module';
 import { AuthModule } from '../auth/auth.module';
-import { NotificationsModule } from '../notifications/notifications.module';
-import { PublicPushController } from './controllers/public-push.controller';
+import { TenantMemberModule } from '../tenant-member/tenant-member.module';
 
 @Module({
   imports: [
@@ -72,6 +71,7 @@ import { PublicPushController } from './controllers/public-push.controller';
     SecurityModule,
     EventEmitterModule,
     AuthModule,
+    TenantMemberModule,
     // New organized provider modules
     EmailModule,
     ChatModule,
@@ -79,15 +79,11 @@ import { PublicPushController } from './controllers/public-push.controller';
     SMSModule,
     InAppModule,
     VoiceModule,
-    // ApiKeyModule,
-    // TokenManagementModule,
-    forwardRef(() => BillingModule),
-    // forwardRef(() => import('../tenant/tenant.module').then(m => m.TenantModule)),
-    // forwardRef(() => import('../tenant-member/tenant-member.module').then(m => m.TenantMemberModule)),
-    forwardRef(() => BrandModule),
-    forwardRef(() => NotificationsModule),
+    ApiKeyModule,
+    BillingModule,
+    BrandModule,
   ],
-  controllers: [ProviderConfigController, BYOPController, DeviceRegistrationController, TelnyxWebhookController, WhatsAppWebhookController, RoutingOptimizerController, PublicPushController],
+  controllers: [ProviderConfigController, BYOPController, DeviceRegistrationController, TelnyxWebhookController, WhatsAppWebhookController, RoutingOptimizerController],
   providers: [
     ProviderService,
     ProviderPerformanceTracker,

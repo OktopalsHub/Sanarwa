@@ -13,6 +13,7 @@ import {
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { Request } from 'express';
+import { SkipThrottle } from '@nestjs/throttler';
 import { CurrentTenantId } from 'src/common/decorators';
 import { TenantContextGuard } from 'src/common/guards';
 import { Public } from '../../auth/decorators/public.decorator';
@@ -76,16 +77,6 @@ export class BillingController {
     @Param('purchaseId') purchaseId: string,
   ) {
     return this.billingService.syncPurchase(purchaseId, tenantId);
-  }
-
-  @Post('tokens/purchase/:purchaseId/confirm')
-  @ApiOperation({ summary: 'Confirm token purchase' })
-  @ApiResponse({ status: 201, description: 'Token purchase confirmed' })
-  @ApiResponse({ status: 401, description: 'Unauthorized' })
-  @ApiResponse({ status: 404, description: 'Purchase not found' })
-  async confirmTokenPurchase(@Param('purchaseId') purchaseId: string) {
-    await this.billingService.confirmTokenPurchase(purchaseId);
-    return { message: 'Token purchase confirmed' };
   }
 
   @Get('tokens/balance')
@@ -231,6 +222,7 @@ export class BillingController {
 
   @Post('webhooks/bachs')
   @Public()
+  @SkipThrottle()
   @ApiOperation({ summary: 'Handle Bachs webhooks' })
   async handleBachsWebhook(@Req() req: RequestWithRawBody, @Headers() headers: Record<string, string | string[] | undefined>) {
     const rawBody = req.rawBody?.toString('utf8');
@@ -242,6 +234,7 @@ export class BillingController {
 
   @Post('webhooks/polar')
   @Public()
+  @SkipThrottle()
   @ApiOperation({ summary: 'Handle Polar webhooks' })
   async handlePolarWebhook(@Req() req: RequestWithRawBody, @Headers() headers: Record<string, string | string[] | undefined>) {
     const rawBody = req.rawBody?.toString('utf8');
@@ -253,6 +246,7 @@ export class BillingController {
 
   @Post('webhooks/nomba')
   @Public()
+  @SkipThrottle()
   @ApiOperation({ summary: 'Handle Nomba webhooks' })
   async handleNombaWebhook(@Req() req: RequestWithRawBody, @Headers() headers: Record<string, string | string[] | undefined>) {
     const rawBody = req.rawBody?.toString('utf8');

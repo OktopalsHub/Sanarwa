@@ -3,6 +3,7 @@ import { ApiTags, ApiOperation, ApiResponse, ApiHeader } from '@nestjs/swagger';
 import { ApiKeyAuthGuard } from '../api-key/guards/api-key-auth.guard';
 import { CurrentApiKey } from '../auth/decorators/current-api-key.decorator';
 import { CurrentProjectId } from '../auth/decorators/current-project.decorator';
+import { Public } from '../auth/decorators/public.decorator';
 import { ApiKey } from '../api-key/entities/api-key.entity';
 
 import { 
@@ -18,6 +19,7 @@ import { NotificationService } from './notification.service';
 
 @ApiTags('notifications')
 @Controller('notifications')
+@Public()
 @UseGuards(ApiKeyAuthGuard)
 export class NotificationController {
   constructor(private readonly notificationService: NotificationService) {}

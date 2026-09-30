@@ -3,7 +3,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { EventEmitter2 } from '@nestjs/event-emitter';
+import { EventEmitter2, OnEvent } from '@nestjs/event-emitter';
 import * as crypto from 'crypto';
 import {
   IPaginatedData,
@@ -11,6 +11,7 @@ import {
 } from '../../common/dto/pagination.dto';
 import { TenantStatus } from '../../common/enums';
 import { TenantCreatedEvent } from '../../common/events/tenant.event';
+import { UserRegisteredEvent } from '../../common/events/user.event';
 import { UserService } from '../user/user.service';
 import { CreateTenantDto } from './dto/create-tenant.dto';
 import { TenantQueryDto } from './dto/tenant-query.dto';
@@ -25,6 +26,11 @@ export class TenantService {
     private readonly userService: UserService,
     private readonly eventEmitter: EventEmitter2,
   ) {}
+
+  @OnEvent('user.registered')
+  async onUserRegistered(event: UserRegisteredEvent) {
+    return this.createTenant(event.userId, { name: event.workspaceName });
+  }
 
   /**
    * Create a new tenant

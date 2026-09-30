@@ -3,13 +3,14 @@ import { ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
 import { SwaggerModule } from '@nestjs/swagger';
 
+import * as compression from 'compression';
 import * as cookieParser from 'cookie-parser';
 import * as express from 'express';
 import { Logger } from 'nestjs-pino';
 import 'reflect-metadata';
 import { AppModule } from './app.module';
 import { initializeSentry } from './common/config/sentry.config';
-import { configureCORS } from './common/middleware/security.middleware';
+import { configureCORS, configureSecurityMiddleware } from './common/middleware/security.middleware';
 import { createSwaggerConfig } from './config/swagger.config';
 import { EnvironmentValidationService } from './modules/configuration/services/environment-validation.service';
 
@@ -59,23 +60,28 @@ async function bootstrap() {
     envValidationService.validateOrThrow();
 
     // Configure security middleware (Helmet + Morgan)
-    // FIXME: blocking authentication
-    // configureSecurityMiddleware(app, configService, logger);
+    configureSecurityMiddleware(app, configService, logger);
 
     // Configure CORS
     configureCORS(app, configService);
 
-    // Add body parser and cookie parser middleware (bodyParser is disabled in NestFactory options)
+    app.use(compression());
+
+    // Body parser with explicit size limit; rawBody for webhook signature verification
     app.use(
       express.json({
+        limit: '1mb',
         verify: (req: express.Request & { rawBody?: Buffer }, _res, buf) => {
-          if (req.originalUrl?.includes('/billing/webhooks/')) {
+          if (
+            req.originalUrl?.includes('/billing/webhooks/') ||
+            req.originalUrl?.includes('/webhooks/')
+          ) {
             req.rawBody = buf;
           }
         },
       }),
     );
-    app.use(express.urlencoded({ extended: true }));
+    app.use(express.urlencoded({ extended: true, limit: '1mb' }));
     app.use(cookieParser());
 
     // Global validation pipe
@@ -95,24 +101,21 @@ async function bootstrap() {
           method: RequestMethod.GET,
         },
         { path: '/health', method: RequestMethod.GET },
-        { path: '/csrf/token', method: RequestMethod.GET },
         { path: '/metrics', method: RequestMethod.GET },
         { path: '/docs', method: RequestMethod.GET },
       ],
     });
 
-    //  app.enableVersioning({ type: VersioningType.URI, defaultVersion: '1' });
-
-    // Setup Swagger
-    const config = createSwaggerConfig();
-    const document = SwaggerModule.createDocument(app, config);
-    SwaggerModule.setup('docs', app, document);
-
+    if (nodeEnv !== 'production') {
+      const config = createSwaggerConfig();
+      const document = SwaggerModule.createDocument(app, config);
+      SwaggerModule.setup('docs', app, document);
+    }
 
     const port = configService.get<number>('app.port') || 3000;
     await app.listen(port);
 
-    logger.log(`🚀 Application is running on: http://localhost:${port}}`);
+    logger.log(`Application is running on: http://localhost:${port}`);
   } catch (error) {
     logger.error('Failed to start application:', error.message);
     process.exit(1);

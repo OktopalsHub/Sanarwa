@@ -23,7 +23,7 @@ import { ApiKeyAuthGuard } from './guards/api-key-auth.guard';
     JwtModule.registerAsync({
       imports: [ConfigModule],
       useFactory: async (configService: ConfigService) => ({
-        secret: configService.get('AUTH_SECRET'),
+        secret: configService.getOrThrow<string>('JWT_AUTH_SECRET'),
         signOptions: { expiresIn: '60m' },
       }),
       inject: [ConfigService],

@@ -133,4 +133,33 @@ describe('verifyNombaWebhook', () => {
       purchaseId,
     });
   });
+
+  it('fails payment_success when transaction.status is not SUCCESS', () => {
+    const rawBody = JSON.stringify({
+      event_type: 'payment_success',
+      requestId: 'req-5',
+      data: {
+        transaction: { transactionId: 'txn-5', status: 'PENDING' },
+        order: {
+          orderReference: `notifi_purchase_${purchaseId}`,
+          currency: 'NGN',
+          orderMetaData: { purchase_id: purchaseId, tenant_id: 'tenant-1' },
+        },
+      },
+    });
+
+    expect(
+      verifyNombaWebhook(
+        {
+          rawBody,
+          headers: { 'nomba-signature': sign(rawBody) },
+        },
+        secret,
+      ),
+    ).toMatchObject({
+      eventId: 'req-5',
+      outcome: 'failed',
+      purchaseId,
+    });
+  });
 });

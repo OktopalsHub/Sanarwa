@@ -27,7 +27,7 @@ pnpm build
 |---------|---------|
 | `DATABASE_URL` | Postgres connection |
 | `REDIS_URL` | Cache / queues |
-| `AUTH_SECRET` / `BETTER_AUTH_SECRET` | Auth signing (long random strings) |
+| `JWT_AUTH_SECRET` / `JWT_REFRESH_SECRET` | JWT access + refresh signing (long random strings) |
 | `PROVIDER_ENCRYPTION_KEY` | Encrypts provider credentials |
 | Provider keys (Telnyx, SES, etc.) | Only for channels you actually use |
 

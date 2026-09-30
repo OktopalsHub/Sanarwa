@@ -1,4 +1,4 @@
-import { Module, forwardRef } from '@nestjs/common';
+import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { TenantContextGuard } from '../../common/guards';
 import { AuthModule } from '../auth/auth.module';
@@ -18,8 +18,9 @@ import { WebhookQueueModule } from './queue/webhook-queue.module';
 @Module({
   imports: [
     TypeOrmModule.forFeature([Message, MessageDelivery, NotificationLog]),
-    forwardRef(() => AuthModule),
-    forwardRef(() => TenantMemberModule),
+    AuthModule,
+    TenantMemberModule,
+    WebhookQueueModule,
   ],
   controllers: [AnalyticsController],
   providers: [

@@ -11,6 +11,7 @@ import { ApiOperation, ApiResponse, ApiTags, ApiHeader } from '@nestjs/swagger';
 import { ApiKeyAuthGuard } from '../../api-key/guards/api-key-auth.guard';
 import { CurrentApiKey } from '../../auth/decorators/current-api-key.decorator';
 import { CurrentProjectId } from '../../auth/decorators/current-project.decorator';
+import { Public } from '../../auth/decorators/public.decorator';
 import { ApiKey } from '../../api-key/entities/api-key.entity';
 import { 
   NotificationTransportService, 
@@ -40,6 +41,7 @@ export class BulkSendNotificationDto {
 
 @ApiTags('Notification Transport (SDK)')
 @Controller('notifications')
+@Public()
 @UseGuards(ApiKeyAuthGuard)
 export class NotificationTransportController {
   constructor(

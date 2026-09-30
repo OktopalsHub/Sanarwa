@@ -1,4 +1,5 @@
-import { Injectable, Logger, Inject, forwardRef } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
+import { assertSafeWebhookUrl } from '../../../common/security/utils/safe-url';
 import { ProviderOrchestratorService } from '../../provider/provider-orchestrator.service';
 import { SmartPushRouterService } from '../../provider/services/smart-push-router.service';
 import { NotificationStorageService } from '../storage/notification-storage.service';
@@ -27,7 +28,6 @@ export class NotificationEngineService {
 
   constructor(
     private readonly storageService: NotificationStorageService,
-    @Inject(forwardRef(() => ProviderOrchestratorService))
     private readonly providerOrchestrator: ProviderOrchestratorService,
     private readonly smartPushRouter: SmartPushRouterService,
     private readonly notificationQueueService: NotificationQueueService,
@@ -370,12 +370,18 @@ export class NotificationEngineService {
   private async sendEmail(
     request: NotificationEngineRequest,
   ): Promise<ChannelDeliveryResult> {
+    const html = request.message
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
     const result = await this.providerOrchestrator.sendEmail(
       {
         to: request.to,
         subject: request.title ?? 'Notification',
         text: request.message,
-        html: request.message,
+        html,
         templateId: request.templateId,
         templateData: request.templateData ?? request.data,
       },
@@ -505,6 +511,8 @@ export class NotificationEngineService {
     if (!webhookUrl) {
       return { status: 'failed', error: 'Webhook URL is required' };
     }
+
+    assertSafeWebhookUrl(webhookUrl);
 
     const response = await fetch(webhookUrl, {
       method: 'POST',

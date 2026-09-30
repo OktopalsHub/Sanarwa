@@ -10,10 +10,14 @@ import {
 import { ConfigService } from '@nestjs/config';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { SkipThrottle } from '@nestjs/throttler';
+import { Public } from '../../auth/decorators/public.decorator';
 import { WebhookValidatorService } from '../services/webhook-validator.service';
 
 @ApiTags('Webhooks')
 @Controller('webhooks')
+@Public()
+@SkipThrottle()
 export class WebhookReceiverController {
   private readonly logger = new Logger(WebhookReceiverController.name);
 

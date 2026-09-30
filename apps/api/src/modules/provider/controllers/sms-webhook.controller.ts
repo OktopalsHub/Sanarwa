@@ -13,6 +13,8 @@ import { ConfigService } from '@nestjs/config';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import * as crypto from 'crypto';
+import { SkipThrottle } from '@nestjs/throttler';
+import { Public } from '../../auth/decorators/public.decorator';
 
 export interface InboundSMSPayload {
   messageId: string;
@@ -36,6 +38,8 @@ export interface SMSStatusPayload {
 
 @ApiTags('SMS Webhooks')
 @Controller('webhooks/sms')
+@Public()
+@SkipThrottle()
 export class SMSWebhookController {
   private readonly logger = new Logger(SMSWebhookController.name);
 

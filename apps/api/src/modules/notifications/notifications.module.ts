@@ -1,4 +1,4 @@
-import { Module, forwardRef } from '@nestjs/common';
+import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { JwtModule } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
@@ -9,6 +9,7 @@ import { NotificationTransportService } from './transport/notification-transport
 import { NotificationTransportController } from './controllers/notification-transport.controller';
 import { NotificationCenterService } from './services/notification-center.service';
 import { NotificationCenterController } from './controllers/notification-center.controller';
+import { PublicPushController } from './controllers/public-push.controller';
 import { NotificationPersistenceService } from './services/notification-persistence.service';
 import { NotificationGateway } from './gateways/notification.gateway';
 import { NotificationRealtimeService } from './services/notification-realtime.service';
@@ -18,6 +19,7 @@ import { ProviderModule } from '../provider/provider.module';
 import { ApiKeyModule } from '../api-key/api-key.module';
 import { MessagingEntitiesModule } from '../messaging/shared/messaging-entities.module';
 import { NotificationQueueModule } from '../messaging/queue/notification-queue.module';
+import { TenantMemberModule } from '../tenant-member/tenant-member.module';
 import { TenantSettings } from '../tenant/entities/tenant-settings.entity';
 
 @Module({
@@ -31,16 +33,21 @@ import { TenantSettings } from '../tenant/entities/tenant-settings.entity';
     NotificationQueueModule,
     JwtModule.registerAsync({
       useFactory: (configService: ConfigService) => ({
-        secret: configService.get<string>('AUTH_SECRET'),
+        secret: configService.getOrThrow<string>('JWT_AUTH_SECRET'),
         signOptions: { expiresIn: '24h' },
       }),
       inject: [ConfigService],
     }),
     ScheduleModule.forRoot(),
-    forwardRef(() => ProviderModule),
+    ProviderModule,
     ApiKeyModule,
+    TenantMemberModule,
   ],
-  controllers: [NotificationTransportController, NotificationCenterController],
+  controllers: [
+    NotificationTransportController,
+    NotificationCenterController,
+    PublicPushController,
+  ],
   providers: [
     NotificationTransportService,
     NotificationCenterService,

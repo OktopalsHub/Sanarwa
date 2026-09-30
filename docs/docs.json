@@ -1,0 +1,66 @@
+{
+  "$schema": "https://mintlify.com/docs.json",
+  "theme": "mint",
+  "name": "Sanarwa",
+  "description": "Multi-channel notification API. Send email, SMS, WhatsApp, push, and more from one endpoint.",
+  "colors": {
+    "primary": "#2563EB",
+    "light": "#60A5FA",
+    "dark": "#1D4ED8"
+  },
+  "appearance": {
+    "default": "system"
+  },
+  "api": {
+    "playground": {
+      "display": "interactive",
+      "proxy": true
+    },
+    "examples": {
+      "languages": ["bash", "javascript", "python", "go"],
+      "defaults": "required",
+      "prefill": true,
+      "autogenerate": true
+    }
+  },
+  "navigation": {
+    "groups": [
+      {
+        "group": "Getting started",
+        "pages": ["index", "authentication"]
+      },
+      {
+        "group": "Notifications",
+        "pages": [
+          "api-reference/notifications/send",
+          "api-reference/notifications/send-bulk",
+          "api-reference/notifications/get-status",
+          "api-reference/notifications/analytics",
+          "api-reference/notifications/health"
+        ]
+      },
+      {
+        "group": "Channels",
+        "pages": [
+          "api-reference/channels/send-push",
+          "api-reference/channels/send-push-bulk",
+          "api-reference/channels/send-whatsapp",
+          "api-reference/channels/send-whatsapp-template"
+        ]
+      }
+    ]
+  },
+  "navbar": {
+    "links": [
+      {
+        "label": "Dashboard",
+        "href": "https://app.sanarwa.com"
+      }
+    ]
+  },
+  "footer": {
+    "socials": {
+      "website": "https://sanarwa.com"
+    }
+  }
+}

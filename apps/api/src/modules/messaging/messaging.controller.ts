@@ -12,6 +12,7 @@ import {
 import { ApiBearerAuth, ApiHeader, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { CurrentTenantId } from '../../common/decorators/current-context.decorator';
 import { TenantMemberGuard } from '../../common/guards';
+import { ApiKeyAuthGuard } from '../api-key/guards/api-key-auth.guard';
 import { Public } from '../auth/decorators/public.decorator';
 import { AuthGuard } from '../auth/guards/jwt-auth.guard';
 import { BulkNotificationResponseDto, NotificationResponseDto, NotificationStatusDto } from './dto/notification-response.dto';
@@ -26,6 +27,7 @@ export class MessagingController {
 
   @Post('send')
   @Public()
+  @UseGuards(ApiKeyAuthGuard)
   @ApiOperation({ summary: 'Send a single message (SDK)' })
   @ApiHeader({ name: 'X-API-Key', description: 'API Key for authentication', required: true })
   @ApiHeader({ name: 'X-Tenant', description: 'Tenant ID', required: false })
@@ -51,6 +53,7 @@ export class MessagingController {
 
   @Post('send-bulk')
   @Public()
+  @UseGuards(ApiKeyAuthGuard)
   @ApiOperation({ summary: 'Send multiple messages in bulk (SDK)' })
   @ApiHeader({ name: 'X-API-Key', description: 'API Key for authentication', required: true })
   @ApiHeader({ name: 'X-Tenant', description: 'Tenant ID', required: false })

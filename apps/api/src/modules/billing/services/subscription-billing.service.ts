@@ -1,6 +1,6 @@
 import { Injectable, Logger, BadRequestException, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { QueryFailedError, Repository } from 'typeorm';
+import { DataSource, In, QueryFailedError, Repository } from 'typeorm';
 import { ConfigService } from '@nestjs/config';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { createHash } from 'node:crypto';
@@ -106,6 +106,7 @@ export class SubscriptionBillingService {
     private paymentMethodService: PaymentMethodService,
     private tokenManagementService: TokenManagementService,
     private configService: ConfigService,
+    private dataSource: DataSource,
   ) {}
 
   async purchaseTokens(
@@ -273,7 +274,9 @@ export class SubscriptionBillingService {
     }
 
     const provider = purchase.paymentMetadata?.provider as PaymentProvider | undefined;
-    let verified: 'success' | 'failed' | 'pending' = 'pending';
+    let verified: import('../types/payment-verify-result').PaymentVerifyResult = {
+      status: 'pending',
+    };
 
     if (provider === PaymentProvider.BACHS && purchase.transactionReference) {
       verified = await this.bachsService.verifyCheckoutSession(purchase.transactionReference);
@@ -283,12 +286,29 @@ export class SubscriptionBillingService {
       verified = await this.polarService.verifyCheckout(purchase.transactionReference);
     } else if (purchase.paymentIntentId?.startsWith('pi_')) {
       const paymentIntent = await this.polarService.getPaymentIntent(purchase.paymentIntentId);
-      verified = paymentIntent.status === 'succeeded' ? 'success' : paymentIntent.status === 'canceled' ? 'failed' : 'pending';
+      verified = {
+        status:
+          paymentIntent.status === 'succeeded'
+            ? 'success'
+            : paymentIntent.status === 'canceled'
+              ? 'failed'
+              : 'pending',
+        amount:
+          typeof paymentIntent.amount === 'number' ? paymentIntent.amount / 100 : undefined,
+        currency: paymentIntent.currency,
+      };
     }
 
-    if (verified === 'success') {
-      await this.confirmTokenPurchase(purchaseId);
-    } else if (verified === 'failed') {
+    if (verified.status === 'success') {
+      if (!this.isFullyPaid(purchase, verified.amount, verified.currency)) {
+        this.logger.warn(
+          `Underpayment for purchase ${purchaseId}: paid=${verified.amount} expected=${purchase.totalPrice}`,
+        );
+        await this.failTokenPurchase(purchaseId);
+      } else {
+        await this.confirmTokenPurchase(purchaseId);
+      }
+    } else if (verified.status === 'failed') {
       await this.failTokenPurchase(purchaseId);
     }
 
@@ -358,7 +378,7 @@ export class SubscriptionBillingService {
         cardLast4: verified.cardLast4,
       });
     } else if (verified.outcome === 'success' && verified.purchaseId) {
-      await this.confirmTokenPurchase(verified.purchaseId);
+      await this.confirmTokenPurchaseIfPaid(verified.purchaseId, undefined, verified.currency);
     }
 
     return { received: true };
@@ -400,7 +420,7 @@ export class SubscriptionBillingService {
         externalPaymentMethodId: verified.paymentMethodId,
       });
     } else if (verified.outcome === 'success' && verified.purchaseId) {
-      await this.confirmTokenPurchase(verified.purchaseId);
+      await this.confirmTokenPurchaseIfPaid(verified.purchaseId, undefined, verified.currency);
     } else if (verified.outcome === 'failed' && verified.purchaseId) {
       await this.failTokenPurchase(verified.purchaseId);
     }
@@ -434,7 +454,11 @@ export class SubscriptionBillingService {
         providerReference: verified.providerReference,
       });
     } else if (verified.outcome === 'success' && verified.purchaseId) {
-      await this.confirmTokenPurchase(verified.purchaseId);
+      await this.confirmTokenPurchaseIfPaid(
+        verified.purchaseId,
+        verified.amount,
+        verified.currency,
+      );
     } else if (verified.outcome === 'failed' && verified.purchaseId) {
       await this.failTokenPurchase(verified.purchaseId);
     }
@@ -480,29 +504,56 @@ export class SubscriptionBillingService {
 
   async confirmTokenPurchase(purchaseId: string): Promise<void> {
     try {
+      // Atomically claim PENDING → COMPLETED so concurrent webhook/sync cannot double-credit.
+      const claim = await this.tokenPurchaseRepository
+        .createQueryBuilder()
+        .update(TokenPurchase)
+        .set({
+          status: TokenPurchaseStatus.COMPLETED,
+          completedAt: () => 'CURRENT_TIMESTAMP',
+        })
+        .where('id = :id AND status = :pending', {
+          id: purchaseId,
+          pending: TokenPurchaseStatus.PENDING,
+        })
+        .execute();
+
+      if (!claim.affected) {
+        const existing = await this.tokenPurchaseRepository.findOne({
+          where: { id: purchaseId },
+        });
+        if (!existing) {
+          throw new NotFoundException('Purchase not found');
+        }
+        return;
+      }
+
       const purchase = await this.tokenPurchaseRepository.findOne({
         where: { id: purchaseId },
       });
-
       if (!purchase) {
         throw new NotFoundException('Purchase not found');
       }
 
-      if (purchase.status !== TokenPurchaseStatus.PENDING) {
-        return;
+      try {
+        await this.tokenManagementService.addTokens(
+          purchase.tenantId,
+          Number(purchase.tokenAmount),
+          TokenTransactionType.PURCHASE,
+          `Token purchase: ${purchase.tokenAmount} tokens`,
+          { purchaseId: purchase.id },
+        );
+      } catch (error) {
+        // Release claim so a later sync/webhook retry can credit tokens.
+        await this.tokenPurchaseRepository.update(
+          { id: purchaseId, status: TokenPurchaseStatus.COMPLETED },
+          {
+            status: TokenPurchaseStatus.PENDING,
+            completedAt: () => 'NULL',
+          },
+        );
+        throw error;
       }
-
-      await this.tokenManagementService.addTokens(
-        purchase.tenantId,
-        purchase.tokenAmount,
-        TokenTransactionType.PURCHASE,
-        `Token purchase: ${purchase.tokenAmount} tokens`,
-        { purchaseId: purchase.id },
-      );
-
-      purchase.status = TokenPurchaseStatus.COMPLETED;
-      purchase.completedAt = new Date();
-      await this.tokenPurchaseRepository.save(purchase);
 
       this.logger.log(`Token purchase completed: ${purchase.id}`);
     } catch (error) {
@@ -512,17 +563,98 @@ export class SubscriptionBillingService {
   }
 
   async failTokenPurchase(purchaseId: string): Promise<void> {
-    const purchase = await this.tokenPurchaseRepository.findOne({
-      where: { id: purchaseId },
-    });
+    const result = await this.tokenPurchaseRepository
+      .createQueryBuilder()
+      .update(TokenPurchase)
+      .set({ status: TokenPurchaseStatus.FAILED })
+      .where('id = :id AND status = :pending', {
+        id: purchaseId,
+        pending: TokenPurchaseStatus.PENDING,
+      })
+      .execute();
 
-    if (!purchase || purchase.status !== TokenPurchaseStatus.PENDING) {
-      return;
+    if (result.affected) {
+      this.logger.warn(`Token purchase failed: ${purchaseId}`);
+    }
+  }
+
+  /** Confirm only when paid amount covers purchase price (when amount is known). */
+  private async confirmTokenPurchaseIfPaid(
+    purchaseId: string,
+    paidAmount?: number,
+    currency?: string,
+  ): Promise<void> {
+    if (paidAmount !== undefined) {
+      const purchase = await this.tokenPurchaseRepository.findOne({
+        where: { id: purchaseId },
+      });
+      if (!purchase) {
+        throw new NotFoundException('Purchase not found');
+      }
+      if (!this.isFullyPaid(purchase, paidAmount, currency)) {
+        this.logger.warn(
+          `Underpayment for purchase ${purchaseId}: paid=${paidAmount} expected=${purchase.totalPrice}`,
+        );
+        await this.failTokenPurchase(purchaseId);
+        return;
+      }
+    } else {
+      // No amount in webhook — re-verify via provider API before crediting.
+      const purchase = await this.tokenPurchaseRepository.findOne({
+        where: { id: purchaseId },
+      });
+      if (!purchase) {
+        throw new NotFoundException('Purchase not found');
+      }
+      if (!purchase.transactionReference) {
+        this.logger.warn(
+          `Skipping confirm for purchase ${purchaseId}: webhook had no amount and purchase has no transaction reference`,
+        );
+        return;
+      }
+      const provider = purchase.paymentMetadata?.provider as PaymentProvider | undefined;
+      let verified: import('../types/payment-verify-result').PaymentVerifyResult = {
+        status: 'pending',
+      };
+      if (provider === PaymentProvider.BACHS) {
+        verified = await this.bachsService.verifyCheckoutSession(purchase.transactionReference);
+      } else if (provider === PaymentProvider.NOMBA) {
+        verified = await this.nombaService.verifyOrder(purchase.transactionReference);
+      } else if (provider === PaymentProvider.POLAR) {
+        verified = await this.polarService.verifyCheckout(purchase.transactionReference);
+      }
+      if (verified.status !== 'success') {
+        return;
+      }
+      if (!this.isFullyPaid(purchase, verified.amount, verified.currency ?? currency)) {
+        this.logger.warn(
+          `Underpayment for purchase ${purchaseId}: paid=${verified.amount} expected=${purchase.totalPrice}`,
+        );
+        await this.failTokenPurchase(purchaseId);
+        return;
+      }
     }
 
-    purchase.status = TokenPurchaseStatus.FAILED;
-    await this.tokenPurchaseRepository.save(purchase);
-    this.logger.warn(`Token purchase failed: ${purchase.id}`);
+    await this.confirmTokenPurchase(purchaseId);
+  }
+
+  private isFullyPaid(
+    purchase: TokenPurchase,
+    paidAmount?: number,
+    currency?: string,
+  ): boolean {
+    if (paidAmount === undefined || paidAmount === null) {
+      // ponytail: amount missing from provider — trust signed success/status verify; add required amount when providers always return it
+      return true;
+    }
+    const expected = Number(purchase.totalPrice);
+    if (!Number.isFinite(expected)) return false;
+    if (paidAmount + 0.01 < expected) return false;
+    const expectedCurrency = purchase.paymentMetadata?.currency as string | undefined;
+    if (currency && expectedCurrency && currency.toUpperCase() !== String(expectedCurrency).toUpperCase()) {
+      return false;
+    }
+    return true;
   }
 
   async configureAutoTopup(dto: AutoTopupConfigDto): Promise<AutoTopupConfig> {
@@ -540,6 +672,12 @@ export class SubscriptionBillingService {
 
         if (!paymentMethod) {
           throw new BadRequestException('Saved payment method not found');
+        }
+
+        if (paymentMethod.provider === PaymentProvider.BACHS) {
+          throw new BadRequestException(
+            'Bachs cards cannot be used for auto top-up. Use Nomba (NGN) or Polar (USD).',
+          );
         }
 
         resolvePackage(dto.packageId, dto.currency);
@@ -604,85 +742,128 @@ export class SubscriptionBillingService {
   }
 
   private async processAutoTopupForTenant(config: AutoTopupConfig): Promise<void> {
+    // Claim under a row lock so multi-instance crons cannot double-charge.
+    // Create the PENDING purchase inside the transaction, then charge outside.
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+
+    let savedPurchase: TokenPurchase | undefined;
+    let paymentMethod: TenantPaymentMethod | undefined;
+    let pkg: ReturnType<typeof resolvePackage> | undefined;
+    let purchaseAmount = 0;
+    let lockedConfig: AutoTopupConfig | undefined;
+
     try {
-      if (!config.paymentMethodId || !config.packageId || !config.currency) {
+      lockedConfig = await queryRunner.manager.findOne(AutoTopupConfig, {
+        where: { id: config.id },
+        lock: { mode: 'pessimistic_write' },
+      });
+
+      if (
+        !lockedConfig?.enabled ||
+        !lockedConfig.paymentMethodId ||
+        !lockedConfig.packageId ||
+        !lockedConfig.currency
+      ) {
+        await queryRunner.rollbackTransaction();
         return;
       }
 
-      const paymentMethod = await this.paymentMethodRepository.findOne({
-        where: { id: config.paymentMethodId, tenantId: config.tenantId },
+      paymentMethod = await queryRunner.manager.findOne(TenantPaymentMethod, {
+        where: { id: lockedConfig.paymentMethodId, tenantId: lockedConfig.tenantId },
       });
 
       if (!paymentMethod) {
-        this.logger.warn(`Auto topup skipped for tenant ${config.tenantId}: no payment method`);
+        this.logger.warn(
+          `Auto topup skipped for tenant ${lockedConfig.tenantId}: no payment method`,
+        );
+        await queryRunner.rollbackTransaction();
         return;
       }
 
-      const balance = await this.tokenManagementService.getBalance(config.tenantId);
+      if (paymentMethod.provider === PaymentProvider.BACHS) {
+        this.logger.warn(
+          `Auto topup skipped for tenant ${lockedConfig.tenantId}: Bachs off-session charging is not supported`,
+        );
+        await queryRunner.rollbackTransaction();
+        return;
+      }
+
+      const balance = await this.tokenManagementService.getBalance(lockedConfig.tenantId);
       let shouldTopup = false;
       let topupType = TokenPurchaseType.AUTO_TOPUP;
 
       if (
-        (config.trigger === TopupTrigger.THRESHOLD || config.trigger === TopupTrigger.BOTH) &&
-        config.thresholdAmount &&
-        balance.availableTokens <= config.thresholdAmount
+        (lockedConfig.trigger === TopupTrigger.THRESHOLD ||
+          lockedConfig.trigger === TopupTrigger.BOTH) &&
+        lockedConfig.thresholdAmount &&
+        balance.availableTokens <= lockedConfig.thresholdAmount
       ) {
         shouldTopup = true;
       }
 
       if (
-        (config.trigger === TopupTrigger.SCHEDULED || config.trigger === TopupTrigger.BOTH) &&
-        config.nextScheduledRun &&
-        config.scheduledAmount &&
-        new Date() >= config.nextScheduledRun
+        (lockedConfig.trigger === TopupTrigger.SCHEDULED ||
+          lockedConfig.trigger === TopupTrigger.BOTH) &&
+        lockedConfig.nextScheduledRun &&
+        lockedConfig.scheduledAmount &&
+        new Date() >= lockedConfig.nextScheduledRun
       ) {
         shouldTopup = true;
         topupType = TokenPurchaseType.SCHEDULED;
-        config.nextScheduledRun = this.calculateNextScheduledRun(config);
-        await this.autoTopupConfigRepository.save(config);
+        lockedConfig.nextScheduledRun = this.calculateNextScheduledRun(lockedConfig);
+        await queryRunner.manager.save(lockedConfig);
       }
 
       if (!shouldTopup) {
+        await queryRunner.rollbackTransaction();
         return;
       }
 
-      const recentPending = await this.tokenPurchaseRepository.findOne({
+      const recentPending = await queryRunner.manager.findOne(TokenPurchase, {
         where: {
-          tenantId: config.tenantId,
-          type: TokenPurchaseType.AUTO_TOPUP,
+          tenantId: lockedConfig.tenantId,
+          type: In([TokenPurchaseType.AUTO_TOPUP, TokenPurchaseType.SCHEDULED]),
           status: TokenPurchaseStatus.PENDING,
         },
         order: { createdAt: 'DESC' },
       });
 
       if (recentPending && Date.now() - recentPending.createdAt.getTime() < 30 * 60 * 1000) {
+        await queryRunner.rollbackTransaction();
         return;
       }
 
-      const pkg = resolvePackage(config.packageId, config.currency as BillingCurrency);
-      const purchaseAmount = pkg.price;
+      pkg = resolvePackage(lockedConfig.packageId, lockedConfig.currency as BillingCurrency);
+      purchaseAmount = pkg.price;
 
       const currentMonth = new Date().getMonth() + 1;
       const currentYear = new Date().getFullYear();
 
-      if (config.currentMonth !== currentMonth || config.currentYear !== currentYear) {
-        config.currentMonthSpend = 0;
-        config.currentMonth = currentMonth;
-        config.currentYear = currentYear;
+      if (
+        lockedConfig.currentMonth !== currentMonth ||
+        lockedConfig.currentYear !== currentYear
+      ) {
+        lockedConfig.currentMonthSpend = 0;
+        lockedConfig.currentMonth = currentMonth;
+        lockedConfig.currentYear = currentYear;
       }
 
       if (
-        config.maxMonthlySpend &&
-        Number(config.currentMonthSpend) + purchaseAmount > Number(config.maxMonthlySpend)
+        lockedConfig.maxMonthlySpend &&
+        Number(lockedConfig.currentMonthSpend) + purchaseAmount >
+          Number(lockedConfig.maxMonthlySpend)
       ) {
         this.logger.warn(
-          `Auto topup skipped for tenant ${config.tenantId}: would exceed monthly spending limit`,
+          `Auto topup skipped for tenant ${lockedConfig.tenantId}: would exceed monthly spending limit`,
         );
+        await queryRunner.rollbackTransaction();
         return;
       }
 
-      const purchase = this.tokenPurchaseRepository.create({
-        tenantId: config.tenantId,
+      const purchase = queryRunner.manager.create(TokenPurchase, {
+        tenantId: lockedConfig.tenantId,
         tokenAmount: pkg.tokens,
         totalPrice: pkg.price,
         pricePerToken: pkg.pricePerToken,
@@ -692,20 +873,33 @@ export class SubscriptionBillingService {
           packageId: pkg.id,
           currency: pkg.currency,
           provider: paymentMethod.provider,
-          autoTopupConfigId: config.id,
+          autoTopupConfigId: lockedConfig.id,
           purpose: 'auto_topup',
         },
       });
 
-      const savedPurchase = await this.tokenPurchaseRepository.save(purchase);
+      savedPurchase = await queryRunner.manager.save(purchase);
+      await queryRunner.commitTransaction();
+    } catch (error) {
+      await queryRunner.rollbackTransaction();
+      this.logger.error(`Failed to process auto topup for tenant ${config.tenantId}:`, error);
+      return;
+    } finally {
+      await queryRunner.release();
+    }
 
+    if (!savedPurchase || !paymentMethod || !pkg || !lockedConfig) {
+      return;
+    }
+
+    try {
       const tenant = await this.tenantRepository.findOne({
-        where: { id: config.tenantId },
+        where: { id: lockedConfig.tenantId },
         relations: ['owner'],
       });
 
       const charge = await this.paymentMethodService.chargeOffSession({
-        tenantId: config.tenantId,
+        tenantId: lockedConfig.tenantId,
         purchaseId: savedPurchase.id,
         packageId: pkg.id,
         currency: pkg.currency,
@@ -717,23 +911,31 @@ export class SubscriptionBillingService {
       savedPurchase.transactionReference = charge.providerReference ?? '';
       await this.tokenPurchaseRepository.save(savedPurchase);
 
-      if (charge.status === 'success') {
-        await this.confirmTokenPurchase(savedPurchase.id);
-      } else if (charge.status === 'failed') {
+      if (charge.status === 'failed') {
         await this.failTokenPurchase(savedPurchase.id);
         return;
       }
 
-      config.currentMonthSpend = Number(config.currentMonthSpend) + purchaseAmount;
-      config.lastTriggered = new Date();
-      config.topupAmount = pkg.tokens;
-      await this.autoTopupConfigRepository.save(config);
+      if (charge.status !== 'success') {
+        // Leave PENDING so the 30-minute guard blocks a second charge; webhook/sync can confirm.
+        return;
+      }
+
+      await this.confirmTokenPurchase(savedPurchase.id);
+
+      lockedConfig.currentMonthSpend = Number(lockedConfig.currentMonthSpend) + purchaseAmount;
+      lockedConfig.lastTriggered = new Date();
+      lockedConfig.topupAmount = pkg.tokens;
+      await this.autoTopupConfigRepository.save(lockedConfig);
 
       this.logger.log(
-        `Auto topup initiated for tenant ${config.tenantId}: ${pkg.tokens} tokens via ${paymentMethod.provider}`,
+        `Auto topup initiated for tenant ${lockedConfig.tenantId}: ${pkg.tokens} tokens via ${paymentMethod.provider}`,
       );
     } catch (error) {
-      this.logger.error(`Failed to process auto topup for tenant ${config.tenantId}:`, error);
+      this.logger.error(
+        `Failed to charge auto topup for tenant ${lockedConfig.tenantId}:`,
+        error,
+      );
     }
   }
 

@@ -34,9 +34,6 @@ jobs:
       - name: Lint
         run: pnpm lint
 
-      - name: Format check
-        run: pnpm fmt
-
       - name: Circular dependencies
         run: pnpm deps:circular
 

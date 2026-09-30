@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { useSearchParams } from "@/compat/next-navigation";
 import { BillingOverview } from "@/components/billing/billing-overview";
 import { AutoTopupSettings } from "@/components/billing/auto-topup-settings";
@@ -15,74 +15,44 @@ function CheckoutStatusBanner() {
   const searchParams = useSearchParams();
   const checkout = searchParams.get("checkout");
   const purchaseId = searchParams.get("purchase_id") ?? searchParams.get("checkout_id");
-  const [message, setMessage] = useState<string | null>(null);
-  const [variant, setVariant] = useState<"default" | "destructive">("default");
 
-  useEffect(() => {
-    if (checkout === "cancel") {
-      setMessage("Checkout was cancelled. You can pick a pack and try again.");
-      setVariant("default");
-      return;
-    }
-
-    if (checkout !== "success") {
-      return;
-    }
-
-    let cancelled = false;
-    setMessage("Payment received — confirming your token purchase…");
-
-    const applyStatus = (status: { status: string }) => {
-      if (status.status === "completed") {
-        setMessage("Payment confirmed. Your token balance has been updated.");
-        return true;
-      }
-      if (status.status === "failed") {
-        setMessage("Payment failed. Please contact support if you were charged.");
-        setVariant("destructive");
-        return true;
-      }
-      return false;
-    };
-
-    const poll = async () => {
-      for (let attempt = 0; attempt < 12; attempt += 1) {
-        if (cancelled) return;
-
-        try {
-          if (purchaseId) {
-            const status = await billingApi.getPurchaseStatus(purchaseId);
-            if (applyStatus(status)) return;
-          }
-        } catch {
-          /* keep polling */
-        }
-
-        await new Promise((resolve) => setTimeout(resolve, 2500));
-      }
-
-      if (cancelled) return;
-
+  const { data: purchaseStatus } = useQuery({
+    queryKey: ["billing", "purchase-status", purchaseId, checkout],
+    queryFn: async () => {
+      if (!purchaseId || checkout !== "success") return null;
       try {
-        if (purchaseId) {
-          const status = await billingApi.syncPurchase(purchaseId);
-          if (applyStatus(status)) return;
-        }
-      } catch {
-        /* fall through to processing message */
-      }
+        const s = await billingApi.getPurchaseStatus(purchaseId);
+        if (s.status === "completed" || s.status === "failed") return s;
+      } catch {}
+      // poll fallback via sync after 30s
+      return billingApi.syncPurchase(purchaseId).catch(() => null);
+    },
+    enabled: checkout === "success" && !!purchaseId,
+    refetchInterval: (query) => (query.state.data?.status === "completed" || query.state.data?.status === "failed" ? false : 2500),
+    staleTime: 0,
+  });
 
-      setMessage(
-        "Payment is still processing. Your balance will update shortly once confirmation completes.",
-      );
-    };
+  if (checkout === "cancel") {
+    return (
+      <div className="rounded-lg border bg-muted/40 px-4 py-3 text-sm">
+        <p className="font-medium">Checkout cancelled</p>
+        <p className="mt-1 text-muted-foreground">Checkout was cancelled. You can pick a pack and try again.</p>
+      </div>
+    );
+  }
+  if (checkout !== "success") return null;
+  if (!purchaseId) return null;
 
-    void poll();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [checkout, purchaseId]);
+  const status = purchaseStatus?.status;
+  const message =
+    status === "completed"
+      ? "Payment confirmed. Your token balance has been updated."
+      : status === "failed"
+        ? "Payment failed. Please contact support if you were charged."
+        : purchaseStatus
+          ? "Payment is still processing. Your balance will update shortly once confirmation completes."
+          : "Payment received — confirming your token purchase…";
+  const variant = status === "failed" ? "destructive" : "default";
 
   if (!message) {
     return null;
@@ -96,9 +66,7 @@ function CheckoutStatusBanner() {
           : "rounded-lg border bg-muted/40 px-4 py-3 text-sm"
       }
     >
-      <p className="font-medium">
-        {checkout === "cancel" ? "Checkout cancelled" : "Checkout status"}
-      </p>
+      <p className="font-medium">Checkout status</p>
       <p className="mt-1 text-muted-foreground">{message}</p>
     </div>
   );

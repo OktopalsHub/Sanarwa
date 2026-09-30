@@ -233,22 +233,15 @@ export default function PricingPage() {
             <div className="flex flex-col justify-center rounded-[var(--radius)] border border-[var(--hm-accent)]/35 bg-black/25 px-3 py-3">
               {billingMode === "byo" ? (
                 <>
-                  <p className="text-[10px] text-white/45">
-                    You pay {byoChannelLabels}. Sanarwa charges orchestration only.
-                  </p>
+                  <p className="text-[10px] text-white/45">BYO: you pay provider, we charge 1 token/event.</p>
                   <p className="mt-1 font-mono text-2xl font-bold leading-tight text-[var(--hm-accent)]">
                     {formatTokens(tokens)}
                     <span className="ml-1.5 text-sm font-normal text-white/40">events</span>
                   </p>
-                  <p className="mt-1.5 text-[10px] text-white/35">
-                    1 event = 1 token on every BYO channel
-                  </p>
                 </>
               ) : (
                 <>
-                  <p className="text-[10px] text-white/45">
-                    {formatTokens(tokens)} tokens — spend varies by channel when Sanarwa delivers.
-                  </p>
+                  <p className="text-[10px] text-white/45">{formatTokens(tokens)} tokens — by channel.</p>
                   <div className="mb-2 flex flex-wrap gap-1">
                     {MANAGED_CHANNELS.map((id) => {
                       const logo = CHANNEL_LOGOS[id];

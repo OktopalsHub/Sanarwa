@@ -13,7 +13,7 @@ import { ApiBearerAuth, ApiHeader, ApiOperation, ApiResponse, ApiTags } from "@n
 import { CurrentTenantId } from "../../common/decorators/current-context.decorator";
 import { TenantMemberGuard } from "../../common/guards";
 import { ApiKeyAuthGuard } from "../api-key/guards/api-key-auth.guard";
-import { Public } from "../auth/decorators/public.decorator";
+import { Public } from "../auth/decorators/public.decorator";\nimport { UnauthorizedException } from "@nestjs/common";
 import { AuthGuard } from "../auth/guards/jwt-auth.guard";
 import {
   BulkNotificationResponseDto,
@@ -49,9 +49,25 @@ export class MessagingController {
   })
   async sendMessage(
     @Body() sendMessageDto: SendMessageDto,
-    @Headers("x-tenant") tenantId?: string,
+    @Req() req: { apiKey?: { tenantId?: string; projectId?: string } },
   ) {
-    return this.messagingService.sendMessage(sendMessageDto, tenantId);
+    const tenantId = req.apiKey?.tenantId;
+    const projectId = req.apiKey?.projectId;
+
+    if (!tenantId || !projectId) {
+      throw new UnauthorizedException("API key is missing tenant or project");
+    }
+
+    return this.messagingService.sendMessage(
+      {
+        ...sendMessageDto,
+        metadata: {
+          ...sendMessageDto.metadata,
+          projectId,
+        },
+      },
+      tenantId,
+    );
   }
 
   @Post("send-bulk")
@@ -75,9 +91,28 @@ export class MessagingController {
   })
   async sendBulkMessages(
     @Body() bulkMessageDto: BulkMessageDto,
-    @Headers("x-tenant") tenantId?: string,
+    @Req() req: { apiKey?: { tenantId?: string; projectId?: string } },
   ) {
-    return this.messagingService.sendBulkMessages(bulkMessageDto, tenantId);
+    const tenantId = req.apiKey?.tenantId;
+    const projectId = req.apiKey?.projectId;
+
+    if (!tenantId || !projectId) {
+      throw new UnauthorizedException("API key is missing tenant or project");
+    }
+
+    return this.messagingService.sendBulkMessages(
+      {
+        ...bulkMessageDto,
+        messages: bulkMessageDto.messages.map((message) => ({
+          ...message,
+          metadata: {
+            ...message.metadata,
+            projectId,
+          },
+        })),
+      },
+      tenantId,
+    );
   }
 
   @Get()

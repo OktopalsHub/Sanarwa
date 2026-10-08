@@ -6,6 +6,7 @@ import {
   ForbiddenException,
   BadRequestException,
   Optional,
+  ServiceUnavailableException,
 } from "@nestjs/common";
 import { InjectRedis } from "@nestjs-modules/ioredis";
 import type { Redis } from "ioredis";
@@ -129,25 +130,25 @@ export class ApiKeyAuthGuard implements CanActivate {
     }
 
     if (!this.redis) {
-      return;
+      throw new ServiceUnavailableException("API key rate limiting is unavailable");
     }
 
-    const pipeline = this.redis.pipeline();
+    const script =
+      "local current = redis.call('INCR', KEYS[1]); " +
+      "if current == 1 then redis.call('EXPIRE', KEYS[1], ARGV[1]); end; " +
+      "return current;";
+
     for (const { name, seconds, limit } of limits) {
       const key = `sanarwa:api-key-rate:${apiKeyId}:${name}`;
-      pipeline.incr(key);
-      pipeline.expire(key, seconds);
-    }
+      const result = await this.redis.eval(script, 1, key, seconds);
+      const count = Number(result);
 
-    const results = await pipeline.exec();
-    if (!results) {
-      throw new BadRequestException("Failed to check API key rate limit");
-    }
+      if (!Number.isFinite(count)) {
+        throw new ServiceUnavailableException("Failed to check API key rate limit");
+      }
 
-    for (let index = 0; index < limits.length; index += 1) {
-      const countResult = results[index * 2]?.[1];
-      if (typeof countResult === "number" && countResult > limits[index].limit) {
-        throw new ForbiddenException(`API key ${limits[index].name} rate limit exceeded`);
+      if (count > limit) {
+        throw new ForbiddenException(`API key ${name} rate limit exceeded`);
       }
     }
   }

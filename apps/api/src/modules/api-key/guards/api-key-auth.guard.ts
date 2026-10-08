@@ -105,14 +105,7 @@ export class ApiKeyAuthGuard implements CanActivate {
    * Get client IP address
    */
   private getClientIp(request: any): string {
-    return (
-      request.headers["x-forwarded-for"]?.split(",")[0].trim() ||
-      request.headers["x-real-ip"] ||
-      request.connection.remoteAddress ||
-      request.socket.remoteAddress ||
-      request.ip ||
-      "unknown"
-    );
+    return request.ip || request.socket?.remoteAddress || request.connection?.remoteAddress || "unknown";
   }
 
   /**

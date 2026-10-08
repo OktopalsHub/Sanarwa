@@ -85,6 +85,32 @@ export class TokenManagementService {
     await queryRunner.startTransaction();
 
     try {
+      // Purchase transactions are idempotent by referenceId. This protects
+      // webhook/sync retries even if the purchase claim is retried.
+      if (type === TokenTransactionType.PURCHASE && referenceId) {
+        const existingTransaction = await queryRunner.manager.findOne(TokenTransaction, {
+          where: { tenantId, type, referenceId },
+        });
+
+        if (existingTransaction) {
+          const existingBalance = await queryRunner.manager.findOne(TokenBalance, {
+            where: { tenantId },
+          });
+          if (!existingBalance) {
+            throw new BadRequestException("Token balance not found for existing purchase");
+          }
+          await queryRunner.rollbackTransaction();
+          return {
+            totalTokens: Number(existingBalance.totalTokens),
+            usedTokens: Number(existingBalance.usedTokens),
+            availableTokens: Number(existingBalance.availableTokens),
+            reservedTokens: Number(existingBalance.reservedTokens),
+            lastUsage: existingBalance.lastUsage,
+            lastPurchase: existingBalance.lastPurchase,
+          };
+        }
+      }
+
       // Get or create balance record with lock
       let balance = await queryRunner.manager.findOne(TokenBalance, {
         where: { tenantId },

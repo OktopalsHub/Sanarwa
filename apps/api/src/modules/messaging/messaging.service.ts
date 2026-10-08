@@ -436,10 +436,17 @@ export class MessagingService {
         }
 
         try {
+          const normalizedChannel = channel.toLowerCase() === "inapp" ? "in_app" : channel.toLowerCase();
+          if (
+            !["email", "sms", "push", "whatsapp", "webhook", "in_app"].includes(normalizedChannel)
+          ) {
+            throw new Error(`Unsupported scheduled channel: ${channel}`);
+          }
+
           const result = await this.notificationEngine.send({
             tenantId: message.tenantId,
             projectId,
-            channel: channel.toLowerCase() === "inapp" ? "in_app" : channel.toLowerCase() as
+            channel: normalizedChannel as
               | "email"
               | "sms"
               | "push"

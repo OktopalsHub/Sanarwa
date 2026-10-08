@@ -3,7 +3,8 @@ import {
   Controller,
   Delete,
   Get,
-  Headers,
+  Req,
+  UnauthorizedException,
   Param,
   Post,
   Query,
@@ -33,7 +34,6 @@ export class MessagingController {
   @UseGuards(ApiKeyAuthGuard)
   @ApiOperation({ summary: "Send a single message (SDK)" })
   @ApiHeader({ name: "X-API-Key", description: "API Key for authentication", required: true })
-  @ApiHeader({ name: "X-Tenant", description: "Tenant ID", required: false })
   @ApiResponse({
     status: 201,
     description: "Message sent successfully",
@@ -49,9 +49,21 @@ export class MessagingController {
   })
   async sendMessage(
     @Body() sendMessageDto: SendMessageDto,
-    @Headers("x-tenant") tenantId?: string,
+    @Req() req: { apiKey?: { tenantId?: string; projectId?: string } },
   ) {
-    return this.messagingService.sendMessage(sendMessageDto, tenantId);
+    const tenantId = req.apiKey?.tenantId;
+    const projectId = req.apiKey?.projectId;
+    if (!tenantId || !projectId) {
+      throw new UnauthorizedException("API key is missing tenant or project");
+    }
+
+    return this.messagingService.sendMessage(
+      {
+        ...sendMessageDto,
+        metadata: { ...sendMessageDto.metadata, projectId },
+      },
+      tenantId,
+    );
   }
 
   @Post("send-bulk")
@@ -75,9 +87,24 @@ export class MessagingController {
   })
   async sendBulkMessages(
     @Body() bulkMessageDto: BulkMessageDto,
-    @Headers("x-tenant") tenantId?: string,
+    @Req() req: { apiKey?: { tenantId?: string; projectId?: string } },
   ) {
-    return this.messagingService.sendBulkMessages(bulkMessageDto, tenantId);
+    const tenantId = req.apiKey?.tenantId;
+    const projectId = req.apiKey?.projectId;
+    if (!tenantId || !projectId) {
+      throw new UnauthorizedException("API key is missing tenant or project");
+    }
+
+    return this.messagingService.sendBulkMessages(
+      {
+        ...bulkMessageDto,
+        messages: bulkMessageDto.messages.map((message) => ({
+          ...message,
+          metadata: { ...message.metadata, projectId },
+        })),
+      },
+      tenantId,
+    );
   }
 
   @Get()

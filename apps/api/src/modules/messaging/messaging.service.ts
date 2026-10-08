@@ -458,7 +458,12 @@ export class MessagingService {
             message: message.content ?? "",
             data: message.data,
             templateId: message.templateId,
-            priority: message.priority,
+            priority:
+              message.priority === MessagePriority.LOW
+                ? "low"
+                : message.priority === MessagePriority.HIGH || message.priority === MessagePriority.URGENT
+                  ? "high"
+                  : "normal",
             subscriberId: recipient.userId ?? recipient.id,
             brandId:
               typeof message.metadata?.brandId === "string" ? message.metadata.brandId : undefined,

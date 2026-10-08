@@ -138,7 +138,7 @@ export class ProviderWebhookService {
     subscription: WebhookSubscription,
     event: ProviderWebhookEvent,
     attempt: number = 1,
-  ): Promise<void> {
+  ): Promise<boolean> {
     try {
       await assertSafeWebhookUrl(subscription.url);
 
@@ -187,6 +187,7 @@ export class ProviderWebhookService {
       subscription.lastTriggered = new Date();
 
       this.logger.debug(`Webhook sent successfully to ${subscription.url} for event ${event.type}`);
+      return true;
     } catch (error) {
       this.logger.error(
         `Failed to send webhook to ${subscription.url} (attempt ${attempt}): ${error.message}`,
@@ -199,9 +200,8 @@ export class ProviderWebhookService {
           subscription.retryPolicy.maxBackoffMs,
         );
 
-        setTimeout(() => {
-          this.sendWebhook(subscription, event, attempt + 1);
-        }, backoffMs);
+        await new Promise((resolve) => setTimeout(resolve, backoffMs));
+        return this.sendWebhook(subscription, event, attempt + 1);
       } else {
         this.logger.error(`Max retries exceeded for webhook ${subscription.id}. Giving up.`);
 
@@ -212,6 +212,7 @@ export class ProviderWebhookService {
           event,
           error: error.message,
         });
+        return false;
       }
     }
   }
@@ -409,11 +410,12 @@ export class ProviderWebhookService {
         },
       };
 
-      await this.sendWebhook(subscription, testEvent);
+      const success = await this.sendWebhook(subscription, testEvent);
 
       return {
-        success: true,
+        success,
         responseTime: Date.now() - startTime,
+        ...(success ? {} : { error: "Webhook delivery failed" }),
       };
     } catch (error) {
       return {

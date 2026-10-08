@@ -58,6 +58,10 @@ export class TokenBalance {
 
 @Entity("token_transactions")
 @Index(["tenantId", "createdAt"])
+@Index("IDX_token_purchase_reference_unique", ["tenantId", "referenceId"], {
+  unique: true,
+  where: `"type" = 'purchase' AND "reference_id" IS NOT NULL`,
+})
 export class TokenTransaction {
   @PrimaryGeneratedColumn("uuid")
   id: string;

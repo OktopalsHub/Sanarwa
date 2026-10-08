@@ -154,6 +154,7 @@ const AppDataSource: DataSourceOptions = {
     SystemAlerts1784543899517,
     NotificationCenter1784545192155,
     CreateCampaigns1787695570150,
+    TokenPurchaseReferenceIdempotency1791470000000,
   ],
   logging: isDev,
   migrationsRun: true,

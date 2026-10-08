@@ -300,6 +300,7 @@ export class TokenPurchaseService {
           TokenTransactionType.PURCHASE,
           `Token purchase: ${purchase.tokenAmount} tokens`,
           { purchaseId: purchase.id },
+          purchase.id,
         );
       } catch (error) {
         // Release claim so a later sync/webhook retry can credit tokens.

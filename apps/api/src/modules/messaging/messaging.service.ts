@@ -4,7 +4,7 @@ import { In, Repository } from "typeorm";
 import { getPaginationSummary } from "../../common/dto/pagination.dto";
 import { IPaginatedData } from "../../common/interfaces";
 import { BulkMessageDto, SendMessageDto } from "./dto/send-message.dto";
-import { MessageStatus } from "./message.entity";
+import { MessagePriority, MessageStatus } from "./message.entity";
 import { MessageDeliveryRepository, MessageRepository } from "./repositories";
 import { DigestService, DigestNotification } from "./services/digest.service";
 import { SchedulingService, ScheduleConfig } from "./services/scheduling.service";

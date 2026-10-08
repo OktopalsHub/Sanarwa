@@ -254,13 +254,13 @@ export class NotificationCenterService {
    * Get unread count
    */
   async getUnreadCount(subscriberId: string, tenantId: string): Promise<number> {
-    return this.repository.count({
-      where: {
-        subscriberId,
-        tenantId,
-        status: NotificationCenterStatus.UNREAD,
-      },
-    });
+    return this.repository
+      .createQueryBuilder("notification")
+      .where("notification.subscriberId = :subscriberId", { subscriberId })
+      .andWhere("notification.tenantId = :tenantId", { tenantId })
+      .andWhere("notification.status = :status", { status: NotificationCenterStatus.UNREAD })
+      .andWhere("(notification.expiresAt IS NULL OR notification.expiresAt > NOW())")
+      .getCount();
   }
 
   /**

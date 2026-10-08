@@ -229,17 +229,22 @@ export class NotificationCenterService {
       tenantId,
     };
 
+    const activeFilter = "(notification.expiresAt IS NULL OR notification.expiresAt > NOW())";
+    const buildCount = (status?: NotificationCenterStatus) => {
+      const query = this.repository
+        .createQueryBuilder("notification")
+        .where("notification.subscriberId = :subscriberId", { subscriberId })
+        .andWhere("notification.tenantId = :tenantId", { tenantId })
+        .andWhere(activeFilter);
+      if (status) query.andWhere("notification.status = :status", { status });
+      return query.getCount();
+    };
+
     const [total, unread, read, archived] = await Promise.all([
-      this.repository.count({ where: baseWhere }),
-      this.repository.count({
-        where: { ...baseWhere, status: NotificationCenterStatus.UNREAD },
-      }),
-      this.repository.count({
-        where: { ...baseWhere, status: NotificationCenterStatus.READ },
-      }),
-      this.repository.count({
-        where: { ...baseWhere, status: NotificationCenterStatus.ARCHIVED },
-      }),
+      buildCount(),
+      buildCount(NotificationCenterStatus.UNREAD),
+      buildCount(NotificationCenterStatus.READ),
+      buildCount(NotificationCenterStatus.ARCHIVED),
     ]);
 
     return { total, unread, read, archived };
@@ -280,6 +285,8 @@ export class NotificationCenterService {
         { query: `%${query}%` },
       );
 
+    qb.andWhere("(notification.expiresAt IS NULL OR notification.expiresAt > NOW())");
+
     const total = await qb.getCount();
 
     const notifications = await qb
@@ -314,6 +321,8 @@ export class NotificationCenterService {
       .where("notification.subscriberId = :subscriberId", { subscriberId })
       .andWhere("notification.tenantId = :tenantId", { tenantId })
       .andWhere("notification.channel = :channel", { channel });
+
+    queryBuilder.andWhere("(notification.expiresAt IS NULL OR notification.expiresAt > NOW())");
 
     const total = await queryBuilder.getCount();
 

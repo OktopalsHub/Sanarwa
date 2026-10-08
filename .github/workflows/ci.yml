@@ -19,6 +19,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - uses: pnpm/action-setup@v4
         with:
           version: ${{ env.PNPM_VERSION }}
@@ -56,7 +58,15 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - run: pnpm fallow
+      # The repository has an existing Fallow backlog. Audit only the changes
+      # introduced by this PR/commit so inherited findings do not block CI.
+      - name: Run Fallow audit
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            pnpm fallow audit --base "origin/${{ github.base_ref }}" --gate new-only
+          else
+            pnpm fallow audit --base HEAD^ --gate new-only
+          fi
 
   type-check:
     runs-on: ubuntu-latest

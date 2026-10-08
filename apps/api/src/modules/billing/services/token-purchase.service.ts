@@ -14,6 +14,7 @@ import { NombaService } from "./nomba.service";
 import { TokenManagementService } from "../../token-management/services/token-management.service";
 import { CheckoutProviderService } from "./checkout-provider.service";
 import { TokenTransactionType } from "../entities/token-balance.entity";
+import { AutoTopupConfig } from "../entities/auto-topup-config.entity";
 import {
   BillingCurrency,
   buildNotifiPurchaseReference,
@@ -37,6 +38,8 @@ export class TokenPurchaseService {
     private tokenPurchaseRepository: Repository<TokenPurchase>,
     @InjectRepository(Tenant)
     private tenantRepository: Repository<Tenant>,
+    @InjectRepository(AutoTopupConfig)
+    private autoTopupConfigRepository: Repository<AutoTopupConfig>,
     private polarService: PolarService,
     private bachsService: BachsService,
     private nombaService: NombaService,
@@ -308,6 +311,32 @@ export class TokenPurchaseService {
           },
         );
         throw error;
+      }
+
+      if (
+        (purchase.type === TokenPurchaseType.AUTO_TOPUP ||
+          purchase.type === TokenPurchaseType.SCHEDULED) &&
+        typeof purchase.paymentMetadata?.autoTopupConfigId === "string"
+      ) {
+        const config = await this.autoTopupConfigRepository.findOne({
+          where: { id: purchase.paymentMetadata.autoTopupConfigId, tenantId: purchase.tenantId },
+        });
+
+        if (config) {
+          const currentMonth = new Date().getMonth() + 1;
+          const currentYear = new Date().getFullYear();
+
+          if (config.currentMonth !== currentMonth || config.currentYear !== currentYear) {
+            config.currentMonthSpend = 0;
+            config.currentMonth = currentMonth;
+            config.currentYear = currentYear;
+          }
+
+          config.currentMonthSpend =
+            Number(config.currentMonthSpend) + Number(purchase.totalPrice);
+          config.lastTriggered = new Date();
+          await this.autoTopupConfigRepository.save(config);
+        }
       }
 
       this.logger.log(`Token purchase completed: ${purchase.id}`);

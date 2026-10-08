@@ -7,6 +7,8 @@ import {
   BadRequestException,
   Optional,
 } from "@nestjs/common";
+import { InjectRedis } from "@nestjs-modules/ioredis";
+import type { Redis } from "ioredis";
 import { ApiKeyService } from "../api-key.service";
 import { TokenManagementService } from "../../token-management/services/token-management.service";
 
@@ -15,6 +17,7 @@ export class ApiKeyAuthGuard implements CanActivate {
   constructor(
     private apiKeyService: ApiKeyService,
     @Optional() private tokenManagementService?: TokenManagementService,
+    @Optional() @InjectRedis() private readonly redis?: Redis,
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
@@ -94,11 +97,6 @@ export class ApiKeyAuthGuard implements CanActivate {
       return request.headers["x-api-key"];
     }
 
-    // Check query parameter (less secure, use with caution)
-    if (request.query && request.query.api_key) {
-      return request.query.api_key;
-    }
-
     return null;
   }
 
@@ -120,10 +118,37 @@ export class ApiKeyAuthGuard implements CanActivate {
    * Check rate limits for API key
    */
   private async checkRateLimits(apiKeyId: string, apiKey: any): Promise<void> {
-    // TODO: Implement rate limiting with Redis
-    // For now, just check the configured limits exist
-    if (!apiKey.rateLimitPerMinute || !apiKey.rateLimitPerHour || !apiKey.rateLimitPerDay) {
+    const limits = [
+      { name: "minute", seconds: 60, limit: Number(apiKey.rateLimitPerMinute) },
+      { name: "hour", seconds: 60 * 60, limit: Number(apiKey.rateLimitPerHour) },
+      { name: "day", seconds: 24 * 60 * 60, limit: Number(apiKey.rateLimitPerDay) },
+    ];
+
+    if (limits.some(({ limit }) => !Number.isFinite(limit) || limit <= 0)) {
       throw new BadRequestException("API key rate limits not configured");
+    }
+
+    if (!this.redis) {
+      return;
+    }
+
+    const pipeline = this.redis.pipeline();
+    for (const { name, seconds, limit } of limits) {
+      const key = `sanarwa:api-key-rate:${apiKeyId}:${name}`;
+      pipeline.incr(key);
+      pipeline.expire(key, seconds);
+    }
+
+    const results = await pipeline.exec();
+    if (!results) {
+      throw new BadRequestException("Failed to check API key rate limit");
+    }
+
+    for (let index = 0; index < limits.length; index += 1) {
+      const countResult = results[index * 2]?.[1];
+      if (typeof countResult === "number" && countResult > limits[index].limit) {
+        throw new ForbiddenException(`API key ${limits[index].name} rate limit exceeded`);
+      }
     }
   }
 

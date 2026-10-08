@@ -21,7 +21,7 @@ const PROVIDER_TEMPLATES: ProviderTemplate[] = [
   { id: "sms.africastalking", name: "Africa's Talking", providerId: "africastalking", channel: NotificationChannel.SMS, difficulty: "easy" },
   { id: "push.fcm", name: "Firebase Cloud Messaging", providerId: "fcm", channel: NotificationChannel.PUSH, isPopular: true, difficulty: "medium" },
   { id: "push.expo", name: "Expo Push", providerId: "expo-push", channel: NotificationChannel.PUSH, difficulty: "easy" },
-  { id: "chat.slack", name: "Slack", providerId: "slack", channel: NotificationChannel.WHATSAPP, difficulty: "easy" },
+  { id: "chat.slack", name: "Slack", providerId: "slack", channel: NotificationChannel.CHAT, difficulty: "easy" },
 ];
 
 @Injectable()

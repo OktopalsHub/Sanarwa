@@ -480,11 +480,14 @@ export class NotificationEngineService {
       return { status: "failed", error: "Webhook URL is required" };
     }
 
-    assertSafeWebhookUrl(webhookUrl);
+    await assertSafeWebhookUrl(webhookUrl);
 
     const response = await fetch(webhookUrl, {
+
       method: "POST",
       headers: { "Content-Type": "application/json" },
+      redirect: "error",
+      signal: AbortSignal.timeout(30000),
       body: JSON.stringify({
         to: request.to,
         title: request.title,

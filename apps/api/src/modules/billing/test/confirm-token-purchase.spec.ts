@@ -87,7 +87,9 @@ describe("TokenPurchaseService.confirmTokenPurchase", () => {
       {} as never,
       {} as never,
       {} as never,
+      {} as never,
       { addTokens } as never,
+      {} as never,
       {} as never,
     );
   });

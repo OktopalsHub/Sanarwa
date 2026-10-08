@@ -4,7 +4,7 @@ import { In, Repository } from "typeorm";
 import { getPaginationSummary } from "../../common/dto/pagination.dto";
 import { IPaginatedData } from "../../common/interfaces";
 import { BulkMessageDto, SendMessageDto } from "./dto/send-message.dto";
-import { MessageStatus } from "./message.entity";
+import { MessagePriority, MessageStatus } from "./message.entity";
 import { MessageDeliveryRepository, MessageRepository } from "./repositories";
 import { DigestService, DigestNotification } from "./services/digest.service";
 import { SchedulingService, ScheduleConfig } from "./services/scheduling.service";
@@ -377,94 +377,130 @@ export class MessagingService {
    * Process scheduled messages only (called by scheduler/cron)
    */
   async processMessage(messageId: string) {
-    try {
-      const message = await this.messageRepository.findById(messageId);
-      if (!message) {
-        throw new Error(`Message ${messageId} not found`);
-      }
+    const message = await this.messageRepository.findById(messageId);
+    if (!message) {
+      throw new NotFoundException(`Message ${messageId} not found`);
+    }
 
-      // Update status to processing
+    await this.messageRepository.update(messageId, {
+      status: MessageStatus.PROCESSING,
+    });
+
+    const projectId =
+      typeof message.metadata?.projectId === "string" ? message.metadata.projectId : undefined;
+
+    if (!projectId) {
       await this.messageRepository.update(messageId, {
-        status: MessageStatus.PROCESSING,
+        status: MessageStatus.FAILED,
+        errorMessage: "Scheduled message is missing project scope",
       });
+      return;
+    }
 
-      // Process each channel
-      const deliveryResults: Array<{
-        channel: string;
-        status: "delivered" | "failed";
-        result?: any;
-        error?: string;
-      }> = [];
+    const deliveries: Array<{
+      channel: string;
+      status: "delivered" | "failed";
+      error?: string;
+    }> = [];
 
-      for (const channel of message.channels) {
-        try {
-          let result;
+    const resolveAddress = (recipient: (typeof message.recipients)[number], channel: string) => {
+      switch (channel.toLowerCase()) {
+        case "email":
+          return recipient.email;
+        case "sms":
+          return recipient.phone;
+        case "whatsapp":
+          return recipient.whatsappNumber ?? recipient.phone;
+        case "push":
+          return recipient.deviceToken ?? recipient.userId ?? recipient.id;
+        case "in_app":
+        case "inapp":
+          return recipient.userId ?? recipient.id;
+        case "webhook":
+          return recipient.id;
+        default:
+          return undefined;
+      }
+    };
 
-          switch (channel.toLowerCase()) {
-            // case 'email':
-            //   result = await this.processEmailChannel(message);
-            //   break;
-            // case 'sms':
-            //   result = await this.processSMSChannel(message);
-            //   break;
-            // case 'push':
-            //   result = await this.processPushChannel(message);
-            //   break;
-            // case 'whatsapp':
-            //   result = await this.processWhatsAppChannel(message);
-            //   break;
-            // case 'inapp':
-            //   result = await this.processInAppChannel(message);
-            //   break;
-            // case 'voice':
-            //   result = await this.processVoiceChannel(message);
-            //   break;
-            default:
-              this.logger.warn(`Unsupported channel: ${channel}`);
-              continue;
-          }
-
-          deliveryResults.push({
-            channel,
-            status: "delivered",
-            result,
-          });
-        } catch (error) {
-          this.logger.error(`Failed to process ${channel} for message ${messageId}:`, error);
-          deliveryResults.push({
+    for (const channel of message.channels) {
+      for (const recipient of message.recipients) {
+        const to = resolveAddress(recipient, channel);
+        if (!to) {
+          deliveries.push({
             channel,
             status: "failed",
-            error: error.message,
+            error: "Missing recipient address for channel",
+          });
+          continue;
+        }
+
+        try {
+          const normalizedChannel = channel.toLowerCase() === "inapp" ? "in_app" : channel.toLowerCase();
+          if (
+            !["email", "sms", "push", "whatsapp", "webhook", "in_app"].includes(normalizedChannel)
+          ) {
+            throw new Error(`Unsupported scheduled channel: ${channel}`);
+          }
+
+          const result = await this.notificationEngine.send({
+            tenantId: message.tenantId,
+            projectId,
+            channel: normalizedChannel as
+              | "email"
+              | "sms"
+              | "push"
+              | "whatsapp"
+              | "webhook"
+              | "in_app",
+            to,
+            title: message.subject,
+            message: message.content ?? "",
+            data: message.data,
+            templateId: message.templateId,
+            priority:
+              message.priority === MessagePriority.LOW
+                ? "low"
+                : message.priority === MessagePriority.HIGH || message.priority === MessagePriority.URGENT
+                  ? "high"
+                  : "normal",
+            subscriberId: recipient.userId ?? recipient.id,
+            brandId:
+              typeof message.metadata?.brandId === "string" ? message.metadata.brandId : undefined,
+            metadata: message.metadata,
+          });
+
+          deliveries.push({
+            channel,
+            status: result.status === "failed" ? "failed" : "delivered",
+            error: result.error,
+          });
+        } catch (error) {
+          deliveries.push({
+            channel,
+            status: "failed",
+            error: error instanceof Error ? error.message : String(error),
           });
         }
       }
-
-      // Update final message status
-      const hasFailures = deliveryResults.some((r) => r.status === "failed");
-      const hasSuccess = deliveryResults.some((r) => r.status === "delivered");
-
-      let finalStatus = MessageStatus.FAILED;
-      if (hasSuccess && !hasFailures) {
-        finalStatus = MessageStatus.DELIVERED;
-      } else if (hasSuccess && hasFailures) {
-        finalStatus = MessageStatus.PARTIALLY_DELIVERED;
-      }
-
-      await this.messageRepository.update(messageId, {
-        status: finalStatus,
-        deliveredAt: hasSuccess ? new Date() : undefined,
-        errorMessage: hasFailures ? "Some channels failed" : undefined,
-      });
-
-      // NO DELIVERY RECORDS - Keep it lightweight
-      this.logger.log(`Processed scheduled message ${messageId}: ${finalStatus}`);
-    } catch (error) {
-      this.logger.error(`Failed to process message ${messageId}:`, error);
-      await this.messageRepository.update(messageId, {
-        status: MessageStatus.FAILED,
-        errorMessage: error.message,
-      });
     }
+
+    const hasFailures = deliveries.some((delivery) => delivery.status === "failed");
+    const hasSuccess = deliveries.some((delivery) => delivery.status === "delivered");
+    const finalStatus =
+      hasSuccess && hasFailures
+        ? MessageStatus.PARTIALLY_DELIVERED
+        : hasSuccess
+          ? MessageStatus.DELIVERED
+          : MessageStatus.FAILED;
+
+    await this.messageRepository.update(messageId, {
+      status: finalStatus,
+      deliveredAt: hasSuccess ? new Date() : undefined,
+      errorMessage: hasFailures ? "Some scheduled deliveries failed" : undefined,
+    });
+
+    this.logger.log(`Processed scheduled message ${messageId}: ${finalStatus}`);
   }
 
   /**

@@ -6,6 +6,7 @@ import { Repository } from "typeorm";
 import { NotificationChannel } from "../../../common/enums/notification-channel.enum";
 import { ProviderWebhookEvent } from "../interfaces/byop.interface";
 import { ProviderConfig } from "../provider-config.entity";
+import { assertSafeWebhookUrl } from "../../../common/security/utils/safe-url";
 
 export interface WebhookSubscription {
   id: string;
@@ -44,6 +45,8 @@ export class ProviderWebhookService {
     tenantId: string,
     subscription: Omit<WebhookSubscription, "id" | "createdAt">,
   ): Promise<WebhookSubscription> {
+    await assertSafeWebhookUrl(subscription.url);
+
     const webhookSubscription: WebhookSubscription = {
       ...subscription,
       id: this.generateId(),
@@ -137,6 +140,8 @@ export class ProviderWebhookService {
     attempt: number = 1,
   ): Promise<void> {
     try {
+      await assertSafeWebhookUrl(subscription.url);
+
       const payload = {
         id: this.generateId(),
         event: event.type,
@@ -170,7 +175,8 @@ export class ProviderWebhookService {
         method: "POST",
         headers,
         body: JSON.stringify(payload),
-        signal: AbortSignal.timeout(30000), // 30 second timeout
+        signal: AbortSignal.timeout(30000),
+        redirect: "error",
       });
 
       if (!response.ok) {

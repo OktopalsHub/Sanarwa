@@ -7,10 +7,10 @@ function createRedis(counts: number[]) {
   return {
     pipeline() {
       return {
-        incr(key: string) {
+        incr(_key: string) {
           return this;
         },
-        expire(key: string, seconds: number) {
+        expire(_key: string, _seconds: number) {
           return this;
         },
         exec: vi.fn(async () => counts.map((count) => [null, count] as [null, number])),

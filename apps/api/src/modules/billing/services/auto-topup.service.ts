@@ -385,8 +385,6 @@ export class AutoTopupService {
 
       await this.tokenPurchaseService.confirmTokenPurchase(savedPurchase.id);
 
-      lockedConfig.currentMonthSpend = Number(lockedConfig.currentMonthSpend) + purchaseAmount;
-      lockedConfig.lastTriggered = new Date();
       lockedConfig.topupAmount = pkg.tokens;
       await this.autoTopupConfigRepository.save(lockedConfig);
 

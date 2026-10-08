@@ -111,6 +111,7 @@ describe("TokenPurchaseService.confirmTokenPurchase", () => {
       TokenTransactionType.PURCHASE,
       "Token purchase: 3000 tokens",
       { purchaseId },
+      purchaseId,
     );
   });
 

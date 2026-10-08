@@ -1,6 +1,7 @@
 import { RequestMethod, ValidationPipe } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { NestFactory } from "@nestjs/core";
+import { NestExpressApplication } from "@nestjs/platform-express";
 import { SwaggerModule } from "@nestjs/swagger";
 
 import * as compression from "compression";
@@ -45,7 +46,7 @@ async function bootstrap() {
     logger: logLevels as ("error" | "warn" | "log" | "debug" | "verbose" | "fatal")[],
   };
 
-  const app = await NestFactory.create(AppModule, nestOptions);
+  const app = await NestFactory.create<NestExpressApplication>(AppModule, nestOptions);
   const logger = app.get(Logger);
   app.useLogger(logger);
 

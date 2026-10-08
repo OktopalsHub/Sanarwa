@@ -4,16 +4,13 @@ import { ApiKeyAuthGuard } from "../api-key/guards/api-key-auth.guard";
 import { MessagingController } from "./messaging.controller";
 
 function createRedis(counts: number[]) {
-  const commands: Array<{ name: string; args: unknown[] }> = [];
   return {
     pipeline() {
       return {
         incr(key: string) {
-          commands.push({ name: "incr", args: [key] });
           return this;
         },
         expire(key: string, seconds: number) {
-          commands.push({ name: "expire", args: [key, seconds] });
           return this;
         },
         exec: vi.fn(async () => counts.map((count) => [null, count] as [null, number])),

@@ -55,6 +55,9 @@ async function bootstrap() {
     const envValidationService = app.get(EnvironmentValidationService);
     envValidationService.validateOrThrow();
 
+    // Trust forwarded client IPs only when the deployment explicitly enables it.
+    app.set("trust proxy", process.env.TRUST_PROXY === "true");
+
     // Configure security middleware (Helmet + Morgan)
     configureSecurityMiddleware(app, configService, logger);
 

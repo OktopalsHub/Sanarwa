@@ -20,7 +20,7 @@ export class WebhookService {
 
   async create(tenantId: string, createWebhookDto: CreateWebhookDto): Promise<Webhook> {
     try {
-      assertSafeWebhookUrl(createWebhookDto.url);
+      await assertSafeWebhookUrl(createWebhookDto.url);
     } catch (error) {
       throw new BadRequestException(error instanceof Error ? error.message : "Invalid webhook URL");
     }
@@ -69,7 +69,7 @@ export class WebhookService {
     // Check URL uniqueness if URL is being updated
     if (updateWebhookDto.url && updateWebhookDto.url !== webhook.url) {
       try {
-        assertSafeWebhookUrl(updateWebhookDto.url);
+        await assertSafeWebhookUrl(updateWebhookDto.url);
       } catch (error) {
         throw new BadRequestException(
           error instanceof Error ? error.message : "Invalid webhook URL",

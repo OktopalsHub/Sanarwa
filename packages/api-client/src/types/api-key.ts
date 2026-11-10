@@ -1,7 +1,3 @@
-/**
- * API Key-related types for the Notifi platform
- */
-
 export enum ApiKeyStatus {
   ACTIVE = "active",
   INACTIVE = "inactive",
@@ -12,13 +8,13 @@ export enum ApiKeyType {
   PROJECT = "project",
   SERVICE = "service",
   TENANT = "tenant",
-  USER = "user", // Deprecated - will be removed in future versions
+  USER = "user",
 }
 
 export interface ApiKey {
   id: string;
   name: string;
-  keyPrefix: string; // First 8 characters for identification
+  keyPrefix: string;
   type: ApiKeyType;
   status: ApiKeyStatus;
   permissions?: string[];
@@ -27,7 +23,7 @@ export interface ApiKey {
   lastUsedAt?: Date;
   lastUsedIp?: string;
   usageCount: number;
-  rateLimit?: number; // Requests per minute
+  rateLimit?: number;
   metadata?: Record<string, any>;
   projectId?: string;
   tenantId: string;
@@ -35,7 +31,6 @@ export interface ApiKey {
   createdAt: Date;
   updatedAt: Date;
 
-  // Computed properties
   isExpired: boolean;
   isActive: boolean;
   daysUntilExpiry?: number;
@@ -44,7 +39,7 @@ export interface ApiKey {
 }
 
 export interface ApiKeyWithSecret extends ApiKey {
-  key: string; // Full API key (only shown once on creation)
+  key: string;
 }
 
 export interface CreateApiKeyRequest {
@@ -116,7 +111,7 @@ export interface ApiKeyStats {
   inactiveKeys: number;
   revokedKeys: number;
   expiredKeys: number;
-  expiringKeys: number; // Keys expiring in next 30 days
+  expiringKeys: number;
   totalUsage: number;
   averageUsage: number;
   topKeys: Array<{
@@ -167,7 +162,7 @@ export interface ApiKeyTemplate {
   type: ApiKeyType;
   permissions: string[];
   defaultRateLimit?: number;
-  defaultExpiry?: number; // Days
+  defaultExpiry?: number;
   isRecommended: boolean;
 }
 

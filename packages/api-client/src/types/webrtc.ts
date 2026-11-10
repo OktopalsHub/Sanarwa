@@ -1,6 +1,3 @@
-// WebRTC and real-time communication types
-
-// Enums for WebRTC
 export enum CallStatus {
   INITIATING = "initiating",
   RINGING = "ringing",
@@ -67,7 +64,6 @@ export enum CallEndReason {
   SYSTEM_ERROR = "system_error",
 }
 
-// Core WebRTC interfaces
 export interface CallSession {
   id: string;
   tenantId: string;
@@ -78,28 +74,23 @@ export interface CallSession {
   startedAt?: Date;
   connectedAt?: Date;
   endedAt?: Date;
-  duration?: number; // in seconds
+  duration?: number;
   endReason?: CallEndReason;
   metadata?: Record<string, any>;
   createdAt: Date;
   updatedAt: Date;
 
-  // Call participants
   participants: CallParticipant[];
 
-  // Media streams
   mediaStreams: MediaStream[];
 
-  // Connection details
   connectionDetails?: ConnectionDetails;
 
-  // Quality metrics
   qualityMetrics?: CallQualityMetrics;
 
-  // Relationships
-  caller?: any; // Will be typed in auth.ts
-  callee?: any; // Will be typed in auth.ts
-  tenant?: any; // Will be typed in tenant.ts
+  caller?: any;
+  callee?: any;
+  tenant?: any;
 }
 
 export interface CallParticipant {
@@ -116,8 +107,7 @@ export interface CallParticipant {
   signalingState: SignalingState;
   metadata?: Record<string, any>;
 
-  // User details (populated when needed)
-  user?: any; // Will be typed in auth.ts
+  user?: any;
 }
 
 export interface MediaSettings {
@@ -207,7 +197,6 @@ export interface DataChannel {
   bufferedAmount: number;
 }
 
-// Call quality and metrics
 export interface CallQualityMetrics {
   sessionId: string;
   overallQuality: "excellent" | "good" | "fair" | "poor";
@@ -219,20 +208,20 @@ export interface CallQualityMetrics {
 }
 
 export interface AudioQualityMetrics {
-  jitter: number; // in milliseconds
-  packetLoss: number; // percentage
-  roundTripTime: number; // in milliseconds
-  bitrate: number; // in kbps
+  jitter: number;
+  packetLoss: number;
+  roundTripTime: number;
+  bitrate: number;
   codec: string;
-  mos: number; // Mean Opinion Score (1-5)
+  mos: number;
 }
 
 export interface VideoQualityMetrics {
-  jitter: number; // in milliseconds
-  packetLoss: number; // percentage
-  roundTripTime: number; // in milliseconds
-  bitrate: number; // in kbps
-  frameRate: number; // fps
+  jitter: number;
+  packetLoss: number;
+  roundTripTime: number;
+  bitrate: number;
+  frameRate: number;
   resolution: {
     width: number;
     height: number;
@@ -244,23 +233,22 @@ export interface VideoQualityMetrics {
 
 export interface NetworkQualityMetrics {
   bandwidth: {
-    upload: number; // in kbps
-    download: number; // in kbps
+    upload: number;
+    download: number;
   };
-  latency: number; // in milliseconds
-  jitter: number; // in milliseconds
-  packetLoss: number; // percentage
+  latency: number;
+  jitter: number;
+  packetLoss: number;
   connectionType: "wifi" | "ethernet" | "cellular" | "unknown";
 }
 
 export interface SystemMetrics {
-  cpuUsage: number; // percentage
-  memoryUsage: number; // percentage
-  batteryLevel?: number; // percentage
+  cpuUsage: number;
+  memoryUsage: number;
+  batteryLevel?: number;
   thermalState?: "nominal" | "fair" | "serious" | "critical";
 }
 
-// Call records and history
 export interface CallRecord {
   id: string;
   sessionId: string;
@@ -272,37 +260,33 @@ export interface CallRecord {
   startedAt: Date;
   connectedAt?: Date;
   endedAt?: Date;
-  duration: number; // in seconds
+  duration: number;
   endReason: CallEndReason;
-  qualityScore?: number; // 1-5
+  qualityScore?: number;
   recordingUrl?: string;
   transcriptUrl?: string;
   metadata?: Record<string, any>;
   createdAt: Date;
 
-  // Relationships
-  caller?: any; // Will be typed in auth.ts
-  callee?: any; // Will be typed in auth.ts
+  caller?: any;
+  callee?: any;
   session?: CallSession;
 }
 
-// Call settings and configuration
 export interface CallSettings {
   id: string;
   userId: string;
   tenantId: string;
 
-  // Audio settings
   audioSettings: {
     defaultInputDevice?: string;
     defaultOutputDevice?: string;
     echoCancellation: boolean;
     noiseSuppression: boolean;
     autoGainControl: boolean;
-    volume: number; // 0-100
+    volume: number;
   };
 
-  // Video settings
   videoSettings: {
     defaultCamera?: string;
     resolution: "low" | "medium" | "high" | "hd" | "4k";
@@ -311,7 +295,6 @@ export interface CallSettings {
     enableLowLightEnhancement: boolean;
   };
 
-  // Call preferences
   callPreferences: {
     autoAnswer: boolean;
     callWaiting: boolean;
@@ -321,15 +304,14 @@ export interface CallSettings {
     allowIncomingCalls: boolean;
   };
 
-  // Network settings
   networkSettings: {
     preferredCodecs: {
       audio: string[];
       video: string[];
     };
     bandwidthLimit?: {
-      upload: number; // in kbps
-      download: number; // in kbps
+      upload: number;
+      download: number;
     };
     enableIceRestart: boolean;
     iceServers: IceServer[];
@@ -345,7 +327,6 @@ export interface IceServer {
   credentialType?: "password" | "oauth";
 }
 
-// Signaling and real-time events
 export interface SignalingMessage {
   id: string;
   sessionId: string;
@@ -395,7 +376,6 @@ export interface QualityUpdatePayload {
   metrics: CallQualityMetrics;
 }
 
-// Real-time communication
 export interface RealTimeEvent {
   id: string;
   type: RealTimeEventType;
@@ -430,7 +410,6 @@ export interface PresenceInfo {
   };
 }
 
-// Request/Response DTOs
 export interface InitiateCallRequest {
   calleeId: string;
   type: CallType;
@@ -484,7 +463,6 @@ export interface CallHistoryQueryParams {
   sortOrder?: "ASC" | "DESC";
 }
 
-// State management
 export interface WebRTCState {
   currentSession?: CallSession;
   activeSessions: CallSession[];
@@ -501,7 +479,6 @@ export interface WebRTCState {
   error: string | null;
 }
 
-// API response wrappers
 export interface WebRTCApiResponse<T = any> {
   data: T;
   success: boolean;
@@ -515,7 +492,6 @@ export interface ValidationError {
   code: string;
 }
 
-// Events
 export interface CallSessionCreatedEvent {
   sessionId: string;
   tenantId: string;

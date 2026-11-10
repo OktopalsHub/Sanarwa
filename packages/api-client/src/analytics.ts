@@ -8,27 +8,15 @@ import {
   UsageMetrics,
 } from "./types/analytics";
 import { NotificationChannel } from "./types/notification";
-import { ApiClient, createApiClient } from "./client";
+import { ApiClient, apiClient as sharedApiClient } from "./client";
 
-/**
- * Analytics API client for handling all analytics and reporting operations
- * Implements metrics collection, reporting, analytics filtering, and real-time data fetching
- */
 class AnalyticsApiClient {
   private apiClient: ApiClient;
 
   constructor(apiClient?: ApiClient) {
-    // Use provided client or create a new one
-    this.apiClient = apiClient || createApiClient();
+    this.apiClient = apiClient ?? sharedApiClient;
   }
 
-  // Core Analytics Methods
-
-  /**
-   * Get delivery rate analytics
-   * @param params Query parameters for delivery analytics
-   * @returns Delivery rate analytics data
-   */
   async getDeliveryRateAnalytics(params?: {
     startDate?: Date;
     endDate?: Date;
@@ -46,11 +34,6 @@ class AnalyticsApiClient {
     return this.apiClient.get<DeliveryMetrics>("/analytics/delivery-rates", queryParams);
   }
 
-  /**
-   * Get channel analytics
-   * @param params Query parameters for channel analytics
-   * @returns Channel performance analytics
-   */
   async getChannelAnalytics(params?: { startDate?: Date; endDate?: Date }): Promise<{
     channels: Array<{
       channel: NotificationChannel;
@@ -71,11 +54,6 @@ class AnalyticsApiClient {
     return this.apiClient.get("/analytics/channels", queryParams);
   }
 
-  /**
-   * Get provider analytics
-   * @param params Query parameters for provider analytics
-   * @returns Provider performance analytics
-   */
   async getProviderAnalytics(params?: {
     startDate?: Date;
     endDate?: Date;
@@ -101,11 +79,6 @@ class AnalyticsApiClient {
     return this.apiClient.get("/analytics/providers", queryParams);
   }
 
-  /**
-   * Get time series analytics data
-   * @param params Query parameters for time series data
-   * @returns Time series analytics data
-   */
   async getTimeSeriesData(params?: {
     startDate?: Date;
     endDate?: Date;
@@ -131,12 +104,6 @@ class AnalyticsApiClient {
     return this.apiClient.get("/analytics/time-series", queryParams);
   }
 
-  /**
-   * Get comprehensive tenant analytics
-   * @param startDate Optional start date
-   * @param endDate Optional end date
-   * @returns Comprehensive tenant analytics
-   */
   async getTenantAnalytics(
     startDate?: Date,
     endDate?: Date,
@@ -157,8 +124,6 @@ class AnalyticsApiClient {
     if (startDate) queryParams.startDate = startDate.toISOString();
     if (endDate) queryParams.endDate = endDate.toISOString();
 
-    // Note: The backend expects tenantId in the path, but with tenant-scoped API client,
-    // we'll use a different approach or the backend needs to be updated
     return this.apiClient.get("/analytics/dashboard", queryParams);
   }
 
@@ -166,11 +131,6 @@ class AnalyticsApiClient {
     return this.getTenantAnalytics(startDate, endDate);
   }
 
-  /**
-   * Get top performing providers
-   * @param params Query parameters for top providers
-   * @returns Top performing providers
-   */
   async getTopProviders(params?: { limit?: number; startDate?: Date; endDate?: Date }): Promise<
     Array<{
       providerId: string;
@@ -189,14 +149,6 @@ class AnalyticsApiClient {
     return this.apiClient.get("/analytics/providers/top", queryParams);
   }
 
-  /**
-   * Get delivery trends comparison
-   * @param currentPeriodStart Start of current period
-   * @param currentPeriodEnd End of current period
-   * @param previousPeriodStart Start of previous period
-   * @param previousPeriodEnd End of previous period
-   * @returns Delivery trends comparison
-   */
   async getDeliveryTrends(
     currentPeriodStart: Date,
     currentPeriodEnd: Date,
@@ -220,13 +172,6 @@ class AnalyticsApiClient {
     });
   }
 
-  // Delivery Tracking Methods
-
-  /**
-   * Get delivery statistics
-   * @param params Query parameters for delivery stats
-   * @returns Delivery statistics
-   */
   async getDeliveryStats(params?: {
     channel?: NotificationChannel;
     startDate?: Date;
@@ -250,11 +195,6 @@ class AnalyticsApiClient {
     return this.apiClient.get("/analytics/delivery-stats", queryParams);
   }
 
-  /**
-   * Get delivery history for a specific notification
-   * @param notificationId Notification ID
-   * @returns Delivery history
-   */
   async getDeliveryHistory(notificationId: string): Promise<
     Array<{
       id: string;
@@ -269,11 +209,6 @@ class AnalyticsApiClient {
     return this.apiClient.get(`/analytics/delivery-history/${notificationId}`);
   }
 
-  /**
-   * Get delivery status for multiple notifications
-   * @param notificationIds Array of notification IDs
-   * @returns Delivery statuses
-   */
   async getMultipleDeliveryStatus(notificationIds: string[]): Promise<
     Array<{
       notificationId: string;
@@ -288,13 +223,6 @@ class AnalyticsApiClient {
     });
   }
 
-  // Webhook Management Methods
-
-  /**
-   * Register webhook configuration for analytics
-   * @param config Webhook configuration
-   * @returns Registration result
-   */
   async registerWebhook(config: {
     url: string;
     secret?: string;
@@ -308,17 +236,10 @@ class AnalyticsApiClient {
     return this.apiClient.post("/analytics/webhooks", config);
   }
 
-  /**
-   * Remove webhook configuration
-   */
   async removeWebhook(): Promise<void> {
     return this.apiClient.delete("/analytics/webhooks/current");
   }
 
-  /**
-   * Test webhook configuration
-   * @returns Test result
-   */
   async testWebhook(): Promise<{
     success: boolean;
     message: string;
@@ -326,10 +247,6 @@ class AnalyticsApiClient {
     return this.apiClient.post("/analytics/webhooks/current/test", {});
   }
 
-  /**
-   * Get webhook configuration
-   * @returns Webhook configuration (without sensitive data)
-   */
   async getWebhookConfig(): Promise<{
     configured: boolean;
     url?: string;
@@ -339,13 +256,6 @@ class AnalyticsApiClient {
     return this.apiClient.get("/analytics/webhooks/current");
   }
 
-  // Audit Log Methods
-
-  /**
-   * Get audit logs
-   * @param params Query parameters for audit logs
-   * @returns Audit logs
-   */
   async getAuditLogs(params?: {
     eventType?: string;
     resourceType?: string;
@@ -381,11 +291,6 @@ class AnalyticsApiClient {
     return this.apiClient.get("/analytics/audit-logs", queryParams);
   }
 
-  /**
-   * Get audit trail for a specific notification
-   * @param notificationId Notification ID
-   * @returns Audit trail
-   */
   async getNotificationAuditTrail(notificationId: string): Promise<
     Array<{
       id: string;
@@ -398,12 +303,6 @@ class AnalyticsApiClient {
     return this.apiClient.get(`/analytics/audit-logs/notification/${notificationId}`);
   }
 
-  /**
-   * Get audit statistics
-   * @param startDate Optional start date
-   * @param endDate Optional end date
-   * @returns Audit statistics
-   */
   async getAuditStatistics(
     startDate?: Date,
     endDate?: Date,
@@ -424,11 +323,6 @@ class AnalyticsApiClient {
     return this.apiClient.get("/analytics/audit-logs/statistics", queryParams);
   }
 
-  /**
-   * Export audit logs
-   * @param params Export parameters
-   * @returns Export data
-   */
   async exportAuditLogs(params: {
     format: ExportFormat;
     eventType?: string;
@@ -459,14 +353,6 @@ class AnalyticsApiClient {
     return this.apiClient.get("/analytics/audit-logs/export", queryParams);
   }
 
-  // Performance Metrics Methods
-
-  /**
-   * Get system performance metrics
-   * @param startDate Optional start date
-   * @param endDate Optional end date
-   * @returns System performance metrics
-   */
   async getSystemPerformanceMetrics(startDate?: Date, endDate?: Date): Promise<PerformanceMetrics> {
     const queryParams: Record<string, string> = {};
     if (startDate) queryParams.startDate = startDate.toISOString();
@@ -475,11 +361,6 @@ class AnalyticsApiClient {
     return this.apiClient.get<PerformanceMetrics>("/analytics/performance/system", queryParams);
   }
 
-  /**
-   * Get provider performance metrics
-   * @param params Query parameters for provider performance
-   * @returns Provider performance metrics
-   */
   async getProviderPerformanceMetrics(params?: {
     providerId?: string;
     channel?: NotificationChannel;
@@ -505,12 +386,6 @@ class AnalyticsApiClient {
     return this.apiClient.get("/analytics/performance/providers", queryParams);
   }
 
-  /**
-   * Get tenant performance metrics
-   * @param startDate Optional start date
-   * @param endDate Optional end date
-   * @returns Tenant performance metrics
-   */
   async getTenantPerformanceMetrics(
     startDate?: Date,
     endDate?: Date,
@@ -537,14 +412,6 @@ class AnalyticsApiClient {
     return this.apiClient.get("/analytics/performance/tenant/current", queryParams);
   }
 
-  /**
-   * Get performance trends
-   * @param metricName Name of the metric to track
-   * @param startDate Start date for trends
-   * @param endDate End date for trends
-   * @param interval Time interval for data points
-   * @returns Performance trends data
-   */
   async getPerformanceTrends(
     metricName: string,
     startDate: Date,
@@ -568,23 +435,10 @@ class AnalyticsApiClient {
     });
   }
 
-  /**
-   * Get real-time performance metrics
-   * @returns Real-time metrics
-   */
   async getRealTimeMetrics(): Promise<RealTimeMetrics> {
     return this.apiClient.get<RealTimeMetrics>("/analytics/performance/realtime");
   }
 
-  // Project and Brand Analytics Methods
-
-  /**
-   * Get analytics for a specific project
-   * @param projectId Project ID
-   * @param startDate Optional start date
-   * @param endDate Optional end date
-   * @returns Project analytics
-   */
   async getProjectAnalytics(
     projectId: string,
     startDate?: Date,
@@ -608,13 +462,6 @@ class AnalyticsApiClient {
     return this.apiClient.get(`/analytics/project/${projectId}`, queryParams);
   }
 
-  /**
-   * Get analytics for a specific brand
-   * @param brandId Brand ID
-   * @param startDate Optional start date
-   * @param endDate Optional end date
-   * @returns Brand analytics
-   */
   async getBrandAnalytics(
     brandId: string,
     startDate?: Date,
@@ -636,13 +483,6 @@ class AnalyticsApiClient {
     return this.apiClient.get(`/analytics/brand/${brandId}`, queryParams);
   }
 
-  /**
-   * Compare analytics between multiple projects
-   * @param projectIds Array of project IDs to compare
-   * @param startDate Optional start date
-   * @param endDate Optional end date
-   * @returns Comparative project analytics
-   */
   async compareProjects(
     projectIds: string[],
     startDate?: Date,
@@ -671,18 +511,12 @@ class AnalyticsApiClient {
     return this.apiClient.get("/analytics/projects/compare", queryParams);
   }
 
-  /**
-   * Validate analytics filters
-   * @param filters Analytics filters to validate
-   * @returns Validation result
-   */
   validateAnalyticsFilters(filters: AnalyticsFilters): {
     isValid: boolean;
     errors: string[];
   } {
     const errors: string[] = [];
 
-    // Validate date range
     if (filters.dateRange.start >= filters.dateRange.end) {
       errors.push("Start date must be before end date");
     }
@@ -692,8 +526,7 @@ class AnalyticsApiClient {
       errors.push("End date cannot be in the future");
     }
 
-    // Validate date range is not too large (e.g., max 1 year)
-    const maxRange = 365 * 24 * 60 * 60 * 1000; // 1 year in milliseconds
+    const maxRange = 365 * 24 * 60 * 60 * 1000;
     const rangeMs = filters.dateRange.end.getTime() - filters.dateRange.start.getTime();
     if (rangeMs > maxRange) {
       errors.push("Date range cannot exceed 1 year");
@@ -705,23 +538,11 @@ class AnalyticsApiClient {
     };
   }
 
-  /**
-   * Calculate percentage change between two values
-   * @param current Current value
-   * @param previous Previous value
-   * @returns Percentage change
-   */
   calculatePercentageChange(current: number, previous: number): number {
     if (previous === 0) return current > 0 ? 100 : 0;
     return ((current - previous) / previous) * 100;
   }
 
-  /**
-   * Format metrics for display
-   * @param value Numeric value to format
-   * @param type Type of metric (rate, count, time, etc.)
-   * @returns Formatted string
-   */
   formatMetricValue(
     value: number,
     type: "rate" | "count" | "time" | "percentage" | "bytes",
@@ -751,10 +572,6 @@ class AnalyticsApiClient {
     }
   }
 
-  /**
-   * Generate date range presets
-   * @returns Common date range presets
-   */
   getDateRangePresets(): Array<{
     label: string;
     value: string;
@@ -804,9 +621,6 @@ class AnalyticsApiClient {
     ];
   }
 
-  /**
-   * Compare brand performance across a date range
-   */
   async compareBrands(
     brandIds: string[],
     startDate?: Date,

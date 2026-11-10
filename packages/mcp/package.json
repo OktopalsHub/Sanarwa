@@ -1,0 +1,55 @@
+{
+  "name": "@sanarwa/mcp",
+  "version": "0.1.0",
+  "description": "MCP server exposing the Sanarwa notification API to AI agents",
+  "keywords": [
+    "agent",
+    "mcp",
+    "model-context-protocol",
+    "notifications",
+    "sanarwa",
+    "sdk"
+  ],
+  "homepage": "https://docs.sanarwa.com",
+  "bugs": {
+    "url": "https://github.com/sanarwa/mcp/issues"
+  },
+  "license": "MIT",
+  "author": "Sanarwa",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/sanarwa/mcp"
+  },
+  "bin": {
+    "sanarwa-mcp": "./dist/index.js"
+  },
+  "files": [
+    "dist"
+  ],
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "dev": "tsc -p tsconfig.json --watch",
+    "test": "vitest run",
+    "type-check": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.32.2",
+    "@sanarwa/sdk": "workspace:*",
+    "@sanarwa/shared-types": "workspace:*",
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.6",
+    "typescript": "^6.0.3",
+    "vitest": "^5.1.0"
+  }
+}

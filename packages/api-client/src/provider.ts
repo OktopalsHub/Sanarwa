@@ -10,36 +10,19 @@ import {
   ProviderType,
   UpdateProviderRequest,
 } from "./types/provider";
-import { ApiClient, createApiClient } from "./client";
+import { ApiClient, apiClient as sharedApiClient } from "./client";
 
-/**
- * Provider Management API client for handling all provider-related operations
- * Implements provider configuration, testing, health monitoring, and failover management
- */
 class ProviderApiClient {
   private apiClient: ApiClient;
 
   constructor(apiClient?: ApiClient) {
-    // Use provided client or create a new one
-    this.apiClient = apiClient || createApiClient();
+    this.apiClient = apiClient ?? sharedApiClient;
   }
 
-  // Core Provider Configuration Methods
-
-  /**
-   * Create a new provider configuration
-   * @param data Provider configuration data
-   * @returns Created provider configuration
-   */
   async createProvider(data: CreateProviderRequest): Promise<Provider> {
     return this.apiClient.post<Provider>("/provider-configs", data);
   }
 
-  /**
-   * Get all provider configurations for the current tenant
-   * @param params Query parameters for filtering and pagination
-   * @returns List of provider configurations
-   */
   async getProviders(params?: ProviderQueryParams): Promise<{
     data: Provider[];
     pagination?: {
@@ -54,12 +37,6 @@ class ProviderApiClient {
     return this.apiClient.get("/provider-configs", params);
   }
 
-  /**
-   * Get provider configurations for a specific project
-   * @param projectId Project ID
-   * @param params Query parameters for filtering
-   * @returns List of provider configurations for the project
-   */
   async getProvidersByProject(
     projectId: string,
     params?: ProviderQueryParams,
@@ -77,52 +54,23 @@ class ProviderApiClient {
     return this.apiClient.get(`/provider-configs/project/${projectId}`, params);
   }
 
-  /**
-   * Get a specific provider configuration by ID
-   * @param providerId Provider ID
-   * @returns Provider configuration details
-   */
   async getProvider(providerId: string): Promise<Provider> {
     return this.apiClient.get<Provider>(`/provider-configs/${providerId}`);
   }
 
-  /**
-   * Update an existing provider configuration
-   * @param providerId Provider ID to update
-   * @param data Provider update data
-   * @returns Updated provider configuration
-   */
   async updateProvider(providerId: string, data: UpdateProviderRequest): Promise<Provider> {
     return this.apiClient.patch<Provider>(`/provider-configs/${providerId}`, data);
   }
 
-  /**
-   * Delete a provider configuration
-   * @param providerId Provider ID to delete
-   */
   async deleteProvider(providerId: string): Promise<void> {
     return this.apiClient.delete<void>(`/provider-configs/${providerId}`);
   }
 
-  // Provider Testing Methods
-
-  /**
-   * Test a provider configuration
-   * @param providerId Provider ID to test
-   * @param testData Optional test data (uses default test if not provided)
-   * @returns Test result with success status and response details
-   */
   async testProvider(providerId: string, testData?: ProviderTestData): Promise<ProviderTestResult> {
     const payload = testData ? { testData } : {};
     return this.apiClient.post<ProviderTestResult>(`/provider-configs/${providerId}/test`, payload);
   }
 
-  /**
-   * Test provider configuration with custom data
-   * @param providerId Provider ID to test
-   * @param testData Test data specific to provider type
-   * @returns Test result
-   */
   async testProviderWithData(
     providerId: string,
     testData: ProviderTestData,
@@ -132,59 +80,26 @@ class ProviderApiClient {
     });
   }
 
-  // Provider Status Management Methods
-
-  /**
-   * Activate a provider configuration
-   * @param providerId Provider ID to activate
-   * @returns Updated provider configuration
-   */
   async activateProvider(providerId: string): Promise<Provider> {
     return this.apiClient.post<Provider>(`/provider-configs/${providerId}/activate`, {});
   }
 
-  /**
-   * Deactivate a provider configuration
-   * @param providerId Provider ID to deactivate
-   * @returns Updated provider configuration
-   */
   async deactivateProvider(providerId: string): Promise<Provider> {
     return this.apiClient.post<Provider>(`/provider-configs/${providerId}/deactivate`, {});
   }
 
-  /**
-   * Set a provider as the default for its type
-   * @param providerId Provider ID to set as default
-   * @returns Updated provider configuration
-   */
   async setDefaultProvider(providerId: string): Promise<Provider> {
     return this.updateProvider(providerId, { isDefault: true });
   }
 
-  // Provider Health Monitoring Methods
-
-  /**
-   * Check the health status of a specific provider
-   * @param providerId Provider ID to check
-   * @returns Current health status and details
-   */
   async checkProviderHealth(providerId: string): Promise<ProviderHealthCheck> {
     return this.apiClient.get<ProviderHealthCheck>(`/provider-configs/${providerId}/health`);
   }
 
-  /**
-   * Get health status for all providers
-   * @returns List of health statuses for all providers
-   */
   async getAllProviderHealth(): Promise<ProviderHealthCheck[]> {
     return this.apiClient.get<ProviderHealthCheck[]>("/provider-configs/health");
   }
 
-  /**
-   * Trigger a manual health check for a provider
-   * @param providerId Provider ID to check
-   * @returns Updated health status
-   */
   async triggerHealthCheck(providerId: string): Promise<ProviderHealthCheck> {
     return this.apiClient.post<ProviderHealthCheck>(
       `/provider-configs/${providerId}/health/check`,
@@ -192,12 +107,6 @@ class ProviderApiClient {
     );
   }
 
-  /**
-   * Get health history for a provider
-   * @param providerId Provider ID
-   * @param params Query parameters for filtering
-   * @returns Historical health check data
-   */
   async getProviderHealthHistory(
     providerId: string,
     params?: {
@@ -217,14 +126,6 @@ class ProviderApiClient {
     );
   }
 
-  // Provider Metrics and Analytics Methods
-
-  /**
-   * Get usage metrics for a specific provider
-   * @param providerId Provider ID
-   * @param params Query parameters for metrics
-   * @returns Provider usage metrics and analytics
-   */
   async getProviderMetrics(
     providerId: string,
     params?: {
@@ -244,11 +145,6 @@ class ProviderApiClient {
     );
   }
 
-  /**
-   * Get aggregated metrics for all providers
-   * @param params Query parameters for metrics
-   * @returns Aggregated provider metrics
-   */
   async getAllProviderMetrics(params?: {
     type?: ProviderType;
     startDate?: Date;
@@ -264,12 +160,6 @@ class ProviderApiClient {
     return this.apiClient.get<ProviderMetrics[]>("/provider-configs/metrics", queryParams);
   }
 
-  /**
-   * Get provider performance comparison
-   * @param providerIds Array of provider IDs to compare
-   * @param params Query parameters for comparison
-   * @returns Comparative metrics for specified providers
-   */
   async compareProviders(
     providerIds: string[],
     params?: {
@@ -296,23 +186,10 @@ class ProviderApiClient {
     return this.apiClient.get("/provider-configs/compare", queryParams);
   }
 
-  // Provider Failover Management Methods
-
-  /**
-   * Get failover configuration for a channel
-   * @param channel Provider type/channel
-   * @returns Failover configuration
-   */
   async getFailoverConfig(channel: ProviderType): Promise<ProviderFailoverConfig> {
     return this.apiClient.get<ProviderFailoverConfig>(`/provider-configs/failover/${channel}`);
   }
 
-  /**
-   * Update failover configuration for a channel
-   * @param channel Provider type/channel
-   * @param config Failover configuration
-   * @returns Updated failover configuration
-   */
   async updateFailoverConfig(
     channel: ProviderType,
     config: Partial<ProviderFailoverConfig>,
@@ -323,13 +200,6 @@ class ProviderApiClient {
     );
   }
 
-  /**
-   * Trigger manual failover for a channel
-   * @param channel Provider type/channel
-   * @param fromProviderId Current provider ID
-   * @param toProviderId Target provider ID
-   * @returns Failover result
-   */
   async triggerFailover(
     channel: ProviderType,
     fromProviderId: string,
@@ -345,20 +215,12 @@ class ProviderApiClient {
     });
   }
 
-  // Utility Methods
-
-  /**
-   * Validate provider configuration data before creating/updating
-   * @param data Provider configuration data
-   * @returns Validation result with errors if any
-   */
   validateProviderConfig(data: CreateProviderRequest | UpdateProviderRequest): {
     isValid: boolean;
     errors: string[];
   } {
     const errors: string[] = [];
 
-    // Validate name
     if ("name" in data && data.name) {
       if (data.name.length < 2) {
         errors.push("Provider name must be at least 2 characters long");
@@ -368,14 +230,12 @@ class ProviderApiClient {
       }
     }
 
-    // Validate priority
     if ("priority" in data && data.priority !== undefined) {
       if (data.priority < 0 || data.priority > 100) {
         errors.push("Priority must be between 0 and 100");
       }
     }
 
-    // Validate configuration
     if ("config" in data && data.config) {
       const configErrors = this.validateProviderCredentials(data.config);
       errors.push(...configErrors);
@@ -387,11 +247,6 @@ class ProviderApiClient {
     };
   }
 
-  /**
-   * Validate provider credentials based on provider type
-   * @param config Provider configuration
-   * @returns Array of validation errors
-   */
   private validateProviderCredentials(config: any): string[] {
     const errors: string[] = [];
 
@@ -427,18 +282,11 @@ class ProviderApiClient {
         if (!credentials.config.privateKey) errors.push("Firebase private key is required");
         if (!credentials.config.clientEmail) errors.push("Firebase client email is required");
         break;
-
-      // Add more provider type validations as needed
     }
 
     return errors;
   }
 
-  /**
-   * Get recommended provider for a specific channel based on performance
-   * @param channel Provider type/channel
-   * @returns Recommended provider ID and reasoning
-   */
   async getRecommendedProvider(channel: ProviderType): Promise<{
     providerId: string;
     providerName: string;
@@ -453,12 +301,6 @@ class ProviderApiClient {
     return this.apiClient.get(`/provider-configs/recommendations/${channel}`);
   }
 
-  /**
-   * Check if a provider supports a specific feature
-   * @param providerId Provider ID
-   * @param feature Feature to check
-   * @returns True if feature is supported
-   */
   async checkProviderFeatureSupport(
     providerId: string,
     feature: string,
@@ -470,12 +312,6 @@ class ProviderApiClient {
     return this.apiClient.get(`/provider-configs/${providerId}/features/${feature}`);
   }
 
-  /**
-   * Get provider configuration template for a specific type
-   * @param type Provider type
-   * @param subtype Provider subtype
-   * @returns Configuration template with required fields
-   */
   getProviderConfigTemplate(
     type: ProviderType,
     subtype: string,
@@ -485,7 +321,6 @@ class ProviderApiClient {
     example: any;
     documentation?: string;
   } {
-    // This is a client-side helper method
     const templates: Record<string, any> = {
       "email.aws_ses": {
         requiredFields: ["region", "accessKeyId", "secretAccessKey", "fromEmail"],
@@ -519,7 +354,6 @@ class ProviderApiClient {
         },
         documentation: "https://www.twilio.com/docs/",
       },
-      // Add more templates as needed
     };
 
     const key = `${type}.${subtype}`;
@@ -532,11 +366,6 @@ class ProviderApiClient {
     );
   }
 
-  /**
-   * Format provider for display in UI
-   * @param provider Provider to format
-   * @returns Formatted provider data for display
-   */
   formatProviderForDisplay(provider: Provider): {
     name: string;
     type: string;

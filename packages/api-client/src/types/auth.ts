@@ -1,4 +1,3 @@
-// Enums matching backend
 export enum UserRole {
   SUPER_ADMIN = "super_admin",
   ADMIN = "admin",
@@ -18,7 +17,6 @@ export enum AuthProvider {
   GITHUB = "github",
 }
 
-// Core User interface matching backend entity
 export interface User {
   id: string;
   email: string;
@@ -39,24 +37,20 @@ export interface User {
   createdAt: Date;
   updatedAt: Date;
 
-  // Virtual properties
   fullName: string;
   isLocked: boolean;
   preferences?: Record<string, any>;
 
-  // Relationships (populated when needed)
-  tenants?: any[]; // Will be typed in tenant.ts
-  members?: any[]; // Will be typed in tenant.ts
-  userRoles?: any[]; // Will be typed in permissions.ts
+  tenants?: any[];
+  members?: any[];
+  userRoles?: any[];
   oauthAccounts?: OAuthAccount[];
 }
 
-// Legacy interface for backward compatibility
 export interface AuthUser extends User {
-  name: string; // Computed from firstName + lastName
+  name: string;
 }
 
-// OAuth Account interface
 export interface OAuthAccount {
   id: string;
   userId: string;
@@ -70,7 +64,6 @@ export interface OAuthAccount {
   updatedAt: Date;
 }
 
-// Authentication request/response types
 export interface LoginCredentials {
   email: string;
   password: string;
@@ -87,10 +80,9 @@ export interface RegisterData {
   googleId?: string;
   githubId?: string;
   avatar?: string;
-  confirmPassword?: string; // Frontend validation only
+  confirmPassword?: string;
 }
 
-// Legacy interface for backward compatibility
 export interface RegisterCredentials extends RegisterData {}
 
 export interface AuthResponse {
@@ -119,7 +111,6 @@ export interface RefreshTokenRequest {
   refreshToken: string;
 }
 
-// Password management
 export interface PasswordResetRequest {
   email: string;
 }
@@ -136,7 +127,6 @@ export interface ChangePasswordRequest {
   confirmPassword: string;
 }
 
-// Email verification
 export interface EmailVerificationRequest {
   token: string;
 }
@@ -145,7 +135,6 @@ export interface ResendVerificationRequest {
   email: string;
 }
 
-// OAuth types
 export interface OAuthLoginRequest {
   provider: AuthProvider;
   code: string;
@@ -162,9 +151,8 @@ export interface OAuthUser {
   provider: AuthProvider;
 }
 
-// JWT Token types
 export interface JwtPayload {
-  sub: string; // User ID
+  sub: string;
   email: string;
   role: UserRole;
   tenantId?: string;
@@ -180,7 +168,6 @@ export interface TokenInfo {
   isExpired: boolean;
 }
 
-// Session management
 export interface SessionInfo {
   id: string;
   userId: string;
@@ -192,7 +179,6 @@ export interface SessionInfo {
   isActive: boolean;
 }
 
-// Permission and role-based access control
 export interface PermissionCheck {
   hasPermission: boolean;
   reason?: string;
@@ -206,7 +192,6 @@ export interface RoleBasedAccess {
   canAccess: (resource: string, action: string) => boolean;
 }
 
-// Error handling
 export interface AuthError {
   message: string;
   code: string;
@@ -220,7 +205,6 @@ export interface ValidationError {
   code: string;
 }
 
-// State management
 export interface AuthState {
   user: AuthUser | null;
   isAuthenticated: boolean;
@@ -231,7 +215,6 @@ export interface AuthState {
   sessionInfo?: SessionInfo;
 }
 
-// API response wrappers
 export interface AuthApiResponse<T = any> {
   data: T;
   success: boolean;
@@ -239,7 +222,6 @@ export interface AuthApiResponse<T = any> {
   errors?: ValidationError[];
 }
 
-// Security and audit
 export interface LoginAttempt {
   id: string;
   email: string;

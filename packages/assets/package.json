@@ -16,8 +16,8 @@
     "test": "echo 'no tests'"
   },
   "devDependencies": {
-    "@types/react": "^19",
-    "typescript": "^5.9.3"
+    "@types/react": "^19.3.0",
+    "typescript": "^6.0.3"
   },
   "peerDependencies": {
     "react": "^19.0.0",

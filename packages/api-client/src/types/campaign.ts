@@ -1,5 +1,3 @@
-// Campaign management types
-
 export type CampaignType = "one_time" | "recurring" | "triggered" | "drip";
 export type CampaignStatus =
   | "draft"
@@ -8,7 +6,9 @@ export type CampaignStatus =
   | "paused"
   | "completed"
   | "cancelled";
-export type CommunicationChannel = "email" | "sms" | "push" | "in_app" | "voice" | "whatsapp";
+import type { CommunicationChannel } from "./notification";
+
+export type { CommunicationChannel };
 
 export interface Campaign {
   id: string;
@@ -57,9 +57,9 @@ export interface ScheduleConfig {
 
 export interface RecurringConfig {
   frequency: "daily" | "weekly" | "monthly" | "yearly";
-  interval: number; // Every N days/weeks/months/years
-  daysOfWeek?: number[]; // For weekly (0 = Sunday, 6 = Saturday)
-  dayOfMonth?: number; // For monthly
+  interval: number;
+  daysOfWeek?: number[];
+  dayOfMonth?: number;
   endDate?: Date;
   maxOccurrences?: number;
 }
@@ -98,7 +98,6 @@ export interface ChannelAnalytics {
   conversionRate: number;
 }
 
-// Campaign creation/update DTOs
 export interface CreateCampaignRequest {
   name: string;
   description?: string;
@@ -113,7 +112,6 @@ export interface UpdateCampaignRequest extends Partial<CreateCampaignRequest> {
   id: string;
 }
 
-// Campaign wizard step data
 export interface CampaignWizardData {
   step: number;
   totalSteps: number;
@@ -133,7 +131,6 @@ export interface CampaignWizardData {
   };
 }
 
-// Audience segment types
 export interface AudienceSegment {
   id: string;
   name: string;
@@ -144,7 +141,6 @@ export interface AudienceSegment {
   updatedAt: Date;
 }
 
-// Template assignment for campaigns (simplified version)
 export interface CampaignTemplate {
   id: string;
   name: string;

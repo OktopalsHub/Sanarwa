@@ -1,6 +1,5 @@
 import type { SVGProps } from "react";
 
-/** Sanarwa mark — signal / notification glyph. Prefer this over ad-hoc icons. */
 export function SanarwaMark({
   title = "Sanarwa",
   ...props

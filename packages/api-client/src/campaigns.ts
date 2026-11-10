@@ -26,7 +26,6 @@ export interface CampaignListResponse {
 }
 
 export const campaignApi = {
-  // Campaign CRUD operations
   async getCampaigns(params: CampaignListParams = {}): Promise<CampaignListResponse> {
     const searchParams = new URLSearchParams();
     Object.entries(params).forEach(([key, value]) => {
@@ -61,7 +60,6 @@ export const campaignApi = {
     return apiClient.post<Campaign>(`/campaigns/${id}/duplicate`, { name });
   },
 
-  // Campaign control operations
   async startCampaign(id: string): Promise<Campaign> {
     return apiClient.post<Campaign>(`/campaigns/${id}/start`);
   },
@@ -78,7 +76,6 @@ export const campaignApi = {
     return apiClient.post<Campaign>(`/campaigns/${id}/stop`);
   },
 
-  // Campaign analytics
   async getCampaignAnalytics(id: string, dateRange?: { start: Date; end: Date }) {
     const params = new URLSearchParams();
     if (dateRange) {
@@ -89,7 +86,6 @@ export const campaignApi = {
     return apiClient.get(`/campaigns/${id}/analytics?${params.toString()}`);
   },
 
-  // Audience management
   async getAudienceSegments(): Promise<AudienceSegment[]> {
     return apiClient.get<AudienceSegment[]>("/audience/segments");
   },
@@ -102,7 +98,6 @@ export const campaignApi = {
     return apiClient.post<{ size: number }>("/audience/estimate", { filters });
   },
 
-  // Template management (simplified for campaigns)
   async getTemplates(channel?: CommunicationChannel): Promise<any[]> {
     const params = channel ? `?channel=${channel}` : "";
     return apiClient.get<any[]>(`/templates${params}`);
@@ -112,7 +107,6 @@ export const campaignApi = {
     return apiClient.get<any>(`/templates/${id}`);
   },
 
-  // Campaign preview and testing
   async previewCampaign(id: string, recipientEmail?: string) {
     const params = recipientEmail ? `?email=${recipientEmail}` : "";
     return apiClient.post(`/campaigns/${id}/preview${params}`);

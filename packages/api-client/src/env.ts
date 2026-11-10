@@ -1,7 +1,3 @@
-/**
- * Runtime API configuration for @sanarwa/api-client
- */
-
 export interface ApiRuntimeConfig {
   baseUrl: string;
   wsUrl: string;

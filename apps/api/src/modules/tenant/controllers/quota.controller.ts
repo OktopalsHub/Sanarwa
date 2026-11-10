@@ -50,7 +50,7 @@ export class QuotaController {
   @ApiOperation({ summary: "Get quota status for a specific channel" })
   @ApiResponse({
     status: 200,
-    description: "Channel quota status retrieved successfully",
+    description: "NotificationChannel quota status retrieved successfully",
   })
   @ApiResponse({ status: 401, description: "Unauthorized" })
   @ApiResponse({ status: 403, description: "Forbidden" })
@@ -89,8 +89,6 @@ export class QuotaController {
   @ApiResponse({ status: 403, description: "Forbidden" })
   @ApiResponse({ status: 404, description: "Tenant not found" })
   async getUsageHistory(@CurrentTenantId() tenantId: string, @Query("days") days: number = 30) {
-    // This would typically fetch from a usage history table
-    // For now, return current month data
     const tenant = await this.tenantService.getTenantById(tenantId);
     const usage = tenant.usage?.currentMonth || {};
 
@@ -102,7 +100,6 @@ export class QuotaController {
         endDate: new Date(),
       },
       currentMonth: usage,
-      // In a real implementation, you'd fetch daily/weekly breakdowns
       dailyBreakdown: [],
     };
   }

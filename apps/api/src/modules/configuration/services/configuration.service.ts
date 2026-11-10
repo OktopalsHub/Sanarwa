@@ -49,11 +49,7 @@ export class ConfigurationService {
     private readonly configService: ConfigService,
   ) {}
 
-  /**
-   * Create a new configuration
-   */
   async create(dto: CreateConfigurationDto, memberId?: string): Promise<ConfigurationResult> {
-    // Validate the configuration value
     const validationResult = await this.validationService.validateValue(
       dto.value,
       dto.validationSchema,
@@ -66,7 +62,6 @@ export class ConfigurationService {
       };
     }
 
-    // Check if configuration already exists
     const existing = await this.findByKey(dto.key, dto.scope, dto.scopeId, dto.environment);
 
     if (existing) {
@@ -75,21 +70,19 @@ export class ConfigurationService {
       );
     }
 
-    // Encrypt value if needed
     let value: any = dto.value;
     if (dto.isEncrypted || dto.isSecret) {
       const encryptionResult = await this.encryptionService.encrypt(dto.value);
-      value = encryptionResult; // Store as object, not stringified JSON
+      value = encryptionResult;
     }
 
-    // Create configuration
     const configuration = this.configRepository.create({
       key: dto.key,
       value,
       tenantId:
         dto.scope === ConfigurationScope.TENANT && dto.scopeId
           ? dto.scopeId
-          : "00000000-0000-0000-0000-000000000000", // Use a default UUID for global configs
+          : "00000000-0000-0000-0000-000000000000",
       configType: dto.scope || "general",
       description: dto.description,
       isEncrypted: dto.isEncrypted || false,
@@ -101,7 +94,6 @@ export class ConfigurationService {
 
     const saved = await this.configRepository.save(configuration);
 
-    // Create version record
     await this.createVersionRecord(
       saved.id,
       1,
@@ -120,9 +112,6 @@ export class ConfigurationService {
     };
   }
 
-  /**
-   * Update an existing configuration
-   */
   async update(
     id: string,
     dto: UpdateConfigurationDto,
@@ -136,7 +125,6 @@ export class ConfigurationService {
       throw new NotFoundException(`Configuration with ID '${id}' not found`);
     }
 
-    // Validate new value if provided
     let validationResult: ValidationResult = { isValid: true };
     if (dto.value) {
       validationResult = await this.validationService.validateValue(
@@ -157,17 +145,15 @@ export class ConfigurationService {
         ? await this.encryptionService.decrypt(configuration.value)
         : configuration.value;
 
-    // Encrypt new value if needed
     let newValue: any = dto.value;
     if (
       newValue &&
       (dto.isEncrypted || configuration.isEncrypted || dto.isSecret || configuration.isSecret)
     ) {
       const encryptionResult = await this.encryptionService.encrypt(dto.value!);
-      newValue = encryptionResult; // Store as object, not stringified JSON
+      newValue = encryptionResult;
     }
 
-    // Update configuration
     const updateData: Partial<Configuration> = {};
 
     if (dto.value !== undefined) {
@@ -180,7 +166,7 @@ export class ConfigurationService {
       updateData.isEncrypted = dto.isEncrypted;
     }
     if (dto.isSecret !== undefined) {
-      updateData.isEncrypted = dto.isSecret; // Map isSecret to isEncrypted
+      updateData.isEncrypted = dto.isSecret;
     }
     if (dto.status !== undefined) {
       updateData.isActive = dto.status === ConfigurationStatus.ACTIVE;
@@ -195,11 +181,9 @@ export class ConfigurationService {
 
     await this.configRepository.update(id, updateData as QueryDeepPartialEntity<Configuration>);
 
-    // Get latest version number
     const latestVersion = await this.getLatestVersion(id);
     const nextVersion = latestVersion ? latestVersion.version + 1 : 1;
 
-    // Create version record if value changed
     if (dto.value && dto.value !== previousValue) {
       await this.createVersionRecord(
         id,
@@ -226,9 +210,6 @@ export class ConfigurationService {
     };
   }
 
-  /**
-   * Find configurations by query
-   */
   async find(query: ConfigurationQueryDto): Promise<Configuration[]> {
     const queryBuilder = this.configRepository.createQueryBuilder("config");
 
@@ -267,9 +248,6 @@ export class ConfigurationService {
     return queryBuilder.getMany();
   }
 
-  /**
-   * Get configuration by ID
-   */
   async findById(id: string, includeSecrets = false): Promise<Configuration> {
     const queryBuilder = this.configRepository
       .createQueryBuilder("config")
@@ -288,9 +266,6 @@ export class ConfigurationService {
     return configuration;
   }
 
-  /**
-   * Get configuration value (decrypted if needed)
-   */
   async getValue(
     key: string,
     scope: ConfigurationScope = ConfigurationScope.GLOBAL,
@@ -310,9 +285,6 @@ export class ConfigurationService {
     return config.value;
   }
 
-  /**
-   * Get multiple configuration values
-   */
   async getValues(
     keys: string[],
     scope: ConfigurationScope = ConfigurationScope.GLOBAL,
@@ -357,13 +329,9 @@ export class ConfigurationService {
     return result;
   }
 
-  /**
-   * Delete configuration
-   */
   async delete(id: string, memberId?: string): Promise<void> {
     const configuration = await this.findById(id);
 
-    // Create version record for deletion
     const latestVersion = await this.getLatestVersion(id);
     const nextVersion = latestVersion ? latestVersion.version + 1 : 1;
 
@@ -387,9 +355,6 @@ export class ConfigurationService {
     this.logger.log(`Deleted configuration: ${configuration.key}`);
   }
 
-  /**
-   * Rollback configuration to a previous version
-   */
   async rollback(
     id: string,
     dto: RollbackConfigurationDto,
@@ -408,25 +373,21 @@ export class ConfigurationService {
       throw new Error("Version does not belong to this configuration");
     }
 
-    // Get current value for version record
     const currentValue =
       configuration.isEncrypted || configuration.isSecret
         ? await this.encryptionService.decrypt(configuration.value)
         : configuration.value;
 
-    // Encrypt rollback value if needed
     let rollbackValue: any = version.newValue;
     if (configuration.isEncrypted || configuration.isSecret) {
       const encryptionResult = await this.encryptionService.encrypt(version.newValue);
-      rollbackValue = encryptionResult; // Store as object, not stringified JSON
+      rollbackValue = encryptionResult;
     }
 
-    // Update configuration
     await this.configRepository.update(id, {
       value: rollbackValue,
     });
 
-    // Create version record for rollback
     const latestVersion = await this.getLatestVersion(id);
     const nextVersion = latestVersion ? latestVersion.version + 1 : 1;
 
@@ -450,9 +411,6 @@ export class ConfigurationService {
     return updated;
   }
 
-  /**
-   * Get configuration versions
-   */
   async getVersions(configurationId: string): Promise<ConfigurationVersion[]> {
     return this.versionRepository.find({
       where: { configurationId },
@@ -460,16 +418,12 @@ export class ConfigurationService {
     });
   }
 
-  /**
-   * Bulk create/update configurations
-   */
   async bulkOperation(dto: BulkConfigurationDto, memberId?: string): Promise<BulkOperationResult> {
     const result: BulkOperationResult = {
       successful: [],
       failed: [],
     };
 
-    // Validate all configurations first if requested
     if (dto.validateAll) {
       const validationResults = await this.validationService.validateConfigurations(
         dto.configurations.map((config) => ({
@@ -497,7 +451,6 @@ export class ConfigurationService {
       }
     }
 
-    // Process each configuration
     for (const configDto of dto.configurations) {
       try {
         const existing = await this.findByKey(
@@ -510,10 +463,8 @@ export class ConfigurationService {
         let configResult: ConfigurationResult;
 
         if (existing) {
-          // Update existing
           configResult = await this.update(existing.id, configDto, memberId);
         } else {
-          // Create new
           configResult = await this.create(configDto, memberId);
         }
 
@@ -540,9 +491,6 @@ export class ConfigurationService {
     return result;
   }
 
-  /**
-   * Find configuration by key and scope
-   */
   private async findByKey(
     key: string,
     scope: ConfigurationScope = ConfigurationScope.GLOBAL,
@@ -559,7 +507,6 @@ export class ConfigurationService {
         tenantId: scopeId,
       });
     } else {
-      // For global scope, use the default global tenant ID
       queryBuilder.andWhere("config.tenantId = :tenantId", {
         tenantId: "00000000-0000-0000-0000-000000000000",
       });
@@ -568,9 +515,6 @@ export class ConfigurationService {
     return queryBuilder.getOne();
   }
 
-  /**
-   * Create a version record
-   */
   private async createVersionRecord(
     configurationId: string,
     version: number,
@@ -595,9 +539,6 @@ export class ConfigurationService {
     return this.versionRepository.save(versionRecord);
   }
 
-  /**
-   * Get latest version for a configuration
-   */
   private async getLatestVersion(configurationId: string): Promise<ConfigurationVersion | null> {
     return this.versionRepository.findOne({
       where: { configurationId },

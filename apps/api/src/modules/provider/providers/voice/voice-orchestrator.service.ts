@@ -18,15 +18,11 @@ export class VoiceOrchestratorService {
     private telnyxVoiceProvider: TelnyxVoiceProvider,
   ) {}
 
-  /**
-   * Create voice call using Telnyx
-   */
   async createVoiceCall(
     phoneNumber: string,
     message?: string,
   ): Promise<{ success: boolean; callId?: string; error?: string }> {
     try {
-      // Use Telnyx for voice calls
       if (await this.telnyxVoiceProvider.validateConfig()) {
         this.logger.debug(`Creating voice call via Telnyx to ${phoneNumber}`);
         const result = await this.telnyxVoiceProvider.createCall(phoneNumber, message);
@@ -60,12 +56,8 @@ export class VoiceOrchestratorService {
     }
   }
 
-  /**
-   * End voice call using Telnyx
-   */
   async endVoiceCall(callControlId: string): Promise<{ success: boolean; error?: string }> {
     try {
-      // End call on Telnyx
       if (await this.telnyxVoiceProvider.validateConfig()) {
         const result = await this.telnyxVoiceProvider.endCall(callControlId);
         if (result.success) {
@@ -83,16 +75,12 @@ export class VoiceOrchestratorService {
     }
   }
 
-  /**
-   * Send TTS to call with Telnyx built-in TTS
-   */
   async sendTTSToCall(
     callControlId: string,
     text: string,
     voice?: string,
   ): Promise<{ success: boolean; messageId?: string; error?: string }> {
     try {
-      // Use Telnyx built-in TTS (much simpler and cheaper)
       if (await this.telnyxVoiceProvider.validateConfig()) {
         this.logger.debug(`Sending TTS to call via Telnyx: ${callControlId}`);
         const result = await this.telnyxVoiceProvider.sendTTS(callControlId, text, voice);
@@ -125,16 +113,12 @@ export class VoiceOrchestratorService {
     }
   }
 
-  /**
-   * Send TTS to multiple calls using Telnyx
-   */
   async sendTTSToMultipleCalls(
     callControlIds: string[],
     text: string,
     voice?: string,
   ): Promise<{ success: boolean; results?: any[]; error?: string }> {
     try {
-      // Use Telnyx built-in TTS for multiple calls
       if (await this.telnyxVoiceProvider.validateConfig()) {
         this.logger.debug(`Sending TTS to multiple calls via Telnyx`);
 
@@ -166,9 +150,6 @@ export class VoiceOrchestratorService {
     }
   }
 
-  /**
-   * Send voice announcement (TTS) to a call
-   */
   async sendVoiceAnnouncement(
     callControlId: string,
     text: string,
@@ -195,9 +176,6 @@ export class VoiceOrchestratorService {
     }
   }
 
-  /**
-   * Get provider status
-   */
   async getProviderStatus(): Promise<{
     telnyxVoice: { available: boolean; healthy?: boolean };
   }> {
@@ -208,7 +186,7 @@ export class VoiceOrchestratorService {
     try {
       status.telnyxVoice.available = await this.telnyxVoiceProvider.validateConfig();
       if (status.telnyxVoice.available) {
-        status.telnyxVoice.healthy = true; // Could add actual health check
+        status.telnyxVoice.healthy = true;
       }
     } catch (error) {
       this.logger.warn(`Telnyx voice status check failed: ${error.message}`);
@@ -217,20 +195,12 @@ export class VoiceOrchestratorService {
     return status;
   }
 
-  /**
-   * List active voice calls (placeholder)
-   */
   async getActiveVoiceCalls(): Promise<string[]> {
-    // In production, this would query Telnyx for active calls
     return [];
   }
 
-  /**
-   * Validate TTS providers configuration
-   */
   async validateTTSProviders(): Promise<boolean> {
     try {
-      // Telnyx has built-in TTS, so just validate Telnyx config
       return await this.telnyxVoiceProvider.validateConfig();
     } catch (error) {
       this.logger.error(`TTS providers validation failed: ${error.message}`);
@@ -238,9 +208,6 @@ export class VoiceOrchestratorService {
     }
   }
 
-  /**
-   * Get available voices from Telnyx
-   */
   async getAvailableVoices(): Promise<{ success: boolean; voices?: any[]; error?: string }> {
     try {
       if (await this.telnyxVoiceProvider.validateConfig()) {

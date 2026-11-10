@@ -3,7 +3,7 @@ import { ConfigService } from "@nestjs/config";
 import axios, { AxiosResponse } from "axios";
 import { assertSafeWebhookUrl } from "../../common/security/utils/safe-url";
 import { MessageDeliveryStatus as DeliveryStatus } from "../messaging/message-delivery.entity";
-import { MessageChannel as NotificationChannel } from "../messaging/message.entity";
+import { NotificationChannel } from "../../common/enums/notification-channel.enum";
 import { WebhookService as DatabaseWebhookService } from "../webhook/webhook.service";
 import { WebhookQueueService } from "./queue/webhook-queue.service";
 
@@ -26,7 +26,6 @@ export interface DeliveryStatusWebhookPayload {
   providerMessageId?: string;
   errorMessage?: string;
   metadata?: Record<string, any>;
-  // Context information
   tenantId: string;
   projectId: string;
 }
@@ -37,7 +36,6 @@ export interface DeliveryEventWebhookPayload {
   eventType: "opened" | "clicked" | "unsubscribed";
   timestamp: Date;
   metadata?: Record<string, any>;
-  // Context information
   tenantId: string;
   projectId: string;
 }
@@ -52,25 +50,6 @@ export class WebhookService {
     @Optional() private readonly webhookQueueService?: WebhookQueueService,
   ) {}
 
-  /**
-   * Register webhook configuration for a tenant (legacy method for backward compatibility)
-   * @deprecated Use the WebhookModule for webhook management instead
-   */
-  registerWebhook(tenantId: string, config: WebhookConfig): void {
-    this.logger.warn(`registerWebhook is deprecated. Use WebhookModule for webhook management`);
-  }
-
-  /**
-   * Remove webhook configuration for a tenant (legacy method for backward compatibility)
-   * @deprecated Use the WebhookModule for webhook management instead
-   */
-  removeWebhook(tenantId: string): void {
-    this.logger.warn(`removeWebhook is deprecated. Use WebhookModule for webhook management`);
-  }
-
-  /**
-   * Send delivery status webhook notification
-   */
   async sendDeliveryStatusWebhook(
     tenantId: string,
     payload: DeliveryStatusWebhookPayload,
@@ -80,7 +59,6 @@ export class WebhookService {
       return;
     }
 
-    // Find active webhooks for this event
     const webhooks = await this.databaseWebhookService.findActiveWebhooksForEvent(
       tenantId,
       "email.delivered",
@@ -92,7 +70,6 @@ export class WebhookService {
       return;
     }
 
-    // Send to all matching webhooks
     for (const webhook of webhooks) {
       const config: WebhookConfig = {
         url: webhook.url,
@@ -119,9 +96,6 @@ export class WebhookService {
     }
   }
 
-  /**
-   * Send delivery event webhook notification
-   */
   async sendDeliveryEventWebhook(
     tenantId: string,
     payload: DeliveryEventWebhookPayload,
@@ -131,7 +105,6 @@ export class WebhookService {
       return;
     }
 
-    // Find active webhooks for this event
     const webhooks = await this.databaseWebhookService.findActiveWebhooksForEvent(
       tenantId,
       `email.${payload.eventType}`,
@@ -143,7 +116,6 @@ export class WebhookService {
       return;
     }
 
-    // Send to all matching webhooks
     for (const webhook of webhooks) {
       const config: WebhookConfig = {
         url: webhook.url,
@@ -170,9 +142,6 @@ export class WebhookService {
     }
   }
 
-  /**
-   * Send bulk notification webhook
-   */
   async sendBulkNotificationWebhook(
     tenantId: string,
     payload: {
@@ -188,7 +157,6 @@ export class WebhookService {
       return;
     }
 
-    // Find active webhooks for bulk notifications
     const webhooks = await this.databaseWebhookService.findActiveWebhooksForEvent(
       tenantId,
       "notification.bulk_completed",
@@ -200,7 +168,6 @@ export class WebhookService {
       return;
     }
 
-    // Send to all matching webhooks
     for (const webhook of webhooks) {
       const config: WebhookConfig = {
         url: webhook.url,
@@ -227,32 +194,11 @@ export class WebhookService {
     }
   }
 
-  /**
-   * Test webhook configuration (legacy method)
-   * @deprecated Use the WebhookModule for webhook testing instead
-   */
-  async testWebhook(tenantId: string): Promise<boolean> {
-    this.logger.warn(`testWebhook is deprecated. Use WebhookModule for webhook testing`);
-    return false;
-  }
-
-  /**
-   * Get webhook configuration for a tenant (legacy method)
-   * @deprecated Use the WebhookModule for webhook management instead
-   */
-  getWebhookConfig(tenantId: string): WebhookConfig | undefined {
-    this.logger.warn(`getWebhookConfig is deprecated. Use WebhookModule for webhook management`);
-    return undefined;
-  }
-
-  /**
-   * Private method to send webhook with retry logic
-   */
   private async sendWebhook(
     config: WebhookConfig,
     payload: any,
     idempotencyKey: string,
-    tenantId?: string,
+    tenantId: string,
   ): Promise<void> {
     assertSafeWebhookUrl(config.url);
 
@@ -260,7 +206,6 @@ export class WebhookService {
     const timeout = Math.max(0, config.timeout || 10000);
 
     try {
-      // First attempt - try immediate delivery
       const headers = {
         "Content-Type": "application/json",
         "X-Webhook-Signature": this.generateSignature(payload, config.secret),
@@ -285,11 +230,10 @@ export class WebhookService {
         `Webhook attempt 1/${maxRetries} failed for ${config.url}: ${statusCode} ${errorMessage}`,
       );
 
-      // Queue for retry if queue service is available
       if (this.webhookQueueService) {
         try {
           await this.webhookQueueService.queueWebhookRetry({
-            tenantId: tenantId || "default",
+            tenantId,
             webhookUrl: config.url,
             payload,
             secret: config.secret,
@@ -309,7 +253,6 @@ export class WebhookService {
         }
       }
 
-      // Fallback: retry synchronously if queue is not available
       this.logger.warn(
         `Webhook queue not available, falling back to synchronous retry for ${config.url}`,
       );
@@ -317,9 +260,6 @@ export class WebhookService {
     }
   }
 
-  /**
-   * Synchronous retry fallback (used when queue is not available)
-   */
   private async retrySynchronously(
     config: WebhookConfig,
     payload: any,
@@ -363,16 +303,12 @@ export class WebhookService {
           throw new Error(`Webhook delivery failed: ${errorMessage}`, { cause: error });
         }
 
-        // Exponential backoff delay
         const delay = Math.min(1000 * Math.pow(2, attempt - 1), 30000);
         await this.sleep(delay);
       }
     }
   }
 
-  /**
-   * Generate HMAC signature for webhook security
-   */
   private generateSignature(payload: any, secret?: string): string {
     if (!secret) {
       return "";
@@ -383,16 +319,10 @@ export class WebhookService {
     return crypto.createHmac("sha256", secret).update(payloadString).digest("hex");
   }
 
-  /**
-   * Utility method for delays
-   */
   private sleep(ms: number): Promise<void> {
     return new Promise((resolve) => setTimeout(resolve, ms));
   }
 
-  /**
-   * Validate webhook URL format
-   */
   validateWebhookUrl(url: string): boolean {
     try {
       const parsedUrl = new URL(url);
@@ -402,17 +332,12 @@ export class WebhookService {
     }
   }
 
-  /**
-   * Get webhook delivery statistics
-   */
   async getWebhookStats(tenantId: string): Promise<{
     totalAttempts: number;
     successfulDeliveries: number;
     failedDeliveries: number;
     averageResponseTime: number;
   }> {
-    // In a real implementation, you would track webhook delivery statistics
-    // This is a placeholder that returns mock data
     return {
       totalAttempts: 0,
       successfulDeliveries: 0,

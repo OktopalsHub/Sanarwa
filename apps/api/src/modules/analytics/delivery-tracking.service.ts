@@ -8,9 +8,9 @@ import {
 } from "../messaging/message-delivery.entity";
 import {
   Message as Notification,
-  MessageChannel as NotificationChannel,
   MessageStatus as NotificationStatus,
 } from "../messaging/message.entity";
+import { NotificationChannel } from "../../common/enums/notification-channel.enum";
 import { AuditLogService } from "./audit-log.service";
 import { WebhookService } from "./webhook.service";
 
@@ -46,19 +46,15 @@ export class DeliveryTrackingService {
     private readonly auditLogService: AuditLogService,
   ) {}
 
-  /**
-   * Update delivery status with real-time tracking
-   */
   async updateDeliveryStatus(update: DeliveryStatusUpdate): Promise<void> {
     const { deliveryId, status, providerMessageId, providerResponse, errorMessage, metadata } =
       update;
 
     this.logger.log(`Updating delivery ${deliveryId} status to ${status}`);
 
-    // Find the delivery record
     const delivery = await this.deliveryRepository.findOne({
       where: { id: deliveryId },
-      relations: ["notification"],
+      relations: { message: true },
     });
 
     if (!delivery) {
@@ -66,7 +62,6 @@ export class DeliveryTrackingService {
       return;
     }
 
-    // Prepare update data
     const updateData: Partial<NotificationDelivery> = {
       status,
       updatedAt: new Date(),
@@ -88,7 +83,6 @@ export class DeliveryTrackingService {
       updateData.metadata = { ...delivery.metadata, ...metadata };
     }
 
-    // Set timestamp based on status
     const now = new Date();
     switch (status) {
       case DeliveryStatus.SENT:
@@ -105,16 +99,13 @@ export class DeliveryTrackingService {
         break;
     }
 
-    // Update delivery record
     await this.deliveryRepository.update(
       deliveryId,
       updateData as QueryDeepPartialEntity<NotificationDelivery>,
     );
 
-    // Update parent notification status
     await this.updateNotificationStatusFromDeliveries(delivery.messageId);
 
-    // Log audit trail
     await this.auditLogService.logDeliveryStatusChange(
       deliveryId,
       delivery.status,
@@ -123,7 +114,6 @@ export class DeliveryTrackingService {
       { providerMessageId, errorMessage, metadata },
     );
 
-    // Send webhook notification if configured
     await this.webhookService.sendDeliveryStatusWebhook(delivery.message.tenantId, {
       deliveryId,
       notificationId: delivery.messageId,
@@ -136,15 +126,12 @@ export class DeliveryTrackingService {
       errorMessage,
       metadata,
       tenantId: delivery.message.tenantId,
-      projectId: delivery.message.metadata?.projectId || "unknown", // Try to get from metadata
+      projectId: delivery.message.metadata?.projectId || "unknown",
     });
 
     this.logger.log(`Delivery ${deliveryId} status updated successfully`);
   }
 
-  /**
-   * Track delivery events (opens, clicks, etc.)
-   */
   async trackDeliveryEvent(
     deliveryId: string,
     eventType: "opened" | "clicked" | "unsubscribed",
@@ -152,7 +139,7 @@ export class DeliveryTrackingService {
   ): Promise<void> {
     const delivery = await this.deliveryRepository.findOne({
       where: { id: deliveryId },
-      relations: ["notification"],
+      relations: { message: true },
     });
 
     if (!delivery) {
@@ -189,7 +176,6 @@ export class DeliveryTrackingService {
       updateData as QueryDeepPartialEntity<NotificationDelivery>,
     );
 
-    // Log audit trail
     await this.auditLogService.logDeliveryEvent(
       deliveryId,
       eventType,
@@ -197,7 +183,6 @@ export class DeliveryTrackingService {
       metadata,
     );
 
-    // Send webhook notification
     await this.webhookService.sendDeliveryEventWebhook(delivery.message.tenantId, {
       deliveryId,
       notificationId: delivery.messageId,
@@ -211,9 +196,6 @@ export class DeliveryTrackingService {
     this.logger.log(`Delivery event ${eventType} tracked for delivery ${deliveryId}`);
   }
 
-  /**
-   * Get delivery tracking statistics for a tenant
-   */
   async getDeliveryStats(
     tenantId: string,
     channel?: NotificationChannel,
@@ -222,8 +204,8 @@ export class DeliveryTrackingService {
   ): Promise<DeliveryTrackingStats> {
     const queryBuilder = this.deliveryRepository
       .createQueryBuilder("delivery")
-      .innerJoin("delivery.notification", "notification")
-      .where("notification.tenantId = :tenantId", { tenantId });
+      .innerJoin("delivery.message", "message")
+      .where("message.tenantId = :tenantId", { tenantId });
 
     if (channel) {
       queryBuilder.andWhere("delivery.channel = :channel", { channel });
@@ -249,7 +231,6 @@ export class DeliveryTrackingService {
     const deliveryRate = totalDeliveries > 0 ? (deliveredCount / totalDeliveries) * 100 : 0;
     const failureRate = totalDeliveries > 0 ? (failedCount / totalDeliveries) * 100 : 0;
 
-    // Calculate average delivery time for delivered messages
     const deliveredMessages = deliveries.filter(
       (d) => d.status === DeliveryStatus.DELIVERED && d.sentAt && d.deliveredAt,
     );
@@ -274,9 +255,6 @@ export class DeliveryTrackingService {
     };
   }
 
-  /**
-   * Get delivery history for a notification
-   */
   async getDeliveryHistory(
     notificationId: string,
     tenantId?: string,
@@ -287,16 +265,13 @@ export class DeliveryTrackingService {
 
     if (tenantId) {
       queryBuilder
-        .innerJoin("delivery.notification", "notification")
-        .andWhere("notification.tenantId = :tenantId", { tenantId });
+        .innerJoin("delivery.message", "message")
+        .andWhere("message.tenantId = :tenantId", { tenantId });
     }
 
     return queryBuilder.orderBy("delivery.createdAt", "ASC").getMany();
   }
 
-  /**
-   * Get real-time delivery status for multiple notifications
-   */
   async getMultipleDeliveryStatus(
     notificationIds: string[],
     tenantId?: string,
@@ -309,13 +284,12 @@ export class DeliveryTrackingService {
 
     if (tenantId) {
       queryBuilder
-        .innerJoin("delivery.notification", "notification")
-        .andWhere("notification.tenantId = :tenantId", { tenantId });
+        .innerJoin("delivery.message", "message")
+        .andWhere("message.tenantId = :tenantId", { tenantId });
     }
 
     const deliveries = await queryBuilder.getMany();
 
-    // Group deliveries by notification ID
     return deliveries.reduce(
       (acc, delivery) => {
         if (!acc[delivery.messageId]) {
@@ -328,9 +302,6 @@ export class DeliveryTrackingService {
     );
   }
 
-  /**
-   * Private helper to update notification status based on deliveries
-   */
   private async updateNotificationStatusFromDeliveries(notificationId: string): Promise<void> {
     const deliveries = await this.deliveryRepository.find({
       where: { messageId: notificationId },
@@ -340,7 +311,6 @@ export class DeliveryTrackingService {
       return;
     }
 
-    // Determine overall notification status based on delivery statuses
     const deliveryStatuses = deliveries.map((d) => d.status);
     let notificationStatus: NotificationStatus;
 

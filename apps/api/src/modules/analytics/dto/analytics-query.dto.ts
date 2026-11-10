@@ -2,10 +2,10 @@ import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
 import { IsDateString, IsEnum, IsOptional, IsString } from "class-validator";
 import { MessageDeliveryStatus as DeliveryStatus } from "../../messaging/message-delivery.entity";
 import {
-  MessageChannel as NotificationChannel,
   MessageStatus as NotificationStatus,
   MessagePriority as Priority,
 } from "../../messaging/message.entity";
+import { NotificationChannel } from "../../../common/enums/notification-channel.enum";
 
 export class AnalyticsQueryDto {
   @ApiProperty({

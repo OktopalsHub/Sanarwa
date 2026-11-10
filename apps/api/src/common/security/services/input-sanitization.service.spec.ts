@@ -157,7 +157,7 @@ describe("InputSanitizationService", () => {
       expect(service.validatePhoneNumber("1234567890")).toBe(true);
       expect(service.validatePhoneNumber("+1 (234) 567-8900")).toBe(true);
       expect(service.validatePhoneNumber("invalid")).toBe(false);
-      expect(service.validatePhoneNumber("123")).toBe(true); // Short numbers are valid in some regions
+      expect(service.validatePhoneNumber("123")).toBe(true);
     });
 
     it("should validate URL format", () => {

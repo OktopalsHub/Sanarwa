@@ -12,9 +12,9 @@ import {
   UseGuards,
 } from "@nestjs/common";
 import { ApiBearerAuth, ApiOperation, ApiParam, ApiResponse, ApiTags } from "@nestjs/swagger";
-import { CurrentTenantId } from "src/common/decorators";
-import { TenantMemberGuard } from "src/common/guards";
-import { AuthGuard } from "src/modules/auth/guards/jwt-auth.guard";
+import { CurrentTenantId } from "../../common/decorators";
+import { TenantMemberGuard } from "../../common/guards";
+import { AuthGuard } from "../../modules/auth/guards/jwt-auth.guard";
 import { CreateProviderConfigDto } from "./dto/create-provider-config.dto";
 import { ProviderConfigQueryDto } from "./dto/provider-config-query.dto";
 import { UpdateProviderConfigDto } from "./dto/update-provider-config.dto";
@@ -51,7 +51,7 @@ export class ProviderConfigController {
     @Param("projectId") projectId: string,
     @Body() createDto: Omit<CreateProviderConfigDto, "projectId">,
   ) {
-    return this.providerService.createConfig(tenantId, {
+    return this.providerService.createConfig({
       ...createDto,
       projectId,
     });
@@ -158,30 +158,6 @@ export class ProviderConfigController {
     return this.providerService.removeConfig(tenantId, id);
   }
 
-  @Post(":id/test")
-  @ApiOperation({ summary: "Test a provider configuration" })
-  @ApiResponse({
-    status: 200,
-    description: "Provider test successful",
-    schema: { properties: { success: { type: "boolean" }, message: { type: "string" } } },
-  })
-  @ApiResponse({ status: 400, description: "Test failed" })
-  @ApiResponse({ status: 401, description: "Unauthorized" })
-  @ApiResponse({ status: 404, description: "Provider configuration not found" })
-  @ApiParam({
-    name: "tenantId",
-    description: "Tenant unique identifier",
-    example: "123e4567-e89b-12d3-a456-426614174000",
-  })
-  @ApiParam({
-    name: "id",
-    description: "Provider configuration unique identifier",
-    example: "123e4567-e89b-12d3-a456-426614174000",
-  })
-  async test(@CurrentTenantId() tenantId: string, @Param("id") id: string) {
-    return this.providerService.testConfig(tenantId, id);
-  }
-
   @Post(":id/activate")
   @ApiOperation({ summary: "Activate a provider configuration" })
   @ApiResponse({ status: 200, description: "Provider activated successfully" })
@@ -218,28 +194,5 @@ export class ProviderConfigController {
   })
   async deactivate(@CurrentTenantId() tenantId: string, @Param("id") id: string) {
     return this.providerService.deactivateConfig(tenantId, id);
-  }
-
-  @Get(":id/health")
-  @ApiOperation({ summary: "Check provider health status" })
-  @ApiResponse({
-    status: 200,
-    description: "Provider health status",
-    schema: { properties: { status: { type: "string" }, lastCheck: { type: "string" } } },
-  })
-  @ApiResponse({ status: 401, description: "Unauthorized" })
-  @ApiResponse({ status: 404, description: "Provider configuration not found" })
-  @ApiParam({
-    name: "tenantId",
-    description: "Tenant unique identifier",
-    example: "123e4567-e89b-12d3-a456-426614174000",
-  })
-  @ApiParam({
-    name: "id",
-    description: "Provider configuration unique identifier",
-    example: "123e4567-e89b-12d3-a456-426614174000",
-  })
-  async checkHealth(@CurrentTenantId() tenantId: string, @Param("id") id: string) {
-    return this.providerService.checkProviderHealth(tenantId, id);
   }
 }

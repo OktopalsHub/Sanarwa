@@ -37,7 +37,7 @@ export interface SubscriberEngagement {
   totalNotifications: number;
   opens: number;
   clicks: number;
-  engagementScore: number; // 0-100
+  engagementScore: number;
   lastEngagementDate: Date;
   preferredChannel: string;
 }
@@ -53,9 +53,6 @@ export class DeliveryAnalyticsService {
     private readonly deliveryRepository: Repository<MessageDelivery>,
   ) {}
 
-  /**
-   * Get delivery metrics for a tenant
-   */
   async getDeliveryMetrics(
     tenantId: string,
     startDate?: Date,
@@ -82,7 +79,6 @@ export class DeliveryAnalyticsService {
     const deliveryRate = totalSent > 0 ? (delivered / totalSent) * 100 : 0;
     const failureRate = totalSent > 0 ? (failed / totalSent) * 100 : 0;
 
-    // Calculate average delivery time
     const deliveredMessages = messages.filter((m) => m.deliveredAt && m.createdAt);
     const avgDeliveryTime =
       deliveredMessages.length > 0
@@ -99,13 +95,10 @@ export class DeliveryAnalyticsService {
       pending,
       deliveryRate,
       failureRate,
-      averageDeliveryTime: Math.round(avgDeliveryTime / 1000), // Convert to seconds
+      averageDeliveryTime: Math.round(avgDeliveryTime / 1000),
     };
   }
 
-  /**
-   * Get metrics by channel
-   */
   async getChannelMetrics(
     tenantId: string,
     startDate?: Date,
@@ -124,7 +117,6 @@ export class DeliveryAnalyticsService {
 
     const messages = await query.getMany();
 
-    // Group by channel
     const channelMap = new Map<string, any>();
 
     for (const message of messages) {
@@ -156,7 +148,6 @@ export class DeliveryAnalyticsService {
       }
     }
 
-    // Convert to array and calculate rates
     return Array.from(channelMap.values()).map((stats) => ({
       channel: stats.channel,
       sent: stats.sent,
@@ -170,9 +161,6 @@ export class DeliveryAnalyticsService {
     }));
   }
 
-  /**
-   * Get engagement metrics
-   */
   async getEngagementMetrics(
     tenantId: string,
     startDate?: Date,
@@ -211,9 +199,6 @@ export class DeliveryAnalyticsService {
     };
   }
 
-  /**
-   * Get subscriber engagement scores
-   */
   async getSubscriberEngagement(
     tenantId: string,
     limit: number = 100,
@@ -244,23 +229,17 @@ export class DeliveryAnalyticsService {
         parseInt(r.totalNotifications) || 1,
       ),
       lastEngagementDate: r.lastEngagementDate,
-      preferredChannel: "email", // Can be enhanced with actual channel tracking
+      preferredChannel: "email",
     }));
   }
 
-  /**
-   * Calculate engagement score (0-100)
-   */
   private calculateEngagementScore(opens: number, clicks: number, total: number): number {
     if (total === 0) return 0;
-    const openScore = (opens / total) * 50; // Opens worth 50 points
-    const clickScore = (clicks / total) * 50; // Clicks worth 50 points
+    const openScore = (opens / total) * 50;
+    const clickScore = (clicks / total) * 50;
     return Math.min(100, Math.round(openScore + clickScore));
   }
 
-  /**
-   * Get delivery trends over time
-   */
   async getDeliveryTrends(
     tenantId: string,
     days: number = 30,
@@ -289,9 +268,6 @@ export class DeliveryAnalyticsService {
     }));
   }
 
-  /**
-   * Get A/B test results
-   */
   async getABTestResults(
     tenantId: string,
     testId: string,
@@ -314,7 +290,6 @@ export class DeliveryAnalyticsService {
     const variantA = this.calculateEngagementMetrics(variantADeliveries);
     const variantB = this.calculateEngagementMetrics(variantBDeliveries);
 
-    // Determine winner based on click rate
     let winner: "A" | "B" | "tie" = "tie";
     if (variantA.clickRate > variantB.clickRate + 5) {
       winner = "A";
@@ -325,9 +300,6 @@ export class DeliveryAnalyticsService {
     return { variantA, variantB, winner };
   }
 
-  /**
-   * Calculate engagement metrics from deliveries
-   */
   private calculateEngagementMetrics(deliveries: MessageDelivery[]): EngagementMetrics {
     const opens = deliveries.filter((d) => d.metadata?.opened).length;
     const clicks = deliveries.filter((d) => d.metadata?.clicked).length;

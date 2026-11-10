@@ -1,7 +1,7 @@
 import { Injectable } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
-import { BaseRepository } from "../../database/repositories/base.repository";
+import { BaseRepository } from "../../common/database/repositories/base.repository";
 import { User } from "./entities/user.entity";
 
 @Injectable()
@@ -23,8 +23,4 @@ export class UserRepository extends BaseRepository<User> {
 
     return this.findOne({ where });
   }
-
-  // async updatePassword(id: string, password: string): Promise<User | null> {
-  //   return this.update(id, password );
-  // }
 }

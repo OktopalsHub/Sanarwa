@@ -6,7 +6,6 @@ import { AsyncLoggingInterceptor } from "./async-logging.interceptor";
 import { CorrelationIdMiddleware } from "./correlation-id.middleware";
 import { RequestLoggingMiddleware } from "./middleware/request-logging.middleware";
 import { PerformanceLoggingInterceptor } from "./interceptors/performance-logging.interceptor";
-import { LoggingHealthIndicator } from "./health/logging-health.indicator";
 import { LogRotationService } from "./utils/log-rotation.util";
 
 @Global()
@@ -18,7 +17,6 @@ import { LogRotationService } from "./utils/log-rotation.util";
     CorrelationIdMiddleware,
     RequestLoggingMiddleware,
     PerformanceLoggingInterceptor,
-    LoggingHealthIndicator,
     LogRotationService,
   ],
   exports: [
@@ -27,7 +25,6 @@ import { LogRotationService } from "./utils/log-rotation.util";
     CorrelationIdMiddleware,
     RequestLoggingMiddleware,
     PerformanceLoggingInterceptor,
-    LoggingHealthIndicator,
     LogRotationService,
   ],
 })

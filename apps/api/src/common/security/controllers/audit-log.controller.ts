@@ -13,7 +13,7 @@ import { AuthGuard } from "../../../modules/auth/guards/jwt-auth.guard";
 
 import { AuditLogService, AuditLogQuery } from "../services/audit-log.service";
 import { AuditAction, AuditResourceType } from "../entities/audit-log.entity";
-import { Roles } from "src/modules/auth/decorators/roles.decorator";
+import { Roles } from "../../../modules/auth/decorators/roles.decorator";
 
 @ApiTags("Audit Logs")
 @Controller("audit-logs")

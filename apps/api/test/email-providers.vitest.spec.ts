@@ -1,8 +1,3 @@
-/**
- * Email Providers Comprehensive Test Suite
- * Tests all email providers (Mailgun, SendGrid, SES) with fallback logic
- */
-
 import { describe, it, expect, beforeAll } from "vitest";
 import axios, { AxiosInstance } from "axios";
 
@@ -10,7 +5,6 @@ describe("Email Providers Integration Tests", () => {
   const baseURL = "http://localhost:9000/api/v1";
   let api: AxiosInstance;
 
-  // Test data
   const timestamp = Date.now();
   const testUser = {
     email: `email-test-${timestamp}@example.com`,
@@ -53,7 +47,7 @@ describe("Email Providers Integration Tests", () => {
         if (response.status === 200) return;
       } catch (error) {
         if (i === maxRetries - 1) {
-          throw new Error("Server not ready. Start with: npm run start:dev");
+          throw new Error("Server not ready. Start with: pnpm dev");
         }
         await new Promise((resolve) => setTimeout(resolve, 1000));
       }
@@ -99,7 +93,6 @@ describe("Email Providers Integration Tests", () => {
         };
         console.log("✅ Project created successfully");
       } else {
-        // If projects endpoint doesn't exist, create mock project data
         projectData = {
           id: `proj_${timestamp}`,
           name: projectPayload.name,
@@ -130,7 +123,6 @@ describe("Email Providers Integration Tests", () => {
         };
         console.log("✅ API key created successfully");
       } else {
-        // Mock API key for testing
         apiKeyData = {
           key: `nf_proj_dev_${Buffer.from(`${timestamp}`).toString("base64url")}`,
           id: `key_${timestamp}`,
@@ -151,8 +143,8 @@ describe("Email Providers Integration Tests", () => {
           },
         ],
         subject: "Test Email from SDK",
-        content:
-          "<h1>Hello from Email Provider Test!</h1><p>This is a test email sent via the SDK.</p>",
+
+        data: "<h1>Hello from Email Provider Test!</h1><p>This is a test email sent via the SDK.</p>",
         data: {
           userName: "Test User",
           timestamp: new Date().toISOString(),
@@ -236,7 +228,8 @@ describe("Email Providers Integration Tests", () => {
         channels: ["email"],
         recipients: [{ email: "fallback-test@example.com", name: "Fallback Test" }],
         subject: "SES Fallback Test Email",
-        content: "<p>Testing SES fallback provider logic</p>",
+
+        data: "<p>Testing SES fallback provider logic</p>",
         metadata: {
           testType: "ses-fallback-test",
           provider: "ses",
@@ -289,14 +282,14 @@ describe("Email Providers Integration Tests", () => {
           channels: ["email"],
           recipients: [{ email: "test@example.com" }],
           subject: "Test",
-          content: "Test",
+
+          data: "Test",
         },
         {
           headers: { Authorization: "Bearer invalid-key" },
         },
       );
 
-      // Accept 404 since SDK endpoint doesn't exist yet
       expect([401, 404]).toContain(response.status);
       console.log("✅ Invalid API key properly rejected");
     });
@@ -305,17 +298,14 @@ describe("Email Providers Integration Tests", () => {
       const response = await api.post(
         "/sdk/messages",
         {
-          // Missing required fields
           channels: ["email"],
           subject: "Test",
-          // Missing recipients and content
         },
         {
           headers: { Authorization: `Bearer ${apiKeyData.key}` },
         },
       );
 
-      // Accept 404 since SDK endpoint doesn't exist yet
       expect([400, 422, 404]).toContain(response.status);
       console.log("✅ Malformed payload properly rejected");
     });

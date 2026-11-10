@@ -1,8 +1,3 @@
-/**
- * WhatsApp Quota Management Tests
- * Tests WhatsApp message quotas, template limits, and multi-tenant scaling
- */
-
 import { describe, it, expect, beforeAll, afterAll } from "vitest";
 import {
   createTestSetup,
@@ -21,12 +16,12 @@ describe("📱 WhatsApp Quota Management Tests", () => {
   beforeAll(async () => {
     testSetup = await createTestSetup();
 
-    // Create WhatsApp template for quota testing
     const templateData = {
       name: "whatsapp-quota-test",
       channel: "WHATSAPP",
       subject: "WhatsApp Quota: {{title}}",
-      content: JSON.stringify({
+
+      data: JSON.stringify({
         type: "template",
         template: {
           name: "quota_test_notification",
@@ -136,7 +131,6 @@ describe("📱 WhatsApp Quota Management Tests", () => {
     });
 
     it("should test WhatsApp quota exceeded scenario", async () => {
-      // Try to send many WhatsApp messages to trigger quota limit
       const quotaTests: Array<{
         attempt: number;
         status: number;
@@ -173,7 +167,6 @@ describe("📱 WhatsApp Quota Management Tests", () => {
 
         console.log(`🔄 WhatsApp quota test ${i}:`, response.status, response.data);
 
-        // If we get quota exceeded, break
         if (response.status === 429) {
           console.log("📊 WhatsApp quota limit reached at attempt", i);
           break;
@@ -190,11 +183,10 @@ describe("📱 WhatsApp Quota Management Tests", () => {
 
   describe("📋 Template Management & Scaling", () => {
     it("should test template limit management (6000 template challenge)", async () => {
-      // Simulate the 6000 template limit challenge
       const templateLimitInfo = {
         maxTemplatesPerAccount: 6000,
-        estimatedUsersPerTemplate: 1000, // Shared template approach
-        maxUsersSupported: 6000 * 1000, // 6 million users
+        estimatedUsersPerTemplate: 1000,
+        maxUsersSupported: 6000 * 1000,
         templateCategories: [
           "ECOMMERCE",
           "HEALTHCARE",
@@ -219,7 +211,6 @@ describe("📱 WhatsApp Quota Management Tests", () => {
       );
       console.log(`   Template categories: ${templateLimitInfo.templateCategories.length}`);
 
-      // Test template category distribution
       const templatesPerCategory = Math.floor(
         templateLimitInfo.maxTemplatesPerAccount / templateLimitInfo.templateCategories.length,
       );
@@ -232,7 +223,7 @@ describe("📱 WhatsApp Quota Management Tests", () => {
         );
       }
 
-      expect(templateLimitInfo.maxUsersSupported).toBeGreaterThan(1000000); // Support millions
+      expect(templateLimitInfo.maxUsersSupported).toBeGreaterThan(1000000);
       console.log("✅ Template scaling strategy validated");
     });
 
@@ -342,7 +333,7 @@ describe("📱 WhatsApp Quota Management Tests", () => {
       const costCalculations = [];
 
       for (const region of regionCosts) {
-        const monthlyVolume = 10000; // 10k messages per month
+        const monthlyVolume = 10000;
         const monthlyCost = monthlyVolume * region.cost;
 
         costCalculations.push({
@@ -370,16 +361,16 @@ describe("📱 WhatsApp Quota Management Tests", () => {
     it("should test BYOP vs traditional WhatsApp pricing", async () => {
       const pricingComparison = {
         traditional: {
-          monthlyFee: 99, // $99/month for WhatsApp service
+          monthlyFee: 99,
           includedMessages: 5000,
-          overageRate: 0.02, // $0.02 per message over limit
+          overageRate: 0.02,
           setupFee: 0,
         },
         byop: {
-          monthlyFee: 0, // No monthly fee
+          monthlyFee: 0,
           includedMessages: 0,
-          messageRate: 0.0055, // Direct WhatsApp Business API rate
-          setupFee: 50, // One-time setup
+          messageRate: 0.0055,
+          setupFee: 50,
         },
       };
 
@@ -387,7 +378,6 @@ describe("📱 WhatsApp Quota Management Tests", () => {
       const comparisonResults = [];
 
       for (const volume of volumeScenarios) {
-        // Traditional pricing
         const traditionalOverage = Math.max(
           0,
           volume - pricingComparison.traditional.includedMessages,
@@ -396,7 +386,6 @@ describe("📱 WhatsApp Quota Management Tests", () => {
           pricingComparison.traditional.monthlyFee +
           traditionalOverage * pricingComparison.traditional.overageRate;
 
-        // BYOP pricing
         const byopCost = volume * pricingComparison.byop.messageRate;
 
         const savings = traditionalCost - byopCost;

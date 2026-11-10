@@ -4,7 +4,7 @@ import { AuditAction, AuditResourceType } from "../entities/audit-log.entity";
 export interface AuditLogOptions {
   action: AuditAction;
   resourceType: AuditResourceType;
-  resourceIdParam?: string; // Parameter name to extract resource ID from
+  resourceIdParam?: string;
   description?: string;
   includeRequestBody?: boolean;
   includeResponseBody?: boolean;

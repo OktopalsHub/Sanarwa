@@ -10,6 +10,10 @@ export class GlobalErrorInterceptor implements NestInterceptor {
   constructor(private readonly errorClassificationService: ErrorClassificationService) {}
 
   intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
+    if (context.getType() !== "http") {
+      return next.handle();
+    }
+
     const request = context.switchToHttp().getRequest();
     const correlationId =
       request.headers["x-correlation-id"] ||
@@ -28,7 +32,6 @@ export class GlobalErrorInterceptor implements NestInterceptor {
           tenantId: request.member?.tenantId,
         });
 
-        // Log the error with proper context
         this.logger.error(`${classifiedError.code}: ${classifiedError.message}`, {
           correlationId,
           error: classifiedError.originalError?.stack,
@@ -37,7 +40,6 @@ export class GlobalErrorInterceptor implements NestInterceptor {
           category: classifiedError.category,
         });
 
-        // Add correlation ID to response headers
         const response = context.switchToHttp().getResponse();
         response.setHeader("X-Correlation-ID", correlationId);
 

@@ -1,4 +1,3 @@
-// Pagination interface for API responses
 export interface PaginatedResult<T> {
   data: T[];
   total: number;
@@ -7,7 +6,6 @@ export interface PaginatedResult<T> {
   totalPages: number;
 }
 
-// New pagination interface
 export interface IPaginatedData<T = any> {
   name: string;
   size: number;

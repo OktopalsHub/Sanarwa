@@ -37,9 +37,6 @@ export class NotificationGateway implements OnGatewayConnection, OnGatewayDiscon
     private readonly notificationService: NotificationCenterService,
   ) {}
 
-  /**
-   * Handle client connection
-   */
   async handleConnection(client: AuthenticatedSocket) {
     try {
       const token = client.handshake.auth.token;
@@ -49,16 +46,13 @@ export class NotificationGateway implements OnGatewayConnection, OnGatewayDiscon
         return;
       }
 
-      // Verify JWT token
       const decoded = this.jwtService.verify(token);
       client.subscriberId = decoded.sub;
       client.tenantId = decoded.tenantId;
 
-      // Join subscriber-specific room
       const room = `subscriber:${decoded.sub}`;
       client.join(room);
 
-      // Track connected client
       if (!this.connectedClients.has(decoded.sub)) {
         this.connectedClients.set(decoded.sub, new Set());
       }
@@ -66,14 +60,12 @@ export class NotificationGateway implements OnGatewayConnection, OnGatewayDiscon
 
       this.logger.log(`Client connected: ${client.id} (subscriber: ${decoded.sub})`);
 
-      // Send connection confirmation
       client.emit("connected", {
         message: "Connected to notification service",
         subscriberId: decoded.sub,
         timestamp: new Date(),
       });
 
-      // Send unread count
       const unreadCount = await this.notificationService.getUnreadCount(
         decoded.sub,
         decoded.tenantId,
@@ -85,9 +77,6 @@ export class NotificationGateway implements OnGatewayConnection, OnGatewayDiscon
     }
   }
 
-  /**
-   * Handle client disconnection
-   */
   handleDisconnect(client: AuthenticatedSocket) {
     if (client.subscriberId) {
       const clients = this.connectedClients.get(client.subscriberId);
@@ -102,9 +91,6 @@ export class NotificationGateway implements OnGatewayConnection, OnGatewayDiscon
     }
   }
 
-  /**
-   * Get notification feed
-   */
   @SubscribeMessage("get_notifications")
   async handleGetNotifications(
     @ConnectedSocket() client: AuthenticatedSocket,
@@ -130,9 +116,6 @@ export class NotificationGateway implements OnGatewayConnection, OnGatewayDiscon
     }
   }
 
-  /**
-   * Mark notification as read
-   */
   @SubscribeMessage("mark_as_read")
   async handleMarkAsRead(
     @ConnectedSocket() client: AuthenticatedSocket,
@@ -148,7 +131,6 @@ export class NotificationGateway implements OnGatewayConnection, OnGatewayDiscon
         client.tenantId,
       );
 
-      // Broadcast to all client connections
       const room = `subscriber:${client.subscriberId}`;
       this.server.to(room).emit("notification_read", {
         notificationId: data.notificationId,
@@ -162,9 +144,6 @@ export class NotificationGateway implements OnGatewayConnection, OnGatewayDiscon
     }
   }
 
-  /**
-   * Mark all notifications as read
-   */
   @SubscribeMessage("mark_all_as_read")
   async handleMarkAllAsRead(@ConnectedSocket() client: AuthenticatedSocket) {
     try {
@@ -174,7 +153,6 @@ export class NotificationGateway implements OnGatewayConnection, OnGatewayDiscon
 
       await this.notificationService.markAllAsRead(client.subscriberId, client.tenantId);
 
-      // Broadcast to all client connections
       const room = `subscriber:${client.subscriberId}`;
       this.server.to(room).emit("all_marked_as_read", {
         timestamp: new Date(),
@@ -187,9 +165,6 @@ export class NotificationGateway implements OnGatewayConnection, OnGatewayDiscon
     }
   }
 
-  /**
-   * Archive notification
-   */
   @SubscribeMessage("archive_notification")
   async handleArchiveNotification(
     @ConnectedSocket() client: AuthenticatedSocket,
@@ -218,9 +193,6 @@ export class NotificationGateway implements OnGatewayConnection, OnGatewayDiscon
     }
   }
 
-  /**
-   * Delete notification
-   */
   @SubscribeMessage("delete_notification")
   async handleDeleteNotification(
     @ConnectedSocket() client: AuthenticatedSocket,
@@ -246,9 +218,6 @@ export class NotificationGateway implements OnGatewayConnection, OnGatewayDiscon
     }
   }
 
-  /**
-   * Search notifications
-   */
   @SubscribeMessage("search_notifications")
   async handleSearchNotifications(
     @ConnectedSocket() client: AuthenticatedSocket,
@@ -275,9 +244,6 @@ export class NotificationGateway implements OnGatewayConnection, OnGatewayDiscon
     }
   }
 
-  /**
-   * Get statistics
-   */
   @SubscribeMessage("get_stats")
   async handleGetStats(@ConnectedSocket() client: AuthenticatedSocket) {
     try {
@@ -294,20 +260,15 @@ export class NotificationGateway implements OnGatewayConnection, OnGatewayDiscon
     }
   }
 
-  /**
-   * Event listener: New notification added
-   */
   @OnEvent("notification.created")
   async handleNotificationCreated(payload: { subscriberId: string; notification: any }) {
     const room = `subscriber:${payload.subscriberId}`;
 
-    // Broadcast to all connected clients for this subscriber
     this.server.to(room).emit("new_notification", {
       notification: payload.notification,
       timestamp: new Date(),
     });
 
-    // Update unread count
     const unreadCount = await this.notificationService.getUnreadCount(
       payload.subscriberId,
       payload.notification.tenantId,
@@ -318,22 +279,17 @@ export class NotificationGateway implements OnGatewayConnection, OnGatewayDiscon
     this.logger.log(`Notification broadcast to ${room}: ${payload.notification.id}`);
   }
 
-  /**
-   * Event listener: Bulk notifications added
-   */
   @OnEvent("notifications.bulk_created")
   async handleBulkNotificationsCreated(payload: { subscriberIds: string[]; notifications: any[] }) {
     for (const subscriberId of payload.subscriberIds) {
       const room = `subscriber:${subscriberId}`;
 
-      // Broadcast to all connected clients
       this.server.to(room).emit("bulk_notifications", {
         notifications: payload.notifications,
         count: payload.notifications.length,
         timestamp: new Date(),
       });
 
-      // Update unread count
       if (payload.notifications.length > 0) {
         const unreadCount = await this.notificationService.getUnreadCount(
           subscriberId,
@@ -345,9 +301,6 @@ export class NotificationGateway implements OnGatewayConnection, OnGatewayDiscon
     }
   }
 
-  /**
-   * Broadcast notification to subscriber
-   */
   broadcastToSubscriber(subscriberId: string, event: string, data: any): void {
     const room = `subscriber:${subscriberId}`;
     this.server.to(room).emit(event, {
@@ -356,16 +309,10 @@ export class NotificationGateway implements OnGatewayConnection, OnGatewayDiscon
     });
   }
 
-  /**
-   * Get connected clients count for subscriber
-   */
   getConnectedClientsCount(subscriberId: string): number {
     return this.connectedClients.get(subscriberId)?.size || 0;
   }
 
-  /**
-   * Check if subscriber is online
-   */
   isSubscriberOnline(subscriberId: string): boolean {
     return this.connectedClients.has(subscriberId);
   }

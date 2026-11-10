@@ -1,6 +1,6 @@
 export interface TenantQuotas {
   notifications?: {
-    total?: number; // -1 for unlimited
+    total?: number;
   };
   channels?: {
     email?: {
@@ -19,14 +19,12 @@ export interface TenantQuotas {
       total?: number;
     };
     voice?: {
-      total?: number; // in minutes
+      total?: number;
     };
   };
-  templates?: {
-    // No limits on templates
-  };
+  templates?: {};
   providers?: {
-    total?: number; // Total number of providers allowed
+    total?: number;
   };
 }
 
@@ -62,10 +60,9 @@ export interface TenantUsage {
     push?: number;
     whatsapp?: number;
     inApp?: number;
-    events?: number; // For BYOP event billing
-    eventsBilling?: number; // Cost of BYOP events
-    tokensBilling?: number; // Cost of token usage
-    // Token balances
+    events?: number;
+    eventsBilling?: number;
+    tokensBilling?: number;
     emailTokens?: number;
     smsTokens?: number;
     pushTokens?: number;
@@ -74,25 +71,4 @@ export interface TenantUsage {
     inAppTokens?: number;
   };
   lastUpdated?: Date;
-}
-
-export interface TenantBillingInfo {
-  plan?: string;
-  billingEmail?: string;
-  billingAddress?: {
-    street?: string;
-    city?: string;
-    state?: string;
-    country?: string;
-    postalCode?: string;
-  };
-  paymentMethod?: string;
-  subscription?: {
-    id: string;
-    plan: string;
-    status: "active" | "canceled" | "past_due" | "unpaid";
-    currentPeriodStart: Date;
-    currentPeriodEnd: Date;
-    stripeSubscriptionId?: string;
-  };
 }

@@ -8,24 +8,20 @@ import {
 } from "../entities/token-purchase.entity";
 import { Tenant } from "../../tenant/entities/tenant.entity";
 import { PaymentProvider } from "../enums/payment-provider.enum";
-import { PolarService } from "./polar.service";
 import { BachsService } from "./bachs.service";
-import { NombaService } from "./nomba.service";
 import { TokenManagementService } from "../../token-management/services/token-management.service";
 import { CheckoutProviderService } from "./checkout-provider.service";
 import { TokenTransactionType } from "../entities/token-balance.entity";
 import { AutoTopupConfig } from "../entities/auto-topup-config.entity";
 import {
   BillingCurrency,
-  buildNotifiPurchaseReference,
+  buildPurchaseReference,
   packagePriceMinor,
   resolvePackage,
 } from "../constants/token-packages";
 import type {
   CheckoutContextResult,
-  LegacyPurchaseTokensDto,
   PurchaseTokenPackDto,
-  PurchaseTokensDto,
   TokenPurchaseCheckoutResult,
 } from "./billing-dto";
 
@@ -40,19 +36,12 @@ export class TokenPurchaseService {
     private tenantRepository: Repository<Tenant>,
     @InjectRepository(AutoTopupConfig)
     private autoTopupConfigRepository: Repository<AutoTopupConfig>,
-    private polarService: PolarService,
     private bachsService: BachsService,
-    private nombaService: NombaService,
     private tokenManagementService: TokenManagementService,
     private checkoutProvider: CheckoutProviderService,
   ) {}
 
-  async purchaseTokens(
-    dto: PurchaseTokensDto,
-  ): Promise<TokenPurchaseCheckoutResult | TokenPurchase> {
-    if (this.isLegacyPurchaseDto(dto)) {
-      return this.initiateLegacyTokenPurchase(dto);
-    }
+  async purchaseTokens(dto: PurchaseTokenPackDto): Promise<TokenPurchaseCheckoutResult> {
     return this.purchaseTokenPack(dto);
   }
 
@@ -66,7 +55,7 @@ export class TokenPurchaseService {
 
     const tenant = await this.tenantRepository.findOne({
       where: { id: dto.tenantId },
-      relations: ["owner"],
+      relations: { owner: true },
     });
 
     if (!tenant) {
@@ -132,52 +121,6 @@ export class TokenPurchaseService {
     }
   }
 
-  async initiateLegacyTokenPurchase(dto: LegacyPurchaseTokensDto): Promise<TokenPurchase> {
-    try {
-      const pricePerToken = this.getTokenPrice(dto.tokenAmount);
-      const totalPrice = dto.tokenAmount * pricePerToken;
-
-      let paymentIntentId = "";
-      let transactionReference = "";
-
-      if (dto.paymentProvider === PaymentProvider.POLAR) {
-        const paymentIntent = await this.polarService.createPaymentIntent({
-          amount: Math.round(totalPrice * 100),
-          currency: "USD",
-          metadata: {
-            tenantId: dto.tenantId,
-            tokenAmount: dto.tokenAmount,
-            type: dto.type || TokenPurchaseType.MANUAL,
-          },
-        });
-        paymentIntentId = paymentIntent.id;
-        transactionReference = paymentIntent.id;
-      } else {
-        throw new BadRequestException("Legacy token purchase requires Polar");
-      }
-
-      const tokenPurchase = this.tokenPurchaseRepository.create({
-        tenantId: dto.tenantId,
-        tokenAmount: dto.tokenAmount,
-        totalPrice,
-        pricePerToken,
-        status: TokenPurchaseStatus.PENDING,
-        type: dto.type || TokenPurchaseType.MANUAL,
-        paymentIntentId,
-        transactionReference,
-        paymentMetadata: {
-          ...dto.metadata,
-          provider: dto.paymentProvider,
-        },
-      });
-
-      return await this.tokenPurchaseRepository.save(tokenPurchase);
-    } catch (error) {
-      this.logger.error("Failed to purchase tokens (legacy):", error);
-      throw new BadRequestException("Failed to initiate token purchase");
-    }
-  }
-
   async getPurchaseStatus(purchaseId: string, tenantId: string) {
     const purchase = await this.tokenPurchaseRepository.findOne({
       where: { id: purchaseId, tenantId },
@@ -237,24 +180,12 @@ export class TokenPurchaseService {
     const defaultCurrency: BillingCurrency = isNg ? "NGN" : "USD";
     const availableCurrencies: BillingCurrency[] = isNg ? ["NGN", "USD"] : ["USD"];
     const bachsConfigured = this.bachsService.isConfigured();
-    const nombaConfigured = this.nombaService.isConfigured();
-    const providers: PaymentProvider[] = [];
-
-    if (nombaConfigured) {
-      providers.push(PaymentProvider.NOMBA);
-    }
-    if (bachsConfigured) {
-      providers.push(PaymentProvider.BACHS);
-    }
-    if (this.polarService.isConfigured()) {
-      providers.push(PaymentProvider.POLAR);
-    }
+    const providers: PaymentProvider[] = bachsConfigured ? [PaymentProvider.BACHS] : [];
 
     return {
       defaultCurrency,
       availableCurrencies,
       bachsConfigured,
-      nombaConfigured,
       providers,
       countryCode,
     };
@@ -262,7 +193,6 @@ export class TokenPurchaseService {
 
   async confirmTokenPurchase(purchaseId: string): Promise<void> {
     try {
-      // Atomically claim PENDING → COMPLETED so concurrent webhook/sync cannot double-credit.
       const claim = await this.tokenPurchaseRepository
         .createQueryBuilder()
         .update(TokenPurchase)
@@ -303,7 +233,6 @@ export class TokenPurchaseService {
           purchase.id,
         );
       } catch (error) {
-        // Release claim so a later sync/webhook retry can credit tokens.
         await this.tokenPurchaseRepository.update(
           { id: purchaseId, status: TokenPurchaseStatus.COMPLETED },
           {
@@ -333,8 +262,7 @@ export class TokenPurchaseService {
             config.currentYear = currentYear;
           }
 
-          config.currentMonthSpend =
-            Number(config.currentMonthSpend) + Number(purchase.totalPrice);
+          config.currentMonthSpend = Number(config.currentMonthSpend) + Number(purchase.totalPrice);
           config.lastTriggered = new Date();
           await this.autoTopupConfigRepository.save(config);
         }
@@ -363,7 +291,6 @@ export class TokenPurchaseService {
     }
   }
 
-  /** Confirm only when paid amount covers purchase price (when amount is known). */
   async confirmTokenPurchaseIfPaid(
     purchaseId: string,
     paidAmount?: number,
@@ -384,7 +311,6 @@ export class TokenPurchaseService {
         return;
       }
     } else {
-      // No amount in webhook — re-verify via provider API before crediting.
       const purchase = await this.tokenPurchaseRepository.findOne({
         where: { id: purchaseId },
       });
@@ -413,7 +339,6 @@ export class TokenPurchaseService {
     await this.confirmTokenPurchase(purchaseId);
   }
 
-  /** Re-verify a purchase's payment status with its provider. */
   async verifyWithProvider(
     purchase: TokenPurchase,
   ): Promise<import("../types/payment-verify-result").PaymentVerifyResult> {
@@ -422,31 +347,11 @@ export class TokenPurchaseService {
     if (provider === PaymentProvider.BACHS && purchase.transactionReference) {
       return this.bachsService.verifyCheckoutSession(purchase.transactionReference);
     }
-    if (provider === PaymentProvider.NOMBA && purchase.transactionReference) {
-      return this.nombaService.verifyOrder(purchase.transactionReference);
-    }
-    if (provider === PaymentProvider.POLAR && purchase.transactionReference) {
-      return this.polarService.verifyCheckout(purchase.transactionReference);
-    }
-    if (purchase.paymentIntentId?.startsWith("pi_")) {
-      const paymentIntent = await this.polarService.getPaymentIntent(purchase.paymentIntentId);
-      return {
-        status:
-          paymentIntent.status === "succeeded"
-            ? "success"
-            : paymentIntent.status === "canceled"
-              ? "failed"
-              : "pending",
-        amount: typeof paymentIntent.amount === "number" ? paymentIntent.amount / 100 : undefined,
-        currency: paymentIntent.currency,
-      };
-    }
     return { status: "pending" };
   }
 
   isFullyPaid(purchase: TokenPurchase, paidAmount?: number, currency?: string): boolean {
     if (paidAmount === undefined || paidAmount === null) {
-      // ponytail: amount missing from provider — trust signed success/status verify; add required amount when providers always return it
       return true;
     }
     const expected = Number(purchase.totalPrice);
@@ -461,10 +366,6 @@ export class TokenPurchaseService {
       return false;
     }
     return true;
-  }
-
-  private isLegacyPurchaseDto(dto: PurchaseTokensDto): dto is LegacyPurchaseTokensDto {
-    return "tokenAmount" in dto && "paymentProvider" in dto;
   }
 
   private getTokenPrice(tokenAmount: number): number {

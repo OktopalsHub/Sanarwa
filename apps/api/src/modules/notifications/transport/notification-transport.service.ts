@@ -4,13 +4,14 @@ import { Repository } from "typeorm";
 import { NotificationLog } from "../entities/notification-log.entity";
 import { NotificationEngineService } from "../engine/notification-engine.service";
 import { NotificationEngineRequest } from "../engine/notification-engine.types";
+import { NotificationChannel } from "../../../common/enums/notification-channel.enum";
 
 export interface NotificationRequest {
   to: string;
-  channel: "email" | "sms" | "push" | "whatsapp" | "webhook" | "in_app";
+  channel: NotificationChannel;
   title?: string;
   message: string;
-  data?: Record<string, any>;
+  variables?: Record<string, any>;
   priority?: "low" | "normal" | "high";
   scheduledAt?: Date;
   expiresAt?: Date;
@@ -54,7 +55,7 @@ export class NotificationTransportService {
       to: request.to,
       title: request.title,
       message: request.message,
-      data: request.templateData ?? request.data,
+      variables: request.templateData ?? request.variables,
       priority: request.priority,
       scheduledAt: request.scheduledAt,
       expiresAt: request.expiresAt,
@@ -64,7 +65,7 @@ export class NotificationTransportService {
       webhookUrl: request.webhookUrl,
       subscriberId:
         request.channel === "push" || request.channel === "in_app" ? request.to : undefined,
-      metadata: request.data,
+      metadata: request.variables,
     };
 
     const result = await this.notificationEngine.send(engineRequest);
@@ -129,16 +130,16 @@ export class NotificationTransportService {
   async getDeliveryStatus(trackingId: string): Promise<NotificationLog | null> {
     return this.logRepository.findOne({
       where: { trackingId },
-      select: [
-        "id",
-        "trackingId",
-        "channel",
-        "status",
-        "sentAt",
-        "deliveredAt",
-        "error",
-        "externalId",
-      ],
+      select: {
+        id: true,
+        trackingId: true,
+        channel: true,
+        status: true,
+        sentAt: true,
+        deliveredAt: true,
+        error: true,
+        externalId: true,
+      },
     });
   }
 

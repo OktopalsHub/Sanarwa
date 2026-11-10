@@ -1,10 +1,10 @@
 import { Test, TestingModule } from "@nestjs/testing";
-import { Channel, ProviderConfig, ProviderHealth } from "../types";
+import { ProviderConfig, ProviderHealth } from "../types";
+import { NotificationChannel } from "../../common/enums/notification-channel.enum";
 import { SMSPayload } from "./sms-provider.interface";
 import { TermiiSMSProvider } from "./termii-sms-provider";
 import type { Mock } from "vitest";
 
-// Mock fetch globally
 global.fetch = vi.fn();
 
 describe("TermiiSMSProvider", () => {
@@ -23,7 +23,7 @@ describe("TermiiSMSProvider", () => {
     validConfig = {
       id: "termii-provider",
       name: "Termii SMS Provider",
-      channel: Channel.SMS,
+      channel: NotificationChannel.SMS,
       priority: 1,
       isActive: true,
       credentials: {
@@ -47,7 +47,7 @@ describe("TermiiSMSProvider", () => {
       expect(provider.isInitialized).toBe(true);
       expect(provider.id).toBe("termii");
       expect(provider.name).toBe("Termii SMS");
-      expect(provider.channel).toBe(Channel.SMS);
+      expect(provider.channel).toBe(NotificationChannel.SMS);
     });
 
     it("should fail initialization with missing apiKey", async () => {
@@ -66,7 +66,7 @@ describe("TermiiSMSProvider", () => {
         ...validConfig,
         credentials: {
           ...validConfig.credentials,
-          senderId: "ThisSenderIdIsTooLong", // More than 11 characters
+          senderId: "ThisSenderIdIsTooLong",
         },
       };
 
@@ -230,42 +230,7 @@ describe("TermiiSMSProvider", () => {
     });
   });
 
-  describe("health checks", () => {
-    beforeEach(async () => {
-      await provider.initialize(validConfig);
-    });
-
-    it("should return healthy status when API is accessible", async () => {
-      const mockBalanceResponse = {
-        balance: 100,
-        currency: "NGN",
-      };
-
-      mockFetch.mockResolvedValue({
-        ok: true,
-        json: () => Promise.resolve(mockBalanceResponse),
-      } as Response);
-
-      const healthStatus = await provider.checkHealth();
-
-      expect(healthStatus.status).toBe(ProviderHealth.HEALTHY);
-      expect(healthStatus.metadata?.service).toBe("Termii SMS");
-      expect(healthStatus.metadata?.balance).toBe(100);
-    });
-
-    it("should return unhealthy status when API is not accessible", async () => {
-      mockFetch.mockResolvedValue({
-        ok: false,
-        status: 401,
-        statusText: "Unauthorized",
-      } as Response);
-
-      const healthStatus = await provider.checkHealth();
-
-      expect(healthStatus.status).toBe(ProviderHealth.UNHEALTHY);
-      expect(healthStatus.metadata?.error).toContain("Termii health check failed");
-    });
-  });
+  // Health checks moved to the circuit breaker (common/errors/services/circuit-breaker.service.ts); providers no longer own a checkHealth API.
 
   describe("Termii-specific methods", () => {
     beforeEach(async () => {

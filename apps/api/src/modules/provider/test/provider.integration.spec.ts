@@ -1,7 +1,7 @@
 import { ConfigModule } from "@nestjs/config";
 import { Test, TestingModule } from "@nestjs/testing";
 import { getRepositoryToken, TypeOrmModule } from "@nestjs/typeorm";
-import { Channel } from "diagnostics_channel";
+import { NotificationChannel } from "diagnostics_channel";
 import { Repository } from "typeorm";
 import { ProviderConfig, ProviderType } from "../provider-config.entity";
 
@@ -41,19 +41,17 @@ describe("ProviderService Integration", () => {
   });
 
   beforeEach(async () => {
-    // Clear database before each test
     await providerConfigRepository.clear();
   });
 
   describe("Provider Selection and Failover", () => {
     it("should select providers based on priority and health", async () => {
-      // Create test provider configurations
       const provider1 = providerConfigRepository.create({
         tenantId: "tenant-1",
         providerId: "aws_ses",
         providerName: "AWS SES Primary",
         providerType: ProviderType.AWS_SES,
-        channel: Channel.EMAIL,
+        channel: NotificationChannel.EMAIL,
         config: {
           accessKeyId: "test-key-1",
           secretAccessKey: "test-secret-1",
@@ -69,7 +67,7 @@ describe("ProviderService Integration", () => {
         providerId: "sendgrid",
         providerName: "SendGrid Backup",
         providerType: ProviderType.SENDGRID,
-        channel: Channel.EMAIL,
+        channel: NotificationChannel.EMAIL,
         config: {
           apiKey: "test-sendgrid-key",
         },
@@ -82,7 +80,7 @@ describe("ProviderService Integration", () => {
 
       const options = {
         tenantId: "tenant-1",
-        channel: Channel.EMAIL,
+        channel: NotificationChannel.EMAIL,
       };
 
       const providers = await providerService.selectProviders(options);
@@ -100,7 +98,7 @@ describe("ProviderService Integration", () => {
         providerId: "termii",
         providerName: "Termii Africa",
         providerType: ProviderType.TERMII,
-        channel: Channel.SMS,
+        channel: NotificationChannel.SMS,
         config: {
           apiKey: "test-termii-key",
           senderId: "TestApp",
@@ -115,7 +113,7 @@ describe("ProviderService Integration", () => {
         providerId: "aws_sns",
         providerName: "AWS SNS Global",
         providerType: ProviderType.AWS_SNS,
-        channel: Channel.SMS,
+        channel: NotificationChannel.SMS,
         config: {
           accessKeyId: "test-key",
           secretAccessKey: "test-secret",
@@ -123,15 +121,14 @@ describe("ProviderService Integration", () => {
         },
         priority: 2,
         isActive: true,
-        supportedCountries: null, // Global support
+        supportedCountries: null,
       });
 
       await providerConfigRepository.save([provider1, provider2]);
 
-      // Test with Nigeria (should get Termii first)
       const nigeriaOptions = {
         tenantId: "tenant-1",
-        channel: Channel.SMS,
+        channel: NotificationChannel.SMS,
         country: "NG",
       };
 
@@ -139,10 +136,9 @@ describe("ProviderService Integration", () => {
       expect(nigeriaProviders).toHaveLength(2);
       expect(nigeriaProviders[0].providerId).toBe("termii");
 
-      // Test with US (should get AWS SNS only)
       const usOptions = {
         tenantId: "tenant-1",
-        channel: Channel.SMS,
+        channel: NotificationChannel.SMS,
         country: "US",
       };
 
@@ -157,7 +153,7 @@ describe("ProviderService Integration", () => {
         providerId: "aws_ses",
         providerName: "AWS SES",
         providerType: ProviderType.AWS_SES,
-        channel: Channel.EMAIL,
+        channel: NotificationChannel.EMAIL,
         config: {
           accessKeyId: "test",
           secretAccessKey: "test",
@@ -172,7 +168,7 @@ describe("ProviderService Integration", () => {
         providerId: "sendgrid",
         providerName: "SendGrid",
         providerType: ProviderType.SENDGRID,
-        channel: Channel.EMAIL,
+        channel: NotificationChannel.EMAIL,
         config: { apiKey: "test-key" },
         priority: 2,
         isActive: true,
@@ -182,7 +178,7 @@ describe("ProviderService Integration", () => {
 
       const options = {
         tenantId: "tenant-1",
-        channel: Channel.EMAIL,
+        channel: NotificationChannel.EMAIL,
         excludeProviders: ["aws_ses"],
       };
 
@@ -199,7 +195,7 @@ describe("ProviderService Integration", () => {
         providerId: "aws_ses",
         providerName: "AWS SES",
         providerType: ProviderType.AWS_SES,
-        channel: Channel.EMAIL,
+        channel: NotificationChannel.EMAIL,
         config: {
           accessKeyId: "old-key",
           secretAccessKey: "old-secret",
@@ -224,13 +220,12 @@ describe("ProviderService Integration", () => {
       const updated = await providerService.updateProviderConfig(
         "tenant-1",
         "aws_ses",
-        Channel.EMAIL,
+        NotificationChannel.EMAIL,
         updates,
       );
 
       expect(updated.priority).toBe(2);
       expect(updated.isActive).toBe(false);
-      // Config should be encrypted, so we can't directly compare
       expect(updated.config).toBeDefined();
     });
 
@@ -240,7 +235,7 @@ describe("ProviderService Integration", () => {
         providerId: "aws_ses",
         providerName: "AWS SES",
         providerType: ProviderType.AWS_SES,
-        channel: Channel.EMAIL,
+        channel: NotificationChannel.EMAIL,
         config: {
           accessKeyId: "test",
           secretAccessKey: "test",
@@ -252,13 +247,13 @@ describe("ProviderService Integration", () => {
 
       await providerConfigRepository.save(provider);
 
-      await providerService.toggleProvider("tenant-1", "aws_ses", Channel.EMAIL, false);
+      await providerService.toggleProvider("tenant-1", "aws_ses", NotificationChannel.EMAIL, false);
 
       const updated = await providerConfigRepository.findOne({
         where: {
           tenantId: "tenant-1",
           providerId: "aws_ses",
-          channel: Channel.EMAIL,
+          channel: NotificationChannel.EMAIL,
         },
       });
 
@@ -271,7 +266,7 @@ describe("ProviderService Integration", () => {
         providerId: "aws_ses",
         providerName: "AWS SES",
         providerType: ProviderType.AWS_SES,
-        channel: Channel.EMAIL,
+        channel: NotificationChannel.EMAIL,
         config: {
           accessKeyId: "AKIAIOSFODNN7EXAMPLE",
           secretAccessKey: "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
@@ -281,12 +276,8 @@ describe("ProviderService Integration", () => {
         isActive: true,
       });
 
-      // Note: This will fail in real scenario because we don't have actual AWS credentials
-      // In a real integration test, you would use mock providers or test credentials
       const isValid = await providerService.validateProviderConfig(validConfig);
 
-      // For this test, we expect it to fail validation due to invalid credentials
-      // but the structure validation should pass
       expect(typeof isValid).toBe("boolean");
     });
   });
@@ -298,7 +289,7 @@ describe("ProviderService Integration", () => {
         providerId: "aws_ses",
         providerName: "AWS SES",
         providerType: ProviderType.AWS_SES,
-        channel: Channel.EMAIL,
+        channel: NotificationChannel.EMAIL,
         config: {
           accessKeyId: "test-key",
           secretAccessKey: "test-secret",
@@ -318,16 +309,13 @@ describe("ProviderService Integration", () => {
 
       const options = {
         tenantId: "tenant-1",
-        channel: Channel.EMAIL,
+        channel: NotificationChannel.EMAIL,
       };
 
-      // This will fail because we don't have real AWS credentials
-      // but it tests the bulk processing logic
       try {
         const results = await providerService.sendBulk(payloads, options);
         expect(results).toHaveLength(3);
       } catch (error) {
-        // Expected to fail with mock credentials
         expect(error.message).toContain("providers failed");
       }
     });
@@ -340,7 +328,7 @@ describe("ProviderService Integration", () => {
         providerId: "test_provider",
         providerName: "Test Provider",
         providerType: ProviderType.CUSTOM,
-        channel: Channel.EMAIL,
+        channel: NotificationChannel.EMAIL,
         config: { apiKey: "test-key" },
         priority: 1,
         isActive: true,
@@ -348,15 +336,11 @@ describe("ProviderService Integration", () => {
 
       await providerConfigRepository.save(provider);
 
-      // Get initial metrics (should be empty)
       const initialMetrics = await providerService.getProviderMetrics(
         "test_provider",
-        Channel.EMAIL,
+        NotificationChannel.EMAIL,
       );
       expect(initialMetrics.totalRequests).toBe(0);
-
-      // The actual performance tracking would happen during real send operations
-      // For this integration test, we're just verifying the service methods work
     });
 
     it("should get available providers for tenant", async () => {
@@ -366,7 +350,7 @@ describe("ProviderService Integration", () => {
           providerId: "aws_ses",
           providerName: "AWS SES",
           providerType: ProviderType.AWS_SES,
-          channel: Channel.EMAIL,
+          channel: NotificationChannel.EMAIL,
           config: {
             accessKeyId: "test",
             secretAccessKey: "test",
@@ -380,7 +364,7 @@ describe("ProviderService Integration", () => {
           providerId: "sendgrid",
           providerName: "SendGrid",
           providerType: ProviderType.SENDGRID,
-          channel: Channel.EMAIL,
+          channel: NotificationChannel.EMAIL,
           config: { apiKey: "test-key" },
           priority: 2,
           isActive: true,
@@ -390,7 +374,7 @@ describe("ProviderService Integration", () => {
           providerId: "aws_sns",
           providerName: "AWS SNS",
           providerType: ProviderType.AWS_SNS,
-          channel: Channel.SMS,
+          channel: NotificationChannel.SMS,
           config: {
             accessKeyId: "test",
             secretAccessKey: "test",
@@ -403,8 +387,14 @@ describe("ProviderService Integration", () => {
 
       await providerConfigRepository.save(providers);
 
-      const emailProviders = await providerService.getAvailableProviders("tenant-1", Channel.EMAIL);
-      const smsProviders = await providerService.getAvailableProviders("tenant-1", Channel.SMS);
+      const emailProviders = await providerService.getAvailableProviders(
+        "tenant-1",
+        NotificationChannel.EMAIL,
+      );
+      const smsProviders = await providerService.getAvailableProviders(
+        "tenant-1",
+        NotificationChannel.SMS,
+      );
 
       expect(emailProviders).toHaveLength(2);
       expect(smsProviders).toHaveLength(1);
@@ -419,7 +409,7 @@ describe("ProviderService Integration", () => {
         providerId: "aws_ses",
         providerName: "Tenant 1 AWS SES",
         providerType: ProviderType.AWS_SES,
-        channel: Channel.EMAIL,
+        channel: NotificationChannel.EMAIL,
         config: {
           accessKeyId: "tenant1-key",
           secretAccessKey: "tenant1-secret",
@@ -434,7 +424,7 @@ describe("ProviderService Integration", () => {
         providerId: "aws_ses",
         providerName: "Tenant 2 AWS SES",
         providerType: ProviderType.AWS_SES,
-        channel: Channel.EMAIL,
+        channel: NotificationChannel.EMAIL,
         config: {
           accessKeyId: "tenant2-key",
           secretAccessKey: "tenant2-secret",
@@ -448,11 +438,11 @@ describe("ProviderService Integration", () => {
 
       const tenant1Providers = await providerService.getAvailableProviders(
         "tenant-1",
-        Channel.EMAIL,
+        NotificationChannel.EMAIL,
       );
       const tenant2Providers = await providerService.getAvailableProviders(
         "tenant-2",
-        Channel.EMAIL,
+        NotificationChannel.EMAIL,
       );
 
       expect(tenant1Providers).toHaveLength(1);
@@ -466,7 +456,7 @@ describe("ProviderService Integration", () => {
     it("should handle missing provider configurations gracefully", async () => {
       const options = {
         tenantId: "nonexistent-tenant",
-        channel: Channel.EMAIL,
+        channel: NotificationChannel.EMAIL,
       };
 
       const providers = await providerService.selectProviders(options);
@@ -475,7 +465,12 @@ describe("ProviderService Integration", () => {
 
     it("should handle provider configuration not found", async () => {
       await expect(
-        providerService.updateProviderConfig("tenant-1", "nonexistent", Channel.EMAIL, {}),
+        providerService.updateProviderConfig(
+          "tenant-1",
+          "nonexistent",
+          NotificationChannel.EMAIL,
+          {},
+        ),
       ).rejects.toThrow("Provider configuration not found");
     });
   });

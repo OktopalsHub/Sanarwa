@@ -30,14 +30,12 @@ export class ExpoPushProvider implements IPushProvider {
         subtitle: payload.ios?.subtitle,
         data: {
           ...payload.data,
-          // Add deep link data for Expo client handling
           ...(payload.deepLink && {
             deepLink: payload.deepLink.url,
             fallbackUrl: payload.deepLink.fallbackUrl,
             androidAction: payload.deepLink.androidAction,
             iosCategory: payload.deepLink.iosCategory,
           }),
-          // Add action buttons
           ...(payload.actions && { actions: payload.actions }),
         },
         badge: payload.badge,
@@ -46,13 +44,10 @@ export class ExpoPushProvider implements IPushProvider {
         ttl: payload.ttl || 3600,
         channelId: payload.android?.channelId || payload.category,
 
-        // Expo-specific deep linking
         ...(payload.deepLink && {
-          // Expo handles deep links via data field, but we can also set categoryId
           categoryId: payload.deepLink.iosCategory,
         }),
 
-        // Android-specific options
         ...(payload.android && {
           android: {
             channelId: payload.android.channelId,
@@ -63,7 +58,6 @@ export class ExpoPushProvider implements IPushProvider {
           },
         }),
 
-        // iOS-specific options
         ...(payload.ios && {
           ios: {
             sound: payload.sound || "default",

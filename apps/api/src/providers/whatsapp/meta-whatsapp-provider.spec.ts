@@ -1,10 +1,10 @@
 import { Test, TestingModule } from "@nestjs/testing";
-import { Channel, ProviderConfig, ProviderHealth } from "../types";
+import { ProviderConfig, ProviderHealth } from "../types";
+import { NotificationChannel } from "../../common/enums/notification-channel.enum";
 import { MetaWhatsAppProvider } from "./meta-whatsapp-provider";
 import type { Mock } from "vitest";
 import { WhatsAppPayload, WhatsAppTemplate } from "./whatsapp-provider.interface";
 
-// Mock fetch globally
 global.fetch = vi.fn();
 
 describe("MetaWhatsAppProvider", () => {
@@ -23,7 +23,7 @@ describe("MetaWhatsAppProvider", () => {
     validConfig = {
       id: "whatsapp-provider",
       name: "Meta WhatsApp Provider",
-      channel: Channel.WHATSAPP,
+      channel: NotificationChannel.WHATSAPP,
       priority: 1,
       isActive: true,
       credentials: {
@@ -49,7 +49,7 @@ describe("MetaWhatsAppProvider", () => {
       expect(provider.isInitialized).toBe(true);
       expect(provider.id).toBe("meta-whatsapp");
       expect(provider.name).toBe("Meta WhatsApp Business");
-      expect(provider.channel).toBe(Channel.WHATSAPP);
+      expect(provider.channel).toBe(NotificationChannel.WHATSAPP);
     });
 
     it("should fail initialization with missing accessToken", async () => {
@@ -109,7 +109,7 @@ describe("MetaWhatsAppProvider", () => {
       const invalidNumbers = [
         "",
         "123",
-        "12345678901234567", // Too long
+        "12345678901234567",
         "abc1234567890",
         "+abc1234567890",
         "123-456-7890",
@@ -374,44 +374,7 @@ describe("MetaWhatsAppProvider", () => {
     });
   });
 
-  describe("health checks", () => {
-    beforeEach(async () => {
-      await provider.initialize(validConfig);
-    });
-
-    it("should return healthy status when API is accessible", async () => {
-      const mockPhoneInfo = {
-        display_phone_number: "+1 555-123-4567",
-        verified_name: "Test Business",
-        id: "test-phone-number-id",
-      };
-
-      mockFetch.mockResolvedValue({
-        ok: true,
-        json: () => Promise.resolve(mockPhoneInfo),
-      } as Response);
-
-      const healthStatus = await provider.checkHealth();
-
-      expect(healthStatus.status).toBe(ProviderHealth.HEALTHY);
-      expect(healthStatus.metadata?.service).toBe("Meta WhatsApp Business");
-      expect(healthStatus.metadata?.phoneNumber).toBe("+1 555-123-4567");
-      expect(healthStatus.metadata?.verifiedName).toBe("Test Business");
-    });
-
-    it("should return unhealthy status when API is not accessible", async () => {
-      mockFetch.mockResolvedValue({
-        ok: false,
-        status: 401,
-        statusText: "Unauthorized",
-      } as Response);
-
-      const healthStatus = await provider.checkHealth();
-
-      expect(healthStatus.status).toBe(ProviderHealth.UNHEALTHY);
-      expect(healthStatus.metadata?.error).toContain("WhatsApp health check failed");
-    });
-  });
+  // Health checks moved to the circuit breaker (common/errors/services/circuit-breaker.service.ts); providers no longer own a checkHealth API.
 
   describe("WhatsApp-specific methods", () => {
     beforeEach(async () => {

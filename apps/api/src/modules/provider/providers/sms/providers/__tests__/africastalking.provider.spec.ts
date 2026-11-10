@@ -4,27 +4,22 @@ import { AfricasTalkingProvider } from "../africastalking.provider";
 import { SMSPayload, BulkSMSPayload } from "../../sms-provider.interface";
 import type { Mock } from "vitest";
 
-// Mock the AfricasTalking SDK
+const { mockSMS, africasTalkingFactory } = vi.hoisted(() => {
+  const sms = { send: vi.fn() };
+  const instance = { SMS: sms };
+  return { mockSMS: sms, africasTalkingFactory: vi.fn(() => instance) };
+});
+
 vi.mock("africastalking", () => {
-  return vi.fn(() => ({
-    SMS: {
-      send: vi.fn(),
-    },
-  }));
+  return { default: africasTalkingFactory };
 });
 
 describe("AfricasTalkingProvider", () => {
   let provider: AfricasTalkingProvider;
   let configService: ConfigService;
-  let mockSMS: any;
 
   beforeEach(async () => {
-    // Reset mocks
     vi.clearAllMocks();
-
-    const AfricasTalking = require("africastalking");
-    const mockAfricasTalking = AfricasTalking();
-    mockSMS = mockAfricasTalking.SMS;
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -68,17 +63,17 @@ describe("AfricasTalkingProvider", () => {
 
   it("should return supported countries", () => {
     const countries = provider.getSupportedCountries();
-    expect(countries).toContain("KE"); // Kenya
-    expect(countries).toContain("NG"); // Nigeria
-    expect(countries).toContain("GH"); // Ghana
-    expect(countries).toContain("ZA"); // South Africa
-    expect(countries.length).toBeGreaterThan(20); // Should support many African countries
+    expect(countries).toContain("KE");
+    expect(countries).toContain("NG");
+    expect(countries).toContain("GH");
+    expect(countries).toContain("ZA");
+    expect(countries.length).toBeGreaterThan(20);
   });
 
   it("should return cost per message for supported countries", () => {
-    expect(provider.getCostPerMessage("KE")).toBe(0.008); // Kenya
-    expect(provider.getCostPerMessage("NG")).toBe(0.02); // Nigeria
-    expect(provider.getCostPerMessage("UNKNOWN")).toBe(0.04); // Default
+    expect(provider.getCostPerMessage("KE")).toBe(0.008);
+    expect(provider.getCostPerMessage("NG")).toBe(0.02);
+    expect(provider.getCostPerMessage("UNKNOWN")).toBe(0.04);
   });
 
   describe("sendSMS", () => {
@@ -111,11 +106,10 @@ describe("AfricasTalkingProvider", () => {
       expect(result.provider).toBe("africastalking");
       expect(result.cost).toBeGreaterThan(0);
 
-      // Verify the SDK was called with correct parameters
       expect(mockSMS.send).toHaveBeenCalledWith({
         to: ["+254700000000"],
         message: "Test message",
-        from: "TEST", // Uses custom 'from' field
+        from: "TEST",
       });
     });
 
@@ -138,18 +132,16 @@ describe("AfricasTalkingProvider", () => {
       const payloadWithoutSender = {
         to: "+254700000000",
         message: "Test message without custom sender",
-        // No 'from' field
       };
 
       const result = await provider.sendSMS(payloadWithoutSender);
 
       expect(result.success).toBe(true);
 
-      // Should use the short code from config as fallback
       expect(mockSMS.send).toHaveBeenCalledWith({
         to: ["+254700000000"],
         message: "Test message without custom sender",
-        from: "TEST", // Uses AFRICASTALKING_SHORT_CODE
+        from: "TEST",
       });
     });
 
@@ -245,17 +237,14 @@ describe("AfricasTalkingProvider", () => {
       expect(result.provider).toBe("africastalking");
       expect(result.results).toHaveLength(3);
 
-      // Verify successful recipients
       expect(result.results[0].success).toBe(true);
       expect(result.results[0].messageId).toBe("ATXid_bulk1");
       expect(result.results[1].success).toBe(true);
       expect(result.results[1].messageId).toBe("ATXid_bulk2");
 
-      // Verify failed recipient
       expect(result.results[2].success).toBe(false);
       expect(result.results[2].error).toContain("Failed - 101");
 
-      // Verify SDK was called correctly
       expect(mockSMS.send).toHaveBeenCalledWith({
         to: ["+254700000000", "+234800000000", "+233200000000"],
         message: "Bulk test message",
@@ -273,7 +262,6 @@ describe("AfricasTalkingProvider", () => {
       expect(result.failureCount).toBe(3);
       expect(result.results).toHaveLength(3);
 
-      // All recipients should be marked as failed
       result.results.forEach((r) => {
         expect(r.success).toBe(false);
         expect(r.error).toContain("Bulk sending failed");
@@ -337,7 +325,6 @@ describe("AfricasTalkingProvider", () => {
 
   describe("cost parsing", () => {
     it("should parse different currency costs correctly", () => {
-      // Test cost parsing through sendSMS (private method testing via public interface)
       const testCases = [
         { phone: "+254700000000", expectedCountry: "KE" },
         { phone: "+234800000000", expectedCountry: "NG" },

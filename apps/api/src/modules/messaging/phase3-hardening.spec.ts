@@ -1,10 +1,8 @@
-import {
-  ForbiddenException,
-  ServiceUnavailableException,
-} from "@nestjs/common";
+import { ForbiddenException, ServiceUnavailableException } from "@nestjs/common";
 import { describe, expect, it, vi } from "vitest";
 
 import { ApiKeyAuthGuard } from "../api-key/guards/api-key-auth.guard";
+import { ApiKeyVerificationService } from "../api-key/api-key-verification.service";
 import { MessagingController } from "./messaging.controller";
 
 function createRedis(results: number[]) {
@@ -12,10 +10,7 @@ function createRedis(results: number[]) {
   for (const result of results) {
     evalMock.mockResolvedValueOnce(result);
   }
-
-  return {
-    eval: evalMock,
-  };
+  return { eval: evalMock };
 }
 
 function createApiKeyService() {
@@ -46,6 +41,19 @@ function createTokenManagementService() {
   };
 }
 
+function createGuard(
+  apiKeyService: ReturnType<typeof createApiKeyService>,
+  tokenManagementService: ReturnType<typeof createTokenManagementService>,
+  redis?: { eval: ReturnType<typeof vi.fn> },
+) {
+  const verifier = new ApiKeyVerificationService(
+    apiKeyService as never,
+    tokenManagementService as never,
+    redis as never,
+  );
+  return new ApiKeyAuthGuard(verifier);
+}
+
 function createRequest() {
   return {
     headers: { "x-api-key": "secret" },
@@ -67,7 +75,8 @@ describe("Phase 3 hardening", () => {
       {
         channels: ["email"],
         recipients: [{ id: "recipient", email: "user@example.com" }],
-        content: "hello",
+
+        data: "hello",
         metadata: { projectId: "attacker-project" },
       } as never,
       { apiKey: { tenantId: "tenant-1", projectId: "project-1" } },
@@ -78,17 +87,14 @@ describe("Phase 3 hardening", () => {
         metadata: expect.objectContaining({ projectId: "project-1" }),
       }),
       "tenant-1",
+      undefined,
     );
   });
 
   it("rejects an API key that exceeds its configured minute limit", async () => {
     const apiKeyService = createApiKeyService();
     const redis = createRedis([11]);
-    const guard = new ApiKeyAuthGuard(
-      apiKeyService as never,
-      createTokenManagementService() as never,
-      redis as never,
-    );
+    const guard = createGuard(apiKeyService, createTokenManagementService(), redis);
 
     await expect(
       guard.canActivate({
@@ -97,21 +103,13 @@ describe("Phase 3 hardening", () => {
     ).rejects.toBeInstanceOf(ForbiddenException);
 
     expect(redis.eval).toHaveBeenCalledTimes(1);
-    expect(apiKeyService.validateApiKey).toHaveBeenCalledWith(
-      "secret",
-      undefined,
-      "127.0.0.2",
-    );
+    expect(apiKeyService.validateApiKey).toHaveBeenCalledWith("secret", undefined, "127.0.0.2");
   });
 
   it("uses fixed expiry windows instead of resetting expiry on every request", async () => {
     const apiKeyService = createApiKeyService();
     const redis = createRedis([1, 1, 1]);
-    const guard = new ApiKeyAuthGuard(
-      apiKeyService as never,
-      createTokenManagementService() as never,
-      redis as never,
-    );
+    const guard = createGuard(apiKeyService, createTokenManagementService(), redis);
 
     await guard.canActivate({
       switchToHttp: () => ({ getRequest: () => createRequest() }),
@@ -123,9 +121,7 @@ describe("Phase 3 hardening", () => {
     expect(keyCount).toBe(1);
     expect(minuteKey).toBe("sanarwa:api-key-rate:key-1:minute");
     expect(minuteSeconds).toBe(60);
-    expect(script).toContain(
-      "if current == 1 then redis.call('EXPIRE', KEYS[1], ARGV[1]); end;",
-    );
+    expect(script).toContain("if current == 1 then redis.call('EXPIRE', KEYS[1], ARGV[1]); end;");
 
     expect(redis.eval.mock.calls[1][3]).toBe(3600);
     expect(redis.eval.mock.calls[2][3]).toBe(86400);
@@ -133,10 +129,7 @@ describe("Phase 3 hardening", () => {
 
   it("fails closed when Redis is unavailable", async () => {
     const apiKeyService = createApiKeyService();
-    const guard = new ApiKeyAuthGuard(
-      apiKeyService as never,
-      createTokenManagementService() as never,
-    );
+    const guard = createGuard(apiKeyService, createTokenManagementService());
 
     await expect(
       guard.canActivate({

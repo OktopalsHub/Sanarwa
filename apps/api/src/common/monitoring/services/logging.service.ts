@@ -1,7 +1,7 @@
 import { Injectable } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import * as winston from "winston";
-import * as DailyRotateFile from "winston-daily-rotate-file";
+import DailyRotateFile from "winston-daily-rotate-file";
 
 export interface LogContext {
   tenantId?: string;
@@ -24,7 +24,6 @@ export class LoggingService {
     const logLevel = this.configService.get<string>("LOG_LEVEL", "info");
     const logDir = this.configService.get<string>("LOG_DIR", "logs");
 
-    // Create custom format
     const customFormat = winston.format.combine(
       winston.format.timestamp(),
       winston.format.errors({ stack: true }),
@@ -43,18 +42,14 @@ export class LoggingService {
       }),
     );
 
-    // Configure transports
     const transports: winston.transport[] = [
-      // Console transport for development
       new winston.transports.Console({
         level: logLevel,
         format: winston.format.combine(winston.format.colorize(), winston.format.simple()),
       }),
     ];
 
-    // File transports for production
     if (this.configService.get<string>("NODE_ENV") === "production") {
-      // General application logs
       transports.push(
         new DailyRotateFile({
           filename: `${logDir}/application-%DATE%.log`,
@@ -66,7 +61,6 @@ export class LoggingService {
         }),
       );
 
-      // Error logs
       transports.push(
         new DailyRotateFile({
           filename: `${logDir}/error-%DATE%.log`,
@@ -78,7 +72,6 @@ export class LoggingService {
         }),
       );
 
-      // Audit logs
       transports.push(
         new DailyRotateFile({
           filename: `${logDir}/audit-%DATE%.log`,
@@ -130,7 +123,6 @@ export class LoggingService {
     });
   }
 
-  // Structured logging for different components
   logNotificationSent(notificationId: string, channel: string, context?: LogContext) {
     this.info("Notification sent", {
       ...context,

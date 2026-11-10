@@ -1,9 +1,9 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
-import { Repository, LessThan, In, Between, MoreThanOrEqual, LessThanOrEqual } from "typeorm";
+import { Repository, LessThan, Between, MoreThanOrEqual, LessThanOrEqual } from "typeorm";
 import { Cron, CronExpression } from "@nestjs/schedule";
 import { NotificationLog } from "../notifications/entities/notification-log.entity";
-import { NotificationCenterItem } from "../notifications/entities/notification-center.entity";
+import { InAppNotification } from "../messaging/entities/in-app-notification.entity";
 import { Message } from "../messaging/message.entity";
 import { MessageDelivery } from "../messaging/message-delivery.entity";
 import { TenantSettings } from "../tenant/entities/tenant-settings.entity";
@@ -53,7 +53,6 @@ export interface RetentionPolicy {
 export class ComplianceService {
   private readonly logger = new Logger(ComplianceService.name);
 
-  // Default retention policies (configurable per tenant)
   private readonly defaultRetentionPolicies: RetentionPolicy[] = [
     { dataType: "notifications", retentionPeriodDays: 2555, autoDelete: true, legalHold: false },
     {
@@ -76,8 +75,8 @@ export class ComplianceService {
   constructor(
     @InjectRepository(NotificationLog)
     private notificationLogRepository: Repository<NotificationLog>,
-    @InjectRepository(NotificationCenterItem)
-    private notificationCenterRepository: Repository<NotificationCenterItem>,
+    @InjectRepository(InAppNotification)
+    private inAppNotificationRepository: Repository<InAppNotification>,
     @InjectRepository(Message)
     private messageRepository: Repository<Message>,
     @InjectRepository(MessageDelivery)
@@ -86,9 +85,6 @@ export class ComplianceService {
     private tenantSettingsRepository: Repository<TenantSettings>,
   ) {}
 
-  /**
-   * GDPR Data Portability - Export user data
-   */
   async exportUserData(request: DataPortabilityRequest): Promise<any> {
     const { userId, tenantId, includePersonalData, includeCommunicationHistory, dateFrom, dateTo } =
       request;
@@ -101,7 +97,6 @@ export class ComplianceService {
     };
 
     if (includeCommunicationHistory) {
-      // Export notification logs
       const notificationLogs = await this.notificationLogRepository.find({
         where: {
           tenantId,
@@ -118,7 +113,6 @@ export class ComplianceService {
         order: { createdAt: "DESC" },
       });
 
-      // Export message history (if available)
       const messages = await this.messageRepository.find({
         where: {
           tenantId,
@@ -134,7 +128,6 @@ export class ComplianceService {
         order: { createdAt: "DESC" },
       });
 
-      // Filter messages that include the user as a recipient
       const userMessages = messages.filter((msg) =>
         msg.recipients.some(
           (recipient) =>
@@ -146,7 +139,6 @@ export class ComplianceService {
         ),
       );
 
-      // Export delivery records
       const deliveries = await this.deliveryRepository.find({
         where: {
           recipient: userId,
@@ -159,11 +151,10 @@ export class ComplianceService {
                   ? LessThanOrEqual(dateTo)
                   : undefined,
         },
-        relations: ["message"],
+        relations: { message: true },
         order: { createdAt: "DESC" },
       });
 
-      // Filter deliveries by tenant through the message relation
       const tenantDeliveries = deliveries.filter(
         (delivery) => delivery.message && delivery.message.tenantId === tenantId,
       );
@@ -176,7 +167,6 @@ export class ComplianceService {
           sentAt: log.sentAt,
           deliveredAt: log.deliveredAt,
           createdAt: log.createdAt,
-          // Exclude sensitive metadata
           metadata: this.sanitizeMetadata(log.metadata),
         })),
         messages: userMessages.map((msg) => ({
@@ -185,7 +175,6 @@ export class ComplianceService {
           status: msg.status,
           deliveredAt: msg.deliveredAt,
           createdAt: msg.createdAt,
-          // Content excluded for privacy
         })),
         deliveries: deliveries.map((delivery) => ({
           id: delivery.id,
@@ -199,7 +188,6 @@ export class ComplianceService {
     }
 
     if (includePersonalData) {
-      // Export consent records and preferences
       exportData.data.personalData = {
         consentRecords: await this.getUserConsentRecords(userId, tenantId),
         communicationPreferences: await this.getUserCommunicationPreferences(userId, tenantId),
@@ -209,9 +197,6 @@ export class ComplianceService {
     return exportData;
   }
 
-  /**
-   * GDPR Right to Erasure - Delete user data
-   */
   async deleteUserData(
     request: DataErasureRequest,
   ): Promise<{ deletedRecords: number; status: string }> {
@@ -223,24 +208,17 @@ export class ComplianceService {
 
     let totalDeleted = 0;
 
-    // Delete notification logs
     const notificationLogsDeleted = await this.notificationLogRepository.delete({
       tenantId,
       to: userId,
     });
     totalDeleted += notificationLogsDeleted.affected || 0;
 
-    // Delete message history (simplified - would need more complex query in real implementation)
-    // For now, we'll rely on NotificationLog cleanup
-
-    // Delete delivery records (simplified)
-    // In real implementation, this would need to join with messages to filter by tenant
     const deliveriesDeleted = await this.deliveryRepository.delete({
       recipient: userId,
     });
     totalDeleted += deliveriesDeleted.affected || 0;
 
-    // Log the erasure for audit purposes
     await this.logDataErasure({
       userId,
       tenantId,
@@ -256,9 +234,6 @@ export class ComplianceService {
     };
   }
 
-  /**
-   * Automated data retention cleanup
-   */
   async performRetentionCleanup(
     tenantId?: string,
   ): Promise<{ cleanedRecords: number; policiesApplied: number }> {
@@ -309,17 +284,17 @@ export class ComplianceService {
 
         case "notification_content":
           if (tenantId) {
-            const centerResult = await this.notificationCenterRepository.delete({
+            const centerResult = await this.inAppNotificationRepository.delete({
               tenantId,
               createdAt: LessThan(cutoffDate),
             });
             const scrubResult = await this.messageRepository
               .createQueryBuilder()
               .update(Message)
-              .set({ content: () => "NULL", subject: () => "NULL" })
+              .set({ data: () => "NULL", subject: () => "NULL" })
               .where("tenant_id = :tenantId", { tenantId })
               .andWhere("created_at < :cutoffDate", { cutoffDate })
-              .andWhere("(content IS NOT NULL OR subject IS NOT NULL)")
+              .andWhere("(data IS NOT NULL OR subject IS NOT NULL)")
               .execute();
             deletedCount = (centerResult.affected || 0) + (scrubResult.affected || 0);
           }
@@ -355,7 +330,7 @@ export class ComplianceService {
   @Cron(CronExpression.EVERY_DAY_AT_3AM)
   async runScheduledRetentionCleanup(): Promise<void> {
     const tenants = await this.tenantSettingsRepository.find({
-      select: ["tenantId"],
+      select: { tenantId: true },
     });
 
     for (const tenant of tenants) {
@@ -363,11 +338,7 @@ export class ComplianceService {
     }
   }
 
-  /**
-   * Consent management
-   */
   async recordConsent(consent: Omit<ConsentRecord, "id">): Promise<ConsentRecord> {
-    // In a real implementation, this would save to a consent table
     const consentRecord: ConsentRecord = {
       id: `consent_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
       ...consent,
@@ -377,19 +348,15 @@ export class ComplianceService {
       `Recorded consent for user ${consent.userId}: ${consent.consentType} = ${consent.consented}`,
     );
 
-    // Store in memory for demo (would be database in real implementation)
     return consentRecord;
   }
 
   async revokeConsent(userId: string, tenantId: string, consentType: string): Promise<boolean> {
-    // In a real implementation, this would update the consent record
     this.logger.log(`Revoked consent for user ${userId}: ${consentType}`);
     return true;
   }
 
   async getUserConsentRecords(userId: string, tenantId: string): Promise<ConsentRecord[]> {
-    // In a real implementation, this would query the consent table
-    // Return mock data for demonstration
     return [
       {
         id: "consent_001",
@@ -412,9 +379,6 @@ export class ComplianceService {
     ];
   }
 
-  /**
-   * Communication preferences management
-   */
   async updateCommunicationPreferences(
     userId: string,
     tenantId: string,
@@ -425,14 +389,11 @@ export class ComplianceService {
       frequency?: "daily" | "weekly" | "monthly" | "never";
     },
   ): Promise<boolean> {
-    // In a real implementation, this would save to a preferences table
     this.logger.log(`Updated communication preferences for user ${userId}`, preferences);
     return true;
   }
 
   async getUserCommunicationPreferences(userId: string, tenantId: string): Promise<any> {
-    // In a real implementation, this would query the preferences table
-    // Return mock data for demonstration
     return {
       emailMarketing: true,
       smsMarketing: false,
@@ -442,11 +403,7 @@ export class ComplianceService {
     };
   }
 
-  /**
-   * Privacy audit trail
-   */
   async getPrivacyAuditTrail(userId: string, tenantId: string): Promise<any[]> {
-    // Return audit trail of privacy-related actions
     return [
       {
         action: "data_export",
@@ -463,12 +420,9 @@ export class ComplianceService {
     ];
   }
 
-  // Helper methods
-
   private sanitizeMetadata(metadata?: any): any {
     if (!metadata) return undefined;
 
-    // Remove sensitive information from metadata
     const sanitized = { ...metadata };
     delete sanitized.apiKey;
     delete sanitized.authToken;
@@ -485,7 +439,6 @@ export class ComplianceService {
     recordsDeleted: number;
     deletedAt: Date;
   }): Promise<void> {
-    // In a real implementation, this would save to an audit log table
     this.logger.log("Data erasure completed", erasureLog);
   }
 }

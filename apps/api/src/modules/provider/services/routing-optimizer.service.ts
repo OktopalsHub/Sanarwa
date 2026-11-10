@@ -1,5 +1,7 @@
-import { Injectable, Logger } from "@nestjs/common";
+import { Injectable, Logger, type OnModuleInit } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
+import { InjectRedis } from "@nestjs-modules/ioredis";
+import type Redis from "ioredis";
 import { Repository, Between, MoreThanOrEqual } from "typeorm";
 import { NotificationLog } from "../../notifications/entities/notification-log.entity";
 
@@ -39,35 +41,30 @@ export interface DynamicRoutingRule {
   providers: {
     primary: string;
     fallback: string[];
-    weights: Record<string, number>; // Dynamic weights based on performance
+    weights: Record<string, number>;
   };
   lastOptimized: Date;
 }
 
 @Injectable()
-export class RoutingOptimizerService {
+export class RoutingOptimizerService implements OnModuleInit {
   private readonly logger = new Logger(RoutingOptimizerService.name);
 
-  // In-memory cache for routing metrics
-  private metricsCache = new Map<string, RoutingMetrics>();
-  private recommendationsCache = new Map<string, OptimizationRecommendation[]>();
-  private dynamicRules = new Map<string, DynamicRoutingRule>();
-
-  // Cache TTL
-  private readonly METRICS_CACHE_TTL = 300000; // 5 minutes
-  private readonly RECOMMENDATIONS_CACHE_TTL = 1800000; // 30 minutes
+  private readonly METRICS_CACHE_TTL = 300;
+  private readonly RULE_PREFIX = "optimizer:rule:";
+  private readonly RULE_KEYS = "optimizer:rule-keys";
+  private readonly METRICS_PREFIX = "optimizer:metrics:";
 
   constructor(
     @InjectRepository(NotificationLog)
     private notificationLogRepository: Repository<NotificationLog>,
-  ) {
-    // Initialize with default dynamic rules
-    this.initializeDefaultRules();
+    @InjectRedis() private readonly redis: Redis,
+  ) {}
+
+  async onModuleInit(): Promise<void> {
+    await this.initializeDefaultRules();
   }
 
-  /**
-   * Analyze routing performance and generate optimization recommendations
-   */
   async analyzeAndOptimize(): Promise<{
     metrics: RoutingMetrics[];
     recommendations: OptimizationRecommendation[];
@@ -76,7 +73,6 @@ export class RoutingOptimizerService {
     const metrics = await this.calculateRoutingMetrics();
     const recommendations = await this.generateOptimizationRecommendations(metrics);
 
-    // Apply automatic optimizations where confidence is high
     const optimizationsApplied = await this.applyAutomaticOptimizations(recommendations);
 
     return {
@@ -86,13 +82,9 @@ export class RoutingOptimizerService {
     };
   }
 
-  /**
-   * Calculate real-time routing metrics from notification logs
-   */
   private async calculateRoutingMetrics(hoursBack: number = 24): Promise<RoutingMetrics[]> {
     const since = new Date(Date.now() - hoursBack * 60 * 60 * 1000);
 
-    // Use raw SQL for better performance on large datasets
     const metrics = await this.notificationLogRepository
       .createQueryBuilder("log")
       .select([
@@ -108,35 +100,31 @@ export class RoutingOptimizerService {
 
     return metrics.map((row) => ({
       channel: row.channel,
-      provider: "aggregated", // Would need provider tracking in logs
+      provider: "aggregated",
       totalSent: parseInt(row.totalSent),
       delivered: parseInt(row.delivered),
       failed: parseInt(row.failed),
       deliveryRate:
         parseInt(row.totalSent) > 0 ? (parseInt(row.delivered) / parseInt(row.totalSent)) * 100 : 0,
       averageLatency: parseFloat(row.avgLatency) || 0,
-      costPerMessage: 0, // Would need cost tracking
+      costPerMessage: 0,
       lastUpdated: new Date(),
     }));
   }
 
-  /**
-   * Generate optimization recommendations based on metrics
-   */
   private async generateOptimizationRecommendations(
     metrics: RoutingMetrics[],
   ): Promise<OptimizationRecommendation[]> {
     const recommendations: OptimizationRecommendation[] = [];
 
     for (const metric of metrics) {
-      // Analyze delivery rate performance
       if (metric.deliveryRate < 95) {
         recommendations.push({
           channel: metric.channel,
           currentProvider: metric.provider,
           recommendedProvider: await this.findBetterProvider(metric.channel, "delivery_rate"),
           expectedImprovement: {
-            deliveryRate: 5 + Math.random() * 10, // Simulated improvement
+            deliveryRate: 5 + Math.random() * 10,
             costSavings: 0,
             latencyReduction: 0,
           },
@@ -145,9 +133,7 @@ export class RoutingOptimizerService {
         });
       }
 
-      // Analyze latency performance
       if (metric.averageLatency > 30000) {
-        // 30 seconds
         recommendations.push({
           channel: metric.channel,
           currentProvider: metric.provider,
@@ -155,7 +141,7 @@ export class RoutingOptimizerService {
           expectedImprovement: {
             deliveryRate: 0,
             costSavings: 0,
-            latencyReduction: 10000 + Math.random() * 20000, // 10-30 seconds
+            latencyReduction: 10000 + Math.random() * 20000,
           },
           confidence: 0.7,
           reasoning: `High latency detected (${(metric.averageLatency / 1000).toFixed(1)}s average)`,
@@ -166,9 +152,6 @@ export class RoutingOptimizerService {
     return recommendations;
   }
 
-  /**
-   * Apply automatic optimizations for high-confidence recommendations
-   */
   private async applyAutomaticOptimizations(
     recommendations: OptimizationRecommendation[],
   ): Promise<number> {
@@ -187,9 +170,6 @@ export class RoutingOptimizerService {
     return applied;
   }
 
-  /**
-   * Get optimized provider selection with real-time adjustments
-   */
   async getOptimizedProvider(
     channel: string,
     region: string,
@@ -200,7 +180,7 @@ export class RoutingOptimizerService {
     performance: RoutingMetrics;
   }> {
     const rule =
-      this.dynamicRules.get(`${channel}:${region}`) || this.dynamicRules.get(`${channel}:global`);
+      (await this.getRule(`${channel}:${region}`)) ?? (await this.getRule(`${channel}:global`));
 
     if (!rule) {
       return {
@@ -210,7 +190,6 @@ export class RoutingOptimizerService {
       };
     }
 
-    // Select provider based on dynamic weights
     const providerId = this.selectProviderByWeight(rule.providers.weights);
 
     return {
@@ -220,9 +199,6 @@ export class RoutingOptimizerService {
     };
   }
 
-  /**
-   * Update routing metrics in real-time
-   */
   async updateMetrics(
     channel: string,
     provider: string,
@@ -230,17 +206,21 @@ export class RoutingOptimizerService {
     latency: number,
   ): Promise<void> {
     const key = `${channel}:${provider}`;
-    const existing = this.metricsCache.get(key) || {
-      channel,
-      provider,
-      totalSent: 0,
-      delivered: 0,
-      failed: 0,
-      deliveryRate: 0,
-      averageLatency: 0,
-      costPerMessage: 0,
-      lastUpdated: new Date(),
-    };
+    const metricsKey = this.metricsKey(key);
+    const cached = await this.redis.get(metricsKey);
+    const existing: RoutingMetrics = cached
+      ? (JSON.parse(cached) as RoutingMetrics)
+      : {
+          channel,
+          provider,
+          totalSent: 0,
+          delivered: 0,
+          failed: 0,
+          deliveryRate: 0,
+          averageLatency: 0,
+          costPerMessage: 0,
+          lastUpdated: new Date(),
+        };
 
     existing.totalSent++;
     if (success) {
@@ -249,30 +229,23 @@ export class RoutingOptimizerService {
       existing.failed++;
     }
 
-    // Update rolling average latency
     existing.averageLatency = (existing.averageLatency + latency) / 2;
     existing.deliveryRate = (existing.delivered / existing.totalSent) * 100;
     existing.lastUpdated = new Date();
 
-    this.metricsCache.set(key, existing);
+    await this.redis.set(metricsKey, JSON.stringify(existing), "EX", this.METRICS_CACHE_TTL);
 
-    // Trigger optimization check if metrics changed significantly
     if (existing.totalSent % 100 === 0) {
-      // Every 100 messages
       await this.checkForOptimization(channel, provider);
     }
   }
 
-  /**
-   * Machine learning-based provider selection
-   */
   async predictOptimalProvider(
     channel: string,
     region: string,
     timeOfDay: number,
     messageVolume: number,
   ): Promise<string> {
-    // Simplified ML prediction (in real implementation, use trained model)
     const features = {
       channel,
       region,
@@ -281,21 +254,15 @@ export class RoutingOptimizerService {
       historicalPerformance: await this.getHistoricalPerformance(channel, region),
     };
 
-    // Simple rule-based prediction (replace with actual ML model)
     if (timeOfDay >= 9 && timeOfDay <= 17) {
-      // Business hours
-      return "premium_provider"; // Use more expensive but reliable provider
+      return "premium_provider";
     } else if (messageVolume > 1000) {
-      // High volume
-      return "bulk_provider"; // Use provider optimized for volume
+      return "bulk_provider";
     } else {
-      return "cost_optimized_provider"; // Use cheapest reliable provider
+      return "cost_optimized_provider";
     }
   }
 
-  /**
-   * A/B testing for routing optimization
-   */
   async startABTest(
     channel: string,
     region: string,
@@ -304,7 +271,6 @@ export class RoutingOptimizerService {
   ): Promise<string> {
     const testId = `ab_test_${channel}_${region}_${Date.now()}`;
 
-    // Create test configuration
     const testConfig = {
       id: testId,
       channel,
@@ -314,24 +280,19 @@ export class RoutingOptimizerService {
       endTime: new Date(Date.now() + durationHours * 60 * 60 * 1000),
       trafficDistribution: providers.reduce(
         (acc, provider, index) => {
-          acc[provider] = 1 / providers.length; // Equal distribution
+          acc[provider] = 1 / providers.length;
           return acc;
         },
         {} as Record<string, number>,
       ),
     };
 
-    // Store test configuration (in real implementation, save to database)
     this.logger.log(`Started A/B test ${testId} for ${channel} in ${region}`);
 
     return testId;
   }
 
-  /**
-   * Get A/B test results
-   */
   async getABTestResults(testId: string): Promise<any> {
-    // In real implementation, analyze test results from database
     return {
       testId,
       status: "running",
@@ -344,10 +305,30 @@ export class RoutingOptimizerService {
     };
   }
 
-  // Helper methods
+  private async getRule(key: string): Promise<DynamicRoutingRule | undefined> {
+    const raw = await this.redis.get(this.ruleKey(key));
+    return raw ? (JSON.parse(raw) as DynamicRoutingRule) : undefined;
+  }
 
-  private initializeDefaultRules(): void {
-    // Initialize with default dynamic rules
+  private async setRule(key: string, rule: DynamicRoutingRule, nx = false): Promise<void> {
+    const payload = JSON.stringify(rule);
+    if (nx) {
+      await this.redis.set(this.ruleKey(key), payload, "NX");
+    } else {
+      await this.redis.set(this.ruleKey(key), payload);
+    }
+    await this.redis.sadd(this.RULE_KEYS, key);
+  }
+
+  private ruleKey(key: string): string {
+    return `${this.RULE_PREFIX}${key}`;
+  }
+
+  private metricsKey(key: string): string {
+    return `${this.METRICS_PREFIX}${key}`;
+  }
+
+  private async initializeDefaultRules(): Promise<void> {
     const defaultRules: DynamicRoutingRule[] = [
       {
         channel: "sms",
@@ -363,25 +344,24 @@ export class RoutingOptimizerService {
         channel: "email",
         conditions: { region: "global" },
         providers: {
-          primary: "sendgrid",
-          fallback: ["ses", "mailgun"],
-          weights: { sendgrid: 0.7, ses: 0.2, mailgun: 0.1 },
+          primary: "zeptomail",
+          fallback: ["sendgrid", "mailgun"],
+          weights: { zeptomail: 0.7, sendgrid: 0.2, mailgun: 0.1 },
         },
         lastOptimized: new Date(),
       },
     ];
 
-    defaultRules.forEach((rule) => {
+    for (const rule of defaultRules) {
       const key = `${rule.channel}:${rule.conditions.region || "global"}`;
-      this.dynamicRules.set(key, rule);
-    });
+      await this.setRule(key, rule, true);
+    }
   }
 
   private async findBetterProvider(channel: string, metric: string): Promise<string> {
-    // Simplified provider recommendation logic
     const providerMap = {
       sms: { delivery_rate: "telnyx", latency: "twilio" },
-      email: { delivery_rate: "sendgrid", latency: "ses" },
+      email: { delivery_rate: "zeptomail", latency: "zeptomail" },
       push: { delivery_rate: "firebase", latency: "firebase" },
     };
 
@@ -399,13 +379,13 @@ export class RoutingOptimizerService {
       }
     }
 
-    return Object.keys(weights)[0]; // Fallback
+    return Object.keys(weights)[0];
   }
 
   private async getProviderMetrics(providerId: string): Promise<RoutingMetrics> {
-    // Return cached or default metrics
+    const cached = await this.redis.get(this.metricsKey(providerId));
     return (
-      this.metricsCache.get(providerId) || {
+      (cached ? (JSON.parse(cached) as RoutingMetrics) : undefined) || {
         channel: "unknown",
         provider: providerId,
         totalSent: 0,
@@ -421,10 +401,9 @@ export class RoutingOptimizerService {
 
   private async updateDynamicRule(recommendation: OptimizationRecommendation): Promise<void> {
     const key = `${recommendation.channel}:global`;
-    const rule = this.dynamicRules.get(key);
+    const rule = await this.getRule(key);
 
     if (rule) {
-      // Adjust weights based on recommendation
       const currentWeight = rule.providers.weights[recommendation.currentProvider] || 0.5;
       const recommendedWeight = rule.providers.weights[recommendation.recommendedProvider] || 0.3;
 
@@ -435,15 +414,14 @@ export class RoutingOptimizerService {
       );
 
       rule.lastOptimized = new Date();
-      this.dynamicRules.set(key, rule);
+      await this.setRule(key, rule);
     }
   }
 
   private async checkForOptimization(channel: string, provider: string): Promise<void> {
-    // Trigger background optimization analysis
     setImmediate(async () => {
       try {
-        const metrics = await this.calculateRoutingMetrics(1); // Last hour
+        const metrics = await this.calculateRoutingMetrics(1);
         const recommendations = await this.generateOptimizationRecommendations(metrics);
 
         if (recommendations.length > 0) {
@@ -458,7 +436,6 @@ export class RoutingOptimizerService {
   }
 
   private async getHistoricalPerformance(channel: string, region: string): Promise<any> {
-    // Return historical performance data for ML features
     return {
       last24h: { deliveryRate: 98.5, latency: 15000 },
       last7d: { deliveryRate: 97.8, latency: 18000 },

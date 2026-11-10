@@ -1,5 +1,5 @@
 import { Injectable, Logger } from "@nestjs/common";
-import { Channel } from "../../providers/types";
+import { NotificationChannel } from "../../common/enums/notification-channel.enum";
 import { ProviderConfig } from "./provider-config.entity";
 
 export interface ValidationResult {
@@ -11,6 +11,7 @@ export interface ValidationResult {
 export interface ProviderConfigSchema {
   required: string[];
   optional: string[];
+  requiredAny?: string[];
   validation: Record<string, (value: any) => boolean>;
   description: Record<string, string>;
 }
@@ -24,23 +25,16 @@ export class ProviderConfigValidator {
     this.initializeSchemas();
   }
 
-  /**
-   * Validate provider configuration
-   */
   async validate(config: ProviderConfig): Promise<boolean> {
     const result = await this.validateDetailed(config);
     return result.isValid;
   }
 
-  /**
-   * Validate provider configuration with detailed results
-   */
   async validateDetailed(config: ProviderConfig): Promise<ValidationResult> {
     const errors: string[] = [];
     const warnings: string[] = [];
 
     try {
-      // Basic structure validation
       if (!config.providerId) {
         errors.push("Provider ID is required");
       }
@@ -50,7 +44,7 @@ export class ProviderConfigValidator {
       }
 
       if (!config.channel) {
-        errors.push("Channel is required");
+        errors.push("NotificationChannel is required");
       }
 
       if (!config.config || typeof config.config !== "object") {
@@ -61,10 +55,9 @@ export class ProviderConfigValidator {
         errors.push("Priority must be greater than 0");
       }
 
-      // Channel-specific validation
       if (config.channel && config.config) {
         const channelValidation = await this.validateChannelConfig(
-          config.channel as unknown as Channel,
+          config.channel,
           config.providerId,
           config.config,
         );
@@ -72,21 +65,12 @@ export class ProviderConfigValidator {
         warnings.push(...channelValidation.warnings);
       }
 
-      // Rate limits validation
       if (config.rateLimits) {
         const rateLimitValidation = this.validateRateLimits(config.rateLimits);
         errors.push(...rateLimitValidation.errors);
         warnings.push(...rateLimitValidation.warnings);
       }
 
-      // Health check configuration validation
-      if (config.healthCheck) {
-        const healthCheckValidation = this.validateHealthCheck(config.healthCheck);
-        errors.push(...healthCheckValidation.errors);
-        warnings.push(...healthCheckValidation.warnings);
-      }
-
-      // Supported countries validation
       if (config.supportedCountries) {
         const countriesValidation = this.validateSupportedCountries(config.supportedCountries);
         errors.push(...countriesValidation.errors);
@@ -108,11 +92,8 @@ export class ProviderConfigValidator {
     }
   }
 
-  /**
-   * Validate channel-specific configuration
-   */
   private async validateChannelConfig(
-    channel: Channel,
+    channel: NotificationChannel,
     providerId: string,
     config: Record<string, any>,
   ): Promise<ValidationResult> {
@@ -130,21 +111,22 @@ export class ProviderConfigValidator {
     const errors: string[] = [];
     const warnings: string[] = [];
 
-    // Check required fields
     for (const field of schema.required) {
       if (!config[field]) {
         errors.push(`Required field '${field}' is missing`);
       }
     }
 
-    // Validate field values
+    if (schema.requiredAny?.length && !schema.requiredAny.some((field) => config[field])) {
+      errors.push(`At least one of ${schema.requiredAny.join(", ")} is required`);
+    }
+
     for (const [field, validator] of Object.entries(schema.validation)) {
       if (config[field] !== undefined && !validator(config[field])) {
         errors.push(`Invalid value for field '${field}'`);
       }
     }
 
-    // Check for unknown fields
     const knownFields = [...schema.required, ...schema.optional];
     for (const field of Object.keys(config)) {
       if (!knownFields.includes(field)) {
@@ -155,9 +137,6 @@ export class ProviderConfigValidator {
     return { isValid: errors.length === 0, errors, warnings };
   }
 
-  /**
-   * Validate rate limits configuration
-   */
   private validateRateLimits(rateLimits: any): ValidationResult {
     const errors: string[] = [];
     const warnings: string[] = [];
@@ -185,7 +164,6 @@ export class ProviderConfigValidator {
       }
     }
 
-    // Logical validation
     if (rateLimits.requestsPerSecond && rateLimits.requestsPerMinute) {
       if (rateLimits.requestsPerSecond * 60 > rateLimits.requestsPerMinute) {
         warnings.push("Requests per second * 60 exceeds requests per minute limit");
@@ -195,58 +173,6 @@ export class ProviderConfigValidator {
     return { isValid: errors.length === 0, errors, warnings };
   }
 
-  /**
-   * Validate health check configuration
-   */
-  private validateHealthCheck(healthCheck: any): ValidationResult {
-    const errors: string[] = [];
-    const warnings: string[] = [];
-
-    if (typeof healthCheck !== "object") {
-      errors.push("Health check configuration must be an object");
-      return { isValid: false, errors, warnings };
-    }
-
-    if (healthCheck.url && typeof healthCheck.url !== "string") {
-      errors.push("Health check URL must be a string");
-    }
-
-    if (
-      healthCheck.interval &&
-      (typeof healthCheck.interval !== "number" || healthCheck.interval <= 0)
-    ) {
-      errors.push("Health check interval must be a positive number");
-    }
-
-    if (
-      healthCheck.timeout &&
-      (typeof healthCheck.timeout !== "number" || healthCheck.timeout < 0)
-    ) {
-      errors.push("Health check timeout must be a non-negative number");
-    }
-
-    if (
-      healthCheck.retries &&
-      (typeof healthCheck.retries !== "number" || healthCheck.retries < 0)
-    ) {
-      errors.push("Health check retries must be a non-negative number");
-    }
-
-    // Logical validation
-    if (
-      healthCheck.timeout &&
-      healthCheck.interval &&
-      healthCheck.timeout >= healthCheck.interval
-    ) {
-      warnings.push("Health check timeout should be less than interval");
-    }
-
-    return { isValid: errors.length === 0, errors, warnings };
-  }
-
-  /**
-   * Validate supported countries configuration
-   */
   private validateSupportedCountries(countries: any): ValidationResult {
     const errors: string[] = [];
     const warnings: string[] = [];
@@ -276,12 +202,8 @@ export class ProviderConfigValidator {
     return { isValid: errors.length === 0, errors, warnings };
   }
 
-  /**
-   * Initialize validation schemas for different providers
-   */
   private initializeSchemas(): void {
-    // AWS SES Email Provider
-    this.schemas.set(`${Channel.EMAIL}:aws_ses`, {
+    this.schemas.set(`${NotificationChannel.EMAIL}:aws_ses`, {
       required: ["accessKeyId", "secretAccessKey", "region"],
       optional: ["fromEmail", "fromName", "replyToEmail"],
       validation: {
@@ -301,8 +223,103 @@ export class ProviderConfigValidator {
       },
     });
 
-    // AWS SNS SMS Provider
-    this.schemas.set(`${Channel.SMS}:aws_sns`, {
+    this.schemas.set(
+      `${NotificationChannel.EMAIL}:ses`,
+      this.schemas.get(`${NotificationChannel.EMAIL}:aws_ses`) as ProviderConfigSchema,
+    );
+
+    this.schemas.set(`${NotificationChannel.EMAIL}:sendgrid`, {
+      required: ["apiKey"],
+      optional: ["fromEmail", "fromName", "webhookPublicKey"],
+      validation: {
+        apiKey: (value) => typeof value === "string" && value.length > 0,
+        fromEmail: (value) => typeof value === "string" && this.isValidEmail(value),
+        webhookPublicKey: (value) => typeof value === "string" && value.length > 0,
+      },
+      description: {
+        apiKey: "SendGrid API key",
+        fromEmail: "Default sender email address",
+        fromName: "Default sender name",
+        webhookPublicKey:
+          "SendGrid signed event webhook public key (Settings > Mail Settings > Event Webhooks)",
+      },
+    });
+
+    this.schemas.set(`${NotificationChannel.EMAIL}:mailgun`, {
+      required: ["apiKey"],
+      optional: ["domain", "fromEmail", "webhookSecret"],
+      validation: {
+        apiKey: (value) => typeof value === "string" && value.length > 0,
+        domain: (value) => typeof value === "string" && value.length > 0,
+        fromEmail: (value) => typeof value === "string" && this.isValidEmail(value),
+        webhookSecret: (value) => typeof value === "string" && value.length > 0,
+      },
+      description: {
+        apiKey: "Mailgun API key",
+        domain: "Mailgun sending domain",
+        fromEmail: "Default sender email address",
+        webhookSecret: "Mailgun webhook signing key (passed as HMAC secret)",
+      },
+    });
+
+    this.schemas.set(`${NotificationChannel.EMAIL}:resend`, {
+      required: ["apiKey"],
+      optional: ["fromEmail", "webhookSecret"],
+      validation: {
+        apiKey: (value) => typeof value === "string" && value.length > 0,
+        fromEmail: (value) => typeof value === "string" && this.isValidEmail(value),
+        webhookSecret: (value) => typeof value === "string" && value.length > 0,
+      },
+      description: {
+        apiKey: "Resend API key",
+        fromEmail: "Default sender email address",
+        webhookSecret: "Resend webhook secret (whsec_..., from the Resend dashboard)",
+      },
+    });
+
+    this.schemas.set(`${NotificationChannel.EMAIL}:zeptomail`, {
+      required: ["apiKey", "fromEmail"],
+      optional: ["apiUrl", "fromName", "replyToEmail"],
+      validation: {
+        apiKey: (value) => typeof value === "string" && value.length > 0,
+        apiUrl: (value) => typeof value === "string" && /^https?:\/\//.test(value),
+        fromEmail: (value) => typeof value === "string" && this.isValidEmail(value),
+        replyToEmail: (value) => typeof value === "string" && this.isValidEmail(value),
+      },
+      description: {
+        apiKey: "ZeptoMail send-mail token",
+        apiUrl: "ZeptoMail API endpoint (defaults to https://api.zeptomail.com/v1.1/email)",
+        fromEmail: "Default sender email address",
+        fromName: "Default sender name",
+        replyToEmail: "Reply-to email address",
+      },
+    });
+
+    this.schemas.set(`${NotificationChannel.EMAIL}:smtp`, {
+      required: ["host", "fromEmail"],
+      optional: ["port", "secure", "username", "password", "fromName", "replyToEmail"],
+      validation: {
+        host: (value) => typeof value === "string" && value.length > 0,
+        port: (value) =>
+          value === undefined || (Number.isInteger(value) && value > 0 && value <= 65535),
+        secure: (value) => value === undefined || typeof value === "boolean",
+        username: (value) => value === undefined || typeof value === "string",
+        fromEmail: (value) => typeof value === "string" && this.isValidEmail(value),
+        replyToEmail: (value) => typeof value === "string" && this.isValidEmail(value),
+      },
+      description: {
+        host: "SMTP server hostname",
+        port: "SMTP server port (defaults to 587)",
+        secure: "Use TLS on connect (true for port 465)",
+        username: "SMTP username",
+        password: "SMTP password",
+        fromEmail: "Default sender email address",
+        fromName: "Default sender name",
+        replyToEmail: "Reply-to email address",
+      },
+    });
+
+    this.schemas.set(`${NotificationChannel.SMS}:aws_sns`, {
       required: ["accessKeyId", "secretAccessKey", "region"],
       optional: ["senderName", "messageType"],
       validation: {
@@ -321,8 +338,7 @@ export class ProviderConfigValidator {
       },
     });
 
-    // Termii SMS Provider
-    this.schemas.set(`${Channel.SMS}:termii`, {
+    this.schemas.set(`${NotificationChannel.SMS}:termii`, {
       required: ["apiKey", "senderId"],
       optional: ["channel", "type"],
       validation: {
@@ -339,8 +355,7 @@ export class ProviderConfigValidator {
       },
     });
 
-    // AWS Pinpoint Push Provider
-    this.schemas.set(`${Channel.PUSH}:aws_pinpoint`, {
+    this.schemas.set(`${NotificationChannel.PUSH}:aws_pinpoint`, {
       required: ["accessKeyId", "secretAccessKey", "region", "applicationId"],
       optional: ["gcmApiKey", "apnsCertificate", "apnsPrivateKey"],
       validation: {
@@ -361,37 +376,124 @@ export class ProviderConfigValidator {
       },
     });
 
-    // WhatsApp Business Provider
-    this.schemas.set(`${Channel.WHATSAPP}:whatsapp_business`, {
-      required: ["accessToken", "phoneNumberId", "businessAccountId"],
-      optional: ["webhookVerifyToken", "apiVersion"],
+    this.schemas.set(`${NotificationChannel.CHAT}:slack`, {
+      required: [],
+      optional: [
+        "botToken",
+        "token",
+        "webhookUrl",
+        "defaultChannel",
+        "appId",
+        "clientId",
+        "clientSecret",
+      ],
+      requiredAny: ["botToken", "token", "webhookUrl"],
+      validation: {
+        botToken: (value) => typeof value === "string" && value.startsWith("xox"),
+        token: (value) => typeof value === "string" && value.startsWith("xox"),
+        webhookUrl: (value) => typeof value === "string" && this.isSlackWebhookUrl(value),
+        defaultChannel: (value) => typeof value === "string" && value.length > 0,
+        appId: (value) => typeof value === "string" && value.length > 0,
+      },
+      description: {
+        botToken: "Slack bot or user OAuth token (xoxb-/xoxp-) for chat.postMessage",
+        token: "Alias for botToken",
+        webhookUrl: "Slack incoming webhook URL (https://hooks.slack.com/...)",
+        defaultChannel: "Channel or user id used when a send names none (e.g. C0123456789)",
+        appId: "Descriptive Slack app id used in log lines",
+      },
+    });
+
+    this.schemas.set(`${NotificationChannel.CHAT}:discord`, {
+      required: [],
+      optional: ["webhookUrl", "username", "avatarUrl"],
+      requiredAny: ["webhookUrl"],
+      validation: {
+        webhookUrl: (value) => typeof value === "string" && this.isDiscordWebhookUrl(value),
+        username: (value) => typeof value === "string" && value.length > 0,
+        avatarUrl: (value) => typeof value === "string" && value.startsWith("https://"),
+      },
+      description: {
+        webhookUrl: "Discord incoming webhook URL (https://discord.com/api/webhooks/...)",
+        username: "Default sender name shown on messages",
+        avatarUrl: "Default sender avatar URL",
+      },
+    });
+
+    this.schemas.set(`${NotificationChannel.CHAT}:telegram`, {
+      required: [],
+      optional: ["botToken", "parseMode", "defaultChatId"],
+      requiredAny: ["botToken"],
+      validation: {
+        botToken: (value) => typeof value === "string" && /^\d+:[A-Za-z0-9_-]+$/.test(value),
+        parseMode: (value) => ["HTML", "MarkdownV2", "Markdown"].includes(value),
+        defaultChatId: (value) => typeof value === "string" && value.length > 0,
+      },
+      description: {
+        botToken: "Bot token from @BotFather",
+        parseMode: "Default formatting mode: HTML, MarkdownV2 or Markdown",
+        defaultChatId: "Fallback chat id when a recipient names none",
+      },
+    });
+
+    const whatsappSchema: ProviderConfigSchema = {
+      required: ["accessToken", "phoneNumberId"],
+      optional: ["businessAccountId", "webhookVerifyToken", "appSecret", "apiVersion"],
       validation: {
         accessToken: (value) => typeof value === "string" && value.length > 0,
         phoneNumberId: (value) => typeof value === "string" && /^\d+$/.test(value),
         businessAccountId: (value) => typeof value === "string" && /^\d+$/.test(value),
+        appSecret: (value) => typeof value === "string" && value.length > 0,
         apiVersion: (value) => typeof value === "string" && /^v\d+\.\d+$/.test(value),
       },
       description: {
         accessToken: "WhatsApp Business API Access Token",
         phoneNumberId: "Phone Number ID",
-        businessAccountId: "Business Account ID",
+        businessAccountId: "Business Account ID (required for template listing)",
         webhookVerifyToken: "Webhook Verification Token",
-        apiVersion: "API Version (e.g., v17.0)",
+        appSecret: "Meta app secret used to verify webhook signatures",
+        apiVersion: "API Version (e.g., v21.0)",
       },
-    });
+    };
+
+    this.schemas.set(`${NotificationChannel.WHATSAPP}:whatsapp`, whatsappSchema);
+    this.schemas.set(`${NotificationChannel.WHATSAPP}:whatsapp_business`, whatsappSchema);
   }
 
-  /**
-   * Validate email format
-   */
   private isValidEmail(email: string): boolean {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    // Labels must be non-empty (no leading/trailing/double dots) and the domain
+    // must have a TLD of at least two characters.
+    const emailRegex = /^[^\s@.]+(\.[^\s@.]+)*@[^\s@.]+(\.[^\s@.]+)*\.[^\s@.]{2,}$/;
     return emailRegex.test(email);
   }
 
-  /**
-   * Get valid country codes (ISO 3166-1 alpha-2)
-   */
+  private isSlackWebhookUrl(value: string): boolean {
+    try {
+      const url = new URL(value);
+      return (
+        url.protocol === "https:" &&
+        ["hooks.slack.com", "hooks.slack-gov.com"].includes(url.hostname.toLowerCase())
+      );
+    } catch {
+      return false;
+    }
+  }
+
+  private isDiscordWebhookUrl(value: string): boolean {
+    try {
+      const url = new URL(value);
+      return (
+        url.protocol === "https:" &&
+        ["discord.com", "discordapp.com", "ptb.discord.com", "canary.discord.com"].includes(
+          url.hostname.toLowerCase(),
+        ) &&
+        url.pathname.startsWith("/api/webhooks/")
+      );
+    } catch {
+      return false;
+    }
+  }
+
   private getValidCountryCodes(): string[] {
     return [
       "AD",

@@ -1,15 +1,15 @@
 import {
-  NotificationEntity,
-  NotificationChannel,
-  NotificationStatus,
-  Priority,
-} from "../notification.entity";
+  Message as Message,
+  MessageStatus as NotificationStatus,
+  MessagePriority as Priority,
+} from "../message.entity";
+import { NotificationChannel } from "../../../common/enums/notification-channel.enum";
 
-describe("NotificationEntity", () => {
-  let notification: NotificationEntity;
+describe("Message", () => {
+  let notification: Message;
 
   beforeEach(() => {
-    notification = new NotificationEntity();
+    notification = new Message();
     notification.id = "123e4567-e89b-12d3-a456-426614174000";
     notification.tenantId = "tenant-123";
     notification.to = "user@example.com";
@@ -38,13 +38,13 @@ describe("NotificationEntity", () => {
   });
 
   it("should have default priority as NORMAL", () => {
-    const newNotification = new NotificationEntity();
+    const newNotification = new Message();
     newNotification.priority = Priority.NORMAL;
     expect(newNotification.priority).toBe(Priority.NORMAL);
   });
 
   it("should have default status as PENDING", () => {
-    const newNotification = new NotificationEntity();
+    const newNotification = new Message();
     newNotification.status = NotificationStatus.PENDING;
     expect(newNotification.status).toBe(NotificationStatus.PENDING);
   });

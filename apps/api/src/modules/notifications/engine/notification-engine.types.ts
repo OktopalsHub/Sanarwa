@@ -1,4 +1,5 @@
-export type NotificationChannel = "email" | "sms" | "push" | "whatsapp" | "webhook" | "in_app";
+import { ChatProvider } from "../../../common/enums/chat-provider.enum";
+import { NotificationChannel } from "../../../common/enums/notification-channel.enum";
 
 export interface NotificationEngineRequest {
   tenantId: string;
@@ -7,7 +8,7 @@ export interface NotificationEngineRequest {
   to: string;
   title?: string;
   message: string;
-  data?: Record<string, any>;
+  variables?: Record<string, any>;
   priority?: "low" | "normal" | "high";
   scheduledAt?: Date;
   expiresAt?: Date;
@@ -17,6 +18,7 @@ export interface NotificationEngineRequest {
   webhookUrl?: string;
   brandId?: string;
   subscriberId?: string;
+  chatProvider?: ChatProvider;
   metadata?: Record<string, any>;
 }
 
@@ -29,28 +31,4 @@ export interface NotificationEngineResponse {
   externalId?: string;
   error?: string;
   timestamp: Date;
-}
-
-export interface MessagingEngineRequest {
-  tenantId: string;
-  projectId: string;
-  channels: string[];
-  recipients: Array<{
-    id: string;
-    email?: string;
-    phone?: string;
-    deviceToken?: string;
-    whatsappNumber?: string;
-    userId?: string;
-    subscriberId?: string;
-    metadata?: Record<string, any>;
-  }>;
-  subject?: string;
-  content?: string;
-  data?: Record<string, any>;
-  templateId?: string;
-  priority?: string;
-  brandId?: string;
-  scheduledAt?: Date;
-  metadata?: Record<string, any>;
 }

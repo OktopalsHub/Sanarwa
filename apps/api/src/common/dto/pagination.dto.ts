@@ -45,7 +45,6 @@ export type IPaginatedData<T = any> = {
   records: T[];
 };
 
-// Additional pagination interfaces for different response formats
 export interface PaginatedResult<T> {
   data: T[];
   total: number;
@@ -80,7 +79,6 @@ export class PaginatedResponse<T> {
   }
 }
 
-// Utility function to create pagination summary
 export async function getPaginationSummary(
   records: any[],
   totalItems: number,
@@ -105,7 +103,6 @@ export async function getPaginationSummary(
   };
 }
 
-// New pagination response class using the new format
 export class PaginatedDataResponse<T> {
   name: string;
   size: number;

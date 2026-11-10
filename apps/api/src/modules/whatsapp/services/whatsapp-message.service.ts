@@ -3,7 +3,8 @@ import { InjectRepository } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
 import { EventEmitter2 } from "@nestjs/event-emitter";
 import { WhatsAppBusinessAPIService } from "./whatsapp-business-api.service";
-import { Message, MessageChannel, MessageStatus } from "../../messaging/message.entity";
+import { Message, MessageStatus } from "../../messaging/message.entity";
+import { NotificationChannel } from "../../../common/enums/notification-channel.enum";
 import { MessageDelivery, MessageDeliveryStatus } from "../../messaging/message-delivery.entity";
 
 export interface WhatsAppSendOptions {
@@ -28,9 +29,6 @@ export class WhatsAppMessageService {
     private readonly eventEmitter: EventEmitter2,
   ) {}
 
-  /**
-   * Send WhatsApp message with enhanced error handling and retry logic
-   */
   async sendMessage(
     phoneNumber: string,
     options: WhatsAppSendOptions,
@@ -38,7 +36,6 @@ export class WhatsAppMessageService {
     tenantId: string,
   ): Promise<{ success: boolean; externalId?: string; error?: string }> {
     try {
-      // Validate phone number
       const validation = this.whatsappApi.validatePhoneNumber(phoneNumber);
       if (!validation.isValid) {
         throw new BadRequestException(validation.error);
@@ -48,10 +45,8 @@ export class WhatsAppMessageService {
         `Sending WhatsApp message to ${phoneNumber} using template ${options.templateName}`,
       );
 
-      // Build components for template
       const components = this.buildTemplateComponents(options);
 
-      // Send message
       const result = await this.whatsappApi.sendTemplateMessage(
         validation.cleanNumber!,
         options.templateName,
@@ -59,12 +54,10 @@ export class WhatsAppMessageService {
         components,
       );
 
-      // Record delivery
       await this.recordDelivery(messageId, tenantId, result.messageId, MessageDeliveryStatus.SENT);
 
       this.logger.log(`WhatsApp message sent successfully: ${result.messageId}`);
 
-      // Emit event for tracking
       this.eventEmitter.emit("whatsapp.message.sent", {
         messageId,
         externalId: result.messageId,
@@ -77,7 +70,6 @@ export class WhatsAppMessageService {
     } catch (error) {
       this.logger.error(`Failed to send WhatsApp message to ${phoneNumber}`, error.message);
 
-      // Record failure
       await this.recordDelivery(
         messageId,
         tenantId,
@@ -86,7 +78,6 @@ export class WhatsAppMessageService {
         error.message,
       );
 
-      // Emit failure event
       this.eventEmitter.emit("whatsapp.message.failed", {
         messageId,
         phoneNumber,
@@ -99,9 +90,6 @@ export class WhatsAppMessageService {
     }
   }
 
-  /**
-   * Send text message (for simple messages)
-   */
   async sendTextMessage(
     phoneNumber: string,
     message: string,
@@ -145,9 +133,6 @@ export class WhatsAppMessageService {
     }
   }
 
-  /**
-   * Handle incoming WhatsApp messages
-   */
   async handleIncomingMessage(payload: any): Promise<void> {
     try {
       const message = payload.entry[0].changes[0].value.messages?.[0];
@@ -159,7 +144,6 @@ export class WhatsAppMessageService {
       const messageType = message.type;
       let content = "";
 
-      // Extract content based on message type
       switch (messageType) {
         case "text":
           content = message.text.body;
@@ -183,7 +167,6 @@ export class WhatsAppMessageService {
           content = `[${messageType} message]`;
       }
 
-      // Emit event for processing
       this.eventEmitter.emit("whatsapp.message.received", {
         externalId: message.id,
         from,
@@ -200,9 +183,6 @@ export class WhatsAppMessageService {
     }
   }
 
-  /**
-   * Handle WhatsApp status updates
-   */
   async handleStatusUpdate(payload: any): Promise<void> {
     try {
       const status = payload.entry[0].changes[0].value.statuses?.[0];
@@ -212,7 +192,6 @@ export class WhatsAppMessageService {
 
       const deliveryStatus = this.mapWhatsAppStatus(status.status);
 
-      // Update delivery record
       await this.deliveryRepository.update({ externalId: status.id } as any, {
         status: deliveryStatus,
         updatedAt: new Date(),
@@ -223,7 +202,6 @@ export class WhatsAppMessageService {
         },
       });
 
-      // Emit event
       this.eventEmitter.emit("whatsapp.status.updated", {
         externalId: status.id,
         status: deliveryStatus,
@@ -235,9 +213,6 @@ export class WhatsAppMessageService {
     }
   }
 
-  /**
-   * Build template components from options
-   */
   private buildTemplateComponents(
     options: WhatsAppSendOptions,
   ): Array<{ type: string; parameters: Array<{ type: string; text: string }> }> {
@@ -253,9 +228,6 @@ export class WhatsAppMessageService {
     ];
   }
 
-  /**
-   * Record message delivery
-   */
   private async recordDelivery(
     messageId: string,
     tenantId: string,
@@ -267,7 +239,7 @@ export class WhatsAppMessageService {
       const delivery = this.deliveryRepository.create({
         messageId,
         tenantId,
-        channel: MessageChannel.WHATSAPP,
+        channel: NotificationChannel.WHATSAPP,
         externalId,
         status,
         error,
@@ -283,9 +255,6 @@ export class WhatsAppMessageService {
     }
   }
 
-  /**
-   * Map WhatsApp status to standard status
-   */
   private mapWhatsAppStatus(whatsappStatus: string): MessageDeliveryStatus {
     const statusMap: Record<string, MessageDeliveryStatus> = {
       sent: MessageDeliveryStatus.SENT,
@@ -297,18 +266,12 @@ export class WhatsAppMessageService {
     return statusMap[whatsappStatus] || MessageDeliveryStatus.PENDING;
   }
 
-  /**
-   * Get message delivery status
-   */
   async getDeliveryStatus(messageId: string): Promise<MessageDelivery | null> {
     return this.deliveryRepository.findOne({
-      where: { messageId, channel: MessageChannel.WHATSAPP },
+      where: { messageId, channel: NotificationChannel.WHATSAPP },
     });
   }
 
-  /**
-   * Retry failed message
-   */
   async retryMessage(
     messageId: string,
     phoneNumber: string,
@@ -316,7 +279,6 @@ export class WhatsAppMessageService {
     tenantId: string,
   ): Promise<{ success: boolean; error?: string }> {
     try {
-      // Check retry count
       const delivery = await this.getDeliveryStatus(messageId);
       if (!delivery) {
         throw new Error("Delivery record not found");
@@ -327,11 +289,9 @@ export class WhatsAppMessageService {
         throw new Error("Max retries exceeded");
       }
 
-      // Retry send
       const result = await this.sendMessage(phoneNumber, options, messageId, tenantId);
 
       if (result.success) {
-        // Update retry count
         await this.deliveryRepository.update(
           { id: delivery.id },
           {

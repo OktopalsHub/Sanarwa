@@ -1,5 +1,5 @@
 import { Column, Entity, JoinColumn, OneToOne } from "typeorm";
-import { BaseEntity } from "../../../database/entities/base.entity";
+import { BaseEntity } from "../../../common/database/entities/base.entity";
 import { Tenant } from "./tenant.entity";
 import { NotificationStoragePolicy } from "../../notifications/enums/notification-storage-policy.enum";
 
@@ -48,7 +48,6 @@ export class TenantSettings extends BaseEntity {
   @Column({ type: "json", nullable: true })
   metadata?: Record<string, any>;
 
-  // Relationship
   @Column({ type: "uuid", name: "tenant_id" })
   tenantId: string;
 

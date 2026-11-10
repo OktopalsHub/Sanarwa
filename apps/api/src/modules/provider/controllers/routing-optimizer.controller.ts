@@ -10,9 +10,6 @@ import { RoutingOptimizerService } from "../services/routing-optimizer.service";
 export class RoutingOptimizerController {
   constructor(private readonly optimizerService: RoutingOptimizerService) {}
 
-  /**
-   * Analyze routing performance and get optimization recommendations
-   */
   @Get("analyze")
   @ApiOperation({ summary: "Analyze routing performance and get optimization recommendations" })
   @ApiResponse({ status: 200, description: "Analysis results retrieved successfully" })
@@ -22,9 +19,6 @@ export class RoutingOptimizerController {
     return this.optimizerService.analyzeAndOptimize();
   }
 
-  /**
-   * Get optimized provider recommendation
-   */
   @Get("optimize")
   @ApiOperation({ summary: "Get optimized provider recommendation" })
   @ApiResponse({ status: 200, description: "Optimization recommendation retrieved successfully" })
@@ -39,9 +33,6 @@ export class RoutingOptimizerController {
     return this.optimizerService.getOptimizedProvider(channel, region, priority);
   }
 
-  /**
-   * Predict optimal provider using ML-based approach
-   */
   @Get("predict")
   @ApiOperation({ summary: "Predict optimal provider using ML-based approach" })
   @ApiResponse({ status: 200, description: "Prediction retrieved successfully" })
@@ -57,9 +48,6 @@ export class RoutingOptimizerController {
     return this.optimizerService.predictOptimalProvider(channel, region, timeOfDay, messageVolume);
   }
 
-  /**
-   * Start A/B testing for routing optimization
-   */
   @Post("ab-test")
   @ApiOperation({ summary: "Start A/B testing for routing optimization" })
   @ApiResponse({ status: 201, description: "A/B test started successfully" })
@@ -79,9 +67,6 @@ export class RoutingOptimizerController {
     return { testId, status: "started" };
   }
 
-  /**
-   * Get A/B test results
-   */
   @Get("ab-test/:testId")
   @ApiOperation({ summary: "Get A/B test results" })
   @ApiResponse({ status: 200, description: "Test results retrieved successfully" })
@@ -92,9 +77,6 @@ export class RoutingOptimizerController {
     return this.optimizerService.getABTestResults(testId);
   }
 
-  /**
-   * Update routing metrics (called by notification processing pipeline)
-   */
   @Post("metrics")
   @ApiOperation({ summary: "Update routing metrics (called by notification processing pipeline)" })
   @ApiResponse({ status: 201, description: "Metrics updated successfully" })

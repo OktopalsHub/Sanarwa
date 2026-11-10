@@ -1,7 +1,9 @@
 import { Test, TestingModule } from "@nestjs/testing";
 import { Tenant } from "../../tenant/entities/tenant.entity";
+import { ApiKeyVerificationService } from "../../api-key/api-key-verification.service";
 import { MessagingController } from "../messaging.controller";
-import { MessageChannel, MessagePriority, MessageStatus } from "../message.entity";
+import { MessagePriority, MessageStatus } from "../message.entity";
+import { NotificationChannel } from "../../../common/enums/notification-channel.enum";
 import { MessagingService } from "../messaging.service";
 
 describe("MessagingController", () => {
@@ -51,6 +53,10 @@ describe("MessagingController", () => {
           provide: MessagingService,
           useValue: mockMessagingService,
         },
+        {
+          provide: ApiKeyVerificationService,
+          useValue: { verify: vi.fn().mockResolvedValue(null) },
+        },
       ],
     }).compile();
 
@@ -65,8 +71,8 @@ describe("MessagingController", () => {
   describe("POST /notifications", () => {
     it("should send a notification successfully", async () => {
       const request = {
-        tenantId: "original-tenant-id", // This should be overridden
-        channels: [MessageChannel.EMAIL],
+        tenantId: "original-tenant-id",
+        channels: [NotificationChannel.EMAIL],
         recipients: [
           {
             id: "recipient-1",
@@ -76,17 +82,19 @@ describe("MessagingController", () => {
         data: { name: "John Doe" },
         priority: MessagePriority.NORMAL,
         subject: "Test Subject",
-        content: "Test Content",
+
+        data: "Test Content",
       };
 
       const expectedResponse = {
         id: "message-1",
         tenantId: mockTenant.id,
-        channels: [MessageChannel.EMAIL],
+        channels: [NotificationChannel.EMAIL],
         status: MessageStatus.PENDING,
         priority: MessagePriority.NORMAL,
         subject: "Test Subject",
-        content: "Test Content",
+
+        data: "Test Content",
         deliveries: [],
         createdAt: new Date(),
         updatedAt: new Date(),
@@ -94,16 +102,24 @@ describe("MessagingController", () => {
 
       mockMessagingService.sendMessage.mockResolvedValue(expectedResponse);
 
-      const result = await controller.sendMessage(request, mockTenant.id);
+      const req = { apiKey: { tenantId: "tenant-1", projectId: "project-1" } };
+      const result = await controller.sendMessage(request, req);
 
-      expect(mockMessagingService.sendMessage).toHaveBeenCalledWith(request, mockTenant.id);
+      expect(mockMessagingService.sendMessage).toHaveBeenCalledWith(
+        {
+          ...request,
+          metadata: { ...request.metadata, projectId: "project-1" },
+        },
+        "tenant-1",
+        undefined,
+      );
       expect(result).toEqual(expectedResponse);
     });
 
     it("should override tenantId with authenticated tenant ID for security", async () => {
       const request = {
         tenantId: "malicious-tenant-id",
-        channels: [MessageChannel.EMAIL],
+        channels: [NotificationChannel.EMAIL],
         recipients: [
           {
             id: "recipient-1",
@@ -115,9 +131,18 @@ describe("MessagingController", () => {
 
       mockMessagingService.sendMessage.mockResolvedValue({});
 
-      await controller.sendMessage(request, mockTenant.id);
+      const req = { apiKey: { tenantId: "tenant-1", projectId: "project-1" } };
+      await controller.sendMessage(request, req);
 
-      expect(mockMessagingService.sendMessage).toHaveBeenCalledWith(request, mockTenant.id);
+      // The API key's tenant wins over anything in the body.
+      expect(mockMessagingService.sendMessage).toHaveBeenCalledWith(
+        {
+          ...request,
+          metadata: { ...request.metadata, projectId: "project-1" },
+        },
+        "tenant-1",
+        undefined,
+      );
     });
   });
 
@@ -127,7 +152,7 @@ describe("MessagingController", () => {
         messages: [
           {
             tenantId: "original-tenant-id-1",
-            channels: [MessageChannel.EMAIL],
+            channels: [NotificationChannel.EMAIL],
             recipients: [
               {
                 id: "recipient-1",
@@ -139,7 +164,7 @@ describe("MessagingController", () => {
           },
           {
             tenantId: "original-tenant-id-2",
-            channels: [MessageChannel.SMS],
+            channels: [NotificationChannel.SMS],
             recipients: [
               {
                 id: "recipient-2",
@@ -147,7 +172,8 @@ describe("MessagingController", () => {
               },
             ],
             data: { name: "Jane Doe" },
-            content: "Bulk SMS Test",
+
+            data: "Bulk SMS Test",
           },
         ],
       };
@@ -162,9 +188,22 @@ describe("MessagingController", () => {
 
       mockMessagingService.sendBulkMessages.mockResolvedValue(expectedResponse);
 
-      const result = await controller.sendBulkMessages(request, mockTenant.id);
+      const req = { apiKey: { tenantId: "tenant-1", projectId: "project-1" } };
+      const result = await controller.sendBulkMessages(request, req);
 
-      expect(mockMessagingService.sendBulkMessages).toHaveBeenCalledWith(request, mockTenant.id);
+      expect(mockMessagingService.sendBulkMessages).toHaveBeenCalledWith(
+        {
+          ...request,
+          messages: request.messages.map((message: Record<string, unknown>) => ({
+            ...message,
+            metadata: {
+              ...((message.metadata as Record<string, unknown>) ?? {}),
+              projectId: "project-1",
+            },
+          })),
+        },
+        "tenant-1",
+      );
       expect(result).toEqual(expectedResponse);
     });
   });
@@ -216,7 +255,7 @@ describe("MessagingController", () => {
         page: 1,
         limit: 10,
         status: MessageStatus.SENT,
-        tenantId: "original-tenant-id", // This should be overridden
+        tenantId: "original-tenant-id",
       };
 
       const expectedResponse = {

@@ -1,10 +1,10 @@
 import { BadRequestException, Injectable, NotFoundException } from "@nestjs/common";
 import { EventEmitter2 } from "@nestjs/event-emitter";
 import * as crypto from "crypto";
-import { getPaginationSummary } from "src/common/dto/pagination.dto";
-import { AuthProvider } from "src/common/enums";
-import { PasswordService } from "src/common/helpers/password.service";
-import { IPaginatedData } from "src/common/interfaces";
+import { getPaginationSummary } from "../../common/dto/pagination.dto";
+import { AuthProvider } from "../../common/enums";
+import { PasswordService } from "../../common/helpers/password.service";
+import { IPaginatedData } from "../../common/interfaces";
 import { TenantMemberService } from "../tenant-member/tenant-member.service";
 import { UserService } from "../user/user.service";
 import { AcceptInviteResponseDto } from "./dto/accept-invite-response.dto";
@@ -28,9 +28,6 @@ export class InviteService {
     private readonly passwordService: PasswordService,
   ) {}
 
-  /**
-   * Create a new invitation
-   */
   async createInvite(
     tenantId: string,
     invitedById: string,
@@ -38,27 +35,22 @@ export class InviteService {
   ): Promise<Invite> {
     const { email, role } = createInviteDto;
 
-    // Check if user is already a member of this tenant
     const existingMember = await this.tenantMemberService.findByUserEmail(tenantId, email);
     if (existingMember) {
       throw new BadRequestException("User is already a member of this tenant");
     }
 
-    // Check if there's already a pending invitation
     const existingInvite = await this.inviteRepository.findByEmailAndTenant(email, tenantId);
 
     if (existingInvite) {
       throw new BadRequestException("Invitation already sent to this email");
     }
 
-    // Generate unique token
     const token = this.generateInviteToken();
 
-    // Set expiration (7 days from now)
     const expiresAt = new Date();
     expiresAt.setDate(expiresAt.getDate() + 7);
 
-    // Create invitation
     const savedInvite = await this.inviteRepository.create({
       email,
       token,
@@ -68,7 +60,6 @@ export class InviteService {
       invitedBy: { id: invitedById },
     });
 
-    // Emit event for email notification
     this.eventEmitter.emit(
       "invite.created",
       new InviteCreatedEvent(savedInvite.id, email, tenantId, token, invitedById),
@@ -77,20 +68,15 @@ export class InviteService {
     return savedInvite;
   }
 
-  /**
-   * Accept an invitation
-   */
   async acceptInvite(acceptInviteDto: AcceptInviteDto): Promise<AcceptInviteResponseDto> {
     const { token, firstName, lastName, password } = acceptInviteDto;
 
-    // Find the invitation
     const invite = await this.inviteRepository.findByToken(token);
 
     if (!invite || invite.status !== InviteStatus.PENDING) {
       throw new NotFoundException("Invalid or expired invitation");
     }
 
-    // Check if invitation has expired
     if (invite.expiresAt < new Date()) {
       await this.inviteRepository.update(invite.id, {
         status: InviteStatus.EXPIRED,
@@ -98,35 +84,26 @@ export class InviteService {
       throw new BadRequestException("Invitation has expired");
     }
 
-    // Check if user already exists
     let user = await this.userService.getByEmail(invite.email);
 
     if (!user) {
-      // Prepare user data
       const userData: any = {
         email: invite.email,
         name: `${firstName} ${lastName}`.trim(),
       };
 
-      // Handle authentication method based on password presence
       if (password) {
-        // Email/password authentication flow
         const hashedPassword = await this.passwordService.hashPassword(password);
         userData.password = hashedPassword;
         userData.authProvider = AuthProvider.LOCAL;
       } else {
-        // OAuth authentication flow - user will complete setup via OAuth
-        userData.authProvider = AuthProvider.LOCAL; // Will be updated when they complete OAuth
+        userData.authProvider = AuthProvider.LOCAL;
         userData.password = null;
       }
 
-      // Create new user account
       user = await this.userService.createUser(userData);
     } else {
-      // User exists - update their profile if needed
       if (password && !user.password) {
-        // User exists but doesn't have a password (was created via OAuth)
-        // Allow them to set a password for local authentication
         const hashedPassword = await this.passwordService.hashPassword(password);
         await this.userService.updateUserInternal(user.id, {
           password: hashedPassword,
@@ -134,7 +111,6 @@ export class InviteService {
         });
         user = await this.userService.getById(user.id);
       } else if (!password && user.password) {
-        // User has password but accepting via OAuth flow - just update profile
         await this.userService.updateUserInternal(user.id, {
           name: user.name || `${firstName} ${lastName}`.trim(),
         });
@@ -142,25 +118,21 @@ export class InviteService {
       }
     }
 
-    // Create tenant member
     const tenantMember = await this.tenantMemberService.createTenantMember(invite.tenant.id, {
       role: invite.role,
       user,
     });
 
-    // Update invitation status
     await this.inviteRepository.update(invite.id, {
       status: InviteStatus.ACCEPTED,
       acceptedAt: new Date(),
     });
 
-    // Emit event
     this.eventEmitter.emit(
       "invite.accepted",
       new InviteAcceptedEvent(invite.id, user.id, invite.tenant.id, invite.role),
     );
 
-    // Return clean response
     return {
       message: "Invitation accepted successfully",
       user: {
@@ -180,9 +152,6 @@ export class InviteService {
     };
   }
 
-  /**
-   * Decline an invitation
-   */
   async declineInvite(token: string): Promise<void> {
     const invite = await this.inviteRepository.findByToken(token);
 
@@ -195,16 +164,12 @@ export class InviteService {
       declinedAt: new Date(),
     });
 
-    // Emit event
     this.eventEmitter.emit(
       "invite.declined",
       new InviteDeclinedEvent(invite.id, invite.email, invite.tenant.id),
     );
   }
 
-  /**
-   * Get invitation by token
-   */
   async getInviteByToken(token: string): Promise<Invite> {
     const invite = await this.inviteRepository.findByToken(token);
 
@@ -215,9 +180,6 @@ export class InviteService {
     return invite;
   }
 
-  /**
-   * Get all invitations for a tenant with pagination
-   */
   async getTenantInvites(tenantId: string, query?: any): Promise<IPaginatedData<Partial<Invite>>> {
     const page = query?.page || 1;
     const limit = query?.limit || 10;
@@ -247,7 +209,6 @@ export class InviteService {
 
     const [invites, total] = await queryBuilder.getManyAndCount();
 
-    // Transform to only include necessary fields
     const sanitizedInvites = invites.map((invite) => ({
       id: invite.id,
       email: invite.email,
@@ -269,9 +230,6 @@ export class InviteService {
     return getPaginationSummary(sanitizedInvites, total, { page, limit }, "invites");
   }
 
-  /**
-   * Cancel an invitation
-   */
   async cancelInvite(tenantId: string, inviteId: string): Promise<void> {
     const invite = await this.inviteRepository.findById(inviteId, false, {
       tenant: { id: tenantId },
@@ -290,9 +248,6 @@ export class InviteService {
     });
   }
 
-  /**
-   * Clean up expired invitations
-   */
   async cleanupExpiredInvites(): Promise<void> {
     const expiredInvites = await this.inviteRepository.find({
       where: { status: InviteStatus.PENDING },
@@ -308,9 +263,6 @@ export class InviteService {
     }
   }
 
-  /**
-   * Generate a secure invitation token
-   */
   private generateInviteToken(): string {
     return crypto.randomBytes(32).toString("hex");
   }

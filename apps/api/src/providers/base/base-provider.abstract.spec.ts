@@ -1,21 +1,20 @@
 import type { Mock } from "vitest";
 import {
-  Channel,
   DeliveryStatus,
   ProviderConfig,
   ProviderHealth,
   ProviderHealthStatus,
   ProviderResponse,
 } from "../types";
+import { NotificationChannel } from "../../common/enums/notification-channel.enum";
 import { BaseProvider } from "./base-provider.abstract";
 import { BaseProviderPayload } from "./base-provider.interface";
 
-// Mock implementation for testing
 class MockProvider extends BaseProvider {
   private shouldFailHealthCheck = false;
   private shouldFailSend = false;
 
-  constructor(id: string, name: string, channel: Channel) {
+  constructor(id: string, name: string, channel: NotificationChannel) {
     super(id, name, channel);
   }
 
@@ -46,7 +45,6 @@ class MockProvider extends BaseProvider {
     };
   }
 
-  // Test helpers
   setFailHealthCheck(fail: boolean): void {
     this.shouldFailHealthCheck = fail;
   }
@@ -61,12 +59,12 @@ describe("BaseProvider", () => {
   let validConfig: ProviderConfig;
 
   beforeEach(async () => {
-    provider = new MockProvider("test-provider", "Test Provider", Channel.EMAIL);
+    provider = new MockProvider("test-provider", "Test Provider", NotificationChannel.EMAIL);
 
     validConfig = {
       id: "test-provider",
       name: "Test Provider",
-      channel: Channel.EMAIL,
+      channel: NotificationChannel.EMAIL,
       priority: 1,
       isActive: true,
       credentials: {
@@ -105,9 +103,9 @@ describe("BaseProvider", () => {
       const invalidConfigs = [
         { ...validConfig, id: "" },
         { ...validConfig, name: "" },
-        { ...validConfig, channel: "invalid" as Channel },
+        { ...validConfig, channel: "invalid" as NotificationChannel },
         { ...validConfig, priority: -1 },
-        { ...validConfig, channel: Channel.SMS }, // Wrong channel
+        { ...validConfig, channel: NotificationChannel.SMS },
       ];
 
       for (const config of invalidConfigs) {
@@ -116,37 +114,7 @@ describe("BaseProvider", () => {
     });
   });
 
-  describe("health checking", () => {
-    beforeEach(async () => {
-      await provider.initialize(validConfig);
-    });
-
-    it("should return healthy status when provider is healthy", async () => {
-      const healthStatus = await provider.checkHealth();
-
-      expect(healthStatus.status).toBe(ProviderHealth.HEALTHY);
-      expect(healthStatus.lastChecked).toBeInstanceOf(Date);
-      expect(healthStatus.responseTime).toBeGreaterThanOrEqual(0);
-    });
-
-    it("should return unhealthy status when health check fails", async () => {
-      provider.setFailHealthCheck(true);
-
-      const healthStatus = await provider.checkHealth();
-
-      expect(healthStatus.status).toBe(ProviderHealth.UNHEALTHY);
-      expect(healthStatus.metadata?.error).toBe("Mock health check failure");
-    });
-
-    it("should return unhealthy status when provider is not initialized", async () => {
-      await provider.destroy();
-
-      const healthStatus = await provider.checkHealth();
-
-      expect(healthStatus.status).toBe(ProviderHealth.UNHEALTHY);
-      expect(healthStatus.metadata?.error).toBe("Provider not initialized");
-    });
-  });
+  // Health checks moved to the circuit breaker (common/errors/services/circuit-breaker.service.ts); providers no longer own a checkHealth API.
 
   describe("sending messages", () => {
     beforeEach(async () => {

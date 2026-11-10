@@ -60,17 +60,13 @@ export class SESProvider extends BaseEmailProvider {
     const sesConfig = this.config.config as SESConfig;
 
     try {
-      // Determine the source email address
       let sourceEmail: string;
 
       if (message.from) {
-        // Use the provided from address (should be from verified domain)
         sourceEmail = message.from;
       } else if (message.brandConfig?.defaultFromEmail && message.brandConfig?.defaultFromName) {
-        // Use brand-specific from address if available
         sourceEmail = `${message.brandConfig.defaultFromName} <${message.brandConfig.defaultFromEmail}>`;
       } else {
-        // Fallback to provider config
         sourceEmail = `${sesConfig.fromName || "Notification"} <${sesConfig.fromEmail}>`;
       }
 
@@ -165,7 +161,6 @@ export class SESProvider extends BaseEmailProvider {
       errors.push("Invalid from email format");
     }
 
-    // Test credentials if provided
     if (
       sesConfig.accessKeyId &&
       sesConfig.secretAccessKey &&
@@ -181,7 +176,6 @@ export class SESProvider extends BaseEmailProvider {
           },
         });
 
-        // Test by getting sending quota
         await testClient.send(new GetSendQuotaCommand({}));
       } catch (error) {
         if (error.name === "InvalidClientTokenId") {
@@ -208,7 +202,6 @@ export class SESProvider extends BaseEmailProvider {
         await this.initialize();
       }
 
-      // SES doesn't provide detailed stats via API, return basic info
       return {
         totalSent: 0,
         totalFailed: 0,
@@ -230,39 +223,13 @@ export class SESProvider extends BaseEmailProvider {
     }
   }
 
-  async healthCheck(): Promise<{ healthy: boolean; latency: number; error?: string }> {
-    const startTime = Date.now();
-
-    try {
-      if (!this.isInitialized) {
-        await this.initialize();
-      }
-
-      // Test by getting sending quota
-      await this.sesClient.send(new GetSendQuotaCommand({}));
-
-      return {
-        healthy: true,
-        latency: Date.now() - startTime,
-      };
-    } catch (error) {
-      return {
-        healthy: false,
-        latency: Date.now() - startTime,
-        error: error.message,
-      };
-    }
-  }
-
   async getCost(messageCount: number): Promise<number> {
     return this.calculateCost(messageCount);
   }
 
   private async calculateCost(messageCount: number): Promise<number> {
-    // SES pricing: $0.10 per 1000 emails
     const baseCost = messageCount * 0.0001;
 
-    // Add infrastructure fee (20% markup for AWS services)
     const infrastructureFee = baseCost * 0.2;
 
     return baseCost + infrastructureFee;

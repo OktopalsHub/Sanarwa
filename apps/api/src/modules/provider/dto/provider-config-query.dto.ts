@@ -27,10 +27,6 @@ export class ProviderConfigQueryDto {
   isDefault?: boolean;
 
   @IsOptional()
-  @IsString()
-  healthStatus?: string;
-
-  @IsOptional()
   @Type(() => Number)
   @IsInt()
   @Min(1)

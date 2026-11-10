@@ -36,9 +36,6 @@ export class CloudflareDNSService {
 
   constructor(private readonly configService: ConfigService) {}
 
-  /**
-   * Get zone ID for a domain
-   */
   async getZoneId(domain: string, apiToken: string): Promise<string | null> {
     try {
       this.logger.log(`Getting zone ID for domain: ${domain}`);
@@ -72,9 +69,6 @@ export class CloudflareDNSService {
     }
   }
 
-  /**
-   * Add DNS record to Cloudflare
-   */
   async addDNSRecord(
     zoneId: string,
     record: CloudflareDNSRecord,
@@ -117,9 +111,6 @@ export class CloudflareDNSService {
     }
   }
 
-  /**
-   * Add multiple DNS records to Cloudflare
-   */
   async addDNSRecords(
     zoneId: string,
     records: CloudflareDNSRecord[],
@@ -147,9 +138,6 @@ export class CloudflareDNSService {
     return { successful, failed };
   }
 
-  /**
-   * Check if DNS record exists
-   */
   async dnsRecordExists(
     zoneId: string,
     record: CloudflareDNSRecord,
@@ -173,7 +161,6 @@ export class CloudflareDNSService {
         return false;
       }
 
-      // Check if any existing record matches
       return data.result.some(
         (existing: any) =>
           existing.type === record.type &&
@@ -186,9 +173,6 @@ export class CloudflareDNSService {
     }
   }
 
-  /**
-   * Validate Cloudflare API token
-   */
   async validateAPIToken(apiToken: string): Promise<{
     valid: boolean;
     error?: string;
@@ -223,9 +207,6 @@ export class CloudflareDNSService {
     }
   }
 
-  /**
-   * Convert Resend DNS records to Cloudflare format
-   */
   convertResendRecordsToCloudflare(
     resendRecords: Array<{
       record: string;
@@ -240,8 +221,8 @@ export class CloudflareDNSService {
       name: record.name,
       content: record.value,
       priority: record.priority,
-      ttl: 300, // 5 minutes
-      proxied: false, // Don't proxy verification records
+      ttl: 300,
+      proxied: false,
     }));
   }
 }

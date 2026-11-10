@@ -12,7 +12,10 @@ export interface InAppPayload {
   }>;
   persistent?: boolean;
   expiresAt?: Date;
-  roomId?: string; // For room-based notifications
+  tenantId?: string;
+  messageId?: string;
+  deliveryId?: string;
+  roomId?: string;
   callData?: {
     roomId: string;
     callType: "audio" | "video";
@@ -33,6 +36,6 @@ export interface InAppResponse {
 export interface IInAppProvider {
   sendNotification(payload: InAppPayload): Promise<InAppResponse>;
   sendToRoom(roomId: string, payload: InAppPayload): Promise<InAppResponse>;
-  validateConfig(): Promise<boolean>;
+  validateConfig(config?: unknown): Promise<boolean>;
   getProviderName(): string;
 }

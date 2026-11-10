@@ -2,6 +2,7 @@ import { Injectable, Logger } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
 import { InAppNotification } from "../../messaging/entities/in-app-notification.entity";
+import { eraseInboxBySubscriber } from "../../notifications/services/inbox-erase";
 
 export interface FeedQuery {
   tenantId: string;
@@ -46,7 +47,8 @@ export class InAppFeedService {
       if (query.read) qb.andWhere("n.status = :readStatus", { readStatus: "read" });
       else qb.andWhere("n.status != :readStatus", { readStatus: "read" });
     }
-    if (query.archived !== undefined) qb.andWhere("n.archived = :archived", { archived: query.archived });
+    if (query.archived !== undefined)
+      qb.andWhere("n.archived = :archived", { archived: query.archived });
     else qb.andWhere("n.archived = false");
 
     qb.orderBy("n.created_at", "DESC")
@@ -89,7 +91,11 @@ export class InAppFeedService {
     return { data, total: totalFiltered, hasMore, unseenCount, unreadCount, page, limit };
   }
 
-  async getUnseenCount(tenantId: string, subscriberId: string, feedId = "default"): Promise<number> {
+  async getUnseenCount(
+    tenantId: string,
+    subscriberId: string,
+    feedId = "default",
+  ): Promise<number> {
     return this.repo
       .createQueryBuilder("n")
       .where("n.tenant_id = :tenantId", { tenantId })
@@ -100,7 +106,12 @@ export class InAppFeedService {
       .getCount();
   }
 
-  async markSeen(tenantId: string, subscriberId: string, ids?: string[], feedId?: string): Promise<number> {
+  async markSeen(
+    tenantId: string,
+    subscriberId: string,
+    ids?: string[],
+    feedId?: string,
+  ): Promise<number> {
     const qb = this.repo
       .createQueryBuilder()
       .update(InAppNotification)
@@ -128,7 +139,12 @@ export class InAppFeedService {
     return r.affected || 0;
   }
 
-  async markArchived(tenantId: string, subscriberId: string, ids: string[], archived: boolean): Promise<number> {
+  async markArchived(
+    tenantId: string,
+    subscriberId: string,
+    ids: string[],
+    archived: boolean,
+  ): Promise<number> {
     const r = await this.repo
       .createQueryBuilder()
       .update(InAppNotification)
@@ -156,5 +172,14 @@ export class InAppFeedService {
       .andWhere("archived = false")
       .execute();
     return r.affected || 0;
+  }
+
+  /**
+   * GDPR/right-to-erasure for the in-app inbox (parity with NotificationCenterService).
+   * Uses the shared inbox erase seam so identity matching (subscriber_id/user_id) stays in one place.
+   * Route-level erase is exposed via the notification-center controller.
+   */
+  async deleteBySubscriber(tenantId: string, subscriberId: string): Promise<number> {
+    return eraseInboxBySubscriber(this.repo, tenantId, subscriberId);
   }
 }

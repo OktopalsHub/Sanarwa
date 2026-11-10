@@ -1,35 +1,55 @@
 import {
-  Controller,
-  Post,
-  Get,
   Body,
-  Query,
-  Param,
+  Controller,
+  Delete,
+  Get,
   HttpCode,
   HttpStatus,
+  Post,
   UseGuards,
-  Logger,
 } from "@nestjs/common";
-import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from "@nestjs/swagger";
+import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from "@nestjs/swagger";
+import { IsOptional, IsString } from "class-validator";
+import { CurrentMemberId, CurrentTenantId } from "../../../common/decorators";
 import { TenantContextGuard } from "../../../common/guards";
-import {
-  WhatsAppEmbeddedSignupService,
-  EmbeddedSignupRequest,
-} from "../services/whatsapp-embedded-signup.service";
+import { WhatsAppEmbeddedSignupService } from "../services/whatsapp-embedded-signup.service";
 
-export class CreateEmbeddedSignupDto {
-  tenantId: string;
+export class InitiateEmbeddedSignupDto {
+  @IsString()
   businessName: string;
+
+  @IsString()
   businessEmail: string;
+
+  @IsString()
   businessPhone: string;
+
+  @IsOptional()
+  @IsString()
   businessWebsite?: string;
+
+  @IsOptional()
+  @IsString()
   businessDescription?: string;
+
+  @IsString()
   redirectUri: string;
 }
 
-export class CompleteSignupDto {
+export class CompleteEmbeddedSignupDto {
+  @IsString()
   code: string;
+
+  @IsString()
   state: string;
+
+  @IsOptional()
+  @IsString()
+  wabaId?: string;
+
+  @IsOptional()
+  @IsString()
+  phoneNumberId?: string;
 }
 
 @ApiTags("WhatsApp Embedded Signup")
@@ -37,91 +57,40 @@ export class CompleteSignupDto {
 @ApiBearerAuth()
 @UseGuards(TenantContextGuard)
 export class WhatsAppEmbeddedSignupController {
-  private readonly logger = new Logger(WhatsAppEmbeddedSignupController.name);
-
   constructor(private readonly embeddedSignupService: WhatsAppEmbeddedSignupService) {}
 
   @Post("initiate")
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
-    summary: "Initiate Embedded Signup for WhatsApp Business Account",
+    summary: "Start Embedded Signup for a tenant's own WhatsApp Business Account",
     description:
-      "Creates a signup URL for tenant to register their own WABA via Meta Embedded Signup",
+      "Returns the Meta app id, config id and signed state used by the Facebook JS SDK. The tenant authorises their own WABA; no platform number is shared.",
   })
-  @ApiResponse({
-    status: 200,
-    description: "Signup URL generated successfully",
-    schema: {
-      type: "object",
-      properties: {
-        signupUrl: { type: "string", description: "Meta signup URL" },
-        state: { type: "string", description: "State parameter for verification" },
-        expiresAt: { type: "string", format: "date-time" },
-        instructions: {
-          type: "object",
-          properties: {
-            step1: { type: "string" },
-            step2: { type: "string" },
-            step3: { type: "string" },
-          },
-        },
-      },
-    },
-  })
-  async initiateEmbeddedSignup(@Body() dto: CreateEmbeddedSignupDto) {
-    this.logger.log(`Initiating embedded signup for tenant: ${dto.tenantId}`);
-
-    const result = await this.embeddedSignupService.generateEmbeddedSignupUrl(dto);
-
-    return {
-      ...result,
-      instructions: {
-        step1: "Click the signup URL to authenticate with Meta",
-        step2: "Complete business verification with Meta",
-        step3: "Return to this platform to complete setup",
-      },
-      benefits: [
-        "Your own dedicated WhatsApp Business Account",
-        "6,000 template limit just for your business",
-        "Independent reputation score",
-        "No sharing with other businesses",
-        "Full control over your WhatsApp presence",
-      ],
-    };
+  @ApiResponse({ status: 200, description: "Signup parameters generated" })
+  async initiateEmbeddedSignup(
+    @CurrentTenantId() tenantId: string,
+    @Body() dto: InitiateEmbeddedSignupDto,
+  ) {
+    return this.embeddedSignupService.generateEmbeddedSignupUrl({
+      ...dto,
+      tenantId,
+    });
   }
 
   @Post("complete")
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
-    summary: "Complete Embedded Signup Process",
-    description: "Completes the signup process after tenant authorizes with Meta",
+    summary: "Complete Embedded Signup",
+    description:
+      "Exchanges the Meta authorization code for a long-lived token, stores the tenant's WABA, and activates it as the tenant's WhatsApp connection.",
   })
-  @ApiResponse({
-    status: 200,
-    description: "WABA setup completed successfully",
-    schema: {
-      type: "object",
-      properties: {
-        wabaId: { type: "string" },
-        businessAccountId: { type: "string" },
-        phoneNumberId: { type: "string" },
-        status: { type: "string", enum: ["PENDING", "ACTIVE"] },
-        verificationRequired: { type: "boolean" },
-        templateQuota: {
-          type: "object",
-          properties: {
-            limit: { type: "number" },
-            used: { type: "number" },
-            remaining: { type: "number" },
-          },
-        },
-      },
-    },
-  })
-  async completeEmbeddedSignup(@Body() dto: CompleteSignupDto) {
-    this.logger.log(`Completing embedded signup with state: ${dto.state}`);
-
-    const result = await this.embeddedSignupService.completeEmbeddedSignup(dto.code, dto.state);
+  @ApiResponse({ status: 200, description: "WABA connected" })
+  async completeEmbeddedSignup(
+    @CurrentTenantId() tenantId: string,
+    @CurrentMemberId() memberId: string,
+    @Body() dto: CompleteEmbeddedSignupDto,
+  ) {
+    const result = await this.embeddedSignupService.completeEmbeddedSignup(tenantId, memberId, dto);
 
     return {
       ...result,
@@ -131,24 +100,22 @@ export class WhatsAppEmbeddedSignupController {
         remaining: 6000,
       },
       message: result.verificationRequired
-        ? "WABA created successfully. Business verification required to start sending messages."
-        : "WABA created and verified. You can start sending messages immediately.",
+        ? "WhatsApp Business connected. Meta review is still pending for full messaging limits."
+        : "WhatsApp Business connected and verified.",
     };
   }
 
-  @Get("status/:tenantId")
-  @ApiOperation({
-    summary: "Get WhatsApp Business Account Status",
-    description: "Returns the current status and configuration of tenant's WABA",
-  })
-  async getWABAStatus(@Param("tenantId") tenantId: string) {
+  @Get("status")
+  @ApiOperation({ summary: "Get the tenant's WhatsApp Business Account status" })
+  async getWABAStatus(@CurrentTenantId() tenantId: string) {
     const tenantWaba = await this.embeddedSignupService.getTenantWABA(tenantId);
 
     if (!tenantWaba) {
       return {
         hasWaba: false,
-        message: "No WhatsApp Business Account configured. Use /initiate to create one.",
-        recommendedAction: "CREATE_WABA",
+        connected: false,
+        message: "No WhatsApp Business Account connected.",
+        recommendedAction: "CONNECT_WABA",
       };
     }
 
@@ -156,9 +123,12 @@ export class WhatsAppEmbeddedSignupController {
 
     return {
       hasWaba: true,
+      connected: true,
       wabaId: tenantWaba.waba.id,
       businessAccountId: tenantWaba.waba.businessAccountId,
       phoneNumberId: tenantWaba.phoneNumberId,
+      displayPhoneNumber: tenantWaba.waba.metadata?.phoneNumber,
+      displayName: tenantWaba.waba.metadata?.displayName,
       status: tenantWaba.status,
       verificationStatus: tenantWaba.verificationStatus,
       isActive: tenantWaba.isActive,
@@ -166,36 +136,27 @@ export class WhatsAppEmbeddedSignupController {
       usage: tenantWaba.usage,
       lastSyncAt: tenantWaba.lastSyncAt,
       assignedAt: tenantWaba.assignedAt,
-      benefits: {
-        dedicatedAccount: true,
-        templateLimit: 6000,
-        independentReputation: true,
-        noSharing: true,
-      },
     };
   }
 
-  @Post("sync/:tenantId")
+  @Post("sync")
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({
-    summary: "Sync WABA Status with Meta",
-    description: "Synchronizes the WABA status and verification with Meta APIs",
-  })
-  async syncWABAStatus(@Param("tenantId") tenantId: string) {
-    await this.embeddedSignupService.syncWABAStatus(tenantId);
-
-    return {
-      message: "WABA status synchronized successfully",
-      syncedAt: new Date(),
-    };
+  @ApiOperation({ summary: "Refresh the WABA status and phone details from Meta" })
+  async syncWABAStatus(@CurrentTenantId() tenantId: string, @CurrentMemberId() memberId: string) {
+    await this.embeddedSignupService.syncWABAStatus(tenantId, memberId);
+    return { message: "WABA status synchronized", syncedAt: new Date() };
   }
 
-  @Get("template-capacity/:tenantId")
-  @ApiOperation({
-    summary: "Check Template Creation Capacity",
-    description: "Returns whether tenant can create more templates and current usage",
-  })
-  async checkTemplateCapacity(@Param("tenantId") tenantId: string) {
+  @Delete()
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({ summary: "Disconnect the tenant's WhatsApp Business Account" })
+  async disconnect(@CurrentTenantId() tenantId: string) {
+    await this.embeddedSignupService.disconnect(tenantId);
+  }
+
+  @Get("template-capacity")
+  @ApiOperation({ summary: "Check template creation capacity" })
+  async checkTemplateCapacity(@CurrentTenantId() tenantId: string) {
     const canCreate = await this.embeddedSignupService.canCreateTemplate(tenantId);
     const usage = await this.embeddedSignupService.getTemplateUsage(tenantId);
 
@@ -204,64 +165,8 @@ export class WhatsAppEmbeddedSignupController {
       templateUsage: usage,
       recommendation:
         usage.utilizationRate > 80
-          ? "Consider creating additional WABA or optimizing template usage"
+          ? "Consider creating an additional WABA or archiving unused templates"
           : "Template capacity is healthy",
-      scalingOptions:
-        usage.utilizationRate > 90
-          ? [
-              "Create additional WABA for different business units",
-              "Archive unused templates",
-              "Optimize template variations",
-            ]
-          : [],
-    };
-  }
-
-  @Get("architecture-info")
-  @ApiOperation({
-    summary: "Get Multi-Tenant Architecture Information",
-    description: "Returns information about the multi-tenant WhatsApp architecture",
-  })
-  async getArchitectureInfo() {
-    return {
-      architecture: "Multi-Tenant WhatsApp with Embedded Sign-Up",
-      benefits: [
-        "Each tenant gets their own WhatsApp Business Account (WABA)",
-        "Each WABA has its own 6,000 template quota",
-        "Independent reputation scores prevent cross-tenant impact",
-        "No sharing of templates or phone numbers",
-        "Fully compliant with Meta policies",
-        "Scales to unlimited tenants",
-      ],
-      comparisonWithSharedWABA: {
-        sharedWABA: {
-          templateLimit: "6,000 total across ALL tenants",
-          riskLevel: "HIGH - One bad tenant affects everyone",
-          scalability: "LIMITED - Hits limits quickly",
-          compliance: "RISKY - Gray area with Meta policies",
-        },
-        dedicatedWABA: {
-          templateLimit: "6,000 per tenant",
-          riskLevel: "LOW - Isolated tenant risks",
-          scalability: "UNLIMITED - Each tenant independent",
-          compliance: "COMPLIANT - Follows Meta best practices",
-        },
-      },
-      implementationModes: {
-        embeddedSignup: {
-          description: "Platform creates WABA for tenant via Meta ESU",
-          ownership: "Platform-managed",
-          setup: "Automated",
-          billing: "Platform handles",
-        },
-        byop: {
-          description: "Tenant brings their own WABA",
-          ownership: "Tenant-owned",
-          setup: "Manual API connection",
-          billing: "Tenant handles directly",
-        },
-      },
-      metaRecommendation: "Meta explicitly recommends this architecture for SaaS platforms",
     };
   }
 }

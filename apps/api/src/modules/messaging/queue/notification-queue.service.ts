@@ -1,8 +1,23 @@
-import { InjectQueue } from "@nestjs/bull";
+import { InjectQueue } from "@nestjs/bullmq";
 import { Injectable, Logger } from "@nestjs/common";
-import { JobOptions, Queue } from "bull";
+import { JobsOptions, Queue } from "bullmq";
+import { ChatProvider } from "../../../common/enums/chat-provider.enum";
 import { MessagePriority as Priority } from "../message.entity";
-import { NOTIFICATION_DELIVERY_QUEUE, NOTIFICATION_QUEUE } from "./notification-queue.constants";
+import {
+  NOTIFICATION_ADMIN_QUEUE,
+  NOTIFICATION_DELIVERY_QUEUE,
+  NOTIFICATION_QUEUE,
+} from "./notification-queue.constants";
+
+export interface NotificationJobPayload {
+  subject?: string;
+  data?: string;
+  templateId?: string;
+  variables?: Record<string, any>;
+  brandId?: string;
+  storagePolicy?: string;
+  chatProvider?: ChatProvider;
+}
 
 export interface NotificationJobData {
   notificationId: string;
@@ -10,6 +25,7 @@ export interface NotificationJobData {
   priority: Priority;
   scheduledAt?: Date;
   retryCount?: number;
+  payload?: NotificationJobPayload;
 }
 
 export interface DeliveryJobData {
@@ -61,17 +77,17 @@ export class NotificationQueueService {
     >,
     @InjectQueue(NOTIFICATION_DELIVERY_QUEUE)
     private readonly deliveryQueue: Queue<DeliveryJobData>,
+    @InjectQueue(NOTIFICATION_ADMIN_QUEUE)
+    private readonly adminQueue: Queue<DeadLetterJobData | AlertJobData>,
   ) {}
 
-  /**
-   * Add notification to processing queue
-   */
   async addNotificationJob(
     notificationId: string,
     tenantId: string,
     priority: Priority = Priority.NORMAL,
     scheduledAt?: Date,
     retryCount: number = 0,
+    payload?: NotificationJobPayload,
   ): Promise<void> {
     const jobData: NotificationJobData = {
       notificationId,
@@ -79,9 +95,10 @@ export class NotificationQueueService {
       priority,
       scheduledAt,
       retryCount,
+      payload,
     };
 
-    const jobOptions: JobOptions = {
+    const jobOptions: JobsOptions = {
       priority: this.getPriorityValue(priority),
       delay: scheduledAt ? Math.max(0, scheduledAt.getTime() - Date.now()) : 0,
       attempts: 3,
@@ -89,6 +106,7 @@ export class NotificationQueueService {
         type: "exponential",
         delay: 2000,
       },
+      jobId: `msg-${notificationId}-${retryCount}`,
     };
 
     await this.notificationQueue.add("process-notification", jobData, jobOptions);
@@ -100,9 +118,6 @@ export class NotificationQueueService {
     );
   }
 
-  /**
-   * Add delivery job to processing queue
-   */
   async addDeliveryJob(
     notificationId: string,
     deliveryId: string,
@@ -125,7 +140,7 @@ export class NotificationQueueService {
       retryCount,
     };
 
-    const jobOptions: JobOptions = {
+    const jobOptions: JobsOptions = {
       priority: this.getPriorityValue(priority),
       attempts: 5,
       backoff: {
@@ -142,70 +157,33 @@ export class NotificationQueueService {
   }
 
   /**
-   * Add bulk delivery jobs
+   * Moves a pending scheduled job: weakens the original delayed job and
+   * re-adds it at the new time so the message send time actually moves.
+   * Safe to call when no job exists (no-op).
    */
-  async addBulkDeliveryJobs(deliveryJobs: Omit<DeliveryJobData, "retryCount">[]): Promise<void> {
-    const jobs = deliveryJobs.map((jobData, index) => ({
-      name: "process-delivery",
-      data: { ...jobData, retryCount: 0 },
-      opts: {
-        priority: this.getPriorityValue(Priority.NORMAL),
-        attempts: 5,
-        backoff: {
-          type: "exponential",
-          delay: 1000,
-        },
-        delay: index * 20, // Minimal 250 plan: 20ms stagger for ZeptoMail 500 burst (was 100)
-      } as JobOptions,
-    }));
+  async rescheduleNotificationJob(notificationId: string, scheduledAt: Date): Promise<void> {
+    const jobs = await this.notificationQueue.getJobs(["waiting", "delayed", "prioritized"]);
+    const pending = jobs.filter((job) => {
+      const data = job.data as NotificationJobData | undefined;
+      return data?.notificationId === notificationId;
+    });
 
-    await this.deliveryQueue.addBulk(jobs);
+    const first = pending[0]?.data;
+    for (const job of pending) {
+      await job.remove();
+    }
 
-    this.logger.log(`Added ${jobs.length} delivery jobs to queue`);
+    const tenantId = (first as NotificationJobData | undefined)?.tenantId ?? "";
+    const priority = (first as NotificationJobData | undefined)?.priority;
+
+    if (scheduledAt.getTime() > Date.now()) {
+      await this.addNotificationJob(notificationId, tenantId, priority, scheduledAt, 0);
+    } else {
+      // Due now — re-enqueue for immediate processing.
+      await this.addNotificationJob(notificationId, tenantId, priority, undefined, 0);
+    }
   }
 
-  /**
-   * Retry failed notification
-   */
-  async retryNotification(
-    notificationId: string,
-    tenantId: string,
-    priority: Priority = Priority.NORMAL,
-    retryCount: number = 0,
-  ): Promise<void> {
-    await this.addNotificationJob(notificationId, tenantId, priority, undefined, retryCount + 1);
-  }
-
-  /**
-   * Retry failed delivery
-   */
-  async retryDelivery(
-    notificationId: string,
-    deliveryId: string,
-    tenantId: string,
-    channel: string,
-    providerId: string,
-    recipient: string,
-    templateData: Record<string, any>,
-    priority: Priority = Priority.NORMAL,
-    retryCount: number = 0,
-  ): Promise<void> {
-    await this.addDeliveryJob(
-      notificationId,
-      deliveryId,
-      tenantId,
-      channel,
-      providerId,
-      recipient,
-      templateData,
-      priority,
-      retryCount + 1,
-    );
-  }
-
-  /**
-   * Get queue statistics
-   */
   async getQueueStats(): Promise<{
     notification: {
       waiting: number;
@@ -228,30 +206,33 @@ export class NotificationQueueService {
     ]);
 
     return {
-      notification: notificationCounts,
-      delivery: deliveryCounts,
+      notification: {
+        waiting: notificationCounts.waiting,
+        active: notificationCounts.active,
+        completed: notificationCounts.completed,
+        failed: notificationCounts.failed,
+        delayed: notificationCounts.delayed,
+      },
+      delivery: {
+        waiting: deliveryCounts.waiting,
+        active: deliveryCounts.active,
+        completed: deliveryCounts.completed,
+        failed: deliveryCounts.failed,
+        delayed: deliveryCounts.delayed,
+      },
     };
   }
 
-  /**
-   * Pause queues
-   */
   async pauseQueues(): Promise<void> {
     await Promise.all([this.notificationQueue.pause(), this.deliveryQueue.pause()]);
     this.logger.log("Queues paused");
   }
 
-  /**
-   * Resume queues
-   */
   async resumeQueues(): Promise<void> {
     await Promise.all([this.notificationQueue.resume(), this.deliveryQueue.resume()]);
     this.logger.log("Queues resumed");
   }
 
-  /**
-   * Clean completed and failed jobs
-   */
   async cleanQueues(): Promise<void> {
     const cleanOptions = {
       grace: 1000,
@@ -259,18 +240,15 @@ export class NotificationQueueService {
     };
 
     await Promise.all([
-      this.notificationQueue.clean(24 * 60 * 60 * 1000, "completed", cleanOptions.limit),
-      this.notificationQueue.clean(7 * 24 * 60 * 60 * 1000, "failed", cleanOptions.limit),
-      this.deliveryQueue.clean(24 * 60 * 60 * 1000, "completed", cleanOptions.limit),
-      this.deliveryQueue.clean(7 * 24 * 60 * 60 * 1000, "failed", cleanOptions.limit),
+      this.notificationQueue.clean(24 * 60 * 60 * 1000, cleanOptions.limit, "completed"),
+      this.notificationQueue.clean(7 * 24 * 60 * 60 * 1000, cleanOptions.limit, "failed"),
+      this.deliveryQueue.clean(24 * 60 * 60 * 1000, cleanOptions.limit, "completed"),
+      this.deliveryQueue.clean(7 * 24 * 60 * 60 * 1000, cleanOptions.limit, "failed"),
     ]);
 
     this.logger.log("Queues cleaned");
   }
 
-  /**
-   * Get failed jobs for analysis
-   */
   async getFailedJobs(limit: number = 50): Promise<{
     notifications: any[];
     deliveries: any[];
@@ -300,86 +278,8 @@ export class NotificationQueueService {
     };
   }
 
-  /**
-   * Add to dead letter queue for manual review
-   */
-  async addToDeadLetterQueue(data: {
-    type: "notification" | "delivery";
-    id: string;
-    tenantId: string;
-    originalJobData: any;
-    failureReason: string;
-    failedAt: Date;
-    retryCount: number;
-    queueName: string;
-    priority: number;
-    messageData?: any;
-    deliveryData?: any;
-  }): Promise<void> {
-    // In a real implementation, this would use a separate dead letter queue
-    // For now, we'll use a special job type in the main queue
-    const jobData: DeadLetterJobData = {
-      type: "dead_letter",
-      originalType: data.type,
-      originalId: data.id,
-      tenantId: data.tenantId,
-      failureReason: data.failureReason,
-      failedAt: data.failedAt,
-      retryCount: data.retryCount,
-      originalJobData: data.originalJobData,
-      messageData: data.messageData,
-      deliveryData: data.deliveryData,
-    };
-
-    await this.notificationQueue.add("handle-dead-letter", jobData, {
-      priority: data.priority,
-      attempts: 1,
-      removeOnComplete: false, // Keep dead letter jobs for manual review
-      removeOnFail: false,
-    });
-
-    this.logger.log(`Added ${data.type} ${data.id} to dead letter queue`);
-  }
-
-  /**
-   * Add alert job for system notifications
-   */
-  async addAlertJob(alert: {
-    type: string;
-    severity: "low" | "medium" | "high" | "critical";
-    title: string;
-    message: string;
-    tenantId: string;
-    metadata?: any;
-    recipients: string[];
-  }): Promise<void> {
-    const jobData: AlertJobData = {
-      type: "system_alert",
-      alert,
-      createdAt: new Date(),
-    };
-
-    const priority = this.getAlertPriority(alert.severity);
-
-    await this.notificationQueue.add("process-alert", jobData, {
-      priority,
-      attempts: 3,
-      backoff: {
-        type: "exponential",
-        delay: 5000,
-      },
-      removeOnComplete: 10,
-      removeOnFail: 10,
-    });
-
-    this.logger.log(`Added ${alert.severity} alert: ${alert.title}`);
-  }
-
-  /**
-   * Get dead letter queue items for manual review
-   */
   async getDeadLetterItems(limit: number = 50): Promise<any[]> {
-    const jobs = await this.notificationQueue.getJobs(["completed", "failed"], 0, limit - 1);
+    const jobs = await this.adminQueue.getJobs(["completed", "failed"], 0, limit - 1);
 
     return jobs
       .filter((job) => (job.data as any).type === "dead_letter")
@@ -402,11 +302,8 @@ export class NotificationQueueService {
       });
   }
 
-  /**
-   * Reprocess dead letter item
-   */
   async reprocessDeadLetterItem(deadLetterJobId: string): Promise<void> {
-    const job = await this.notificationQueue.getJob(deadLetterJobId);
+    const job = await this.adminQueue.getJob(deadLetterJobId);
 
     if (!job || (job.data as any).type !== "dead_letter") {
       throw new Error("Dead letter job not found");
@@ -422,6 +319,7 @@ export class NotificationQueueService {
         originalJobData.priority,
         originalJobData.scheduledAt,
         originalJobData.retryCount || 0,
+        originalJobData.payload,
       );
     } else if (originalType === "delivery") {
       await this.addDeliveryJob(
@@ -437,45 +335,38 @@ export class NotificationQueueService {
       );
     }
 
-    // Remove the dead letter job
     await job.remove();
 
     this.logger.log(`Reprocessed dead letter item ${deadLetterJobId}`);
   }
 
-  /**
-   * Get alert priority value
-   */
   private getAlertPriority(severity: string): number {
     switch (severity) {
       case "critical":
-        return 20;
-      case "high":
-        return 15;
-      case "medium":
-        return 5;
-      case "low":
         return 1;
+      case "high":
+        return 2;
+      case "medium":
+        return 3;
+      case "low":
+        return 4;
       default:
-        return 5;
+        return 3;
     }
   }
 
-  /**
-   * Convert priority enum to numeric value for Bull queue
-   */
   private getPriorityValue(priority: Priority): number {
     switch (priority) {
       case Priority.URGENT:
-        return 10;
+        return 1;
       case Priority.HIGH:
-        return 5;
+        return 2;
       case Priority.NORMAL:
-        return 1;
+        return 3;
       case Priority.LOW:
-        return -5;
+        return 4;
       default:
-        return 1;
+        return 3;
     }
   }
 }

@@ -2,10 +2,6 @@ import { DataSource, DataSourceOptions, EntityTarget, ObjectLiteral } from "type
 
 const TEST_DB_TYPES = new Set(["sqljs", "sqlite", "better-sqlite3"]);
 
-/**
- * Tests must never touch the real Postgres database.
- * Always pin the process to an in-memory SQL.js database.
- */
 export function assertSafeTestDatabase(): void {
   process.env.NODE_ENV = "test";
   process.env.DATABASE_URL = "sqlite::memory:";

@@ -1,22 +1,34 @@
 import { Test, TestingModule } from "@nestjs/testing";
-import { Channel, ProviderConfig, ProviderHealth } from "../types";
+import { ProviderConfig, ProviderHealth } from "../types";
+import { NotificationChannel } from "../../common/enums/notification-channel.enum";
 import { EmailPayload } from "./email-provider.interface";
 import { SESEmailProvider } from "./ses-email-provider";
 import type { Mock } from "vitest";
 
-// Mock AWS SDK
 const mockSend = vi.fn();
 const mockDestroy = vi.fn();
 
 vi.mock("@aws-sdk/client-ses", () => ({
-  SESClient: vi.fn().mockImplementation(() => ({
-    send: mockSend,
-    destroy: mockDestroy,
-    config: { region: "us-east-1" },
-  })),
-  SendEmailCommand: vi.fn().mockImplementation((params) => params),
-  GetSendQuotaCommand: vi.fn().mockImplementation((params) => params),
-  GetSendStatisticsCommand: vi.fn().mockImplementation((params) => params),
+  SESClient: class {
+    send = mockSend;
+    destroy = mockDestroy;
+    config = { region: "us-east-1" };
+  },
+  SendEmailCommand: class {
+    constructor(input: unknown) {
+      Object.assign(this, input);
+    }
+  },
+  GetSendQuotaCommand: class {
+    constructor(input: unknown) {
+      Object.assign(this, input);
+    }
+  },
+  GetSendStatisticsCommand: class {
+    constructor(input: unknown) {
+      Object.assign(this, input);
+    }
+  },
 }));
 
 describe("SESEmailProvider", () => {
@@ -34,7 +46,7 @@ describe("SESEmailProvider", () => {
     validConfig = {
       id: "ses-provider",
       name: "SES Email Provider",
-      channel: Channel.EMAIL,
+      channel: NotificationChannel.EMAIL,
       priority: 1,
       isActive: true,
       credentials: {
@@ -45,11 +57,9 @@ describe("SESEmailProvider", () => {
       },
     };
 
-    // Reset mocks
     mockSend.mockReset();
     mockDestroy.mockReset();
 
-    // Get the mocked SES client
     const { SESClient } = require("@aws-sdk/client-ses");
     mockSESClient = { send: mockSend, destroy: mockDestroy };
   });
@@ -68,7 +78,7 @@ describe("SESEmailProvider", () => {
       expect(provider.isInitialized).toBe(true);
       expect(provider.id).toBe("ses");
       expect(provider.name).toBe("AWS SES");
-      expect(provider.channel).toBe(Channel.EMAIL);
+      expect(provider.channel).toBe(NotificationChannel.EMAIL);
     });
 
     it("should fail initialization with missing fromEmail", async () => {
@@ -169,29 +179,7 @@ describe("SESEmailProvider", () => {
     });
   });
 
-  describe("health checks", () => {
-    beforeEach(async () => {
-      await provider.initialize(validConfig);
-    });
-
-    it("should return healthy status when SES is accessible", async () => {
-      mockSend.mockResolvedValue({ Max24HourSend: 200 });
-
-      const healthStatus = await provider.checkHealth();
-
-      expect(healthStatus.status).toBe(ProviderHealth.HEALTHY);
-      expect(healthStatus.metadata?.service).toBe("AWS SES");
-    });
-
-    it("should return unhealthy status when SES is not accessible", async () => {
-      mockSend.mockRejectedValue(new Error("Connection failed"));
-
-      const healthStatus = await provider.checkHealth();
-
-      expect(healthStatus.status).toBe(ProviderHealth.UNHEALTHY);
-      expect(healthStatus.metadata?.error).toContain("SES health check failed");
-    });
-  });
+  // Health checks moved to the circuit breaker (common/errors/services/circuit-breaker.service.ts); providers no longer own a checkHealth API.
 
   describe("SES-specific methods", () => {
     beforeEach(async () => {

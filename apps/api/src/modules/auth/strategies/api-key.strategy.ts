@@ -9,7 +9,6 @@ export class ApiKeyStrategy extends PassportStrategy(Strategy, "api-key") {
   }
 
   async validate(req: any): Promise<any> {
-    // API key validation logic would go here
     return {};
   }
 }

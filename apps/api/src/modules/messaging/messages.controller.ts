@@ -3,10 +3,8 @@ import { ApiHeader, ApiOperation, ApiResponse, ApiTags } from "@nestjs/swagger";
 import { ApiKeyAuthGuard } from "../api-key/guards/api-key-auth.guard";
 import { Public } from "../auth/decorators/public.decorator";
 import { NotificationEngineService } from "../notifications/engine/notification-engine.service";
-import {
-  NotificationChannel,
-  NotificationEngineResponse,
-} from "../notifications/engine/notification-engine.types";
+import { NotificationEngineResponse } from "../notifications/engine/notification-engine.types";
+import { NotificationChannel } from "../../common/enums/notification-channel.enum";
 import { PublicSendMessageDto } from "./dto/public-send-message.dto";
 
 @ApiTags("messages")
@@ -44,11 +42,12 @@ export class MessagesController {
         await this.notificationEngine.send({
           tenantId,
           projectId,
-          channel: dto.channel as NotificationChannel,
+          channel: dto.channel,
           to,
           title: dto.subject,
           message: body,
           templateId: dto.templateId,
+          chatProvider: dto.chatProvider,
           metadata: {
             from: dto.from,
             html: dto.html,

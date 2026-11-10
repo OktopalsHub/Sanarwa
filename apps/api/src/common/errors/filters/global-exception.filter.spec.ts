@@ -1,13 +1,11 @@
-import { ArgumentsHost, HttpStatus, HttpException } from "@nestjs/common";
+import { ArgumentsHost, HttpStatus } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { Test, TestingModule } from "@nestjs/testing";
 import { Request, Response } from "express";
-import { AlertService } from "../../alerts/alert.service";
 import { GlobalExceptionFilter } from "./global-exception.filter";
 
 describe("GlobalExceptionFilter", () => {
   let filter: GlobalExceptionFilter;
-  let alertService: AlertService;
 
   const mockRequest = {
     method: "POST",
@@ -33,12 +31,6 @@ describe("GlobalExceptionFilter", () => {
       providers: [
         GlobalExceptionFilter,
         {
-          provide: AlertService,
-          useValue: {
-            send5xxAlert: vi.fn(),
-          },
-        },
-        {
           provide: ConfigService,
           useValue: {
             get: vi.fn().mockImplementation((key: string) => {
@@ -51,7 +43,6 @@ describe("GlobalExceptionFilter", () => {
     }).compile();
 
     filter = module.get<GlobalExceptionFilter>(GlobalExceptionFilter);
-    alertService = module.get<AlertService>(AlertService);
   });
 
   afterEach(() => {
@@ -79,36 +70,10 @@ describe("GlobalExceptionFilter", () => {
       );
     });
 
-    it("should send alert for 5xx errors", async () => {
-      const error = new Error("Server error");
-
-      await filter.catch(error, mockArgumentsHost);
-
-      expect(alertService.send5xxAlert).toHaveBeenCalledWith(
-        error,
-        mockRequest,
-        HttpStatus.INTERNAL_SERVER_ERROR,
-      );
-    });
-
-    it("should not send alert for client errors", async () => {
-      const clientError = new HttpException("Bad request", HttpStatus.BAD_REQUEST);
-
-      await filter.catch(clientError, mockArgumentsHost);
-
-      expect(alertService.send5xxAlert).not.toHaveBeenCalled();
-    });
-
     it("should include debug information in development environment", async () => {
       const module: TestingModule = await Test.createTestingModule({
         providers: [
           GlobalExceptionFilter,
-          {
-            provide: AlertService,
-            useValue: {
-              send5xxAlert: vi.fn(),
-            },
-          },
           {
             provide: ConfigService,
             useValue: {
@@ -141,7 +106,6 @@ describe("GlobalExceptionFilter", () => {
 
       await filter.catch(error, mockArgumentsHost);
 
-      // Should complete without throwing
       expect(mockResponse.status).toHaveBeenCalledWith(HttpStatus.INTERNAL_SERVER_ERROR);
     });
 
@@ -150,15 +114,12 @@ describe("GlobalExceptionFilter", () => {
 
       await filter.catch(error, mockArgumentsHost);
 
-      // Should complete without throwing
       expect(mockResponse.status).toHaveBeenCalledWith(HttpStatus.INTERNAL_SERVER_ERROR);
     });
 
-    it("should handle alerting service failures gracefully", async () => {
+    it("should handle an error with no alert service", async () => {
       const error = new Error("Critical error");
-      vi.spyOn(alertService, "send5xxAlert").mockRejectedValue(new Error("Alert service down"));
 
-      // Should not throw even if alerting fails
       await expect(filter.catch(error, mockArgumentsHost)).resolves.not.toThrow();
 
       expect(mockResponse.status).toHaveBeenCalledWith(HttpStatus.INTERNAL_SERVER_ERROR);

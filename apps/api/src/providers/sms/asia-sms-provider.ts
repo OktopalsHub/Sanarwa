@@ -1,12 +1,7 @@
 import { Injectable } from "@nestjs/common";
 import { BaseProvider } from "../base/base-provider.abstract";
-import {
-  Channel,
-  ProviderConfig,
-  ProviderHealth,
-  ProviderHealthStatus,
-  ProviderResponse,
-} from "../types";
+import { ProviderConfig, ProviderResponse } from "../types";
+import { NotificationChannel } from "../../common/enums/notification-channel.enum";
 import { ISMSProvider, SMSConfig, SMSPayload } from "./sms-provider.interface";
 
 interface AsiaSMSRequest {
@@ -76,7 +71,7 @@ export class AsiaSMSProvider extends BaseProvider implements ISMSProvider {
   ];
 
   constructor() {
-    super("asia-sms", "Asia SMS Provider", Channel.SMS);
+    super("asia-sms", "Asia SMS Provider", NotificationChannel.SMS);
   }
 
   async send(payload: SMSPayload): Promise<ProviderResponse> {
@@ -143,41 +138,6 @@ export class AsiaSMSProvider extends BaseProvider implements ISMSProvider {
     return true;
   }
 
-  protected async performHealthCheck(): Promise<ProviderHealthStatus> {
-    try {
-      // Test connectivity by fetching account info
-      const accountUrl = `${this.baseUrl}/${this.smsConfig.apiKey}.json`;
-      const auth = Buffer.from(`${this.smsConfig.apiKey}:${this.smsConfig.apiSecret}`).toString(
-        "base64",
-      );
-
-      const response = await fetch(accountUrl, {
-        headers: {
-          Authorization: `Basic ${auth}`,
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-      }
-
-      const data = (await response.json()) as { status: string };
-
-      return {
-        status: ProviderHealth.HEALTHY,
-        lastChecked: new Date(),
-        uptime: 100,
-        metadata: {
-          service: "Asia SMS Provider",
-          accountStatus: data.status,
-          supportedCountries: this.supportedCountries.length,
-        },
-      };
-    } catch (error) {
-      throw new Error(`Asia SMS health check failed: ${error.message}`, { cause: error });
-    }
-  }
-
   protected async onInitialize(): Promise<void> {
     this.smsConfig = this.config.credentials as SMSConfig;
     this.logger.log(
@@ -195,15 +155,12 @@ export class AsiaSMSProvider extends BaseProvider implements ISMSProvider {
   }
 
   formatPhoneNumber(phoneNumber: string, countryCode?: string): string {
-    // If number already starts with +, return as is
     if (phoneNumber.startsWith("+")) {
       return phoneNumber;
     }
 
-    // Remove all non-digit characters
     let cleaned = phoneNumber.replace(/\D/g, "");
 
-    // Country code mapping for Asian countries
     const countryCodeMap: Record<string, string> = {
       CN: "86",
       JP: "81",
@@ -253,31 +210,25 @@ export class AsiaSMSProvider extends BaseProvider implements ISMSProvider {
       CY: "357",
     };
 
-    // If country code is provided and supported
     if (countryCode && countryCodeMap[countryCode.toUpperCase()]) {
       const code = countryCodeMap[countryCode.toUpperCase()];
 
-      // Remove leading zeros
       cleaned = cleaned.replace(/^0+/, "");
 
-      // If number doesn't start with country code, add it
       if (!cleaned.startsWith(code)) {
         return `+${code}${cleaned}`;
       }
     }
 
-    // Default to India if no country code provided and looks like local number
     if (cleaned.length === 10 || cleaned.length === 11) {
       cleaned = cleaned.replace(/^0+/, "");
       return `+91${cleaned}`;
     }
 
-    // If number already has country code (length > 11), add +
     if (cleaned.length > 11) {
       return `+${cleaned}`;
     }
 
-    // Fallback: add + to whatever we have
     return `+${cleaned}`;
   }
 
@@ -310,7 +261,6 @@ export class AsiaSMSProvider extends BaseProvider implements ISMSProvider {
   }
 
   private extractCountryCode(phoneNumber: string): string {
-    // Extract country code from formatted phone number
     if (!phoneNumber.startsWith("+")) {
       return "";
     }
@@ -364,7 +314,6 @@ export class AsiaSMSProvider extends BaseProvider implements ISMSProvider {
       "357": "CY",
     };
 
-    // Try different lengths of country codes (1-3 digits)
     for (let i = 1; i <= 3; i++) {
       const code = phoneNumber.substring(1, 1 + i);
       if (countryCodeMap[code]) {
@@ -375,9 +324,6 @@ export class AsiaSMSProvider extends BaseProvider implements ISMSProvider {
     return "";
   }
 
-  /**
-   * Get account information
-   */
   async getAccountInfo(): Promise<any> {
     if (!this.isInitialized) {
       throw new Error("Provider not initialized");
@@ -406,9 +352,6 @@ export class AsiaSMSProvider extends BaseProvider implements ISMSProvider {
     }
   }
 
-  /**
-   * Get message delivery status
-   */
   async getMessageStatus(messageSid: string): Promise<any> {
     if (!this.isInitialized) {
       throw new Error("Provider not initialized");

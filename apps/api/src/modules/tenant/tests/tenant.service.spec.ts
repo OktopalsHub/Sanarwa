@@ -30,10 +30,10 @@ describe("TenantService", () => {
     subdomain: "test-tenant",
     status: TenantStatus.ACTIVE,
     quotas: {
-      notifications: { daily: 1000, monthly: 30000 },
+      notifications: { total: 1000, monthly: 30000 },
       channels: {
-        email: { daily: 500, monthly: 15000 },
-        sms: { daily: 200, monthly: 6000 },
+        email: { total: 500, monthly: 15000 },
+        sms: { total: 200, monthly: 6000 },
       },
     },
     settings: {
@@ -52,7 +52,6 @@ describe("TenantService", () => {
     createdAt: new Date(),
     updatedAt: new Date(),
 
-    // Relationship properties
     members: [],
     apiKeys: [],
   };
@@ -60,6 +59,7 @@ describe("TenantService", () => {
   const mockQueryBuilder = {
     andWhere: vi.fn().mockReturnThis(),
     where: vi.fn().mockReturnThis(),
+    select: vi.fn().mockReturnThis(),
     orderBy: vi.fn().mockReturnThis(),
     skip: vi.fn().mockReturnThis(),
     take: vi.fn().mockReturnThis(),
@@ -108,7 +108,6 @@ describe("TenantService", () => {
     userService = module.get<UserService>(UserService);
     eventEmitter = module.get<EventEmitter2>(EventEmitter2);
 
-    // Reset all mocks
     vi.clearAllMocks();
   });
 
@@ -136,14 +135,27 @@ describe("TenantService", () => {
 
       expect(mockUserService.getUserById).toHaveBeenCalledWith(mockUser.id);
       expect(mockTenantRepository.findOne).toHaveBeenCalledWith({
-        where: [
-          { name: createTenantDto.name.toLowerCase() },
-          { subdomain: createTenantDto.subdomain },
-        ],
+        where: [{ subdomain: "new-tenant" }],
       });
       expect(mockTenantRepository.create).toHaveBeenCalledWith({
-        ...createTenantDto,
+        name: "New Tenant",
+        quotas: {
+          notifications: { total: -1 },
+          channels: {
+            email: { total: 1000 },
+            sms: { total: 10 },
+            push: { total: 1000 },
+            whatsapp: { total: 10 },
+            inApp: { total: 1000 },
+            voice: { total: 5 },
+          },
+          templates: {},
+          providers: { total: 6 },
+        },
+        inviteCode: expect.any(String),
+        subdomain: "new-tenant",
         status: TenantStatus.ACTIVE,
+        ownerId: "user-123",
       });
       expect(mockEventEmitter.emit).toHaveBeenCalledWith(
         "tenant.created",
@@ -163,31 +175,31 @@ describe("TenantService", () => {
     });
   });
 
-  describe("getAllTenants", () => {
+  describe("getTenants", () => {
     it("should return paginated tenants", async () => {
       mockQueryBuilder.getManyAndCount.mockResolvedValue([[mockTenant], 1]);
 
-      const result = await service.getAllTenants({});
+      const result = await service.getTenants({} as any);
 
-      expect(result.tenants).toHaveLength(1);
-      expect(result.total).toBe(1);
+      expect(result.size).toBe(1);
+      expect(result.totalItems).toBe(1);
     });
 
     it("should apply filters correctly", async () => {
       mockQueryBuilder.getManyAndCount.mockResolvedValue([[], 0]);
 
-      await service.getAllTenants({
+      await service.getTenants({
         status: TenantStatus.ACTIVE,
         search: "test",
         page: 2,
         limit: 5,
-      });
+      } as any);
 
       expect(mockQueryBuilder.andWhere).toHaveBeenCalledWith("tenant.status = :status", {
         status: TenantStatus.ACTIVE,
       });
       expect(mockQueryBuilder.andWhere).toHaveBeenCalledWith(
-        "(tenant.name ILIKE :search OR tenant.description ILIKE :search OR tenant.subdomain ILIKE :search)",
+        "(tenant.name ILIKE :search OR tenant.subdomain ILIKE :search)",
         { search: "%test%" },
       );
       expect(mockQueryBuilder.skip).toHaveBeenCalledWith(5);
@@ -286,8 +298,8 @@ describe("TenantService", () => {
       expect(mockTenantRepository.update).toHaveBeenCalledWith(mockTenant.id, {
         usage: {
           currentMonth: {
-            notifications: 105, // 100 + 5
-            email: 55, // 50 + 5
+            notifications: 105,
+            email: 55,
             sms: 25,
           },
           lastUpdated: expect.any(Date),

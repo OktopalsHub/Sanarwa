@@ -1,7 +1,16 @@
 import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
-import { IsString, IsOptional, IsEnum, IsObject, IsArray, ValidateNested } from "class-validator";
+import {
+  IsString,
+  IsOptional,
+  IsEnum,
+  IsObject,
+  IsArray,
+  ValidateNested,
+  IsIn,
+} from "class-validator";
 import { Type } from "class-transformer";
 import { NotificationChannel } from "../../../common/enums/notification-channel.enum";
+import { CHAT_CHANNEL_PROVIDERS, ChatProvider } from "../../../common/enums/chat-provider.enum";
 
 export enum Priority {
   LOW = "low",
@@ -42,15 +51,23 @@ export class NotificationRequestDto {
   @IsEnum(NotificationChannel)
   channel: NotificationChannel;
 
-  @ApiPropertyOptional({ description: "Template data/variables (used when template is specified)" })
+  @ApiPropertyOptional({ description: "Template variables (used when template is specified)" })
   @IsOptional()
   @IsObject()
-  data?: Record<string, any>;
+  variables?: Record<string, any>;
 
   @ApiPropertyOptional({ enum: Priority, description: "Notification priority" })
   @IsOptional()
   @IsEnum(Priority)
   priority?: Priority;
+
+  @ApiPropertyOptional({
+    enum: CHAT_CHANNEL_PROVIDERS,
+    description: "Chat provider used when channel is `chat` (defaults to slack)",
+  })
+  @IsOptional()
+  @IsIn(CHAT_CHANNEL_PROVIDERS)
+  chatProvider?: ChatProvider;
 
   @ApiPropertyOptional({ description: "Additional metadata" })
   @IsOptional()

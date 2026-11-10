@@ -1,9 +1,11 @@
 import { Injectable, Logger } from "@nestjs/common";
-import { Channel } from "../../providers/types";
+import { InjectRedis } from "@nestjs-modules/ioredis";
+import type Redis from "ioredis";
+import { NotificationChannel } from "../../common/enums/notification-channel.enum";
 
 export interface ProviderMetrics {
   providerId: string;
-  channel: Channel;
+  channel: NotificationChannel;
   successRate: number;
   averageResponseTime: number;
   totalRequests: number;
@@ -17,7 +19,7 @@ export interface ProviderMetrics {
 
 export interface PerformanceAnalytics {
   providerId: string;
-  channel: Channel;
+  channel: NotificationChannel;
   timeRange: {
     start: Date;
     end: Date;
@@ -31,19 +33,19 @@ export interface PerformanceAnalytics {
     p99ResponseTime: number;
     successRate: number;
     errorRate: number;
-    throughput: number; // requests per second
+    throughput: number;
   };
   trends: {
-    successRateTrend: number; // percentage change
-    responseTimeTrend: number; // percentage change
-    throughputTrend: number; // percentage change
+    successRateTrend: number;
+    responseTimeTrend: number;
+    throughputTrend: number;
   };
 }
 
 interface ProviderPerformanceRecord {
   id: string;
   providerId: string;
-  channel: Channel;
+  channel: NotificationChannel;
   timestamp: Date;
   success: boolean;
   responseTime: number;
@@ -54,17 +56,14 @@ interface ProviderPerformanceRecord {
 @Injectable()
 export class ProviderPerformanceTracker {
   private readonly logger = new Logger(ProviderPerformanceTracker.name);
-  private readonly performanceData = new Map<string, ProviderPerformanceRecord[]>();
-  private readonly metricsCache = new Map<string, { metrics: ProviderMetrics; timestamp: Date }>();
-  private readonly CACHE_TTL = 60000; // 1 minute
+  private readonly CACHE_TTL = 60;
   private readonly MAX_RECORDS_PER_PROVIDER = 10000;
 
-  /**
-   * Record a successful provider operation
-   */
+  constructor(@InjectRedis() private readonly redis: Redis) {}
+
   async recordSuccess(
     providerId: string,
-    channel: Channel,
+    channel: NotificationChannel,
     responseTime: number,
     metadata?: Record<string, any>,
   ): Promise<void> {
@@ -78,18 +77,15 @@ export class ProviderPerformanceTracker {
       metadata,
     };
 
-    this.addRecord(providerId, channel, record);
-    this.invalidateCache(providerId, channel);
+    await this.addRecord(providerId, channel, record);
+    await this.invalidateCache(providerId, channel);
 
     this.logger.debug(`Recorded success for ${providerId} (${channel}): ${responseTime}ms`);
   }
 
-  /**
-   * Record a failed provider operation
-   */
   async recordFailure(
     providerId: string,
-    channel: Channel,
+    channel: NotificationChannel,
     errorMessage: string,
     metadata?: Record<string, any>,
   ): Promise<void> {
@@ -104,39 +100,40 @@ export class ProviderPerformanceTracker {
       metadata,
     };
 
-    this.addRecord(providerId, channel, record);
-    this.invalidateCache(providerId, channel);
+    await this.addRecord(providerId, channel, record);
+    await this.invalidateCache(providerId, channel);
 
     this.logger.debug(`Recorded failure for ${providerId} (${channel}): ${errorMessage}`);
   }
 
-  /**
-   * Get current metrics for a provider
-   */
-  async getMetrics(providerId: string, channel: Channel): Promise<ProviderMetrics> {
+  async getMetrics(providerId: string, channel: NotificationChannel): Promise<ProviderMetrics> {
     const cacheKey = this.getCacheKey(providerId, channel);
-    const cached = this.metricsCache.get(cacheKey);
+    const cached = await this.redis.get(cacheKey);
 
-    if (cached && Date.now() - cached.timestamp.getTime() < this.CACHE_TTL) {
-      return cached.metrics;
+    if (cached) {
+      const metrics = JSON.parse(cached) as ProviderMetrics;
+      if (metrics.lastSuccessfulRequest) {
+        metrics.lastSuccessfulRequest = new Date(metrics.lastSuccessfulRequest);
+      }
+      if (metrics.lastFailedRequest) {
+        metrics.lastFailedRequest = new Date(metrics.lastFailedRequest);
+      }
+      return metrics;
     }
 
     const metrics = await this.calculateMetrics(providerId, channel);
-    this.metricsCache.set(cacheKey, { metrics, timestamp: new Date() });
+    await this.redis.set(cacheKey, JSON.stringify(metrics), "EX", this.CACHE_TTL);
 
     return metrics;
   }
 
-  /**
-   * Get performance analytics for a time range
-   */
   async getAnalytics(
     providerId: string,
-    channel: Channel,
+    channel: NotificationChannel,
     startDate: Date,
     endDate: Date,
   ): Promise<PerformanceAnalytics> {
-    const records = this.getRecordsInRange(providerId, channel, startDate, endDate);
+    const records = await this.getRecordsInRange(providerId, channel, startDate, endDate);
 
     if (records.length === 0) {
       return this.getEmptyAnalytics(providerId, channel, startDate, endDate);
@@ -154,16 +151,13 @@ export class ProviderPerformanceTracker {
         ? responseTimes.reduce((sum, time) => sum + time, 0) / responseTimes.length
         : 0;
 
-    // Calculate percentiles
     const sortedResponseTimes = responseTimes.toSorted((a, b) => a - b);
     const p95ResponseTime = this.calculatePercentile(sortedResponseTimes, 95);
     const p99ResponseTime = this.calculatePercentile(sortedResponseTimes, 99);
 
-    // Calculate throughput (requests per second)
     const timeRangeSeconds = (endDate.getTime() - startDate.getTime()) / 1000;
     const throughput = totalRequests / timeRangeSeconds;
 
-    // Calculate trends (compare with previous period)
     const previousPeriodStart = new Date(
       startDate.getTime() - (endDate.getTime() - startDate.getTime()),
     );
@@ -208,21 +202,22 @@ export class ProviderPerformanceTracker {
     };
   }
 
-  /**
-   * Get top performing providers for a channel
-   */
-  async getTopPerformers(channel: Channel, limit: number = 10): Promise<ProviderMetrics[]> {
+  async getTopPerformers(
+    channel: NotificationChannel,
+    limit: number = 10,
+  ): Promise<ProviderMetrics[]> {
     const allMetrics: ProviderMetrics[] = [];
 
-    for (const [key] of this.performanceData) {
-      const [providerId, providerChannel] = key.split(":");
+    for (const member of await this.redis.smembers(this.getRegistryKey())) {
+      const { providerId, channel: providerChannel } = JSON.parse(member) as {
+        providerId: string;
+        channel: NotificationChannel;
+      };
       if (providerChannel === channel) {
-        const metrics = await this.getMetrics(providerId, channel);
-        allMetrics.push(metrics);
+        allMetrics.push(await this.getMetrics(providerId, channel));
       }
     }
 
-    // Sort by success rate and response time
     return allMetrics
       .toSorted((a, b) => {
         if (a.successRate !== b.successRate) {
@@ -233,61 +228,61 @@ export class ProviderPerformanceTracker {
       .slice(0, limit);
   }
 
-  /**
-   * Clear old performance data
-   */
   async cleanupOldData(olderThanDays: number = 30): Promise<void> {
     const cutoffDate = new Date();
     cutoffDate.setDate(cutoffDate.getDate() - olderThanDays);
 
     let totalRemoved = 0;
 
-    for (const [key, records] of this.performanceData) {
+    for (const member of await this.redis.smembers(this.getRegistryKey())) {
+      const { providerId, channel } = JSON.parse(member) as {
+        providerId: string;
+        channel: NotificationChannel;
+      };
+      const key = this.getDataKey(providerId, channel);
+      const records = await this.readRecords(key);
       const filteredRecords = records.filter((record) => record.timestamp > cutoffDate);
 
-      const removedCount = records.length - filteredRecords.length;
-      totalRemoved += removedCount;
+      totalRemoved += records.length - filteredRecords.length;
 
+      await this.redis.del(key);
       if (filteredRecords.length === 0) {
-        this.performanceData.delete(key);
+        await this.redis.srem(this.getRegistryKey(), member);
       } else {
-        this.performanceData.set(key, filteredRecords);
+        await this.writeRecords(key, filteredRecords);
       }
+      await this.redis.del(this.getCacheKey(providerId, channel));
     }
-
-    // Clear cache
-    this.metricsCache.clear();
 
     this.logger.log(`Cleaned up ${totalRemoved} old performance records`);
   }
 
-  /**
-   * Get provider comparison report
-   */
   async getProviderComparison(
-    channel: Channel,
+    channel: NotificationChannel,
     startDate: Date,
     endDate: Date,
   ): Promise<PerformanceAnalytics[]> {
     const comparisons: PerformanceAnalytics[] = [];
 
-    for (const [key] of this.performanceData) {
-      const [providerId, providerChannel] = key.split(":");
+    for (const member of await this.redis.smembers(this.getRegistryKey())) {
+      const { providerId, channel: providerChannel } = JSON.parse(member) as {
+        providerId: string;
+        channel: NotificationChannel;
+      };
       if (providerChannel === channel) {
-        const analytics = await this.getAnalytics(providerId, channel, startDate, endDate);
-        comparisons.push(analytics);
+        comparisons.push(await this.getAnalytics(providerId, channel, startDate, endDate));
       }
     }
 
     return comparisons.toSorted((a, b) => b.metrics.successRate - a.metrics.successRate);
   }
 
-  /**
-   * Calculate current metrics for a provider
-   */
-  private async calculateMetrics(providerId: string, channel: Channel): Promise<ProviderMetrics> {
+  private async calculateMetrics(
+    providerId: string,
+    channel: NotificationChannel,
+  ): Promise<ProviderMetrics> {
     const key = this.getDataKey(providerId, channel);
-    const records = this.performanceData.get(key) || [];
+    const records = await this.readRecords(key);
 
     if (records.length === 0) {
       return {
@@ -316,7 +311,6 @@ export class ProviderPerformanceTracker {
         ? responseTimes.reduce((sum, time) => sum + time, 0) / responseTimes.length
         : 0;
 
-    // Calculate requests per minute for last hour
     const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
     const recentRecords = records.filter((r) => r.timestamp > oneHourAgo);
     const requestsPerMinute = recentRecords.length / 60;
@@ -346,41 +340,51 @@ export class ProviderPerformanceTracker {
     };
   }
 
-  /**
-   * Add a performance record
-   */
-  private addRecord(providerId: string, channel: Channel, record: ProviderPerformanceRecord): void {
+  private async addRecord(
+    providerId: string,
+    channel: NotificationChannel,
+    record: ProviderPerformanceRecord,
+  ): Promise<void> {
     const key = this.getDataKey(providerId, channel);
-    const records = this.performanceData.get(key) || [];
-
-    records.push(record);
-
-    // Keep only the most recent records
-    if (records.length > this.MAX_RECORDS_PER_PROVIDER) {
-      records.splice(0, records.length - this.MAX_RECORDS_PER_PROVIDER);
-    }
-
-    this.performanceData.set(key, records);
+    await this.redis
+      .multi()
+      .lpush(key, JSON.stringify(record))
+      .ltrim(key, 0, this.MAX_RECORDS_PER_PROVIDER - 1)
+      .sadd(this.getRegistryKey(), JSON.stringify({ providerId, channel }))
+      .exec();
   }
 
-  /**
-   * Get records within a time range
-   */
-  private getRecordsInRange(
+  private getRegistryKey(): string {
+    return "perf:keys";
+  }
+
+  private async readRecords(key: string): Promise<ProviderPerformanceRecord[]> {
+    const raw = await this.redis.lrange(key, 0, -1);
+    return raw.map((item) => {
+      const record = JSON.parse(item) as ProviderPerformanceRecord;
+      record.timestamp = new Date(record.timestamp);
+      return record;
+    });
+  }
+
+  private async writeRecords(key: string, records: ProviderPerformanceRecord[]): Promise<void> {
+    if (records.length === 0) {
+      return;
+    }
+    await this.redis.rpush(key, ...records.map((record) => JSON.stringify(record)));
+  }
+
+  private async getRecordsInRange(
     providerId: string,
-    channel: Channel,
+    channel: NotificationChannel,
     startDate: Date,
     endDate: Date,
-  ): ProviderPerformanceRecord[] {
-    const key = this.getDataKey(providerId, channel);
-    const records = this.performanceData.get(key) || [];
+  ): Promise<ProviderPerformanceRecord[]> {
+    const records = await this.readRecords(this.getDataKey(providerId, channel));
 
     return records.filter((record) => record.timestamp >= startDate && record.timestamp <= endDate);
   }
 
-  /**
-   * Calculate percentile from sorted array
-   */
   private calculatePercentile(sortedArray: number[], percentile: number): number {
     if (sortedArray.length === 0) return 0;
 
@@ -388,20 +392,14 @@ export class ProviderPerformanceTracker {
     return sortedArray[Math.max(0, Math.min(index, sortedArray.length - 1))];
   }
 
-  /**
-   * Calculate trend percentage
-   */
   private calculateTrend(previousValue: number, currentValue: number): number {
     if (previousValue === 0) return currentValue > 0 ? 100 : 0;
     return ((currentValue - previousValue) / previousValue) * 100;
   }
 
-  /**
-   * Get empty analytics structure
-   */
   private getEmptyAnalytics(
     providerId: string,
-    channel: Channel,
+    channel: NotificationChannel,
     startDate: Date,
     endDate: Date,
   ): PerformanceAnalytics {
@@ -428,32 +426,19 @@ export class ProviderPerformanceTracker {
     };
   }
 
-  /**
-   * Generate unique ID for records
-   */
   private generateId(): string {
     return `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
   }
 
-  /**
-   * Get data key for provider
-   */
-  private getDataKey(providerId: string, channel: Channel): string {
-    return `${providerId}:${channel}`;
+  private getDataKey(providerId: string, channel: NotificationChannel): string {
+    return `perf:records:${providerId}:${channel}`;
   }
 
-  /**
-   * Get cache key for metrics
-   */
-  private getCacheKey(providerId: string, channel: Channel): string {
-    return `metrics:${providerId}:${channel}`;
+  private getCacheKey(providerId: string, channel: NotificationChannel): string {
+    return `perf:metrics:${providerId}:${channel}`;
   }
 
-  /**
-   * Invalidate metrics cache
-   */
-  private invalidateCache(providerId: string, channel: Channel): void {
-    const cacheKey = this.getCacheKey(providerId, channel);
-    this.metricsCache.delete(cacheKey);
+  private async invalidateCache(providerId: string, channel: NotificationChannel): Promise<void> {
+    await this.redis.del(this.getCacheKey(providerId, channel));
   }
 }

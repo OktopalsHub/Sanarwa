@@ -4,6 +4,8 @@ import { InjectRepository } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
 import { Message } from "../../messaging/message.entity";
 import { SMSService } from "./sms.service";
+import { InjectRedis } from "@nestjs-modules/ioredis";
+import type Redis from "ioredis";
 
 export interface ConversationContext {
   conversationId: string;
@@ -19,19 +21,16 @@ export interface ConversationContext {
 export class SMSConversationService {
   private readonly logger = new Logger(SMSConversationService.name);
 
-  // In-memory conversation cache for quick lookups
-  private readonly conversationCache = new Map<string, ConversationContext>();
+  private readonly CONTEXT_TTL = 3600;
 
   constructor(
     @InjectRepository(Message)
     private readonly messageRepository: Repository<Message>,
     private readonly smsService: SMSService,
     private readonly eventEmitter: EventEmitter2,
+    @InjectRedis() private readonly redis: Redis,
   ) {}
 
-  /**
-   * Handle conversation replies - ensures replies use the same provider
-   */
   @OnEvent("sms.conversation.reply")
   async handleConversationReply(payload: {
     inboundMessage: any;
@@ -42,10 +41,8 @@ export class SMSConversationService {
     try {
       this.logger.log(`Processing conversation reply: ${payload.conversationId}`);
 
-      // Update conversation context
       await this.updateConversationContext(payload);
 
-      // Emit event for business logic to handle the reply
       this.eventEmitter.emit("sms.conversation.message", {
         conversationId: payload.conversationId,
         message: payload.inboundMessage.text,
@@ -57,16 +54,12 @@ export class SMSConversationService {
         originalMessage: payload.originalMessage,
       });
 
-      // Example auto-reply logic based on keywords
       await this.processConversationAutoReply(payload);
     } catch (error) {
       this.logger.error(`Failed to handle conversation reply: ${error.message}`, error.stack);
     }
   }
 
-  /**
-   * Send a message in an existing conversation (maintains provider continuity)
-   */
   async sendConversationMessage(
     conversationId: string,
     message: string,
@@ -74,7 +67,6 @@ export class SMSConversationService {
     metadata?: Record<string, any>,
   ): Promise<{ success: boolean; messageId?: string; error?: string }> {
     try {
-      // Get conversation context
       const context = await this.getConversationContext(conversationId);
       if (!context) {
         return {
@@ -83,7 +75,6 @@ export class SMSConversationService {
         };
       }
 
-      // Send using the same provider to maintain conversation continuity
       const result = await this.smsService.sendSMS({
         to: context.phoneNumber,
         message,
@@ -97,7 +88,6 @@ export class SMSConversationService {
       });
 
       if (result.success) {
-        // Update conversation context
         await this.updateConversationActivity(conversationId);
       }
 
@@ -111,16 +101,13 @@ export class SMSConversationService {
     }
   }
 
-  /**
-   * Get conversation history
-   */
   async getConversationHistory(
     conversationId: string,
     limit: number = 50,
   ): Promise<{
     messages: Array<{
       id: string;
-      content: string;
+      data: string;
       direction: "inbound" | "outbound";
       timestamp: Date;
       provider: string;
@@ -129,7 +116,6 @@ export class SMSConversationService {
     context: ConversationContext | null;
   }> {
     try {
-      // Get messages for this conversation
       const messages = await this.messageRepository
         .createQueryBuilder("message")
         .leftJoinAndSelect("message.deliveries", "delivery")
@@ -140,7 +126,7 @@ export class SMSConversationService {
 
       const formattedMessages = messages.map((msg) => ({
         id: msg.id,
-        content: msg.content || "",
+        data: msg.data || "",
         direction: msg.metadata?.direction || "outbound",
         timestamp: msg.createdAt,
         provider: msg.metadata?.provider || "unknown",
@@ -162,15 +148,11 @@ export class SMSConversationService {
     }
   }
 
-  /**
-   * Get active conversations for a tenant
-   */
   async getActiveConversations(
     tenantId: string,
     limit: number = 100,
   ): Promise<ConversationContext[]> {
     try {
-      // Get recent conversations from database
       const recentMessages = await this.messageRepository
         .createQueryBuilder("message")
         .select([
@@ -183,7 +165,7 @@ export class SMSConversationService {
         .where("message.tenantId = :tenantId", { tenantId })
         .andWhere("message.metadata->'conversationId' IS NOT NULL")
         .andWhere("message.createdAt >= :since", {
-          since: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000), // Last 7 days
+          since: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
         })
         .groupBy(
           "message.metadata->'conversationId', message.tenantId, message.metadata->'provider'",
@@ -198,7 +180,6 @@ export class SMSConversationService {
         const conversationId = row.conversationid;
         if (!conversationId) continue;
 
-        // Extract phone number from conversation ID
         const phoneNumber = this.extractPhoneFromConversationId(conversationId);
 
         conversations.push({
@@ -218,9 +199,6 @@ export class SMSConversationService {
     }
   }
 
-  /**
-   * Process auto-reply logic for conversations
-   */
   private async processConversationAutoReply(payload: {
     inboundMessage: any;
     originalMessage: Message;
@@ -230,7 +208,6 @@ export class SMSConversationService {
     const message = payload.inboundMessage.text.toLowerCase().trim();
     const tenantId = payload.originalMessage.tenantId;
 
-    // Example conversation-aware auto-replies
     if (message === "status") {
       await this.sendConversationMessage(
         payload.conversationId,
@@ -246,7 +223,6 @@ export class SMSConversationService {
         { type: "auto-reply", trigger: "help" },
       );
     } else if (message === "support") {
-      // Escalate to human support
       this.eventEmitter.emit("sms.conversation.escalate", {
         conversationId: payload.conversationId,
         phoneNumber: payload.inboundMessage.from,
@@ -263,9 +239,6 @@ export class SMSConversationService {
     }
   }
 
-  /**
-   * Update conversation context
-   */
   private async updateConversationContext(payload: {
     inboundMessage: any;
     originalMessage: Message;
@@ -278,31 +251,27 @@ export class SMSConversationService {
       provider: payload.provider,
       tenantId: payload.originalMessage.tenantId,
       lastMessageAt: new Date(),
-      messageCount: 1, // Will be updated with actual count
+      messageCount: 1,
     };
 
-    // Cache the context for quick lookups
-    this.conversationCache.set(payload.conversationId, context);
-
-    // Clean cache periodically
-    if (this.conversationCache.size > 1000) {
-      this.cleanConversationCache();
-    }
+    await this.redis.set(
+      this.conversationKey(payload.conversationId),
+      JSON.stringify(context),
+      "EX",
+      this.CONTEXT_TTL,
+    );
   }
 
-  /**
-   * Get conversation context
-   */
   private async getConversationContext(
     conversationId: string,
   ): Promise<ConversationContext | null> {
-    // Check cache first
-    const cached = this.conversationCache.get(conversationId);
+    const cached = await this.redis.get(this.conversationKey(conversationId));
     if (cached) {
-      return cached;
+      const context = JSON.parse(cached) as ConversationContext;
+      context.lastMessageAt = new Date(context.lastMessageAt);
+      return context;
     }
 
-    // Get from database
     const message = await this.messageRepository
       .createQueryBuilder("message")
       .where("message.metadata->'conversationId' = :conversationId", { conversationId })
@@ -324,28 +293,34 @@ export class SMSConversationService {
       messageCount: 1,
     };
 
-    // Cache for future use
-    this.conversationCache.set(conversationId, context);
+    await this.redis.set(
+      this.conversationKey(conversationId),
+      JSON.stringify(context),
+      "EX",
+      this.CONTEXT_TTL,
+    );
 
     return context;
   }
 
-  /**
-   * Update conversation activity timestamp
-   */
   private async updateConversationActivity(conversationId: string): Promise<void> {
-    const context = this.conversationCache.get(conversationId);
-    if (context) {
-      context.lastMessageAt = new Date();
-      context.messageCount++;
+    const raw = await this.redis.get(this.conversationKey(conversationId));
+    if (!raw) {
+      return;
     }
+
+    const context = JSON.parse(raw) as ConversationContext;
+    context.lastMessageAt = new Date();
+    context.messageCount++;
+    await this.redis.set(
+      this.conversationKey(conversationId),
+      JSON.stringify(context),
+      "EX",
+      this.CONTEXT_TTL,
+    );
   }
 
-  /**
-   * Extract phone number from conversation ID
-   */
   private extractPhoneFromConversationId(conversationId: string): string {
-    // Conversation ID format: provider_phonenumber
     const parts = conversationId.split("_");
     if (parts.length >= 2) {
       return "+" + parts.slice(1).join("");
@@ -353,21 +328,7 @@ export class SMSConversationService {
     return "unknown";
   }
 
-  /**
-   * Clean old entries from conversation cache
-   */
-  private cleanConversationCache(): void {
-    const now = Date.now();
-    const maxAge = 60 * 60 * 1000; // 1 hour
-
-    for (const [id, context] of this.conversationCache.entries()) {
-      if (now - context.lastMessageAt.getTime() > maxAge) {
-        this.conversationCache.delete(id);
-      }
-    }
-
-    this.logger.debug(
-      `Cleaned conversation cache, ${this.conversationCache.size} entries remaining`,
-    );
+  private conversationKey(conversationId: string): string {
+    return `sms:conv:${conversationId}`;
   }
 }

@@ -14,42 +14,27 @@ export class EnvironmentValidationService {
 
   constructor(private readonly configService: ConfigService) {}
 
-  /**
-   * Validates all environment variables and returns validation errors
-   */
   validateEnvironment(): ValidationError[] {
     const errors: ValidationError[] = [];
 
-    // Core required variables
     errors.push(...this.validateCoreVariables());
 
-    // Security variables
     errors.push(...this.validateSecurityVariables());
 
-    // Database and Redis
     errors.push(...this.validateDatabaseVariables());
 
-    // OAuth configuration (if enabled)
     errors.push(...this.validateOAuthVariables());
 
-    // Twilio (if enabled)
     errors.push(...this.validateTwilioVariables());
-
-    // Alert system (if enabled)
-    errors.push(...this.validateAlertVariables());
 
     return errors;
   }
 
-  /**
-   * Validates environment and throws error if critical issues found
-   */
   validateOrThrow(): void {
     const errors = this.validateEnvironment();
     const criticalErrors = errors.filter((error) => error.severity === "error");
 
     if (criticalErrors.length > 0) {
-      // Use console.error to ensure immediate output
       console.error("\n" + "=".repeat(80));
       console.error("ENVIRONMENT VALIDATION FAILED");
       console.error("=".repeat(80));
@@ -89,7 +74,6 @@ export class EnvironmentValidationService {
   private validateCoreVariables(): ValidationError[] {
     const errors: ValidationError[] = [];
 
-    // Database URL is required
     if (!this.configService.get<string>("DATABASE_URL")) {
       errors.push({
         variable: "DATABASE_URL",
@@ -160,7 +144,6 @@ export class EnvironmentValidationService {
     const errors: ValidationError[] = [];
     const nodeEnv = this.configService.get<string>("NODE_ENV", "development");
 
-    // Encryption key validation
     const encryptionKey = this.configService.get<string>("PROVIDER_ENCRYPTION_KEY");
     if (!encryptionKey) {
       errors.push({
@@ -185,7 +168,6 @@ export class EnvironmentValidationService {
       });
     }
 
-    // Production-specific encryption key validation
     if (nodeEnv === "production" && encryptionKey && encryptionKey.length < 32) {
       errors.push({
         variable: "PROVIDER_ENCRYPTION_KEY",
@@ -195,7 +177,6 @@ export class EnvironmentValidationService {
       });
     }
 
-    // Session secret validation
     const sessionSecret = this.configService.get<string>("SESSION_SECRET");
     if (!sessionSecret) {
       errors.push({
@@ -220,7 +201,6 @@ export class EnvironmentValidationService {
       });
     }
 
-    // Production-specific validations
     if (nodeEnv === "production") {
       if (!this.configService.get<string>("FRONTEND_URL")) {
         errors.push({
@@ -238,7 +218,6 @@ export class EnvironmentValidationService {
   private validateDatabaseVariables(): ValidationError[] {
     const errors: ValidationError[] = [];
 
-    // Redis configuration validation
     const redisUrl = this.configService.get<string>("REDIS_URL");
     const redisHost = this.configService.get<string>("REDIS_HOST");
 
@@ -257,7 +236,6 @@ export class EnvironmentValidationService {
   private validateOAuthVariables(): ValidationError[] {
     const errors: ValidationError[] = [];
 
-    // Google OAuth validation
     const googleClientId = this.configService.get<string>("GOOGLE_CLIENT_ID");
     const googleClientSecret = this.configService.get<string>("GOOGLE_CLIENT_SECRET");
 
@@ -279,7 +257,6 @@ export class EnvironmentValidationService {
       });
     }
 
-    // GitHub OAuth validation
     const githubClientId = this.configService.get<string>("GITHUB_CLIENT_ID");
     const githubClientSecret = this.configService.get<string>("GITHUB_CLIENT_SECRET");
 
@@ -338,34 +315,6 @@ export class EnvironmentValidationService {
         message: "Twilio Phone Number is required when using Twilio voice provider",
         severity: "error",
         suggestion: "Set TWILIO_PHONE_NUMBER or change VOICE_PROVIDER",
-      });
-    }
-
-    return errors;
-  }
-
-  private validateAlertVariables(): ValidationError[] {
-    const errors: ValidationError[] = [];
-
-    // Slack alerts validation
-    const slackEnabled = this.configService.get<string>("SLACK_ALERTS_ENABLED", "false");
-    if (slackEnabled === "true" && !this.configService.get<string>("SLACK_BOT_TOKEN")) {
-      errors.push({
-        variable: "SLACK_BOT_TOKEN",
-        message: "Slack bot token is required when Slack alerts are enabled",
-        severity: "error",
-        suggestion: "Set SLACK_BOT_TOKEN or disable SLACK_ALERTS_ENABLED",
-      });
-    }
-
-    // Discord alerts validation
-    const discordEnabled = this.configService.get<string>("DISCORD_ALERTS_ENABLED", "false");
-    if (discordEnabled === "true" && !this.configService.get<string>("DISCORD_BOT_TOKEN")) {
-      errors.push({
-        variable: "DISCORD_BOT_TOKEN",
-        message: "Discord bot token is required when Discord alerts are enabled",
-        severity: "error",
-        suggestion: "Set DISCORD_BOT_TOKEN or disable DISCORD_ALERTS_ENABLED",
       });
     }
 

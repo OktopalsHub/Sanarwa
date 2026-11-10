@@ -1,5 +1,5 @@
 import { Injectable, Inject, Logger } from "@nestjs/common";
-import { BaseRepository } from "../../../database/repositories/base.repository";
+import { BaseRepository } from "../../../common/database/repositories/base.repository";
 import { BRAND_REPO } from "../brand.tokens";
 import { Brand } from "../entities/brand.entity";
 import { getBrandOrThrow } from "./brand-lookup";
@@ -19,9 +19,6 @@ export class BrandMessagingConfigService {
     private readonly brandRepository: BaseRepository<Brand>,
   ) {}
 
-  /**
-   * Get brand configuration for email sending (integrated branded email functionality)
-   */
   async getBrandConfigForEmail(
     tenantId: string,
     brandId?: string,
@@ -42,16 +39,15 @@ export class BrandMessagingConfigService {
 
       if (!brand) {
         return {
-          canSend: true, // Can send with platform defaults
+          canSend: true,
           reason: "No brand configured, using platform defaults",
           recommendations: ["Configure a brand for better email branding"],
         };
       }
 
-      // Check if brand has email configuration
       if (!brand.defaultFromEmail || !brand.defaultFromName) {
         return {
-          canSend: true, // Can send with platform defaults
+          canSend: true,
           reason: "Brand missing email configuration, using platform defaults",
           recommendations: [
             "Set defaultFromEmail in brand configuration",
@@ -60,7 +56,6 @@ export class BrandMessagingConfigService {
         };
       }
 
-      // Check if domain is verified with SES
       const isVerified = brand.whiteLabelConfig?.domains?.sesVerified || false;
       const isDkimEnabled = brand.whiteLabelConfig?.dkim?.sesEnabled || false;
 
@@ -75,7 +70,7 @@ export class BrandMessagingConfigService {
       if (!isVerified && brand.domain) {
         return {
           brandConfig,
-          canSend: true, // Can send but with warnings
+          canSend: true,
           reason: "Domain not verified with SES",
           recommendations: [
             "Verify domain with SES for better deliverability",
@@ -94,16 +89,13 @@ export class BrandMessagingConfigService {
     } catch (error) {
       this.logger.error(`Failed to get brand config for email: ${error.message}`, error);
       return {
-        canSend: true, // Fallback to platform defaults
+        canSend: true,
         reason: `Brand configuration error: ${error.message}`,
         recommendations: ["Using platform email defaults"],
       };
     }
   }
 
-  /**
-   * Get email sending recommendations for a brand
-   */
   async getEmailRecommendations(tenantId: string, brandId: string): Promise<ScoredRecommendations> {
     try {
       const brand = await getBrandOrThrow(this.brandRepository, tenantId, brandId);
@@ -111,7 +103,6 @@ export class BrandMessagingConfigService {
 
       let score = 0;
 
-      // Check basic configuration (30 points)
       if (brand.defaultFromEmail && brand.defaultFromName) {
         score += 30;
       } else {
@@ -123,7 +114,6 @@ export class BrandMessagingConfigService {
         });
       }
 
-      // Check domain configuration (20 points)
       if (brand.domain) {
         score += 20;
       } else {
@@ -135,7 +125,6 @@ export class BrandMessagingConfigService {
         });
       }
 
-      // Check SES verification (30 points)
       const isVerified = brand.whiteLabelConfig?.domains?.sesVerified || false;
       if (isVerified) {
         score += 30;
@@ -148,7 +137,6 @@ export class BrandMessagingConfigService {
         });
       }
 
-      // Check DKIM (20 points)
       const isDkimEnabled = brand.whiteLabelConfig?.dkim?.sesEnabled || false;
       const isDkimVerified = brand.whiteLabelConfig?.dkim?.sesVerified || false;
 
@@ -178,9 +166,6 @@ export class BrandMessagingConfigService {
     }
   }
 
-  /**
-   * Get push notification recommendations for a brand
-   */
   async getPushRecommendations(tenantId: string, brandId: string): Promise<ScoredRecommendations> {
     try {
       const brand = await getBrandOrThrow(this.brandRepository, tenantId, brandId);
@@ -188,7 +173,6 @@ export class BrandMessagingConfigService {
 
       let score = 0;
 
-      // Check brand name (20 points)
       if (brand.name) {
         score += 20;
       } else {
@@ -200,7 +184,6 @@ export class BrandMessagingConfigService {
         });
       }
 
-      // Check brand colors (20 points)
       if (brand.primaryColor) {
         score += 20;
       } else {
@@ -212,7 +195,6 @@ export class BrandMessagingConfigService {
         });
       }
 
-      // Check brand logo (20 points)
       if (brand.logo) {
         score += 20;
       } else {
@@ -224,7 +206,6 @@ export class BrandMessagingConfigService {
         });
       }
 
-      // Check domain for deep linking (20 points)
       if (brand.domain) {
         score += 20;
       } else {
@@ -236,7 +217,6 @@ export class BrandMessagingConfigService {
         });
       }
 
-      // Check description for context (20 points)
       if (brand.description) {
         score += 20;
       } else {
@@ -255,9 +235,6 @@ export class BrandMessagingConfigService {
     }
   }
 
-  /**
-   * Get brand configuration for push notifications
-   */
   async getBrandConfigForPush(
     tenantId: string,
     brandId?: string,
@@ -277,7 +254,7 @@ export class BrandMessagingConfigService {
 
       if (!brand) {
         return {
-          canSend: true, // Can send with platform defaults
+          canSend: true,
           reason: "No brand configured, using platform defaults",
           recommendations: ["Configure a brand for better push notification branding"],
         };
@@ -315,17 +292,13 @@ export class BrandMessagingConfigService {
     } catch (error) {
       this.logger.error(`Failed to get brand config for push: ${error.message}`, error);
       return {
-        canSend: true, // Fallback to platform defaults
+        canSend: true,
         reason: `Brand configuration error: ${error.message}`,
         recommendations: ["Using platform push notification defaults"],
       };
     }
   }
 
-  /**
-   * Resolve the requested brand, or the tenant's most recent brand when no ID is given.
-   * Falls back to null when the tenant has no brands at all.
-   */
   private async resolveBrand(tenantId: string, brandId?: string): Promise<Brand | null> {
     if (brandId) {
       return getBrandOrThrow(this.brandRepository, tenantId, brandId);

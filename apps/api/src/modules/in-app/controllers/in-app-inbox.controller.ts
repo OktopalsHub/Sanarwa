@@ -41,7 +41,11 @@ export class InAppInboxController {
     @Query("subscriberId") subscriberId: string,
     @Query("feedId") feedId?: string,
   ) {
-    const count = await this.feedService.getUnseenCount(tenantId, subscriberId, feedId || "default");
+    const count = await this.feedService.getUnseenCount(
+      tenantId,
+      subscriberId,
+      feedId || "default",
+    );
     return { count };
   }
 
@@ -51,7 +55,12 @@ export class InAppInboxController {
     @CurrentTenantId() tenantId: string,
     @Body() body: { subscriberId: string; messageIds?: string[]; feedId?: string },
   ) {
-    const n = await this.feedService.markSeen(tenantId, body.subscriberId, body.messageIds, body.feedId);
+    const n = await this.feedService.markSeen(
+      tenantId,
+      body.subscriberId,
+      body.messageIds,
+      body.feedId,
+    );
     return { updated: n };
   }
 
@@ -71,7 +80,12 @@ export class InAppInboxController {
     @CurrentTenantId() tenantId: string,
     @Body() body: { subscriberId: string; messageIds: string[]; archived: boolean },
   ) {
-    const n = await this.feedService.markArchived(tenantId, body.subscriberId, body.messageIds, body.archived);
+    const n = await this.feedService.markArchived(
+      tenantId,
+      body.subscriberId,
+      body.messageIds,
+      body.archived,
+    );
     return { updated: n };
   }
 

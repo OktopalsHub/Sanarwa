@@ -7,7 +7,7 @@ export interface OutboundCallRequest {
   phoneNumber: string;
   message: string;
   voice?: {
-    voice?: string; // Telnyx voice identifier like 'Telnyx.Natural.abbie'
+    voice?: string;
     language?: string;
   };
   callerId?: string;
@@ -35,9 +35,6 @@ export class VoiceService {
     this.logger.log("Using Telnyx voice provider with built-in TTS");
   }
 
-  /**
-   * Create an outbound voice call with TTS message using Telnyx
-   */
   async createOutboundCall(
     request: OutboundCallRequest,
     tenantId: string,
@@ -47,7 +44,6 @@ export class VoiceService {
         `Creating outbound call to ${request.phoneNumber} with message: "${request.message}"`,
       );
 
-      // Create the call using Telnyx
       const result = await this.telnyxVoiceProvider.createCall(
         request.phoneNumber,
         request.message,
@@ -60,7 +56,6 @@ export class VoiceService {
         };
       }
 
-      // Start call tracking for quota management
       if (result.callControlId) {
         await this.voiceCallTrackingService.startCall({
           tenantId,
@@ -82,7 +77,6 @@ export class VoiceService {
         success: true,
         callId: result.callId,
         callControlId: result.callControlId,
-        // Cost will be tracked by Telnyx billing
       };
     } catch (error) {
       this.logger.error(`Failed to create outbound call: ${error.message}`, error.stack);
@@ -93,14 +87,8 @@ export class VoiceService {
     }
   }
 
-  // TTS message will be played automatically via webhook when call is answered
-
-  /**
-   * Get call status
-   */
   async getCallStatus(callId: string) {
     try {
-      // For now, return basic status - Telnyx webhooks would provide real status
       return {
         success: true,
         callId,
@@ -116,9 +104,6 @@ export class VoiceService {
     }
   }
 
-  /**
-   * End a call
-   */
   async endCall(callControlId: string): Promise<{ success: boolean; error?: string }> {
     try {
       this.logger.log(`Ending call: ${callControlId}`);
@@ -141,9 +126,6 @@ export class VoiceService {
     }
   }
 
-  /**
-   * Send additional TTS message to active call
-   */
   async sendTTSToCall(
     callControlId: string,
     message: string,
@@ -177,9 +159,6 @@ export class VoiceService {
     }
   }
 
-  /**
-   * Get call statistics for tenant
-   */
   async getCallStats(tenantId: string, startDate?: Date): Promise<any> {
     try {
       return await this.voiceCallTrackingService.getCallStats(tenantId, startDate);
@@ -189,9 +168,6 @@ export class VoiceService {
     }
   }
 
-  /**
-   * Get available voices from Telnyx
-   */
   async getAvailableVoices(): Promise<{ success: boolean; voices?: any[]; error?: string }> {
     try {
       return await this.telnyxVoiceProvider.getAvailableVoices();
@@ -204,9 +180,6 @@ export class VoiceService {
     }
   }
 
-  /**
-   * Validate voice service configuration
-   */
   async validateConfiguration(): Promise<{
     telnyx: boolean;
     tts: boolean;
@@ -218,7 +191,7 @@ export class VoiceService {
 
     return {
       telnyx: telnyxValid,
-      tts: telnyxValid, // TTS is built into Telnyx
+      tts: telnyxValid,
       overall: telnyxValid,
     };
   }

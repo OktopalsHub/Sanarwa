@@ -1,5 +1,5 @@
 import { Injectable, NotFoundException, ConflictException } from "@nestjs/common";
-import { getPaginationSummary, IPaginatedData } from "src/common/dto/pagination.dto";
+import { getPaginationSummary, IPaginatedData } from "../../common/dto/pagination.dto";
 import { CreateProjectDto } from "./dto/create-project.dto";
 import { UpdateProjectDto } from "./dto/update-project.dto";
 import { Project } from "./entities/project.entity";
@@ -14,7 +14,6 @@ export class ProjectService {
     createDto: CreateProjectDto,
     createdById?: string,
   ): Promise<Project> {
-    // Check if a project with the same name already exists in this tenant
     const exists = await this.projectRepository.existsByNameAndTenant(createDto.name, tenantId);
 
     if (exists) {
@@ -43,19 +42,16 @@ export class ProjectService {
       ])
       .where("project.tenant.id = :tenantId", { tenantId });
 
-    // Apply filters
     if (query?.search) {
       queryBuilder.andWhere("(project.name ILIKE :search OR project.description ILIKE :search)", {
         search: `%${query.search}%`,
       });
     }
 
-    // Apply sorting
     const sortField = query?.sortBy || "createdAt";
     const sortOrder = query?.sortOrder || "DESC";
     queryBuilder.orderBy(`project.${sortField}`, sortOrder);
 
-    // Apply pagination
     const page = query?.page || 1;
     const limit = query?.limit || 10;
     const offset = (page - 1) * limit;
@@ -64,7 +60,6 @@ export class ProjectService {
 
     const [projects, total] = await queryBuilder.getManyAndCount();
 
-    // Transform to only include necessary fields
     const sanitizedProjects = projects.map((project) => ({
       id: project.id,
       name: project.name,
@@ -88,7 +83,6 @@ export class ProjectService {
   async updateProject(tenantId: string, id: string, updateDto: UpdateProjectDto): Promise<Project> {
     const project = await this.getProjectById(tenantId, id);
 
-    // Check if updating the name would create a duplicate
     if (updateDto.name && updateDto.name !== project.name) {
       const exists = await this.projectRepository.existsByNameAndTenant(
         updateDto.name,

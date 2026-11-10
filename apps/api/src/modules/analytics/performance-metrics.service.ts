@@ -5,10 +5,8 @@ import {
   MessageDeliveryStatus as DeliveryStatus,
   MessageDelivery as NotificationDelivery,
 } from "../messaging/message-delivery.entity";
-import {
-  Message as Notification,
-  MessageChannel as NotificationChannel,
-} from "../messaging/message.entity";
+import { Message as Notification } from "../messaging/message.entity";
+import { NotificationChannel } from "../../common/enums/notification-channel.enum";
 
 export interface PerformanceMetric {
   name: string;
@@ -83,13 +81,9 @@ export class PerformanceMetricsService {
     @InjectRepository(NotificationDelivery)
     private readonly deliveryRepository: Repository<NotificationDelivery>,
   ) {
-    // Start collecting system metrics periodically
     this.startMetricsCollection();
   }
 
-  /**
-   * Record a performance metric
-   */
   recordMetric(name: string, value: number, unit: string, tags?: Record<string, string>): void {
     const metric: PerformanceMetric = {
       name,
@@ -101,7 +95,6 @@ export class PerformanceMetricsService {
 
     this.metrics.push(metric);
 
-    // Keep only the last 10000 metrics in memory
     if (this.metrics.length > 10000) {
       this.metrics.splice(0, this.metrics.length - 10000);
     }
@@ -109,9 +102,6 @@ export class PerformanceMetricsService {
     this.logger.debug(`Metric recorded: ${name} = ${value} ${unit}`);
   }
 
-  /**
-   * Record notification processing time
-   */
   recordNotificationProcessingTime(
     notificationId: string,
     processingTimeMs: number,
@@ -125,9 +115,6 @@ export class PerformanceMetricsService {
     });
   }
 
-  /**
-   * Record provider response time
-   */
   recordProviderResponseTime(
     providerId: string,
     channel: NotificationChannel,
@@ -147,9 +134,6 @@ export class PerformanceMetricsService {
     });
   }
 
-  /**
-   * Record queue metrics
-   */
   recordQueueMetrics(queueName: string, depth: number, processingRate: number): void {
     this.recordMetric("queue.depth", depth, "count", { queueName });
 
@@ -158,9 +142,6 @@ export class PerformanceMetricsService {
     });
   }
 
-  /**
-   * Record delivery metrics
-   */
   recordDeliveryMetrics(
     channel: NotificationChannel,
     status: DeliveryStatus,
@@ -179,44 +160,36 @@ export class PerformanceMetricsService {
     }
   }
 
-  /**
-   * Get system performance metrics
-   */
   async getSystemPerformanceMetrics(
     startDate?: Date,
     endDate?: Date,
   ): Promise<SystemPerformanceMetrics> {
     const now = new Date();
-    const start = startDate || new Date(now.getTime() - 24 * 60 * 60 * 1000); // Last 24 hours
+    const start = startDate || new Date(now.getTime() - 24 * 60 * 60 * 1000);
     const end = endDate || now;
 
-    // Get notifications in time range
     const notifications = await this.notificationRepository
       .createQueryBuilder("notification")
       .where("notification.createdAt >= :start", { start })
       .andWhere("notification.createdAt <= :end", { end })
       .getMany();
 
-    // Get deliveries in time range
     const deliveries = await this.deliveryRepository
       .createQueryBuilder("delivery")
       .where("delivery.createdAt >= :start", { start })
       .andWhere("delivery.createdAt <= :end", { end })
       .getMany();
 
-    // Calculate throughput
     const timeRangeSeconds = (end.getTime() - start.getTime()) / 1000;
     const notificationsPerSecond = notifications.length / timeRangeSeconds;
     const deliveriesPerSecond = deliveries.length / timeRangeSeconds;
 
-    // Calculate processing times
     const processingTimes = this.getMetricValues("notification.processing_time", start, end);
 
     const deliveryTimes = deliveries
       .filter((d) => d.sentAt && d.deliveredAt)
       .map((d) => d.deliveredAt!.getTime() - d.sentAt!.getTime());
 
-    // Calculate success/error rates
     const successfulDeliveries = deliveries.filter(
       (d) => d.status === DeliveryStatus.DELIVERED,
     ).length;
@@ -226,14 +199,12 @@ export class PerformanceMetricsService {
     const successRate = totalDeliveries > 0 ? (successfulDeliveries / totalDeliveries) * 100 : 0;
     const errorRate = totalDeliveries > 0 ? (failedDeliveries / totalDeliveries) * 100 : 0;
 
-    // Calculate retry rate
     const retriedNotifications = notifications.filter((n) => n.retryCount > 0).length;
     const retryRate =
       notifications.length > 0 ? (retriedNotifications / notifications.length) * 100 : 0;
 
-    // Calculate uptime (simplified - time since service start)
     const uptimeMs = Date.now() - this.startTime;
-    const uptime = (uptimeMs / (24 * 60 * 60 * 1000)) * 100; // Percentage of day
+    const uptime = (uptimeMs / (24 * 60 * 60 * 1000)) * 100;
 
     return {
       throughput: {
@@ -262,9 +233,6 @@ export class PerformanceMetricsService {
     };
   }
 
-  /**
-   * Get provider performance metrics
-   */
   async getProviderPerformanceMetrics(
     providerId?: string,
     channel?: NotificationChannel,
@@ -275,7 +243,6 @@ export class PerformanceMetricsService {
     const start = startDate || new Date(now.getTime() - 24 * 60 * 60 * 1000);
     const end = endDate || now;
 
-    // Get deliveries for the provider/channel
     const queryBuilder = this.deliveryRepository
       .createQueryBuilder("delivery")
       .where("delivery.createdAt >= :start", { start })
@@ -293,7 +260,6 @@ export class PerformanceMetricsService {
 
     const deliveries = await queryBuilder.getMany();
 
-    // Group by provider and channel
     const providerGroups = deliveries.reduce(
       (acc, delivery) => {
         const key = `${delivery.providerId}-${delivery.channel}`;
@@ -322,13 +288,11 @@ export class PerformanceMetricsService {
     for (const group of Object.values(providerGroups)) {
       const { providerId: pid, channel: ch, deliveries: providerDeliveries } = group;
 
-      // Get response times from metrics
       const responseTimes = this.getMetricValues("provider.response_time", start, end, {
         providerId: pid,
         channel: ch,
       });
 
-      // Calculate metrics
       const totalRequests = providerDeliveries.length;
       const successfulRequests = providerDeliveries.filter(
         (d) => d.status === DeliveryStatus.DELIVERED || d.status === DeliveryStatus.SENT,
@@ -342,7 +306,6 @@ export class PerformanceMetricsService {
       const throughput = totalRequests / ((end.getTime() - start.getTime()) / 1000);
       const averageResponseTime = this.calculateAverage(responseTimes);
 
-      // Simplified availability calculation
       const availability = successRate > 95 ? 100 : successRate;
 
       providerMetrics.push({
@@ -362,9 +325,6 @@ export class PerformanceMetricsService {
     return providerMetrics.toSorted((a, b) => b.metrics.throughput - a.metrics.throughput);
   }
 
-  /**
-   * Get tenant performance metrics
-   */
   async getTenantPerformanceMetrics(
     tenantId: string,
     startDate?: Date,
@@ -374,7 +334,6 @@ export class PerformanceMetricsService {
     const start = startDate || new Date(now.getTime() - 24 * 60 * 60 * 1000);
     const end = endDate || now;
 
-    // Get notifications for tenant
     const notifications = await this.notificationRepository
       .createQueryBuilder("notification")
       .where("notification.tenantId = :tenantId", { tenantId })
@@ -382,7 +341,6 @@ export class PerformanceMetricsService {
       .andWhere("notification.createdAt <= :end", { end })
       .getMany();
 
-    // Get deliveries for tenant
     const deliveries = await this.deliveryRepository
       .createQueryBuilder("delivery")
       .innerJoin("delivery.notification", "notification")
@@ -397,16 +355,14 @@ export class PerformanceMetricsService {
     ).length;
     const failedDeliveries = deliveries.filter((d) => d.status === DeliveryStatus.FAILED).length;
 
-    // Calculate average delivery time
     const deliveryTimes = deliveries
       .filter((d) => d.sentAt && d.deliveredAt)
       .map((d) => d.deliveredAt!.getTime() - d.sentAt!.getTime());
 
     const averageDeliveryTime = this.calculateAverage(deliveryTimes);
 
-    // Simplified quota calculation (would come from tenant configuration in real implementation)
     const quotaUsage = totalNotifications;
-    const quotaLimit = 10000; // Default limit
+    const quotaLimit = 10000;
 
     return {
       tenantId,
@@ -422,9 +378,6 @@ export class PerformanceMetricsService {
     };
   }
 
-  /**
-   * Get performance trends over time
-   */
   async getPerformanceTrends(
     metricName: string,
     startDate: Date,
@@ -433,7 +386,6 @@ export class PerformanceMetricsService {
   ): Promise<Array<{ timestamp: Date; value: number }>> {
     const metrics = this.getMetricValues(metricName, startDate, endDate);
 
-    // Group metrics by time interval
     const timeGroups = new Map<string, number[]>();
 
     metrics.forEach((value, index) => {
@@ -450,7 +402,6 @@ export class PerformanceMetricsService {
       }
     });
 
-    // Calculate averages for each time period
     const trends: Array<{ timestamp: Date; value: number }> = [];
 
     for (const [timeKey, values] of timeGroups.entries()) {
@@ -462,9 +413,6 @@ export class PerformanceMetricsService {
     return trends.toSorted((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
   }
 
-  /**
-   * Get real-time metrics dashboard data
-   */
   getRealTimeMetrics(): {
     currentThroughput: number;
     averageLatency: number;
@@ -487,13 +435,12 @@ export class PerformanceMetricsService {
       status: DeliveryStatus.FAILED,
     });
 
-    const currentThroughput = recentDeliveries.length / (5 * 60); // per second
+    const currentThroughput = recentDeliveries.length / (5 * 60);
     const averageLatency = this.calculateAverage(recentProcessingTimes);
     const errorRate =
       recentDeliveries.length > 0 ? (recentErrors.length / recentDeliveries.length) * 100 : 0;
     const queueDepth = this.getLatestMetricValue("queue.depth") || 0;
 
-    // Count unique providers from recent metrics
     const activeProviders = new Set(
       this.metrics
         .filter((m) => m.name === "provider.response_time" && m.timestamp >= fiveMinutesAgo)
@@ -510,23 +457,14 @@ export class PerformanceMetricsService {
     };
   }
 
-  /**
-   * Private helper methods
-   */
-
   private startMetricsCollection(): void {
-    // Collect system metrics every 30 seconds
     this.metricsCollectionInterval = setInterval(() => {
       this.collectSystemMetrics();
     }, 30000);
 
-    // Unref the timer to prevent it from keeping the process alive
     this.metricsCollectionInterval.unref();
   }
 
-  /**
-   * Stop metrics collection (for cleanup)
-   */
   stopMetricsCollection(): void {
     if (this.metricsCollectionInterval) {
       clearInterval(this.metricsCollectionInterval);
@@ -535,7 +473,6 @@ export class PerformanceMetricsService {
   }
 
   private collectSystemMetrics(): void {
-    // In a real implementation, these would collect actual system metrics
     this.recordMetric("system.memory_usage", Math.random() * 100, "percent");
     this.recordMetric("system.cpu_usage", Math.random() * 100, "percent");
     this.recordMetric("system.active_connections", Math.floor(Math.random() * 100), "count");

@@ -3,11 +3,44 @@ import { ConfigModule, ConfigService } from "@nestjs/config";
 import { MailgunProvider } from "./providers/mailgun.provider";
 import { SendGridProvider } from "./providers/sendgrid.provider";
 import { SESProvider } from "./providers/ses.provider";
+import { SMTPProvider } from "./providers/smtp.provider";
+import { ZeptoMailProvider } from "./providers/zeptomail.provider";
 import { EmailProviderConfig } from "./email-provider.interface";
-
 @Module({
   imports: [ConfigModule],
   providers: [
+    {
+      provide: ZeptoMailProvider,
+      useFactory: (configService: ConfigService) => {
+        const config: EmailProviderConfig = {
+          providerId: "zeptomail",
+          name: "ZeptoMail",
+          isActive: configService.get<boolean>("ZEPTOMAIL_ENABLED", true),
+          priority: configService.get<number>("ZEPTOMAIL_PRIORITY", 0),
+          config: {
+            apiKey: configService.get<string>("ZEPTOMAIL_API_KEY", ""),
+            apiUrl: configService.get<string>(
+              "ZEPTOMAIL_API_URL",
+              "https://api.zeptomail.com/v1.1/email",
+            ),
+            fromEmail: configService.get<string>("ZEPTOMAIL_FROM_EMAIL", ""),
+            fromName: configService.get<string>("ZEPTOMAIL_FROM_NAME", "Sanarwa"),
+            replyToEmail: configService.get<string>("ZEPTOMAIL_REPLY_TO_EMAIL", ""),
+          },
+          rateLimits: {
+            perSecond: configService.get<number>("ZEPTOMAIL_RATE_LIMIT_PER_SECOND", 10),
+            perMinute: configService.get<number>("ZEPTOMAIL_RATE_LIMIT_PER_MINUTE", 600),
+            perHour: configService.get<number>("ZEPTOMAIL_RATE_LIMIT_PER_HOUR", 20000),
+          },
+          failoverConfig: {
+            maxRetries: 3,
+            retryDelay: 1000,
+          },
+        };
+        return new ZeptoMailProvider(config);
+      },
+      inject: [ConfigService],
+    },
     {
       provide: MailgunProvider,
       useFactory: (configService: ConfigService) => {
@@ -72,6 +105,8 @@ import { EmailProviderConfig } from "./email-provider.interface";
         const config: EmailProviderConfig = {
           providerId: "ses",
           name: "Amazon SES",
+          // SES is BYOP only; this instance is registered so tenants can use
+          // their own AWS credentials. It is never the managed fallback.
           isActive: configService.get<boolean>("AWS_SES_ENABLED", false),
           priority: configService.get<number>("AWS_SES_PRIORITY", 3),
           config: {
@@ -96,7 +131,35 @@ import { EmailProviderConfig } from "./email-provider.interface";
       },
       inject: [ConfigService],
     },
+    {
+      provide: SMTPProvider,
+      useFactory: (configService: ConfigService) => {
+        const config: EmailProviderConfig = {
+          providerId: "smtp",
+          name: "SMTP",
+          // BYOP only. Registered so tenant-supplied SMTP relays can be used.
+          isActive: configService.get<boolean>("SMTP_ENABLED", false),
+          priority: configService.get<number>("SMTP_PRIORITY", 10),
+          config: {
+            host: configService.get<string>("SMTP_HOST", ""),
+            port: configService.get<number>("SMTP_PORT", 587),
+            secure: configService.get<boolean>("SMTP_SECURE", false),
+            username: configService.get<string>("SMTP_USER", ""),
+            password: configService.get<string>("SMTP_PASSWORD", ""),
+            fromEmail: configService.get<string>("SMTP_FROM_EMAIL", ""),
+            fromName: configService.get<string>("SMTP_FROM_NAME", ""),
+            replyToEmail: configService.get<string>("SMTP_REPLY_TO_EMAIL", ""),
+          },
+          failoverConfig: {
+            maxRetries: 3,
+            retryDelay: 1000,
+          },
+        };
+        return new SMTPProvider(config);
+      },
+      inject: [ConfigService],
+    },
   ],
-  exports: [MailgunProvider, SendGridProvider, SESProvider],
+  exports: [ZeptoMailProvider, MailgunProvider, SendGridProvider, SESProvider, SMTPProvider],
 })
 export class EmailModule {}

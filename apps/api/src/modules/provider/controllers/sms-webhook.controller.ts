@@ -5,16 +5,16 @@ import {
   Headers,
   HttpCode,
   HttpStatus,
-  Logger,
+  Param,
   Post,
-  UnauthorizedException,
+  RawBody,
+  Req,
 } from "@nestjs/common";
-import { ConfigService } from "@nestjs/config";
-import { EventEmitter2 } from "@nestjs/event-emitter";
 import { ApiOperation, ApiTags } from "@nestjs/swagger";
-import * as crypto from "crypto";
 import { SkipThrottle } from "@nestjs/throttler";
+import type { Request } from "express";
 import { Public } from "../../auth/decorators/public.decorator";
+import { SmsWebhookIntakeService } from "../services/sms-webhook-intake.service";
 
 export interface InboundSMSPayload {
   messageId: string;
@@ -30,7 +30,8 @@ export interface SMSStatusPayload {
   messageId: string;
   status: "delivered" | "failed" | "sent" | "received";
   timestamp: Date;
-  provider: string;
+  provider?: string;
+  error?: string;
   errorCode?: string;
   errorMessage?: string;
   metadata?: Record<string, any>;
@@ -41,337 +42,203 @@ export interface SMSStatusPayload {
 @Public()
 @SkipThrottle()
 export class SMSWebhookController {
-  private readonly logger = new Logger(SMSWebhookController.name);
+  constructor(private readonly intake: SmsWebhookIntakeService) {}
 
-  constructor(
-    private readonly configService: ConfigService,
-    private readonly eventEmitter: EventEmitter2,
-  ) {}
-
-  /**
-   * Handle Twilio inbound SMS webhooks
-   */
   @Post("twilio/inbound")
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: "Handle Twilio inbound SMS webhooks" })
+  @ApiOperation({ summary: "Handle Twilio inbound SMS webhooks (BYOP supported)" })
   async handleTwilioInbound(
+    @RawBody() rawBody: Buffer,
     @Body() body: any,
-    @Headers() headers: Record<string, string>,
+    @Headers("x-twilio-signature") signature?: string,
   ): Promise<{ success: boolean }> {
-    try {
-      // Validate Twilio webhook signature
-      const signature = headers["x-twilio-signature"];
-      if (!this.validateTwilioSignature(body, signature)) {
-        throw new UnauthorizedException("Invalid webhook signature");
-      }
-
-      const inboundSMS: InboundSMSPayload = {
-        messageId: body.MessageSid,
-        from: body.From,
-        to: body.To,
-        text: body.Body,
-        timestamp: new Date(),
-        provider: "twilio",
-        metadata: {
-          accountSid: body.AccountSid,
-          messagingServiceSid: body.MessagingServiceSid,
-          numMedia: body.NumMedia,
-          numSegments: body.NumSegments,
-        },
-      };
-
-      // Add conversation context for routing
-      if (!inboundSMS.metadata) {
-        inboundSMS.metadata = {};
-      }
-      inboundSMS.metadata.conversationId = this.generateConversationId(inboundSMS.from, "twilio");
-
-      // Emit event for processing
-      this.eventEmitter.emit("sms.inbound.received", inboundSMS);
-
-      this.logger.log(`Inbound SMS received from Twilio: ${body.MessageSid}`);
-      return { success: true };
-    } catch (error) {
-      this.logger.error(`Failed to process Twilio inbound SMS: ${error.message}`);
-      throw new BadRequestException("Failed to process webhook");
-    }
+    return this.intake.acceptTwilioInbound(rawBody?.toString("utf8") ?? "", signature, body);
   }
 
-  /**
-   * Handle Twilio SMS status callbacks
-   */
   @Post("twilio/status")
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: "Handle Twilio SMS status callbacks" })
+  @ApiOperation({ summary: "Handle Twilio SMS status callbacks (BYOP supported)" })
   async handleTwilioStatus(
+    @RawBody() rawBody: Buffer,
     @Body() body: any,
-    @Headers() headers: Record<string, string>,
+    @Headers("x-twilio-signature") signature?: string,
   ): Promise<{ success: boolean }> {
-    try {
-      // Validate Twilio webhook signature
-      const signature = headers["x-twilio-signature"];
-      if (!this.validateTwilioSignature(body, signature)) {
-        throw new UnauthorizedException("Invalid webhook signature");
-      }
-
-      const statusUpdate: SMSStatusPayload = {
-        messageId: body.MessageSid,
-        status: this.mapTwilioStatus(body.MessageStatus),
-        timestamp: new Date(),
-        provider: "twilio",
-        errorCode: body.ErrorCode,
-        errorMessage: body.ErrorMessage,
-        metadata: {
-          accountSid: body.AccountSid,
-          price: body.Price,
-          priceUnit: body.PriceUnit,
-        },
-      };
-
-      // Emit event for processing
-      this.eventEmitter.emit("sms.status.updated", statusUpdate);
-
-      this.logger.log(
-        `SMS status updated from Twilio: ${body.MessageSid} -> ${body.MessageStatus}`,
-      );
-      return { success: true };
-    } catch (error) {
-      this.logger.error(`Failed to process Twilio status callback: ${error.message}`);
-      throw new BadRequestException("Failed to process webhook");
-    }
+    return this.intake.acceptTwilioStatus(rawBody?.toString("utf8") ?? "", signature, body);
   }
 
-  /**
-   * Handle Termii inbound SMS webhooks
-   */
   @Post("termii/inbound")
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: "Handle Termii inbound SMS webhooks" })
+  @ApiOperation({ summary: "Handle Termii inbound SMS webhooks (BYOP)" })
   async handleTermiiInbound(
     @Body() body: any,
     @Headers() headers: Record<string, string>,
   ): Promise<{ success: boolean }> {
-    try {
-      // Termii doesn't use signature validation by default
-      // You can implement API key validation if needed
-
-      const inboundSMS: InboundSMSPayload = {
-        messageId: body.message_id || `termii_${Date.now()}`,
-        from: body.from,
-        to: body.to,
-        text: body.text || body.message,
-        timestamp: new Date(body.date || Date.now()),
-        provider: "termii",
-        metadata: {
-          channel: body.channel,
-          type: body.type,
-        },
-      };
-
-      // Add conversation context for routing
-      if (!inboundSMS.metadata) {
-        inboundSMS.metadata = {};
-      }
-      inboundSMS.metadata.conversationId = this.generateConversationId(inboundSMS.from, "termii");
-
-      // Emit event for processing
-      this.eventEmitter.emit("sms.inbound.received", inboundSMS);
-
-      this.logger.log(`Inbound SMS received from Termii: ${inboundSMS.messageId}`);
-      return { success: true };
-    } catch (error) {
-      this.logger.error(`Failed to process Termii inbound SMS: ${error.message}`);
-      throw new BadRequestException("Failed to process webhook");
-    }
+    return this.intake.acceptTermiiInbound(headers, body);
   }
 
-  /**
-   * Handle Telnyx inbound SMS webhooks
-   */
-  @Post("telnyx/inbound")
+  @Post("termii/status")
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: "Handle Telnyx inbound SMS webhooks" })
-  async handleTelnyxInbound(
+  @ApiOperation({ summary: "Handle Termii delivery report webhooks (BYOP)" })
+  async handleTermiiStatus(
     @Body() body: any,
     @Headers() headers: Record<string, string>,
   ): Promise<{ success: boolean }> {
-    try {
-      // Validate Telnyx webhook signature if configured
-      const signature = headers["telnyx-signature-ed25519"];
-      if (
-        signature &&
-        !this.validateTelnyxSignature(body, signature, headers["telnyx-timestamp"])
-      ) {
-        throw new UnauthorizedException("Invalid webhook signature");
-      }
-
-      const eventData = body.data;
-      const inboundSMS: InboundSMSPayload = {
-        messageId: eventData.id,
-        from: eventData.from.phone_number,
-        to: eventData.to[0].phone_number,
-        text: eventData.text,
-        timestamp: new Date(eventData.received_at),
-        provider: "telnyx",
-        metadata: {
-          messagingProfileId: eventData.messaging_profile_id,
-          webhookUrl: eventData.webhook_url,
-          encoding: eventData.encoding,
-        },
-      };
-
-      // Add conversation context for routing
-      if (!inboundSMS.metadata) {
-        inboundSMS.metadata = {};
-      }
-      inboundSMS.metadata.conversationId = this.generateConversationId(inboundSMS.from, "telnyx");
-
-      // Emit event for processing
-      this.eventEmitter.emit("sms.inbound.received", inboundSMS);
-
-      this.logger.log(`Inbound SMS received from Telnyx: ${eventData.id}`);
-      return { success: true };
-    } catch (error) {
-      this.logger.error(`Failed to process Telnyx inbound SMS: ${error.message}`);
-      throw new BadRequestException("Failed to process webhook");
-    }
+    return this.intake.acceptTermiiStatus(headers, body);
   }
 
-  /**
-   * Handle Infobip inbound SMS webhooks
-   */
   @Post("infobip/inbound")
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: "Handle Infobip inbound SMS webhooks" })
+  @ApiOperation({ summary: "Handle Infobip inbound SMS webhooks (BYOP)" })
   async handleInfobipInbound(
     @Body() body: any,
     @Headers() headers: Record<string, string>,
   ): Promise<{ success: boolean }> {
-    try {
-      // Infobip uses basic authentication or API key
-      // Implement validation as needed
-
-      const results = body.results || [body];
-
-      for (const result of results) {
-        const inboundSMS: InboundSMSPayload = {
-          messageId: result.messageId,
-          from: result.from,
-          to: result.to,
-          text: result.text,
-          timestamp: new Date(result.receivedAt),
-          provider: "infobip",
-          metadata: {
-            keyword: result.keyword,
-            cleanText: result.cleanText,
-            smsCount: result.smsCount,
-          },
-        };
-
-        // Add conversation context for routing
-        if (!inboundSMS.metadata) {
-          inboundSMS.metadata = {};
-        }
-        inboundSMS.metadata.conversationId = this.generateConversationId(
-          inboundSMS.from,
-          "infobip",
-        );
-
-        // Emit event for processing
-        this.eventEmitter.emit("sms.inbound.received", inboundSMS);
-      }
-
-      this.logger.log(`Processed ${results.length} inbound SMS from Infobip`);
-      return { success: true };
-    } catch (error) {
-      this.logger.error(`Failed to process Infobip inbound SMS: ${error.message}`);
-      throw new BadRequestException("Failed to process webhook");
-    }
+    return this.intake.acceptInfobipInbound(headers, body);
   }
 
-  /**
-   * Generic SMS status webhook for delivery reports
-   */
-  @Post("status/:provider")
+  @Post("infobip/status")
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: "Generic SMS status webhook for delivery reports" })
-  async handleGenericStatus(
+  @ApiOperation({ summary: "Handle Infobip delivery report webhooks (BYOP)" })
+  async handleInfobipStatus(
     @Body() body: any,
     @Headers() headers: Record<string, string>,
   ): Promise<{ success: boolean }> {
-    try {
-      // Process generic status updates
-      this.logger.log(`Generic SMS status webhook received for provider: ${body.provider}`);
-
-      // Emit generic status event
-      this.eventEmitter.emit("sms.status.generic", {
-        provider: body.provider,
-        data: body,
-        headers,
-        timestamp: new Date(),
-      });
-
-      return { success: true };
-    } catch (error) {
-      this.logger.error(`Failed to process generic SMS status: ${error.message}`);
-      throw new BadRequestException("Failed to process webhook");
-    }
+    return this.intake.acceptInfobipStatus(headers, body);
   }
 
-  /**
-   * Validate Twilio webhook signature
-   */
-  private validateTwilioSignature(body: any, signature: string): boolean {
-    if (!signature) return false;
-
-    const authToken = this.configService.get("TWILIO_AUTH_TOKEN");
-    const webhookUrl = this.configService.get("TWILIO_WEBHOOK_URL");
-
-    if (!authToken || !webhookUrl) return false;
-
-    // Create the signature
-    const params = new URLSearchParams(body).toString();
-    const data = webhookUrl + params;
-    const expectedSignature = crypto
-      .createHmac("sha1", authToken)
-      .update(data, "utf8")
-      .digest("base64");
-
-    return crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(expectedSignature));
+  @Post("telnyx/inbound")
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: "Handle Telnyx inbound SMS webhooks (managed/global)" })
+  async handleTelnyxInbound(
+    @Req() req: Request & { rawBody?: Buffer | string },
+    @Body() body: any,
+    @Headers("telnyx-signature-ed25519") signature?: string,
+    @Headers("telnyx-timestamp") timestamp?: string,
+  ): Promise<{ success: boolean }> {
+    return this.intake.acceptTelnyx(this.raw(req), { signature, timestamp }, body);
   }
 
-  /**
-   * Validate Telnyx webhook signature
-   */
-  private validateTelnyxSignature(body: any, signature: string, timestamp: string): boolean {
-    // Implement Telnyx Ed25519 signature validation
-    // This is a simplified version - implement proper Ed25519 validation in production
-    return true; // For now, always return true
+  @Post("telnyx/status")
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: "Handle Telnyx SMS delivery status webhooks (managed/global)" })
+  async handleTelnyxStatus(
+    @Req() req: Request & { rawBody?: Buffer | string },
+    @Body() body: any,
+    @Headers("telnyx-signature-ed25519") signature?: string,
+    @Headers("telnyx-timestamp") timestamp?: string,
+  ): Promise<{ success: boolean }> {
+    return this.intake.acceptTelnyxStatus(this.raw(req), { signature, timestamp }, body);
   }
 
-  /**
-   * Map Twilio status to standard status
-   */
-  private mapTwilioStatus(twilioStatus: string): "delivered" | "failed" | "sent" | "received" {
-    const statusMap: Record<string, "delivered" | "failed" | "sent" | "received"> = {
-      queued: "sent",
-      sending: "sent",
-      sent: "sent",
-      delivered: "delivered",
-      undelivered: "failed",
-      failed: "failed",
-      received: "received",
-    };
-
-    return statusMap[twilioStatus] || "failed";
+  @Post("telnyx/:tenantId/inbound")
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: "Handle Telnyx inbound SMS webhooks (BYOP, tenant-scoped)" })
+  async handleTelnyxInboundByop(
+    @Param("tenantId") tenantId: string,
+    @Req() req: Request & { rawBody?: Buffer | string },
+    @Body() body: any,
+    @Headers("telnyx-signature-ed25519") signature?: string,
+    @Headers("telnyx-timestamp") timestamp?: string,
+  ): Promise<{ success: boolean }> {
+    return this.intake.acceptTelnyxByTenant(
+      this.raw(req),
+      { signature, timestamp },
+      body,
+      tenantId,
+    );
   }
 
-  /**
-   * Generate conversation ID for tracking message threads
-   */
-  private generateConversationId(phoneNumber: string, provider: string): string {
-    // Create a consistent conversation ID that allows routing replies back to the same provider
-    const normalized = phoneNumber.replace(/[^\d]/g, "");
-    return `${provider}_${normalized}`;
+  @Post("telnyx/:tenantId/status")
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: "Handle Telnyx SMS status webhooks (BYOP, tenant-scoped)" })
+  async handleTelnyxStatusByop(
+    @Param("tenantId") tenantId: string,
+    @Req() req: Request & { rawBody?: Buffer | string },
+    @Body() body: any,
+    @Headers("telnyx-signature-ed25519") signature?: string,
+    @Headers("telnyx-timestamp") timestamp?: string,
+  ): Promise<{ success: boolean }> {
+    return this.intake.acceptTelnyxStatusByTenant(
+      this.raw(req),
+      { signature, timestamp },
+      body,
+      tenantId,
+    );
+  }
+
+  @Post("africastalking/inbound")
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: "Handle Africa's Talking inbound SMS webhooks (managed/global)" })
+  async handleAfricasTalkingInbound(
+    @Body() body: any,
+    @Headers() headers: Record<string, string>,
+  ): Promise<{ success: boolean }> {
+    return this.intake.acceptAfricasTalking(headers, body);
+  }
+
+  @Post("africastalking/status")
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: "Handle Africa's Talking delivery report webhooks (managed/global)" })
+  async handleAfricasTalkingStatus(
+    @Body() body: any,
+    @Headers() headers: Record<string, string>,
+  ): Promise<{ success: boolean }> {
+    return this.intake.acceptAfricasTalkingStatus(headers, body);
+  }
+
+  @Post("africastalking/:tenantId/inbound")
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: "Handle Africa's Talking inbound SMS webhooks (BYOP, tenant-scoped)" })
+  async handleAfricasTalkingInboundByop(
+    @Param("tenantId") tenantId: string,
+    @Body() body: any,
+    @Headers() headers: Record<string, string>,
+  ): Promise<{ success: boolean }> {
+    return this.intake.acceptAfricasTalkingByTenant(headers, body, tenantId);
+  }
+
+  @Post("africastalking/:tenantId/status")
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: "Handle Africa's Talking status webhooks (BYOP, tenant-scoped)" })
+  async handleAfricasTalkingStatusByop(
+    @Param("tenantId") tenantId: string,
+    @Body() body: any,
+    @Headers() headers: Record<string, string>,
+  ): Promise<{ success: boolean }> {
+    return this.intake.acceptAfricasTalkingStatusByTenant(headers, body, tenantId);
+  }
+
+  @Post("status/:provider")
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: "Generic SMS status webhook (provider-routed)" })
+  async handleGenericStatus(
+    @Req() req: Request & { rawBody?: Buffer | string },
+    @RawBody() rawBody: Buffer,
+    @Param("provider") provider: string,
+    @Body() body: any,
+    @Headers() headers: Record<string, string>,
+  ): Promise<{ success: boolean }> {
+    const p = (provider || "").toLowerCase();
+    if (p === "telnyx")
+      return this.handleTelnyxStatus(
+        req,
+        body,
+        headers["telnyx-signature-ed25519"],
+        headers["telnyx-timestamp"],
+      );
+    if (p === "africastalking" || p === "africas-talking")
+      return this.handleAfricasTalkingStatus(body, headers);
+    if (p === "twilio")
+      return this.handleTwilioStatus(rawBody, body, headers["x-twilio-signature"]);
+    if (p === "termii") return this.handleTermiiStatus(body, headers);
+    if (p === "infobip") return this.handleInfobipStatus(body, headers);
+    throw new BadRequestException("Unsupported SMS webhook provider");
+  }
+
+  private raw(req: Request & { rawBody?: Buffer | string }): string | undefined {
+    const raw = req.rawBody;
+    if (typeof raw === "string") return raw;
+    if (Buffer.isBuffer(raw)) return raw.toString("utf8");
+    return undefined;
   }
 }

@@ -1,4 +1,4 @@
-import { NotificationChannel } from "src/common/enums";
+import { NotificationChannel } from "../../common/enums";
 import { ProviderConfig } from "../../modules/provider/provider-config.entity";
 
 export class ProviderConfigFactory {
@@ -27,7 +27,6 @@ export class ProviderConfigFactory {
       priority: 1,
       isActive: true,
       isDefault: false,
-      healthStatus: "healthy",
       createdBy: {
         id: "member-" + Math.random().toString(36).substr(2, 9),
       } as any,

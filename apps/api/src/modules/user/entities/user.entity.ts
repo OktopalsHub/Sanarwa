@@ -1,5 +1,5 @@
 import { Column, DeleteDateColumn, Entity, OneToMany } from "typeorm";
-import { BaseEntity } from "../../../database/entities/base.entity";
+import { BaseEntity } from "../../../common/database/entities/base.entity";
 import { Account } from "../../auth/entities/account.entity";
 import { Session } from "../../auth/entities/session.entity";
 import { Tenant } from "../../tenant/entities/tenant.entity";

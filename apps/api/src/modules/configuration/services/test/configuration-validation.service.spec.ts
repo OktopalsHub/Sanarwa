@@ -88,7 +88,6 @@ describe("ConfigurationValidationService", () => {
     it("should reject invalid database_config schema", async () => {
       const invalidConfig = JSON.stringify({
         host: "localhost",
-        // missing required fields
       });
 
       const result = await service.validateValue(invalidConfig, "database_config");
@@ -261,7 +260,6 @@ describe("ConfigurationValidationService", () => {
     it("should return invalid for missing required configs", async () => {
       const configs = {
         DATABASE_HOST: "localhost",
-        // missing other required configs
       };
 
       const result = await service.validateEnvironmentConfig("production", configs);

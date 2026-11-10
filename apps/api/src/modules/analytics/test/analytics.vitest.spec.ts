@@ -78,7 +78,7 @@ describe("Analytics Module Integration Tests", () => {
         headers: { Authorization: `Bearer ${authToken}` },
       });
 
-      console.log("📊 Channel analytics response:", response.status, response.data);
+      console.log("📊 NotificationChannel analytics response:", response.status, response.data);
 
       if (response.status === 400 || response.status === 422) {
         console.log("⚠️ Analytics channels endpoint requires tenantId parameter");

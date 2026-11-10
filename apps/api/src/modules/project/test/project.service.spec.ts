@@ -1,400 +1,318 @@
+import { ConflictException, NotFoundException } from "@nestjs/common";
 import { Test, TestingModule } from "@nestjs/testing";
-import { getRepositoryToken } from "@nestjs/typeorm";
-import type { Mock } from "vitest";
-import { Repository } from "typeorm";
-import { Project, ProjectStatus } from "../../../database/entities/project.entity";
-import { TenantFactory } from "../../test/factories/tenant.factory";
-import { ProjectService } from "./project.service";
+import { ProjectStatus } from "../../../common/enums";
+import { Project } from "../entities/project.entity";
+import { ProjectRepository } from "../project.repository";
+import { ProjectService } from "../project.service";
+
+type ProjectRow = Pick<
+  Project,
+  "id" | "name" | "description" | "status" | "createdAt" | "updatedAt"
+>;
 
 describe("ProjectService", () => {
   let service: ProjectService;
-  let projectRepository: Repository<Project>;
 
-  const mockProjectRepository = {
+  const projectRepository = {
     create: vi.fn(),
-    save: vi.fn(),
-    find: vi.fn(),
-    findOne: vi.fn(),
     update: vi.fn(),
     delete: vi.fn(),
-    count: vi.fn(),
-    createQueryBuilder: vi.fn(() => ({
+    findByIdAndTenant: vi.fn(),
+    existsByNameAndTenant: vi.fn(),
+    createQueryBuilder: vi.fn(),
+  };
+
+  const projectRow = (overrides: Partial<ProjectRow> = {}): ProjectRow => ({
+    id: "project-1",
+    name: "Test Project",
+    description: "A test project",
+    status: ProjectStatus.ACTIVE,
+    createdAt: new Date("2026-01-01"),
+    updatedAt: new Date("2026-01-02"),
+    ...overrides,
+  });
+
+  const paginatedBuilder = (allRows: ProjectRow[], total: number) => {
+    const builder: any = {
+      select: vi.fn().mockReturnThis(),
       where: vi.fn().mockReturnThis(),
       andWhere: vi.fn().mockReturnThis(),
       orderBy: vi.fn().mockReturnThis(),
       skip: vi.fn().mockReturnThis(),
       take: vi.fn().mockReturnThis(),
-      getMany: vi.fn(),
-      getOne: vi.fn(),
-      getManyAndCount: vi.fn(),
-    })),
+    };
+    builder.getManyAndCount = vi.fn(() => {
+      const offset = builder.skip.mock.calls.at(-1)?.[0] ?? 0;
+      const limit = builder.take.mock.calls.at(-1)?.[0] ?? allRows.length;
+      return Promise.resolve([allRows.slice(offset, offset + limit), total]);
+    });
+    projectRepository.createQueryBuilder.mockReturnValue(builder);
+    return builder;
   };
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      providers: [
-        ProjectService,
-        {
-          provide: getRepositoryToken(Project),
-          useValue: mockProjectRepository,
-        },
-      ],
+      providers: [ProjectService, { provide: ProjectRepository, useValue: projectRepository }],
     }).compile();
 
-    service = module.get<ProjectService>(ProjectService);
-    projectRepository = module.get<Repository<Project>>(getRepositoryToken(Project));
+    service = module.get(ProjectService);
   });
 
   afterEach(() => {
-    vi.clearAllMocks();
+    vi.resetAllMocks();
   });
 
-  it("should be defined", () => {
+  it("is defined", () => {
     expect(service).toBeDefined();
   });
 
   describe("createProject", () => {
-    it("should create a new project successfully", async () => {
-      const tenant = TenantFactory.create();
-      const projectData = {
+    it("stores the project against its tenant and creator", async () => {
+      projectRepository.existsByNameAndTenant.mockResolvedValue(false);
+      projectRepository.create.mockResolvedValue(projectRow());
+
+      const created = await service.createProject(
+        "tenant-1",
+        { name: "Test Project", description: "A test project" },
+        "member-1",
+      );
+
+      expect(projectRepository.create).toHaveBeenCalledWith({
         name: "Test Project",
-        description: "Test project description",
-        settings: {
-          defaultFromEmail: "noreply@testproject.com",
-          defaultFromName: "Test Project",
-        },
-      };
-
-      const mockProject = {
-        id: "project-1",
-        tenantId: tenant.id,
-        name: projectData.name,
-        description: projectData.description,
-        status: ProjectStatus.ACTIVE,
-        settings: projectData.settings,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      };
-
-      mockProjectRepository.create.mockReturnValue(mockProject);
-      mockProjectRepository.save.mockResolvedValue(mockProject);
-
-      const result = await service.createProject(tenant.id, projectData);
-
-      expect(mockProjectRepository.create).toHaveBeenCalledWith({
-        tenantId: tenant.id,
-        name: projectData.name,
-        description: projectData.description,
-        status: ProjectStatus.ACTIVE,
-        settings: projectData.settings,
+        description: "A test project",
+        tenant: { id: "tenant-1" },
+        createdBy: { id: "member-1" },
       });
-      expect(mockProjectRepository.save).toHaveBeenCalledWith(mockProject);
-      expect(result).toEqual(mockProject);
+      expect(created.id).toBe("project-1");
     });
 
-    it("should create project with default settings when not provided", async () => {
-      const tenant = TenantFactory.create();
-      const projectData = {
+    it("leaves createdBy off when no member is given", async () => {
+      projectRepository.existsByNameAndTenant.mockResolvedValue(false);
+      projectRepository.create.mockResolvedValue(projectRow());
+
+      await service.createProject("tenant-1", { name: "Test Project" });
+
+      expect(projectRepository.create).toHaveBeenCalledWith({
         name: "Test Project",
-        description: "Test project description",
-      };
-
-      const mockProject = {
-        id: "project-1",
-        tenantId: tenant.id,
-        name: projectData.name,
-        description: projectData.description,
-        status: ProjectStatus.ACTIVE,
-        settings: {},
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      };
-
-      mockProjectRepository.create.mockReturnValue(mockProject);
-      mockProjectRepository.save.mockResolvedValue(mockProject);
-
-      const result = await service.createProject(tenant.id, projectData);
-
-      expect(mockProjectRepository.create).toHaveBeenCalledWith({
-        tenantId: tenant.id,
-        name: projectData.name,
-        description: projectData.description,
-        status: ProjectStatus.ACTIVE,
-        settings: {},
+        tenant: { id: "tenant-1" },
       });
-      expect(result).toEqual(mockProject);
+    });
+
+    it("rejects a second project with the same name in the tenant", async () => {
+      projectRepository.existsByNameAndTenant.mockResolvedValue(true);
+
+      await expect(service.createProject("tenant-1", { name: "Taken" })).rejects.toThrow(
+        ConflictException,
+      );
+      expect(projectRepository.create).not.toHaveBeenCalled();
+    });
+
+    it("scopes the name check to the tenant", async () => {
+      projectRepository.existsByNameAndTenant.mockResolvedValue(false);
+      projectRepository.create.mockResolvedValue(projectRow());
+
+      await service.createProject("tenant-2", { name: "Test Project" });
+
+      expect(projectRepository.existsByNameAndTenant).toHaveBeenCalledWith(
+        "Test Project",
+        "tenant-2",
+      );
     });
   });
 
-  describe("getProjectsByTenant", () => {
-    it("should return all projects for a tenant", async () => {
-      const tenant = TenantFactory.create();
-      const mockProjects = [
-        { id: "project-1", name: "Project 1", tenantId: tenant.id },
-        { id: "project-2", name: "Project 2", tenantId: tenant.id },
-      ];
+  describe("getAllProjects", () => {
+    it("returns the page with tenant-visible fields only", async () => {
+      const builder = paginatedBuilder([projectRow()], 1);
 
-      mockProjectRepository.find.mockResolvedValue(mockProjects);
+      const result = await service.getAllProjects("tenant-1");
 
-      const result = await service.getProjectsByTenant(tenant.id);
-
-      expect(mockProjectRepository.find).toHaveBeenCalledWith({
-        where: { tenantId: tenant.id },
-        order: { createdAt: "DESC" },
-      });
-      expect(result).toEqual(mockProjects);
+      expect(projectRepository.createQueryBuilder).toHaveBeenCalledWith("project");
+      expect(builder.select).toHaveBeenCalled();
+      expect(builder.take).toHaveBeenCalledWith(10);
+      expect(builder.skip).toHaveBeenCalledWith(0);
+      expect(result).toMatchObject({ name: "projects", page: 1, limit: 10, totalItems: 1 });
+      expect(Object.keys(result.records[0]).sort()).toEqual([
+        "description",
+        "id",
+        "name",
+        "status",
+      ]);
     });
 
-    it("should filter projects by status when provided", async () => {
-      const tenant = TenantFactory.create();
-      const status = ProjectStatus.ACTIVE;
-      const mockProjects = [{ id: "project-1", name: "Project 1", tenantId: tenant.id, status }];
+    it("windows the requested page and reports its neighbours", async () => {
+      const rows = Array.from({ length: 12 }, (_, index) => projectRow({ id: `project-${index}` }));
+      const builder = paginatedBuilder(rows, 12);
 
-      mockProjectRepository.find.mockResolvedValue(mockProjects);
+      const result = await service.getAllProjects("tenant-1", { page: 2, limit: 5 });
 
-      const result = await service.getProjectsByTenant(tenant.id, status);
-
-      expect(mockProjectRepository.find).toHaveBeenCalledWith({
-        where: { tenantId: tenant.id, status },
-        order: { createdAt: "DESC" },
+      expect(builder.skip).toHaveBeenCalledWith(5);
+      expect(builder.take).toHaveBeenCalledWith(5);
+      expect(result).toMatchObject({
+        page: 2,
+        limit: 5,
+        pageCount: 3,
+        totalItems: 12,
+        previousPage: 1,
+        nextPage: 3,
       });
-      expect(result).toEqual(mockProjects);
+      expect(result.size).toBe(5);
+      expect(result.records.map((row) => row.id)).toEqual([
+        "project-5",
+        "project-6",
+        "project-7",
+        "project-8",
+        "project-9",
+      ]);
+    });
+
+    it("clamps previousPage when the page sits past the last one", async () => {
+      paginatedBuilder([], 0);
+
+      const result = await service.getAllProjects("tenant-1", { page: 3, limit: 5 });
+
+      expect(result).toMatchObject({ pageCount: 1, previousPage: 1, nextPage: null });
+    });
+
+    it("adds a search predicate only when a search is given", async () => {
+      const withSearch = paginatedBuilder([], 0);
+
+      await service.getAllProjects("tenant-1", { search: "payments" });
+
+      expect(withSearch.andWhere).toHaveBeenCalledWith(
+        "(project.name ILIKE :search OR project.description ILIKE :search)",
+        { search: "%payments%" },
+      );
+
+      const withoutSearch = paginatedBuilder([], 0);
+
+      await service.getAllProjects("tenant-1");
+
+      expect(withoutSearch.andWhere).not.toHaveBeenCalled();
+    });
+
+    it("orders by the requested column and defaults to newest first", async () => {
+      const sorted = paginatedBuilder([], 0);
+
+      await service.getAllProjects("tenant-1", { sortBy: "name", sortOrder: "ASC" });
+
+      expect(sorted.orderBy).toHaveBeenCalledWith("project.name", "ASC");
+
+      const unsorted = paginatedBuilder([], 0);
+
+      await service.getAllProjects("tenant-1");
+
+      expect(unsorted.orderBy).toHaveBeenCalledWith("project.createdAt", "DESC");
+    });
+
+    it("keeps the tenant predicate on every read", async () => {
+      const builder = paginatedBuilder([], 0);
+
+      await service.getAllProjects("tenant-9", { search: "x" });
+
+      expect(builder.where).toHaveBeenCalledWith("project.tenant.id = :tenantId", {
+        tenantId: "tenant-9",
+      });
     });
   });
 
   describe("getProjectById", () => {
-    it("should return project when found", async () => {
-      const tenant = TenantFactory.create();
-      const projectId = "project-1";
-      const mockProject = {
-        id: projectId,
-        name: "Test Project",
-        tenantId: tenant.id,
-      };
+    it("reads the project scoped to the tenant", async () => {
+      projectRepository.findByIdAndTenant.mockResolvedValue(projectRow());
 
-      mockProjectRepository.findOne.mockResolvedValue(mockProject);
+      const project = await service.getProjectById("tenant-1", "project-1");
 
-      const result = await service.getProjectById(tenant.id, projectId);
-
-      expect(mockProjectRepository.findOne).toHaveBeenCalledWith({
-        where: { id: projectId, tenantId: tenant.id },
-      });
-      expect(result).toEqual(mockProject);
+      expect(projectRepository.findByIdAndTenant).toHaveBeenCalledWith("project-1", "tenant-1");
+      expect(project.id).toBe("project-1");
     });
 
-    it("should return null when project not found", async () => {
-      const tenant = TenantFactory.create();
-      const projectId = "non-existent";
+    it("throws not found when the project belongs to another tenant", async () => {
+      projectRepository.findByIdAndTenant.mockResolvedValue(null);
 
-      mockProjectRepository.findOne.mockResolvedValue(null);
-
-      const result = await service.getProjectById(tenant.id, projectId);
-
-      expect(result).toBeNull();
+      await expect(service.getProjectById("tenant-2", "project-1")).rejects.toThrow(
+        NotFoundException,
+      );
     });
   });
 
   describe("updateProject", () => {
-    it("should update project successfully", async () => {
-      const tenant = TenantFactory.create();
-      const projectId = "project-1";
-      const updateData = {
-        name: "Updated Project",
-        description: "Updated description",
-        settings: {
-          defaultFromEmail: "updated@test.com",
-        },
-      };
+    it("updates without a name check when the name is unchanged", async () => {
+      projectRepository.findByIdAndTenant.mockResolvedValue(projectRow());
+      projectRepository.update.mockResolvedValue(projectRow({ description: "Rewritten" }));
 
-      const existingProject = {
-        id: projectId,
-        tenantId: tenant.id,
-        name: "Old Project",
-        status: ProjectStatus.ACTIVE,
-      };
-
-      const updatedProject = { ...existingProject, ...updateData };
-
-      mockProjectRepository.findOne.mockResolvedValue(existingProject);
-      mockProjectRepository.save.mockResolvedValue(updatedProject);
-
-      const result = await service.updateProject(tenant.id, projectId, updateData);
-
-      expect(mockProjectRepository.findOne).toHaveBeenCalledWith({
-        where: { id: projectId, tenantId: tenant.id },
+      const updated = await service.updateProject("tenant-1", "project-1", {
+        name: "Test Project",
+        description: "Rewritten",
       });
-      expect(mockProjectRepository.save).toHaveBeenCalledWith(updatedProject);
-      expect(result).toEqual(updatedProject);
+
+      expect(projectRepository.existsByNameAndTenant).not.toHaveBeenCalled();
+      expect(projectRepository.update).toHaveBeenCalledWith("project-1", {
+        name: "Test Project",
+        description: "Rewritten",
+      });
+      expect(updated.description).toBe("Rewritten");
     });
 
-    it("should throw error when project not found", async () => {
-      const tenant = TenantFactory.create();
-      const projectId = "non-existent";
-      const updateData = { name: "Updated Project" };
+    it("checks the new name against the tenant, excluding this project", async () => {
+      projectRepository.findByIdAndTenant.mockResolvedValue(projectRow());
+      projectRepository.existsByNameAndTenant.mockResolvedValue(false);
+      projectRepository.update.mockResolvedValue(projectRow({ name: "Renamed" }));
 
-      mockProjectRepository.findOne.mockResolvedValue(null);
+      await service.updateProject("tenant-1", "project-1", { name: "Renamed" });
 
-      await expect(service.updateProject(tenant.id, projectId, updateData)).rejects.toThrow(
-        "Project not found",
+      expect(projectRepository.existsByNameAndTenant).toHaveBeenCalledWith(
+        "Renamed",
+        "tenant-1",
+        "project-1",
       );
+    });
+
+    it("rejects a name already taken by another project in the tenant", async () => {
+      projectRepository.findByIdAndTenant.mockResolvedValue(projectRow());
+      projectRepository.existsByNameAndTenant.mockResolvedValue(true);
+
+      await expect(
+        service.updateProject("tenant-1", "project-1", { name: "Taken" }),
+      ).rejects.toThrow(ConflictException);
+      expect(projectRepository.update).not.toHaveBeenCalled();
+    });
+
+    it("throws not found when the project belongs to another tenant", async () => {
+      projectRepository.findByIdAndTenant.mockResolvedValue(null);
+
+      await expect(
+        service.updateProject("tenant-2", "project-1", { name: "Yours" }),
+      ).rejects.toThrow(NotFoundException);
+      expect(projectRepository.update).not.toHaveBeenCalled();
+    });
+
+    it("throws not found when the row disappears between the read and the write", async () => {
+      projectRepository.findByIdAndTenant.mockResolvedValue(projectRow());
+      projectRepository.existsByNameAndTenant.mockResolvedValue(false);
+      projectRepository.update.mockResolvedValue(null);
+
+      await expect(
+        service.updateProject("tenant-1", "project-1", { name: "Gone" }),
+      ).rejects.toThrow(NotFoundException);
     });
   });
 
   describe("deleteProject", () => {
-    it("should delete project successfully", async () => {
-      const tenant = TenantFactory.create();
-      const projectId = "project-1";
+    it("deletes the project it just read back", async () => {
+      projectRepository.findByIdAndTenant.mockResolvedValue(projectRow({ id: "project-7" }));
+      projectRepository.delete.mockResolvedValue({ affected: 1 });
 
-      const existingProject = {
-        id: projectId,
-        tenantId: tenant.id,
-        status: ProjectStatus.ACTIVE,
-      };
+      await service.deleteProject("tenant-1", "project-7");
 
-      mockProjectRepository.findOne.mockResolvedValue(existingProject);
-      mockProjectRepository.delete.mockResolvedValue({ affected: 1 });
-
-      await service.deleteProject(tenant.id, projectId);
-
-      expect(mockProjectRepository.findOne).toHaveBeenCalledWith({
-        where: { id: projectId, tenantId: tenant.id },
-      });
-      expect(mockProjectRepository.delete).toHaveBeenCalledWith(projectId);
+      expect(projectRepository.delete).toHaveBeenCalledWith("project-7");
     });
 
-    it("should throw error when project not found", async () => {
-      const tenant = TenantFactory.create();
-      const projectId = "non-existent";
+    it("deletes nothing when the project belongs to another tenant", async () => {
+      projectRepository.findByIdAndTenant.mockResolvedValue(null);
 
-      mockProjectRepository.findOne.mockResolvedValue(null);
-
-      await expect(service.deleteProject(tenant.id, projectId)).rejects.toThrow(
-        "Project not found",
+      await expect(service.deleteProject("tenant-2", "project-7")).rejects.toThrow(
+        NotFoundException,
       );
-    });
-  });
-
-  describe("getProjectStats", () => {
-    it("should return project statistics", async () => {
-      const tenant = TenantFactory.create();
-      const projectId = "project-1";
-
-      const existingProject = {
-        id: projectId,
-        tenantId: tenant.id,
-        status: ProjectStatus.ACTIVE,
-      };
-
-      // Mock statistics data
-      const mockStats = {
-        totalNotifications: 100,
-        totalTemplates: 5,
-        totalBrands: 2,
-        notificationsByChannel: {
-          email: 60,
-          sms: 30,
-          push: 10,
-        },
-        deliveryRates: {
-          overall: 95.5,
-          email: 98.0,
-          sms: 92.0,
-          push: 88.0,
-        },
-      };
-
-      mockProjectRepository.findOne.mockResolvedValue(existingProject);
-
-      // Mock the query builder for statistics
-      const mockQueryBuilder = {
-        where: vi.fn().mockReturnThis(),
-        andWhere: vi.fn().mockReturnThis(),
-        select: vi.fn().mockReturnThis(),
-        groupBy: vi.fn().mockReturnThis(),
-        getRawMany: vi.fn().mockResolvedValue([
-          { channel: "email", count: "60" },
-          { channel: "sms", count: "30" },
-          { channel: "push", count: "10" },
-        ]),
-      };
-
-      mockProjectRepository.createQueryBuilder.mockReturnValue(mockQueryBuilder);
-
-      const result = await service.getProjectStats(tenant.id, projectId);
-
-      expect(mockProjectRepository.findOne).toHaveBeenCalledWith({
-        where: { id: projectId, tenantId: tenant.id },
-      });
-      expect(result).toBeDefined();
-      expect(result.project).toEqual(existingProject);
-    });
-
-    it("should throw error when project not found", async () => {
-      const tenant = TenantFactory.create();
-      const projectId = "non-existent";
-
-      mockProjectRepository.findOne.mockResolvedValue(null);
-
-      await expect(service.getProjectStats(tenant.id, projectId)).rejects.toThrow(
-        "Project not found",
-      );
-    });
-  });
-
-  describe("archiveProject", () => {
-    it("should archive project successfully", async () => {
-      const tenant = TenantFactory.create();
-      const projectId = "project-1";
-
-      const existingProject = {
-        id: projectId,
-        tenantId: tenant.id,
-        status: ProjectStatus.ACTIVE,
-      };
-
-      const archivedProject = {
-        ...existingProject,
-        status: ProjectStatus.ARCHIVED,
-      };
-
-      mockProjectRepository.findOne.mockResolvedValue(existingProject);
-      mockProjectRepository.save.mockResolvedValue(archivedProject);
-
-      const result = await service.archiveProject(tenant.id, projectId);
-
-      expect(mockProjectRepository.findOne).toHaveBeenCalledWith({
-        where: { id: projectId, tenantId: tenant.id },
-      });
-      expect(mockProjectRepository.save).toHaveBeenCalledWith(archivedProject);
-      expect(result.status).toBe(ProjectStatus.ARCHIVED);
-    });
-
-    it("should throw error when project not found", async () => {
-      const tenant = TenantFactory.create();
-      const projectId = "non-existent";
-
-      mockProjectRepository.findOne.mockResolvedValue(null);
-
-      await expect(service.archiveProject(tenant.id, projectId)).rejects.toThrow(
-        "Project not found",
-      );
-    });
-
-    it("should throw error when project is already archived", async () => {
-      const tenant = TenantFactory.create();
-      const projectId = "project-1";
-
-      const archivedProject = {
-        id: projectId,
-        tenantId: tenant.id,
-        status: ProjectStatus.ARCHIVED,
-      };
-
-      mockProjectRepository.findOne.mockResolvedValue(archivedProject);
-
-      await expect(service.archiveProject(tenant.id, projectId)).rejects.toThrow(
-        "Project is already archived",
-      );
+      expect(projectRepository.delete).not.toHaveBeenCalled();
     });
   });
 });

@@ -53,7 +53,7 @@ describe("message log list filters", () => {
           createdAt: new Date("2026-08-01T10:00:00Z"),
         },
       ],
-      [{ id: "msg-1", subject: "Receipt for ₦45,000", content: "<p>Thanks</p>" }],
+      [{ id: "msg-1", subject: "Receipt for ₦45,000", data: "<p>Thanks</p>" }],
     );
 
     expect(records[0]).toMatchObject({

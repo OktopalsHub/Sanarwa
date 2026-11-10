@@ -71,6 +71,21 @@ describe("BachsService", () => {
     );
   });
 
+  it("cancels at period end with DELETE, the documented method", async () => {
+    const fetchMock = vi.spyOn(global, "fetch").mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: async () => ({}),
+    } as Response);
+
+    await service.cancelSubscriptionAtPeriodEnd("sub_1");
+
+    const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+    expect(url).toContain("/v1/subscriptions/sub_1");
+    expect(init.method).toBe("DELETE");
+    expect(JSON.parse(String(init.body))).toEqual({ cancel_at_period_end: true });
+  });
+
   it("initializes checkout with CUSTOM amount on the USD product", async () => {
     const fetchMock = vi.spyOn(global, "fetch").mockResolvedValue({
       ok: true,
@@ -96,13 +111,19 @@ describe("BachsService", () => {
 
     expect(result.checkoutUrl).toBe("https://checkout.bachs.io/co_123");
     expect(result.checkoutId).toBe("co_123");
-    expect(result.reference).toBe("notifi_purchase_purchase-1");
+    expect(result.reference).toBe("sanarwa_purchase_purchase-1");
     expect(fetchMock).toHaveBeenCalledOnce();
 
     const [, init] = fetchMock.mock.calls[0] as [string, RequestInit];
     const body = JSON.parse(String(init.body));
+    // Docs: a per-item price override is pricing: { price_type: "fixed", amount }.
+    // A bare `amount` on the cart item is not a documented override and is ignored.
     expect(body.product_cart).toEqual([
-      { product_id: "prod_usd_custom", quantity: 1, amount: "1.00" },
+      {
+        product_id: "prod_usd_custom",
+        quantity: 1,
+        pricing: { price_type: "fixed", amount: "1.00" },
+      },
     ]);
     expect(body.billing_currency).toBe("USD");
   });

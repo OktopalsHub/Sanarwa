@@ -14,25 +14,19 @@ import { Message } from "../messaging/message.entity";
 import { MessageDelivery } from "../messaging/message-delivery.entity";
 import { WABAConfig } from "./entities/waba-config.entity";
 import { TenantWABAConfig } from "./entities/tenant-waba-config.entity";
-import { TenantWABAAssignment } from "./entities/tenant-waba-assignment.entity";
+
 import { ApiKeyModule } from "../api-key/api-key.module";
 import { TenantMemberModule } from "../tenant-member/tenant-member.module";
-// import { TokenManagementModule } from '../token-management/token-management.module';
+import { ChannelsModule } from "../channels/channels.module";
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([
-      WABAConfig,
-      TenantWABAConfig,
-      TenantWABAAssignment,
-      Message,
-      MessageDelivery,
-    ]),
+    TypeOrmModule.forFeature([WABAConfig, TenantWABAConfig, Message, MessageDelivery]),
     HttpModule,
     EventEmitterModule,
     ApiKeyModule,
     TenantMemberModule,
-    // TokenManagementModule,
+    ChannelsModule,
   ],
   controllers: [WhatsAppController, WhatsAppEmbeddedSignupController],
   providers: [

@@ -1,8 +1,3 @@
-/**
- * API Key Management Tests
- * Tests API key creation, validation, and usage for SDK access
- */
-
 import { describe, it, expect, beforeAll } from "vitest";
 import axios, { AxiosInstance } from "axios";
 
@@ -44,7 +39,7 @@ describe("API Key Management Tests", () => {
         if (response.status === 200) return;
       } catch (error) {
         if (i === maxRetries - 1) {
-          throw new Error("Server not ready. Start with: npm run start:dev");
+          throw new Error("Server not ready. Start with: pnpm dev");
         }
         await new Promise((resolve) => setTimeout(resolve, 1000));
       }
@@ -63,7 +58,6 @@ describe("API Key Management Tests", () => {
         userId: response.data.user.id,
       };
 
-      // Mock project ID for testing
       projectId = `proj_${timestamp}`;
 
       console.log("✅ User registered for API key testing");
@@ -122,7 +116,7 @@ describe("API Key Management Tests", () => {
         rateLimitPerMinute: 500,
         rateLimitPerHour: 10000,
         rateLimitPerDay: 100000,
-        expiresAt: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000), // 1 year
+        expiresAt: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000),
       };
 
       const response = await api.post("/api-keys", apiKeyPayload, {
@@ -159,7 +153,7 @@ describe("API Key Management Tests", () => {
         name: `Limited API Key ${timestamp}`,
         projectId: projectId,
         environment: "development",
-        permissions: ["email:read"], // Only read permissions
+        permissions: ["email:read"],
         rateLimitPerMinute: 50,
         rateLimitPerHour: 500,
         rateLimitPerDay: 5000,
@@ -195,7 +189,7 @@ describe("API Key Management Tests", () => {
 
   describe("🔍 API Key Validation Tests", () => {
     it("should validate API key with correct permissions", async () => {
-      const apiKey = createdApiKeys[0]; // Development key with email:send
+      const apiKey = createdApiKeys[0];
 
       const response = await api.post(
         "/sdk/messages",
@@ -203,7 +197,8 @@ describe("API Key Management Tests", () => {
           channels: ["email"],
           recipients: [{ email: "validation-test@example.com", name: "Validation Test" }],
           subject: "API Key Validation Test",
-          content: "<p>Testing API key validation</p>",
+
+          data: "<p>Testing API key validation</p>",
         },
         {
           headers: {
@@ -232,7 +227,8 @@ describe("API Key Management Tests", () => {
           channels: ["email"],
           recipients: [{ email: "test@example.com" }],
           subject: "Test",
-          content: "Test",
+
+          data: "Test",
         },
         {
           headers: {
@@ -242,13 +238,12 @@ describe("API Key Management Tests", () => {
         },
       );
 
-      // API key endpoints not implemented yet, expect 404 or 401
       expect([401, 404]).toContain(response.status);
       console.log("✅ Invalid API key properly rejected");
     });
 
     it("should reject API key with insufficient permissions", async () => {
-      const limitedApiKey = createdApiKeys[2]; // Limited key with only read permissions
+      const limitedApiKey = createdApiKeys[2];
 
       const response = await api.post(
         "/sdk/messages",
@@ -256,7 +251,8 @@ describe("API Key Management Tests", () => {
           channels: ["email"],
           recipients: [{ email: "test@example.com" }],
           subject: "Test",
-          content: "Test",
+
+          data: "Test",
         },
         {
           headers: {
@@ -268,7 +264,6 @@ describe("API Key Management Tests", () => {
 
       console.log("Limited permissions test:", response.status, response.data);
 
-      // Should be rejected due to insufficient permissions or endpoint not found
       expect([401, 403, 404]).toContain(response.status);
       console.log("✅ Insufficient permissions properly rejected");
     });
@@ -284,7 +279,6 @@ describe("API Key Management Tests", () => {
 
       if (response.status === 200) {
         expect(Array.isArray(response.data)).toBe(true);
-        // Keys should not include the actual key value in list
         if (response.data.length > 0) {
           expect(response.data[0]).not.toHaveProperty("key");
           expect(response.data[0]).toHaveProperty("keyPrefix");
@@ -322,7 +316,7 @@ describe("API Key Management Tests", () => {
     });
 
     it("should revoke API key", async () => {
-      const apiKey = createdApiKeys[1]; // Production key
+      const apiKey = createdApiKeys[1];
 
       const response = await api.delete(`/api-keys/${apiKey.id}`, {
         headers: { Authorization: `Bearer ${authData.accessToken}` },
@@ -333,14 +327,14 @@ describe("API Key Management Tests", () => {
       if (response.status === 204 || response.status === 200) {
         console.log("✅ API key revoked successfully");
 
-        // Test that revoked key no longer works
         const testResponse = await api.post(
           "/sdk/messages",
           {
             channels: ["email"],
             recipients: [{ email: "test@example.com" }],
             subject: "Test",
-            content: "Test",
+
+            data: "Test",
           },
           {
             headers: { Authorization: `Bearer ${apiKey.key}` },
@@ -358,9 +352,8 @@ describe("API Key Management Tests", () => {
 
   describe("🔒 API Key Security Tests", () => {
     it("should enforce rate limits", async () => {
-      const apiKey = createdApiKeys[0]; // Development key with 100/min limit
+      const apiKey = createdApiKeys[0];
 
-      // Send requests rapidly to test rate limiting
       const promises = Array(10)
         .fill(null)
         .map(() =>
@@ -370,7 +363,8 @@ describe("API Key Management Tests", () => {
               channels: ["email"],
               recipients: [{ email: "rate-limit@example.com" }],
               subject: "Rate Limit Test",
-              content: "Testing rate limits",
+
+              data: "Testing rate limits",
             },
             {
               headers: {
@@ -386,7 +380,6 @@ describe("API Key Management Tests", () => {
 
       console.log("Rate limiting test status codes:", statusCodes);
 
-      // Should have mix of success and rate limit responses
       const hasRateLimit = statusCodes.some((code) => code === 429);
       const hasSuccess = statusCodes.some((code) => [200, 201].includes(code));
 
@@ -394,8 +387,6 @@ describe("API Key Management Tests", () => {
     });
 
     it("should validate IP whitelist", async () => {
-      // This test would require actual IP-based validation
-      // For now, we'll test the API structure
       const apiKey = createdApiKeys[0];
 
       const response = await api.post(
@@ -404,32 +395,31 @@ describe("API Key Management Tests", () => {
           channels: ["email"],
           recipients: [{ email: "ip-test@example.com" }],
           subject: "IP Whitelist Test",
-          content: "Testing IP whitelist",
+
+          data: "Testing IP whitelist",
         },
         {
           headers: {
             Authorization: `Bearer ${apiKey.key}`,
             "X-Project-ID": projectId,
-            "X-Forwarded-For": "192.168.1.100", // Simulate different IP
+            "X-Forwarded-For": "192.168.1.100",
           },
         },
       );
 
       console.log("IP whitelist test:", response.status, response.data);
 
-      // Accept various responses as IP validation might not be implemented
       expect([200, 201, 401, 403, 404]).toContain(response.status);
       console.log("✅ IP whitelist test completed");
     });
 
     it("should handle API key expiration", async () => {
-      // Create an expired API key
       const expiredKeyPayload = {
         name: `Expired API Key ${timestamp}`,
         projectId: projectId,
         environment: "development",
         permissions: ["email:send"],
-        expiresAt: new Date(Date.now() - 24 * 60 * 60 * 1000), // Expired yesterday
+        expiresAt: new Date(Date.now() - 24 * 60 * 60 * 1000),
       };
 
       const createResponse = await api.post("/api-keys", expiredKeyPayload, {
@@ -439,14 +429,14 @@ describe("API Key Management Tests", () => {
       if (createResponse.status === 201) {
         const expiredKey = createResponse.data.key;
 
-        // Test using expired key
         const testResponse = await api.post(
           "/sdk/messages",
           {
             channels: ["email"],
             recipients: [{ email: "expired-test@example.com" }],
             subject: "Expired Key Test",
-            content: "Testing expired key",
+
+            data: "Testing expired key",
           },
           {
             headers: { Authorization: `Bearer ${expiredKey}` },

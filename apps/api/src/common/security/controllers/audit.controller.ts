@@ -13,7 +13,6 @@ import { Response } from "express";
 import { CurrentUser } from "../../../modules/auth/decorators/current-user.decorator";
 import { RequireRoles } from "../../../modules/auth/decorators/roles.decorator";
 import { AuthGuard } from "../../../modules/auth/guards/jwt-auth.guard";
-// import { RolesGuard } from '../../../modules/auth/guards/roles.guard';
 import { AuditLog } from "../decorators/audit-log.decorator";
 import { AuditLogService } from "../services/audit-log.service";
 import { AuditAction, AuditResourceType } from "../entities/audit-log.entity";

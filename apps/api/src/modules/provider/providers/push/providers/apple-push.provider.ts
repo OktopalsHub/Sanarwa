@@ -30,7 +30,6 @@ export class ApplePushProvider implements IPushProvider {
       const deliveredTo: string[] = [];
       const failedDeliveries: string[] = [];
 
-      // Build standard APNS payload
       const apnsPayload = {
         aps: {
           alert: {
@@ -49,21 +48,16 @@ export class ApplePushProvider implements IPushProvider {
             "interruption-level": payload.ios.interruptionLevel,
           }),
         },
-        // Custom data payload
         ...payload.data,
-        // Deep link support
         ...(payload.deepLink && {
           deep_link: payload.deepLink.url,
           fallback_url: payload.deepLink.fallbackUrl,
           ios_category: payload.deepLink.iosCategory,
         }),
-        // Action buttons
         ...(payload.actions && { actions: JSON.stringify(payload.actions) }),
-        // Image URL
         ...(payload.imageUrl && { image_url: payload.imageUrl }),
       };
 
-      // Send to each device token
       for (const token of tokens) {
         try {
           await this.sendAPNSNotification(token, apnsPayload, payload.priority);
@@ -111,7 +105,6 @@ export class ApplePushProvider implements IPushProvider {
         ? "https://api.push.apple.com"
         : "https://api.sandbox.push.apple.com";
 
-    // Generate JWT token for APNS authentication
     const jwtToken = await this.generateJWTToken();
 
     const response = await fetch(`${apnsUrl}/3/device/${deviceToken}`, {
@@ -122,7 +115,7 @@ export class ApplePushProvider implements IPushProvider {
         "apns-topic": this.apnsBundleId,
         "apns-priority": this.mapPriorityToAPNSPriority(priority),
         "apns-push-type": "alert",
-        "apns-expiration": (Math.floor(Date.now() / 1000) + 3600).toString(), // 1 hour
+        "apns-expiration": (Math.floor(Date.now() / 1000) + 3600).toString(),
       },
       body: JSON.stringify(payload),
     });
@@ -134,7 +127,6 @@ export class ApplePushProvider implements IPushProvider {
   }
 
   private async generateJWTToken(): Promise<string> {
-    // Proper ES256 JWT for APNS - world-class fix (was stub apns_jwt_token_${Date.now()})
     const privateKey = this.apnsPrivateKey.replace(/\\n/g, "\n");
     const token = jwt.sign(
       {
@@ -155,11 +147,11 @@ export class ApplePushProvider implements IPushProvider {
     switch (priority) {
       case "urgent":
       case "high":
-        return "10"; // High priority
+        return "10";
       case "normal":
       case "low":
       default:
-        return "5"; // Normal priority
+        return "5";
     }
   }
 

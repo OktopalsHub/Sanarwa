@@ -1,27 +1,26 @@
 import { Injectable } from "@nestjs/common";
+import { InjectRedis } from "@nestjs-modules/ioredis";
+import type Redis from "ioredis";
 import { ConfigurationScope } from "../entities/configuration.entity";
 
-interface CacheEntry {
-  value: unknown;
-  expiresAt: number;
-}
+const KEY_PREFIX = "config:";
 
 @Injectable()
 export class ConfigurationCacheService {
-  private readonly cache = new Map<string, CacheEntry>();
   private readonly ttlMs = 60_000;
 
-  async get<T>(key: string, scope: ConfigurationScope, scopeId?: string, environment?: string): Promise<T | undefined> {
-    const cacheKey = this.buildKey(key, scope, scopeId, environment);
-    const entry = this.cache.get(cacheKey);
-    if (!entry) return undefined;
+  constructor(@InjectRedis() private readonly redis: Redis) {}
 
-    if (entry.expiresAt <= Date.now()) {
-      this.cache.delete(cacheKey);
-      return undefined;
-    }
-
-    return entry.value as T;
+  async get<T>(
+    key: string,
+    scope: ConfigurationScope,
+    scopeId?: string,
+    environment?: string,
+  ): Promise<T | undefined> {
+    const cached = await this.redis.get(
+      KEY_PREFIX + this.buildKey(key, scope, scopeId, environment),
+    );
+    return cached === null ? undefined : (JSON.parse(cached) as T);
   }
 
   async set(
@@ -32,10 +31,12 @@ export class ConfigurationCacheService {
     environment?: string,
     ttlMs = this.ttlMs,
   ): Promise<void> {
-    this.cache.set(this.buildKey(key, scope, scopeId, environment), {
-      value,
-      expiresAt: Date.now() + Math.max(1, ttlMs),
-    });
+    await this.redis.set(
+      KEY_PREFIX + this.buildKey(key, scope, scopeId, environment),
+      JSON.stringify(value),
+      "PX",
+      Math.max(1, ttlMs),
+    );
   }
 
   async invalidate(
@@ -44,24 +45,33 @@ export class ConfigurationCacheService {
     scopeId?: string,
     environment?: string,
   ): Promise<void> {
-    this.cache.delete(this.buildKey(key, scope, scopeId, environment));
+    await this.redis.del(KEY_PREFIX + this.buildKey(key, scope, scopeId, environment));
   }
 
   async clear(): Promise<void> {
-    this.cache.clear();
+    const keys = await this.scanKeys(`${KEY_PREFIX}*`);
+    if (keys.length > 0) {
+      await this.redis.del(keys);
+    }
   }
 
   async getStats(): Promise<{ totalKeys: number; memoryUsage: string }> {
-    this.pruneExpired();
+    const keys = await this.scanKeys(`${KEY_PREFIX}*`);
     return {
-      totalKeys: this.cache.size,
-      memoryUsage: `${this.cache.size} entries`,
+      totalKeys: keys.length,
+      memoryUsage: `${keys.length} entries`,
     };
   }
 
-  async healthCheck(): Promise<{ status: string }> {
-    this.pruneExpired();
-    return { status: "healthy" };
+  private async scanKeys(pattern: string): Promise<string[]> {
+    const keys: string[] = [];
+    let cursor = "0";
+    do {
+      const [nextCursor, batch] = await this.redis.scan(cursor, "MATCH", pattern, "COUNT", 100);
+      cursor = nextCursor;
+      keys.push(...batch);
+    } while (cursor !== "0");
+    return keys;
   }
 
   private buildKey(
@@ -71,14 +81,5 @@ export class ConfigurationCacheService {
     environment?: string,
   ): string {
     return [scope, scopeId ?? "", environment ?? "", key].join(":");
-  }
-
-  private pruneExpired(): void {
-    const now = Date.now();
-    for (const [key, entry] of this.cache.entries()) {
-      if (entry.expiresAt <= now) {
-        this.cache.delete(key);
-      }
-    }
   }
 }

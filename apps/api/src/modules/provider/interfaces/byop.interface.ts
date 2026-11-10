@@ -1,14 +1,9 @@
-/**
- * BYOP (Bring Your Own Provider) System Interfaces
- * Inspired by Novu's provider management system with optimizations
- */
-
 export interface ProviderCostModel {
   type: "per_message" | "monthly" | "hybrid" | "custom";
   baseRate: number;
   currency: string;
   tiers?: ProviderCostTier[];
-  infrastructureFee?: number; // Our management fee
+  infrastructureFee?: number;
   minimumCharge?: number;
   overage?: {
     rate: number;
@@ -52,7 +47,7 @@ export interface ProviderConfigProperty {
   format?: string;
   enum?: any[];
   default?: any;
-  sensitive?: boolean; // For encryption
+  sensitive?: boolean;
   validation?: {
     pattern?: string;
     minLength?: number;
@@ -97,10 +92,10 @@ export interface ProviderFailoverRule {
 }
 
 export interface ProviderFailoverCondition {
-  type: "error_rate" | "latency" | "cost" | "quota" | "health_check";
+  type: "error_rate" | "latency" | "cost" | "quota";
   operator: "gt" | "lt" | "eq" | "gte" | "lte";
   value: number;
-  timeWindow?: number; // in minutes
+  timeWindow?: number;
 }
 
 export interface ProviderFailoverAction {
@@ -121,7 +116,7 @@ export interface ProviderQuota {
   limit: number;
   current: number;
   resetAt: Date;
-  alertThresholds: number[]; // Percentages: [80, 95]
+  alertThresholds: number[];
 }
 
 export interface ProviderWebhookEvent {

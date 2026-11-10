@@ -1,7 +1,6 @@
 import {
   IsString,
   IsNumber,
-  IsBoolean,
   IsOptional,
   IsEnum,
   validateSync,
@@ -20,15 +19,12 @@ enum NodeEnvironment {
 @ValidatorConstraint({ name: "isDatabaseUrl", async: false })
 export class IsDatabaseUrlConstraint implements ValidatorConstraintInterface {
   validate(value: string): boolean {
-    if (!value) return true; // Optional field
+    if (!value) return true;
 
-    // Remove quotes if present
     const cleanValue = value.replace(/^["']|["']$/g, "");
 
-    // Check if it's a valid database URL format
     try {
       const url = new URL(cleanValue);
-      // Allow common database protocols
       const validProtocols = [
         "postgres:",
         "postgresql:",
@@ -43,8 +39,6 @@ export class IsDatabaseUrlConstraint implements ValidatorConstraintInterface {
       ];
       return validProtocols.includes(url.protocol);
     } catch {
-      // If URL parsing fails, it might still be a valid connection string
-      // Allow basic patterns like host:port or more complex connection strings
       return cleanValue.length > 0 && typeof cleanValue === "string";
     }
   }
@@ -57,18 +51,14 @@ export class IsDatabaseUrlConstraint implements ValidatorConstraintInterface {
 @ValidatorConstraint({ name: "isRedisUrl", async: false })
 export class IsRedisUrlConstraint implements ValidatorConstraintInterface {
   validate(value: string): boolean {
-    if (!value) return true; // Optional field
+    if (!value) return true;
 
-    // Remove quotes if present
     const cleanValue = value.replace(/^["']|["']$/g, "");
 
-    // Check if it's a valid Redis URL format
     try {
       const url = new URL(cleanValue);
       return ["redis:", "rediss:"].includes(url.protocol);
     } catch {
-      // If URL parsing fails, it might still be a valid connection string
-      // Allow basic patterns like host:port or more complex connection strings
       return cleanValue.length > 0 && typeof cleanValue === "string";
     }
   }
@@ -89,7 +79,6 @@ export class EnvironmentVariables {
   @IsString()
   API_PREFIX: string = "api/v1";
 
-  // Database Configuration
   @IsOptional()
   @IsString()
   DATABASE_URL?: string;
@@ -115,7 +104,6 @@ export class EnvironmentVariables {
   @IsString()
   DATABASE_NAME?: string;
 
-  // Redis Configuration
   @IsOptional()
   @IsString()
   REDIS_URL?: string;
@@ -138,7 +126,6 @@ export class EnvironmentVariables {
   @Transform(({ value }) => parseInt(value, 10))
   REDIS_DB?: number;
 
-  // JWT Configuration
   @IsString()
   JWT_AUTH_SECRET: string;
 
@@ -153,7 +140,6 @@ export class EnvironmentVariables {
   @IsString()
   JWT_REFRESH_EXPIRES_IN?: string = "30d";
 
-  // Session Configuration
   @IsString()
   SESSION_SECRET: string;
 
@@ -162,7 +148,6 @@ export class EnvironmentVariables {
   @Transform(({ value }) => parseInt(value, 10))
   SESSION_TIMEOUT?: number = 3600000;
 
-  // Encryption Configuration
   @IsString()
   PROVIDER_ENCRYPTION_KEY: string;
 
@@ -170,7 +155,6 @@ export class EnvironmentVariables {
   @IsString()
   ENCRYPTION_KEY_VERSION?: string = "v1";
 
-  // Rate Limiting
   @IsOptional()
   @IsNumber()
   @Transform(({ value }) => parseInt(value, 10))
@@ -181,34 +165,46 @@ export class EnvironmentVariables {
   @Transform(({ value }) => parseInt(value, 10))
   RATE_LIMIT_WINDOW?: number = 60;
 
-  // Alert Configuration
   @IsOptional()
   @IsString()
-  SLACK_BOT_TOKEN?: string;
-
-  @IsOptional()
-  @IsBoolean()
-  @Transform(({ value }) => value === "true")
-  SLACK_ALERTS_ENABLED?: boolean = false;
+  WHATSAPP_API_VERSION?: string = "v21.0";
 
   @IsOptional()
   @IsString()
-  SLACK_ALERT_CHANNEL?: string = "#alerts";
+  WHATSAPP_WEBHOOK_VERIFY_TOKEN?: string;
 
   @IsOptional()
   @IsString()
-  DISCORD_BOT_TOKEN?: string;
-
-  @IsOptional()
-  @IsBoolean()
-  @Transform(({ value }) => value === "true")
-  DISCORD_ALERTS_ENABLED?: boolean = false;
+  META_APP_ID?: string;
 
   @IsOptional()
   @IsString()
-  DISCORD_ALERT_CHANNEL_ID?: string;
+  META_CONFIG_ID?: string;
 
-  // Logging
+  @IsOptional()
+  @IsString()
+  META_APP_SECRET?: string;
+
+  @IsOptional()
+  @IsString()
+  WHATSAPP_APP_SECRET?: string;
+
+  @IsOptional()
+  @IsString()
+  VAPID_PUBLIC_KEY?: string;
+
+  @IsOptional()
+  @IsString()
+  VAPID_PRIVATE_KEY?: string;
+
+  @IsOptional()
+  @IsString()
+  VAPID_SUBJECT?: string;
+
+  @IsOptional()
+  @IsString()
+  INBOUND_EMAIL_SECRET?: string;
+
   @IsOptional()
   @IsString()
   LOG_LEVEL?: string = "info";
@@ -217,38 +213,36 @@ export class EnvironmentVariables {
   @IsString()
   LOG_DIR?: string = "logs";
 
-  // Performance Configuration
   @IsOptional()
   @IsNumber()
   @Transform(({ value }) => parseInt(value, 10))
-  BATCH_MAX_SIZE?: number = 250; // Minimal 250 plan for ZeptoMail (was 100)
+  BATCH_MAX_SIZE?: number = 250;
 
   @IsOptional()
   @IsNumber()
   @Transform(({ value }) => parseInt(value, 10))
-  BATCH_MAX_WAIT_TIME?: number = 2000; // Faster flush for low latency (was 5000)
+  BATCH_MAX_WAIT_TIME?: number = 2000;
 
   @IsOptional()
   @IsNumber()
   @Transform(({ value }) => parseInt(value, 10))
-  BATCH_MAX_CONCURRENCY?: number = 5; // 4GB shared box safe (was 10)
+  BATCH_MAX_CONCURRENCY?: number = 5;
 
   @IsOptional()
   @IsNumber()
   @Transform(({ value }) => parseInt(value, 10))
-  HTTP_POOL_MAX_SOCKETS?: number = 20; // Shared box safe (was 50)
+  HTTP_POOL_MAX_SOCKETS?: number = 20;
 
   @IsOptional()
   @IsNumber()
   @Transform(({ value }) => parseInt(value, 10))
-  HTTP_POOL_MAX_FREE_SOCKETS?: number = 5; // Shared box safe (was 10)
+  HTTP_POOL_MAX_FREE_SOCKETS?: number = 5;
 
   @IsOptional()
   @IsNumber()
   @Transform(({ value }) => parseInt(value, 10))
   HTTP_POOL_TIMEOUT?: number = 30000;
 
-  // Memory Optimization
   @IsOptional()
   @IsNumber()
   @Transform(({ value }) => parseInt(value, 10))
@@ -269,7 +263,6 @@ export class EnvironmentVariables {
   @Transform(({ value }) => parseInt(value, 10))
   MEMORY_RSS_CRITICAL_MB?: number = 2048;
 
-  // Cache Configuration
   @IsOptional()
   @IsNumber()
   @Transform(({ value }) => parseInt(value, 10))

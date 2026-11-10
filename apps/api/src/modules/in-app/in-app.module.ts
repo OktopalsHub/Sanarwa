@@ -10,7 +10,13 @@ import { InAppGateway } from "./gateway/in-app.gateway";
 import { InAppFeedService } from "./services/in-app-feed.service";
 
 @Module({
-  imports: [TypeOrmModule.forFeature([InAppNotification]), JwtModule.register({}), AuthModule, TenantMemberModule, EventEmitterModule],
+  imports: [
+    TypeOrmModule.forFeature([InAppNotification]),
+    JwtModule.register({}),
+    AuthModule,
+    TenantMemberModule,
+    EventEmitterModule,
+  ],
   controllers: [InAppInboxController],
   providers: [InAppGateway, InAppFeedService],
   exports: [InAppGateway, InAppFeedService],

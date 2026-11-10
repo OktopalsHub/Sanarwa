@@ -1,13 +1,13 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
 
 import {
-  parseNotifiPaymentMethodSetupReference,
-  parseNotifiPurchaseReference,
+  parsePaymentMethodSetupReference,
+  parsePurchaseReference,
 } from "../constants/token-packages";
 
 const TIMESTAMP_SKEW_SECONDS = 300;
 
-const SUCCESS_STATUSES = new Set(["succeeded", "accepted"]);
+const SUCCESS_STATUSES = new Set(["succeeded", "accepted", "overpaid"]);
 
 export interface BachsWebhookVerifyInput {
   rawBody: string;
@@ -86,10 +86,10 @@ export function verifyBachsWebhook(
 
   const metadata = body.data?.metadata ?? {};
 
-  const purchaseId = parseNotifiPurchaseReference(merchantReference);
+  const purchaseId = parsePurchaseReference(merchantReference);
 
   const setupReference =
-    parseNotifiPaymentMethodSetupReference(merchantReference) ??
+    parsePaymentMethodSetupReference(merchantReference) ??
     (metadata.setup_reference ? String(metadata.setup_reference) : null);
 
   const tenantId = metadata.tenant_id !== undefined ? String(metadata.tenant_id) : undefined;
@@ -221,7 +221,7 @@ export function verifyBachsWebhook(
     return null;
   }
 
-  if (!chargeId && !setupReference) return null;
+  if (!chargeId && !checkoutId && !purchaseId && !setupReference) return null;
 
   return {
     eventId: body.id,
@@ -255,17 +255,49 @@ export function verifyBachsWebhook(
   };
 }
 
+/**
+ * Bachs signs every delivery. `X-Bachs-Signature-V2` is preferred: it carries the
+ * scheme name and repeats `v1=` once per currently valid secret, so a rotation
+ * keeps verifying while the new secret is deployed. `X-Bachs-Signature` is the
+ * single-secret form and stays supported.
+ */
 function verifyBachsSignature(
   input: BachsWebhookVerifyInput,
 
   webhookSecret: string,
 ): boolean {
-  const signature = getHeader(input.headers, "x-bachs-signature");
+  if (!webhookSecret) return false;
 
+  const v2 = getHeader(input.headers, "x-bachs-signature-v2");
+
+  if (v2) {
+    const parts = v2.split(",").map((part) => part.trim());
+
+    const timestamp = parts.find((p) => p.startsWith("t="))?.slice(2);
+
+    const signatures = parts.filter((p) => p.startsWith("v1=")).map((p) => p.slice(3));
+
+    if (!timestamp || signatures.length === 0) return false;
+
+    return signatures.some((presented) =>
+      matches(timestamp, presented, input.rawBody, webhookSecret),
+    );
+  }
+
+  const signature = getHeader(input.headers, "x-bachs-signature");
   const timestamp = getHeader(input.headers, "x-bachs-timestamp");
 
-  if (!signature || !timestamp || !webhookSecret) return false;
+  if (!signature || !timestamp) return false;
 
+  return matches(timestamp, signature, input.rawBody, webhookSecret);
+}
+
+function matches(
+  timestamp: string,
+  presented: string,
+  rawBody: string,
+  webhookSecret: string,
+): boolean {
   const timestampSeconds = Number(timestamp);
 
   if (!Number.isFinite(timestampSeconds)) return false;
@@ -277,11 +309,11 @@ function verifyBachsSignature(
   }
 
   const expected = createHmac("sha256", webhookSecret)
-    .update(`${timestamp}.${input.rawBody}`)
+    .update(`${timestamp}.${rawBody}`)
 
     .digest("hex");
 
-  return safeEqual(signature, expected);
+  return safeEqual(presented, expected);
 }
 
 function getHeader(

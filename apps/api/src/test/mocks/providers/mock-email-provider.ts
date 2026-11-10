@@ -1,16 +1,11 @@
 import { IEmailProvider } from "../../../providers/email/email-provider.interface";
-import {
-  Channel,
-  DeliveryStatus,
-  ProviderConfig,
-  ProviderHealth,
-  ProviderResponse,
-} from "../../../providers/types";
+import { DeliveryStatus, ProviderConfig, ProviderResponse } from "../../../providers/types";
+import { NotificationChannel } from "../../../common/enums/notification-channel.enum";
 
 export class MockEmailProvider implements IEmailProvider {
   id = "mock-email-provider";
   name = "Mock Email Provider";
-  channel = Channel.EMAIL;
+  channel = NotificationChannel.EMAIL;
   config: ProviderConfig;
   isInitialized = true;
 
@@ -42,13 +37,6 @@ export class MockEmailProvider implements IEmailProvider {
     return config && config.credentials && typeof config.credentials === "object";
   }
 
-  async checkHealth(): Promise<{ status: ProviderHealth; lastChecked: Date }> {
-    return {
-      status: this.shouldFail ? ProviderHealth.UNHEALTHY : ProviderHealth.HEALTHY,
-      lastChecked: new Date(),
-    };
-  }
-
   async initialize(): Promise<void> {
     this.isInitialized = true;
   }
@@ -57,7 +45,6 @@ export class MockEmailProvider implements IEmailProvider {
     this.isInitialized = false;
   }
 
-  // Test helper methods
   setShouldFail(shouldFail: boolean, message?: string): void {
     this.shouldFail = shouldFail;
     if (message) {

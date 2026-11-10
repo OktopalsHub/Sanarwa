@@ -1,7 +1,6 @@
 import { Module } from "@nestjs/common";
 import { TypeOrmModule } from "@nestjs/typeorm";
 import { ConfigModule } from "@nestjs/config";
-import { ScheduleModule } from "@nestjs/schedule";
 import { TenantContextGuard } from "../../common/guards";
 import { AuthModule } from "../auth/auth.module";
 import { TenantMemberModule } from "../tenant-member/tenant-member.module";
@@ -11,11 +10,10 @@ import { TokenPurchaseService } from "./services/token-purchase.service";
 import { CheckoutProviderService } from "./services/checkout-provider.service";
 import { AutoTopupService } from "./services/auto-topup.service";
 import { BillingWebhooksService } from "./services/billing-webhooks.service";
+import { BillingWebhookLedgerService } from "./services/billing-webhook-ledger.service";
 import { BillingIntegrationService } from "./services/billing-integration.service";
 import { WelcomeTokenListener } from "./services/welcome-token.listener";
-import { PolarService } from "./services/polar.service";
 import { BachsService } from "./services/bachs.service";
-import { NombaService } from "./services/nomba.service";
 import { PaymentMethodService } from "./services/payment-method.service";
 import { TokenManagementService } from "../token-management/services/token-management.service";
 import { Subscription } from "./entities/subscription.entity";
@@ -39,7 +37,6 @@ import { Tenant } from "../tenant/entities/tenant.entity";
       Tenant,
     ]),
     ConfigModule,
-    ScheduleModule.forRoot(),
     AuthModule,
     TenantMemberModule,
   ],
@@ -49,10 +46,9 @@ import { Tenant } from "../tenant/entities/tenant.entity";
     TokenPurchaseService,
     CheckoutProviderService,
     AutoTopupService,
+    BillingWebhookLedgerService,
     BillingWebhooksService,
-    PolarService,
     BachsService,
-    NombaService,
     PaymentMethodService,
     TokenManagementService,
     BillingIntegrationService,
@@ -64,12 +60,11 @@ import { Tenant } from "../tenant/entities/tenant.entity";
     TokenPurchaseService,
     CheckoutProviderService,
     AutoTopupService,
+    BillingWebhookLedgerService,
     BillingWebhooksService,
     TokenManagementService,
     BillingIntegrationService,
-    PolarService,
     BachsService,
-    NombaService,
     PaymentMethodService,
   ],
 })

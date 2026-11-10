@@ -1,7 +1,7 @@
 import { Get, Param, Query, Controller, UseGuards } from "@nestjs/common";
 import { ApiTags, ApiBearerAuth, ApiOperation, ApiParam, ApiResponse } from "@nestjs/swagger";
-import { CurrentTenantId } from "src/common/decorators";
-import { TenantContextGuard } from "src/common/guards";
+import { CurrentTenantId } from "../../common/decorators";
+import { TenantContextGuard } from "../../common/guards";
 import { AuthGuard } from "../auth/guards/jwt-auth.guard";
 import { AdvancedAnalyticsService } from "./advanced-analytics.service";
 import { AnalyticsService } from "./analytics.service";
@@ -16,12 +16,6 @@ export class AnalyticsInsightsController {
     private readonly analyticsService: AnalyticsService,
   ) {}
 
-  /**
-   * Get analytics filtered by project
-   */
-  /**
-   * Get analytics filtered by project
-   */
   @Get("project/:projectId")
   @ApiOperation({ summary: "Get project analytics" })
   @ApiParam({
@@ -46,12 +40,6 @@ export class AnalyticsInsightsController {
     );
   }
 
-  /**
-   * Get analytics filtered by brand
-   */
-  /**
-   * Get analytics filtered by brand
-   */
   @Get("brand/:brandId")
   @ApiOperation({ summary: "Get brand analytics" })
   @ApiParam({ name: "brandId", description: "Brand ID" })
@@ -72,12 +60,6 @@ export class AnalyticsInsightsController {
     );
   }
 
-  /**
-   * Get comparative analytics between projects
-   */
-  /**
-   * Get comparative analytics between projects
-   */
   @Get("compare/projects")
   @ApiOperation({ summary: "Compare project analytics" })
   @ApiResponse({ status: 200, description: "Comparison data retrieved successfully" })
@@ -97,12 +79,6 @@ export class AnalyticsInsightsController {
     );
   }
 
-  /**
-   * Get comparative analytics between brands
-   */
-  /**
-   * Get comparative analytics between brands
-   */
   @Get("compare/brands")
   @ApiOperation({ summary: "Compare brand analytics" })
   @ApiResponse({ status: 200, description: "Comparison data retrieved successfully" })
@@ -122,14 +98,6 @@ export class AnalyticsInsightsController {
     );
   }
 
-  // ===== ADVANCED ANALYTICS ENDPOINTS =====
-
-  /**
-   * Get cohort analysis for user engagement
-   */
-  /**
-   * Get cohort analysis for user engagement
-   */
   @Get("advanced/cohorts")
   @ApiOperation({ summary: "Get cohort analysis" })
   @ApiResponse({ status: 200, description: "Cohort analysis data retrieved successfully" })
@@ -149,12 +117,6 @@ export class AnalyticsInsightsController {
     return this.advancedAnalyticsService.getCohortAnalysis(query, cohortType);
   }
 
-  /**
-   * Get user journey analysis
-   */
-  /**
-   * Get user journey analysis
-   */
   @Get("advanced/user-journey/:userIdentifier")
   @ApiOperation({ summary: "Get user journey analysis" })
   @ApiParam({ name: "userIdentifier", description: "User Identifier" })
@@ -173,12 +135,6 @@ export class AnalyticsInsightsController {
     );
   }
 
-  /**
-   * Get optimal send times prediction
-   */
-  /**
-   * Get optimal send times prediction
-   */
   @Get("advanced/optimal-send-times")
   @ApiOperation({ summary: "Get optimal send times prediction" })
   @ApiResponse({ status: 200, description: "Optimal send times data retrieved successfully" })
@@ -197,50 +153,6 @@ export class AnalyticsInsightsController {
     return this.advancedAnalyticsService.getOptimalSendTimes(query);
   }
 
-  /**
-   * Get revenue attribution analysis
-   */
-  // @Get('advanced/revenue-attribution')
-  // async getRevenueAttribution(
-  //   @Query('tenantId') tenantId: string,
-  //   @Query('startDate') startDate?: string,
-  //   @Query('endDate') endDate?: string,
-  //   @Query('campaignId') campaignId?: string,
-  // ) {
-  //   const query = {
-  //     tenantId,
-  //     startDate: startDate ? new Date(startDate) : undefined,
-  //     endDate: endDate ? new Date(endDate) : undefined,
-  //     campaignId,
-  //   };
-
-  //   return this.advancedAnalyticsService.getRevenueAttribution(query);
-  // }
-
-  /**
-   * Get segment performance analytics
-   */
-  // @Get('advanced/segment-performance')
-  // async getSegmentPerformance(
-  //   @Query('tenantId') tenantId: string,
-  //   @Query('startDate') startDate?: string,
-  //   @Query('endDate') endDate?: string,
-  // ) {
-  //   const query = {
-  //     tenantId,
-  //     startDate: startDate ? new Date(startDate) : undefined,
-  //     endDate: endDate ? new Date(endDate) : undefined,
-  //   };
-
-  //   return this.advancedAnalyticsService.getSegmentPerformance(query);
-  // }
-
-  /**
-   * Get churn risk analysis
-   */
-  /**
-   * Get churn risk analysis
-   */
   @Get("advanced/churn-risk")
   @ApiOperation({ summary: "Get churn risk analysis" })
   @ApiResponse({ status: 200, description: "Churn risk data retrieved successfully" })

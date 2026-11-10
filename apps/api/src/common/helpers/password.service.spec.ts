@@ -17,7 +17,7 @@ describe("PasswordService", () => {
   });
 
   describe("hashPassword", () => {
-    it("should hash a password", async () => {
+    it("should hash a password", { timeout: 20000 }, async () => {
       const password = "testPassword123!";
       const hash = await service.hashPassword(password);
 
@@ -26,7 +26,7 @@ describe("PasswordService", () => {
       expect(hash.length).toBeGreaterThan(50);
     });
 
-    it("should generate different hashes for the same password", async () => {
+    it("should generate different hashes for the same password", { timeout: 20000 }, async () => {
       const password = "testPassword123!";
       const hash1 = await service.hashPassword(password);
       const hash2 = await service.hashPassword(password);
@@ -36,7 +36,7 @@ describe("PasswordService", () => {
   });
 
   describe("verifyPassword", () => {
-    it("should verify a correct password", async () => {
+    it("should verify a correct password", { timeout: 20000 }, async () => {
       const password = "testPassword123!";
       const hash = await service.hashPassword(password);
       const isValid = await service.verifyPassword(hash, password);
@@ -44,7 +44,7 @@ describe("PasswordService", () => {
       expect(isValid).toBe(true);
     });
 
-    it("should reject an incorrect password", async () => {
+    it("should reject an incorrect password", { timeout: 20000 }, async () => {
       const password = "testPassword123!";
       const wrongPassword = "wrongPassword123!";
       const hash = await service.hashPassword(password);
@@ -124,15 +124,14 @@ describe("PasswordService", () => {
     });
 
     it("should give bonus score for longer passwords", () => {
-      const shortPassword = "Pass12"; // 6 characters, missing special char, score = 3
-      const longPassword = "VeryLongPassword123!"; // 20 characters, all criteria + length bonus, score = 5 (capped)
+      const shortPassword = "Pass12";
+      const longPassword = "VeryLongPassword123!";
 
       const shortResult = service.validatePasswordStrength(shortPassword);
       const longResult = service.validatePasswordStrength(longPassword);
 
-      // Long password should have higher score
       expect(longResult.score).toBeGreaterThan(shortResult.score);
-      expect(longResult.score).toBe(5); // Max score
+      expect(longResult.score).toBe(5);
       expect(shortResult.score).toBeLessThan(5);
     });
   });

@@ -18,9 +18,6 @@ export class PushCertificateService {
     private readonly eventEmitter: EventEmitter2,
   ) {}
 
-  /**
-   * Validate a certificate
-   */
   async validateCertificate(
     certificateId: string,
     tenantId: string,
@@ -35,7 +32,6 @@ export class PushCertificateService {
 
     const validation = certificate.validateCertificate();
 
-    // Update validation result
     certificate.validationResult = {
       ...validation,
       lastChecked: new Date(),
@@ -61,9 +57,6 @@ export class PushCertificateService {
     return validation;
   }
 
-  /**
-   * Test a certificate by sending a test push notification
-   */
   async testCertificate(
     certificateId: string,
     tenantId: string,
@@ -82,18 +75,14 @@ export class PushCertificateService {
     }
 
     try {
-      // This would integrate with the actual push provider (APNs for iOS, FCM for Android)
-      // For now, we'll simulate the test
-
       const testResult = {
         success: true,
         messageId: `test_${Date.now()}`,
       };
 
-      // Update test result
       certificate.testResult = {
         ...testResult,
-        responseTime: 100, // simulated
+        responseTime: 100,
         lastTested: new Date(),
       };
 
@@ -132,9 +121,6 @@ export class PushCertificateService {
     }
   }
 
-  /**
-   * Check for certificates that need rotation
-   */
   async checkCertificatesForRotation(): Promise<PushCertificate[]> {
     const certificates = await this.certificateRepository.find({
       where: { status: CertificateStatus.ACTIVE },
@@ -146,7 +132,6 @@ export class PushCertificateService {
       if (certificate.needsRotation()) {
         expiringCertificates.push(certificate);
 
-        // Update next rotation date if not set
         if (!certificate.nextRotationAt) {
           const rotationDays = certificate.rotationConfig?.rotationDaysBeforeExpiry || 30;
           const nextRotation = new Date(certificate.expiresAt!);
@@ -168,9 +153,6 @@ export class PushCertificateService {
     return expiringCertificates;
   }
 
-  /**
-   * Rotate a certificate (create new one and deactivate old)
-   */
   async rotateCertificate(
     certificateId: string,
     tenantId: string,
@@ -184,11 +166,9 @@ export class PushCertificateService {
       throw new Error("Certificate not found");
     }
 
-    // Deactivate old certificate
     oldCertificate.status = CertificateStatus.INACTIVE;
     await this.certificateRepository.save(oldCertificate);
 
-    // Create new certificate with same metadata
     const newCertificate = this.certificateRepository.create({
       name: `${oldCertificate.name} (Rotated)`,
       description: oldCertificate.description,
@@ -214,9 +194,6 @@ export class PushCertificateService {
     return savedCertificate;
   }
 
-  /**
-   * Get certificate usage statistics
-   */
   async getCertificateUsageStats(certificateId: string, tenantId: string): Promise<any> {
     const certificate = await this.certificateRepository.findOne({
       where: { id: certificateId, tenantId },
@@ -226,8 +203,6 @@ export class PushCertificateService {
       throw new Error("Certificate not found");
     }
 
-    // In a real implementation, this would query notification logs
-    // to get detailed usage statistics
     return {
       certificateId,
       totalNotificationsSent: certificate.totalNotificationsSent,
@@ -238,9 +213,6 @@ export class PushCertificateService {
     };
   }
 
-  /**
-   * Update certificate metadata
-   */
   async updateCertificateUsage(certificateId: string): Promise<void> {
     await this.certificateRepository.update(certificateId, {
       totalNotificationsSent: () => "total_notifications_sent + 1",
@@ -248,9 +220,6 @@ export class PushCertificateService {
     });
   }
 
-  /**
-   * Get certificates expiring soon
-   */
   async getExpiringCertificates(days: number = 30): Promise<PushCertificate[]> {
     const expiryDate = new Date();
     expiryDate.setDate(expiryDate.getDate() + days);
@@ -262,9 +231,6 @@ export class PushCertificateService {
       .getMany();
   }
 
-  /**
-   * Bulk validate certificates
-   */
   async validateAllCertificates(): Promise<{ validated: number; errors: number }> {
     const certificates = await this.certificateRepository.find({
       where: { status: CertificateStatus.ACTIVE },

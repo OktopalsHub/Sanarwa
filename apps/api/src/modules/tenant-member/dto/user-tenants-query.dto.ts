@@ -1,7 +1,7 @@
 import { ApiPropertyOptional } from "@nestjs/swagger";
 import { IsEnum, IsOptional, IsString } from "class-validator";
-import { PaginationDto } from "src/common/dto/pagination.dto";
-import { TenantMemberRole } from "src/common/enums";
+import { PaginationDto } from "../../../common/dto/pagination.dto";
+import { TenantMemberRole } from "../../../common/enums";
 
 export class UserTenantsQueryDto extends PaginationDto {
   @ApiPropertyOptional({

@@ -32,25 +32,24 @@ export class InfobipProvider implements ISMSProvider {
   private readonly apiKey: string;
   private readonly baseUrl: string;
 
-  // Infobip pricing (competitive global rates, in USD)
   private readonly countryPricing: Record<string, number> = {
-    US: 0.0075, // United States
-    CA: 0.0075, // Canada
-    GB: 0.035, // United Kingdom
-    DE: 0.065, // Germany
-    FR: 0.065, // France
-    AU: 0.045, // Australia
-    IN: 0.006, // India
-    BR: 0.02, // Brazil
-    MX: 0.02, // Mexico
-    JP: 0.07, // Japan
-    KR: 0.04, // South Korea
-    CN: 0.045, // China
-    NG: 0.018, // Nigeria
-    ZA: 0.025, // South Africa
-    KE: 0.02, // Kenya
-    GH: 0.018, // Ghana
-    "*": 0.04, // Default for other countries
+    US: 0.0075,
+    CA: 0.0075,
+    GB: 0.035,
+    DE: 0.065,
+    FR: 0.065,
+    AU: 0.045,
+    IN: 0.006,
+    BR: 0.02,
+    MX: 0.02,
+    JP: 0.07,
+    KR: 0.04,
+    CN: 0.045,
+    NG: 0.018,
+    ZA: 0.025,
+    KE: 0.02,
+    GH: 0.018,
+    "*": 0.04,
   };
 
   constructor(private configService: ConfigService) {
@@ -133,7 +132,6 @@ export class InfobipProvider implements ISMSProvider {
 
   async sendBulkSMS(payload: BulkSMSPayload): Promise<BulkSMSResponse> {
     try {
-      // Infobip supports native bulk SMS
       const infobipPayload = {
         messages: [
           {
@@ -165,7 +163,6 @@ export class InfobipProvider implements ISMSProvider {
       const results: BulkSMSResponse["results"] = [];
       let totalCost = 0;
 
-      // Process results for each recipient
       const messages = result.messages || [];
       payload.recipients.forEach((recipient, index) => {
         const message = messages[index];
@@ -218,7 +215,6 @@ export class InfobipProvider implements ISMSProvider {
   }
 
   private extractCountryCode(phoneNumber: string): string {
-    // Simple extraction - in production, use libphonenumber-js
     if (phoneNumber.startsWith("+1")) return "US";
     if (phoneNumber.startsWith("+44")) return "GB";
     if (phoneNumber.startsWith("+49")) return "DE";

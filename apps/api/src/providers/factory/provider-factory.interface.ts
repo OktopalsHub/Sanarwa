@@ -1,32 +1,21 @@
 import { IBaseProvider } from "../base/base-provider.interface";
-import { Channel, ProviderConfig } from "../types";
+import { ProviderConfig } from "../types";
+import { NotificationChannel } from "../../common/enums/notification-channel.enum";
 
 export interface IProviderFactory {
-  /**
-   * Create a provider instance
-   */
   createProvider(
     providerId: string,
-    channel: Channel,
+    channel: NotificationChannel,
     config: ProviderConfig,
   ): Promise<IBaseProvider>;
 
-  /**
-   * Get available provider types for a channel
-   */
-  getAvailableProviders(channel: Channel): string[];
+  getAvailableProviders(channel: NotificationChannel): string[];
 
-  /**
-   * Register a new provider type
-   */
   registerProvider(
     providerId: string,
-    channel: Channel,
+    channel: NotificationChannel,
     providerClass: new (...args: any[]) => IBaseProvider,
   ): void;
 
-  /**
-   * Check if a provider type is registered
-   */
-  isProviderRegistered(providerId: string, channel: Channel): boolean;
+  isProviderRegistered(providerId: string, channel: NotificationChannel): boolean;
 }

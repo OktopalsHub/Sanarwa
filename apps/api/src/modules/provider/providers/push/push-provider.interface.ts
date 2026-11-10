@@ -9,26 +9,23 @@ export interface PushPayload {
   clickAction?: string;
   category?: string;
   priority?: "high" | "normal";
-  ttl?: number; // Time to live in seconds
+  ttl?: number;
 
-  // Deep linking support
   deepLink?: {
-    url: string; // Deep link URL (e.g., "myapp://profile/123")
-    fallbackUrl?: string; // Web fallback URL
-    androidAction?: string; // Android intent action
-    iosCategory?: string; // iOS notification category
+    url: string;
+    fallbackUrl?: string;
+    androidAction?: string;
+    iosCategory?: string;
   };
 
-  // Action buttons
   actions?: Array<{
     id: string;
     title: string;
     icon?: string;
     deepLink?: string;
-    destructive?: boolean; // iOS only
+    destructive?: boolean;
   }>;
 
-  // Platform-specific options
   android?: {
     channelId?: string;
     color?: string;
@@ -65,6 +62,6 @@ export interface PushResponse {
 
 export interface IPushProvider {
   sendPushNotification(payload: PushPayload): Promise<PushResponse>;
-  validateConfig(): Promise<boolean>;
+  validateConfig(config?: unknown): Promise<boolean>;
   getProviderName(): string;
 }

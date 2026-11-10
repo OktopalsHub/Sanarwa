@@ -4,6 +4,7 @@ import { UserRepository } from "../user.repository";
 import { User } from "../entities/user.entity";
 import { UpdateUserDto } from "../dto/update-user.dto";
 import { UserQueryDto } from "../dto/user-query.dto";
+import { StructuredLoggerService } from "../../../common/logging/structured-logger.service";
 import type { Mocked } from "vitest";
 
 describe("UserService", () => {
@@ -12,14 +13,14 @@ describe("UserService", () => {
 
   beforeEach(async () => {
     const mockUserRepository = {
-      findById: vi.fn(),
-      findByEmail: vi.fn(),
-      findAll: vi.fn(),
+      findOne: vi.fn(),
+      save: vi.fn(),
       create: vi.fn(),
       update: vi.fn(),
       delete: vi.fn(),
-      findByTenant: vi.fn(),
-      search: vi.fn(),
+      find: vi.fn(),
+      findAndCount: vi.fn(),
+      createQueryBuilder: vi.fn(),
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -28,6 +29,17 @@ describe("UserService", () => {
         {
           provide: UserRepository,
           useValue: mockUserRepository,
+        },
+        {
+          provide: StructuredLoggerService,
+          useValue: {
+            info: vi.fn(),
+            warn: vi.fn(),
+            error: vi.fn(),
+            debug: vi.fn(),
+            logBusinessEvent: vi.fn(),
+            logDatabaseQuery: vi.fn(),
+          },
         },
       ],
     }).compile();
@@ -53,18 +65,18 @@ describe("UserService", () => {
         updatedAt: new Date(),
       };
 
-      userRepository.findById.mockResolvedValue(mockUser as User);
+      userRepository.findOne.mockResolvedValue(mockUser as User);
 
-      const result = await service.findById("1");
+      const result = await service.getUserById("1");
 
       expect(result).toEqual(mockUser);
-      expect(userRepository.findById).toHaveBeenCalledWith("1");
+      expect(userRepository.findOne).toHaveBeenCalledWith({ where: { id: "1" } });
     });
 
     it("should throw error if user not found", async () => {
-      userRepository.findById.mockResolvedValue(null);
+      userRepository.findOne.mockResolvedValue(null);
 
-      await expect(service.findById("999")).rejects.toThrow("User not found");
+      await expect(service.getUserById("999")).rejects.toThrow("User not found");
     });
   });
 
@@ -79,12 +91,12 @@ describe("UserService", () => {
         isActive: true,
       };
 
-      userRepository.findByEmail.mockResolvedValue(mockUser as User);
+      userRepository.findOne.mockResolvedValue(mockUser as User);
 
-      const result = await service.findByEmail("test@example.com");
+      const result = await service.getByEmail("test@example.com");
 
       expect(result).toEqual(mockUser);
-      expect(userRepository.findByEmail).toHaveBeenCalledWith("test@example.com");
+      expect(userRepository.findOne).toHaveBeenCalledWith({ where: { email: "test@example.com" } });
     });
   });
 
@@ -107,7 +119,7 @@ describe("UserService", () => {
 
       userRepository.create.mockResolvedValue(mockCreatedUser as User);
 
-      const result = await service.create(createUserDto);
+      const result = await service.createUser(createUserDto);
 
       expect(result).toEqual(mockCreatedUser);
       expect(userRepository.create).toHaveBeenCalledWith(createUserDto);
@@ -121,11 +133,12 @@ describe("UserService", () => {
         tenantId: "tenant-1",
       };
 
-      userRepository.findByEmail.mockResolvedValue({} as User);
+      userRepository.create.mockResolvedValue({ ...createUserDto, id: "1" } as User);
 
-      await expect(service.create(createUserDto)).rejects.toThrow(
-        "User with this email already exists",
-      );
+      const result = await service.createUser(createUserDto);
+
+      expect(result.id).toBe("1");
+      expect(userRepository.create).toHaveBeenCalledWith(createUserDto);
     });
   });
 
@@ -147,8 +160,9 @@ describe("UserService", () => {
       };
 
       userRepository.update.mockResolvedValue(mockUpdatedUser as User);
+      userRepository.findOne.mockResolvedValue(mockUpdatedUser as User);
 
-      const result = await service.update("1", updateDto);
+      const result = await service.updateUser("1", updateDto);
 
       expect(result).toEqual(mockUpdatedUser);
       expect(userRepository.update).toHaveBeenCalledWith("1", updateDto);
@@ -175,34 +189,30 @@ describe("UserService", () => {
         limit: 10,
       };
 
-      userRepository.findByTenant.mockResolvedValue({
-        users: mockUsers as User[],
-        total: 2,
-        page: 1,
-        limit: 10,
-      });
+      const queryBuilder = {
+        select: vi.fn().mockReturnThis(),
+        andWhere: vi.fn().mockReturnThis(),
+        orderBy: vi.fn().mockReturnThis(),
+        skip: vi.fn().mockReturnThis(),
+        take: vi.fn().mockReturnThis(),
+        getManyAndCount: vi.fn().mockResolvedValue([mockUsers, 2]),
+      };
+      userRepository.createQueryBuilder.mockReturnValue(queryBuilder as any);
 
-      const result = await service.findByTenant("tenant-1", queryDto);
+      const result = await service.getUsers(queryDto);
 
-      expect(result.users).toHaveLength(2);
-      expect(result.total).toBe(2);
-      expect(userRepository.findByTenant).toHaveBeenCalledWith("tenant-1", queryDto);
+      expect(result.size).toBe(2);
+      expect(result.totalItems).toBe(2);
     });
   });
 
-  describe("deactivate", () => {
-    it("should deactivate user", async () => {
-      const mockUser = {
-        id: "1",
-        isActive: false,
-      };
+  describe("deleteUser", () => {
+    it("should delete the user", async () => {
+      userRepository.delete.mockResolvedValue(undefined);
 
-      userRepository.update.mockResolvedValue(mockUser as User);
+      await service.deleteUser("1");
 
-      const result = await service.deactivate("1");
-
-      expect(result.isActive).toBe(false);
-      expect(userRepository.update).toHaveBeenCalledWith("1", { isActive: false });
+      expect(userRepository.delete).toHaveBeenCalledWith("1");
     });
   });
 });

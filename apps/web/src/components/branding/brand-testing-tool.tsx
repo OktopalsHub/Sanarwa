@@ -2,13 +2,13 @@
 
 import { Bell, Mail, MessageSquare } from "@/lib/icons";
 
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Progress } from "@/components/ui/progress";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Badge } from "@sanarwa/ui/badge";
+import { Button } from "@sanarwa/ui/button";
+import { Card } from "@sanarwa/ui/card";
+import { Input } from "@sanarwa/ui/input";
+import { Label } from "@sanarwa/ui/label";
+import { Progress } from "@sanarwa/ui/progress";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@sanarwa/ui/tabs";
 import { BrandingConfig } from "@/contexts/branding-context";
 import { useBrandApplication } from "@/hooks/use-brand-application";
 import { cn } from "@/lib/utils";
@@ -37,7 +37,6 @@ export function BrandTestingTool({ branding, className }: BrandTestingToolProps)
   } | null>(null);
 
   const runBrandTests = () => {
-    // Simulate running brand tests
     setTimeout(() => {
       setTestResults({
         accessibility: accessibilityReport.isValid,
@@ -127,7 +126,6 @@ export function BrandTestingTool({ branding, className }: BrandTestingToolProps)
           </TabsList>
 
           <TabsContent value="components" className="space-y-6 mt-6">
-            {/* Buttons */}
             <div className="space-y-3">
               <h4 className="font-medium">Buttons</h4>
               <div className="flex flex-wrap gap-3">
@@ -155,7 +153,6 @@ export function BrandTestingTool({ branding, className }: BrandTestingToolProps)
               </div>
             </div>
 
-            {/* Form Elements */}
             <div className="space-y-3">
               <h4 className="font-medium">Form Elements</h4>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -183,7 +180,6 @@ export function BrandTestingTool({ branding, className }: BrandTestingToolProps)
               </div>
             </div>
 
-            {/* Badges */}
             <div className="space-y-3">
               <h4 className="font-medium">Status Badges</h4>
               <div className="flex flex-wrap gap-2">
@@ -216,7 +212,6 @@ export function BrandTestingTool({ branding, className }: BrandTestingToolProps)
             <div className="space-y-4">
               <h4 className="font-medium">In-App Notifications</h4>
 
-              {/* Success Notification */}
               <div
                 className="p-4 rounded-lg border-l-4 flex items-center gap-3"
                 style={{
@@ -236,7 +231,6 @@ export function BrandTestingTool({ branding, className }: BrandTestingToolProps)
                 </div>
               </div>
 
-              {/* Warning Notification */}
               <div
                 className="p-4 rounded-lg border-l-4 flex items-center gap-3"
                 style={{
@@ -325,7 +319,6 @@ export function BrandTestingTool({ branding, className }: BrandTestingToolProps)
             <div className="space-y-4">
               <h4 className="font-medium">Dashboard Components</h4>
 
-              {/* Metric Cards */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 {[
                   { icon: Mail, label: "Emails Sent", value: "12,345", change: "+12%" },
@@ -366,7 +359,6 @@ export function BrandTestingTool({ branding, className }: BrandTestingToolProps)
                 ))}
               </div>
 
-              {/* Chart Colors Preview */}
               <div className="space-y-3">
                 <h5 className="font-medium">Chart Color Palette</h5>
                 <div className="flex gap-2">

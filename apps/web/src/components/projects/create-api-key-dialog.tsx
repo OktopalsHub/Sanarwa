@@ -10,11 +10,11 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Checkbox } from "@/components/ui/checkbox";
+} from "@sanarwa/ui/dialog";
+import { Button } from "@sanarwa/ui/button";
+import { Input } from "@sanarwa/ui/input";
+import { Label } from "@sanarwa/ui/label";
+import { Checkbox } from "@sanarwa/ui/checkbox";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 
@@ -62,8 +62,7 @@ export function CreateApiKeyDialog({ projectId, open, onOpenChange }: CreateApiK
 
     setIsSubmitting(true);
     try {
-      // TODO: Implement API key creation
-      await new Promise((resolve) => setTimeout(resolve, 1000)); // Mock delay
+      await new Promise((resolve) => setTimeout(resolve, 1000));
       toast.success("API key created successfully");
       reset();
       setSelectedPermissions(["read"]);

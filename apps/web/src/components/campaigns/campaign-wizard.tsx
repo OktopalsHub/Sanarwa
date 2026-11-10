@@ -1,10 +1,15 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Progress } from "@/components/ui/progress";
-import { campaignApi } from "@/lib/api/campaigns";
-import type { CampaignWizardData, CommunicationChannel, CreateCampaignRequest, TemplateAssignment } from "@/lib/types/campaign";
+import { Button } from "@sanarwa/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@sanarwa/ui/card";
+import { Progress } from "@sanarwa/ui/progress";
+import { campaignApi } from "@sanarwa/api-client";
+import type {
+  CampaignWizardData,
+  CommunicationChannel,
+  CreateCampaignRequest,
+  TemplateAssignment,
+} from "@/lib/types/campaign";
 import { toast } from "@/lib/utils/toast";
 import { cn } from "@/lib/utils";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -28,26 +33,36 @@ const WIZARD_STEPS = [
   { id: "basic", title: "Basic Information", description: "Campaign name, type, and description" },
   { id: "channels", title: "Channel Selection", description: "Choose communication channels" },
   { id: "audience", title: "Audience Targeting", description: "Define your target audience" },
-  { id: "templates", title: "Templates", description: "Content per channel (email, SMS, WhatsApp, push, in-app, voice)" },
+  {
+    id: "templates",
+    title: "Templates",
+    description: "Content per channel (email, SMS, WhatsApp, push, in-app, voice)",
+  },
   { id: "schedule", title: "Scheduling", description: "Set campaign timing and schedule" },
   { id: "review", title: "Review & Launch", description: "Review and launch your campaign" },
 ];
 
-const EMPTY_TEMPLATE: TemplatePerChannel[CommunicationChannel] = { content: "" };
+const EMPTY_TEMPLATE: TemplatePerChannel[CommunicationChannel] = { data: "" };
 
 function assignmentsToEditor(assignments: TemplateAssignment[] | undefined): TemplatePerChannel {
   const result = {} as TemplatePerChannel;
   for (const assignment of assignments || []) {
     result[assignment.channel] = {
-      content: assignment.variables?.content || "",
-      subject: assignment.variables?.subject,
-      data: assignment.variables,
+      data: typeof assignment.variables?.data === "string" ? assignment.variables.data : "",
+      subject:
+        typeof assignment.variables?.subject === "string"
+          ? assignment.variables.subject
+          : undefined,
+      variables: assignment.variables,
     };
   }
   return result;
 }
 
-function editorToAssignments(templates: TemplatePerChannel, existing: TemplateAssignment[] | undefined): TemplateAssignment[] {
+function editorToAssignments(
+  templates: TemplatePerChannel,
+  existing: TemplateAssignment[] | undefined,
+): TemplateAssignment[] {
   return Object.entries(templates).map(([channel, template]) => {
     const typedChannel = channel as CommunicationChannel;
     const previous = existing?.find((assignment) => assignment.channel === typedChannel);
@@ -57,8 +72,8 @@ function editorToAssignments(templates: TemplatePerChannel, existing: TemplateAs
       templateName: previous?.templateName || `${typedChannel} campaign template`,
       variables: {
         ...previous?.variables,
-        ...template.data,
-        content: template.content,
+        ...(template.data ? { data: template.data } : {}),
+        ...(template.variables ?? {}),
         ...(template.subject ? { subject: template.subject } : {}),
       },
     };
@@ -69,7 +84,11 @@ export function CampaignWizard({ onClose, initialData }: CampaignWizardProps) {
   const router = useRouter();
   const basePath = useTenantBasePath();
   const queryClient = useQueryClient();
-  const [wizardData, setWizardData] = useState<CampaignWizardData>({ step: 1, totalSteps: WIZARD_STEPS.length, data: initialData?.data || {} });
+  const [wizardData, setWizardData] = useState<CampaignWizardData>({
+    step: 1,
+    totalSteps: WIZARD_STEPS.length,
+    data: initialData?.data || {},
+  });
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const createCampaignMutation = useMutation({
@@ -88,18 +107,25 @@ export function CampaignWizard({ onClose, initialData }: CampaignWizardProps) {
 
   const goToStep = (step: number) => setWizardData((prev) => ({ ...prev, step }));
   const { data } = wizardData;
-  const canProceed = wizardData.step === 1
-    ? Boolean(data.basic?.name && data.basic?.type)
-    : wizardData.step === 2
-      ? Boolean(data.channels?.selectedChannels?.length)
-      : wizardData.step === 3
-        ? Boolean(data.audience?.type)
-        : wizardData.step === 4
-          ? Boolean(data.templates || data.channels?.selectedChannels?.length)
-          : wizardData.step === 5
-            ? Boolean(data.schedule?.type)
-            : true;
-  const canCreate = Boolean(data.basic?.name && data.basic?.type && data.channels?.selectedChannels?.length && data.audience?.type && data.schedule?.type);
+  const canProceed =
+    wizardData.step === 1
+      ? Boolean(data.basic?.name && data.basic?.type)
+      : wizardData.step === 2
+        ? Boolean(data.channels?.selectedChannels?.length)
+        : wizardData.step === 3
+          ? Boolean(data.audience?.type)
+          : wizardData.step === 4
+            ? Boolean(data.templates || data.channels?.selectedChannels?.length)
+            : wizardData.step === 5
+              ? Boolean(data.schedule?.type)
+              : true;
+  const canCreate = Boolean(
+    data.basic?.name &&
+    data.basic?.type &&
+    data.channels?.selectedChannels?.length &&
+    data.audience?.type &&
+    data.schedule?.type,
+  );
 
   const buildCampaignRequest = (_status: "draft" | "scheduled"): CreateCampaignRequest => ({
     name: data.basic!.name,
@@ -130,42 +156,107 @@ export function CampaignWizard({ onClose, initialData }: CampaignWizardProps) {
   }
 
   const steps = [
-    <BasicInfoStep key="basic" data={data.basic} onUpdate={(basic) => updateWizardData({ basic })} />,
-    <ChannelSelectionStep key="channels" data={data.channels} onUpdate={(channels) => updateWizardData({ channels })} />,
-    <AudienceTargetingStep key="audience" data={data.audience} onUpdate={(audience) => updateWizardData({ audience })} />,
+    <BasicInfoStep
+      key="basic"
+      data={data.basic}
+      onUpdate={(basic) => updateWizardData({ basic })}
+    />,
+    <ChannelSelectionStep
+      key="channels"
+      data={data.channels}
+      onUpdate={(channels) => updateWizardData({ channels })}
+    />,
+    <AudienceTargetingStep
+      key="audience"
+      data={data.audience}
+      onUpdate={(audience) => updateWizardData({ audience })}
+    />,
     <TemplateEditorStep
       key="templates"
       selectedChannels={data.channels?.selectedChannels || []}
       templates={templateEditorData}
-      onChange={(templates) => updateWizardData({ templates: editorToAssignments(templates, data.templates) })}
+      onChange={(templates) =>
+        updateWizardData({ templates: editorToAssignments(templates, data.templates) })
+      }
     />,
-    <SchedulingStep key="schedule" data={data.schedule} onUpdate={(schedule) => updateWizardData({ schedule })} />,
+    <SchedulingStep
+      key="schedule"
+      data={data.schedule}
+      onUpdate={(schedule) => updateWizardData({ schedule })}
+    />,
     <ReviewStep key="review" data={data} onUpdate={updateWizardData} />,
   ];
 
   return (
     <div className="mx-auto flex max-w-4xl flex-col gap-6 p-6">
       <div className="flex items-center justify-between">
-        <div><h1 className="text-2xl font-bold">Create New Campaign</h1><p className="text-muted-foreground">Step {wizardData.step} of {WIZARD_STEPS.length}: {currentStep.title}</p></div>
-        {onClose ? <Button variant="ghost" onClick={onClose}>Cancel</Button> : null}
+        <div>
+          <h1 className="text-2xl font-bold">Create New Campaign</h1>
+          <p className="text-muted-foreground">
+            Step {wizardData.step} of {WIZARD_STEPS.length}: {currentStep.title}
+          </p>
+        </div>
+        {onClose ? (
+          <Button variant="ghost" onClick={onClose}>
+            Cancel
+          </Button>
+        ) : null}
       </div>
       <div className="flex flex-col gap-2">
         <Progress value={(wizardData.step / WIZARD_STEPS.length) * 100} className="h-2" />
         <div className="flex justify-between text-sm text-muted-foreground">
-          {WIZARD_STEPS.map((step, index) => <div key={step.id} className={cn("flex-1 text-center", index + 1 === wizardData.step && "font-medium text-primary", index + 1 < wizardData.step && "text-primary")}>{step.title}</div>)}
+          {WIZARD_STEPS.map((step, index) => (
+            <div
+              key={step.id}
+              className={cn(
+                "flex-1 text-center",
+                index + 1 === wizardData.step && "font-medium text-primary",
+                index + 1 < wizardData.step && "text-primary",
+              )}
+            >
+              {step.title}
+            </div>
+          ))}
         </div>
       </div>
       <Card>
-        <CardHeader><CardTitle>{currentStep.title}</CardTitle><p className="text-muted-foreground">{currentStep.description}</p></CardHeader>
+        <CardHeader>
+          <CardTitle>{currentStep.title}</CardTitle>
+          <p className="text-muted-foreground">{currentStep.description}</p>
+        </CardHeader>
         <CardContent>{steps[wizardData.step - 1]}</CardContent>
       </Card>
       <div className="flex items-center justify-between">
-        <Button variant="outline" onClick={() => goToStep(wizardData.step - 1)} disabled={wizardData.step === 1}><IconArrowLeft data-icon="inline-start" />Previous</Button>
+        <Button
+          variant="outline"
+          onClick={() => goToStep(wizardData.step - 1)}
+          disabled={wizardData.step === 1}
+        >
+          <IconArrowLeft data-icon="inline-start" />
+          Previous
+        </Button>
         <div className="flex items-center gap-3">
-          {wizardData.step === WIZARD_STEPS.length ? <>
-            <Button variant="outline" onClick={() => submit("draft")} disabled={!canCreate || isSubmitting}><IconBookmark data-icon="inline-start" />Save as Draft</Button>
-            <Button onClick={() => submit("scheduled")} disabled={!canCreate || isSubmitting}><IconSend data-icon="inline-start" />Launch Campaign</Button>
-          </> : <Button onClick={() => goToStep(wizardData.step + 1)} disabled={!canProceed}>Next<IconArrowRight data-icon="inline-end" /></Button>}
+          {wizardData.step === WIZARD_STEPS.length ? (
+            <>
+              <Button
+                variant="outline"
+                onClick={() => submit("draft")}
+                disabled={!canCreate || isSubmitting}
+              >
+                <IconBookmark data-icon="inline-start" />
+                Save as Draft
+              </Button>
+              <Button onClick={() => submit("scheduled")} disabled={!canCreate || isSubmitting}>
+                <IconSend data-icon="inline-start" />
+                Launch Campaign
+              </Button>
+            </>
+          ) : (
+            <Button onClick={() => goToStep(wizardData.step + 1)} disabled={!canProceed}>
+              Next
+              <IconArrowRight data-icon="inline-end" />
+            </Button>
+          )}
         </div>
       </div>
     </div>

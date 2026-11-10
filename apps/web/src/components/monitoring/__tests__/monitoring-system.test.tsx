@@ -1,23 +1,27 @@
 import { alertManager } from "@/lib/services/alert-manager";
 import { analyticsTracker } from "@/lib/services/analytics-tracker";
-import { monitoringService } from "@/lib/services/monitoring";
+import { monitoringService, type MonitoringService } from "@/lib/services/monitoring";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import MonitoringDashboard from "../monitoring-dashboard";
+import MonitoringProvider from "../monitoring-provider";
 import RealTimeAlerts from "../real-time-alerts";
 import UserBehaviorTracker from "../user-behavior-tracker";
 
-// Mock the monitoring services
 vi.mock("@/lib/services/monitoring");
 vi.mock("@/lib/services/analytics-tracker");
 vi.mock("@/lib/services/alert-manager");
 
-// Mock Next.js router
 vi.mock("next/navigation", () => ({
   usePathname: () => "/test",
 }));
 
-// Mock auth and tenant contexts
+vi.mock("@/compat/next-navigation", () => ({
+  usePathname: () => "/test",
+  useRouter: () => ({ push: vi.fn(), replace: vi.fn() }),
+  useNavigate: () => vi.fn(),
+}));
+
 vi.mock("@/contexts/auth-context", () => ({
   useAuth: () => ({
     user: { id: "test-user", email: "test@example.com" },
@@ -34,7 +38,6 @@ describe("Monitoring System", () => {
   beforeEach(() => {
     vi.clearAllMocks();
 
-    // Mock fetch for API calls
     global.fetch = vi.fn(() =>
       Promise.resolve({
         ok: true,
@@ -54,7 +57,6 @@ describe("Monitoring System", () => {
       expect(screen.getByText("System Monitoring")).toBeInTheDocument();
       expect(screen.getByText("Real-time monitoring and alerting dashboard")).toBeInTheDocument();
 
-      // Check for metric cards
       await waitFor(() => {
         expect(screen.getByText("Error Rate")).toBeInTheDocument();
         expect(screen.getByText("Avg Response Time")).toBeInTheDocument();
@@ -67,7 +69,7 @@ describe("Monitoring System", () => {
       render(<MonitoringDashboard />);
 
       await waitFor(() => {
-        expect(screen.getByText("Active Alerts")).toBeInTheDocument();
+        expect(screen.getByRole("tab", { name: "Active Alerts" })).toBeInTheDocument();
         expect(screen.getByText("Performance")).toBeInTheDocument();
         expect(screen.getByText("Error Tracking")).toBeInTheDocument();
         expect(screen.getByText("User Analytics")).toBeInTheDocument();
@@ -80,7 +82,6 @@ describe("Monitoring System", () => {
       const refreshButton = await screen.findByText("Refresh");
       fireEvent.click(refreshButton);
 
-      // Verify that the component attempts to reload data
       await waitFor(() => {
         expect(screen.getByText("Refresh")).toBeInTheDocument();
       });
@@ -115,7 +116,6 @@ describe("Monitoring System", () => {
     it("can clear all alerts", async () => {
       render(<RealTimeAlerts />);
 
-      // Wait for potential alerts to load
       await waitFor(() => {
         const clearButton = screen.queryByText("Clear All");
         if (clearButton) {
@@ -138,7 +138,6 @@ describe("Monitoring System", () => {
       const button = screen.getByText("Test Button");
       fireEvent.click(button);
 
-      // Verify that analytics tracker was called
       expect(analyticsTracker.trackEvent).toHaveBeenCalledWith(
         "user_interaction",
         expect.objectContaining({
@@ -197,7 +196,7 @@ describe("Monitoring System", () => {
         throw new Error("Test error");
       };
 
-      const consoleSpy = jest.spyOn(console, "error").mockImplementation();
+      const consoleSpy = vi.spyOn(console, "error").mockImplementation();
 
       expect(() => {
         render(<TestComponent />);
@@ -207,12 +206,12 @@ describe("Monitoring System", () => {
     });
 
     it("handles API errors gracefully", async () => {
-      // Mock a failed API call
-      global.fetch = jest.fn(() => Promise.reject(new Error("API Error"))) as jest.Mock;
+      global.fetch = vi.fn(() =>
+        Promise.reject(new Error("API Error")),
+      ) as unknown as typeof globalThis.fetch;
 
       render(<MonitoringDashboard />);
 
-      // The component should handle the error gracefully
       await waitFor(() => {
         expect(screen.getByText("System Monitoring")).toBeInTheDocument();
       });
@@ -220,26 +219,22 @@ describe("Monitoring System", () => {
   });
 
   describe("Performance Monitoring", () => {
-    it("tracks performance metrics", () => {
+    it("initializes monitoring when the provider mounts", () => {
       const TestComponent = () => (
-        <UserBehaviorTracker>
+        <MonitoringProvider>
           <div>Performance Test</div>
-        </UserBehaviorTracker>
+        </MonitoringProvider>
       );
 
       render(<TestComponent />);
 
-      // Verify that performance monitoring is initialized
       expect(monitoringService.initialize).toHaveBeenCalled();
     });
 
     it("measures component render times", async () => {
       const TestComponent = () => {
-        // Simulate a slow component
         const start = performance.now();
-        while (performance.now() - start < 20) {
-          // Busy wait for 20ms
-        }
+        while (performance.now() - start < 20) {}
         return <div>Slow Component</div>;
       };
 
@@ -252,11 +247,19 @@ describe("Monitoring System", () => {
   });
 
   describe("Alert Management", () => {
+    let realMonitoringService: MonitoringService;
+
+    beforeEach(async () => {
+      const actual = await vi.importActual<typeof import("@/lib/services/monitoring")>(
+        "@/lib/services/monitoring",
+      );
+      realMonitoringService = new actual.MonitoringService();
+    });
+
     it("creates alerts for critical errors", () => {
       const criticalError = new Error("Critical system failure");
 
-      // Simulate a critical error
-      monitoringService.reportError(criticalError, { severity: "critical" });
+      realMonitoringService.reportError(criticalError, { severity: "critical" });
 
       expect(alertManager.createCustomAlert).toHaveBeenCalledWith(
         "error",
@@ -267,8 +270,7 @@ describe("Monitoring System", () => {
     });
 
     it("creates alerts for performance issues", () => {
-      // Simulate a slow API call
-      monitoringService.trackPerformance("api_call", 5000, {
+      realMonitoringService.trackPerformance("api_call", 5000, {
         endpoint: "/api/test",
         threshold: 3000,
       });
@@ -295,22 +297,18 @@ describe("Monitoring System", () => {
 
       render(<IntegratedApp />);
 
-      // Verify all components render
       await waitFor(() => {
         expect(screen.getByText("System Monitoring")).toBeInTheDocument();
         expect(screen.getByText("Real-time Alerts")).toBeInTheDocument();
       });
 
-      // Simulate user interaction
       const refreshButton = screen.getByText("Refresh");
       fireEvent.click(refreshButton);
 
-      // Verify tracking
       expect(analyticsTracker.trackEvent).toHaveBeenCalled();
     });
 
     it("handles monitoring service failures gracefully", async () => {
-      // Mock monitoring service to throw errors
       (monitoringService.initialize as any).mockImplementation(() => {
         throw new Error("Monitoring service failed");
       });
@@ -319,7 +317,6 @@ describe("Monitoring System", () => {
 
       render(<MonitoringDashboard />);
 
-      // Component should still render despite monitoring failure
       await waitFor(() => {
         expect(screen.getByText("System Monitoring")).toBeInTheDocument();
       });

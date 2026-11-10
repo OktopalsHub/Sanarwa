@@ -2,8 +2,8 @@
 
 import { AuthDivider } from "@/components/auth/auth-page-shell";
 import { AuthOAuthButtons } from "@/components/auth/auth-oauth-buttons";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { Button } from "@sanarwa/ui/button";
+import { Input } from "@sanarwa/ui/input";
 import { useAuth } from "@/contexts/auth-context";
 import { redirectAfterAuth } from "@/lib/auth/post-auth-redirect";
 import { getTenantPathSegment } from "@/lib/tenant-path";
@@ -74,14 +74,14 @@ export function RegisterForm({ variant = "standalone" }: { variant?: "standalone
         lastName: formData.lastName || "Account",
       };
 
-      const response = await register(registrationData);
+      const response = (await register(registrationData)) as any;
 
-      if (response.tenant) {
+      if (response?.tenant) {
         router.push(`/${getTenantPathSegment(response.tenant)}/dashboard`);
         return;
       }
 
-      if (response.tenantSlug) {
+      if (response?.tenantSlug) {
         router.push(`/${response.tenantSlug}/dashboard`);
         return;
       }

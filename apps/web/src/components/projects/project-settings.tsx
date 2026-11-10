@@ -4,14 +4,14 @@ import { Webhook } from "@/lib/icons";
 
 import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { projectApi } from "@/lib/api/project";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Switch } from "@/components/ui/switch";
-import { Separator } from "@/components/ui/separator";
+import { projectApi } from "@sanarwa/api-client";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@sanarwa/ui/card";
+import { Button } from "@sanarwa/ui/button";
+import { Input } from "@sanarwa/ui/input";
+import { Label } from "@sanarwa/ui/label";
+import { Textarea } from "@sanarwa/ui/textarea";
+import { Switch } from "@sanarwa/ui/switch";
+import { Separator } from "@sanarwa/ui/separator";
 import { useForm } from "react-hook-form";
 import { Project, UpdateProjectRequest } from "@/lib/types/project";
 import { toast } from "sonner";
@@ -73,7 +73,6 @@ export function ProjectSettings({ project }: ProjectSettingsProps) {
   return (
     <div className="space-y-6">
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-        {/* Basic Settings */}
         <Card>
           <CardHeader>
             <CardTitle>Basic Settings</CardTitle>
@@ -110,7 +109,6 @@ export function ProjectSettings({ project }: ProjectSettingsProps) {
           </CardContent>
         </Card>
 
-        {/* Webhook Settings */}
         <Card>
           <CardHeader>
             <CardTitle>Webhook Configuration</CardTitle>
@@ -135,7 +133,6 @@ export function ProjectSettings({ project }: ProjectSettingsProps) {
           </CardContent>
         </Card>
 
-        {/* Retry Policy */}
         <Card>
           <CardHeader>
             <CardTitle>Retry Policy</CardTitle>
@@ -188,7 +185,6 @@ export function ProjectSettings({ project }: ProjectSettingsProps) {
           </CardContent>
         </Card>
 
-        {/* Rate Limiting */}
         <Card>
           <CardHeader>
             <CardTitle>Rate Limiting</CardTitle>
@@ -237,7 +233,6 @@ export function ProjectSettings({ project }: ProjectSettingsProps) {
           </CardContent>
         </Card>
 
-        {/* Save Button */}
         <div className="flex justify-end">
           <Button type="submit" disabled={!isDirty || isSubmitting}>
             <BookmarkIcon className="h-4 w-4 mr-2" />
@@ -248,7 +243,6 @@ export function ProjectSettings({ project }: ProjectSettingsProps) {
 
       <Separator />
 
-      {/* Danger Zone */}
       <Card className="border-destructive">
         <CardHeader>
           <CardTitle className="text-destructive flex items-center gap-2">

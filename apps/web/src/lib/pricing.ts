@@ -1,5 +1,3 @@
-/** PAYG tokens. Dual shelves (NGN ≠ USD×FX). Managed vs BYO use different list rates. */
-
 export type ChannelId = "email" | "sms" | "push" | "whatsapp" | "in_app" | "voice";
 
 export type CurrencyCode = "USD" | "NGN";
@@ -16,13 +14,10 @@ export interface TokenPackage {
   savingsPercent: number;
 }
 
-/** BYO-eligible — customer brings provider. Keep in sync with apps/api/.../token-pricing.ts */
 export const BYO_ELIGIBLE_CHANNELS: ChannelId[] = ["email", "sms", "push", "whatsapp", "voice"];
 
-/** Always Sanarwa-managed (in-app / realtime). */
 export const MANAGED_ONLY_CHANNELS: ChannelId[] = ["in_app"];
 
-/** Managed — Sanarwa pays delivery. */
 export const MANAGED_CHANNEL_TOKEN_COST: Record<ChannelId, number> = {
   email: 1,
   push: 0.5,
@@ -32,10 +27,8 @@ export const MANAGED_CHANNEL_TOKEN_COST: Record<ChannelId, number> = {
   voice: 250,
 };
 
-/** Novu-style BYO: 1 token = 1 event on any BYO channel. */
 export const BYO_EVENT_TOKEN_COST = 1;
 
-/** @deprecated Use channelTokenCost(channel, mode) */
 export const CHANNEL_TOKEN_COST = MANAGED_CHANNEL_TOKEN_COST;
 
 export function isByoEligibleChannel(channel: ChannelId): boolean {
@@ -78,15 +71,12 @@ export const CHANNEL_UNIT_LABEL: Record<ChannelId, string> = {
 
 export const USD_TO_NGN = 1600;
 
-/** Free tokens for every new workspace. Keep in sync with apps/api/.../token-pricing.ts */
 export const WELCOME_SIGNUP_TOKENS = 3_000;
 
-/** Managed list: $1 / ₦1,000 → 3,000 tokens (email anchor). */
 export const MANAGED_LIST_TOKENS = 3_000;
 export const MANAGED_LIST_PRICE_USD = 1;
 export const MANAGED_LIST_PRICE_NGN = 1_000;
 
-/** BYO list (Novu-style): $10 → 12,500 events · $1 → 1,250 events. */
 export const BYO_LIST_EVENTS = 12_500;
 export const BYO_LIST_PRICE_USD = 10;
 export const BYO_LIST_PRICE_NGN = 10_000;
@@ -174,7 +164,6 @@ export const TOKEN_PACKAGES_NGN: TokenPackage[] = [
   },
 ];
 
-/** BYO event packs — $1 / ₦1,000 → 1,250 events (not managed token shelf). */
 export const BYO_EVENT_PACKAGES_USD: TokenPackage[] = [
   {
     id: "byo-usd-1250",
@@ -292,7 +281,6 @@ export function sendsFromTokens(
   return Math.floor(Math.max(0, tokens) / cost);
 }
 
-/** BYO: 1 token = 1 event (flat). */
 export function eventsFromSpend(spend: number, currency: CurrencyCode): number {
   if (spend <= 0) return 0;
   const rate = currency === "NGN" ? BYO_EVENTS_PER_NGN : BYO_EVENTS_PER_USD;

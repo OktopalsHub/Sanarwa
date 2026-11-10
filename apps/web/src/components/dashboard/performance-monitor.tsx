@@ -1,6 +1,6 @@
 "use client";
 
-import { Card } from "@/components/ui/card";
+import { Card } from "@sanarwa/ui/card";
 import {
   SignalIcon,
   CpuChipIcon,
@@ -29,7 +29,6 @@ export function PerformanceMonitor() {
     uptime: 99.99,
   });
 
-  // Simulate real-time updates
   useEffect(() => {
     const interval = setInterval(() => {
       setMetrics((prev) => ({
@@ -50,7 +49,6 @@ export function PerformanceMonitor() {
       if (value > 70) return "text-yellow-500";
       return "text-emerald-500";
     }
-    // Latency
     if (value > 500) return "text-red-500";
     if (value > 200) return "text-yellow-500";
     return "text-emerald-500";

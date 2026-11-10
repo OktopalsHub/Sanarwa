@@ -11,23 +11,16 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Checkbox } from "@/components/ui/checkbox";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+} from "@sanarwa/ui/dialog";
+import { Button } from "@sanarwa/ui/button";
+import { Input } from "@sanarwa/ui/input";
+import { Label } from "@sanarwa/ui/label";
+import { Checkbox } from "@sanarwa/ui/checkbox";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@sanarwa/ui/select";
 import { useForm, Controller } from "react-hook-form";
 import { toast } from "sonner";
-import { projectApi } from "@/lib/api/project";
-import { apiKeyApi } from "@/lib/api/api-key";
-import { apiClient } from "@/lib/api/client";
+import { projectApi } from "@sanarwa/api-client";
+import { apiKeyApi } from "@sanarwa/api-client";
 import { useTenant } from "@/contexts/tenant-context";
 import { DocumentDuplicateIcon, EyeIcon, EyeSlashIcon } from "@heroicons/react/24/outline";
 
@@ -57,7 +50,6 @@ export function CreateApiKeyDialog({ open, onOpenChange }: CreateApiKeyDialogPro
     formState: { errors },
   } = useForm<CreateApiKeyForm>();
 
-  // Fetch projects for selection
   const { data: projectsData } = useQuery({
     queryKey: ["projects", selectedTenant?.id],
     queryFn: () => projectApi.getProjects({ limit: 100 }),
@@ -89,7 +81,6 @@ export function CreateApiKeyDialog({ open, onOpenChange }: CreateApiKeyDialogPro
     setIsSubmitting(true);
     try {
       if (selectedTenant?.id) {
-        apiClient.setTenant(selectedTenant.id);
       }
       const result = await apiKeyApi.createApiKey({
         name: data.name,
@@ -143,7 +134,6 @@ export function CreateApiKeyDialog({ open, onOpenChange }: CreateApiKeyDialogPro
         </DialogHeader>
 
         {createdApiKey ? (
-          // Show created API key
           <div className="space-y-4">
             <div className="space-y-2">
               <Label>Your API Key</Label>
@@ -184,7 +174,6 @@ export function CreateApiKeyDialog({ open, onOpenChange }: CreateApiKeyDialogPro
             </DialogFooter>
           </div>
         ) : (
-          // Show creation form
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="name">API Key Name</Label>

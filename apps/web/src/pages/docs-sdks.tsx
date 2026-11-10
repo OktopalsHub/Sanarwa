@@ -1,7 +1,7 @@
 import { Webhook } from "@/lib/icons";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@sanarwa/ui/badge";
+import { Button } from "@sanarwa/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@sanarwa/ui/card";
 import {
   ArrowRightIcon,
   ArrowDownTrayIcon,
@@ -13,53 +13,17 @@ import Link from "@/compat/next-link";
 
 const sdks = [
   {
-    name: "JavaScript/Node.js",
-    description: "Official SDK for JavaScript and Node.js applications",
+    name: "JavaScript / TypeScript",
+    description: "Official SDK for JavaScript, TypeScript and Node.js applications",
     href: "/docs/sdks/javascript",
-    packageName: "@notifi/sdk",
+    packageName: "@sanarwa/sdk",
     popular: true,
-    features: ["TypeScript support", "Promise-based API", "Webhook validation", "Template helpers"],
-  },
-  {
-    name: "Python",
-    description: "Python SDK with Django and Flask integration examples",
-    href: "/docs/sdks/python",
-    packageName: "notifi-python",
-    popular: true,
-    features: ["Async/await support", "Django integration", "Flask helpers", "Type hints"],
-  },
-  {
-    name: "PHP",
-    description: "PHP SDK with Laravel and Symfony examples",
-    href: "/docs/sdks/php",
-    packageName: "notifi/php-sdk",
     features: [
-      "PSR-4 autoloading",
-      "Laravel service provider",
-      "Guzzle HTTP client",
-      "PHPUnit tests",
+      "TypeScript types included",
+      "Promise-based API",
+      "Webhook signature validation",
+      "Template helpers",
     ],
-  },
-  {
-    name: "Java",
-    description: "Java SDK for Spring Boot and standalone applications",
-    href: "/docs/sdks/java",
-    packageName: "com.notifi:notifi-java-sdk",
-    features: ["Spring Boot starter", "Reactive support", "Jackson serialization", "Maven/Gradle"],
-  },
-  {
-    name: "Go",
-    description: "Go SDK with context support and structured logging",
-    href: "/docs/sdks/go",
-    packageName: "github.com/notifi/go-sdk",
-    features: ["Context support", "Structured logging", "HTTP/2 client", "Go modules"],
-  },
-  {
-    name: ".NET",
-    description: ".NET SDK for C# applications with async/await support",
-    href: "/docs/sdks/dotnet",
-    packageName: "Notifi.SDK",
-    features: ["Async/await", "Dependency injection", "Configuration binding", "NuGet package"],
   },
 ];
 
@@ -69,8 +33,8 @@ export default function SDKsPage() {
       <div className="space-y-4">
         <h1 className="text-4xl font-bold tracking-tight">SDK Guides</h1>
         <p className="text-xl text-muted-foreground max-w-3xl">
-          Choose your preferred programming language to get started with Notifi. Our SDKs provide a
-          simple, consistent interface for all communication channels.
+          Install the Sanarwa SDK to send over every channel from Node.js. Any language can call the
+          REST API directly at /api/v1.
         </p>
       </div>
 
@@ -121,7 +85,12 @@ export default function SDKsPage() {
       </div>
 
       <div className="space-y-6">
-        <h2 className="text-2xl font-semibold">Quick Comparison</h2>
+        <h2 className="text-2xl font-semibold">Other Languages</h2>
+        <p className="text-muted-foreground">
+          Python, PHP, Java, Go and .NET SDKs are not available yet. Until then, call the REST API
+          directly at <code className="font-mono">/api/v1</code> from any language — the endpoint
+          and payload are identical regardless of client.
+        </p>
         <div className="overflow-x-auto">
           <table className="w-full border-collapse border border-border">
             <thead>
@@ -138,36 +107,6 @@ export default function SDKsPage() {
                 <td className="border border-border p-3">npm, yarn, pnpm</td>
                 <td className="border border-border p-3">✅ Promises/async-await</td>
                 <td className="border border-border p-3">Express, Next.js, Nuxt</td>
-              </tr>
-              <tr className="bg-muted/25">
-                <td className="border border-border p-3 font-medium">Python</td>
-                <td className="border border-border p-3">pip, poetry</td>
-                <td className="border border-border p-3">✅ asyncio</td>
-                <td className="border border-border p-3">Django, Flask, FastAPI</td>
-              </tr>
-              <tr>
-                <td className="border border-border p-3 font-medium">PHP</td>
-                <td className="border border-border p-3">Composer</td>
-                <td className="border border-border p-3">✅ ReactPHP</td>
-                <td className="border border-border p-3">Laravel, Symfony</td>
-              </tr>
-              <tr className="bg-muted/25">
-                <td className="border border-border p-3 font-medium">Java</td>
-                <td className="border border-border p-3">Maven, Gradle</td>
-                <td className="border border-border p-3">✅ CompletableFuture</td>
-                <td className="border border-border p-3">Spring Boot, Quarkus</td>
-              </tr>
-              <tr>
-                <td className="border border-border p-3 font-medium">Go</td>
-                <td className="border border-border p-3">Go modules</td>
-                <td className="border border-border p-3">✅ Goroutines</td>
-                <td className="border border-border p-3">Gin, Echo, Fiber</td>
-              </tr>
-              <tr className="bg-muted/25">
-                <td className="border border-border p-3 font-medium">.NET</td>
-                <td className="border border-border p-3">NuGet</td>
-                <td className="border border-border p-3">✅ Task/async-await</td>
-                <td className="border border-border p-3">ASP.NET Core, Blazor</td>
               </tr>
             </tbody>
           </table>

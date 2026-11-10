@@ -4,16 +4,10 @@ import { Eye, MousePointer, Send, TrendingUp } from "@/lib/icons";
 
 import { DashboardChart } from "@/components/dashboard/dashboard-chart";
 import { MetricCard } from "@/components/dashboard/metric-card";
-import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { DateRange, DateRangePicker } from "@/components/ui/date-range-picker";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Button } from "@sanarwa/ui/button";
+import { Card } from "@sanarwa/ui/card";
+import { DateRange, DateRangePicker } from "@sanarwa/ui/date-range-picker";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@sanarwa/ui/select";
 import {
   ArrowDownTrayIcon,
   EyeIcon,
@@ -28,7 +22,6 @@ interface CampaignAnalyticsProps {
   campaignId?: string;
 }
 
-// Mock data for campaign analytics
 const mockCampaignData = {
   overview: {
     totalSent: 15420,
@@ -80,13 +73,11 @@ export function CampaignAnalytics({ campaignId }: CampaignAnalyticsProps) {
   const data = mockCampaignData;
 
   const handleExport = () => {
-    // TODO: Implement data export functionality
     alert("Export functionality will be implemented soon");
   };
 
   return (
     <div className="space-y-6">
-      {/* Filters */}
       <Card className="p-6">
         <div className="flex flex-col space-y-4 md:flex-row md:space-y-0 md:space-x-4 md:items-end">
           <div className="flex-1">
@@ -135,7 +126,6 @@ export function CampaignAnalytics({ campaignId }: CampaignAnalyticsProps) {
         </div>
       </Card>
 
-      {/* Overview Metrics */}
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
         <MetricCard
           title="Messages Sent"
@@ -163,7 +153,6 @@ export function CampaignAnalytics({ campaignId }: CampaignAnalyticsProps) {
         />
       </div>
 
-      {/* Performance Charts */}
       <div className="grid gap-6 lg:grid-cols-2">
         <DashboardChart
           title="Campaign Performance Over Time"
@@ -181,7 +170,6 @@ export function CampaignAnalytics({ campaignId }: CampaignAnalyticsProps) {
         />
       </div>
 
-      {/* Additional Analytics */}
       <div className="grid gap-6 lg:grid-cols-2">
         <DashboardChart
           title="Device Breakdown"
@@ -197,7 +185,6 @@ export function CampaignAnalytics({ campaignId }: CampaignAnalyticsProps) {
         />
       </div>
 
-      {/* Detailed Performance Table */}
       <Card className="p-6">
         <h3 className="text-lg font-semibold mb-4">Channel Performance Details</h3>
         <div className="overflow-x-auto">

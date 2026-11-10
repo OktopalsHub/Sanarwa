@@ -1,55 +1,39 @@
 import { DefaultOptions, QueryClient } from "@tanstack/react-query";
 
-// Default query options for consistent behavior
 const defaultQueryOptions: DefaultOptions = {
   queries: {
-    // Stale time: 5 minutes - data is considered fresh for 5 minutes
     staleTime: 5 * 60 * 1000,
-    // Cache time: 10 minutes - data stays in cache for 10 minutes after becoming unused
     gcTime: 10 * 60 * 1000,
-    // Retry failed requests 3 times with exponential backoff
     retry: (failureCount, error: any) => {
-      // Don't retry on 4xx errors (client errors)
       if (error?.status >= 400 && error?.status < 500) {
         return false;
       }
-      // Retry up to 3 times for other errors
       return failureCount < 3;
     },
-    // Retry delay with exponential backoff
     retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
-    // Refetch on window focus for important data
     refetchOnWindowFocus: true,
-    // Don't refetch on reconnect by default (can be overridden per query)
     refetchOnReconnect: "always",
   },
   mutations: {
-    // Retry mutations once on network errors
     retry: (failureCount, error: any) => {
-      // Don't retry on 4xx errors
       if (error?.status >= 400 && error?.status < 500) {
         return false;
       }
-      // Retry once for network errors
       return failureCount < 1;
     },
   },
 };
 
-// Create query client instance
 export const queryClient = new QueryClient({
   defaultOptions: defaultQueryOptions,
 });
 
-// Query keys factory for consistent key management
 export const queryKeys = {
-  // Auth queries
   auth: {
     user: () => ["auth", "user"] as const,
     permissions: (tenantId?: string) => ["auth", "permissions", tenantId] as const,
   },
 
-  // Tenant queries
   tenants: {
     all: () => ["tenants"] as const,
     detail: (id: string) => ["tenants", id] as const,
@@ -58,7 +42,6 @@ export const queryKeys = {
     branding: (id: string) => ["tenants", id, "branding"] as const,
   },
 
-  // Campaign queries
   campaigns: {
     all: (tenantId: string, filters?: Record<string, any>) =>
       ["campaigns", tenantId, filters] as const,
@@ -67,7 +50,6 @@ export const queryKeys = {
       ["campaigns", tenantId, id, "analytics", dateRange] as const,
   },
 
-  // Workflow queries
   workflows: {
     all: (tenantId: string, filters?: Record<string, any>) =>
       ["workflows", tenantId, filters] as const,
@@ -76,13 +58,11 @@ export const queryKeys = {
       ["workflows", tenantId, id, "analytics", dateRange] as const,
   },
 
-  // Template queries
   templates: {
     all: (tenantId: string, channel?: string) => ["templates", tenantId, channel] as const,
     detail: (tenantId: string, id: string) => ["templates", tenantId, id] as const,
   },
 
-  // Analytics queries
   analytics: {
     dashboard: (tenantId: string, dateRange?: string) =>
       ["analytics", "dashboard", tenantId, dateRange] as const,
@@ -93,7 +73,6 @@ export const queryKeys = {
   },
 } as const;
 
-// Utility function to invalidate related queries
 export const invalidateQueries = {
   auth: () => queryClient.invalidateQueries({ queryKey: queryKeys.auth.user() }),
 

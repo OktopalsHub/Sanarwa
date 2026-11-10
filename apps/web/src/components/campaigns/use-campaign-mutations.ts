@@ -1,4 +1,4 @@
-import { campaignApi } from "@/lib/api/campaigns";
+import { campaignApi } from "@sanarwa/api-client";
 import type { Campaign } from "@/lib/types/campaign";
 import { toast } from "@/lib/utils/toast";
 import { useMutation, useQueryClient } from "@tanstack/react-query";

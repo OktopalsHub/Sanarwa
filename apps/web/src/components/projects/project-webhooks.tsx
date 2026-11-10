@@ -1,7 +1,7 @@
 "use client";
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@sanarwa/ui/card";
+import { Button } from "@sanarwa/ui/button";
 import { useTenantBasePath } from "@/hooks/use-tenant-slug";
 import Link from "@/compat/next-link";
 

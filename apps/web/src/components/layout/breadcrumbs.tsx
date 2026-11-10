@@ -32,12 +32,10 @@ const routeLabels: Record<string, string> = {
 export function Breadcrumbs() {
   const pathname = usePathname();
 
-  // Generate breadcrumb items from pathname
   const generateBreadcrumbs = (): BreadcrumbItem[] => {
     const segments = pathname.split("/").filter(Boolean);
     const breadcrumbs: BreadcrumbItem[] = [];
 
-    // Always start with dashboard
     if (segments[0] !== "dashboard") {
       breadcrumbs.push({
         label: "Dashboard",
@@ -45,7 +43,6 @@ export function Breadcrumbs() {
       });
     }
 
-    // Build breadcrumbs from path segments
     let currentPath = "";
     segments.forEach((segment, index) => {
       currentPath += `/${segment}`;

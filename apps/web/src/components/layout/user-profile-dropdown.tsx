@@ -2,8 +2,8 @@
 
 import { User } from "@/lib/icons";
 
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback, AvatarImage } from "@sanarwa/ui/avatar";
+import { Button } from "@sanarwa/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -12,7 +12,7 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+} from "@sanarwa/ui/dropdown-menu";
 import { useAuth } from "@/contexts/auth-context";
 import { useTenant } from "@/contexts/tenant-context";
 import { usePermissions } from "@/hooks/use-permissions";
@@ -41,7 +41,11 @@ export function UserProfileDropdown() {
     return null;
   }
 
-  const fullName = `${user.firstName} ${user.lastName}`.trim();
+  const fullName =
+    [user.firstName ?? user.name ?? "", user.lastName ?? ""].join(" ").trim() ||
+    user.name ||
+    user.email ||
+    "User";
   const initials =
     fullName
       ?.split(" ")
@@ -54,7 +58,7 @@ export function UserProfileDropdown() {
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" className="relative h-10 w-10 rounded-full">
           <Avatar className="h-10 w-10">
-            <AvatarImage src={user.avatar} alt={fullName || "User"} />
+            <AvatarImage src={(user.avatar ?? user.image) || undefined} alt={fullName || "User"} />
             <AvatarFallback className="bg-primary text-primary-foreground">
               {initials}
             </AvatarFallback>

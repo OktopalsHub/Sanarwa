@@ -2,22 +2,15 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { billingApi } from "@/lib/api";
-import { apiClient } from "@/lib/api/client";
+import { billingApi } from "@sanarwa/api-client";
 import { useTenant } from "@/contexts/tenant-context";
 import { useCheckoutCurrency } from "@/hooks/use-checkout-currency";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Switch } from "@/components/ui/switch";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@sanarwa/ui/card";
+import { Button } from "@sanarwa/ui/button";
+import { Input } from "@sanarwa/ui/input";
+import { Label } from "@sanarwa/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@sanarwa/ui/select";
+import { Switch } from "@sanarwa/ui/switch";
 
 export function AutoTopupSettings() {
   const { selectedTenant } = useTenant();
@@ -59,7 +52,6 @@ export function AutoTopupSettings() {
     queryKey: ["auto-topup-config", selectedTenant?.id],
     queryFn: async () => {
       if (selectedTenant?.id) {
-        apiClient.setTenant(selectedTenant.id);
       }
       return billingApi.getAutoTopupConfig();
     },
@@ -70,7 +62,6 @@ export function AutoTopupSettings() {
     queryKey: ["payment-methods", selectedTenant?.id],
     queryFn: async () => {
       if (selectedTenant?.id) {
-        apiClient.setTenant(selectedTenant.id);
       }
       return billingApi.listPaymentMethods();
     },
@@ -137,8 +128,8 @@ export function AutoTopupSettings() {
           <div>
             <p className="font-medium">Enable auto top-up</p>
             <p className="text-sm text-muted-foreground">
-              Requires a saved card (Nomba for NGN, Polar for USD). Bachs cards cannot be charged
-              off-session.
+              Requires a saved card. Bachs does not support off-session charges, so auto-topup
+              cannot bill a saved card. off-session.
             </p>
           </div>
           <Switch checked={enabled} onCheckedChange={setEnabled} disabled={isLoading} />

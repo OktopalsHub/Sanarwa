@@ -1,6 +1,5 @@
 "use client";
 
-import { TenantProvider } from "@/contexts/tenant-context";
 import { useAuth } from "@/contexts/auth-context";
 import { useNavigate, useParams } from "@tanstack/react-router";
 import { useEffect, type ReactNode } from "react";
@@ -32,5 +31,5 @@ export function TenantLayoutGuard({ children }: { children: ReactNode }) {
 
   if (!isAuthenticated) return null;
 
-  return <TenantProvider>{children}</TenantProvider>;
+  return <>{children}</>;
 }

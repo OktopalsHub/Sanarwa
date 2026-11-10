@@ -1,10 +1,10 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
+import { Button } from "@sanarwa/ui/button";
+import { Skeleton } from "@sanarwa/ui/skeleton";
 import { useTenantBasePath } from "@/hooks/use-tenant-slug";
-import { messagingApi, type MessageLogListItem } from "@/lib/api/messaging";
-import { projectApi } from "@/lib/api/project";
+import { messagingApi, type MessageLogListItem } from "@sanarwa/api-client";
+import { projectApi } from "@sanarwa/api-client";
 import { useQuery } from "@tanstack/react-query";
 import { useRouter } from "@/compat/next-navigation";
 import { useState } from "react";

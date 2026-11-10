@@ -4,11 +4,11 @@ import { Activity } from "@/lib/icons";
 
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { projectApi } from "@/lib/api/project";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { projectApi } from "@sanarwa/api-client";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@sanarwa/ui/card";
+import { Badge } from "@sanarwa/ui/badge";
+import { Button } from "@sanarwa/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@sanarwa/ui/tabs";
 import {
   Cog6ToothIcon,
   UsersIcon,
@@ -82,7 +82,6 @@ export function ProjectDetails({ projectId }: ProjectDetailsProps) {
 
   return (
     <div className="space-y-6">
-      {/* Project Header */}
       <Card>
         <CardHeader>
           <div className="flex items-start justify-between">
@@ -129,7 +128,6 @@ export function ProjectDetails({ projectId }: ProjectDetailsProps) {
         </CardContent>
       </Card>
 
-      {/* Project Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="overview">Overview</TabsTrigger>

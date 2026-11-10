@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import Link from "@/compat/next-link";
 import { ThemeToggle } from "@/components/theme-toggle";
-import { Button } from "@/components/ui/button";
+import { Button } from "@sanarwa/ui/button";
 import { useCheckoutCurrency } from "@/hooks/use-checkout-currency";
 import { SanarwaMark, SanarwaWordmark } from "@sanarwa/assets";
 import {
@@ -89,13 +89,16 @@ export default function PricingPage() {
     isReady,
   } = useCheckoutCurrency();
   const currency = (isReady ? checkoutCurrency : "USD") as CurrencyCode;
-  const [spendInput, setSpendInput] = useState(1);
   const [billingMode, setBillingMode] = useState<BillingMode>("managed");
   const [selectedChannel, setSelectedChannel] = useState<ChannelId>("email");
-
-  useEffect(() => {
-    setSpendInput(currency === "NGN" ? 1000 : 1);
-  }, [currency]);
+  const [spendByCurrency, setSpendByCurrency] = useState<Record<CurrencyCode, number>>({
+    USD: 1,
+    NGN: 1000,
+  });
+  const spendInput = spendByCurrency[currency];
+  const setSpendInput = (value: number) => {
+    setSpendByCurrency((prev) => ({ ...prev, [currency]: value }));
+  };
 
   const packs = packagesForCurrency(currency, billingMode);
 
@@ -118,7 +121,6 @@ export default function PricingPage() {
   const switchCurrency = () => {
     const next: CurrencyCode = currency === "NGN" ? "USD" : "NGN";
     setCheckoutCurrency(next);
-    setSpendInput(next === "NGN" ? 1000 : 1);
   };
 
   const budgetLabel = formatMoney(spendInput, currency);
@@ -132,8 +134,6 @@ export default function PricingPage() {
       : currency === "NGN"
         ? `List rate: ₦1,000 → ${formatTokens(MANAGED_LIST_TOKENS)} tokens`
         : `List rate: $1 → ${formatTokens(MANAGED_LIST_TOKENS)} tokens`;
-
-  const byoChannelLabels = BYO_ELIGIBLE_CHANNELS.map((id) => CHANNEL_LABELS[id]).join(", ");
 
   return (
     <div className="min-h-screen bg-[var(--color-paper)] text-[var(--color-ink-2)]">
@@ -233,7 +233,9 @@ export default function PricingPage() {
             <div className="flex flex-col justify-center rounded-[var(--radius)] border border-[var(--hm-accent)]/35 bg-black/25 px-3 py-3">
               {billingMode === "byo" ? (
                 <>
-                  <p className="text-[10px] text-white/45">BYO: you pay provider, we charge 1 token/event.</p>
+                  <p className="text-[10px] text-white/45">
+                    BYO: you pay provider, we charge 1 token/event.
+                  </p>
                   <p className="mt-1 font-mono text-2xl font-bold leading-tight text-[var(--hm-accent)]">
                     {formatTokens(tokens)}
                     <span className="ml-1.5 text-sm font-normal text-white/40">events</span>
@@ -241,7 +243,9 @@ export default function PricingPage() {
                 </>
               ) : (
                 <>
-                  <p className="text-[10px] text-white/45">{formatTokens(tokens)} tokens — by channel.</p>
+                  <p className="text-[10px] text-white/45">
+                    {formatTokens(tokens)} tokens — by channel.
+                  </p>
                   <div className="mb-2 flex flex-wrap gap-1">
                     {MANAGED_CHANNELS.map((id) => {
                       const logo = CHANNEL_LOGOS[id];
@@ -373,7 +377,7 @@ export default function PricingPage() {
             <SanarwaMark className="size-3.5 text-[var(--hm-accent)]" />
             <span className="font-medium">Sanarwa</span>
           </Link>
-          <p>© {new Date().getFullYear()}</p>
+          <p>© 2026</p>
         </div>
       </footer>
     </div>

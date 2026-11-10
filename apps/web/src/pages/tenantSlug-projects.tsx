@@ -3,7 +3,7 @@
 import { ProjectList } from "@/components/projects/project-list";
 import { CreateProjectDialog } from "@/components/projects/create-project-dialog";
 import { AppShell } from "@/components/layout";
-import { Button } from "@/components/ui/button";
+import { Button } from "@sanarwa/ui/button";
 import { PlusIcon } from "@heroicons/react/24/outline";
 
 import { useState } from "react";

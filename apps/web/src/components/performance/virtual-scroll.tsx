@@ -44,7 +44,7 @@ export function VirtualScroll<T>({
     const newScrollTop = event.currentTarget.scrollTop;
     setScrollTop(newScrollTop);
     onScroll?.(newScrollTop);
-  }, 16); // ~60fps
+  }, 16);
 
   return (
     <div
@@ -74,7 +74,6 @@ export function VirtualScroll<T>({
   );
 }
 
-// Hook for virtual scrolling with dynamic item heights
 export function useVirtualScroll<T>({
   items,
   estimatedItemHeight,
@@ -90,7 +89,6 @@ export function useVirtualScroll<T>({
   const [itemHeights, setItemHeights] = useState<number[]>([]);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // Calculate item positions based on actual heights
   const itemPositions = useMemo(() => {
     const positions: number[] = [];
     let totalHeight = 0;
@@ -103,14 +101,12 @@ export function useVirtualScroll<T>({
     return { positions, totalHeight };
   }, [items.length, itemHeights, estimatedItemHeight]);
 
-  // Find visible items based on scroll position
   const visibleRange = useMemo(() => {
     const { positions, totalHeight } = itemPositions;
 
     let start = 0;
     let end = items.length - 1;
 
-    // Binary search for start index
     for (let i = 0; i < positions.length; i++) {
       const position = positions[i];
       if (typeof position === "number" && position >= scrollTop) {
@@ -119,7 +115,6 @@ export function useVirtualScroll<T>({
       }
     }
 
-    // Find end index
     for (let i = start; i < positions.length; i++) {
       const position = positions[i];
       if (typeof position === "number" && position > scrollTop + containerHeight) {
@@ -156,7 +151,6 @@ export function useVirtualScroll<T>({
   };
 }
 
-// Intersection Observer based lazy loading component
 interface LazyLoadProps {
   children: React.ReactNode;
   placeholder?: React.ReactNode;
@@ -208,7 +202,6 @@ export function LazyLoad({
   );
 }
 
-// Optimized list component that combines virtual scrolling and lazy loading
 interface OptimizedListProps<T> {
   items: T[];
   renderItem: (item: T, index: number) => React.ReactNode;
@@ -239,7 +232,6 @@ export function OptimizedList<T>({
     );
   }
 
-  // Use virtual scrolling for large lists
   if (items.length > 100) {
     return (
       <VirtualScroll
@@ -252,7 +244,6 @@ export function OptimizedList<T>({
     );
   }
 
-  // Use regular rendering with lazy loading for smaller lists
   return (
     <div className={cn("overflow-auto", className)} style={{ height: containerHeight }}>
       {items.map((item, index) => (

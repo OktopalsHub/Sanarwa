@@ -1,8 +1,8 @@
 "use client";
 
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@sanarwa/ui/badge";
+import { Button } from "@sanarwa/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@sanarwa/ui/card";
 import { alertManager } from "@/lib/services/alert-manager";
 import { toast } from "@/lib/utils/toast";
 import {
@@ -50,11 +50,8 @@ export default function RealTimeAlerts({
   useEffect(() => {
     if (!isEnabled) return;
 
-    // Simulate real-time alerts (in production, this would be WebSocket or SSE)
     const interval = setInterval(() => {
-      // Randomly generate alerts for demonstration
       if (Math.random() < 0.1) {
-        // 10% chance every 5 seconds
         generateRandomAlert();
       }
     }, 5000);
@@ -142,7 +139,6 @@ export default function RealTimeAlerts({
 
     setUnreadCount((prev) => prev + 1);
 
-    // Show toast notification for high/critical alerts
     if (showNotifications && ["high", "critical"].includes(alert.severity)) {
       const icon = alert.severity === "critical" ? "🚨" : "⚠️";
       toast.error(`${icon} ${alert.message}`, {
@@ -150,14 +146,13 @@ export default function RealTimeAlerts({
       });
     }
 
-    // Auto-resolve some alerts after a delay (simulation)
     if (autoHide && Math.random() < 0.3) {
       setTimeout(
         () => {
           resolveAlert(alert.id);
         },
         30000 + Math.random() * 60000,
-      ); // 30-90 seconds
+      );
     }
   };
 
@@ -168,7 +163,6 @@ export default function RealTimeAlerts({
       ),
     );
 
-    // Also resolve in alert manager
     alertManager.resolveAlert(alertId);
   };
 
@@ -281,7 +275,6 @@ export default function RealTimeAlerts({
           </div>
         ) : (
           <div className="space-y-4">
-            {/* Active Alerts */}
             {activeAlerts.length > 0 && (
               <div>
                 <h4 className="font-medium mb-3 flex items-center">
@@ -304,7 +297,6 @@ export default function RealTimeAlerts({
               </div>
             )}
 
-            {/* Resolved Alerts */}
             {resolvedAlerts.length > 0 && (
               <div>
                 <h4 className="font-medium mb-3 flex items-center">

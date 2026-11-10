@@ -1,22 +1,9 @@
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import {
-  Empty,
-  EmptyContent,
-  EmptyDescription,
-  EmptyHeader,
-  EmptyTitle,
-} from "@/components/ui/empty";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { Badge } from "@sanarwa/ui/badge";
+import { Button } from "@sanarwa/ui/button";
+import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyTitle } from "@sanarwa/ui/empty";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@sanarwa/ui/table";
 import { SendSnippet } from "@/components/messages/send-snippet";
-import type { MessageLogListItem } from "@/lib/api/messaging";
+import type { MessageLogListItem } from "@sanarwa/api-client";
 import Link from "@/compat/next-link";
 
 function statusVariant(status: string) {

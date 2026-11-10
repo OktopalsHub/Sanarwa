@@ -4,16 +4,10 @@ import { Activity } from "@/lib/icons";
 
 import { DashboardChart } from "@/components/dashboard/dashboard-chart";
 import { MetricCard } from "@/components/dashboard/metric-card";
-import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { DateRange, DateRangePicker } from "@/components/ui/date-range-picker";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Button } from "@sanarwa/ui/button";
+import { Card } from "@sanarwa/ui/card";
+import { DateRange, DateRangePicker } from "@sanarwa/ui/date-range-picker";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@sanarwa/ui/select";
 import {
   BellIcon,
   ArrowDownTrayIcon,
@@ -140,13 +134,11 @@ export function ChannelAnalytics({ channel = "email" }: ChannelAnalyticsProps) {
   const Icon = channelIcons[selectedChannel as keyof typeof channelIcons];
 
   const handleExport = () => {
-    // TODO: Implement data export functionality
     alert(`Export functionality for ${selectedChannel} will be implemented soon`);
   };
 
   return (
     <div className="space-y-6">
-      {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-3">
           <Icon className="h-8 w-8 text-primary" />
@@ -163,7 +155,6 @@ export function ChannelAnalytics({ channel = "email" }: ChannelAnalyticsProps) {
         </Button>
       </div>
 
-      {/* Filters */}
       <Card className="p-6">
         <div className="flex flex-col space-y-4 md:flex-row md:space-y-0 md:space-x-4 md:items-end">
           <div className="flex-1">
@@ -193,7 +184,6 @@ export function ChannelAnalytics({ channel = "email" }: ChannelAnalyticsProps) {
         </div>
       </Card>
 
-      {/* Key Metrics */}
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
         <MetricCard
           title="Messages Sent"
@@ -233,7 +223,6 @@ export function ChannelAnalytics({ channel = "email" }: ChannelAnalyticsProps) {
         />
       </div>
 
-      {/* Performance Charts */}
       <div className="grid gap-6 lg:grid-cols-2">
         <DashboardChart
           title="Daily Performance"
@@ -251,7 +240,6 @@ export function ChannelAnalytics({ channel = "email" }: ChannelAnalyticsProps) {
         />
       </div>
 
-      {/* Detailed Metrics */}
       <div className="grid gap-6 lg:grid-cols-2">
         <Card className="p-6">
           <h3 className="text-lg font-semibold mb-4">Performance Breakdown</h3>

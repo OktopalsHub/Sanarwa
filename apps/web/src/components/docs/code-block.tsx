@@ -1,6 +1,6 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
+import { Button } from "@sanarwa/ui/button";
 import { cn } from "@/lib/utils";
 import { CheckIcon, DocumentDuplicateIcon } from "@heroicons/react/24/outline";
 import { useState } from "react";
@@ -86,7 +86,6 @@ export function CodeBlock({
   );
 }
 
-// Language-specific code block components
 export function JavaScriptCode({ children, title }: { children: string; title?: string }) {
   return (
     <CodeBlock language="javascript" title={title}>

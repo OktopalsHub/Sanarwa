@@ -11,6 +11,6 @@ export default function ForgotPasswordPage() {
 }
 
 export const metadata = {
-  title: "Forgot Password - Notifi",
-  description: "Reset your Notifi account password",
+  title: "Forgot Password - Sanarwa",
+  description: "Reset your Sanarwa account password",
 };

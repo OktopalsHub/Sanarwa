@@ -21,16 +21,16 @@ export const troubleshootingItems = [
         title: "Verify API Key Configuration",
         description: "Check that your API key is correctly configured and valid.",
         steps: [
-          "Log in to your Notifi dashboard",
+          "Log in to your Sanarwa dashboard",
           "Navigate to Settings > API Keys",
           "Verify the API key matches what you're using in your code",
           "Check the key's status and permissions",
           "Regenerate the key if necessary",
         ],
         code: `// Check your API key configuration
-const client = new NotifiClient({
-  apiKey: process.env.NOTIFI_API_KEY, // Make sure this is set
-  baseUrl: 'https://api.notifi.com'
+const client = new Sanarwa({
+  apiKey: process.env.SANARWA_API_KEY, // Make sure this is set
+  baseUrl: 'https://api.sanarwa.com'
 });
 
 // Test the connection
@@ -47,16 +47,16 @@ try {
         description: "Ensure your environment variables are properly configured.",
         steps: [
           "Create a .env file in your project root",
-          "Add your API key: NOTIFI_API_KEY=your_actual_key_here",
+          "Add your API key: SANARWA_API_KEY=your_actual_key_here",
           "Restart your application to load the new environment variables",
           "Verify the variable is loaded correctly",
         ],
         code: `# .env file
-NOTIFI_API_KEY=nk_live_1234567890abcdef
-NOTIFI_BASE_URL=https://api.notifi.com
+SANARWA_API_KEY=nk_live_1234567890abcdef
+SANARWA_BASE_URL=https://api.sanarwa.com
 
 # Verify in your code
-console.log('API Key loaded:', process.env.NOTIFI_API_KEY ? 'Yes' : 'No');`,
+console.log('API Key loaded:', process.env.SANARWA_API_KEY ? 'Yes' : 'No');`,
         language: "bash",
       },
     ],
@@ -127,15 +127,15 @@ async function sendEmailSafely(to, subject, content) {
         title: "Check Domain Authentication",
         description: "Verify your domain has proper email authentication records.",
         steps: [
-          'Add SPF record to your DNS: "v=spf1 include:_spf.notifi.com ~all"',
-          "Configure DKIM signing in your Notifi dashboard",
+          'Add SPF record to your DNS: "v=spf1 include:_spf.sanarwa.com ~all"',
+          "Configure DKIM signing in your Sanarwa dashboard",
           "Set up DMARC policy for your domain",
           "Verify records using DNS lookup tools",
         ],
       },
       {
         title: "Monitor Delivery Analytics",
-        description: "Use Notifi's analytics to track delivery performance.",
+        description: "Use Sanarwa's analytics to track delivery performance.",
         code: `// Check delivery status
 const deliveryStats = await client.analytics.getDeliveryStats({
   startDate: '2024-01-01',
@@ -166,7 +166,7 @@ console.log('Spam rate:', deliveryStats.spamRate);`,
     title: "SDK Installation Problems",
     category: "sdk" as const,
     severity: "medium" as const,
-    description: "Issues installing or importing the Notifi SDK",
+    description: "Issues installing or importing the Sanarwa SDK",
     symptoms: [
       "npm install fails with dependency errors",
       "Import statements not working",
@@ -205,7 +205,7 @@ pnpm install`,
         description: "Ensure you're using a supported Node.js version.",
         steps: [
           "Check your Node.js version: node --version",
-          "Notifi SDK requires Node.js 16 or higher",
+          "Sanarwa SDK requires Node.js 16 or higher",
           "Update Node.js if necessary using nvm or direct download",
           "Reinstall dependencies after Node.js update",
         ],
@@ -221,16 +221,16 @@ nvm use --lts`,
         title: "Correct Import Syntax",
         description: "Use the correct import syntax for your environment.",
         code: `// ES6 Modules (recommended)
-import { NotifiClient } from '@notifi/sdk';
+import { Sanarwa } from '@sanarwa/sdk';
 
 // CommonJS
-const { NotifiClient } = require('@notifi/sdk');
+const { Sanarwa } = require('@sanarwa/sdk');
 
 // TypeScript with types
-import { NotifiClient, EmailOptions } from '@notifi/sdk';
+import { Sanarwa, EmailOptions } from '@sanarwa/sdk';
 
 // Default import (if using default export)
-import NotifiClient from '@notifi/sdk';`,
+import Sanarwa from '@sanarwa/sdk';`,
         language: "javascript",
       },
     ],
@@ -289,7 +289,7 @@ const result = await sendWithRetry(() =>
   client.email.send({
     to: 'user@example.com',
     subject: 'Hello',
-    content: 'World'
+    data: 'World'
   })
 );`,
         language: "javascript",
@@ -368,13 +368,13 @@ client.on('response', (response) => {
         title: "Verify Webhook Configuration",
         description: "Check that your webhook URL is correctly configured and accessible.",
         steps: [
-          "Verify the webhook URL in your Notifi dashboard",
+          "Verify the webhook URL in your Sanarwa dashboard",
           "Test the URL manually with curl or Postman",
           "Ensure the endpoint returns 200 OK for POST requests",
           "Check that the URL is publicly accessible (not localhost)",
         ],
         code: `# Test your webhook endpoint
-curl -X POST https://your-domain.com/webhooks/notifi \\
+curl -X POST https://your-domain.com/webhooks/sanarwa \\
   -H "Content-Type: application/json" \\
   -d '{"test": true}'
 
@@ -383,10 +383,10 @@ curl -X POST https://your-domain.com/webhooks/notifi \\
       },
       {
         title: "Implement Proper Webhook Handler",
-        description: "Create a webhook endpoint that properly handles Notifi events.",
+        description: "Create a webhook endpoint that properly handles Sanarwa events.",
         code: `// Express.js webhook handler
-app.post('/webhooks/notifi', express.raw({type: 'application/json'}), (req, res) => {
-  const signature = req.headers['x-notifi-signature'];
+app.post('/webhooks/sanarwa', express.raw({type: 'application/json'}), (req, res) => {
+  const signature = req.headers['x-sanarwa-signature'];
   const payload = req.body;
   
   // Verify webhook signature
@@ -411,7 +411,7 @@ app.post('/webhooks/notifi', express.raw({type: 'application/json'}), (req, res)
 
 function verifyWebhookSignature(payload, signature) {
   const expectedSignature = crypto
-    .createHmac('sha256', process.env.NOTIFI_WEBHOOK_SECRET)
+    .createHmac('sha256', process.env.SANARWA_WEBHOOK_SECRET)
     .update(payload)
     .digest('hex');
   
@@ -573,7 +573,7 @@ if (unrendered) {
 const heavyPayload = {
   to: 'user@example.com',
   subject: 'Newsletter',
-  content: {
+  data: {
     html: '<!-- Very large HTML content -->',
     attachments: [/* Large files */]
   },
@@ -601,7 +601,7 @@ console.log(\`Request completed in \${duration}ms\`);`,
       {
         title: "Implement Request Caching",
         description: "Cache frequently used data to reduce API calls.",
-        code: `class NotifiCache {
+        code: `class SanarwaCache {
   constructor(ttl = 300000) { // 5 minutes default TTL
     this.cache = new Map();
     this.ttl = ttl;
@@ -627,7 +627,7 @@ console.log(\`Request completed in \${duration}ms\`);`,
   }
 }
 
-const cache = new NotifiCache();
+const cache = new SanarwaCache();
 
 async function getTemplateWithCache(templateId) {
   const cacheKey = \`template:\${templateId}\`;
@@ -780,7 +780,7 @@ const workflow = await client.workflows.create({
     results.email = await client.email.send({
       to: user.email,
       subject: message.subject,
-      content: message.content
+      data: message.content
     });
   } catch (error) {
     console.error('Email failed:', error);

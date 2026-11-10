@@ -1,5 +1,5 @@
-import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
+import { Button } from "@sanarwa/ui/button";
+import { Card } from "@sanarwa/ui/card";
 import {
   Empty,
   EmptyContent,
@@ -7,7 +7,7 @@ import {
   EmptyHeader,
   EmptyMedia,
   EmptyTitle,
-} from "@/components/ui/empty";
+} from "@sanarwa/ui/empty";
 import { SendSnippet } from "@/components/messages/send-snippet";
 import Link from "@/compat/next-link";
 import { IconInbox } from "@tabler/icons-react";

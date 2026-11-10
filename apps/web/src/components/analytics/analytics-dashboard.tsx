@@ -1,15 +1,9 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { DateRange, DateRangePicker } from "@/components/ui/date-range-picker";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Button } from "@sanarwa/ui/button";
+import { Card } from "@sanarwa/ui/card";
+import { DateRange, DateRangePicker } from "@sanarwa/ui/date-range-picker";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@sanarwa/ui/select";
 import {
   ChartBarIcon,
   ArrowDownTrayIcon,
@@ -32,7 +26,6 @@ export function AnalyticsDashboard() {
   });
 
   const handleExportAll = () => {
-    // TODO: Implement data export functionality
     alert("Export functionality will be implemented soon");
   };
 
@@ -66,7 +59,6 @@ export function AnalyticsDashboard() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold">Analytics</h1>
@@ -80,7 +72,6 @@ export function AnalyticsDashboard() {
         </Button>
       </div>
 
-      {/* Navigation Tabs */}
       <Card className="p-1">
         <div className="flex space-x-1">
           <Button
@@ -122,7 +113,6 @@ export function AnalyticsDashboard() {
         </div>
       </Card>
 
-      {/* Global Filters (only show for overview) */}
       {currentView === "overview" && (
         <Card className="p-6">
           <div className="flex flex-col space-y-4 md:flex-row md:space-y-0 md:space-x-4 md:items-end">
@@ -156,7 +146,6 @@ export function AnalyticsDashboard() {
         </Card>
       )}
 
-      {/* Content */}
       {renderViewContent()}
     </div>
   );

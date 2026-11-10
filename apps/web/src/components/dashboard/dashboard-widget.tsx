@@ -1,7 +1,7 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
+import { Button } from "@sanarwa/ui/button";
+import { Card } from "@sanarwa/ui/card";
 import { cn } from "@/lib/utils";
 import {
   EllipsisHorizontalIcon,

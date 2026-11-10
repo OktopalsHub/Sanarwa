@@ -1,7 +1,7 @@
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Checkbox } from "@/components/ui/checkbox";
+import { Badge } from "@sanarwa/ui/badge";
+import { Button } from "@sanarwa/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@sanarwa/ui/card";
+import { Checkbox } from "@sanarwa/ui/checkbox";
 import { cn } from "@/lib/utils";
 import { IconChevronDown, IconChevronUp, IconSettings } from "@tabler/icons-react";
 import { ChannelConfigFields } from "./channel-config-fields";

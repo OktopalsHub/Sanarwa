@@ -2,9 +2,9 @@
 
 import { Filter } from "@/lib/icons";
 
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Button } from "@sanarwa/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@sanarwa/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@sanarwa/ui/tabs";
 import { useTenant } from "@/contexts/tenant-context";
 import { Tenant } from "@/lib/types/tenant";
 import { PlusIcon, UsersIcon } from "@heroicons/react/24/outline";
@@ -21,14 +21,12 @@ export function TeamManagement({ tenant }: TeamManagementProps) {
   const { memberships, invitations } = useTenant();
   const [inviteDialogOpen, setInviteDialogOpen] = useState(false);
 
-  // Filter memberships for current tenant
   const tenantMembers = memberships.filter((member) => member.tenantId === tenant.id);
   const activeMembers = tenantMembers.filter((member) => member.status === "active");
   const pendingInvitations = invitations.filter((invitation) => invitation.tenantId === tenant.id);
 
   return (
     <div className="space-y-6">
-      {/* Team Overview */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -65,7 +63,6 @@ export function TeamManagement({ tenant }: TeamManagementProps) {
         </Card>
       </div>
 
-      {/* Team Management Tabs */}
       <Tabs defaultValue="members" className="space-y-6">
         <div className="flex items-center justify-between">
           <TabsList>
@@ -109,7 +106,6 @@ export function TeamManagement({ tenant }: TeamManagementProps) {
         </TabsContent>
       </Tabs>
 
-      {/* Invite Member Dialog */}
       <InviteMemberDialog
         open={inviteDialogOpen}
         onOpenChange={setInviteDialogOpen}

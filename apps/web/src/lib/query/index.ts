@@ -1,8 +1,6 @@
-// Query client and provider
 export { invalidateQueries, queryClient, queryKeys } from "./query-client";
 export { QueryProvider } from "./query-provider";
 
-// Error handling utilities
 export {
   getValidationErrors,
   handleApiError,
@@ -14,10 +12,8 @@ export {
   queryErrorHandler,
 } from "./error-handling";
 
-// Query hooks
 export * from "./hooks/use-analytics-queries";
 export * from "./hooks/use-auth-queries";
-// Export notification hooks with explicit naming to avoid conflicts
 export {
   useSendBulkNotifications as useBulkOperations,
   useSendNotification as useCreateNotification,
@@ -28,7 +24,6 @@ export {
   useDeliveryMetrics as useNotificationDeliveryMetrics,
   useEngagementMetrics as useNotificationEngagementMetrics,
   useNotificationStatus,
-  useRealtimeNotifications as useNotificationSubscriptions,
   useNotifications,
   useSendNotification as useUpdateNotification,
 } from "./hooks/use-notification-queries";

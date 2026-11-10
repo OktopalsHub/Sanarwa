@@ -2,17 +2,11 @@
 
 import { Calendar, Repeat, Send, Zap } from "@/lib/icons";
 
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Button } from "@sanarwa/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@sanarwa/ui/card";
+import { Input } from "@sanarwa/ui/input";
+import { Label } from "@sanarwa/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@sanarwa/ui/select";
 import type { RecurringConfig, ScheduleConfig } from "@/lib/types/campaign";
 import {
   CalendarIcon,
@@ -86,7 +80,7 @@ export function SchedulingStep({ data, onUpdate }: SchedulingStepProps) {
     data?.recurring || {
       frequency: "weekly",
       interval: 1,
-      daysOfWeek: [1], // Monday
+      daysOfWeek: [1],
     },
   );
 
@@ -124,7 +118,7 @@ export function SchedulingStep({ data, onUpdate }: SchedulingStepProps) {
 
   const getMinDateTime = () => {
     const now = new Date();
-    now.setMinutes(now.getMinutes() + 5); // Minimum 5 minutes from now
+    now.setMinutes(now.getMinutes() + 5);
     return now.toISOString().slice(0, 16);
   };
 
@@ -166,7 +160,6 @@ export function SchedulingStep({ data, onUpdate }: SchedulingStepProps) {
 
   return (
     <div className="space-y-6">
-      {/* Schedule Type Selection */}
       <div className="space-y-4">
         <Label className="text-base font-medium">When to Send</Label>
         <div className="grid gap-4">
@@ -205,7 +198,6 @@ export function SchedulingStep({ data, onUpdate }: SchedulingStepProps) {
         </div>
       </div>
 
-      {/* Scheduled Configuration */}
       {scheduleType === "scheduled" && (
         <Card>
           <CardHeader>
@@ -247,7 +239,6 @@ export function SchedulingStep({ data, onUpdate }: SchedulingStepProps) {
         </Card>
       )}
 
-      {/* Recurring Configuration */}
       {scheduleType === "recurring" && (
         <Card>
           <CardHeader>
@@ -257,7 +248,6 @@ export function SchedulingStep({ data, onUpdate }: SchedulingStepProps) {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-6">
-            {/* Frequency */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>Frequency</Label>
@@ -302,7 +292,6 @@ export function SchedulingStep({ data, onUpdate }: SchedulingStepProps) {
               </div>
             </div>
 
-            {/* Days of Week (for weekly) */}
             {recurring.frequency === "weekly" && (
               <div className="space-y-3">
                 <Label>Days of Week</Label>
@@ -325,7 +314,6 @@ export function SchedulingStep({ data, onUpdate }: SchedulingStepProps) {
               </div>
             )}
 
-            {/* Day of Month (for monthly) */}
             {recurring.frequency === "monthly" && (
               <div className="space-y-2">
                 <Label>Day of Month</Label>
@@ -342,7 +330,6 @@ export function SchedulingStep({ data, onUpdate }: SchedulingStepProps) {
               </div>
             )}
 
-            {/* End Conditions */}
             <div className="space-y-4">
               <Label>End Conditions</Label>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -382,7 +369,6 @@ export function SchedulingStep({ data, onUpdate }: SchedulingStepProps) {
               </div>
             </div>
 
-            {/* Timezone */}
             <div className="space-y-2">
               <Label>Timezone</Label>
               <Select value={timezone} onValueChange={setTimezone}>
@@ -402,7 +388,6 @@ export function SchedulingStep({ data, onUpdate }: SchedulingStepProps) {
         </Card>
       )}
 
-      {/* Schedule Preview */}
       <Card className="bg-blue-50 border-blue-200 dark:bg-blue-950/20 dark:border-blue-800">
         <CardContent className="pt-6">
           <div className="flex items-start gap-3">
@@ -419,7 +404,6 @@ export function SchedulingStep({ data, onUpdate }: SchedulingStepProps) {
         </CardContent>
       </Card>
 
-      {/* Timezone Info */}
       <Card className="bg-muted/50">
         <CardContent className="pt-6">
           <div className="flex items-start gap-3">

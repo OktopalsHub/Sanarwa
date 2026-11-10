@@ -1,10 +1,10 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Separator } from "@/components/ui/separator";
+import { Button } from "@sanarwa/ui/button";
+import { Card } from "@sanarwa/ui/card";
+import { Input } from "@sanarwa/ui/input";
+import { Label } from "@sanarwa/ui/label";
+import { Separator } from "@sanarwa/ui/separator";
 import { BrandingColors } from "@/contexts/branding-context";
 import { useThemeCustomization } from "@/hooks/use-theme-customization";
 import { cn } from "@/lib/utils";
@@ -187,7 +187,6 @@ export function ThemeConfigurator({ className }: ThemeConfiguratorProps) {
   return (
     <Card className={cn("p-6", className)}>
       <div className="space-y-6">
-        {/* Header */}
         <div className="flex items-center justify-between">
           <div>
             <h3 className="text-lg font-semibold">Theme Configurator</h3>
@@ -205,7 +204,6 @@ export function ThemeConfigurator({ className }: ThemeConfiguratorProps) {
           </div>
         </div>
 
-        {/* Accessibility Report */}
         {!accessibilityReport.isValid && (
           <div className="p-4 bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-800 rounded-lg">
             <div className="flex items-center gap-2 mb-2">
@@ -226,7 +224,6 @@ export function ThemeConfigurator({ className }: ThemeConfiguratorProps) {
           </div>
         )}
 
-        {/* Color Configuration */}
         <div className="space-y-4">
           <h4 className="text-md font-medium">Colors</h4>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -283,7 +280,6 @@ export function ThemeConfigurator({ className }: ThemeConfiguratorProps) {
 
         <Separator />
 
-        {/* Typography Configuration */}
         <div className="space-y-4">
           <h4 className="text-md font-medium">Typography</h4>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -292,9 +288,7 @@ export function ThemeConfigurator({ className }: ThemeConfiguratorProps) {
               <Input
                 id="fontFamily"
                 value={currentTheme.typography.fontFamily}
-                onChange={(e) => {
-                  // Handle font family change
-                }}
+                onChange={(e) => {}}
                 placeholder="var(--font-geist-sans)"
               />
             </div>
@@ -303,9 +297,7 @@ export function ThemeConfigurator({ className }: ThemeConfiguratorProps) {
               <Input
                 id="headingFont"
                 value={currentTheme.typography.headingFont || ""}
-                onChange={(e) => {
-                  // Handle heading font change
-                }}
+                onChange={(e) => {}}
                 placeholder="var(--font-geist-sans)"
               />
             </div>
@@ -314,7 +306,6 @@ export function ThemeConfigurator({ className }: ThemeConfiguratorProps) {
 
         <Separator />
 
-        {/* Custom CSS */}
         <div className="space-y-4">
           <h4 className="text-md font-medium">Custom CSS</h4>
           <div className="space-y-2">
@@ -334,7 +325,6 @@ export function ThemeConfigurator({ className }: ThemeConfiguratorProps) {
 
         <Separator />
 
-        {/* Actions */}
         <div className="flex flex-wrap items-center gap-2">
           {previewMode ? (
             <>
@@ -371,7 +361,6 @@ export function ThemeConfigurator({ className }: ThemeConfiguratorProps) {
           </div>
         </div>
 
-        {/* Hidden file input */}
         <input
           ref={fileInputRef}
           type="file"

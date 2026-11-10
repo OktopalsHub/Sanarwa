@@ -39,7 +39,6 @@ export function useThemeCustomization() {
 
   const isDark = resolvedTheme === "dark";
 
-  // Generate accessibility report for current colors
   const accessibilityReport = useMemo((): AccessibilityReport => {
     const colors = previewConfig?.colors || branding?.colors;
     if (!colors) {
@@ -56,7 +55,6 @@ export function useThemeCustomization() {
     });
   }, [branding?.colors, previewConfig?.colors]);
 
-  // Apply theme configuration with smooth transitions
   const applyTheme = useCallback(
     async (customization: ThemeCustomization, permanent = false) => {
       if (isApplying) return;
@@ -64,22 +62,18 @@ export function useThemeCustomization() {
       setIsApplying(true);
 
       try {
-        // Create smooth transition if user doesn't prefer reduced motion
         if (!prefersReducedMotion()) {
           createThemeTransition();
         }
 
-        // Create theme configuration
         const themeConfig = createThemeConfig(
           customization.colors,
           customization.typography,
           isDark,
         );
 
-        // Apply theme configuration
         applyThemeConfig(themeConfig);
 
-        // Apply custom CSS if provided
         if (customization.customCss) {
           let styleElement = document.getElementById("custom-theme-styles");
           if (!styleElement) {
@@ -90,7 +84,6 @@ export function useThemeCustomization() {
           styleElement.textContent = customization.customCss;
         }
 
-        // If permanent, update branding context
         if (permanent && branding) {
           const updatedBranding = {
             ...branding,
@@ -101,7 +94,6 @@ export function useThemeCustomization() {
           applyBranding(updatedBranding);
         }
 
-        // Small delay to ensure smooth transition
         await new Promise((resolve) => setTimeout(resolve, 50));
       } catch (error) {
         console.error("Failed to apply theme:", error);
@@ -112,7 +104,6 @@ export function useThemeCustomization() {
     [isApplying, isDark, branding, applyBranding],
   );
 
-  // Preview theme changes without applying permanently
   const previewTheme = useCallback(
     (customization: ThemeCustomization) => {
       setPreviewConfig(customization);
@@ -122,7 +113,6 @@ export function useThemeCustomization() {
     [applyTheme],
   );
 
-  // Apply theme changes permanently
   const commitTheme = useCallback(
     async (customization: ThemeCustomization) => {
       await applyTheme(customization, true);
@@ -132,7 +122,6 @@ export function useThemeCustomization() {
     [applyTheme],
   );
 
-  // Cancel preview and revert to original theme
   const cancelPreview = useCallback(() => {
     if (branding && previewMode) {
       const originalCustomization: ThemeCustomization = {
@@ -146,7 +135,6 @@ export function useThemeCustomization() {
     setPreviewConfig(null);
   }, [branding, previewMode, applyTheme]);
 
-  // Update specific color values
   const updateColor = useCallback(
     (colorKey: keyof BrandingColors, value: string) => {
       const currentColors = previewConfig?.colors || branding?.colors;
@@ -171,13 +159,12 @@ export function useThemeCustomization() {
     [branding?.colors, previewConfig, previewMode, updateColors, applyTheme],
   );
 
-  // Reset to default theme
   const resetToDefault = useCallback(() => {
     const defaultCustomization: ThemeCustomization = {
       colors: {
-        primary: "oklch(0.65 0.18 45)", // NectarHR Orange
+        primary: "oklch(0.65 0.18 45)",
         secondary: "oklch(0.97 0 0)",
-        accent: "oklch(0.6 0.15 240)", // Complementary Blue
+        accent: "oklch(0.6 0.15 240)",
         background: isDark ? "oklch(0.145 0 0)" : "oklch(1 0 0)",
         foreground: isDark ? "oklch(0.985 0 0)" : "oklch(0.145 0 0)",
         muted: isDark ? "oklch(0.269 0 0)" : "oklch(0.97 0 0)",
@@ -198,7 +185,6 @@ export function useThemeCustomization() {
     }
   }, [isDark, previewMode, previewTheme, commitTheme]);
 
-  // Get color accessibility level
   const getColorAccessibility = useCallback(
     (foreground: string, background: string, isLargeText = false) => {
       return getAccessibilityLevel(foreground, background, isLargeText);
@@ -206,7 +192,6 @@ export function useThemeCustomization() {
     [],
   );
 
-  // Export theme configuration
   const exportTheme = useCallback(() => {
     const currentConfig =
       previewConfig ||
@@ -228,7 +213,6 @@ export function useThemeCustomization() {
     };
   }, [branding, previewConfig, accessibilityReport]);
 
-  // Import theme configuration
   const importTheme = useCallback(
     (themeData: { config: ThemeCustomization }) => {
       previewTheme(themeData.config);
@@ -236,7 +220,6 @@ export function useThemeCustomization() {
     [previewTheme],
   );
 
-  // Apply theme when branding changes or theme mode changes
   useEffect(() => {
     if (branding && !previewMode) {
       const customization: ThemeCustomization = {
@@ -249,7 +232,6 @@ export function useThemeCustomization() {
   }, [branding, isDark, previewMode, applyTheme]);
 
   return {
-    // State
     isLoading,
     isApplying,
     previewMode,
@@ -265,7 +247,6 @@ export function useThemeCustomization() {
     accessibilityReport,
     isDark,
 
-    // Actions
     previewTheme,
     commitTheme,
     cancelPreview,

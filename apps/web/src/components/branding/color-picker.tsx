@@ -1,8 +1,8 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Button } from "@sanarwa/ui/button";
+import { Input } from "@sanarwa/ui/input";
+import { Label } from "@sanarwa/ui/label";
 import { cn } from "@/lib/utils";
 import { getAccessibilityLevel } from "@/lib/utils/color-contrast";
 import { Popover, PopoverContent, PopoverTrigger } from "@radix-ui/react-popover";

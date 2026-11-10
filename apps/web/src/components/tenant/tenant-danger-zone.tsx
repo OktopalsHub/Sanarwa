@@ -1,7 +1,7 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@sanarwa/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@sanarwa/ui/card";
 import {
   Dialog,
   DialogContent,
@@ -10,10 +10,10 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Separator } from "@/components/ui/separator";
+} from "@sanarwa/ui/dialog";
+import { Input } from "@sanarwa/ui/input";
+import { Label } from "@sanarwa/ui/label";
+import { Separator } from "@sanarwa/ui/separator";
 import { useTenant } from "@/contexts/tenant-context";
 import { Tenant } from "@/lib/types/tenant";
 import { ExclamationTriangleIcon, TrashIcon } from "@heroicons/react/24/outline";
@@ -53,12 +53,10 @@ export function TenantDangerZone({ tenant }: TenantDangerZoneProps) {
   };
 
   const handleTransferOwnership = async () => {
-    // This would open a dialog to transfer ownership
     toast.info("Transfer ownership feature coming soon");
   };
 
   const handleLeaveOrganization = async () => {
-    // This would allow the user to leave the organization
     toast.info("Leave organization feature coming soon");
   };
 
@@ -74,7 +72,6 @@ export function TenantDangerZone({ tenant }: TenantDangerZoneProps) {
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
-        {/* Transfer Ownership */}
         <div className="flex items-center justify-between p-4 border rounded-lg">
           <div className="space-y-1">
             <h4 className="font-medium">Transfer Ownership</h4>
@@ -89,7 +86,6 @@ export function TenantDangerZone({ tenant }: TenantDangerZoneProps) {
 
         <Separator />
 
-        {/* Leave Organization */}
         <div className="flex items-center justify-between p-4 border rounded-lg">
           <div className="space-y-1">
             <h4 className="font-medium">Leave Organization</h4>
@@ -104,7 +100,6 @@ export function TenantDangerZone({ tenant }: TenantDangerZoneProps) {
 
         <Separator />
 
-        {/* Delete Organization */}
         <div className="flex items-center justify-between p-4 border border-destructive/20 rounded-lg bg-destructive/5">
           <div className="space-y-1">
             <h4 className="font-medium text-destructive">Delete Organization</h4>

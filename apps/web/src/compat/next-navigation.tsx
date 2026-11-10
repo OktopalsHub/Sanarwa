@@ -1,6 +1,3 @@
-/**
- * Next.js compatibility shims for TanStack Router migration
- */
 import {
   Link as TanStackLink,
   useNavigate,

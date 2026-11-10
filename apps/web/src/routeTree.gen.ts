@@ -25,6 +25,7 @@ import { Route as OnboardingRouteImport } from './routes/onboarding'
 import { Route as PricingRouteImport } from './routes/pricing'
 import { Route as RegisterRouteImport } from './routes/register'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
+import { Route as TemplatesRouteImport } from './routes/templates'
 import { Route as ThemeDemoRouteImport } from './routes/theme-demo'
 import { Route as UnauthorizedRouteImport } from './routes/unauthorized'
 import { Route as VerifyEmailRouteImport } from './routes/verify-email'
@@ -33,14 +34,17 @@ import { Route as TenantSlugAnalyticsRouteImport } from './routes/$tenantSlug/an
 import { Route as TenantSlugApiKeysRouteImport } from './routes/$tenantSlug/api-keys'
 import { Route as TenantSlugBillingRouteImport } from './routes/$tenantSlug/billing'
 import { Route as TenantSlugCampaignsRouteImport } from './routes/$tenantSlug/campaigns'
+import { Route as TenantSlugChannelsRouteImport } from './routes/$tenantSlug/channels'
 import { Route as TenantSlugDashboardRouteImport } from './routes/$tenantSlug/dashboard'
 import { Route as TenantSlugMessagesRouteImport } from './routes/$tenantSlug/messages'
 import { Route as TenantSlugMonitoringRouteImport } from './routes/$tenantSlug/monitoring'
 import { Route as TenantSlugProjectsRouteImport } from './routes/$tenantSlug/projects'
 import { Route as TenantSlugProvidersRouteImport } from './routes/$tenantSlug/providers'
 import { Route as TenantSlugSettingsRouteImport } from './routes/$tenantSlug/settings'
+import { Route as TenantSlugTemplatesRouteImport } from './routes/$tenantSlug/templates'
 import { Route as TenantSlugWebhooksRouteImport } from './routes/$tenantSlug/webhooks'
 import { Route as TenantSlugWorkflowsRouteImport } from './routes/$tenantSlug/workflows'
+import { Route as AcceptInvitationInvitationIdRouteImport } from './routes/accept-invitation.$invitationId'
 import { Route as CampaignsIdRouteImport } from './routes/campaigns/$id'
 import { Route as DocsExamplesRouteImport } from './routes/docs/examples'
 import { Route as DocsPlaygroundRouteImport } from './routes/docs/playground'
@@ -50,6 +54,7 @@ import { Route as OauthCallbackRouteImport } from './routes/oauth/callback'
 import { Route as SettingsBrandingRouteImport } from './routes/settings/branding'
 import { Route as SettingsTeamRouteImport } from './routes/settings/team'
 import { Route as SettingsTenantRouteImport } from './routes/settings/tenant'
+import { Route as TemplatesEmailRouteImport } from './routes/templates/email'
 import { Route as TenantSlugCampaignsIdRouteImport } from './routes/$tenantSlug/campaigns/$id'
 import { Route as TenantSlugMessagesIdRouteImport } from './routes/$tenantSlug/messages/$id'
 import { Route as TenantSlugProjectsProjectIdRouteImport } from './routes/$tenantSlug/projects/$projectId'
@@ -136,6 +141,11 @@ const ResetPasswordRoute = ResetPasswordRouteImport.update({
   path: '/reset-password',
   getParentRoute: () => rootRouteImport,
 } as any)
+const TemplatesRoute = TemplatesRouteImport.update({
+  id: '/templates',
+  path: '/templates',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ThemeDemoRoute = ThemeDemoRouteImport.update({
   id: '/theme-demo',
   path: '/theme-demo',
@@ -176,6 +186,11 @@ const TenantSlugCampaignsRoute = TenantSlugCampaignsRouteImport.update({
   path: '/campaigns',
   getParentRoute: () => TenantSlugRoute,
 } as any)
+const TenantSlugChannelsRoute = TenantSlugChannelsRouteImport.update({
+  id: '/channels',
+  path: '/channels',
+  getParentRoute: () => TenantSlugRoute,
+} as any)
 const TenantSlugDashboardRoute = TenantSlugDashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
@@ -206,6 +221,11 @@ const TenantSlugSettingsRoute = TenantSlugSettingsRouteImport.update({
   path: '/settings',
   getParentRoute: () => TenantSlugRoute,
 } as any)
+const TenantSlugTemplatesRoute = TenantSlugTemplatesRouteImport.update({
+  id: '/templates',
+  path: '/templates',
+  getParentRoute: () => TenantSlugRoute,
+} as any)
 const TenantSlugWebhooksRoute = TenantSlugWebhooksRouteImport.update({
   id: '/webhooks',
   path: '/webhooks',
@@ -216,6 +236,12 @@ const TenantSlugWorkflowsRoute = TenantSlugWorkflowsRouteImport.update({
   path: '/workflows',
   getParentRoute: () => TenantSlugRoute,
 } as any)
+const AcceptInvitationInvitationIdRoute =
+  AcceptInvitationInvitationIdRouteImport.update({
+    id: '/accept-invitation/$invitationId',
+    path: '/accept-invitation/$invitationId',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const CampaignsIdRoute = CampaignsIdRouteImport.update({
   id: '/$id',
   path: '/$id',
@@ -260,6 +286,11 @@ const SettingsTenantRoute = SettingsTenantRouteImport.update({
   id: '/settings/tenant',
   path: '/settings/tenant',
   getParentRoute: () => rootRouteImport,
+} as any)
+const TemplatesEmailRoute = TemplatesEmailRouteImport.update({
+  id: '/email',
+  path: '/email',
+  getParentRoute: () => TemplatesRoute,
 } as any)
 const TenantSlugCampaignsIdRoute = TenantSlugCampaignsIdRouteImport.update({
   id: '/$id',
@@ -306,6 +337,7 @@ export interface FileRoutesByFullPath {
   '/pricing': typeof PricingRoute
   '/register': typeof RegisterRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/templates': typeof TemplatesRouteWithChildren
   '/theme-demo': typeof ThemeDemoRoute
   '/unauthorized': typeof UnauthorizedRoute
   '/verify-email': typeof VerifyEmailRoute
@@ -314,14 +346,17 @@ export interface FileRoutesByFullPath {
   '/$tenantSlug/api-keys': typeof TenantSlugApiKeysRoute
   '/$tenantSlug/billing': typeof TenantSlugBillingRoute
   '/$tenantSlug/campaigns': typeof TenantSlugCampaignsRouteWithChildren
+  '/$tenantSlug/channels': typeof TenantSlugChannelsRoute
   '/$tenantSlug/dashboard': typeof TenantSlugDashboardRoute
   '/$tenantSlug/messages': typeof TenantSlugMessagesRouteWithChildren
   '/$tenantSlug/monitoring': typeof TenantSlugMonitoringRoute
   '/$tenantSlug/projects': typeof TenantSlugProjectsRouteWithChildren
   '/$tenantSlug/providers': typeof TenantSlugProvidersRouteWithChildren
   '/$tenantSlug/settings': typeof TenantSlugSettingsRoute
+  '/$tenantSlug/templates': typeof TenantSlugTemplatesRoute
   '/$tenantSlug/webhooks': typeof TenantSlugWebhooksRoute
   '/$tenantSlug/workflows': typeof TenantSlugWorkflowsRoute
+  '/accept-invitation/$invitationId': typeof AcceptInvitationInvitationIdRoute
   '/campaigns/$id': typeof CampaignsIdRoute
   '/docs/examples': typeof DocsExamplesRoute
   '/docs/playground': typeof DocsPlaygroundRoute
@@ -331,6 +366,7 @@ export interface FileRoutesByFullPath {
   '/settings/branding': typeof SettingsBrandingRoute
   '/settings/team': typeof SettingsTeamRoute
   '/settings/tenant': typeof SettingsTenantRoute
+  '/templates/email': typeof TemplatesEmailRoute
   '/$tenantSlug/campaigns/$id': typeof TenantSlugCampaignsIdRoute
   '/$tenantSlug/messages/$id': typeof TenantSlugMessagesIdRoute
   '/$tenantSlug/projects/$projectId': typeof TenantSlugProjectsProjectIdRoute
@@ -354,6 +390,7 @@ export interface FileRoutesByTo {
   '/pricing': typeof PricingRoute
   '/register': typeof RegisterRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/templates': typeof TemplatesRouteWithChildren
   '/theme-demo': typeof ThemeDemoRoute
   '/unauthorized': typeof UnauthorizedRoute
   '/verify-email': typeof VerifyEmailRoute
@@ -362,14 +399,17 @@ export interface FileRoutesByTo {
   '/$tenantSlug/api-keys': typeof TenantSlugApiKeysRoute
   '/$tenantSlug/billing': typeof TenantSlugBillingRoute
   '/$tenantSlug/campaigns': typeof TenantSlugCampaignsRouteWithChildren
+  '/$tenantSlug/channels': typeof TenantSlugChannelsRoute
   '/$tenantSlug/dashboard': typeof TenantSlugDashboardRoute
   '/$tenantSlug/messages': typeof TenantSlugMessagesRouteWithChildren
   '/$tenantSlug/monitoring': typeof TenantSlugMonitoringRoute
   '/$tenantSlug/projects': typeof TenantSlugProjectsRouteWithChildren
   '/$tenantSlug/providers': typeof TenantSlugProvidersRouteWithChildren
   '/$tenantSlug/settings': typeof TenantSlugSettingsRoute
+  '/$tenantSlug/templates': typeof TenantSlugTemplatesRoute
   '/$tenantSlug/webhooks': typeof TenantSlugWebhooksRoute
   '/$tenantSlug/workflows': typeof TenantSlugWorkflowsRoute
+  '/accept-invitation/$invitationId': typeof AcceptInvitationInvitationIdRoute
   '/campaigns/$id': typeof CampaignsIdRoute
   '/docs/examples': typeof DocsExamplesRoute
   '/docs/playground': typeof DocsPlaygroundRoute
@@ -379,6 +419,7 @@ export interface FileRoutesByTo {
   '/settings/branding': typeof SettingsBrandingRoute
   '/settings/team': typeof SettingsTeamRoute
   '/settings/tenant': typeof SettingsTenantRoute
+  '/templates/email': typeof TemplatesEmailRoute
   '/$tenantSlug/campaigns/$id': typeof TenantSlugCampaignsIdRoute
   '/$tenantSlug/messages/$id': typeof TenantSlugMessagesIdRoute
   '/$tenantSlug/projects/$projectId': typeof TenantSlugProjectsProjectIdRoute
@@ -403,6 +444,7 @@ export interface FileRoutesById {
   '/pricing': typeof PricingRoute
   '/register': typeof RegisterRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/templates': typeof TemplatesRouteWithChildren
   '/theme-demo': typeof ThemeDemoRoute
   '/unauthorized': typeof UnauthorizedRoute
   '/verify-email': typeof VerifyEmailRoute
@@ -411,14 +453,17 @@ export interface FileRoutesById {
   '/$tenantSlug/api-keys': typeof TenantSlugApiKeysRoute
   '/$tenantSlug/billing': typeof TenantSlugBillingRoute
   '/$tenantSlug/campaigns': typeof TenantSlugCampaignsRouteWithChildren
+  '/$tenantSlug/channels': typeof TenantSlugChannelsRoute
   '/$tenantSlug/dashboard': typeof TenantSlugDashboardRoute
   '/$tenantSlug/messages': typeof TenantSlugMessagesRouteWithChildren
   '/$tenantSlug/monitoring': typeof TenantSlugMonitoringRoute
   '/$tenantSlug/projects': typeof TenantSlugProjectsRouteWithChildren
   '/$tenantSlug/providers': typeof TenantSlugProvidersRouteWithChildren
   '/$tenantSlug/settings': typeof TenantSlugSettingsRoute
+  '/$tenantSlug/templates': typeof TenantSlugTemplatesRoute
   '/$tenantSlug/webhooks': typeof TenantSlugWebhooksRoute
   '/$tenantSlug/workflows': typeof TenantSlugWorkflowsRoute
+  '/accept-invitation/$invitationId': typeof AcceptInvitationInvitationIdRoute
   '/campaigns/$id': typeof CampaignsIdRoute
   '/docs/examples': typeof DocsExamplesRoute
   '/docs/playground': typeof DocsPlaygroundRoute
@@ -428,6 +473,7 @@ export interface FileRoutesById {
   '/settings/branding': typeof SettingsBrandingRoute
   '/settings/team': typeof SettingsTeamRoute
   '/settings/tenant': typeof SettingsTenantRoute
+  '/templates/email': typeof TemplatesEmailRoute
   '/$tenantSlug/campaigns/$id': typeof TenantSlugCampaignsIdRoute
   '/$tenantSlug/messages/$id': typeof TenantSlugMessagesIdRoute
   '/$tenantSlug/projects/$projectId': typeof TenantSlugProjectsProjectIdRoute
@@ -453,6 +499,7 @@ export interface FileRouteTypes {
     | '/pricing'
     | '/register'
     | '/reset-password'
+    | '/templates'
     | '/theme-demo'
     | '/unauthorized'
     | '/verify-email'
@@ -461,14 +508,17 @@ export interface FileRouteTypes {
     | '/$tenantSlug/api-keys'
     | '/$tenantSlug/billing'
     | '/$tenantSlug/campaigns'
+    | '/$tenantSlug/channels'
     | '/$tenantSlug/dashboard'
     | '/$tenantSlug/messages'
     | '/$tenantSlug/monitoring'
     | '/$tenantSlug/projects'
     | '/$tenantSlug/providers'
     | '/$tenantSlug/settings'
+    | '/$tenantSlug/templates'
     | '/$tenantSlug/webhooks'
     | '/$tenantSlug/workflows'
+    | '/accept-invitation/$invitationId'
     | '/campaigns/$id'
     | '/docs/examples'
     | '/docs/playground'
@@ -478,6 +528,7 @@ export interface FileRouteTypes {
     | '/settings/branding'
     | '/settings/team'
     | '/settings/tenant'
+    | '/templates/email'
     | '/$tenantSlug/campaigns/$id'
     | '/$tenantSlug/messages/$id'
     | '/$tenantSlug/projects/$projectId'
@@ -501,6 +552,7 @@ export interface FileRouteTypes {
     | '/pricing'
     | '/register'
     | '/reset-password'
+    | '/templates'
     | '/theme-demo'
     | '/unauthorized'
     | '/verify-email'
@@ -509,14 +561,17 @@ export interface FileRouteTypes {
     | '/$tenantSlug/api-keys'
     | '/$tenantSlug/billing'
     | '/$tenantSlug/campaigns'
+    | '/$tenantSlug/channels'
     | '/$tenantSlug/dashboard'
     | '/$tenantSlug/messages'
     | '/$tenantSlug/monitoring'
     | '/$tenantSlug/projects'
     | '/$tenantSlug/providers'
     | '/$tenantSlug/settings'
+    | '/$tenantSlug/templates'
     | '/$tenantSlug/webhooks'
     | '/$tenantSlug/workflows'
+    | '/accept-invitation/$invitationId'
     | '/campaigns/$id'
     | '/docs/examples'
     | '/docs/playground'
@@ -526,6 +581,7 @@ export interface FileRouteTypes {
     | '/settings/branding'
     | '/settings/team'
     | '/settings/tenant'
+    | '/templates/email'
     | '/$tenantSlug/campaigns/$id'
     | '/$tenantSlug/messages/$id'
     | '/$tenantSlug/projects/$projectId'
@@ -549,6 +605,7 @@ export interface FileRouteTypes {
     | '/pricing'
     | '/register'
     | '/reset-password'
+    | '/templates'
     | '/theme-demo'
     | '/unauthorized'
     | '/verify-email'
@@ -557,14 +614,17 @@ export interface FileRouteTypes {
     | '/$tenantSlug/api-keys'
     | '/$tenantSlug/billing'
     | '/$tenantSlug/campaigns'
+    | '/$tenantSlug/channels'
     | '/$tenantSlug/dashboard'
     | '/$tenantSlug/messages'
     | '/$tenantSlug/monitoring'
     | '/$tenantSlug/projects'
     | '/$tenantSlug/providers'
     | '/$tenantSlug/settings'
+    | '/$tenantSlug/templates'
     | '/$tenantSlug/webhooks'
     | '/$tenantSlug/workflows'
+    | '/accept-invitation/$invitationId'
     | '/campaigns/$id'
     | '/docs/examples'
     | '/docs/playground'
@@ -574,6 +634,7 @@ export interface FileRouteTypes {
     | '/settings/branding'
     | '/settings/team'
     | '/settings/tenant'
+    | '/templates/email'
     | '/$tenantSlug/campaigns/$id'
     | '/$tenantSlug/messages/$id'
     | '/$tenantSlug/projects/$projectId'
@@ -598,10 +659,12 @@ export interface RootRouteChildren {
   PricingRoute: typeof PricingRoute
   RegisterRoute: typeof RegisterRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
+  TemplatesRoute: typeof TemplatesRouteWithChildren
   ThemeDemoRoute: typeof ThemeDemoRoute
   UnauthorizedRoute: typeof UnauthorizedRoute
   VerifyEmailRoute: typeof VerifyEmailRoute
   WorkflowsRoute: typeof WorkflowsRoute
+  AcceptInvitationInvitationIdRoute: typeof AcceptInvitationInvitationIdRoute
   OauthCallbackRoute: typeof OauthCallbackRoute
   SettingsBrandingRoute: typeof SettingsBrandingRoute
   SettingsTeamRoute: typeof SettingsTeamRoute
@@ -722,6 +785,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ResetPasswordRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/templates': {
+      id: '/templates'
+      path: '/templates'
+      fullPath: '/templates'
+      preLoaderRoute: typeof TemplatesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/theme-demo': {
       id: '/theme-demo'
       path: '/theme-demo'
@@ -778,6 +848,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TenantSlugCampaignsRouteImport
       parentRoute: typeof TenantSlugRoute
     }
+    '/$tenantSlug/channels': {
+      id: '/$tenantSlug/channels'
+      path: '/channels'
+      fullPath: '/$tenantSlug/channels'
+      preLoaderRoute: typeof TenantSlugChannelsRouteImport
+      parentRoute: typeof TenantSlugRoute
+    }
     '/$tenantSlug/dashboard': {
       id: '/$tenantSlug/dashboard'
       path: '/dashboard'
@@ -820,6 +897,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TenantSlugSettingsRouteImport
       parentRoute: typeof TenantSlugRoute
     }
+    '/$tenantSlug/templates': {
+      id: '/$tenantSlug/templates'
+      path: '/templates'
+      fullPath: '/$tenantSlug/templates'
+      preLoaderRoute: typeof TenantSlugTemplatesRouteImport
+      parentRoute: typeof TenantSlugRoute
+    }
     '/$tenantSlug/webhooks': {
       id: '/$tenantSlug/webhooks'
       path: '/webhooks'
@@ -833,6 +917,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/$tenantSlug/workflows'
       preLoaderRoute: typeof TenantSlugWorkflowsRouteImport
       parentRoute: typeof TenantSlugRoute
+    }
+    '/accept-invitation/$invitationId': {
+      id: '/accept-invitation/$invitationId'
+      path: '/accept-invitation/$invitationId'
+      fullPath: '/accept-invitation/$invitationId'
+      preLoaderRoute: typeof AcceptInvitationInvitationIdRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/campaigns/$id': {
       id: '/campaigns/$id'
@@ -896,6 +987,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/settings/tenant'
       preLoaderRoute: typeof SettingsTenantRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/templates/email': {
+      id: '/templates/email'
+      path: '/email'
+      fullPath: '/templates/email'
+      preLoaderRoute: typeof TemplatesEmailRouteImport
+      parentRoute: typeof TemplatesRoute
     }
     '/$tenantSlug/campaigns/$id': {
       id: '/$tenantSlug/campaigns/$id'
@@ -984,12 +1082,14 @@ interface TenantSlugRouteChildren {
   TenantSlugApiKeysRoute: typeof TenantSlugApiKeysRoute
   TenantSlugBillingRoute: typeof TenantSlugBillingRoute
   TenantSlugCampaignsRoute: typeof TenantSlugCampaignsRouteWithChildren
+  TenantSlugChannelsRoute: typeof TenantSlugChannelsRoute
   TenantSlugDashboardRoute: typeof TenantSlugDashboardRoute
   TenantSlugMessagesRoute: typeof TenantSlugMessagesRouteWithChildren
   TenantSlugMonitoringRoute: typeof TenantSlugMonitoringRoute
   TenantSlugProjectsRoute: typeof TenantSlugProjectsRouteWithChildren
   TenantSlugProvidersRoute: typeof TenantSlugProvidersRouteWithChildren
   TenantSlugSettingsRoute: typeof TenantSlugSettingsRoute
+  TenantSlugTemplatesRoute: typeof TenantSlugTemplatesRoute
   TenantSlugWebhooksRoute: typeof TenantSlugWebhooksRoute
   TenantSlugWorkflowsRoute: typeof TenantSlugWorkflowsRoute
 }
@@ -999,12 +1099,14 @@ const TenantSlugRouteChildren: TenantSlugRouteChildren = {
   TenantSlugApiKeysRoute: TenantSlugApiKeysRoute,
   TenantSlugBillingRoute: TenantSlugBillingRoute,
   TenantSlugCampaignsRoute: TenantSlugCampaignsRouteWithChildren,
+  TenantSlugChannelsRoute: TenantSlugChannelsRoute,
   TenantSlugDashboardRoute: TenantSlugDashboardRoute,
   TenantSlugMessagesRoute: TenantSlugMessagesRouteWithChildren,
   TenantSlugMonitoringRoute: TenantSlugMonitoringRoute,
   TenantSlugProjectsRoute: TenantSlugProjectsRouteWithChildren,
   TenantSlugProvidersRoute: TenantSlugProvidersRouteWithChildren,
   TenantSlugSettingsRoute: TenantSlugSettingsRoute,
+  TenantSlugTemplatesRoute: TenantSlugTemplatesRoute,
   TenantSlugWebhooksRoute: TenantSlugWebhooksRoute,
   TenantSlugWorkflowsRoute: TenantSlugWorkflowsRoute,
 }
@@ -1053,6 +1155,18 @@ const DocsRouteChildren: DocsRouteChildren = {
 
 const DocsRouteWithChildren = DocsRoute._addFileChildren(DocsRouteChildren)
 
+interface TemplatesRouteChildren {
+  TemplatesEmailRoute: typeof TemplatesEmailRoute
+}
+
+const TemplatesRouteChildren: TemplatesRouteChildren = {
+  TemplatesEmailRoute: TemplatesEmailRoute,
+}
+
+const TemplatesRouteWithChildren = TemplatesRoute._addFileChildren(
+  TemplatesRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   TenantSlugRoute: TenantSlugRouteWithChildren,
@@ -1070,10 +1184,12 @@ const rootRouteChildren: RootRouteChildren = {
   PricingRoute: PricingRoute,
   RegisterRoute: RegisterRoute,
   ResetPasswordRoute: ResetPasswordRoute,
+  TemplatesRoute: TemplatesRouteWithChildren,
   ThemeDemoRoute: ThemeDemoRoute,
   UnauthorizedRoute: UnauthorizedRoute,
   VerifyEmailRoute: VerifyEmailRoute,
   WorkflowsRoute: WorkflowsRoute,
+  AcceptInvitationInvitationIdRoute: AcceptInvitationInvitationIdRoute,
   OauthCallbackRoute: OauthCallbackRoute,
   SettingsBrandingRoute: SettingsBrandingRoute,
   SettingsTeamRoute: SettingsTeamRoute,
@@ -1084,10 +1200,8 @@ export const routeTree = rootRouteImport
   ._addFileTypes<FileRouteTypes>()
 
 import type { getRouter } from './router.tsx'
-import type { createStart } from '@tanstack/react-start'
-declare module '@tanstack/react-start' {
+declare module '@tanstack/react-router' {
   interface Register {
-    ssr: true
     router: Awaited<ReturnType<typeof getRouter>>
   }
 }

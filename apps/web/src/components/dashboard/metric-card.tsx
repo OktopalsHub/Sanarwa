@@ -1,6 +1,6 @@
 "use client";
 
-import { Card } from "@/components/ui/card";
+import { Card } from "@sanarwa/ui/card";
 import { cn } from "@/lib/utils";
 import type { ComponentType } from "react";
 
@@ -47,9 +47,7 @@ export function MetricCard({
               {change.type === "increase" ? "↑" : "↓"} {Math.abs(change.value)}%
             </span>
           ) : null}
-          {description ? (
-            <p className="mt-2 text-xs text-muted-foreground">{description}</p>
-          ) : null}
+          {description ? <p className="mt-2 text-xs text-muted-foreground">{description}</p> : null}
         </div>
         <div className="rounded-lg border border-border bg-muted/40 p-2.5">
           <Icon className="size-5 text-muted-foreground" aria-hidden />

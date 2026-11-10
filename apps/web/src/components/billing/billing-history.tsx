@@ -1,10 +1,9 @@
 "use client";
 
-import { apiClient } from "@/lib/api/client";
-import { billingApi } from "@/lib/api";
+import { billingApi } from "@sanarwa/api-client";
 import { useTenant } from "@/contexts/tenant-context";
 import { useQuery } from "@tanstack/react-query";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@sanarwa/ui/card";
 
 export function BillingHistory() {
   const { selectedTenant } = useTenant();
@@ -13,7 +12,6 @@ export function BillingHistory() {
     queryKey: ["billing-transactions", selectedTenant?.id],
     queryFn: async () => {
       if (selectedTenant?.id) {
-        apiClient.setTenant(selectedTenant.id);
       }
       return billingApi.getTransactions({ limit: 50 });
     },

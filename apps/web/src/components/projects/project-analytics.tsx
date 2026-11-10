@@ -4,15 +4,9 @@ import { Activity } from "@/lib/icons";
 
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@sanarwa/ui/card";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@sanarwa/ui/select";
+import { Badge } from "@sanarwa/ui/badge";
 import {
   ChartBarIcon,
   ArrowTrendingUpIcon,
@@ -26,7 +20,6 @@ interface ProjectAnalyticsProps {
   projectId: string;
 }
 
-// Mock analytics data
 const mockAnalytics = {
   overview: {
     totalMessages: 12543,
@@ -51,11 +44,9 @@ const mockAnalytics = {
 export function ProjectAnalytics({ projectId }: ProjectAnalyticsProps) {
   const [timeRange, setTimeRange] = useState("7d");
 
-  // Mock query - replace with actual API call
   const { data: analytics = mockAnalytics, isLoading } = useQuery({
     queryKey: ["project-analytics", projectId, timeRange],
     queryFn: async () => {
-      // Replace with actual API call
       return mockAnalytics;
     },
   });
@@ -111,7 +102,6 @@ export function ProjectAnalytics({ projectId }: ProjectAnalyticsProps) {
         </Select>
       </div>
 
-      {/* Key Metrics */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card>
           <CardContent className="pt-6">
@@ -203,7 +193,6 @@ export function ProjectAnalytics({ projectId }: ProjectAnalyticsProps) {
         </Card>
       </div>
 
-      {/* Channel Performance */}
       <Card>
         <CardHeader>
           <CardTitle>Channel Performance</CardTitle>
@@ -237,7 +226,6 @@ export function ProjectAnalytics({ projectId }: ProjectAnalyticsProps) {
         </CardContent>
       </Card>
 
-      {/* Recent Activity */}
       <Card>
         <CardHeader>
           <CardTitle>Recent Activity</CardTitle>

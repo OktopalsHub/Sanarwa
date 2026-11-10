@@ -1,12 +1,12 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
+import { Button } from "@sanarwa/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+} from "@sanarwa/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
 import { useHighContrast } from "@/lib/utils/accessibility";
 import { EyeIcon, ComputerDesktopIcon, SwatchIcon } from "@heroicons/react/24/outline";
@@ -26,7 +26,6 @@ export function HighContrastMode({ className }: HighContrastModeProps) {
   useEffect(() => {
     setMounted(true);
 
-    // Load saved preference
     const saved = localStorage.getItem("contrast-mode") as ContrastMode;
     if (saved) {
       setContrastMode(saved);
@@ -39,14 +38,12 @@ export function HighContrastMode({ className }: HighContrastModeProps) {
     const shouldUseHighContrast =
       contrastMode === "high" || (contrastMode === "auto" && systemPrefersHighContrast);
 
-    // Apply high contrast class to document
     if (shouldUseHighContrast) {
       document.documentElement.classList.add("high-contrast");
     } else {
       document.documentElement.classList.remove("high-contrast");
     }
 
-    // Save preference
     localStorage.setItem("contrast-mode", contrastMode);
   }, [contrastMode, systemPrefersHighContrast, mounted]);
 
@@ -136,7 +133,6 @@ export function HighContrastMode({ className }: HighContrastModeProps) {
   );
 }
 
-// Hook to use high contrast mode state
 export function useContrastMode() {
   const [contrastMode, setContrastMode] = useState<ContrastMode>("auto");
   const [isHighContrast, setIsHighContrast] = useState(false);

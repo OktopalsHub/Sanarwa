@@ -1,4 +1,4 @@
-import type { ApiError } from "@/lib/api/client";
+import type { ApiError } from "@sanarwa/api-client";
 import { toast } from "@/lib/utils/toast";
 
 function isApiError(error: unknown): error is ApiError {
@@ -10,7 +10,6 @@ function isApiError(error: unknown): error is ApiError {
   );
 }
 
-/** Turn API / network failures into a user-readable sentence. */
 export function getApiErrorMessage(error: unknown, fallback = "Something went wrong"): string {
   if (isApiError(error)) {
     if (error.message?.trim()) return error.message;

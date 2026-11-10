@@ -30,7 +30,6 @@ export interface RolePermissions {
   description: string;
 }
 
-// Default role permissions
 export const ROLE_PERMISSIONS: Record<TenantRole, RolePermissions> = {
   owner: {
     role: "owner",

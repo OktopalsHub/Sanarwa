@@ -1,9 +1,8 @@
-import { analyticsApi } from "@/lib/api/analytics";
+import { analyticsApi } from "@sanarwa/api-client";
 import type { AnalyticsFilters, ExportFormat } from "@/lib/types/analytics";
 import type { NotificationChannel } from "@/lib/types/notification";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
-// Query hook for delivery rate analytics
 export function useDeliveryAnalytics(params?: {
   startDate?: Date;
   endDate?: Date;
@@ -14,20 +13,18 @@ export function useDeliveryAnalytics(params?: {
   return useQuery({
     queryKey: ["analytics", "delivery", params],
     queryFn: () => analyticsApi.getDeliveryRateAnalytics(params),
-    staleTime: 2 * 60 * 1000, // 2 minutes
+    staleTime: 2 * 60 * 1000,
   });
 }
 
-// Query hook for channel analytics
 export function useChannelAnalytics(params?: { startDate?: Date; endDate?: Date }) {
   return useQuery({
     queryKey: ["analytics", "channels", params],
     queryFn: () => analyticsApi.getChannelAnalytics(params),
-    staleTime: 2 * 60 * 1000, // 2 minutes
+    staleTime: 2 * 60 * 1000,
   });
 }
 
-// Query hook for provider analytics
 export function useProviderAnalytics(params?: {
   startDate?: Date;
   endDate?: Date;
@@ -36,11 +33,10 @@ export function useProviderAnalytics(params?: {
   return useQuery({
     queryKey: ["analytics", "providers", params],
     queryFn: () => analyticsApi.getProviderAnalytics(params),
-    staleTime: 2 * 60 * 1000, // 2 minutes
+    staleTime: 2 * 60 * 1000,
   });
 }
 
-// Query hook for time series data
 export function useTimeSeriesData(params?: {
   startDate?: Date;
   endDate?: Date;
@@ -50,29 +46,26 @@ export function useTimeSeriesData(params?: {
   return useQuery({
     queryKey: ["analytics", "time-series", params],
     queryFn: () => analyticsApi.getTimeSeriesData(params),
-    staleTime: 1 * 60 * 1000, // 1 minute
+    staleTime: 1 * 60 * 1000,
   });
 }
 
-// Query hook for comprehensive tenant analytics
 export function useTenantAnalytics(startDate?: Date, endDate?: Date) {
   return useQuery({
     queryKey: ["analytics", "tenant", startDate?.toISOString(), endDate?.toISOString()],
     queryFn: () => analyticsApi.getTenantAnalytics(startDate, endDate),
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    staleTime: 5 * 60 * 1000,
   });
 }
 
-// Query hook for top performing providers
 export function useTopProviders(params?: { limit?: number; startDate?: Date; endDate?: Date }) {
   return useQuery({
     queryKey: ["analytics", "providers", "top", params],
     queryFn: () => analyticsApi.getTopProviders(params),
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    staleTime: 5 * 60 * 1000,
   });
 }
 
-// Query hook for delivery trends comparison
 export function useDeliveryTrends(
   currentPeriodStart: Date,
   currentPeriodEnd: Date,
@@ -95,11 +88,10 @@ export function useDeliveryTrends(
         previousPeriodStart,
         previousPeriodEnd,
       ),
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    staleTime: 5 * 60 * 1000,
   });
 }
 
-// Query hook for delivery statistics
 export function useDeliveryStats(params?: {
   channel?: NotificationChannel;
   startDate?: Date;
@@ -108,40 +100,36 @@ export function useDeliveryStats(params?: {
   return useQuery({
     queryKey: ["analytics", "delivery-stats", params],
     queryFn: () => analyticsApi.getDeliveryStats(params),
-    staleTime: 2 * 60 * 1000, // 2 minutes
+    staleTime: 2 * 60 * 1000,
   });
 }
 
-// Query hook for delivery history of a specific notification
 export function useDeliveryHistory(notificationId: string) {
   return useQuery({
     queryKey: ["analytics", "delivery-history", notificationId],
     queryFn: () => analyticsApi.getDeliveryHistory(notificationId),
     enabled: !!notificationId,
-    staleTime: 30 * 1000, // 30 seconds
+    staleTime: 30 * 1000,
   });
 }
 
-// Query hook for multiple delivery statuses
 export function useMultipleDeliveryStatus(notificationIds: string[]) {
   return useQuery({
     queryKey: ["analytics", "delivery-status", "batch", notificationIds],
     queryFn: () => analyticsApi.getMultipleDeliveryStatus(notificationIds),
     enabled: notificationIds.length > 0,
-    staleTime: 30 * 1000, // 30 seconds
+    staleTime: 30 * 1000,
   });
 }
 
-// Query hook for webhook configuration
 export function useWebhookConfig() {
   return useQuery({
     queryKey: ["analytics", "webhook", "config"],
     queryFn: () => analyticsApi.getWebhookConfig(),
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    staleTime: 5 * 60 * 1000,
   });
 }
 
-// Query hook for audit logs
 export function useAuditLogs(params?: {
   eventType?: string;
   resourceType?: string;
@@ -155,21 +143,19 @@ export function useAuditLogs(params?: {
   return useQuery({
     queryKey: ["analytics", "audit-logs", params],
     queryFn: () => analyticsApi.getAuditLogs(params),
-    staleTime: 1 * 60 * 1000, // 1 minute
+    staleTime: 1 * 60 * 1000,
   });
 }
 
-// Query hook for notification audit trail
 export function useNotificationAuditTrail(notificationId: string) {
   return useQuery({
     queryKey: ["analytics", "audit-logs", "notification", notificationId],
     queryFn: () => analyticsApi.getNotificationAuditTrail(notificationId),
     enabled: !!notificationId,
-    staleTime: 2 * 60 * 1000, // 2 minutes
+    staleTime: 2 * 60 * 1000,
   });
 }
 
-// Query hook for audit statistics
 export function useAuditStatistics(startDate?: Date, endDate?: Date) {
   return useQuery({
     queryKey: [
@@ -180,11 +166,10 @@ export function useAuditStatistics(startDate?: Date, endDate?: Date) {
       endDate?.toISOString(),
     ],
     queryFn: () => analyticsApi.getAuditStatistics(startDate, endDate),
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    staleTime: 5 * 60 * 1000,
   });
 }
 
-// Query hook for system performance metrics
 export function useSystemPerformanceMetrics(startDate?: Date, endDate?: Date) {
   return useQuery({
     queryKey: [
@@ -195,11 +180,10 @@ export function useSystemPerformanceMetrics(startDate?: Date, endDate?: Date) {
       endDate?.toISOString(),
     ],
     queryFn: () => analyticsApi.getSystemPerformanceMetrics(startDate, endDate),
-    staleTime: 1 * 60 * 1000, // 1 minute
+    staleTime: 1 * 60 * 1000,
   });
 }
 
-// Query hook for provider performance metrics
 export function useProviderPerformanceMetrics(params?: {
   providerId?: string;
   channel?: NotificationChannel;
@@ -209,11 +193,10 @@ export function useProviderPerformanceMetrics(params?: {
   return useQuery({
     queryKey: ["analytics", "performance", "providers", params],
     queryFn: () => analyticsApi.getProviderPerformanceMetrics(params),
-    staleTime: 2 * 60 * 1000, // 2 minutes
+    staleTime: 2 * 60 * 1000,
   });
 }
 
-// Query hook for tenant performance metrics
 export function useTenantPerformanceMetrics(startDate?: Date, endDate?: Date) {
   return useQuery({
     queryKey: [
@@ -224,11 +207,10 @@ export function useTenantPerformanceMetrics(startDate?: Date, endDate?: Date) {
       endDate?.toISOString(),
     ],
     queryFn: () => analyticsApi.getTenantPerformanceMetrics(startDate, endDate),
-    staleTime: 1 * 60 * 1000, // 1 minute
+    staleTime: 1 * 60 * 1000,
   });
 }
 
-// Query hook for performance trends
 export function usePerformanceTrends(
   metricName: string,
   startDate: Date,
@@ -247,41 +229,37 @@ export function usePerformanceTrends(
     ],
     queryFn: () => analyticsApi.getPerformanceTrends(metricName, startDate, endDate, interval),
     enabled: !!metricName,
-    staleTime: 2 * 60 * 1000, // 2 minutes
+    staleTime: 2 * 60 * 1000,
   });
 }
 
-// Query hook for real-time metrics
 export function useRealTimeMetrics() {
   return useQuery({
     queryKey: ["analytics", "performance", "realtime"],
     queryFn: () => analyticsApi.getRealTimeMetrics(),
-    staleTime: 10 * 1000, // 10 seconds
-    refetchInterval: 15 * 1000, // Refetch every 15 seconds for real-time updates
+    staleTime: 10 * 1000,
+    refetchInterval: 15 * 1000,
   });
 }
 
-// Query hook for project analytics
 export function useProjectAnalytics(projectId: string, startDate?: Date, endDate?: Date) {
   return useQuery({
     queryKey: ["analytics", "project", projectId, startDate?.toISOString(), endDate?.toISOString()],
     queryFn: () => analyticsApi.getProjectAnalytics(projectId, startDate, endDate),
     enabled: !!projectId,
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    staleTime: 5 * 60 * 1000,
   });
 }
 
-// Query hook for brand analytics
 export function useBrandAnalytics(brandId: string, startDate?: Date, endDate?: Date) {
   return useQuery({
     queryKey: ["analytics", "brand", brandId, startDate?.toISOString(), endDate?.toISOString()],
     queryFn: () => analyticsApi.getBrandAnalytics(brandId, startDate, endDate),
     enabled: !!brandId,
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    staleTime: 5 * 60 * 1000,
   });
 }
 
-// Query hook for project comparison
 export function useProjectComparison(projectIds: string[], startDate?: Date, endDate?: Date) {
   return useQuery({
     queryKey: [
@@ -294,11 +272,10 @@ export function useProjectComparison(projectIds: string[], startDate?: Date, end
     ],
     queryFn: () => analyticsApi.compareProjects(projectIds, startDate, endDate),
     enabled: projectIds.length > 0,
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    staleTime: 5 * 60 * 1000,
   });
 }
 
-// Query hook for brand comparison
 export function useBrandComparison(brandIds: string[], startDate?: Date, endDate?: Date) {
   return useQuery({
     queryKey: [
@@ -311,11 +288,10 @@ export function useBrandComparison(brandIds: string[], startDate?: Date, endDate
     ],
     queryFn: () => analyticsApi.compareBrands(brandIds, startDate, endDate),
     enabled: brandIds.length > 0,
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    staleTime: 5 * 60 * 1000,
   });
 }
 
-// Mutation hook for registering webhook
 export function useRegisterWebhook() {
   const queryClient = useQueryClient();
 
@@ -328,7 +304,6 @@ export function useRegisterWebhook() {
       timeout?: number;
     }) => analyticsApi.registerWebhook(config),
     onSuccess: () => {
-      // Invalidate webhook config
       queryClient.invalidateQueries({ queryKey: ["analytics", "webhook", "config"] });
     },
     onError: (error) => {
@@ -337,14 +312,12 @@ export function useRegisterWebhook() {
   });
 }
 
-// Mutation hook for removing webhook
 export function useRemoveWebhook() {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: () => analyticsApi.removeWebhook(),
     onSuccess: () => {
-      // Invalidate webhook config
       queryClient.invalidateQueries({ queryKey: ["analytics", "webhook", "config"] });
     },
     onError: (error) => {
@@ -353,7 +326,6 @@ export function useRemoveWebhook() {
   });
 }
 
-// Mutation hook for testing webhook
 export function useTestWebhook() {
   return useMutation({
     mutationFn: () => analyticsApi.testWebhook(),
@@ -363,7 +335,6 @@ export function useTestWebhook() {
   });
 }
 
-// Mutation hook for exporting audit logs
 export function useExportAuditLogs() {
   return useMutation({
     mutationFn: (params: {
@@ -383,7 +354,6 @@ export function useExportAuditLogs() {
   });
 }
 
-// Hook for analytics validation and utilities
 export function useAnalyticsUtils() {
   const validateFilters = (filters: AnalyticsFilters) => {
     return analyticsApi.validateAnalyticsFilters(filters);
@@ -412,7 +382,6 @@ export function useAnalyticsUtils() {
   };
 }
 
-// Hook for analytics dashboard data
 export function useAnalyticsDashboard(timeRange: { startDate: Date; endDate: Date }) {
   const { data: deliveryAnalytics } = useDeliveryAnalytics({
     startDate: timeRange.startDate,
@@ -443,7 +412,6 @@ export function useAnalyticsDashboard(timeRange: { startDate: Date; endDate: Dat
   };
 }
 
-// Hook for engagement metrics (derived from delivery analytics)
 export function useEngagementMetrics(params?: {
   startDate?: Date;
   endDate?: Date;
@@ -454,11 +422,10 @@ export function useEngagementMetrics(params?: {
   return {
     data: tenantAnalytics?.engagementStats,
     isLoading: !tenantAnalytics,
-    error: null, // Would come from the query if there was an error
+    error: null,
   };
 }
 
-// Hook for delivery metrics (derived from delivery analytics)
 export function useDeliveryMetrics(params?: {
   startDate?: Date;
   endDate?: Date;
@@ -473,7 +440,6 @@ export function useDeliveryMetrics(params?: {
   };
 }
 
-// Hook for analytics insights and recommendations
 export function useAnalyticsInsights(timeRange: { startDate: Date; endDate: Date }) {
   const { data: deliveryAnalytics } = useDeliveryAnalytics({
     startDate: timeRange.startDate,
@@ -492,12 +458,10 @@ export function useAnalyticsInsights(timeRange: { startDate: Date; endDate: Date
   });
 
   const insights = {
-    // Delivery insights
     overallDeliveryRate: deliveryAnalytics?.deliveryRate || 0,
     totalNotifications: deliveryAnalytics?.totalSent || 0,
     failureRate: deliveryAnalytics?.failureRate || 0,
 
-    // Channel insights
     bestPerformingChannel: channelAnalytics?.channels?.reduce((best, current) =>
       current.deliveryRate > (best?.deliveryRate || 0) ? current : best,
     ),
@@ -505,15 +469,12 @@ export function useAnalyticsInsights(timeRange: { startDate: Date; endDate: Date
       current.deliveryRate < (worst?.deliveryRate || 1) ? current : worst,
     ),
 
-    // Provider insights
     topProvider: topProviders?.[0],
     providerCount: topProviders?.length || 0,
 
-    // Recommendations
     recommendations: [] as string[],
   };
 
-  // Generate recommendations based on data
   if (insights.overallDeliveryRate < 0.9) {
     insights.recommendations.push(
       "Consider reviewing provider configurations to improve delivery rates",

@@ -1,11 +1,10 @@
 "use client";
 
-import { apiClient } from "@/lib/api/client";
-import { billingApi } from "@/lib/api";
+import { billingApi } from "@sanarwa/api-client";
 import { useTenant } from "@/contexts/tenant-context";
 import { useQuery } from "@tanstack/react-query";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Progress } from "@/components/ui/progress";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@sanarwa/ui/card";
+import { Progress } from "@sanarwa/ui/progress";
 import { CurrencyDollarIcon } from "@heroicons/react/24/outline";
 
 export function BillingOverview() {
@@ -15,7 +14,6 @@ export function BillingOverview() {
     queryKey: ["billing-balance", selectedTenant?.id],
     queryFn: async () => {
       if (selectedTenant?.id) {
-        apiClient.setTenant(selectedTenant.id);
       }
       return billingApi.getTokenBalance();
     },

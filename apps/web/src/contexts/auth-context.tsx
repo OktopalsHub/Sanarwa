@@ -1,198 +1,142 @@
 "use client";
 
-import { authApi } from "@/lib/api/auth";
-import {
-  AuthError,
-  AuthResponse,
-  AuthState,
-  AuthUser,
-  LoginCredentials,
-  RegisterCredentials,
-} from "@/lib/types/auth";
-import React, { createContext, useCallback, useContext, useEffect, useReducer } from "react";
+import { useCallback, useContext, useState } from "react";
+import { createContext, type ReactNode } from "react";
+import { authClient } from "@/lib/better-auth-client";
 
-interface AuthContextType extends AuthState {
-  login: (credentials: LoginCredentials) => Promise<AuthResponse>;
-  register: (credentials: RegisterCredentials) => Promise<AuthResponse>;
+type AuthError =
+  | { message: string; code: string }
+  | {
+      message: string;
+      code: string;
+      errors: Array<{ field: string; code: string; message: string }>;
+    };
+
+type AuthUser = {
+  id: string;
+  name?: string | null;
+  email: string;
+  emailVerified?: boolean | null;
+  image?: string | null;
+  createdAt?: string | null;
+  updatedAt?: string | null;
+  role?: string | null;
+  avatar?: string | null;
+  firstName?: string | null;
+  lastName?: string | null;
+};
+
+type AuthState = {
+  user: AuthUser | null;
+  isAuthenticated: boolean;
+  isLoading: boolean;
+  error: AuthError | null;
+  permissions: Array<{ code: string; message: string }>;
+  login: (credentials: { email: string; password: string }) => Promise<unknown>;
+  register: (credentials: {
+    email: string;
+    password: string;
+    name?: string;
+    firstName?: string;
+    lastName?: string;
+  }) => Promise<unknown>;
   logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
   clearError: () => void;
-}
-
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
-
-type AuthAction =
-  | { type: "AUTH_START" }
-  | { type: "AUTH_SUCCESS"; payload: AuthUser }
-  | { type: "AUTH_ERROR"; payload: AuthError }
-  | { type: "AUTH_LOGOUT" }
-  | { type: "CLEAR_ERROR" };
-
-const initialState: AuthState = {
-  user: null,
-  isAuthenticated: false,
-  isLoading: false,
-  error: null,
-  permissions: [],
+  clearTokens: () => void;
 };
 
-function authReducer(state: AuthState, action: AuthAction): AuthState {
-  switch (action.type) {
-    case "AUTH_START":
-      return {
-        ...state,
-        isLoading: true,
-        error: null,
-      };
-    case "AUTH_SUCCESS":
-      return {
-        ...state,
-        user: action.payload,
-        isAuthenticated: true,
-        isLoading: false,
-        error: null,
-      };
-    case "AUTH_ERROR":
-      return {
-        ...state,
-        user: null,
-        isAuthenticated: false,
-        isLoading: false,
-        error: action.payload,
-      };
-    case "AUTH_LOGOUT":
-      return {
-        ...state,
-        user: null,
-        isAuthenticated: false,
-        isLoading: false,
-        error: null,
-      };
-    case "CLEAR_ERROR":
-      return {
-        ...state,
-        error: null,
-      };
-    default:
-      return state;
-  }
-}
+const AuthContext = createContext<AuthState | undefined>(undefined);
 
-interface AuthProviderProps {
-  children: React.ReactNode;
-}
+export function AuthProvider({ children }: { children: ReactNode }) {
+  const sessionState = (authClient as any).useSession() as any;
+  const session = sessionState?.data ?? sessionState?.session ?? null;
+  const isPending = sessionState?.isPending ?? sessionState?.isLoading ?? false;
+  const [error, setError] = useState<AuthError | null>(null);
+  const user = (session?.user ?? null) as AuthUser | null;
 
-export function AuthProvider({ children }: AuthProviderProps) {
-  const [state, dispatch] = useReducer(authReducer, initialState);
-
-  const login = useCallback(async (credentials: LoginCredentials) => {
+  const login = useCallback(async (credentials: { email: string; password: string }) => {
+    setError(null);
     try {
-      dispatch({ type: "AUTH_START" });
-      const response = await authApi.login(credentials);
-      const authUser: AuthUser = {
-        ...response.user,
-        name: `${response.user.firstName} ${response.user.lastName}`.trim(),
-      };
-      dispatch({ type: "AUTH_SUCCESS", payload: authUser });
+      const response = (await authClient.signIn.email({
+        email: credentials.email,
+        password: credentials.password,
+      })) as any;
+      if (response?.error) throw new Error(response.error.message ?? "Login failed");
+      return response?.data;
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Login failed";
+      setError({ message, code: "LOGIN_ERROR" });
+      throw err;
+    }
+  }, []);
 
-      // Log successful login (fire and forget)
+  const register = useCallback(
+    async (credentials: {
+      email: string;
+      password: string;
+      name?: string;
+      firstName?: string;
+      lastName?: string;
+    }) => {
+      setError(null);
+      const name =
+        credentials.name ||
+        [credentials.firstName, credentials.lastName].filter(Boolean).join(" ").trim() ||
+        credentials.email.split("@")[0];
       try {
-        const { auditLogger } = await import("@/lib/services/audit-logger");
-        auditLogger.logLogin();
-      } catch (auditError) {
-        console.error("Failed to log login audit entry:", auditError);
+        const response = (await (authClient.signUp as any).email({
+          email: credentials.email,
+          password: credentials.password,
+          name,
+          ...(credentials.firstName ? { firstName: credentials.firstName } : {}),
+          ...(credentials.lastName ? { lastName: credentials.lastName } : {}),
+        })) as any;
+        if (response?.error) throw new Error(response.error.message ?? "Registration failed");
+        return response?.data ?? response;
+      } catch (err) {
+        const message = err instanceof Error ? err.message : "Registration failed";
+        setError({ message, code: "REGISTER_ERROR" });
+        throw err;
       }
-
-      return response;
-    } catch (error) {
-      dispatch({
-        type: "AUTH_ERROR",
-        payload: {
-          message: error instanceof Error ? error.message : "Login failed",
-          code: "LOGIN_ERROR",
-        },
-      });
-      throw error;
-    }
-  }, []);
-
-  const register = useCallback(async (credentials: RegisterCredentials) => {
-    try {
-      dispatch({ type: "AUTH_START" });
-      const response = await authApi.register(credentials);
-      const authUser: AuthUser = {
-        ...response.user,
-        name: `${response.user.firstName} ${response.user.lastName}`.trim(),
-      };
-      dispatch({ type: "AUTH_SUCCESS", payload: authUser });
-
-      return response;
-    } catch (error) {
-      dispatch({
-        type: "AUTH_ERROR",
-        payload: {
-          message: error instanceof Error ? error.message : "Registration failed",
-          code: "REGISTER_ERROR",
-        },
-      });
-      throw error;
-    }
-  }, []);
+    },
+    [],
+  );
 
   const logout = useCallback(async () => {
     try {
-      // Log logout before actually logging out
-      try {
-        const { auditLogger } = await import("@/lib/services/audit-logger");
-        auditLogger.logLogout();
-      } catch (auditError) {
-        console.error("Failed to log logout audit entry:", auditError);
-      }
-
-      await authApi.logout();
-    } catch (error) {
-      console.error("Logout error:", error);
-    } finally {
-      dispatch({ type: "AUTH_LOGOUT" });
+      await authClient.signOut();
+    } catch (err) {
+      console.error("Logout error:", err);
     }
   }, []);
 
   const refreshUser = useCallback(async () => {
-    if (!authApi.isAuthenticated()) {
-      dispatch({ type: "AUTH_LOGOUT" });
-      return;
-    }
-
     try {
-      dispatch({ type: "AUTH_START" });
-      const user = await authApi.getCurrentUser();
-      const authUser: AuthUser = {
-        ...user,
-        name: `${user.firstName} ${user.lastName}`.trim(),
-      };
-      dispatch({ type: "AUTH_SUCCESS", payload: authUser });
-    } catch {
-      authApi.clearTokens();
-      dispatch({ type: "AUTH_LOGOUT" });
+      await (authClient as any).getSession?.();
+    } catch (err) {
+      console.error("Refresh user error:", err);
     }
   }, []);
 
-  const clearError = useCallback(() => {
-    dispatch({ type: "CLEAR_ERROR" });
+  const clearError = useCallback(() => setError(null), []);
+
+  const clearTokens = useCallback(() => {
+    void authClient.signOut();
   }, []);
 
-  // Initialize authentication state on mount
-  useEffect(() => {
-    refreshUser();
-  }, [refreshUser]);
-
-  const value: AuthContextType = {
-    ...state,
+  const value: AuthState = {
+    user,
+    isAuthenticated: !!user,
+    isLoading: isPending,
+    error,
+    permissions: [],
     login,
     register,
     logout,
     refreshUser,
     clearError,
+    clearTokens,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
@@ -205,3 +149,5 @@ export function useAuth() {
   }
   return context;
 }
+
+export { authClient };

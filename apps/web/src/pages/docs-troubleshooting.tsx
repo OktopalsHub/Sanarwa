@@ -1,9 +1,9 @@
 import { ErrorScenarios } from "@/components/docs/error-scenarios";
 import { FeedbackSystem } from "@/components/docs/feedback-system";
 import { TroubleshootingGuide } from "@/components/docs/troubleshooting-guide";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Badge } from "@sanarwa/ui/badge";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@sanarwa/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@sanarwa/ui/tabs";
 import { troubleshootingItems } from "@/lib/data/troubleshooting-data";
 import {
   ExclamationTriangleIcon,
@@ -34,7 +34,6 @@ export default function TroubleshootingPage() {
 
   return (
     <div className="space-y-8">
-      {/* Header */}
       <div className="space-y-4">
         <div className="flex items-center gap-2">
           <QuestionMarkCircleIcon className="h-6 w-6 text-primary" />
@@ -46,7 +45,6 @@ export default function TroubleshootingPage() {
         </p>
       </div>
 
-      {/* Quick Stats */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card>
           <CardContent className="pt-6">
@@ -99,7 +97,6 @@ export default function TroubleshootingPage() {
         </Card>
       </div>
 
-      {/* Category Overview */}
       <Card>
         <CardHeader>
           <CardTitle>Issue Categories</CardTitle>
@@ -125,7 +122,6 @@ export default function TroubleshootingPage() {
         </CardContent>
       </Card>
 
-      {/* Common Issues Quick Links */}
       <Card>
         <CardHeader>
           <CardTitle>Most Common Issues</CardTitle>
@@ -186,7 +182,6 @@ export default function TroubleshootingPage() {
         </CardContent>
       </Card>
 
-      {/* Troubleshooting Content */}
       <Tabs defaultValue="guide" className="w-full">
         <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="guide" className="flex items-center gap-2">
@@ -217,7 +212,6 @@ export default function TroubleshootingPage() {
         </TabsContent>
       </Tabs>
 
-      {/* Additional Resources */}
       <Card>
         <CardHeader>
           <CardTitle>Additional Resources</CardTitle>
@@ -252,7 +246,7 @@ export default function TroubleshootingPage() {
             </a>
 
             <a
-              href="mailto:support@notifi.com"
+              href="mailto:support@sanarwa.com"
               className="flex items-center gap-3 p-4 border rounded-lg hover:bg-accent transition-colors"
             >
               <div className="h-10 w-10 bg-primary/10 rounded-lg flex items-center justify-center">
@@ -265,7 +259,7 @@ export default function TroubleshootingPage() {
             </a>
 
             <a
-              href="https://status.notifi.com"
+              href="https://status.sanarwa.com"
               target="_blank"
               rel="noopener noreferrer"
               className="flex items-center gap-3 p-4 border rounded-lg hover:bg-accent transition-colors"
@@ -293,7 +287,7 @@ export default function TroubleshootingPage() {
             </a>
 
             <a
-              href="https://community.notifi.com"
+              href="https://community.sanarwa.com"
               target="_blank"
               rel="noopener noreferrer"
               className="flex items-center gap-3 p-4 border rounded-lg hover:bg-accent transition-colors"
@@ -310,7 +304,6 @@ export default function TroubleshootingPage() {
         </CardContent>
       </Card>
 
-      {/* Feedback */}
       <FeedbackSystem page="troubleshooting" category="support" />
     </div>
   );

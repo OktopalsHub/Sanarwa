@@ -2,9 +2,9 @@
 
 import { CHANNEL_ICONS } from "../campaign-status";
 
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@sanarwa/ui/badge";
+import { Button } from "@sanarwa/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@sanarwa/ui/card";
 import type { CampaignWizardData } from "@/lib/types/campaign";
 import {
   ExclamationCircleIcon,
@@ -128,7 +128,6 @@ export function ReviewStep({ data }: ReviewStepProps) {
 
   return (
     <div className="space-y-6">
-      {/* Validation Status */}
       {hasIssues ? (
         <Card className="border-destructive bg-destructive/5">
           <CardContent className="pt-6">
@@ -164,7 +163,6 @@ export function ReviewStep({ data }: ReviewStepProps) {
         </Card>
       )}
 
-      {/* Campaign Overview */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -196,7 +194,6 @@ export function ReviewStep({ data }: ReviewStepProps) {
         </CardContent>
       </Card>
 
-      {/* Channels */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -219,7 +216,6 @@ export function ReviewStep({ data }: ReviewStepProps) {
                 })}
               </div>
 
-              {/* Channel Configurations */}
               {Object.entries(channels.channelConfigs || {}).map(([channel, config]) => (
                 <div key={channel} className="p-3 bg-muted/50 rounded-lg">
                   <h5 className="font-medium capitalize mb-2">{channel} Configuration</h5>
@@ -242,7 +238,6 @@ export function ReviewStep({ data }: ReviewStepProps) {
         </CardContent>
       </Card>
 
-      {/* Audience */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -285,7 +280,6 @@ export function ReviewStep({ data }: ReviewStepProps) {
         </CardContent>
       </Card>
 
-      {/* Schedule */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -315,7 +309,6 @@ export function ReviewStep({ data }: ReviewStepProps) {
         </CardContent>
       </Card>
 
-      {/* Templates */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -356,7 +349,6 @@ export function ReviewStep({ data }: ReviewStepProps) {
         </CardContent>
       </Card>
 
-      {/* Important Notes */}
       <Card className="bg-blue-50 border-blue-200 dark:bg-blue-950/20 dark:border-blue-800">
         <CardContent className="pt-6">
           <div className="flex items-start gap-3">

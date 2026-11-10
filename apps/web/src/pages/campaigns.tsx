@@ -3,9 +3,9 @@
 import { CampaignList } from "@/components/campaigns/campaign-list";
 import { CampaignWizard } from "@/components/campaigns/campaign-wizard";
 import { AppShell } from "@/components/layout";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { campaignApi } from "@/lib/api/campaigns";
+import { Button } from "@sanarwa/ui/button";
+import { Card, CardContent } from "@sanarwa/ui/card";
+import { campaignApi } from "@sanarwa/api-client";
 import type { Campaign } from "@/lib/types/campaign";
 import { useQuery } from "@tanstack/react-query";
 import { ChartBarIcon, EnvelopeIcon, PlusIcon, UsersIcon } from "@heroicons/react/24/outline";
@@ -16,9 +16,8 @@ export default function CampaignsPage() {
   const [showWizard, setShowWizard] = useState(false);
   const [editingCampaign, setEditingCampaign] = useState<Campaign | null>(null);
 
-  // Fetch campaign stats for the header
   const { data: campaignsData } = useQuery({
-    queryKey: ["campaigns", { limit: 1000 }], // Get all campaigns for stats
+    queryKey: ["campaigns", { limit: 1000 }],
     queryFn: () => campaignApi.getCampaigns({ limit: 1000 }),
   });
 
@@ -80,7 +79,6 @@ export default function CampaignsPage() {
   return (
     <AppShell>
       <div className="container mx-auto p-6 space-y-6">
-        {/* Header */}
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold">Campaigns</h1>
@@ -94,7 +92,6 @@ export default function CampaignsPage() {
           </Button>
         </div>
 
-        {/* Quick Stats */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <Card>
             <CardContent className="pt-6">
@@ -139,13 +136,7 @@ export default function CampaignsPage() {
           </Card>
         </div>
 
-        {/* Campaign List */}
-        <CampaignList
-          onEdit={handleEditCampaign}
-          onDuplicate={(_campaign) => {
-            // Handle duplicate - could navigate to the new campaign or show a success message
-          }}
-        />
+        <CampaignList onEdit={handleEditCampaign} onDuplicate={(_campaign) => {}} />
       </div>
     </AppShell>
   );

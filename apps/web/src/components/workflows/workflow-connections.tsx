@@ -23,7 +23,6 @@ export function WorkflowConnections({
   isConnecting = false,
   connectionStart = null,
 }: WorkflowConnectionsProps) {
-  // Calculate connection paths
   const connectionPaths = useMemo(() => {
     const paths: ConnectionPath[] = [];
 
@@ -32,13 +31,11 @@ export function WorkflowConnections({
       const targetNode = nodes.find((n) => n.id === connection.targetNodeId);
 
       if (sourceNode && targetNode) {
-        // Calculate connection points
-        const sourceX = sourceNode.position.x + 192; // Node width (48 * 4 = 192px)
-        const sourceY = sourceNode.position.y + 60; // Half node height
+        const sourceX = sourceNode.position.x + 192;
+        const sourceY = sourceNode.position.y + 60;
         const targetX = targetNode.position.x;
         const targetY = targetNode.position.y + 60;
 
-        // Create curved path
         const path = createCurvedPath(sourceX, sourceY, targetX, targetY);
 
         paths.push({
@@ -56,12 +53,10 @@ export function WorkflowConnections({
   return (
     <svg className="absolute inset-0 pointer-events-none" style={{ zIndex: 1 }}>
       <defs>
-        {/* Arrow marker */}
         <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
           <polygon points="0 0, 10 3.5, 0 7" fill="hsl(var(--muted-foreground))" />
         </marker>
 
-        {/* Active arrow marker */}
         <marker
           id="arrowhead-active"
           markerWidth="10"
@@ -74,10 +69,8 @@ export function WorkflowConnections({
         </marker>
       </defs>
 
-      {/* Render connections */}
       {connectionPaths.map((connectionPath) => (
         <g key={connectionPath.id}>
-          {/* Connection line */}
           <path
             d={connectionPath.path}
             stroke="hsl(var(--muted-foreground))"
@@ -89,7 +82,6 @@ export function WorkflowConnections({
         </g>
       ))}
 
-      {/* Temporary connection line while connecting */}
       {isConnecting && connectionStart && (
         <TempConnectionLine sourceNodeId={connectionStart} nodes={nodes} />
       )}
@@ -97,7 +89,6 @@ export function WorkflowConnections({
   );
 }
 
-// Component for temporary connection line during connection creation
 function TempConnectionLine({
   sourceNodeId,
   nodes,
@@ -136,7 +127,6 @@ function TempConnectionLine({
   );
 }
 
-// Helper function to create curved connection paths
 function createCurvedPath(
   sourceX: number,
   sourceY: number,
@@ -146,7 +136,6 @@ function createCurvedPath(
   const dx = targetX - sourceX;
   const dy = targetY - sourceY;
 
-  // Control points for the curve
   const controlPointOffset = Math.abs(dx) * 0.5;
   const cp1x = sourceX + controlPointOffset;
   const cp1y = sourceY;

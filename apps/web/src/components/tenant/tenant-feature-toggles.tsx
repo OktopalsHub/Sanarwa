@@ -1,9 +1,9 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
-import { Switch } from "@/components/ui/switch";
+import { Button } from "@sanarwa/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@sanarwa/ui/card";
+import { Separator } from "@sanarwa/ui/separator";
+import { Switch } from "@sanarwa/ui/switch";
 import { useTenant } from "@/contexts/tenant-context";
 import { Tenant, TenantFeatures } from "@/lib/types/tenant";
 import { BookmarkIcon } from "@heroicons/react/24/outline";
@@ -74,7 +74,6 @@ export function TenantFeatureToggles({ tenant }: TenantFeatureTogglesProps) {
   const handleFeatureToggle = (featureKey: keyof TenantFeatures, enabled: boolean) => {
     const feature = features.find((f) => f.key === featureKey);
 
-    // Check if feature requires pro plan
     if (
       enabled &&
       feature?.requiresPro &&

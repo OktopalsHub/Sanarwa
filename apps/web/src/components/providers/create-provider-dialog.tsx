@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { providerApi } from "@/lib/api/provider";
+import { providerApi } from "@sanarwa/api-client";
 import {
   Dialog,
   DialogContent,
@@ -10,23 +10,17 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
+} from "@sanarwa/ui/dialog";
+import { Button } from "@sanarwa/ui/button";
+import { Input } from "@sanarwa/ui/input";
+import { Label } from "@sanarwa/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@sanarwa/ui/select";
+import { Textarea } from "@sanarwa/ui/textarea";
 import { useForm, Controller } from "react-hook-form";
 import { CreateProviderRequest, ProviderType } from "@/lib/types/provider";
 import { useTenant } from "@/contexts/tenant-context";
 import { toast } from "sonner";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@sanarwa/ui/card";
 
 interface CreateProviderDialogProps {
   open: boolean;
@@ -137,7 +131,6 @@ export function CreateProviderDialog({ open, onOpenChange }: CreateProviderDialo
         </DialogHeader>
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-          {/* Provider Type Selection */}
           <div className="space-y-4">
             <Label>Provider Type</Label>
             <div className="grid grid-cols-1 gap-3">
@@ -171,7 +164,6 @@ export function CreateProviderDialog({ open, onOpenChange }: CreateProviderDialo
             {errors.type && <p className="text-sm text-destructive">{errors.type.message}</p>}
           </div>
 
-          {/* Provider Subtype */}
           {selectedType && (
             <div className="space-y-2">
               <Label htmlFor="subtype">Service Provider</Label>
@@ -200,7 +192,6 @@ export function CreateProviderDialog({ open, onOpenChange }: CreateProviderDialo
             </div>
           )}
 
-          {/* Basic Configuration */}
           <div className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="name">Provider Name</Label>
@@ -251,7 +242,6 @@ export function CreateProviderDialog({ open, onOpenChange }: CreateProviderDialo
             </div>
           </div>
 
-          {/* Configuration Template Info */}
           {selectedType && watchedType && (
             <Card>
               <CardHeader>

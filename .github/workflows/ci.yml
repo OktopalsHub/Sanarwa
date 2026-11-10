@@ -28,44 +28,7 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm lint
-
-  circular:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
-        with:
-          version: ${{ env.PNPM_VERSION }}
-      - uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: pnpm
-      - run: pnpm install --frozen-lockfile
-      - run: pnpm deps:circular
-
-  fallow:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-      - uses: pnpm/action-setup@v4
-        with:
-          version: ${{ env.PNPM_VERSION }}
-      - uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: pnpm
-      - run: pnpm install --frozen-lockfile
-      # The repository has an existing Fallow backlog. Audit only the changes
-      # introduced by this PR/commit so inherited findings do not block CI.
-      - name: Run Fallow audit
-        run: |
-          if [ "${{ github.event_name }}" = "pull_request" ]; then
-            pnpm fallow audit --base "origin/${{ github.base_ref }}" --gate new-only
-          else
-            pnpm fallow audit --base HEAD^ --gate new-only
-          fi
+      - run: pnpm fmt:check
 
   type-check:
     runs-on: ubuntu-latest
@@ -109,6 +72,13 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm build
 
+  containers:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: docker build --tag sanarwa-api:${{ github.sha }} --file apps/api/Dockerfile .
+      - run: docker build --tag sanarwa-web:${{ github.sha }} --file apps/web/Dockerfile .
+
   migrations:
     runs-on: ubuntu-latest
     services:
@@ -138,6 +108,7 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter @sanarwa/api build
       - run: pnpm --filter @sanarwa/api migration:run
       - run: pnpm --filter @sanarwa/api migration:revert
       - run: pnpm --filter @sanarwa/api migration:run

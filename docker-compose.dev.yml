@@ -1,0 +1,53 @@
+# Sanarwa local development infrastructure ONLY (postgres + redis).
+#
+# This machine runs several projects' containers in parallel, so Sanarwa gets
+# its own host ports instead of the usual 5432/6379:
+#   postgres -> localhost:5441  (5432 = dev-postgres, 5433 = soonwhy, 5440 = wasanni, 5434 = voxora)
+#   redis    -> localhost:6391  (6379 = voxora, 6380 = soonwhy, 6390 = wasanni)
+#
+# Images are pinned to versions already present in the local docker cache
+# (verified via `docker images`) so starting this never pulls anything new:
+#   postgres:16-alpine  721873c34ceb
+#   redis:7-alpine      858f009f9709
+#
+# Usage:
+#   docker compose -f docker-compose.dev.yml up -d
+#   docker compose -f docker-compose.dev.yml down
+#
+# Then run migrations against it:
+#   pnpm --filter @sanarwa/api migration:run
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: sanarwa
+      POSTGRES_PASSWORD: sanarwa
+      POSTGRES_DB: sanarwa_db
+    ports:
+      - "5441:5432"
+    volumes:
+      - sanarwa_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U sanarwa -d sanarwa_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6391:6379"
+    volumes:
+      - sanarwa_redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    restart: unless-stopped
+
+volumes:
+  sanarwa_postgres_data:
+  sanarwa_redis_data:

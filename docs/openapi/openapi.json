@@ -360,10 +360,7 @@
               "example": {
                 "title": "New message",
                 "body": "You have a new notification",
-                "notifications": [
-                  { "to": "fcm:token-1" },
-                  { "to": "fcm:token-2" }
-                ]
+                "notifications": [{ "to": "fcm:token-1" }, { "to": "fcm:token-2" }]
               }
             }
           }

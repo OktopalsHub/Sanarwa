@@ -26,7 +26,6 @@ export class ErrorClassificationService {
       metadata: context.metadata,
     };
 
-    // If it's already a classified error (BaseException)
     if (error instanceof BaseException) {
       return {
         code: error.code,
@@ -42,7 +41,6 @@ export class ErrorClassificationService {
       };
     }
 
-    // Classify known error types
     if (error instanceof HttpException) {
       return this.classifyHttpException(error, fullContext);
     }
@@ -67,7 +65,6 @@ export class ErrorClassificationService {
       return this.classifyNetworkError(error, fullContext);
     }
 
-    // Default classification for unknown errors
     return this.classifyUnknownError(error, fullContext);
   }
 
@@ -111,10 +108,9 @@ export class ErrorClassificationService {
   private classifyDatabaseError(error: QueryFailedError, context: ErrorContext): ClassifiedError {
     const message = error.message;
 
-    // PostgreSQL specific error codes
     if ((error.driverError as any)?.code) {
       switch ((error.driverError as any).code) {
-        case "23505": // unique_violation
+        case "23505":
           return {
             code: ErrorCode.DUPLICATE_RESOURCE,
             category: ErrorCategory.BUSINESS_LOGIC,
@@ -127,7 +123,7 @@ export class ErrorClassificationService {
             retryable: false,
             recoverable: false,
           };
-        case "23503": // foreign_key_violation
+        case "23503":
           return {
             code: ErrorCode.VALIDATION_ERROR,
             category: ErrorCategory.VALIDATION,
@@ -140,7 +136,7 @@ export class ErrorClassificationService {
             retryable: false,
             recoverable: false,
           };
-        case "23502": // not_null_violation
+        case "23502":
           return {
             code: ErrorCode.MISSING_REQUIRED_FIELD,
             category: ErrorCategory.VALIDATION,

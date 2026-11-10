@@ -1,8 +1,22 @@
-import { Controller, Post, Body, Headers, Logger, HttpStatus, HttpException } from "@nestjs/common";
-import { ApiTags, ApiOperation, ApiResponse } from "@nestjs/swagger";
+import {
+  BadRequestException,
+  Body,
+  Controller,
+  Headers,
+  HttpException,
+  HttpStatus,
+  Logger,
+  Post,
+  Req,
+  UnauthorizedException,
+} from "@nestjs/common";
+import { ConfigService } from "@nestjs/config";
+import { ApiOperation, ApiResponse, ApiTags } from "@nestjs/swagger";
 import { SkipThrottle } from "@nestjs/throttler";
+import type { Request } from "express";
 import { Public } from "../../auth/decorators/public.decorator";
 import { VoiceService } from "../services/voice.service";
+import { WebhookValidatorService } from "../services/webhook-validator.service";
 
 interface TelnyxWebhookEvent {
   data: {
@@ -31,16 +45,42 @@ interface TelnyxWebhookEvent {
 export class TelnyxWebhookController {
   private readonly logger = new Logger(TelnyxWebhookController.name);
 
-  constructor(private readonly voiceService: VoiceService) {}
+  constructor(
+    private readonly voiceService: VoiceService,
+    private readonly webhookValidator: WebhookValidatorService,
+    private readonly configService: ConfigService,
+  ) {}
 
   @Post("voice")
   @ApiOperation({ summary: "Handle Telnyx voice webhooks" })
   @ApiResponse({ status: 200, description: "Webhook processed successfully" })
   async handleVoiceWebhook(
+    @Req() req: Request & { rawBody?: Buffer | string },
     @Body() event: TelnyxWebhookEvent,
     @Headers("telnyx-signature-ed25519") signature?: string,
     @Headers("telnyx-timestamp") timestamp?: string,
   ) {
+    const rawBody = this.getRawBody(req);
+    if (!rawBody) {
+      throw new BadRequestException("Missing raw request body for webhook verification");
+    }
+
+    const publicKey = this.configService.get<string>("TELNYX_PUBLIC_KEY");
+    const verification = this.webhookValidator.verify({
+      provider: "telnyx",
+      publicKey,
+      rawBody,
+      headers: {
+        "telnyx-signature-ed25519": signature,
+        "telnyx-timestamp": timestamp,
+      },
+    });
+
+    if (verification.kind === "rejected") {
+      this.logger.warn(`Rejected Telnyx voice webhook: ${verification.reason}`);
+      throw new UnauthorizedException("Invalid Telnyx webhook signature");
+    }
+
     try {
       this.logger.log(
         `Received Telnyx webhook: ${event.data.event_type} for call ${event.data.payload.call_control_id}`,
@@ -84,13 +124,11 @@ export class TelnyxWebhookController {
     this.logger.log(
       `Call initiated: ${payload.call_control_id} from ${payload.from} to ${payload.to}`,
     );
-    // Track call initiation
   }
 
   private async handleCallAnswered(payload: any) {
     this.logger.log(`Call answered: ${payload.call_control_id}`);
 
-    // Check if there's a TTS message to play
     const customHeaders = payload.custom_headers || [];
     const ttsHeader = customHeaders.find((h: any) => h.name === "X-TTS-Message");
 
@@ -99,7 +137,6 @@ export class TelnyxWebhookController {
         const message = Buffer.from(ttsHeader.value, "base64").toString("utf-8");
         this.logger.log(`Playing TTS message for answered call: "${message}"`);
 
-        // Send TTS message to the call with default Telnyx voice
         await this.voiceService.sendTTSToCall(payload.call_control_id, message, {
           voice: "Telnyx.Natural.abbie",
           language: "en-US",
@@ -114,6 +151,12 @@ export class TelnyxWebhookController {
     this.logger.log(
       `Call ended: ${payload.call_control_id} - ${payload.hangup_cause || "unknown cause"}`,
     );
-    // Track call completion and duration
+  }
+
+  private getRawBody(req: Request & { rawBody?: Buffer | string }): string | undefined {
+    const raw = req.rawBody;
+    if (typeof raw === "string") return raw;
+    if (Buffer.isBuffer(raw)) return raw.toString("utf8");
+    return undefined;
   }
 }

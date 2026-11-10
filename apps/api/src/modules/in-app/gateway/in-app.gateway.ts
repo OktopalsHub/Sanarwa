@@ -47,7 +47,11 @@ export class InAppGateway implements OnGatewayConnection, OnGatewayDisconnect {
         client.disconnect();
         return;
       }
-      const rooms = [`tenant:${tenantId}`, `tenant:${tenantId}:user:${sid}`, `tenant:${tenantId}:subscriber:${sid}`];
+      const rooms = [
+        `tenant:${tenantId}`,
+        `tenant:${tenantId}:user:${sid}`,
+        `tenant:${tenantId}:subscriber:${sid}`,
+      ];
       await client.join(rooms);
       this.logger.log(`In-App connected ${sid} tenant:${tenantId} rooms:${rooms.join(",")}`);
       client.emit("in-app:connected", { subscriberId: sid, tenantId });
@@ -84,15 +88,30 @@ export class InAppGateway implements OnGatewayConnection, OnGatewayDisconnect {
   }
 
   @OnEvent("in-app.notification.created")
-  handleNotificationCreated(payload: { tenantId: string; subscriberId: string; notification: any }) {
+  handleNotificationCreated(payload: {
+    tenantId: string;
+    subscriberId: string;
+    notification: any;
+  }) {
     const { tenantId, subscriberId, notification } = payload;
-    const delivered = this.emitToSubscriber(tenantId, subscriberId, "notifications:feed:updated", notification);
-    // Also emit unseen count bump for bell
+    const delivered = this.emitToSubscriber(
+      tenantId,
+      subscriberId,
+      "notifications:feed:updated",
+      notification,
+    );
     if (delivered) {
-      this.server.to(`tenant:${tenantId}:user:${subscriberId}`).to(`tenant:${tenantId}:subscriber:${subscriberId}`).emit("notifications:unseen_count:updated", { feedId: notification.feedId || "default" });
-      this.logger.log(`In-App pushed live to ${subscriberId} tenant:${tenantId} id:${notification.id} delivered:${delivered}`);
+      this.server
+        .to(`tenant:${tenantId}:user:${subscriberId}`)
+        .to(`tenant:${tenantId}:subscriber:${subscriberId}`)
+        .emit("notifications:unseen_count:updated", { feedId: notification.feedId || "default" });
+      this.logger.log(
+        `In-App pushed live to ${subscriberId} tenant:${tenantId} id:${notification.id} delivered:${delivered}`,
+      );
     } else {
-      this.logger.log(`In-App offline for ${subscriberId} tenant:${tenantId} id:${notification.id} - will be in feed poll`);
+      this.logger.log(
+        `In-App offline for ${subscriberId} tenant:${tenantId} id:${notification.id} - will be in feed poll`,
+      );
     }
   }
 }

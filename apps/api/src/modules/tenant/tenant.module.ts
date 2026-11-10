@@ -18,17 +18,14 @@ import { QuotaController } from "./controllers/quota.controller";
 })
 export class TenantModule {
   configure(consumer: MiddlewareConsumer) {
-    // Apply tenant context middleware to all routes except tenant management, health, and auth routes
     consumer
       .apply(TenantContextMiddleware)
       .exclude(
         { path: "tenants", method: RequestMethod.ALL },
         { path: "tenants/*path", method: RequestMethod.ALL },
-        { path: "health", method: RequestMethod.ALL },
-        { path: "health/*path", method: RequestMethod.ALL },
         { path: "auth", method: RequestMethod.ALL },
         { path: "auth/*path", method: RequestMethod.ALL },
-        { path: "", method: RequestMethod.GET }, // Base route
+        { path: "", method: RequestMethod.GET },
       )
       .forRoutes("*path");
   }

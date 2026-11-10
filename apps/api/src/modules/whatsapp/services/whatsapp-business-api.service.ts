@@ -71,9 +71,6 @@ export class WhatsAppBusinessAPIService {
     }
   }
 
-  /**
-   * Create a new WhatsApp message template
-   */
   async createTemplate(
     templateRequest: WhatsAppTemplateRequest,
   ): Promise<{ id: string; status: string }> {
@@ -107,9 +104,6 @@ export class WhatsAppBusinessAPIService {
     }
   }
 
-  /**
-   * Send a WhatsApp message using a template
-   */
   async sendTemplateMessage(
     phoneNumber: string,
     templateName: string,
@@ -121,7 +115,6 @@ export class WhatsAppBusinessAPIService {
         `Sending WhatsApp template message to ${phoneNumber} using template ${templateName}`,
       );
 
-      // Clean phone number (remove any non-numeric characters except +)
       const cleanPhoneNumber = phoneNumber.replace(/[^\d+]/g, "");
 
       const messageRequest: WhatsAppMessageRequest = {
@@ -161,9 +154,6 @@ export class WhatsAppBusinessAPIService {
     }
   }
 
-  /**
-   * Send a simple text message (for testing)
-   */
   async sendTextMessage(phoneNumber: string, message: string): Promise<{ messageId: string }> {
     try {
       this.logger.log(`Sending WhatsApp text message to ${phoneNumber}`);
@@ -205,9 +195,6 @@ export class WhatsAppBusinessAPIService {
     }
   }
 
-  /**
-   * Get template status
-   */
   async getTemplateStatus(templateId: string): Promise<{ status: string; reason?: string }> {
     try {
       const url = `${this.baseUrl}/${templateId}`;
@@ -233,9 +220,6 @@ export class WhatsAppBusinessAPIService {
     }
   }
 
-  /**
-   * List all templates for the business account
-   */
   async listTemplates(): Promise<
     Array<{ id: string; name: string; status: string; category: string }>
   > {
@@ -262,9 +246,6 @@ export class WhatsAppBusinessAPIService {
     }
   }
 
-  /**
-   * Delete a template
-   */
   async deleteTemplate(templateId: string): Promise<{ success: boolean }> {
     try {
       const url = `${this.baseUrl}/${this.businessAccountId}/message_templates`;
@@ -293,23 +274,17 @@ export class WhatsAppBusinessAPIService {
     }
   }
 
-  /**
-   * Validate phone number format
-   */
   validatePhoneNumber(phoneNumber: string): {
     isValid: boolean;
     cleanNumber?: string;
     error?: string;
   } {
-    // Remove all non-numeric characters except +
     const cleaned = phoneNumber.replace(/[^\d+]/g, "");
 
-    // Check if it starts with + and has at least 10 digits
     if (!cleaned.startsWith("+")) {
       return { isValid: false, error: "Phone number must start with country code (+)" };
     }
 
-    // Remove + for length check
     const digits = cleaned.substring(1);
 
     if (digits.length < 10 || digits.length > 15) {
@@ -317,40 +292,5 @@ export class WhatsAppBusinessAPIService {
     }
 
     return { isValid: true, cleanNumber: cleaned };
-  }
-
-  /**
-   * Get WhatsApp Business API health status
-   */
-  async getHealthStatus(): Promise<{
-    status: string;
-    phoneNumberId: string | undefined;
-    businessAccountId: string | undefined;
-  }> {
-    try {
-      // Try to get phone number info as a health check
-      const url = `${this.baseUrl}/${this.phoneNumberId}`;
-      const headers = {
-        Authorization: `Bearer ${this.accessToken}`,
-      };
-
-      const response = await firstValueFrom(this.httpService.get(url, { headers }));
-
-      return {
-        status: "healthy",
-        phoneNumberId: this.phoneNumberId,
-        businessAccountId: this.businessAccountId,
-      };
-    } catch (error) {
-      this.logger.error(
-        "WhatsApp Business API health check failed",
-        error.response?.data || error.message,
-      );
-      return {
-        status: "unhealthy",
-        phoneNumberId: this.phoneNumberId,
-        businessAccountId: this.businessAccountId,
-      };
-    }
   }
 }

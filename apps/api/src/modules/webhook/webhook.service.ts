@@ -25,7 +25,6 @@ export class WebhookService {
       throw new BadRequestException(error instanceof Error ? error.message : "Invalid webhook URL");
     }
 
-    // Check if webhook with same URL already exists for this tenant
     const existing = await this.webhookRepository.findOne({
       where: { tenantId, url: createWebhookDto.url },
     });
@@ -66,7 +65,6 @@ export class WebhookService {
   async update(tenantId: string, id: string, updateWebhookDto: UpdateWebhookDto): Promise<Webhook> {
     const webhook = await this.findOne(tenantId, id);
 
-    // Check URL uniqueness if URL is being updated
     if (updateWebhookDto.url && updateWebhookDto.url !== webhook.url) {
       try {
         await assertSafeWebhookUrl(updateWebhookDto.url);

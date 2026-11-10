@@ -1,5 +1,5 @@
 import { BadRequestException, Injectable, Inject } from "@nestjs/common";
-import { BaseRepository } from "../../../database/repositories/base.repository";
+import { BaseRepository } from "../../../common/database/repositories/base.repository";
 import { BRAND_REPO } from "../brand.tokens";
 import { Brand } from "../entities/brand.entity";
 import { getBrandOrThrow } from "./brand-lookup";
@@ -19,9 +19,6 @@ export class BrandDomainService {
     private readonly cloudflareDNSService: CloudflareDNSService,
   ) {}
 
-  /**
-   * Get domain verification instructions without attempting verification (legacy method)
-   */
   async getDomainVerificationInstructions(
     tenantId: string,
     id: string,
@@ -49,12 +46,10 @@ export class BrandDomainService {
       );
     }
 
-    // Generate or retrieve verification token
     let verificationToken = brand.whiteLabelConfig?.domains?.verificationToken;
     if (!verificationToken) {
       verificationToken = this.dnsVerificationService.generateVerificationToken(targetDomain, id);
 
-      // Save the token to the brand
       const updateData: Partial<Brand> = {
         whiteLabelConfig: {
           ...brand.whiteLabelConfig,
@@ -67,7 +62,6 @@ export class BrandDomainService {
       await this.brandRepository.update(id, updateData);
     }
 
-    // Check domain health
     const domainHealth = await this.dnsVerificationService.checkDomainHealth(targetDomain);
 
     return {
@@ -90,20 +84,16 @@ export class BrandDomainService {
   ): Promise<Brand> {
     const brand = await getBrandOrThrow(this.brandRepository, tenantId, id);
 
-    // Validate prerequisites for domain verification
     validateDomainVerificationPrerequisites(brand, domain);
 
-    // Generate verification token if not already present
     let verificationToken = brand.whiteLabelConfig?.domains?.verificationToken;
     if (!verificationToken) {
       verificationToken = this.dnsVerificationService.generateVerificationToken(domain, id);
     }
 
-    // If Cloudflare API token provided, attempt auto-setup
     let cloudflareSetupResult: any = null;
     if (cloudflareApiToken) {
       try {
-        // Validate Cloudflare token
         const cfValidation = await this.cloudflareDNSService.validateAPIToken(cloudflareApiToken);
         if (!cfValidation.valid) {
           cloudflareSetupResult = {
@@ -112,7 +102,6 @@ export class BrandDomainService {
             error: `Invalid Cloudflare API token: ${cfValidation.error}`,
           };
         } else {
-          // Get zone ID
           const zoneId = await this.cloudflareDNSService.getZoneId(domain, cloudflareApiToken);
           if (!zoneId) {
             cloudflareSetupResult = {
@@ -121,7 +110,6 @@ export class BrandDomainService {
               error: `Could not find Cloudflare zone for domain: ${domain}`,
             };
           } else {
-            // Add the verification TXT record automatically
             const cfRecord = {
               type: "TXT",
               name: `_verification.${domain}`,
@@ -160,14 +148,12 @@ export class BrandDomainService {
       }
     }
 
-    // Perform actual DNS verification
     const verificationResult = await this.dnsVerificationService.verifyDomainOwnership(
       domain,
       verificationToken,
     );
 
     if (!verificationResult.verified) {
-      // Store the verification token and Cloudflare setup result
       const updateData: Partial<Brand> = {
         domain,
         whiteLabelConfig: {
@@ -200,7 +186,6 @@ export class BrandDomainService {
       throw new BadRequestException(errorMessage);
     }
 
-    // Domain verified successfully
     const updateData: Partial<Brand> = {
       domain,
       whiteLabelConfig: {
@@ -227,10 +212,8 @@ export class BrandDomainService {
   ): Promise<Brand> {
     const brand = await getBrandOrThrow(this.brandRepository, tenantId, id);
 
-    // Validate prerequisites for DKIM verification
     validateEmailVerificationPrerequisites(brand, "DKIM");
 
-    // Generate DKIM keys if not present
     let publicKey = brand.whiteLabelConfig?.dkim?.publicKey;
     let privateKey = brand.whiteLabelConfig?.dkim?.privateKey;
 
@@ -240,11 +223,9 @@ export class BrandDomainService {
       privateKey = keyPair.privateKey;
     }
 
-    // If Cloudflare API token provided, attempt auto-setup of DKIM record
     let cloudflareDkimSetupResult: any = null;
     if (cloudflareApiToken) {
       try {
-        // Validate Cloudflare token
         const cfValidation = await this.cloudflareDNSService.validateAPIToken(cloudflareApiToken);
         if (!cfValidation.valid) {
           cloudflareDkimSetupResult = {
@@ -253,7 +234,6 @@ export class BrandDomainService {
             error: `Invalid Cloudflare API token: ${cfValidation.error}`,
           };
         } else {
-          // Get zone ID
           const zoneId = await this.cloudflareDNSService.getZoneId(
             brand.domain!,
             cloudflareApiToken,
@@ -265,11 +245,10 @@ export class BrandDomainService {
               error: `Could not find Cloudflare zone for domain: ${brand.domain}`,
             };
           } else {
-            // Add the DKIM CNAME record automatically
             const cfRecord = {
               type: "CNAME",
               name: `${selector}._domainkey.${brand.domain}`,
-              content: `${selector}._domainkey.${brand.domain}`, // This would be the actual DKIM record value
+              content: `${selector}._domainkey.${brand.domain}`,
               ttl: 300,
               proxied: false,
             };
@@ -305,7 +284,6 @@ export class BrandDomainService {
       }
     }
 
-    // Perform actual DKIM verification
     const verificationResult = await this.dnsVerificationService.verifyDKIM(
       brand.domain!,
       selector,
@@ -345,7 +323,6 @@ export class BrandDomainService {
       throw new BadRequestException(errorMessage);
     }
 
-    // DKIM verified successfully
     brand.whiteLabelConfig.dkim.verified = true;
     brand.whiteLabelConfig.dkim.verifiedAt = new Date();
     brand.whiteLabelConfig.dkim.selector = selector;
@@ -360,17 +337,14 @@ export class BrandDomainService {
   async verifyDMARC(tenantId: string, id: string): Promise<Brand> {
     const brand = await getBrandOrThrow(this.brandRepository, tenantId, id);
 
-    // Validate prerequisites for DMARC verification
     validateEmailVerificationPrerequisites(brand, "DMARC");
 
-    // DMARC requires domain verification first
     if (!brand.whiteLabelConfig?.domains?.verified) {
       throw new BadRequestException(
         "Domain must be verified before DMARC verification. Please verify your domain first.",
       );
     }
 
-    // Perform actual DMARC verification
     const verificationResult = await this.dnsVerificationService.verifyDMARC(brand.domain!);
 
     if (!brand.whiteLabelConfig) {
@@ -396,7 +370,6 @@ export class BrandDomainService {
       );
     }
 
-    // DMARC verified successfully
     brand.whiteLabelConfig.dmarc.verified = true;
     brand.whiteLabelConfig.dmarc.verifiedAt = new Date();
     brand.whiteLabelConfig.dmarc.policy = verificationResult.policy;

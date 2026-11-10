@@ -16,7 +16,6 @@ export class SecurityMiddleware implements NestMiddleware {
     const startTime = Date.now();
 
     try {
-      // Sanitize request body
       if (req.body && typeof req.body === "object") {
         const sanitizationResult = this.inputSanitizationService.sanitizeObject(req.body, {
           preventSqlInjection: true,
@@ -32,7 +31,6 @@ export class SecurityMiddleware implements NestMiddleware {
             userAgent: req.get("User-Agent"),
           });
 
-          // Log suspicious activity
           await this.securityEventService.logSuspiciousActivity(
             `Malicious input detected in request body`,
             undefined,
@@ -50,7 +48,6 @@ export class SecurityMiddleware implements NestMiddleware {
         req.body = sanitizationResult.sanitized;
       }
 
-      // Sanitize query parameters
       if (req.query && typeof req.query === "object") {
         let queryModified = false;
 
@@ -64,7 +61,6 @@ export class SecurityMiddleware implements NestMiddleware {
             });
 
             if (result.wasModified) {
-              // Modify the query parameter in place
               (req.query as any)[key] = result.sanitized;
               queryModified = true;
             }
@@ -92,10 +88,8 @@ export class SecurityMiddleware implements NestMiddleware {
         }
       }
 
-      // Check for suspicious patterns in headers
       await this.checkSuspiciousHeaders(req);
 
-      // Add security headers to response
       this.addSecurityHeaders(res);
 
       next();
@@ -137,25 +131,18 @@ export class SecurityMiddleware implements NestMiddleware {
   }
 
   private addSecurityHeaders(res: Response): void {
-    // Prevent clickjacking
     res.setHeader("X-Frame-Options", "DENY");
 
-    // Prevent MIME type sniffing
     res.setHeader("X-Content-Type-Options", "nosniff");
 
-    // Enable XSS protection
     res.setHeader("X-XSS-Protection", "1; mode=block");
 
-    // Strict transport security
     res.setHeader("Strict-Transport-Security", "max-age=31536000; includeSubDomains");
 
-    // Content security policy
     res.setHeader("Content-Security-Policy", "default-src 'self'");
 
-    // Referrer policy
     res.setHeader("Referrer-Policy", "strict-origin-when-cross-origin");
 
-    // Permissions policy
     res.setHeader("Permissions-Policy", "geolocation=(), microphone=(), camera=()");
   }
 }

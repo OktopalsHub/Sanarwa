@@ -8,7 +8,8 @@ import {
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from "typeorm";
-import { Message, MessageChannel } from "./message.entity";
+import { Message } from "./message.entity";
+import { NotificationChannel } from "../../common/enums/notification-channel.enum";
 
 export enum MessageDeliveryStatus {
   PENDING = "pending",
@@ -19,9 +20,9 @@ export enum MessageDeliveryStatus {
   OPENED = "opened",
   CLICKED = "clicked",
   UNSUBSCRIBED = "unsubscribed",
+  SKIPPED = "skipped",
 }
 
-// Export type alias for convenience
 export type DeliveryStatus = MessageDeliveryStatus;
 
 @Entity("message_deliveries")
@@ -37,12 +38,12 @@ export class MessageDelivery {
   @Index()
   messageId: string;
 
-  @Column({
-    type: "enum",
-    enum: MessageChannel,
-    enumName: "message_channel_enum",
-  })
-  channel: MessageChannel;
+  @Column({ type: "uuid", name: "tenant_id" })
+  @Index()
+  tenantId: string;
+
+  @Column({ type: "varchar", length: 20 })
+  channel: NotificationChannel;
 
   @Column({ name: "provider_id" })
   providerId: string;
@@ -87,7 +88,7 @@ export class MessageDelivery {
   @ManyToOne(() => Message, (message) => message.deliveries, {
     onDelete: "CASCADE",
   })
-  @JoinColumn({ name: "messageId" })
+  @JoinColumn({ name: "message_id" })
   message: Message;
 
   @CreateDateColumn({ name: "created_at" })

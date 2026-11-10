@@ -1,31 +1,42 @@
 import { Test, TestingModule } from "@nestjs/testing";
 import { CircuitBreakerException } from "../exceptions/base.exception";
 import { CircuitBreakerService } from "./circuit-breaker.service";
+import { getRedisConnectionToken } from "@nestjs-modules/ioredis";
+import Redis from "ioredis-mock";
 import type { Mock } from "vitest";
 
 describe("CircuitBreakerService", () => {
   let service: CircuitBreakerService;
+  let redis: Redis;
 
   beforeEach(async () => {
+    redis = new Redis();
     const module: TestingModule = await Test.createTestingModule({
-      providers: [CircuitBreakerService],
+      providers: [
+        CircuitBreakerService,
+        {
+          provide: getRedisConnectionToken(),
+          useValue: redis,
+        },
+      ],
     }).compile();
 
     service = module.get<CircuitBreakerService>(CircuitBreakerService);
+    await redis.flushall();
   });
 
   describe("registerCircuit", () => {
-    it("should register a circuit with default config", () => {
-      service.registerCircuit("test-service");
-      const state = service.getCircuitState("test-service");
+    it("should register a circuit with default config", async () => {
+      await service.registerCircuit("test-service");
+      const state = await service.getCircuitState("test-service");
 
       expect(state.state).toBe("CLOSED");
       expect(state.failureCount).toBe(0);
     });
 
-    it("should register a circuit with custom config", () => {
-      service.registerCircuit("test-service", { failureThreshold: 10 });
-      const state = service.getCircuitState("test-service");
+    it("should register a circuit with custom config", async () => {
+      await service.registerCircuit("test-service", { failureThreshold: 10 });
+      const state = await service.getCircuitState("test-service");
 
       expect(state.state).toBe("CLOSED");
       expect(state.failureCount).toBe(0);
@@ -45,16 +56,12 @@ describe("CircuitBreakerService", () => {
     it("should throw CircuitBreakerException when circuit is open", async () => {
       const mockOperation = vi.fn().mockRejectedValue(new Error("Service error"));
 
-      // Force failures to open the circuit
       for (let i = 0; i < 5; i++) {
         try {
           await service.execute("test-service", mockOperation);
-        } catch (error) {
-          // Expected failures
-        }
+        } catch (error) {}
       }
 
-      // Circuit should now be open
       await expect(service.execute("test-service", mockOperation)).rejects.toThrow(
         CircuitBreakerException,
       );
@@ -63,25 +70,19 @@ describe("CircuitBreakerService", () => {
     it("should transition to half-open after recovery timeout", async () => {
       const mockOperation = vi.fn().mockRejectedValue(new Error("Service error"));
 
-      // Register circuit with short recovery timeout for testing
-      service.registerCircuit("test-service", {
+      await service.registerCircuit("test-service", {
         failureThreshold: 2,
         recoveryTimeout: 100,
       });
 
-      // Force failures to open the circuit
       for (let i = 0; i < 2; i++) {
         try {
           await service.execute("test-service", mockOperation);
-        } catch (error) {
-          // Expected failures
-        }
+        } catch (error) {}
       }
 
-      // Wait for recovery timeout
       await new Promise((resolve) => setTimeout(resolve, 150));
 
-      // Mock successful operation
       mockOperation.mockResolvedValueOnce("success");
 
       const result = await service.execute("test-service", mockOperation);
@@ -94,23 +95,19 @@ describe("CircuitBreakerService", () => {
         .mockRejectedValueOnce(new Error("Temporary error"))
         .mockResolvedValue("success");
 
-      // First call fails
       try {
         await service.execute("test-service", mockOperation);
-      } catch (error) {
-        // Expected failure
-      }
+      } catch (error) {}
 
-      // Second call succeeds
       const result = await service.execute("test-service", mockOperation);
       expect(result).toBe("success");
 
-      const state = service.getCircuitState("test-service");
+      const state = await service.getCircuitState("test-service");
       expect(state.failureCount).toBe(0);
     });
 
     it("should track success count in half-open state", async () => {
-      service.registerCircuit("test-service", {
+      await service.registerCircuit("test-service", {
         failureThreshold: 1,
         recoveryTimeout: 100,
         halfOpenSuccessThreshold: 2,
@@ -121,42 +118,37 @@ describe("CircuitBreakerService", () => {
         .mockRejectedValueOnce(new Error("Service error"))
         .mockResolvedValue("success");
 
-      // Force failure to open circuit
       try {
         await service.execute("test-service", mockOperation);
-      } catch (error) {
-        // Expected failure
-      }
+      } catch (error) {}
 
-      // Wait for recovery timeout
       await new Promise((resolve) => setTimeout(resolve, 150));
 
-      // Execute successful operations in half-open state
       await service.execute("test-service", mockOperation);
       await service.execute("test-service", mockOperation);
 
-      const state = service.getCircuitState("test-service");
+      const state = await service.getCircuitState("test-service");
       expect(state.state).toBe("CLOSED");
     });
   });
 
   describe("manual control", () => {
-    it("should manually open circuit", () => {
-      service.registerCircuit("test-service");
-      service.openCircuit("test-service");
+    it("should manually open circuit", async () => {
+      await service.registerCircuit("test-service");
+      await service.openCircuit("test-service");
 
-      const state = service.getCircuitState("test-service");
+      const state = await service.getCircuitState("test-service");
       expect(state.state).toBe("OPEN");
       expect(state.lastFailureTime).toBeDefined();
       expect(state.nextAttemptTime).toBeDefined();
     });
 
-    it("should manually close circuit", () => {
-      service.registerCircuit("test-service");
-      service.openCircuit("test-service");
-      service.closeCircuit("test-service");
+    it("should manually close circuit", async () => {
+      await service.registerCircuit("test-service");
+      await service.openCircuit("test-service");
+      await service.closeCircuit("test-service");
 
-      const state = service.getCircuitState("test-service");
+      const state = await service.getCircuitState("test-service");
       expect(state.state).toBe("CLOSED");
       expect(state.failureCount).toBe(0);
       expect(state.lastFailureTime).toBeUndefined();
@@ -165,11 +157,11 @@ describe("CircuitBreakerService", () => {
   });
 
   describe("getMetrics", () => {
-    it("should return metrics for all circuits", () => {
-      service.registerCircuit("service-1");
-      service.registerCircuit("service-2");
+    it("should return metrics for all circuits", async () => {
+      await service.registerCircuit("service-1");
+      await service.registerCircuit("service-2");
 
-      const metrics = service.getMetrics();
+      const metrics = await service.getMetrics();
 
       expect(metrics).toHaveProperty("service-1");
       expect(metrics).toHaveProperty("service-2");
@@ -178,33 +170,38 @@ describe("CircuitBreakerService", () => {
       expect(metrics["service-1"]).toHaveProperty("isHealthy");
     });
 
-    it("should indicate healthy status for closed circuits", () => {
-      service.registerCircuit("test-service");
-      const metrics = service.getMetrics();
+    it("should indicate healthy status for closed circuits", async () => {
+      await service.registerCircuit("test-service");
+      const metrics = await service.getMetrics();
 
       expect(metrics["test-service"].isHealthy).toBe(true);
     });
 
-    it("should indicate unhealthy status for open circuits", () => {
-      service.registerCircuit("test-service");
-      service.openCircuit("test-service");
-      const metrics = service.getMetrics();
+    it("should indicate unhealthy status for open circuits", async () => {
+      await service.registerCircuit("test-service");
+      await service.openCircuit("test-service");
+      const metrics = await service.getMetrics();
 
       expect(metrics["test-service"].isHealthy).toBe(false);
     });
   });
 
   describe("cleanup", () => {
-    it("should reset old circuit states", () => {
-      service.registerCircuit("test-service");
+    it("should reset old circuit states", async () => {
+      await service.registerCircuit("test-service");
 
-      // Simulate old failure
-      const state = service.getCircuitState("test-service");
-      state.failureCount = 3;
-      state.lastFailureTime = new Date(Date.now() - 25 * 60 * 60 * 1000); // 25 hours ago
+      await redis.set(
+        "circuit:state:test-service",
+        JSON.stringify({
+          state: "CLOSED",
+          failureCount: 3,
+          lastFailureTime: new Date(Date.now() - 25 * 60 * 60 * 1000).toISOString(),
+        }),
+      );
 
-      service.cleanup();
+      await service.cleanup();
 
+      const state = await service.getCircuitState("test-service");
       expect(state.failureCount).toBe(0);
       expect(state.lastFailureTime).toBeUndefined();
     });

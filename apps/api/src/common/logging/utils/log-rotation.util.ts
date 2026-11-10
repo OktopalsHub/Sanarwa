@@ -43,24 +43,19 @@ export class LogRotationService {
     const logFileName = path.basename(logFilePath, path.extname(logFilePath));
     const logFileExt = path.extname(logFilePath);
 
-    // Check if current log file exists
     try {
       await fs.access(logFilePath);
     } catch {
-      // Log file doesn't exist, nothing to rotate
       return;
     }
 
-    // Get file stats to check if rotation is needed
     const stats = await fs.stat(logFilePath);
     const maxSize = this.parseSize(this.configService.get("logging.file.maxSize", "10m"));
 
     if (stats.size < maxSize) {
-      // File is not large enough to rotate
       return;
     }
 
-    // Rotate existing numbered files
     for (let i = maxFiles - 1; i >= 1; i--) {
       const currentFile = path.join(logDir, `${logFileName}.${i}${logFileExt}`);
       const nextFile = path.join(logDir, `${logFileName}.${i + 1}${logFileExt}`);
@@ -68,22 +63,16 @@ export class LogRotationService {
       try {
         await fs.access(currentFile);
         if (i === maxFiles - 1) {
-          // Delete the oldest file
           await fs.unlink(currentFile);
         } else {
-          // Move to next number
           await fs.rename(currentFile, nextFile);
         }
-      } catch {
-        // File doesn't exist, continue
-      }
+      } catch {}
     }
 
-    // Move current log file to .1
     const firstRotatedFile = path.join(logDir, `${logFileName}.1${logFileExt}`);
     await fs.rename(logFilePath, firstRotatedFile);
 
-    // Compress the rotated file
     await this.compressFile(firstRotatedFile);
   }
 
@@ -100,7 +89,6 @@ export class LogRotationService {
 
       await pipeline(readStream, gzipStream, writeStream);
 
-      // Remove original file after compression
       await fs.unlink(filePath);
 
       this.logger.log("Log file compressed", {

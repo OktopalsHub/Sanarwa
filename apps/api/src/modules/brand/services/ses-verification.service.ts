@@ -62,10 +62,6 @@ export class SESVerificationService {
     }
   }
 
-  /**
-   * Start domain verification process with AWS SES
-   * Returns verification token that user needs to add to DNS
-   */
   async startDomainVerification(domain: string): Promise<SESVerificationResult> {
     try {
       this.logger.log(`Starting SES domain verification for: ${domain}`);
@@ -81,7 +77,7 @@ export class SESVerificationService {
       );
 
       return {
-        verified: false, // Verification is pending
+        verified: false,
         verificationToken: response.VerificationToken,
         status: "Pending",
       };
@@ -95,9 +91,6 @@ export class SESVerificationService {
     }
   }
 
-  /**
-   * Check domain verification status with AWS SES
-   */
   async checkDomainVerificationStatus(domain: string): Promise<SESVerificationResult> {
     try {
       this.logger.log(`Checking SES domain verification status for: ${domain}`);
@@ -138,14 +131,10 @@ export class SESVerificationService {
     }
   }
 
-  /**
-   * Enable DKIM for a verified domain
-   */
   async enableDKIM(domain: string): Promise<SESDKIMResult> {
     try {
       this.logger.log(`Enabling DKIM for domain: ${domain}`);
 
-      // Use VerifyDomainDkimCommand to enable DKIM and get tokens
       const command = new VerifyDomainDkimCommand({
         Domain: domain,
       });
@@ -156,7 +145,7 @@ export class SESVerificationService {
 
       return {
         enabled: true,
-        verified: false, // Will be verified after DNS records are added
+        verified: false,
         dkimTokens: response.DkimTokens,
       };
     } catch (error) {
@@ -169,9 +158,6 @@ export class SESVerificationService {
     }
   }
 
-  /**
-   * Check DKIM status for a domain
-   */
   async checkDKIMStatus(domain: string): Promise<SESDKIMResult> {
     try {
       this.logger.log(`Checking DKIM status for domain: ${domain}`);
@@ -206,9 +192,6 @@ export class SESVerificationService {
     }
   }
 
-  /**
-   * Verify domain DKIM by checking DNS records
-   */
   async verifyDomainDKIM(domain: string): Promise<SESDKIMResult> {
     try {
       this.logger.log(`Verifying DKIM for domain: ${domain}`);
@@ -225,7 +208,7 @@ export class SESVerificationService {
 
       return {
         enabled: true,
-        verified: false, // Verification is pending
+        verified: false,
         dkimTokens: response.DkimTokens,
       };
     } catch (error) {
@@ -238,9 +221,6 @@ export class SESVerificationService {
     }
   }
 
-  /**
-   * Get all verified identities (domains and email addresses)
-   */
   async getVerifiedIdentities(): Promise<SESIdentityInfo[]> {
     try {
       this.logger.log("Retrieving all SES verified identities");
@@ -252,14 +232,12 @@ export class SESVerificationService {
         return [];
       }
 
-      // Get verification attributes for all identities
       const verificationCommand = new GetIdentityVerificationAttributesCommand({
         Identities: listResponse.Identities,
       });
 
       const verificationResponse = await this.sesClient.send(verificationCommand);
 
-      // Get DKIM attributes for all identities
       const dkimCommand = new GetIdentityDkimAttributesCommand({
         Identities: listResponse.Identities,
       });
@@ -288,9 +266,6 @@ export class SESVerificationService {
     }
   }
 
-  /**
-   * Remove domain from SES (cleanup)
-   */
   async removeDomain(domain: string): Promise<boolean> {
     try {
       this.logger.log(`Removing domain from SES: ${domain}`);
@@ -309,9 +284,6 @@ export class SESVerificationService {
     }
   }
 
-  /**
-   * Generate DNS instructions for domain verification
-   */
   generateDomainVerificationInstructions(
     domain: string,
     verificationToken: string,
@@ -337,9 +309,6 @@ export class SESVerificationService {
     };
   }
 
-  /**
-   * Generate DNS instructions for DKIM setup
-   */
   generateDKIMInstructions(
     domain: string,
     dkimTokens: string[],
@@ -365,16 +334,12 @@ export class SESVerificationService {
     };
   }
 
-  /**
-   * Validate that SES is properly configured
-   */
   async validateSESConfiguration(): Promise<{
     configured: boolean;
     region?: string;
     error?: string;
   }> {
     try {
-      // Try to list identities to test SES connectivity
       const command = new ListIdentitiesCommand({});
       await this.sesClient.send(command);
 
@@ -391,9 +356,6 @@ export class SESVerificationService {
     }
   }
 
-  /**
-   * Check if domain can send emails (is verified and not in sandbox)
-   */
   async canSendEmails(domain: string): Promise<{
     canSend: boolean;
     reason?: string;
@@ -409,8 +371,6 @@ export class SESVerificationService {
           verificationStatus: verificationResult.status,
         };
       }
-
-      // Additional checks could be added here for sandbox mode, sending limits, etc.
 
       return {
         canSend: true,

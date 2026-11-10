@@ -1,12 +1,7 @@
 import { Injectable } from "@nestjs/common";
 import { BaseProvider } from "../base/base-provider.abstract";
-import {
-  Channel,
-  ProviderConfig,
-  ProviderHealth,
-  ProviderHealthStatus,
-  ProviderResponse,
-} from "../types";
+import { ProviderConfig, ProviderResponse } from "../types";
+import { NotificationChannel } from "../../common/enums/notification-channel.enum";
 import {
   IWhatsAppProvider,
   WhatsAppConfig,
@@ -74,7 +69,7 @@ export class MetaWhatsAppProvider extends BaseProvider implements IWhatsAppProvi
   private whatsappConfig: WhatsAppConfig;
 
   constructor() {
-    super("meta-whatsapp", "Meta WhatsApp Business", Channel.WHATSAPP);
+    super("meta-whatsapp", "Meta WhatsApp Business", NotificationChannel.WHATSAPP);
   }
 
   async send(payload: WhatsAppPayload): Promise<ProviderResponse> {
@@ -90,10 +85,8 @@ export class MetaWhatsAppProvider extends BaseProvider implements IWhatsAppProvi
       let requestData: MetaWhatsAppRequest;
 
       if (payload.templateName) {
-        // Send template message
         requestData = this.buildTemplateRequest(payload);
       } else {
-        // Send regular message
         requestData = this.buildMessageRequest(payload);
       }
 
@@ -177,11 +170,8 @@ export class MetaWhatsAppProvider extends BaseProvider implements IWhatsAppProvi
       return false;
     }
 
-    // WhatsApp numbers should be in E.164 format without the + sign
-    // or with the + sign (we'll handle both)
     const cleanNumber = number.replace(/^\+/, "");
 
-    // Should be 10-15 digits
     const phoneRegex = /^\d{10,15}$/;
     return phoneRegex.test(cleanNumber);
   }
@@ -218,13 +208,11 @@ export class MetaWhatsAppProvider extends BaseProvider implements IWhatsAppProvi
       return false;
     }
 
-    // Validate language code format (e.g., 'en', 'en_US')
     const languageRegex = /^[a-z]{2}(_[A-Z]{2})?$/;
     if (!languageRegex.test(template.language)) {
       return false;
     }
 
-    // Validate components if present
     if (template.components) {
       for (const component of template.components) {
         if (!["header", "body", "footer", "button"].includes(component.type)) {
@@ -261,46 +249,6 @@ export class MetaWhatsAppProvider extends BaseProvider implements IWhatsAppProvi
     return true;
   }
 
-  protected async performHealthCheck(): Promise<ProviderHealthStatus> {
-    if (!this.whatsappConfig.accessToken) {
-      throw new Error("WhatsApp access token not configured");
-    }
-
-    try {
-      // Test connectivity by getting phone number info
-      const url = `${this.baseUrl}/${this.whatsappConfig.apiVersion || "v18.0"}/${this.whatsappConfig.phoneNumberId}`;
-
-      const response = await fetch(url, {
-        headers: {
-          Authorization: `Bearer ${this.whatsappConfig.accessToken}`,
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-      }
-
-      const data = (await response.json()) as {
-        display_phone_number?: string;
-        verified_name?: string;
-      };
-
-      return {
-        status: ProviderHealth.HEALTHY,
-        lastChecked: new Date(),
-        uptime: 100,
-        metadata: {
-          service: "Meta WhatsApp Business",
-          phoneNumber: data.display_phone_number,
-          verifiedName: data.verified_name,
-          apiVersion: this.whatsappConfig.apiVersion || "v18.0",
-        },
-      };
-    } catch (error) {
-      throw new Error(`WhatsApp health check failed: ${error.message}`, { cause: error });
-    }
-  }
-
   protected async onInitialize(): Promise<void> {
     this.whatsappConfig = this.config.credentials as WhatsAppConfig;
     this.logger.log(
@@ -311,7 +259,7 @@ export class MetaWhatsAppProvider extends BaseProvider implements IWhatsAppProvi
   private buildMessageRequest(payload: WhatsAppPayload): MetaWhatsAppRequest {
     const baseRequest: MetaWhatsAppRequest = {
       messaging_product: "whatsapp",
-      to: payload.recipient.replace(/^\+/, ""), // Remove + if present
+      to: payload.recipient.replace(/^\+/, ""),
       type: payload.message.type,
     };
 
@@ -449,9 +397,6 @@ export class MetaWhatsAppProvider extends BaseProvider implements IWhatsAppProvi
     }));
   }
 
-  /**
-   * Get message delivery status
-   */
   async getMessageStatus(messageId: string): Promise<any> {
     if (!this.isInitialized) {
       throw new Error("Provider not initialized");
@@ -477,9 +422,6 @@ export class MetaWhatsAppProvider extends BaseProvider implements IWhatsAppProvi
     }
   }
 
-  /**
-   * Upload media to WhatsApp
-   */
   async uploadMedia(mediaUrl: string, mediaType: string): Promise<string> {
     if (!this.isInitialized) {
       throw new Error("Provider not initialized");
@@ -491,7 +433,7 @@ export class MetaWhatsAppProvider extends BaseProvider implements IWhatsAppProvi
       const formData = new FormData();
       formData.append("messaging_product", "whatsapp");
       formData.append("type", mediaType);
-      formData.append("file", mediaUrl); // In real implementation, this would be a file
+      formData.append("file", mediaUrl);
 
       const response = await fetch(url, {
         method: "POST",

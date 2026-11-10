@@ -25,8 +25,15 @@ describe("ConfigurationWatcherService", () => {
     updatedAt: new Date(),
   } as Configuration;
 
+  let mockQueryBuilder: {
+    where: ReturnType<typeof vi.fn>;
+    andWhere: ReturnType<typeof vi.fn>;
+    setParameter: ReturnType<typeof vi.fn>;
+    getMany: ReturnType<typeof vi.fn>;
+  };
+
   beforeEach(async () => {
-    const mockQueryBuilder = {
+    mockQueryBuilder = {
       where: vi.fn().mockReturnThis(),
       andWhere: vi.fn().mockReturnThis(),
       setParameter: vi.fn().mockReturnThis(),
@@ -36,6 +43,7 @@ describe("ConfigurationWatcherService", () => {
     const mockConfigRepository = {
       createQueryBuilder: vi.fn(() => mockQueryBuilder),
       find: vi.fn(),
+      findOne: vi.fn(),
     };
 
     const mockCacheService = {
@@ -87,7 +95,6 @@ describe("ConfigurationWatcherService", () => {
     eventEmitter = module.get(EventEmitter2);
     configService = module.get(ConfigService);
 
-    // Clear any existing intervals
     await service.onModuleDestroy();
   });
 
@@ -110,14 +117,29 @@ describe("ConfigurationWatcherService", () => {
     });
 
     it("should not start watching when hot reload is disabled", async () => {
-      configService.get.mockImplementation((key: string, defaultValue?: any) => {
-        if (key === "CONFIG_HOT_RELOAD_ENABLED") return false;
-        return defaultValue;
-      });
+      const coldModule: TestingModule = await Test.createTestingModule({
+        providers: [
+          ConfigurationWatcherService,
+          { provide: getRepositoryToken(Configuration), useValue: configRepository },
+          { provide: ConfigurationCacheService, useValue: cacheService },
+          { provide: EventEmitter2, useValue: eventEmitter },
+          {
+            provide: ConfigService,
+            useValue: {
+              get: vi.fn((key: string, defaultValue?: any) => {
+                if (key === "CONFIG_HOT_RELOAD_ENABLED") return false;
+                return defaultValue;
+              }),
+            },
+          },
+        ],
+      }).compile();
 
-      await service.onModuleInit();
+      const coldService = coldModule.get(ConfigurationWatcherService);
 
-      const status = service.getStatus();
+      await coldService.onModuleInit();
+
+      const status = coldService.getStatus();
       expect(status.isWatching).toBe(false);
     });
   });
@@ -137,7 +159,7 @@ describe("ConfigurationWatcherService", () => {
       mockQueryBuilder.getMany.mockResolvedValue([mockConfiguration]);
 
       await service.startWatching();
-      await service.startWatching(); // Second call should be ignored
+      await service.startWatching();
 
       const status = service.getStatus();
       expect(status.isWatching).toBe(true);
@@ -166,7 +188,7 @@ describe("ConfigurationWatcherService", () => {
 
   describe("watchConfiguration", () => {
     it("should add configuration to watch list", async () => {
-      configRepository.find.mockResolvedValue([mockConfiguration]);
+      configRepository.findOne.mockResolvedValue(mockConfiguration);
 
       await service.watchConfiguration("test.key");
 
@@ -205,12 +227,11 @@ describe("ConfigurationWatcherService", () => {
       };
 
       mockQueryBuilder.getMany
-        .mockResolvedValueOnce([mockConfiguration]) // Initial load
-        .mockResolvedValueOnce([updatedConfig]); // Force check
+        .mockResolvedValueOnce([mockConfiguration])
+        .mockResolvedValueOnce([updatedConfig]);
 
       await service.startWatching();
 
-      // Simulate configuration being watched
       (service as any).watchedConfigurations.set("test.key:global:test", mockConfiguration);
 
       const changes = await service.forceCheck();
@@ -229,9 +250,7 @@ describe("ConfigurationWatcherService", () => {
         createdAt: new Date(),
       };
 
-      mockQueryBuilder.getMany
-        .mockResolvedValueOnce([]) // Initial load (empty)
-        .mockResolvedValueOnce([newConfig]); // Force check with new config
+      mockQueryBuilder.getMany.mockResolvedValueOnce([]).mockResolvedValueOnce([newConfig]);
 
       await service.startWatching();
 
@@ -289,7 +308,6 @@ describe("ConfigurationWatcherService", () => {
     });
 
     it("should match specific patterns", () => {
-      // Mock specific patterns
       (service as any).options.watchPatterns = ["app.*", "db.*"];
 
       const shouldWatchApp = (service as any).shouldWatchConfiguration("app.config");

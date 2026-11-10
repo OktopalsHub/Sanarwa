@@ -30,26 +30,20 @@ export class TelnyxVoiceProvider {
     this.connectionId = this.configService.get("TELNYX_CONNECTION_ID") || "";
     this.webhookUrl = this.configService.get("TELNYX_WEBHOOK_URL") || "";
 
-    // Initialize Telnyx client
     this.client = new Telnyx(apiKey);
     this.logger.log("Telnyx Voice Provider initialized");
   }
 
-  /**
-   * Create an outbound call using Telnyx
-   */
   async createCall(phoneNumber: string, message?: string): Promise<TelnyxCallResult> {
     try {
       this.logger.log(`Creating call to ${phoneNumber}`);
 
-      // Create call using Telnyx SDK
       const response = await this.client.calls.create({
         connection_id: this.connectionId,
         to: phoneNumber,
         from: this.fromNumber,
         webhook_url: this.webhookUrl,
         ...(message && {
-          // Store message in custom headers to be used when call is answered
           custom_headers: [
             {
               name: "X-TTS-Message",
@@ -75,9 +69,6 @@ export class TelnyxVoiceProvider {
     }
   }
 
-  /**
-   * End a call using Telnyx
-   */
   async endCall(callControlId: string): Promise<{ success: boolean; error?: string }> {
     try {
       await this.client.callCommands(callControlId).hangup();
@@ -92,14 +83,10 @@ export class TelnyxVoiceProvider {
     }
   }
 
-  /**
-   * Send TTS to an active call using Telnyx
-   */
   async sendTTS(callControlId: string, text: string, voice?: string): Promise<TelnyxTTSResult> {
     try {
       this.logger.log(`Sending TTS to call ${callControlId}: "${text}"`);
 
-      // Use Telnyx SDK speak command
       const response = await this.client.callCommands(callControlId).speak({
         payload: text,
         voice: voice || "Telnyx.Natural.abbie",
@@ -125,9 +112,6 @@ export class TelnyxVoiceProvider {
     }
   }
 
-  /**
-   * Get available voices from Telnyx API
-   */
   async getAvailableVoices(): Promise<{ success: boolean; voices?: any[]; error?: string }> {
     try {
       this.logger.log("Fetching available voices from Telnyx API");
@@ -163,16 +147,10 @@ export class TelnyxVoiceProvider {
     }
   }
 
-  /**
-   * Validate configuration
-   */
   async validateConfig(): Promise<boolean> {
     return !!(this.client && this.fromNumber && this.connectionId);
   }
 
-  /**
-   * Get provider name
-   */
   getProviderName(): string {
     return "telnyx";
   }

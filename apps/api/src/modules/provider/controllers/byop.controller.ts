@@ -223,54 +223,6 @@ export class BYOPController {
     );
   }
 
-  @Get("health/overview")
-  @ApiOperation({ summary: "Get BYOP system health overview" })
-  @ApiResponse({ status: 200, description: "Health overview retrieved successfully" })
-  @ApiResponse({ status: 401, description: "Unauthorized" })
-  @ApiResponse({ status: 403, description: "Forbidden" })
-  async getHealthOverview(@CurrentTenantId() tenantId: string) {
-    // Get all active providers
-    const providers = await this.providerService.findAllConfigs(tenantId, { isActive: true });
-
-    const healthChecks = await Promise.all(
-      providers.configs.map(async (config) => {
-        try {
-          const health = await this.providerService.checkProviderHealth(tenantId, config.id);
-          return {
-            providerId: config.providerId,
-            providerName: config.providerName,
-            channel: config.channel,
-            status: health.status,
-            lastCheck: health.lastCheck,
-            responseTime: health.responseTime,
-          };
-        } catch (error) {
-          return {
-            providerId: config.providerId,
-            providerName: config.providerName,
-            channel: config.channel,
-            status: "unhealthy",
-            error: error.message,
-          };
-        }
-      }),
-    );
-
-    const totalProviders = healthChecks.length;
-    const healthyProviders = healthChecks.filter((h) => h.status === "healthy").length;
-    const unhealthyProviders = healthChecks.filter((h) => h.status === "unhealthy").length;
-
-    return {
-      summary: {
-        totalProviders,
-        healthyProviders,
-        unhealthyProviders,
-        healthPercentage: totalProviders > 0 ? (healthyProviders / totalProviders) * 100 : 0,
-      },
-      providers: healthChecks,
-    };
-  }
-
   @Get("setup-guide/:channel")
   @ApiOperation({ summary: "Get setup guide for a specific channel" })
   @ApiResponse({ status: 200, description: "Setup guide retrieved successfully" })
@@ -336,7 +288,6 @@ export class BYOPController {
           throw new Error(`Template ${providerSetup.templateId} not found`);
         }
 
-        // Validate configuration
         const validation = this.providerTemplateService.validateConfiguration(
           providerSetup.templateId,
           providerSetup.config,
@@ -346,8 +297,7 @@ export class BYOPController {
           throw new Error(`Invalid configuration: ${validation.errors.join(", ")}`);
         }
 
-        // Create provider configuration
-        const providerConfig = await this.providerService.createConfig(tenantId, {
+        const providerConfig = await this.providerService.createConfig({
           projectId: projectId,
           providerId: template.providerId,
           providerName: template.name,

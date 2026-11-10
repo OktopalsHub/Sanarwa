@@ -1,4 +1,5 @@
-import { Tenant, TenantStatus } from "../entities/tenant.entity";
+import { Tenant } from "../entities/tenant.entity";
+import { TenantStatus } from "../../../common/enums";
 import { TenantQuotas } from "../../../common/interfaces";
 
 describe("Tenant Entity", () => {
@@ -8,7 +9,6 @@ describe("Tenant Entity", () => {
     tenant = new Tenant();
     tenant.id = "123e4567-e89b-12d3-a456-426614174000";
     tenant.name = "Test Tenant";
-    // tenant.apiKey = 'api-key-123'; // Removed as apiKey is not a property of Tenant
     tenant.status = TenantStatus.ACTIVE;
     tenant.quotas = {
       notifications: {

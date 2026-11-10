@@ -1,15 +1,9 @@
-/**
- * Tenant Module HTTP Tests
- * Tests tenant management endpoints via HTTP calls
- */
-
 import axios, { AxiosInstance } from "axios";
 
 describe("Tenant Module HTTP Tests", () => {
   const baseURL = "http://localhost:9000/api/v1";
   let api: AxiosInstance;
 
-  // Test data
   const testUser = {
     email: `tenant-test-${Date.now()}@example.com`,
     password: "TestPassword123!",
@@ -35,13 +29,11 @@ describe("Tenant Module HTTP Tests", () => {
     api = axios.create({
       baseURL,
       timeout: 10000,
-      validateStatus: () => true, // Don't throw on HTTP errors
+      validateStatus: () => true,
     });
 
-    // Wait for server to be ready
     await waitForServer();
 
-    // Register test users
     await registerTestUsers();
   });
 
@@ -63,7 +55,6 @@ describe("Tenant Module HTTP Tests", () => {
   }
 
   async function registerTestUsers(): Promise<void> {
-    // Register first user
     const response1 = await api.post("/auth/register", testUser);
     expect(response1.status).toBe(201);
 
@@ -73,7 +64,6 @@ describe("Tenant Module HTTP Tests", () => {
       userId: response1.data.user.id,
     };
 
-    // Register second user
     const response2 = await api.post("/auth/register", testUser2);
     expect(response2.status).toBe(201);
 
@@ -101,7 +91,6 @@ describe("Tenant Module HTTP Tests", () => {
       expect(response.data[0].tenant.name).toContain(testUser.firstName);
       expect(response.data[0].role).toBe("OWNER");
 
-      // Store tenant ID for later tests
       tenantId = response.data[0].tenant.id;
     });
 
@@ -293,9 +282,6 @@ describe("Tenant Module HTTP Tests", () => {
         expect(response.status).toBe(401);
       });
     });
-
-    // Note: Tenant members are added only through the invitation system
-    // Direct member addition is not supported via API endpoints
   });
 
   describe("Tenant Lifecycle Management", () => {
@@ -320,14 +306,12 @@ describe("Tenant Module HTTP Tests", () => {
       });
 
       it("should not allow operations on suspended tenant", async () => {
-        // Try to access tenant resources while suspended
         const response = await api.get(`/tenants/${tenantId}/members`, {
           headers: {
             Authorization: `Bearer ${authTokens.user1.accessToken}`,
           },
         });
 
-        // Should either be forbidden or return limited data
         expect([200, 403]).toContain(response.status);
       });
 
@@ -401,7 +385,6 @@ describe("Tenant Module HTTP Tests", () => {
 
         expect(response.status).toBe(204);
 
-        // Verify tenant is soft deleted
         const getResponse = await api.get(`/tenants/${tenantId}`, {
           headers: {
             Authorization: `Bearer ${authTokens.user1.accessToken}`,
@@ -485,7 +468,6 @@ describe("Tenant Module HTTP Tests", () => {
       let testTenantId: string;
 
       beforeAll(async () => {
-        // Create a new tenant for permanent deletion test
         const newUser = {
           email: `delete-test-${Date.now()}@example.com`,
           password: "TestPassword123!",
@@ -504,7 +486,6 @@ describe("Tenant Module HTTP Tests", () => {
 
         testTenantId = workspacesResponse.data[0].tenant.id;
 
-        // First soft delete it
         await api.delete(`/tenants/${testTenantId}`, {
           headers: {
             Authorization: `Bearer ${registerResponse.data.access_token}`,
@@ -521,7 +502,6 @@ describe("Tenant Module HTTP Tests", () => {
 
         expect(response.status).toBe(204);
 
-        // Verify tenant is permanently deleted
         const getResponse = await api.get(`/tenants/${testTenantId}?includeDeleted=true`, {
           headers: {
             Authorization: `Bearer ${authTokens.user1.accessToken}`,
@@ -547,7 +527,6 @@ describe("Tenant Module HTTP Tests", () => {
     let transferTargetToken: string;
 
     beforeAll(async () => {
-      // Create a user to transfer tenant to
       const transferUser = {
         email: `transfer-target-${Date.now()}@example.com`,
         password: "TestPassword123!",
@@ -650,7 +629,6 @@ describe("Tenant Module HTTP Tests", () => {
         expect(response.status).toBe(200);
         expect(response.data.status).toBe("ACTIVE");
 
-        // Verify ownership changed
         const tenantResponse = await api.get(`/tenants/${tenantId}`, {
           headers: {
             Authorization: `Bearer ${transferTargetToken}`,
@@ -676,7 +654,7 @@ describe("Tenant Module HTTP Tests", () => {
         );
 
         expect(newOwner.role).toBe("OWNER");
-        expect(oldOwner.role).toBe("ADMIN"); // Or whatever role the old owner gets
+        expect(oldOwner.role).toBe("ADMIN");
       });
 
       it("should not accept non-existent transfer", async () => {
@@ -698,7 +676,6 @@ describe("Tenant Module HTTP Tests", () => {
       let declineTestTenantId: string;
 
       beforeAll(async () => {
-        // Create another tenant for decline test
         const declineUser = {
           email: `decline-test-${Date.now()}@example.com`,
           password: "TestPassword123!",
@@ -712,7 +689,6 @@ describe("Tenant Module HTTP Tests", () => {
         });
         declineTestTenantId = workspacesResponse.data[0].tenant.id;
 
-        // Initiate transfer
         await api.post(
           `/tenants/${declineTestTenantId}/transfer`,
           {
@@ -745,14 +721,12 @@ describe("Tenant Module HTTP Tests", () => {
 
     describe("DELETE /tenants/:id/transfer", () => {
       it("should cancel pending transfer", async () => {
-        // This would test canceling a transfer by the current owner
         const response = await api.delete(`/tenants/${tenantId}/transfer`, {
           headers: {
-            Authorization: `Bearer ${transferTargetToken}`, // Now the new owner
+            Authorization: `Bearer ${transferTargetToken}`,
           },
         });
 
-        // Should either succeed or indicate no pending transfer
         expect([200, 204, 404]).toContain(response.status);
       });
     });
@@ -760,18 +734,15 @@ describe("Tenant Module HTTP Tests", () => {
 
   describe("Tenant Authorization & Security", () => {
     it("should not access other tenant resources", async () => {
-      // User 2 should not access User 1's tenant members directly
       const response = await api.get(`/tenants/${tenantId}/members`, {
         headers: {
           Authorization: `Bearer ${authTokens.user2.accessToken}`,
         },
       });
 
-      // This should either be forbidden or only show user2's membership
       expect([200, 403]).toContain(response.status);
 
       if (response.status === 200) {
-        // If allowed, should only see their own membership
         const userMemberships = response.data.data.filter(
           (member: any) => member.user.id === authTokens.user2.userId,
         );
@@ -780,7 +751,6 @@ describe("Tenant Module HTTP Tests", () => {
     });
 
     it("should validate tenant access permissions", async () => {
-      // Test that users can only access tenants they're members of
       const response = await api.get("/tenant-members/user-workspaces", {
         headers: {
           Authorization: `Bearer ${authTokens.user2.accessToken}`,

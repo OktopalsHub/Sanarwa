@@ -26,7 +26,6 @@ import {
   TokenTransaction,
   TokenTransactionType,
 } from "../entities/token-balance.entity";
-import { PolarService } from "./polar.service";
 import { TokenManagementService } from "../../token-management/services/token-management.service";
 
 export interface CreateSubscriptionDto {
@@ -75,77 +74,9 @@ export class BillingService {
     private tokenBalanceRepository: Repository<TokenBalance>,
     @InjectRepository(TokenTransaction)
     private tokenTransactionRepository: Repository<TokenTransaction>,
-    private polarService: PolarService,
     private tokenManagementService: TokenManagementService,
     private configService: ConfigService,
   ) {}
-
-  async createSubscription(dto: CreateSubscriptionDto): Promise<Subscription> {
-    try {
-      let externalCustomerId: string;
-      let externalSubscriptionId: string;
-
-      // Create customer and subscription with the chosen provider
-      if (dto.paymentProvider === PaymentProvider.POLAR) {
-        const customer = await this.polarService.createCustomer({
-          email: dto.customerEmail,
-          name: dto.customerName,
-          metadata: { tenantId: dto.tenantId },
-        });
-        externalCustomerId = customer.id;
-
-        // Get the appropriate price ID for the plan
-        const priceId = await this.getPolarPriceId(dto.plan);
-
-        const subscription = await this.polarService.createSubscription({
-          customer_id: customer.id,
-          price_id: priceId,
-          trial_period_days: dto.trialDays,
-          metadata: { tenantId: dto.tenantId, plan: dto.plan },
-        });
-        externalSubscriptionId = subscription.id;
-      } else {
-        throw new BadRequestException("Only Polar subscriptions are supported");
-      }
-
-      // Create local subscription record
-      const planConfig = this.getPlanConfiguration(dto.plan);
-      const subscription = this.subscriptionRepository.create({
-        tenantId: dto.tenantId,
-        plan: dto.plan,
-        status: SubscriptionStatus.ACTIVE,
-        paymentProvider: dto.paymentProvider,
-        externalSubscriptionId,
-        externalCustomerId,
-        monthlyPrice: planConfig.monthlyPrice,
-        includedTokens: planConfig.includedTokens,
-        overageRate: planConfig.overageRate,
-        currentPeriodStart: new Date(),
-        currentPeriodEnd: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days
-        trialEnd: dto.trialDays
-          ? new Date(Date.now() + dto.trialDays * 24 * 60 * 60 * 1000)
-          : undefined,
-      });
-
-      const savedSubscription = await this.subscriptionRepository.save(subscription);
-
-      // Initialize token balance if plan includes tokens
-      if (planConfig.includedTokens > 0) {
-        await this.tokenManagementService.addTokens(
-          dto.tenantId,
-          planConfig.includedTokens,
-          TokenTransactionType.PURCHASE,
-          "Monthly subscription tokens",
-          { subscriptionId: savedSubscription.id },
-        );
-      }
-
-      return savedSubscription;
-    } catch (error) {
-      this.logger.error("Failed to create subscription:", error);
-      throw new BadRequestException("Failed to create subscription");
-    }
-  }
 
   async purchaseTokens(dto: PurchaseTokensDto): Promise<TokenPurchase> {
     try {
@@ -155,23 +86,8 @@ export class BillingService {
       let paymentIntentId: string;
       let transactionReference: string;
 
-      if (dto.paymentProvider === PaymentProvider.POLAR) {
-        const paymentIntent = await this.polarService.createPaymentIntent({
-          amount: Math.round(totalPrice * 100), // Convert to cents
-          currency: "USD",
-          metadata: {
-            tenantId: dto.tenantId,
-            tokenAmount: dto.tokenAmount,
-            type: dto.type || TokenPurchaseType.MANUAL,
-          },
-        });
-        paymentIntentId = paymentIntent.id;
-        transactionReference = paymentIntent.id;
-      } else {
-        throw new BadRequestException("Use Bachs or Polar checkout for token purchases");
-      }
+      throw new BadRequestException("Use the Bachs checkout flow for token purchases");
 
-      // Create token purchase record
       const tokenPurchase = this.tokenPurchaseRepository.create({
         tenantId: dto.tenantId,
         tokenAmount: dto.tokenAmount,
@@ -189,12 +105,6 @@ export class BillingService {
       this.logger.error("Failed to purchase tokens:", error);
       throw new BadRequestException("Failed to initiate token purchase");
     }
-  }
-
-  async confirmTokenPurchase(_purchaseId: string): Promise<void> {
-    throw new BadRequestException(
-      "Legacy confirmTokenPurchase is disabled; use SubscriptionBillingService",
-    );
   }
 
   private getPlanConfiguration(plan: SubscriptionPlan) {
@@ -225,25 +135,12 @@ export class BillingService {
   }
 
   private getTokenPrice(tokenAmount: number): number {
-    // Tiered pricing - more tokens = lower price per token
     if (tokenAmount >= 100000) return 0.0005;
     if (tokenAmount >= 50000) return 0.0008;
     if (tokenAmount >= 10000) return 0.001;
     return 0.002;
   }
 
-  private async getPolarPriceId(plan: SubscriptionPlan): Promise<string> {
-    // This would typically be stored in configuration or fetched from Polar
-    const priceIds = {
-      [SubscriptionPlan.STARTER]: this.configService.get("POLAR_STARTER_PRICE_ID"),
-      [SubscriptionPlan.PROFESSIONAL]: this.configService.get("POLAR_PROFESSIONAL_PRICE_ID"),
-      [SubscriptionPlan.ENTERPRISE]: this.configService.get("POLAR_ENTERPRISE_PRICE_ID"),
-    };
-
-    return priceIds[plan];
-  }
-
-  // Additional methods for compatibility with existing code
   async getSubscriptionByTenantId(tenantId: string): Promise<Subscription | null> {
     return await this.subscriptionRepository.findOne({
       where: { tenantId, status: SubscriptionStatus.ACTIVE },
@@ -261,9 +158,6 @@ export class BillingService {
     return await this.subscriptionRepository.findOne({ where: { id: subscriptionId } });
   }
 
-  /**
-   * Calculate event-based billing for BYOP usage
-   */
   async calculateEventBilling(
     tenantId: string,
     eventType: string,
@@ -277,8 +171,7 @@ export class BillingService {
     metadata?: any;
   }> {
     try {
-      // For BYOP usage, we charge per event regardless of channels
-      const costPerEvent = 0.01; // $0.01 per event
+      const costPerEvent = 0.01;
       const totalCost = costPerEvent * eventCount;
 
       return {

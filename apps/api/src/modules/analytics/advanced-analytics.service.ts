@@ -4,7 +4,7 @@ import { Repository, Between, MoreThanOrEqual, LessThanOrEqual } from "typeorm";
 import { NotificationLog } from "../notifications/entities/notification-log.entity";
 
 export interface CohortAnalysis {
-  cohort: string; // e.g., "2024-W01", "Jan-2024"
+  cohort: string;
   totalUsers: number;
   activeUsers: number;
   retentionRate: number;
@@ -57,17 +57,13 @@ export class AdvancedAnalyticsService {
     private notificationLogRepository: Repository<NotificationLog>,
   ) {}
 
-  /**
-   * Cohort Analysis - Track user engagement over time
-   */
   async getCohortAnalysis(
     query: AdvancedAnalyticsQuery,
     cohortType: "weekly" | "monthly" = "monthly",
   ): Promise<CohortAnalysis[]> {
-    const startDate = query.startDate || new Date(Date.now() - 90 * 24 * 60 * 60 * 1000); // 90 days ago
+    const startDate = query.startDate || new Date(Date.now() - 90 * 24 * 60 * 60 * 1000);
     const endDate = query.endDate || new Date();
 
-    // Get all notification logs for the period
     const logs = await this.notificationLogRepository.find({
       where: {
         tenantId: query.tenantId,
@@ -76,7 +72,6 @@ export class AdvancedAnalyticsService {
       order: { createdAt: "ASC" },
     });
 
-    // Group by cohort (first activity month/week)
     const cohorts = new Map<
       string,
       {
@@ -103,11 +98,9 @@ export class AdvancedAnalyticsService {
       cohort.totalNotifications++;
     });
 
-    // Calculate retention and engagement metrics
     const result: CohortAnalysis[] = [];
 
     for (const [cohortKey, data] of cohorts) {
-      // Check activity in the last 30 days for retention
       const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
       const recentLogs = logs.filter(
         (log) => log.createdAt >= thirtyDaysAgo && data.users.has(`${log.channel}:${log.to}`),
@@ -129,12 +122,9 @@ export class AdvancedAnalyticsService {
     return result.toSorted((a, b) => b.cohort.localeCompare(a.cohort));
   }
 
-  /**
-   * User Journey Analysis - Track notification sequences
-   */
   async getUserJourney(
     tenantId: string,
-    userIdentifier: string, // email, phone, or device token
+    userIdentifier: string,
     limit: number = 50,
   ): Promise<UserJourneyStep[]> {
     const logs = await this.notificationLogRepository.find({
@@ -165,9 +155,6 @@ export class AdvancedAnalyticsService {
     return journey;
   }
 
-  /**
-   * Optimal Send Time Prediction
-   */
   async getOptimalSendTimes(query: AdvancedAnalyticsQuery): Promise<OptimalSendTime[]> {
     const logs = await this.notificationLogRepository.find({
       where: {
@@ -180,7 +167,6 @@ export class AdvancedAnalyticsService {
       },
     });
 
-    // Analyze performance by hour and day of week
     const performance = new Map<
       string,
       {
@@ -208,55 +194,24 @@ export class AdvancedAnalyticsService {
       const [dayOfWeek, hour] = key.split("-").map(Number);
 
       if (stats.sent >= 10) {
-        // Minimum sample size
         optimalTimes.push({
           hour,
           dayOfWeek,
           deliveryRate: (stats.delivered / stats.sent) * 100,
-          openRate: 0, // Would need open tracking data
-          clickRate: 0, // Would need click tracking data
-          confidence: Math.min(stats.sent / 100, 1) * 100, // Confidence based on sample size
+          openRate: 0,
+          clickRate: 0,
+          confidence: Math.min(stats.sent / 100, 1) * 100,
         });
       }
     }
 
-    return optimalTimes.toSorted((a, b) => b.deliveryRate - a.deliveryRate).slice(0, 10); // Top 10 optimal times
+    return optimalTimes.toSorted((a, b) => b.deliveryRate - a.deliveryRate).slice(0, 10);
   }
 
-  // /**
-  //  * Revenue Attribution Analysis
-  //  */
-  // async getRevenueAttribution(
-  //   query: AdvancedAnalyticsQuery
-  // ): Promise<RevenueAttribution[]> {
-  //   // This would integrate with external revenue data
-  //   // For now, return placeholder structure
-
-  //   const campaigns = await this.campaignRepository.find({
-  //     where: { tenantId: query.tenantId },
-  //     relations: ['analytics'],
-  //   });
-
-  //   const attributions: RevenueAttribution[] = campaigns.map(campaign => ({
-  //     campaignId: campaign.id,
-  //     totalRevenue: 0, // Would come from external system
-  //     attributedRevenue: 0, // Calculated based on attribution model
-  //     notificationsSent: campaign.analytics?.sentCount || campaign.totalSent || 0,
-  //     conversionRate: campaign.analytics?.variantResults?.[0]?.conversionRate || 0,
-  //     averageOrderValue: 0, // Would come from external system
-  //   }));
-
-  //   return attributions;
-  // }
-
-  /**
-   * Predictive Analytics - Churn Risk
-   */
   async getChurnRiskAnalysis(tenantId: string): Promise<any[]> {
     const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
     const sixtyDaysAgo = new Date(Date.now() - 60 * 24 * 60 * 60 * 1000);
 
-    // Get users active in last 60 days
     const recentLogs = await this.notificationLogRepository.find({
       where: {
         tenantId,
@@ -279,8 +234,8 @@ export class AdvancedAnalyticsService {
       const lastActivity = Math.max(...dates.map((d) => d.getTime()));
       const daysSinceLastActivity = (Date.now() - lastActivity) / (24 * 60 * 60 * 1000);
 
-      const activityFrequency = dates.length / 60; // activities per day over 60 days
-      const recencyScore = Math.max(0, 30 - daysSinceLastActivity) / 30; // 0-1 scale
+      const activityFrequency = dates.length / 60;
+      const recencyScore = Math.max(0, 30 - daysSinceLastActivity) / 30;
 
       let riskLevel = "low";
       if (daysSinceLastActivity > 14) riskLevel = "medium";
@@ -300,8 +255,6 @@ export class AdvancedAnalyticsService {
     return churnRisk.toSorted((a, b) => b.daysSinceLastActivity - a.daysSinceLastActivity);
   }
 
-  // Helper methods
-
   private getCohortKey(date: Date, type: "weekly" | "monthly"): string {
     if (type === "weekly") {
       const year = date.getFullYear();
@@ -313,8 +266,6 @@ export class AdvancedAnalyticsService {
   }
 
   private calculateConversionRate(logs: NotificationLog[], users: Set<string>): number {
-    // Simplified conversion calculation
-    // In real implementation, this would track actual conversions
     const convertedUsers = new Set<string>();
 
     logs.forEach((log) => {
@@ -326,12 +277,6 @@ export class AdvancedAnalyticsService {
 
     return users.size > 0 ? (convertedUsers.size / users.size) * 100 : 0;
   }
-
-  // private matchesSegment(log: NotificationLog, segment: Segment): boolean {
-  // Simplified segment matching
-  // In real implementation, this would evaluate segment criteria
-  //   return true; // Placeholder
-  // }
 
   private getChurnAction(riskLevel: string): string {
     switch (riskLevel) {

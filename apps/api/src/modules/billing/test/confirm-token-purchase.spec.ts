@@ -31,9 +31,7 @@ vi.mock("../entities/auto-topup-config.entity", () => ({
   TopupTrigger: { THRESHOLD: "threshold", SCHEDULED: "scheduled", BOTH: "both" },
   ScheduleFrequency: { DAILY: "daily", WEEKLY: "weekly", MONTHLY: "monthly" },
 }));
-vi.mock("../services/polar.service", () => ({ PolarService: class PolarService {} }));
 vi.mock("../services/bachs.service", () => ({ BachsService: class BachsService {} }));
-vi.mock("../services/nomba.service", () => ({ NombaService: class NombaService {} }));
 vi.mock("../services/payment-method.service", () => ({
   PaymentMethodService: class PaymentMethodService {},
 }));
@@ -41,9 +39,8 @@ vi.mock("../../token-management/services/token-management.service", () => ({
   TokenManagementService: class TokenManagementService {},
 }));
 vi.mock("../utils/bachs-webhook.util", () => ({ verifyBachsWebhook: vi.fn() }));
-vi.mock("../utils/nomba-webhook.util", () => ({ verifyNombaWebhook: vi.fn() }));
 vi.mock("../constants/token-packages", () => ({
-  buildNotifiPurchaseReference: (id: string) => `notifi_purchase_${id}`,
+  buildPurchaseReference: (id: string) => `sanarwa_purchase_${id}`,
   packagePriceMinor: () => 0,
   resolvePackage: () => ({ id: "usd-3000", tokens: 3000, price: 1 }),
 }));
@@ -86,10 +83,7 @@ describe("TokenPurchaseService.confirmTokenPurchase", () => {
       {} as never,
       {} as never,
       {} as never,
-      {} as never,
-      {} as never,
       { addTokens } as never,
-      {} as never,
       {} as never,
     );
   });

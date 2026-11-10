@@ -61,9 +61,6 @@ export class SecurityEventService {
     private readonly securityEventRepository: Repository<SecurityEventEntity>,
   ) {}
 
-  /**
-   * Log a security event
-   */
   async logEvent(eventData: CreateSecurityEventDto): Promise<SecurityEventEntity> {
     try {
       const securityEvent = this.securityEventRepository.create({
@@ -73,7 +70,6 @@ export class SecurityEventService {
 
       const savedEvent = await this.securityEventRepository.save(securityEvent);
 
-      // Log high severity events immediately
       if (
         savedEvent.severity === SecurityEventSeverity.HIGH ||
         savedEvent.severity === SecurityEventSeverity.CRITICAL
@@ -96,9 +92,6 @@ export class SecurityEventService {
     }
   }
 
-  /**
-   * Log login success
-   */
   async logLoginSuccess(
     userId: string,
     tenantId: string,
@@ -118,9 +111,6 @@ export class SecurityEventService {
     });
   }
 
-  /**
-   * Log login failure
-   */
   async logLoginFailure(
     email: string,
     tenantId?: string,
@@ -139,9 +129,6 @@ export class SecurityEventService {
     });
   }
 
-  /**
-   * Log unauthorized access attempt
-   */
   async logUnauthorizedAccess(
     resourceType: string,
     resourceId: string,
@@ -165,9 +152,6 @@ export class SecurityEventService {
     });
   }
 
-  /**
-   * Log permission denied
-   */
   async logPermissionDenied(
     userId: string,
     tenantId: string,
@@ -191,9 +175,6 @@ export class SecurityEventService {
     });
   }
 
-  /**
-   * Log suspicious activity
-   */
   async logSuspiciousActivity(
     description: string,
     userId?: string,
@@ -214,9 +195,6 @@ export class SecurityEventService {
     });
   }
 
-  /**
-   * Log rate limit exceeded
-   */
   async logRateLimitExceeded(
     identifier: string,
     limit: number,
@@ -236,9 +214,6 @@ export class SecurityEventService {
     });
   }
 
-  /**
-   * Log account locked
-   */
   async logAccountLocked(
     userId: string,
     tenantId: string,
@@ -258,9 +233,6 @@ export class SecurityEventService {
     });
   }
 
-  /**
-   * Log encryption/decryption events
-   */
   async logEncryptionEvent(
     action: "encrypt" | "decrypt",
     resourceType: string,
@@ -285,9 +257,6 @@ export class SecurityEventService {
     });
   }
 
-  /**
-   * Log API key events
-   */
   async logApiKeyEvent(
     action: "created" | "used" | "revoked",
     apiKeyId: string,
@@ -321,9 +290,6 @@ export class SecurityEventService {
     });
   }
 
-  /**
-   * Get security events with filtering
-   */
   async getSecurityEvents(query: SecurityEventQuery): Promise<{
     events: SecurityEventEntity[];
     total: number;
@@ -332,7 +298,6 @@ export class SecurityEventService {
   }> {
     const queryBuilder = this.securityEventRepository.createQueryBuilder("event");
 
-    // Apply filters
     if (query.tenantId) {
       queryBuilder.andWhere("event.tenantId = :tenantId", {
         tenantId: query.tenantId,
@@ -373,10 +338,8 @@ export class SecurityEventService {
       });
     }
 
-    // Count total
     const total = await queryBuilder.getCount();
 
-    // Apply pagination and ordering
     const limit = query.limit || 50;
     const offset = query.offset || 0;
     const page = Math.floor(offset / limit) + 1;
@@ -393,9 +356,6 @@ export class SecurityEventService {
     };
   }
 
-  /**
-   * Get security event statistics
-   */
   async getSecurityEventStats(
     tenantId?: string,
     startDate?: Date,
@@ -417,7 +377,6 @@ export class SecurityEventService {
 
     const events = await queryBuilder.getMany();
 
-    // Calculate statistics
     const totalEvents = events.length;
 
     const eventsBySeverity = events.reduce(
@@ -436,15 +395,12 @@ export class SecurityEventService {
       {} as Record<SecurityEventType, number>,
     );
 
-    // Get recent events (last 10)
     const recentEvents = events
       .toSorted((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
       .slice(0, 10);
 
-    // Count unresolved events
     const unresolvedEvents = events.filter((event) => !event.resolved).length;
 
-    // Events over time (daily)
     const eventsOverTime = events.reduce(
       (acc, event) => {
         const date = event.createdAt.toISOString().split("T")[0];
@@ -477,9 +433,6 @@ export class SecurityEventService {
     };
   }
 
-  /**
-   * Resolve security event
-   */
   async resolveEvent(
     eventId: string,
     resolvedBy: string,
@@ -501,9 +454,6 @@ export class SecurityEventService {
     return this.securityEventRepository.save(event);
   }
 
-  /**
-   * Get unresolved high-severity events
-   */
   async getUnresolvedHighSeverityEvents(tenantId?: string): Promise<SecurityEventEntity[]> {
     const queryBuilder = this.securityEventRepository.createQueryBuilder("event");
 
@@ -522,9 +472,6 @@ export class SecurityEventService {
     return queryBuilder.getMany();
   }
 
-  /**
-   * Clean up old security events
-   */
   async cleanupOldEvents(retentionDays: number = 90): Promise<number> {
     const cutoffDate = new Date();
     cutoffDate.setDate(cutoffDate.getDate() - retentionDays);
@@ -539,10 +486,6 @@ export class SecurityEventService {
     this.logger.log(`Cleaned up ${result.affected} old security events`);
     return result.affected || 0;
   }
-
-  /**
-   * Private helper methods
-   */
 
   private determineSeverity(eventType: SecurityEventType): SecurityEventSeverity {
     const severityMap: Record<SecurityEventType, SecurityEventSeverity> = {

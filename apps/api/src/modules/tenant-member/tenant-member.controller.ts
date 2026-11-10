@@ -11,8 +11,8 @@ import {
   UseGuards,
 } from "@nestjs/common";
 import { ApiBearerAuth, ApiOperation, ApiParam, ApiResponse, ApiTags } from "@nestjs/swagger";
-import { TenantMemberGuard } from "src/common/guards";
-import { AuthGuard } from "src/modules/auth/guards/jwt-auth.guard";
+import { TenantMemberGuard } from "../../common/guards";
+import { AuthGuard } from "../../modules/auth/guards/jwt-auth.guard";
 import { UpdateTenantMemberDto } from "../tenant/dto/update-tenant-member.dto";
 import { TenantMemberQueryDto } from "./dto/tenant-member-query.dto";
 import { TenantMemberResponseDto } from "./dto/tenant-member-response.dto";

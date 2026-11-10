@@ -59,9 +59,6 @@ export class AuditLogService {
     private auditLogRepository: Repository<AuditLog>,
   ) {}
 
-  /**
-   * Create a new audit log entry
-   */
   async createAuditLog(data: CreateAuditLogDto): Promise<AuditLog> {
     try {
       const auditLog = this.auditLogRepository.create({
@@ -98,9 +95,6 @@ export class AuditLogService {
     }
   }
 
-  /**
-   * Bulk create audit log entries for better performance
-   */
   async createBulkAuditLogs(data: CreateAuditLogDto[]): Promise<void> {
     try {
       const auditLogs = data.map((item) =>
@@ -139,9 +133,6 @@ export class AuditLogService {
     }
   }
 
-  /**
-   * Query audit logs with filtering and pagination
-   */
   async queryAuditLogs(query: AuditLogQuery): Promise<{
     data: AuditLog[];
     total: number;
@@ -212,9 +203,6 @@ export class AuditLogService {
     }
   }
 
-  /**
-   * Get audit logs for a specific resource
-   */
   async getResourceAuditLogs(
     tenantId: string,
     resourceType: AuditResourceType,
@@ -237,9 +225,6 @@ export class AuditLogService {
     }
   }
 
-  /**
-   * Get audit logs for a specific tenant member
-   */
   async getTenantMemberAuditLogs(
     tenantId: string,
     tenantMemberId: string,
@@ -260,9 +245,6 @@ export class AuditLogService {
     }
   }
 
-  /**
-   * Get audit log statistics
-   */
   async getAuditLogStats(
     tenantId: string,
     startDate?: Date,
@@ -330,9 +312,6 @@ export class AuditLogService {
     }
   }
 
-  /**
-   * Delete old audit logs (for compliance/retention)
-   */
   async deleteOldAuditLogs(olderThanDate: Date): Promise<number> {
     try {
       const result = await this.auditLogRepository.delete({
@@ -347,9 +326,6 @@ export class AuditLogService {
     }
   }
 
-  /**
-   * Export audit logs in specified format
-   */
   async exportAuditLogs(query: AuditLogQuery, format: "json" | "csv" = "json"): Promise<string> {
     try {
       const result = await this.queryAuditLogs({
@@ -397,9 +373,6 @@ export class AuditLogService {
     }
   }
 
-  /**
-   * Get tenant member activity summary
-   */
   async getTenantMemberActivitySummary(
     tenantId: string,
     tenantMemberId: string,
@@ -474,9 +447,6 @@ export class AuditLogService {
     }
   }
 
-  /**
-   * Get audit logs for a specific user
-   */
   async getUserAuditLogs(tenantId: string, userId: string, limit = 100): Promise<AuditLog[]> {
     try {
       return await this.auditLogRepository.find({
@@ -493,9 +463,6 @@ export class AuditLogService {
     }
   }
 
-  /**
-   * Get user activity summary
-   */
   async getUserActivitySummary(userId: string, startDate?: Date, endDate?: Date): Promise<any> {
     try {
       const qb = this.auditLogRepository

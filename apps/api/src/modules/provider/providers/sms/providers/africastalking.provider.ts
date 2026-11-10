@@ -8,8 +8,7 @@ import {
   BulkSMSResponse,
 } from "../sms-provider.interface";
 
-// Import AfricasTalking SDK
-const AfricasTalking = require("africastalking");
+import AfricasTalking from "africastalking";
 
 @Injectable()
 export class AfricasTalkingProvider implements ISMSProvider {
@@ -20,45 +19,44 @@ export class AfricasTalkingProvider implements ISMSProvider {
   private readonly africasTalking: any;
   private readonly sms: any;
 
-  // AfricasTalking pricing per country (approximate, in USD)
   private readonly countryPricing: Record<string, number> = {
-    KE: 0.008, // Kenya
-    UG: 0.012, // Uganda
-    TZ: 0.015, // Tanzania
-    RW: 0.018, // Rwanda
-    NG: 0.02, // Nigeria
-    GH: 0.025, // Ghana
-    ZA: 0.03, // South Africa
-    MW: 0.015, // Malawi
-    ZM: 0.02, // Zambia
-    BW: 0.025, // Botswana
-    ET: 0.02, // Ethiopia
-    SN: 0.03, // Senegal
-    CI: 0.03, // Ivory Coast
-    BF: 0.035, // Burkina Faso
-    ML: 0.035, // Mali
-    NE: 0.035, // Niger
-    TD: 0.04, // Chad
-    CM: 0.025, // Cameroon
-    GA: 0.035, // Gabon
-    CG: 0.04, // Congo
-    CD: 0.04, // Democratic Republic of Congo
-    CF: 0.045, // Central African Republic
-    AO: 0.035, // Angola
-    MZ: 0.03, // Mozambique
-    MG: 0.035, // Madagascar
-    MU: 0.025, // Mauritius
-    SC: 0.04, // Seychelles
-    DJ: 0.04, // Djibouti
-    SO: 0.045, // Somalia
-    SS: 0.05, // South Sudan
-    SD: 0.045, // Sudan
-    EG: 0.03, // Egypt
-    LY: 0.04, // Libya
-    TN: 0.035, // Tunisia
-    DZ: 0.035, // Algeria
-    MA: 0.03, // Morocco
-    "*": 0.04, // Default for other countries
+    KE: 0.008,
+    UG: 0.012,
+    TZ: 0.015,
+    RW: 0.018,
+    NG: 0.02,
+    GH: 0.025,
+    ZA: 0.03,
+    MW: 0.015,
+    ZM: 0.02,
+    BW: 0.025,
+    ET: 0.02,
+    SN: 0.03,
+    CI: 0.03,
+    BF: 0.035,
+    ML: 0.035,
+    NE: 0.035,
+    TD: 0.04,
+    CM: 0.025,
+    GA: 0.035,
+    CG: 0.04,
+    CD: 0.04,
+    CF: 0.045,
+    AO: 0.035,
+    MZ: 0.03,
+    MG: 0.035,
+    MU: 0.025,
+    SC: 0.04,
+    DJ: 0.04,
+    SO: 0.045,
+    SS: 0.05,
+    SD: 0.045,
+    EG: 0.03,
+    LY: 0.04,
+    TN: 0.035,
+    DZ: 0.035,
+    MA: 0.03,
+    "*": 0.04,
   };
 
   constructor(private configService: ConfigService) {
@@ -66,7 +64,6 @@ export class AfricasTalkingProvider implements ISMSProvider {
     this.username = this.configService.get("AFRICASTALKING_USERNAME") || "";
     this.shortCode = this.configService.get("AFRICASTALKING_SHORT_CODE") || "";
 
-    // Initialize AfricasTalking SDK
     if (this.apiKey && this.username) {
       try {
         this.africasTalking = AfricasTalking({
@@ -87,11 +84,10 @@ export class AfricasTalkingProvider implements ISMSProvider {
         throw new Error("AfricasTalking SDK not initialized. Check your API key and username.");
       }
 
-      // Sender ID priority: payload.from > shortCode > username
       const senderId = payload.from || this.shortCode || this.username;
 
       const options = {
-        to: [payload.to], // AfricasTalking expects an array
+        to: [payload.to],
         message: payload.message,
         from: senderId,
       };
@@ -100,7 +96,6 @@ export class AfricasTalkingProvider implements ISMSProvider {
 
       const result = await this.sms.send(options);
 
-      // AfricasTalking returns response with SMSMessageData
       const recipients = result.SMSMessageData?.Recipients || [];
 
       if (recipients.length === 0) {
@@ -115,7 +110,6 @@ export class AfricasTalkingProvider implements ISMSProvider {
 
       this.logger.log(`SMS sent successfully via AfricasTalking: ${recipient.messageId}`);
 
-      // Parse cost from the response
       const cost =
         this.parseCost(recipient.cost) ||
         this.getCostPerMessage(this.extractCountryCode(payload.to));
@@ -145,7 +139,7 @@ export class AfricasTalkingProvider implements ISMSProvider {
       const senderId = payload.from || this.shortCode || this.username;
 
       const options = {
-        to: payload.recipients, // AfricasTalking supports bulk SMS natively
+        to: payload.recipients,
         message: payload.message,
         from: senderId,
       };
@@ -156,12 +150,10 @@ export class AfricasTalkingProvider implements ISMSProvider {
 
       const result = await this.sms.send(options);
 
-      // Process results for each recipient
       const recipients = result.SMSMessageData?.Recipients || [];
       const results: BulkSMSResponse["results"] = [];
       let totalCost = 0;
 
-      // Map results to recipients
       payload.recipients.forEach((recipient, index) => {
         const recipientResult = recipients.find((r) => r.number === recipient) || recipients[index];
 
@@ -185,7 +177,6 @@ export class AfricasTalkingProvider implements ISMSProvider {
             totalCost += cost;
           }
         } else {
-          // No result found for this recipient
           results.push({
             recipient,
             success: false,
@@ -215,7 +206,6 @@ export class AfricasTalkingProvider implements ISMSProvider {
         error.stack,
       );
 
-      // Mark all as failed
       const results = payload.recipients.map((recipient) => ({
         recipient,
         success: false,
@@ -249,30 +239,23 @@ export class AfricasTalkingProvider implements ISMSProvider {
     return this.countryPricing[countryCode] || this.countryPricing["*"];
   }
 
-  /**
-   * Parse cost from AfricasTalking response
-   * Cost comes in format like "KES 1.0000" or "USD 0.05"
-   */
   private parseCost(costString: string): number {
     if (!costString) return 0;
 
     try {
-      // Extract numeric value from cost string
       const match = costString.match(/[\d.]+/);
       if (match) {
         const amount = parseFloat(match[0]);
 
-        // Convert to USD if needed (rough conversion)
         if (costString.includes("KES")) {
-          return amount * 0.0067; // 1 KES ≈ 0.0067 USD
+          return amount * 0.0067;
         } else if (costString.includes("NGN")) {
-          return amount * 0.0013; // 1 NGN ≈ 0.0013 USD
+          return amount * 0.0013;
         } else if (costString.includes("GHS")) {
-          return amount * 0.084; // 1 GHS ≈ 0.084 USD
+          return amount * 0.084;
         } else if (costString.includes("ZAR")) {
-          return amount * 0.055; // 1 ZAR ≈ 0.055 USD
+          return amount * 0.055;
         } else {
-          // Assume USD or return as-is
           return amount;
         }
       }
@@ -283,24 +266,21 @@ export class AfricasTalkingProvider implements ISMSProvider {
     return 0;
   }
 
-  /**
-   * Extract country code from phone number for cost calculation
-   */
   private extractCountryCode(phoneNumber: string): string {
-    if (phoneNumber.startsWith("+254")) return "KE"; // Kenya
-    if (phoneNumber.startsWith("+234")) return "NG"; // Nigeria
-    if (phoneNumber.startsWith("+233")) return "GH"; // Ghana
-    if (phoneNumber.startsWith("+27")) return "ZA"; // South Africa
-    if (phoneNumber.startsWith("+256")) return "UG"; // Uganda
-    if (phoneNumber.startsWith("+255")) return "TZ"; // Tanzania
-    if (phoneNumber.startsWith("+250")) return "RW"; // Rwanda
-    if (phoneNumber.startsWith("+251")) return "ET"; // Ethiopia
-    if (phoneNumber.startsWith("+221")) return "SN"; // Senegal
-    if (phoneNumber.startsWith("+225")) return "CI"; // Ivory Coast
-    if (phoneNumber.startsWith("+226")) return "BF"; // Burkina Faso
-    if (phoneNumber.startsWith("+223")) return "ML"; // Mali
-    if (phoneNumber.startsWith("+229")) return "BJ"; // Benin
-    if (phoneNumber.startsWith("+228")) return "TG"; // Togo
-    return "*"; // Default
+    if (phoneNumber.startsWith("+254")) return "KE";
+    if (phoneNumber.startsWith("+234")) return "NG";
+    if (phoneNumber.startsWith("+233")) return "GH";
+    if (phoneNumber.startsWith("+27")) return "ZA";
+    if (phoneNumber.startsWith("+256")) return "UG";
+    if (phoneNumber.startsWith("+255")) return "TZ";
+    if (phoneNumber.startsWith("+250")) return "RW";
+    if (phoneNumber.startsWith("+251")) return "ET";
+    if (phoneNumber.startsWith("+221")) return "SN";
+    if (phoneNumber.startsWith("+225")) return "CI";
+    if (phoneNumber.startsWith("+226")) return "BF";
+    if (phoneNumber.startsWith("+223")) return "ML";
+    if (phoneNumber.startsWith("+229")) return "BJ";
+    if (phoneNumber.startsWith("+228")) return "TG";
+    return "*";
   }
 }

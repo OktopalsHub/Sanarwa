@@ -1,5 +1,5 @@
 import { NotFoundException } from "@nestjs/common";
-import { BaseRepository } from "../../../database/repositories/base.repository";
+import { BaseRepository } from "../../../common/database/repositories/base.repository";
 import { Brand } from "../entities/brand.entity";
 
 export async function getBrandOrThrow(

@@ -1,354 +1,356 @@
-import { Injectable, Logger, BadRequestException } from "@nestjs/common";
+import { Injectable, Logger } from "@nestjs/common";
 import * as crypto from "crypto";
 
-export interface WebhookValidationConfig {
-  provider: "whatsapp" | "twilio" | "sendgrid" | "mailgun" | "stripe";
-  secret: string;
-  algorithm?: "sha256" | "sha1" | "md5";
+export type WebhookProviderName =
+  | "whatsapp"
+  | "twilio"
+  | "sendgrid"
+  | "mailgun"
+  | "telnyx"
+  | "resend";
+
+export type WebhookRejectionReason =
+  | "secret-not-configured"
+  | "signature-header-missing"
+  | "signature-malformed"
+  | "signature-mismatch"
+  | "timestamp-stale"
+  | "request-url-missing";
+
+export interface WebhookVerificationRequest {
+  provider: WebhookProviderName;
+  secret?: string;
+  publicKey?: string;
+  rawBody: string;
+  headers: Record<string, string | undefined>;
+  url?: string;
 }
 
-export interface WebhookValidationResult {
-  isValid: boolean;
-  error?: string;
-  timestamp?: number;
+export interface WebhookAccepted {
+  readonly kind: "accepted";
+  readonly provider: WebhookProviderName;
 }
+
+export interface WebhookRejected {
+  readonly kind: "rejected";
+  readonly provider: WebhookProviderName;
+  readonly reason: WebhookRejectionReason;
+}
+
+export type WebhookVerification = WebhookAccepted | WebhookRejected;
+
+const TIMESTAMP_TOLERANCE_SECONDS: Record<string, number> = {
+  sendgrid: 300,
+  mailgun: 900,
+  resend: 300,
+};
 
 @Injectable()
 export class WebhookValidatorService {
   private readonly logger = new Logger(WebhookValidatorService.name);
 
-  /**
-   * Validate WhatsApp webhook signature
-   * Uses X-Hub-Signature header with SHA256
-   */
-  validateWhatsAppWebhook(
-    body: string,
-    signature: string,
-    secret: string,
-  ): WebhookValidationResult {
-    try {
-      if (!signature) {
-        return { isValid: false, error: "Missing X-Hub-Signature header" };
-      }
+  verify(request: WebhookVerificationRequest): WebhookVerification {
+    const { provider, secret, headers } = request;
 
-      // WhatsApp format: sha1=<signature>
-      const [algorithm, hash] = signature.split("=");
-
-      if (algorithm !== "sha1") {
-        return { isValid: false, error: `Invalid algorithm: ${algorithm}` };
-      }
-
-      // Calculate HMAC
-      const hmac = crypto.createHmac("sha1", secret).update(body).digest("hex");
-
-      // Constant-time comparison to prevent timing attacks
-      const isValid = this.constantTimeCompare(hash, hmac);
-
-      if (!isValid) {
-        this.logger.warn("WhatsApp webhook signature validation failed");
-        return { isValid: false, error: "Invalid signature" };
-      }
-
-      this.logger.debug("WhatsApp webhook signature validated");
-      return { isValid: true };
-    } catch (error) {
-      this.logger.error("WhatsApp webhook validation error", error);
-      return { isValid: false, error: error.message };
+    if (provider === "telnyx") {
+      return request.publicKey
+        ? this.verifyTelnyx(request, request.publicKey)
+        : this.reject(provider, "secret-not-configured");
     }
-  }
 
-  /**
-   * Validate Twilio webhook signature
-   * Uses X-Twilio-Signature header with SHA1
-   */
-  validateTwilioWebhook(
-    url: string,
-    body: Record<string, any>,
-    signature: string,
-    authToken: string,
-  ): WebhookValidationResult {
-    try {
-      if (!signature) {
-        return { isValid: false, error: "Missing X-Twilio-Signature header" };
-      }
-
-      // Build the data to sign
-      let data = url;
-
-      // Add body parameters in sorted order
-      const keys = Object.keys(body).toSorted();
-      for (const key of keys) {
-        data += key + body[key];
-      }
-
-      // Calculate HMAC
-      const hmac = crypto.createHmac("sha1", authToken).update(data).digest("base64");
-
-      // Constant-time comparison
-      const isValid = this.constantTimeCompare(signature, hmac);
-
-      if (!isValid) {
-        this.logger.warn("Twilio webhook signature validation failed");
-        return { isValid: false, error: "Invalid signature" };
-      }
-
-      this.logger.debug("Twilio webhook signature validated");
-      return { isValid: true };
-    } catch (error) {
-      this.logger.error("Twilio webhook validation error", error);
-      return { isValid: false, error: error.message };
+    if (provider === "sendgrid") {
+      return request.publicKey
+        ? this.verifySendGrid(request, request.publicKey, headers)
+        : this.reject(provider, "secret-not-configured");
     }
-  }
 
-  /**
-   * Validate SendGrid webhook signature
-   * Uses X-Twilio-Email-Event-Webhook-Signature header with SHA256
-   */
-  validateSendGridWebhook(
-    body: string,
-    signature: string,
-    timestamp: string,
-    secret: string,
-  ): WebhookValidationResult {
-    try {
-      if (!signature || !timestamp) {
-        return {
-          isValid: false,
-          error: "Missing signature or timestamp header",
-        };
-      }
-
-      // Check timestamp is recent (within 5 minutes)
-      const webhookTimestamp = parseInt(timestamp, 10);
-      const currentTimestamp = Math.floor(Date.now() / 1000);
-      const timeDiff = Math.abs(currentTimestamp - webhookTimestamp);
-
-      if (timeDiff > 300) {
-        // 5 minutes
-        return {
-          isValid: false,
-          error: "Webhook timestamp too old",
-          timestamp: webhookTimestamp,
-        };
-      }
-
-      // Build signed content
-      const signedContent = `${timestamp}${body}`;
-
-      // Calculate HMAC
-      const hmac = crypto.createHmac("sha256", secret).update(signedContent).digest("base64");
-
-      // Constant-time comparison
-      const isValid = this.constantTimeCompare(signature, hmac);
-
-      if (!isValid) {
-        this.logger.warn("SendGrid webhook signature validation failed");
-        return { isValid: false, error: "Invalid signature" };
-      }
-
-      this.logger.debug("SendGrid webhook signature validated");
-      return { isValid: true };
-    } catch (error) {
-      this.logger.error("SendGrid webhook validation error", error);
-      return { isValid: false, error: error.message };
+    if (!secret) {
+      this.logger.error(`${provider} webhook secret is not configured; rejecting`);
+      return this.reject(provider, "secret-not-configured");
     }
-  }
 
-  /**
-   * Validate Mailgun webhook signature
-   * Uses X-Mailgun-Signature header with SHA256
-   */
-  validateMailgunWebhook(
-    timestamp: string,
-    token: string,
-    signature: string,
-    secret: string,
-  ): WebhookValidationResult {
-    try {
-      if (!signature || !timestamp || !token) {
-        return {
-          isValid: false,
-          error: "Missing signature, timestamp, or token",
-        };
-      }
-
-      // Check timestamp is recent (within 15 minutes)
-      const webhookTimestamp = parseInt(timestamp, 10);
-      const currentTimestamp = Math.floor(Date.now() / 1000);
-      const timeDiff = Math.abs(currentTimestamp - webhookTimestamp);
-
-      if (timeDiff > 900) {
-        // 15 minutes
-        return {
-          isValid: false,
-          error: "Webhook timestamp too old",
-          timestamp: webhookTimestamp,
-        };
-      }
-
-      // Build signed content
-      const signedContent = `${timestamp}${token}`;
-
-      // Calculate HMAC
-      const hmac = crypto.createHmac("sha256", secret).update(signedContent).digest("hex");
-
-      // Constant-time comparison
-      const isValid = this.constantTimeCompare(signature, hmac);
-
-      if (!isValid) {
-        this.logger.warn("Mailgun webhook signature validation failed");
-        return { isValid: false, error: "Invalid signature" };
-      }
-
-      this.logger.debug("Mailgun webhook signature validated");
-      return { isValid: true };
-    } catch (error) {
-      this.logger.error("Mailgun webhook validation error", error);
-      return { isValid: false, error: error.message };
-    }
-  }
-
-  /**
-   * Validate Stripe webhook signature
-   * Uses X-Stripe-Signature header with SHA256
-   */
-  validateStripeWebhook(body: string, signature: string, secret: string): WebhookValidationResult {
-    try {
-      if (!signature) {
-        return { isValid: false, error: "Missing X-Stripe-Signature header" };
-      }
-
-      // Parse Stripe signature format: t=<timestamp>,v1=<signature>
-      const parts = signature.split(",");
-      let timestamp = "";
-      let hash = "";
-
-      for (const part of parts) {
-        const [key, value] = part.split("=");
-        if (key === "t") timestamp = value;
-        if (key === "v1") hash = value;
-      }
-
-      if (!timestamp || !hash) {
-        return { isValid: false, error: "Invalid signature format" };
-      }
-
-      // Check timestamp is recent (within 5 minutes)
-      const webhookTimestamp = parseInt(timestamp, 10);
-      const currentTimestamp = Math.floor(Date.now() / 1000);
-      const timeDiff = Math.abs(currentTimestamp - webhookTimestamp);
-
-      if (timeDiff > 300) {
-        return {
-          isValid: false,
-          error: "Webhook timestamp too old",
-          timestamp: webhookTimestamp,
-        };
-      }
-
-      // Build signed content
-      const signedContent = `${timestamp}.${body}`;
-
-      // Calculate HMAC
-      const hmac = crypto.createHmac("sha256", secret).update(signedContent).digest("hex");
-
-      // Constant-time comparison
-      const isValid = this.constantTimeCompare(hash, hmac);
-
-      if (!isValid) {
-        this.logger.warn("Stripe webhook signature validation failed");
-        return { isValid: false, error: "Invalid signature" };
-      }
-
-      this.logger.debug("Stripe webhook signature validated");
-      return { isValid: true };
-    } catch (error) {
-      this.logger.error("Stripe webhook validation error", error);
-      return { isValid: false, error: error.message };
-    }
-  }
-
-  /**
-   * Generic webhook validation
-   */
-  validateWebhook(
-    config: WebhookValidationConfig,
-    body: string,
-    headers: Record<string, string>,
-  ): WebhookValidationResult {
-    switch (config.provider) {
+    switch (provider) {
       case "whatsapp":
-        return this.validateWhatsAppWebhook(body, headers["x-hub-signature"], config.secret);
-
+        return this.verifyWhatsApp(request, secret);
       case "twilio":
-        return this.validateTwilioWebhook(
-          headers["x-twilio-webhook-url"],
-          JSON.parse(body),
-          headers["x-twilio-signature"],
-          config.secret,
-        );
-
-      case "sendgrid":
-        return this.validateSendGridWebhook(
-          body,
-          headers["x-twilio-email-event-webhook-signature"],
-          headers["x-twilio-email-event-webhook-timestamp"],
-          config.secret,
-        );
-
+        return this.verifyTwilio(request, secret);
+      case "resend":
+        return this.verifyResend(request, secret, headers);
       case "mailgun":
-        return this.validateMailgunWebhook(
-          headers["x-mailgun-timestamp"],
-          headers["x-mailgun-token"],
-          headers["x-mailgun-signature"],
-          config.secret,
-        );
-
-      case "stripe":
-        return this.validateStripeWebhook(body, headers["x-stripe-signature"], config.secret);
-
+        return this.verifyMailgun(request, secret, headers);
       default:
-        return { isValid: false, error: `Unknown provider: ${config.provider}` };
+        return this.reject(provider, "signature-malformed");
     }
   }
 
-  /**
-   * Constant-time string comparison to prevent timing attacks
-   */
-  private constantTimeCompare(a: string, b: string): boolean {
-    if (a.length !== b.length) {
+  private verifyTelnyx(
+    request: WebhookVerificationRequest,
+    publicKey: string,
+  ): WebhookVerification {
+    const signature = request.headers["telnyx-signature-ed25519"];
+    const timestamp = request.headers["telnyx-timestamp"];
+
+    if (!signature || !timestamp) {
+      return this.reject("telnyx", "signature-header-missing");
+    }
+
+    const staleness = this.timestampAge(timestamp);
+    if (staleness === null) {
+      return this.reject("telnyx", "signature-malformed");
+    }
+
+    try {
+      const key = crypto.createPublicKey(publicKey);
+      const signedPayload = Buffer.from(`${timestamp}|${request.rawBody}`, "utf8");
+      const presented = Buffer.from(signature, "base64");
+
+      const verified = crypto.verify(null, signedPayload, key, presented);
+
+      if (!verified) {
+        this.logger.warn("telnyx webhook signature mismatch");
+        return this.reject("telnyx", "signature-mismatch");
+      }
+
+      this.logger.debug("telnyx webhook signature verified");
+      return { kind: "accepted", provider: "telnyx" };
+    } catch (error) {
+      this.logger.warn(`telnyx webhook signature could not be verified: ${error.message}`);
+      return this.reject("telnyx", "signature-malformed");
+    }
+  }
+
+  private verifyWhatsApp(request: WebhookVerificationRequest, secret: string): WebhookVerification {
+    const presented = request.headers["x-hub-signature-256"];
+
+    if (!presented) {
+      return this.reject("whatsapp", "signature-header-missing");
+    }
+
+    return this.verifyHmac({
+      provider: "whatsapp",
+      secret,
+      rawBody: request.rawBody,
+      presented,
+      prefix: "sha256",
+    });
+  }
+
+  private verifyTwilio(
+    request: WebhookVerificationRequest,
+    authToken: string,
+  ): WebhookVerification {
+    const presented = request.headers["x-twilio-signature"];
+    if (!presented) {
+      return this.reject("twilio", "signature-header-missing");
+    }
+
+    if (!request.url) {
+      return this.reject("twilio", "request-url-missing");
+    }
+
+    return this.verifyHmac({
+      provider: "twilio",
+      secret: authToken,
+      rawBody: `${request.url}${request.rawBody}`,
+      presented,
+      algorithm: "sha1",
+      encoding: "base64",
+    });
+  }
+
+  private verifySendGrid(
+    request: WebhookVerificationRequest,
+    publicKey: string,
+    headers: Record<string, string | undefined>,
+  ): WebhookVerification {
+    const presented = headers["x-twilio-email-event-webhook-signature"];
+    const timestamp = headers["x-twilio-email-event-webhook-timestamp"];
+
+    if (!presented || !timestamp) {
+      return this.reject("sendgrid", "signature-header-missing");
+    }
+
+    const staleness = this.timestampAge(timestamp);
+    if (staleness === null) {
+      return this.reject("sendgrid", "signature-malformed");
+    }
+
+    if (staleness > TIMESTAMP_TOLERANCE_SECONDS.sendgrid) {
+      return this.reject("sendgrid", "timestamp-stale");
+    }
+
+    try {
+      const key = crypto.createPublicKey(publicKey);
+      const signedPayload = Buffer.concat([
+        Buffer.from(timestamp, "utf8"),
+        Buffer.from(request.rawBody, "utf8"),
+      ]);
+      const signature = Buffer.from(presented, "base64");
+
+      if (!crypto.verify("sha256", signedPayload, key, signature)) {
+        this.logger.warn("sendgrid webhook signature mismatch");
+        return this.reject("sendgrid", "signature-mismatch");
+      }
+
+      this.logger.debug("sendgrid webhook signature verified");
+      return { kind: "accepted", provider: "sendgrid" };
+    } catch (error) {
+      this.logger.warn(`sendgrid webhook signature could not be verified: ${error.message}`);
+      return this.reject("sendgrid", "signature-malformed");
+    }
+  }
+
+  private verifyResend(
+    request: WebhookVerificationRequest,
+    secret: string,
+    headers: Record<string, string | undefined>,
+  ): WebhookVerification {
+    const svixId = headers["svix-id"];
+    const timestamp = headers["svix-timestamp"];
+    const presented = headers["svix-signature"];
+
+    if (!svixId || !timestamp || !presented) {
+      return this.reject("resend", "signature-header-missing");
+    }
+
+    const staleness = this.timestampAge(timestamp);
+    if (staleness === null) {
+      return this.reject("resend", "signature-malformed");
+    }
+
+    if (staleness > TIMESTAMP_TOLERANCE_SECONDS.resend) {
+      return this.reject("resend", "timestamp-stale");
+    }
+
+    let key: Buffer;
+    try {
+      const b64 = secret.startsWith("whsec_") ? secret.slice(6) : secret;
+      key = Buffer.from(b64, "base64");
+    } catch {
+      return this.reject("resend", "signature-malformed");
+    }
+
+    const expected = crypto
+      .createHmac("sha256", key)
+      .update(`${svixId}.${timestamp}.${request.rawBody}`, "utf8")
+      .digest("base64");
+
+    const candidates = presented.split(/\s+/).map((entry) => {
+      const comma = entry.indexOf(",");
+      return comma >= 0 ? entry.slice(comma + 1) : entry;
+    });
+
+    if (!candidates.some((candidate) => this.constantTimeEquals(candidate, expected))) {
+      this.logger.warn("resend webhook signature mismatch");
+      return this.reject("resend", "signature-mismatch");
+    }
+
+    this.logger.debug("resend webhook signature verified");
+    return { kind: "accepted", provider: "resend" };
+  }
+
+  private verifyMailgun(
+    request: WebhookVerificationRequest,
+    secret: string,
+    headers: Record<string, string | undefined>,
+  ): WebhookVerification {
+    const presented = headers["x-mailgun-signature"];
+    const timestamp = headers["x-mailgun-timestamp"];
+    const token = headers["x-mailgun-token"];
+
+    if (!presented || !timestamp || !token) {
+      return this.reject("mailgun", "signature-header-missing");
+    }
+
+    const staleness = this.timestampAge(timestamp);
+    if (staleness === null) {
+      return this.reject("mailgun", "signature-malformed");
+    }
+
+    if (staleness > TIMESTAMP_TOLERANCE_SECONDS.mailgun) {
+      return this.reject("mailgun", "timestamp-stale");
+    }
+
+    return this.verifyHmac({
+      provider: "mailgun",
+      secret,
+      rawBody: `${timestamp}${token}`,
+      presented,
+    });
+  }
+
+  private verifyHmac(options: {
+    provider: WebhookProviderName;
+    secret: string;
+    rawBody: string;
+    presented: string;
+    algorithm?: "sha1" | "sha256";
+    prefix?: "sha1" | "sha256";
+    encoding?: "hex" | "base64";
+  }): WebhookVerification {
+    const {
+      provider,
+      secret,
+      rawBody,
+      presented,
+      prefix,
+      encoding = "hex",
+      algorithm = "sha256",
+    } = options;
+
+    let declaredAlgorithm = algorithm;
+    let presentedSignature = presented;
+
+    if (prefix) {
+      const [fromHeader, ...rest] = presented.split("=");
+      if (rest.length === 0) {
+        return this.reject(provider, "signature-malformed");
+      }
+      if (fromHeader !== prefix) {
+        this.logger.warn(
+          `${provider} webhook presented unexpected signature algorithm: ${fromHeader}`,
+        );
+        return this.reject(provider, "signature-malformed");
+      }
+      declaredAlgorithm = prefix;
+      presentedSignature = rest.join("=");
+    }
+
+    const digest = crypto
+      .createHmac(declaredAlgorithm, secret)
+      .update(rawBody, "utf8")
+      .digest(encoding);
+
+    if (!this.constantTimeEquals(presentedSignature, digest)) {
+      this.logger.warn(`${provider} webhook signature mismatch`);
+      return this.reject(provider, "signature-mismatch");
+    }
+
+    this.logger.debug(`${provider} webhook signature verified`);
+    return { kind: "accepted", provider };
+  }
+
+  private timestampAge(timestamp: string): number | null {
+    const presented = Number.parseInt(timestamp, 10);
+    if (!Number.isFinite(presented)) {
+      return null;
+    }
+    return Math.abs(Math.floor(Date.now() / 1000) - presented);
+  }
+
+  private constantTimeEquals(presented: string, expected: string): boolean {
+    if (presented.length !== expected.length) {
       return false;
     }
 
-    let result = 0;
-    for (let i = 0; i < a.length; i++) {
-      result |= a.charCodeAt(i) ^ b.charCodeAt(i);
+    let mismatch = 0;
+    for (let i = 0; i < presented.length; i++) {
+      mismatch |= presented.charCodeAt(i) ^ expected.charCodeAt(i);
     }
-
-    return result === 0;
+    return mismatch === 0;
   }
 
-  /**
-   * Generate webhook signature for testing
-   */
-  generateSignature(provider: string, body: string, secret: string): string {
-    switch (provider) {
-      case "whatsapp":
-        return "sha1=" + crypto.createHmac("sha1", secret).update(body).digest("hex");
-
-      case "sendgrid":
-        const timestamp = Math.floor(Date.now() / 1000);
-        const signedContent = `${timestamp}${body}`;
-        return crypto.createHmac("sha256", secret).update(signedContent).digest("base64");
-
-      case "mailgun":
-        const token = crypto.randomBytes(16).toString("hex");
-        const mailgunTimestamp = Math.floor(Date.now() / 1000);
-        const mailgunSignedContent = `${mailgunTimestamp}${token}`;
-        return crypto.createHmac("sha256", secret).update(mailgunSignedContent).digest("hex");
-
-      default:
-        throw new Error(`Unsupported provider: ${provider}`);
-    }
+  private reject(provider: WebhookProviderName, reason: WebhookRejectionReason): WebhookRejected {
+    return { kind: "rejected", provider, reason };
   }
 }

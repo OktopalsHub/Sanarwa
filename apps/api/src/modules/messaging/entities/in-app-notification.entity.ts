@@ -101,12 +101,21 @@ export class InAppNotification {
   @Column({ type: "timestamp", nullable: true, name: "expires_at" })
   expiresAt?: Date;
 
-  // World-class Novu parity fields
   @Column({ type: "uuid", nullable: true, name: "transaction_id" })
   transactionId?: string;
 
   @Column({ type: "varchar", default: "default", name: "feed_id" })
   feedId: string;
+
+  @Column({ type: "varchar", default: "in_app" })
+  channel: string;
+
+  @Column({ type: "varchar", length: 255, nullable: true, name: "message_id" })
+  @Index()
+  messageId?: string;
+
+  @Column({ type: "uuid", nullable: true, name: "delivery_id" })
+  deliveryId?: string;
 
   @Column({ type: "boolean", default: false })
   seen: boolean;

@@ -8,7 +8,7 @@ import {
 } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { SkipThrottle } from "@nestjs/throttler";
-import { Public } from "src/modules/auth/decorators/public.decorator";
+import { Public } from "../../modules/auth/decorators/public.decorator";
 import { MetricsService } from "./metrics.service";
 
 @Controller("metrics")

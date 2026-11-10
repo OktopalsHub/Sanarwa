@@ -1,8 +1,3 @@
-/**
- * Tenant Management Tests
- * Tests tenant creation, member management, and workspace functionality
- */
-
 import { describe, it, expect, beforeAll } from "vitest";
 import axios, { AxiosInstance } from "axios";
 
@@ -10,7 +5,6 @@ describe("Tenant Management Tests", () => {
   const baseURL = "http://localhost:9000/api/v1";
   let api: AxiosInstance;
 
-  // Test data
   const timestamp = Date.now();
   const testUser = {
     email: `tenant-test-${timestamp}@example.com`,
@@ -38,7 +32,7 @@ describe("Tenant Management Tests", () => {
     api = axios.create({
       baseURL,
       timeout: 15000,
-      validateStatus: () => true, // Don't throw on HTTP errors
+      validateStatus: () => true,
     });
 
     await waitForServer();
@@ -56,7 +50,7 @@ describe("Tenant Management Tests", () => {
         }
       } catch (error) {
         if (i === maxRetries - 1) {
-          throw new Error("Server not ready. Please start with: npm run start:dev");
+          throw new Error("Server not ready. Please start with: pnpm dev");
         }
         await new Promise((resolve) => setTimeout(resolve, 1000));
       }
@@ -64,7 +58,6 @@ describe("Tenant Management Tests", () => {
   }
 
   async function setupTestData(): Promise<void> {
-    // Register first user (will be tenant owner)
     const response1 = await api.post("/auth/signup", testUser);
     expect(response1.status).toBe(201);
 
@@ -74,7 +67,6 @@ describe("Tenant Management Tests", () => {
       userId: response1.data.user.id,
     };
 
-    // Register second user
     const response2 = await api.post("/auth/signup", testUser2);
     expect(response2.status).toBe(201);
 
@@ -84,7 +76,6 @@ describe("Tenant Management Tests", () => {
       userId: response2.data.user.id,
     };
 
-    // Get tenant ID from user1's workspaces
     const workspacesResponse = await api.get("/tenant-members/user-workspaces", {
       headers: {
         Authorization: `Bearer ${authTokens.user1.accessToken}`,
@@ -102,7 +93,6 @@ describe("Tenant Management Tests", () => {
 
   describe("🏢 Tenant Creation & Management", () => {
     it("should automatically create tenant on user registration", async () => {
-      // Tenant should be created automatically when user registers
       const response = await api.get("/tenant-members/user-workspaces", {
         headers: {
           Authorization: `Bearer ${authTokens.user1.accessToken}`,
@@ -180,7 +170,6 @@ describe("Tenant Management Tests", () => {
       });
 
       if (response.status === 200) {
-        // Handle different possible response structures
         if (response.data.data) {
           expect(response.data).toHaveProperty("data");
           expect(response.data).toHaveProperty("pagination");
@@ -188,7 +177,6 @@ describe("Tenant Management Tests", () => {
         } else if (Array.isArray(response.data)) {
           expect(Array.isArray(response.data)).toBe(true);
         } else {
-          // Handle other response structures
           expect(response.data).toBeTruthy();
         }
 
@@ -207,7 +195,6 @@ describe("Tenant Management Tests", () => {
       });
 
       if (response.status === 200) {
-        // Handle different possible response structures
         if (response.data.data) {
           expect(response.data).toHaveProperty("data");
           expect(Array.isArray(response.data.data)).toBe(true);
@@ -232,7 +219,6 @@ describe("Tenant Management Tests", () => {
       });
 
       if (response.status === 200) {
-        // Handle different possible response structures
         if (response.data.pagination) {
           expect(response.data.pagination.limit).toBe(5);
           expect(response.data.pagination.page).toBe(1);
@@ -249,7 +235,6 @@ describe("Tenant Management Tests", () => {
 
   describe("👥 Tenant Member Management", () => {
     beforeAll(async () => {
-      // Get existing members to work with
       const membersResponse = await api.get(`/tenants/${tenantId}/members`, {
         headers: {
           Authorization: `Bearer ${authTokens.user1.accessToken}`,
@@ -398,7 +383,6 @@ describe("Tenant Management Tests", () => {
 
       for (const route of protectedRoutes) {
         const response = await api.get(route);
-        // Endpoints might return 404 if not implemented or 401 if implemented
         expect([401, 404]).toContain(response.status);
       }
 
@@ -440,7 +424,6 @@ describe("Tenant Management Tests", () => {
         },
       });
 
-      // User2 might not have access to manage members in user1's tenant
       expect([200, 403, 404]).toContain(response.status);
       console.log("✅ Tenant member access validation working");
     });
@@ -526,7 +509,6 @@ describe("Tenant Management Tests", () => {
       console.log("🏢 Tenant Management System Validated!");
       console.log("=".repeat(50));
 
-      // Final validation
       expect(authTokens.user1.accessToken).toBeTruthy();
       expect(authTokens.user2.accessToken).toBeTruthy();
       expect(tenantId).toBeTruthy();

@@ -18,9 +18,9 @@ export interface ConfigurationChangeEvent {
 }
 
 export interface WatchOptions {
-  pollInterval?: number; // Polling interval in milliseconds
+  pollInterval?: number;
   enableHotReload?: boolean;
-  watchPatterns?: string[]; // Key patterns to watch
+  watchPatterns?: string[];
 }
 
 @Injectable()
@@ -41,7 +41,7 @@ export class ConfigurationWatcherService implements OnModuleInit, OnModuleDestro
     private readonly configService: ConfigService,
   ) {
     this.options = {
-      pollInterval: this.configService.get<number>("CONFIG_WATCH_INTERVAL", 30000), // 30 seconds
+      pollInterval: this.configService.get<number>("CONFIG_WATCH_INTERVAL", 30000),
       enableHotReload: this.configService.get<boolean>("CONFIG_HOT_RELOAD_ENABLED", true),
       watchPatterns: this.configService.get<string>("CONFIG_WATCH_PATTERNS", "*").split(","),
     };
@@ -57,9 +57,6 @@ export class ConfigurationWatcherService implements OnModuleInit, OnModuleDestro
     await this.stopWatching();
   }
 
-  /**
-   * Start watching for configuration changes
-   */
   async startWatching(): Promise<void> {
     if (this.isWatching) {
       this.logger.warn("Configuration watcher is already running");
@@ -69,18 +66,13 @@ export class ConfigurationWatcherService implements OnModuleInit, OnModuleDestro
     this.logger.log("Starting configuration watcher");
     this.isWatching = true;
 
-    // Load initial configurations
     await this.loadWatchedConfigurations();
 
-    // Start polling for changes
     this.watchInterval = setInterval(() => this.checkForChanges(), this.options.pollInterval);
 
     this.logger.log(`Configuration watcher started with ${this.options.pollInterval}ms interval`);
   }
 
-  /**
-   * Stop watching for configuration changes
-   */
   async stopWatching(): Promise<void> {
     if (!this.isWatching) {
       return;
@@ -98,9 +90,6 @@ export class ConfigurationWatcherService implements OnModuleInit, OnModuleDestro
     this.logger.log("Configuration watcher stopped");
   }
 
-  /**
-   * Add configuration key to watch list
-   */
   async watchConfiguration(
     key: string,
     scope: ConfigurationScope = ConfigurationScope.GLOBAL,
@@ -128,9 +117,6 @@ export class ConfigurationWatcherService implements OnModuleInit, OnModuleDestro
     }
   }
 
-  /**
-   * Remove configuration from watch list
-   */
   unwatchConfiguration(
     key: string,
     scope: ConfigurationScope = ConfigurationScope.GLOBAL,
@@ -142,30 +128,20 @@ export class ConfigurationWatcherService implements OnModuleInit, OnModuleDestro
     this.logger.debug(`Removed configuration from watch list: ${watchKey}`);
   }
 
-  /**
-   * Get list of watched configurations
-   */
   getWatchedConfigurations(): string[] {
     return Array.from(this.watchedConfigurations.keys());
   }
 
-  /**
-   * Force check for configuration changes
-   */
   async forceCheck(): Promise<ConfigurationChangeEvent[]> {
     this.logger.debug("Forcing configuration change check");
     return this.checkForChanges();
   }
 
-  /**
-   * Check for configuration changes
-   */
   private async checkForChanges(): Promise<ConfigurationChangeEvent[]> {
     try {
       const changes: ConfigurationChangeEvent[] = [];
       const currentTimestamp = new Date();
 
-      // Get all configurations that might have changed since last check
       const recentConfigurations = await this.configRepository
         .createQueryBuilder("config")
         .where("config.updatedAt > :lastCheck", {
@@ -173,7 +149,6 @@ export class ConfigurationWatcherService implements OnModuleInit, OnModuleDestro
         })
         .getMany();
 
-      // Check for changes in watched configurations
       for (const [watchKey, oldConfig] of this.watchedConfigurations.entries()) {
         const currentConfig = recentConfigurations.find(
           (config) =>
@@ -182,7 +157,6 @@ export class ConfigurationWatcherService implements OnModuleInit, OnModuleDestro
         );
 
         if (currentConfig) {
-          // Configuration was updated
           if (
             currentConfig.value !== oldConfig.value ||
             currentConfig.updatedAt > oldConfig.updatedAt
@@ -201,7 +175,6 @@ export class ConfigurationWatcherService implements OnModuleInit, OnModuleDestro
             changes.push(changeEvent);
             this.watchedConfigurations.set(watchKey, currentConfig);
 
-            // Invalidate cache
             await this.cacheService.invalidate(
               currentConfig.key,
               currentConfig.scope,
@@ -209,14 +182,12 @@ export class ConfigurationWatcherService implements OnModuleInit, OnModuleDestro
               currentConfig.environment,
             );
 
-            // Emit change event
             this.eventEmitter.emit("configuration.changed", changeEvent);
             this.logger.log(`Configuration changed: ${watchKey}`);
           }
         }
       }
 
-      // Check for new configurations matching watch patterns
       for (const config of recentConfigurations) {
         const watchKey = this.buildWatchKey(
           config.key,
@@ -242,7 +213,6 @@ export class ConfigurationWatcherService implements OnModuleInit, OnModuleDestro
           changes.push(changeEvent);
           this.watchedConfigurations.set(watchKey, config);
 
-          // Emit change event
           this.eventEmitter.emit("configuration.created", changeEvent);
           this.logger.log(`New configuration detected: ${watchKey}`);
         }
@@ -256,14 +226,10 @@ export class ConfigurationWatcherService implements OnModuleInit, OnModuleDestro
     }
   }
 
-  /**
-   * Load configurations to watch based on patterns
-   */
   private async loadWatchedConfigurations(): Promise<void> {
     try {
       const queryBuilder = this.configRepository.createQueryBuilder("config");
 
-      // Build query for watch patterns
       if (this.options.watchPatterns && this.options.watchPatterns.length > 0) {
         const conditions = this.options.watchPatterns
           .filter((pattern) => pattern !== "*")
@@ -273,7 +239,6 @@ export class ConfigurationWatcherService implements OnModuleInit, OnModuleDestro
         if (conditions) {
           queryBuilder.where(`(${conditions})`);
 
-          // Add parameters for patterns
           this.options.watchPatterns.forEach((pattern, index) => {
             if (pattern !== "*") {
               queryBuilder.setParameter(`pattern${index}`, pattern.replace("*", "%"));
@@ -301,9 +266,6 @@ export class ConfigurationWatcherService implements OnModuleInit, OnModuleDestro
     }
   }
 
-  /**
-   * Check if a configuration key should be watched based on patterns
-   */
   private shouldWatchConfiguration(key: string): boolean {
     if (!this.options.watchPatterns || this.options.watchPatterns.includes("*")) {
       return true;
@@ -312,16 +274,12 @@ export class ConfigurationWatcherService implements OnModuleInit, OnModuleDestro
     return this.options.watchPatterns.some((pattern) => {
       if (pattern === "*") return true;
 
-      // Convert glob pattern to regex
       const regexPattern = pattern.replace(/\*/g, ".*").replace(/\?/g, ".");
 
       return new RegExp(`^${regexPattern}$`).test(key);
     });
   }
 
-  /**
-   * Build watch key from configuration parameters
-   */
   private buildWatchKey(
     key: string,
     scope: ConfigurationScope,
@@ -341,9 +299,6 @@ export class ConfigurationWatcherService implements OnModuleInit, OnModuleDestro
     return parts.join(":");
   }
 
-  /**
-   * Get watcher status and statistics
-   */
   getStatus(): {
     isWatching: boolean;
     watchedCount: number;
@@ -360,14 +315,10 @@ export class ConfigurationWatcherService implements OnModuleInit, OnModuleDestro
     };
   }
 
-  /**
-   * Reload watched configurations
-   */
   async reload(): Promise<void> {
     this.logger.log("Reloading watched configurations");
     await this.loadWatchedConfigurations();
 
-    // Clear cache to force fresh reads
     await this.cacheService.clear();
 
     this.eventEmitter.emit("configuration.reloaded", {

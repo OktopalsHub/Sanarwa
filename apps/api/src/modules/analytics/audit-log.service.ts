@@ -7,9 +7,9 @@ import {
 } from "../messaging/message-delivery.entity";
 import {
   Message as Notification,
-  MessageChannel as NotificationChannel,
   MessageStatus as NotificationStatus,
 } from "../messaging/message.entity";
+import { NotificationChannel } from "../../common/enums/notification-channel.enum";
 
 export enum AuditEventType {
   NOTIFICATION_CREATED = "notification_created",
@@ -54,7 +54,7 @@ export interface AuditQuery {
 @Injectable()
 export class AuditLogService {
   private readonly logger = new Logger(AuditLogService.name);
-  private readonly auditLogs: AuditLogEntry[] = []; // In-memory storage for demo
+  private readonly auditLogs: AuditLogEntry[] = [];
 
   constructor(
     @InjectRepository(Notification)
@@ -63,9 +63,6 @@ export class AuditLogService {
     private readonly deliveryRepository: Repository<NotificationDelivery>,
   ) {}
 
-  /**
-   * Log notification creation
-   */
   async logNotificationCreated(
     notificationId: string,
     tenantId: string,
@@ -90,9 +87,6 @@ export class AuditLogService {
     this.logger.log(`Audit: Notification ${notificationId} created for tenant ${tenantId}`);
   }
 
-  /**
-   * Log notification status change
-   */
   async logNotificationStatusChange(
     notificationId: string,
     oldStatus: NotificationStatus,
@@ -121,9 +115,6 @@ export class AuditLogService {
     );
   }
 
-  /**
-   * Log delivery status change
-   */
   async logDeliveryStatusChange(
     deliveryId: string,
     oldStatus: DeliveryStatus,
@@ -150,9 +141,6 @@ export class AuditLogService {
     );
   }
 
-  /**
-   * Log delivery event (open, click, unsubscribe)
-   */
   async logDeliveryEvent(
     deliveryId: string,
     eventType: "opened" | "clicked" | "unsubscribed",
@@ -175,9 +163,6 @@ export class AuditLogService {
     this.logger.log(`Audit: Delivery event ${eventType} tracked for delivery ${deliveryId}`);
   }
 
-  /**
-   * Log provider failover
-   */
   async logProviderFailover(
     notificationId: string,
     fromProviderId: string,
@@ -208,9 +193,6 @@ export class AuditLogService {
     );
   }
 
-  /**
-   * Log webhook delivery
-   */
   async logWebhookDelivery(
     tenantId: string,
     webhookUrl: string,
@@ -243,9 +225,6 @@ export class AuditLogService {
     );
   }
 
-  /**
-   * Log template rendering
-   */
   async logTemplateRendering(
     templateId: string,
     tenantId: string,
@@ -274,9 +253,6 @@ export class AuditLogService {
     );
   }
 
-  /**
-   * Log bulk operation
-   */
   async logBulkOperation(
     tenantId: string,
     operationType: "send" | "cancel" | "retry",
@@ -306,9 +282,6 @@ export class AuditLogService {
     );
   }
 
-  /**
-   * Get audit logs with filtering and pagination
-   */
   async getAuditLogs(query: AuditQuery): Promise<{
     logs: AuditLogEntry[];
     total: number;
@@ -317,7 +290,6 @@ export class AuditLogService {
   }> {
     let filteredLogs = this.auditLogs.filter((log) => log.tenantId === query.tenantId);
 
-    // Apply filters
     if (query.eventType) {
       filteredLogs = filteredLogs.filter((log) => log.eventType === query.eventType);
     }
@@ -342,10 +314,8 @@ export class AuditLogService {
       filteredLogs = filteredLogs.filter((log) => log.timestamp <= query.endDate!);
     }
 
-    // Sort by timestamp (newest first)
     filteredLogs.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
 
-    // Apply pagination
     const limit = query.limit || 50;
     const offset = query.offset || 0;
     const page = Math.floor(offset / limit) + 1;
@@ -359,14 +329,10 @@ export class AuditLogService {
     };
   }
 
-  /**
-   * Get audit trail for a specific notification
-   */
   async getNotificationAuditTrail(
     notificationId: string,
     tenantId: string,
   ): Promise<AuditLogEntry[]> {
-    // Get notification-related logs
     const notificationLogs = this.auditLogs.filter(
       (log) =>
         log.tenantId === tenantId &&
@@ -374,7 +340,6 @@ export class AuditLogService {
         log.resourceType === "notification",
     );
 
-    // Get delivery-related logs for this notification
     const deliveries = await this.deliveryRepository.find({
       where: { messageId: notificationId },
     });
@@ -387,14 +352,10 @@ export class AuditLogService {
         log.resourceType === "delivery",
     );
 
-    // Combine and sort by timestamp
     const allLogs = [...notificationLogs, ...deliveryLogs];
     return allLogs.toSorted((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
   }
 
-  /**
-   * Get audit statistics
-   */
   async getAuditStatistics(
     tenantId: string,
     startDate?: Date,
@@ -417,7 +378,6 @@ export class AuditLogService {
 
     const totalEvents = logs.length;
 
-    // Count by event type
     const eventsByType = logs.reduce(
       (acc, log) => {
         acc[log.eventType] = (acc[log.eventType] || 0) + 1;
@@ -426,7 +386,6 @@ export class AuditLogService {
       {} as Record<AuditEventType, number>,
     );
 
-    // Count by resource type
     const eventsByResource = logs.reduce(
       (acc, log) => {
         acc[log.resourceType] = (acc[log.resourceType] || 0) + 1;
@@ -435,7 +394,6 @@ export class AuditLogService {
       {} as Record<string, number>,
     );
 
-    // Events over time (daily)
     const eventsOverTime = logs.reduce(
       (acc, log) => {
         const date = log.timestamp.toISOString().split("T")[0];
@@ -460,9 +418,6 @@ export class AuditLogService {
     };
   }
 
-  /**
-   * Export audit logs
-   */
   async exportAuditLogs(query: AuditQuery, format: "json" | "csv" = "json"): Promise<string> {
     const { logs } = await this.getAuditLogs(query);
 
@@ -473,20 +428,14 @@ export class AuditLogService {
     return JSON.stringify(logs, null, 2);
   }
 
-  /**
-   * Private helper methods
-   */
-
   private async createAuditLog(entry: AuditLogEntry): Promise<void> {
     const auditLog: AuditLogEntry = {
       id: this.generateId(),
       ...entry,
     };
 
-    // In a real implementation, this would be stored in a database
     this.auditLogs.push(auditLog);
 
-    // Keep only the last 10000 logs in memory to prevent memory leaks
     if (this.auditLogs.length > 10000) {
       this.auditLogs.splice(0, this.auditLogs.length - 10000);
     }

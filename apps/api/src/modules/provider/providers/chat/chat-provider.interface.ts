@@ -1,11 +1,16 @@
+export interface ChatAttachment {
+  url: string;
+  type: "image" | "file" | "video";
+  filename?: string;
+}
+
 export interface ChatPayload {
   channel: string;
   message: string;
-  attachments?: Array<{
-    url: string;
-    type: "image" | "file" | "video";
-    filename?: string;
-  }>;
+  subject?: string;
+  attachments?: ChatAttachment[];
+  blocks?: unknown[];
+  embeds?: unknown[];
   metadata?: Record<string, any>;
 }
 
@@ -15,10 +20,12 @@ export interface ChatResponse {
   timestamp?: string;
   error?: string;
   provider: string;
+  retryable?: boolean;
+  invalidDestination?: boolean;
 }
 
 export interface IChatProvider {
   sendMessage(payload: ChatPayload): Promise<ChatResponse>;
-  validateConfig(): Promise<boolean>;
+  validateConfig(config?: unknown): Promise<boolean>;
   getProviderName(): string;
 }

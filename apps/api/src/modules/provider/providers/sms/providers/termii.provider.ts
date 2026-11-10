@@ -15,23 +15,22 @@ export class TermiiProvider implements ISMSProvider {
   private readonly senderId: string;
   private readonly apiUrl = "https://v3.api.termii.com/api/sms/send";
 
-  // Termii pricing (focused on African countries, in USD)
   private readonly countryPricing: Record<string, number> = {
-    NG: 0.015, // Nigeria
-    GH: 0.02, // Ghana
-    KE: 0.025, // Kenya
-    ZA: 0.03, // South Africa
-    UG: 0.025, // Uganda
-    TZ: 0.025, // Tanzania
-    RW: 0.03, // Rwanda
-    ET: 0.025, // Ethiopia
-    SN: 0.035, // Senegal
-    CI: 0.035, // Ivory Coast
-    BF: 0.04, // Burkina Faso
-    ML: 0.04, // Mali
-    BJ: 0.035, // Benin
-    TG: 0.035, // Togo
-    "*": 0.05, // Default for other countries
+    NG: 0.015,
+    GH: 0.02,
+    KE: 0.025,
+    ZA: 0.03,
+    UG: 0.025,
+    TZ: 0.025,
+    RW: 0.03,
+    ET: 0.025,
+    SN: 0.035,
+    CI: 0.035,
+    BF: 0.04,
+    ML: 0.04,
+    BJ: 0.035,
+    TG: 0.035,
+    "*": 0.05,
   };
 
   constructor(private configService: ConfigService) {
@@ -41,7 +40,6 @@ export class TermiiProvider implements ISMSProvider {
 
   async sendSMS(payload: SMSPayload): Promise<SMSResponse> {
     try {
-      // Sender ID priority: payload.from > senderId
       const senderId = payload.from || this.senderId;
 
       const termiiPayload = {
@@ -49,7 +47,7 @@ export class TermiiProvider implements ISMSProvider {
         from: senderId,
         sms: payload.message,
         type: "plain",
-        channel: "generic", // SMS only
+        channel: "generic",
         api_key: this.apiKey,
       };
 
@@ -96,7 +94,6 @@ export class TermiiProvider implements ISMSProvider {
       const results: BulkSMSResponse["results"] = [];
       let totalCost = 0;
 
-      // Termii supports bulk SMS with comma-separated recipients
       const termiiPayload = {
         to: payload.recipients.join(","),
         from: senderId,
@@ -122,7 +119,6 @@ export class TermiiProvider implements ISMSProvider {
       };
 
       if (!response.ok || result.code !== "ok") {
-        // If bulk fails, mark all as failed
         payload.recipients.forEach((recipient) => {
           results.push({
             recipient,
@@ -131,7 +127,6 @@ export class TermiiProvider implements ISMSProvider {
           });
         });
       } else {
-        // If bulk succeeds, mark all as successful
         payload.recipients.forEach((recipient) => {
           results.push({
             recipient,
@@ -158,7 +153,6 @@ export class TermiiProvider implements ISMSProvider {
     } catch (error) {
       this.logger.error(`Failed to send bulk SMS via Termii: ${error.message}`, error.stack);
 
-      // Mark all as failed
       const results = payload.recipients.map((recipient) => ({
         recipient,
         success: false,

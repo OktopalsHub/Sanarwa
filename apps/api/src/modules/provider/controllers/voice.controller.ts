@@ -41,12 +41,10 @@ export class VoiceController {
     try {
       this.logger.log(`Creating outbound call to ${request.phoneNumber}`);
 
-      // Validate required fields
       if (!request.phoneNumber || !request.message) {
         throw new HttpException("Phone number and message are required", HttpStatus.BAD_REQUEST);
       }
 
-      // Validate phone number format (basic validation)
       const phoneRegex = /^\+[1-9]\d{1,14}$/;
       if (!phoneRegex.test(request.phoneNumber)) {
         throw new HttpException(
@@ -214,7 +212,6 @@ export class VoiceController {
   @ApiResponse({ status: 200, description: "Voice customization options retrieved" })
   async getVoiceCustomizationOptions() {
     try {
-      // Get customization options supported by Telnyx
       const options = {
         languages: [
           "en-US",
@@ -253,41 +250,6 @@ export class VoiceController {
     }
   }
 
-  @Get("health")
-  @ApiOperation({ summary: "Check voice service health" })
-  @ApiResponse({ status: 200, description: "Voice service health status" })
-  async getHealthStatus() {
-    try {
-      const config = await this.voiceService.validateConfiguration();
-
-      return {
-        success: true,
-        data: {
-          status: config.overall ? "healthy" : "unhealthy",
-          provider: "telnyx",
-          providers: {
-            telnyx: config.telnyx ? "connected" : "disconnected",
-            tts: config.tts ? "connected" : "disconnected",
-          },
-          timestamp: new Date().toISOString(),
-        },
-        message: "Voice service health check completed",
-      };
-    } catch (error) {
-      this.logger.error(`Health check failed: ${error.message}`, error.stack);
-
-      return {
-        success: false,
-        data: {
-          status: "unhealthy",
-          error: error.message,
-          timestamp: new Date().toISOString(),
-        },
-        message: "Voice service health check failed",
-      };
-    }
-  }
-
   @Get("usage/stats")
   @ApiOperation({ summary: "Get voice usage statistics" })
   @ApiResponse({ status: 200, description: "Voice usage stats retrieved" })
@@ -300,7 +262,6 @@ export class VoiceController {
       const startDate = new Date();
       startDate.setDate(startDate.getDate() - daysBack);
 
-      // Get call stats from tracking service
       const stats = await this.voiceService.getCallStats(tenantId, startDate);
 
       return {
@@ -341,7 +302,7 @@ export class VoiceController {
             voice: "Telnyx.Natural.abbie",
             language: "en-US",
           },
-          maxDuration: 120, // 2 minutes for test
+          maxDuration: 120,
           recordCall: false,
         },
         tenantId,

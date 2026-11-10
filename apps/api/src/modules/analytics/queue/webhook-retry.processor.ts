@@ -1,16 +1,20 @@
-import { Process, Processor } from "@nestjs/bull";
-import { Logger } from "@nestjs/common";
-import { Job } from "bull";
+import { Processor, WorkerHost } from "@nestjs/bullmq";
+import { Injectable, Logger } from "@nestjs/common";
+import { Job } from "bullmq";
 import axios, { AxiosResponse } from "axios";
 import { WEBHOOK_RETRY_QUEUE } from "./webhook-queue.constants";
 import { WebhookRetryJob } from "./webhook-queue.service";
 import * as crypto from "crypto";
 
+@Injectable()
 @Processor(WEBHOOK_RETRY_QUEUE)
-export class WebhookRetryProcessor {
+export class WebhookRetryProcessor extends WorkerHost {
   private readonly logger = new Logger(WebhookRetryProcessor.name);
 
-  @Process()
+  async process(job: Job<WebhookRetryJob>, token?: string): Promise<void> {
+    await this.handleWebhookRetry(job);
+  }
+
   async handleWebhookRetry(job: Job<WebhookRetryJob>): Promise<void> {
     const {
       tenantId,
@@ -48,8 +52,7 @@ export class WebhookRetryProcessor {
         `Webhook delivered successfully to ${webhookUrl} (attempt ${attempt}): ${response.status}`,
       );
 
-      // Mark job as completed
-      job.progress(100);
+      await job.updateProgress(100);
     } catch (error) {
       const statusCode = error.response?.status;
       const errorMessage = error.response?.data?.message || error.message;
@@ -58,7 +61,6 @@ export class WebhookRetryProcessor {
         `Webhook attempt ${attempt}/${maxRetries} failed for ${webhookUrl}: ${statusCode} ${errorMessage}`,
       );
 
-      // If this is the last attempt, throw error to mark job as failed
       if (attempt >= maxRetries) {
         this.logger.error(
           `Webhook failed after ${maxRetries} attempts for ${webhookUrl}: ${errorMessage}`,
@@ -68,14 +70,10 @@ export class WebhookRetryProcessor {
         });
       }
 
-      // For non-final attempts, throw to trigger retry with backoff
       throw error;
     }
   }
 
-  /**
-   * Generate HMAC signature for webhook security
-   */
   private generateSignature(payload: any, secret?: string): string {
     if (!secret) {
       return "";

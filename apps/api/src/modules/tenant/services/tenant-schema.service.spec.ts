@@ -41,7 +41,6 @@ describe("TenantSchemaService", () => {
         `CREATE SCHEMA IF NOT EXISTS "${expectedSchemaName}"`,
       );
 
-      // Should create tenant-specific tables
       expect(mockDataSource.query).toHaveBeenCalledWith(
         expect.stringContaining(`CREATE TABLE IF NOT EXISTS "${expectedSchemaName}".`),
       );
@@ -103,9 +102,9 @@ describe("TenantSchemaService", () => {
       const queryFn = vi.fn().mockResolvedValue(queryResult);
 
       mockDataSource.query
-        .mockResolvedValueOnce([{ search_path: originalSearchPath }]) // getCurrentSearchPath
-        .mockResolvedValueOnce([]) // Set tenant search path
-        .mockResolvedValueOnce([]); // Restore search path
+        .mockResolvedValueOnce([{ search_path: originalSearchPath }])
+        .mockResolvedValueOnce([])
+        .mockResolvedValueOnce([]);
 
       const result = await service.executeInTenantContext(tenantId, queryFn);
 
@@ -180,11 +179,11 @@ describe("TenantSchemaService", () => {
 
     it("should return schema statistics", async () => {
       mockDataSource.query
-        .mockResolvedValueOnce([{ count: "5" }]) // table count
-        .mockResolvedValueOnce([{ size: "1024 MB" }]) // schema size
-        .mockResolvedValueOnce([{ tablename: "notifications" }, { tablename: "templates" }]) // table names
-        .mockResolvedValueOnce([{ count: "100" }]) // notifications count
-        .mockResolvedValueOnce([{ count: "25" }]); // templates count
+        .mockResolvedValueOnce([{ count: "5" }])
+        .mockResolvedValueOnce([{ size: "1024 MB" }])
+        .mockResolvedValueOnce([{ tablename: "notifications" }, { tablename: "templates" }])
+        .mockResolvedValueOnce([{ count: "100" }])
+        .mockResolvedValueOnce([{ count: "25" }]);
 
       const result = await service.getTenantSchemaStats(tenantId);
 
@@ -201,7 +200,7 @@ describe("TenantSchemaService", () => {
     it("should handle missing size data", async () => {
       mockDataSource.query
         .mockResolvedValueOnce([{ count: "0" }])
-        .mockResolvedValueOnce([]) // no size data
+        .mockResolvedValueOnce([])
         .mockResolvedValueOnce([]);
 
       const result = await service.getTenantSchemaStats(tenantId);
@@ -255,7 +254,6 @@ describe("TenantSchemaService", () => {
     it("should handle missing tables gracefully", async () => {
       mockDataSource.query.mockRejectedValue(new Error("Table not found"));
 
-      // Should not throw, just log warning
       await expect((service as any).createTenantTables(schemaName)).resolves.not.toThrow();
     });
   });

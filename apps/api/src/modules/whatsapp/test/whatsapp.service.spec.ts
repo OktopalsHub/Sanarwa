@@ -1,18 +1,24 @@
 import { Test, TestingModule } from "@nestjs/testing";
-import { WhatsappBusinessApiService } from "../services/whatsapp-business-api.service";
-import { WhatsappEmbeddedSignupService } from "../services/whatsapp-embedded-signup.service";
-import { WhatsappMultiTenantTemplateService } from "../services/whatsapp-multi-tenant-template.service";
+import { WhatsAppBusinessAPIService } from "../services/whatsapp-business-api.service";
+import { WhatsAppEmbeddedSignupService } from "../services/whatsapp-embedded-signup.service";
+import { WhatsAppMultiTenantTemplateService } from "../services/whatsapp-multi-tenant-template.service";
 import { Repository } from "typeorm";
 import { getRepositoryToken } from "@nestjs/typeorm";
-import { WabaConfig } from "../entities/waba-config.entity";
-import { TenantWabaConfig } from "../entities/tenant-waba-config.entity";
-import { TenantWabaAssignment } from "../entities/tenant-waba-assignment.entity";
+import { HttpService } from "@nestjs/axios";
+import { ConfigService } from "@nestjs/config";
+import { of, throwError } from "rxjs";
+import { WABAConfig } from "../entities/waba-config.entity";
+import { TenantWABAConfig } from "../entities/tenant-waba-config.entity";
 import type { Mock, Mocked } from "vitest";
+import { getRedisConnectionToken } from "@nestjs-modules/ioredis";
+import Redis from "ioredis-mock";
+import { ChannelsService } from "../../channels/channels.service";
 
-describe("WhatsappBusinessApiService", () => {
-  let service: WhatsappBusinessApiService;
-  let wabaConfigRepository: Mocked<Repository<WabaConfig>>;
-  let tenantWabaConfigRepository: Mocked<Repository<TenantWabaConfig>>;
+describe("WhatsAppBusinessAPIService", () => {
+  let service: WhatsAppBusinessAPIService;
+  let wabaConfigRepository: Mocked<Repository<WABAConfig>>;
+  let tenantWabaConfigRepository: Mocked<Repository<TenantWABAConfig>>;
+  let httpService: Mocked<HttpService>;
 
   beforeEach(async () => {
     const mockRepository = {
@@ -26,130 +32,119 @@ describe("WhatsappBusinessApiService", () => {
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
-        WhatsappBusinessApiService,
+        WhatsAppBusinessAPIService,
         {
-          provide: getRepositoryToken(WabaConfig),
+          provide: getRepositoryToken(WABAConfig),
           useValue: mockRepository,
         },
         {
-          provide: getRepositoryToken(TenantWabaConfig),
+          provide: getRepositoryToken(TenantWABAConfig),
           useValue: mockRepository,
+        },
+        {
+          provide: HttpService,
+          useValue: {
+            post: vi.fn(),
+            get: vi.fn(),
+          },
+        },
+        {
+          provide: ConfigService,
+          useValue: {
+            get: vi.fn((_key: string, defaultValue?: unknown) => defaultValue),
+          },
         },
       ],
     }).compile();
 
-    service = module.get<WhatsappBusinessApiService>(WhatsappBusinessApiService);
-    wabaConfigRepository = module.get(getRepositoryToken(WabaConfig));
-    tenantWabaConfigRepository = module.get(getRepositoryToken(TenantWabaConfig));
+    service = module.get<WhatsAppBusinessAPIService>(WhatsAppBusinessAPIService);
+    wabaConfigRepository = module.get(getRepositoryToken(WABAConfig));
+    tenantWabaConfigRepository = module.get(getRepositoryToken(TenantWABAConfig));
+    httpService = module.get(HttpService);
   });
 
   it("should be defined", () => {
     expect(service).toBeDefined();
   });
 
-  describe("sendMessage", () => {
-    it("should send WhatsApp message", async () => {
-      const messageData = {
-        to: "+1234567890",
-        message: "Hello World",
-        tenantId: "tenant-1",
-      };
+  describe("sendTextMessage", () => {
+    it("should send a WhatsApp text message and return its id", async () => {
+      httpService.post.mockReturnValue(of({ data: { messages: [{ id: "msg-123" }] } }));
 
-      const mockConfig = {
-        id: "1",
-        wabaId: "waba-123",
-        accessToken: "token-123",
-        phoneNumberId: "phone-123",
-      };
+      const result = await service.sendTextMessage("+1 (234) 567-8900", "Hello World");
 
-      tenantWabaConfigRepository.findOne.mockResolvedValue(mockConfig as TenantWabaConfig);
-
-      // Mock HTTP request
-      vi.spyOn(service as any, "makeWhatsAppRequest").mockResolvedValue({
-        messages: [{ id: "msg-123" }],
-      });
-
-      const result = await service.sendMessage(messageData);
-
-      expect(result).toBeDefined();
       expect(result.messageId).toBe("msg-123");
+      const [url, body] = httpService.post.mock.calls[0];
+      expect(url).toContain("/messages");
+      expect(body).toMatchObject({
+        messaging_product: "whatsapp",
+        to: "+12345678900",
+        type: "text",
+        text: { body: "Hello World" },
+      });
     });
 
-    it("should throw error if no WABA config found", async () => {
-      const messageData = {
-        to: "+1234567890",
-        message: "Hello World",
-        tenantId: "tenant-1",
-      };
+    it("should surface a readable error when the upstream call fails", async () => {
+      httpService.post.mockReturnValue(
+        throwError(() => ({ error: { message: "Invalid phone number" } })),
+      );
 
-      tenantWabaConfigRepository.findOne.mockResolvedValue(null);
-
-      await expect(service.sendMessage(messageData)).rejects.toThrow(
-        "No WhatsApp Business API configuration found",
+      await expect(service.sendTextMessage("+1234567890", "Hi")).rejects.toThrow(
+        /Failed to send WhatsApp text message/,
       );
     });
   });
 
-  describe("sendTemplate", () => {
-    it("should send template message", async () => {
-      const templateData = {
-        to: "+1234567890",
-        templateName: "welcome_message",
-        templateLanguage: "en",
-        parameters: ["John"],
-        tenantId: "tenant-1",
-      };
+  describe("validatePhoneNumber", () => {
+    it("should accept an international number", () => {
+      expect(service.validatePhoneNumber("+12345678900").isValid).toBe(true);
+    });
 
-      const mockConfig = {
-        id: "1",
-        wabaId: "waba-123",
-        accessToken: "token-123",
-        phoneNumberId: "phone-123",
-      };
-
-      tenantWabaConfigRepository.findOne.mockResolvedValue(mockConfig as TenantWabaConfig);
-
-      vi.spyOn(service as any, "makeWhatsAppRequest").mockResolvedValue({
-        messages: [{ id: "msg-template-123" }],
-      });
-
-      const result = await service.sendTemplate(templateData);
-
-      expect(result).toBeDefined();
-      expect(result.messageId).toBe("msg-template-123");
+    it("should reject a malformed number", () => {
+      expect(service.validatePhoneNumber("not-a-number").isValid).toBe(false);
     });
   });
 
-  describe("getMessageStatus", () => {
-    it("should get message delivery status", async () => {
-      const messageId = "msg-123";
-      const tenantId = "tenant-1";
+  describe("getTemplateStatus", () => {
+    it("should return the template status", async () => {
+      httpService.get.mockReturnValue(of({ data: { status: "APPROVED" } }));
 
-      const mockConfig = {
-        id: "1",
-        wabaId: "waba-123",
-        accessToken: "token-123",
-      };
+      const result = await service.getTemplateStatus("tpl-1");
 
-      tenantWabaConfigRepository.findOne.mockResolvedValue(mockConfig as TenantWabaConfig);
+      expect(result.status).toBe("APPROVED");
+    });
+  });
 
-      vi.spyOn(service as any, "makeWhatsAppRequest").mockResolvedValue({
-        id: messageId,
-        status: "delivered",
-        timestamp: "1234567890",
+  describe("sendTemplateMessage", () => {
+    it("should send a template message and return its id", async () => {
+      httpService.post.mockReturnValue(of({ data: { messages: [{ id: "msg-template-123" }] } }));
+
+      const result = await service.sendTemplateMessage("+12345678900", "welcome_message", "en");
+
+      expect(result.messageId).toBe("msg-template-123");
+      const [, body] = httpService.post.mock.calls[0];
+      expect(body).toMatchObject({
+        type: "template",
+        template: { name: "welcome_message", language: { code: "en" } },
       });
+    });
+  });
 
-      const result = await service.getMessageStatus(messageId, tenantId);
+  describe("listTemplates", () => {
+    it("should return the template list from the API", async () => {
+      httpService.get.mockReturnValue(of({ data: { data: [{ id: "tpl-1", name: "welcome" }] } }));
 
-      expect(result.status).toBe("delivered");
-      expect(result.messageId).toBe(messageId);
+      const result = await service.listTemplates();
+
+      expect(result).toHaveLength(1);
     });
   });
 });
 
-describe("WhatsappEmbeddedSignupService", () => {
-  let service: WhatsappEmbeddedSignupService;
-  let wabaConfigRepository: Mocked<Repository<WabaConfig>>;
+describe("WhatsAppEmbeddedSignupService", () => {
+  let service: WhatsAppEmbeddedSignupService;
+  let wabaConfigRepository: Mocked<Repository<WABAConfig>>;
+  let tenantWabaConfigRepository: Mocked<Repository<TenantWABAConfig>>;
 
   beforeEach(async () => {
     const mockRepository = {
@@ -161,64 +156,103 @@ describe("WhatsappEmbeddedSignupService", () => {
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
-        WhatsappEmbeddedSignupService,
+        WhatsAppEmbeddedSignupService,
         {
-          provide: getRepositoryToken(WabaConfig),
+          provide: getRepositoryToken(WABAConfig),
           useValue: mockRepository,
+        },
+        {
+          provide: getRepositoryToken(TenantWABAConfig),
+          useValue: mockRepository,
+        },
+        {
+          provide: ConfigService,
+          useValue: {
+            get: vi.fn((_key: string, defaultValue?: unknown) => defaultValue),
+          },
+        },
+        {
+          provide: ChannelsService,
+          useValue: {
+            upsert: vi.fn(),
+            findConfig: vi.fn().mockResolvedValue(null),
+            remove: vi.fn(),
+          },
+        },
+        {
+          provide: getRedisConnectionToken(),
+          useValue: new Redis(),
         },
       ],
     }).compile();
 
-    service = module.get<WhatsappEmbeddedSignupService>(WhatsappEmbeddedSignupService);
-    wabaConfigRepository = module.get(getRepositoryToken(WabaConfig));
+    service = module.get<WhatsAppEmbeddedSignupService>(WhatsAppEmbeddedSignupService);
+    wabaConfigRepository = module.get(getRepositoryToken(WABAConfig));
+    tenantWabaConfigRepository = module.get(getRepositoryToken(TenantWABAConfig));
   });
 
   it("should be defined", () => {
     expect(service).toBeDefined();
   });
 
-  describe("handleEmbeddedSignup", () => {
-    it("should process embedded signup callback", async () => {
-      const signupData = {
-        wabaId: "waba-123",
-        accessToken: "token-123",
-        phoneNumbers: [
-          {
-            id: "phone-123",
-            number: "+1234567890",
-            verified: true,
-          },
-        ],
-      };
+  describe("getTenantWABA", () => {
+    it("should return the tenant's active WABA config", async () => {
+      const mockConfig = { id: "1", wabaId: "waba-123", isActive: true };
+      tenantWabaConfigRepository.findOne.mockResolvedValue(mockConfig as TenantWABAConfig);
 
-      const mockConfig = {
-        id: "1",
-        wabaId: signupData.wabaId,
-        accessToken: signupData.accessToken,
-        isActive: true,
-      };
+      const result = await service.getTenantWABA("tenant-1");
 
-      wabaConfigRepository.create.mockReturnValue(mockConfig as WabaConfig);
-      wabaConfigRepository.save.mockResolvedValue(mockConfig as WabaConfig);
+      expect(result).toEqual(mockConfig);
+      expect(tenantWabaConfigRepository.findOne).toHaveBeenCalledWith({
+        where: { tenantId: "tenant-1", isActive: true },
+        relations: { waba: true },
+      });
+    });
 
-      const result = await service.handleEmbeddedSignup(signupData);
+    it("should return null when the tenant has no WABA", async () => {
+      tenantWabaConfigRepository.findOne.mockResolvedValue(null);
 
-      expect(result).toBeDefined();
-      expect(result.wabaId).toBe(signupData.wabaId);
-      expect(wabaConfigRepository.save).toHaveBeenCalled();
+      await expect(service.getTenantWABA("tenant-1")).resolves.toBeNull();
+    });
+  });
+
+  describe("canCreateTemplate", () => {
+    it("should be false when the tenant has no WABA", async () => {
+      tenantWabaConfigRepository.findOne.mockResolvedValue(null);
+
+      await expect(service.canCreateTemplate("tenant-1")).resolves.toBe(false);
     });
   });
 });
 
-describe("WhatsappMultiTenantTemplateService", () => {
-  let service: WhatsappMultiTenantTemplateService;
+describe("WhatsAppMultiTenantTemplateService", () => {
+  let service: WhatsAppMultiTenantTemplateService;
+  let embeddedSignupService: {
+    getTenantWABA: ReturnType<typeof vi.fn>;
+    canCreateTemplate: ReturnType<typeof vi.fn>;
+  };
 
   beforeEach(async () => {
+    const mockRepository = { find: vi.fn(), findOne: vi.fn(), save: vi.fn(), create: vi.fn() };
+    embeddedSignupService = {
+      getTenantWABA: vi.fn(),
+      canCreateTemplate: vi.fn(),
+    };
+
     const module: TestingModule = await Test.createTestingModule({
-      providers: [WhatsappMultiTenantTemplateService],
+      providers: [
+        WhatsAppMultiTenantTemplateService,
+        { provide: getRepositoryToken(WABAConfig), useValue: mockRepository },
+        { provide: getRepositoryToken(TenantWABAConfig), useValue: mockRepository },
+        { provide: WhatsAppEmbeddedSignupService, useValue: embeddedSignupService },
+        {
+          provide: ConfigService,
+          useValue: { get: vi.fn((_key: string, defaultValue?: unknown) => defaultValue) },
+        },
+      ],
     }).compile();
 
-    service = module.get<WhatsappMultiTenantTemplateService>(WhatsappMultiTenantTemplateService);
+    service = module.get<WhatsAppMultiTenantTemplateService>(WhatsAppMultiTenantTemplateService);
   });
 
   it("should be defined", () => {
@@ -226,50 +260,43 @@ describe("WhatsappMultiTenantTemplateService", () => {
   });
 
   describe("createTemplate", () => {
-    it("should create WhatsApp template", async () => {
-      const templateData = {
-        name: "welcome_message",
-        category: "MARKETING",
-        language: "en",
-        components: [
-          {
-            type: "BODY",
-            text: "Welcome {{1}}! Thank you for joining us.",
-          },
-        ],
-        tenantId: "tenant-1",
-      };
+    it("should refuse to create a template when the tenant has no WABA", async () => {
+      embeddedSignupService.getTenantWABA.mockResolvedValue(null);
 
-      // Mock API call
-      vi.spyOn(service as any, "makeTemplateRequest").mockResolvedValue({
-        id: "template-123",
-        status: "PENDING",
-        name: templateData.name,
-      });
+      await expect(
+        service.createTemplate({
+          name: "welcome_message",
+          category: "MARKETING",
+          language: "en",
+          components: [],
+          tenantId: "tenant-1",
+        }),
+      ).rejects.toThrow(/does not have a WhatsApp Business Account/);
+    });
 
-      const result = await service.createTemplate(templateData);
+    it("should refuse to create a template when the tenant limit is reached", async () => {
+      embeddedSignupService.getTenantWABA.mockResolvedValue({ id: "1" });
+      embeddedSignupService.canCreateTemplate.mockResolvedValue(false);
 
-      expect(result).toBeDefined();
-      expect(result.templateId).toBe("template-123");
-      expect(result.status).toBe("PENDING");
+      await expect(
+        service.createTemplate({
+          name: "welcome_message",
+          category: "MARKETING",
+          language: "en",
+          components: [],
+          tenantId: "tenant-1",
+        }),
+      ).rejects.toThrow(/Template limit reached/);
     });
   });
 
-  describe("getTemplateStatus", () => {
-    it("should get template approval status", async () => {
-      const templateId = "template-123";
-      const tenantId = "tenant-1";
+  describe("deleteTemplate", () => {
+    it("should report success when the underlying delete succeeds", async () => {
+      vi.spyOn(service as any, "deleteTenantTemplate").mockResolvedValue({ success: true });
 
-      vi.spyOn(service as any, "makeTemplateRequest").mockResolvedValue({
-        id: templateId,
-        status: "APPROVED",
-        name: "welcome_message",
+      await expect(service.deleteTemplate("tenant-1", "template-123")).resolves.toEqual({
+        success: true,
       });
-
-      const result = await service.getTemplateStatus(templateId, tenantId);
-
-      expect(result.status).toBe("APPROVED");
-      expect(result.templateId).toBe(templateId);
     });
   });
 });

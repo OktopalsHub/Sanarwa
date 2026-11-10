@@ -19,8 +19,13 @@ export enum ProviderType {
   TERMII = "termii",
   TWILIO = "twilio",
   SENDGRID = "sendgrid",
+  SMTP = "smtp",
   FIREBASE = "firebase",
+  WHATSAPP = "whatsapp",
   WHATSAPP_BUSINESS = "whatsapp_business",
+  SLACK = "slack",
+  DISCORD = "discord",
+  TELEGRAM = "telegram",
   CUSTOM = "custom",
 }
 
@@ -49,14 +54,11 @@ export class ProviderConfig {
   })
   providerType: ProviderType;
 
-  @Column({
-    type: "enum",
-    enum: NotificationChannel,
-  })
+  @Column({ type: "varchar", length: 20 })
   channel: NotificationChannel;
 
   @Column({ type: "json" })
-  config: Record<string, any>; // Encrypted sensitive data
+  config: Record<string, any>;
 
   @Column({ type: "int", default: 1 })
   priority: number;
@@ -78,25 +80,6 @@ export class ProviderConfig {
     requestsPerDay?: number;
   };
 
-  @Column({ type: "json", nullable: true, name: "health_check" })
-  healthCheck?: {
-    url?: string;
-    interval?: number;
-    timeout?: number;
-    retries?: number;
-  };
-
-  @Column({ type: "timestamp", nullable: true, name: "last_health_check" })
-  lastHealthCheck?: Date;
-
-  @Column({
-    type: "varchar",
-    length: 50,
-    default: "unknown",
-    name: "health_status",
-  })
-  healthStatus: string; // 'healthy', 'unhealthy', 'unknown'
-
   @Column({ type: "json", nullable: true })
   metadata?: Record<string, any>;
 
@@ -114,7 +97,6 @@ export class ProviderConfig {
   @UpdateDateColumn({ name: "updated_at" })
   updatedAt: Date;
 
-  // Virtual properties to access tenant through project
   get tenant() {
     return this.project?.tenant;
   }

@@ -1,7 +1,18 @@
-import { Column, CreateDateColumn, Entity, Index, ManyToOne, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
+import {
+  Column,
+  CreateDateColumn,
+  Entity,
+  Index,
+  ManyToOne,
+  PrimaryGeneratedColumn,
+  UpdateDateColumn,
+} from "typeorm";
 import { Project } from "../project/entities/project.entity";
 import { Tenant } from "../tenant/entities/tenant.entity";
 import { TenantMember } from "../tenant-member/entities/tenant-member.entity";
+import { TemplateStatus } from "../../common/enums/template.enum";
+import { NotificationChannel } from "../../common/enums/notification-channel.enum";
+import { TemplateVariable } from "../../common/interfaces/template.interface";
 
 @Entity("templates")
 @Index(["tenantId", "channel"])
@@ -19,20 +30,38 @@ export class Template {
   @Column({ type: "varchar", length: 255, nullable: true })
   name?: string;
 
+  @Column({ type: "text", nullable: true })
+  description?: string;
+
+  @Column({ type: "boolean", default: false })
+  isDefault: boolean;
+
   @Column({ type: "varchar", length: 50, default: "email" })
-  channel: "email" | "sms" | "push" | "in_app" | "whatsapp" | "voice";
+  channel: NotificationChannel;
 
   @Column({ type: "text", nullable: true })
   subject?: string;
 
   @Column({ type: "text", nullable: true })
-  content?: string;
+  data?: string;
+
+  @Column({ type: "json", nullable: true })
+  meta?: Record<string, any>;
 
   @Column({ type: "jsonb", nullable: true })
-  data?: Record<string, any>; // per-channel: {html, text, pushTitle, whatsappTemplate, tts, etc}
+  variables?: TemplateVariable[];
 
-  @Column({ type: "jsonb", nullable: true })
-  variables?: string[]; // extracted {{var}}
+  @Column({ type: "enum", enum: TemplateStatus, default: TemplateStatus.DRAFT })
+  status: TemplateStatus;
+
+  @Column({ type: "int", default: 1 })
+  version: number;
+
+  @Column({ type: "uuid", nullable: true, name: "parent_template_id" })
+  parentTemplateId?: string;
+
+  @Column({ type: "jsonb", nullable: true, name: "channel_specific" })
+  channelSpecific?: Record<string, any>;
 
   @CreateDateColumn({ name: "created_at" })
   createdAt: Date;

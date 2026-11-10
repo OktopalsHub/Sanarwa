@@ -1,7 +1,8 @@
 import { Injectable, Logger } from "@nestjs/common";
-import { InjectRepository } from "@nestjs/typeorm";
-import { Repository } from "typeorm";
 import { EventEmitter2 } from "@nestjs/event-emitter";
+import { InjectRedis } from "@nestjs-modules/ioredis";
+import type Redis from "ioredis";
+import * as crypto from "crypto";
 
 export interface WhatsAppConversation {
   id: string;
@@ -19,37 +20,46 @@ export interface ConversationMessage {
   conversationId: string;
   from: string;
   to: string;
-  content: string;
+  data: string;
   messageType: "text" | "image" | "video" | "document" | "audio" | "location";
   direction: "inbound" | "outbound";
   timestamp: Date;
   metadata?: Record<string, any>;
 }
 
+const CONVERSATION_TTL = 60 * 60 * 24 * 30;
+const MAX_MESSAGES_PER_CONVERSATION = 500;
+const idKey = (id: string) => `wa:conv:id:${id}`;
+const aliasKey = (tenantId: string, phoneNumber: string) => `wa:conv:tp:${tenantId}:${phoneNumber}`;
+const tenantKey = (tenantId: string) => `wa:conv:tenant:${tenantId}`;
+const messagesKey = (id: string) => `wa:conv:msgs:${id}`;
+
 @Injectable()
 export class WhatsAppConversationService {
   private readonly logger = new Logger(WhatsAppConversationService.name);
-  private conversations = new Map<string, WhatsAppConversation>();
-  private messages = new Map<string, ConversationMessage[]>();
 
-  constructor(private readonly eventEmitter: EventEmitter2) {}
+  constructor(
+    private readonly eventEmitter: EventEmitter2,
+    @InjectRedis() private readonly redis: Redis,
+  ) {}
 
-  /**
-   * Get or create conversation
-   */
   async getOrCreateConversation(
     phoneNumber: string,
     tenantId: string,
     subscriberId?: string,
   ): Promise<WhatsAppConversation> {
     const key = `${tenantId}:${phoneNumber}`;
+    const existingId = await this.redis.get(aliasKey(tenantId, phoneNumber));
 
-    if (this.conversations.has(key)) {
-      return this.conversations.get(key)!;
+    if (existingId) {
+      const existing = await this.readConversation(existingId);
+      if (existing) {
+        return existing;
+      }
     }
 
     const conversation: WhatsAppConversation = {
-      id: `conv_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      id: `conv_${Date.now()}_${crypto.randomBytes(9).toString("base64url")}`,
       phoneNumber,
       tenantId,
       subscriberId,
@@ -58,8 +68,7 @@ export class WhatsAppConversationService {
       status: "active",
     };
 
-    this.conversations.set(key, conversation);
-    this.messages.set(conversation.id, []);
+    await this.writeConversation(conversation);
 
     this.logger.log(`Created conversation ${conversation.id} for ${phoneNumber}`);
 
@@ -68,35 +77,32 @@ export class WhatsAppConversationService {
     return conversation;
   }
 
-  /**
-   * Add message to conversation
-   */
   async addMessage(
     conversationId: string,
     message: Omit<ConversationMessage, "id">,
   ): Promise<ConversationMessage> {
-    const conversation = Array.from(this.conversations.values()).find(
-      (c) => c.id === conversationId,
-    );
+    const conversation = await this.readConversation(conversationId);
 
     if (!conversation) {
       throw new Error(`Conversation ${conversationId} not found`);
     }
 
     const fullMessage: ConversationMessage = {
-      id: `msg_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      id: `msg_${Date.now()}_${crypto.randomBytes(9).toString("base64url")}`,
       ...message,
     };
 
-    if (!this.messages.has(conversationId)) {
-      this.messages.set(conversationId, []);
-    }
+    const key = messagesKey(conversationId);
+    await this.redis
+      .multi()
+      .lpush(key, JSON.stringify(fullMessage))
+      .ltrim(key, 0, MAX_MESSAGES_PER_CONVERSATION - 1)
+      .expire(key, CONVERSATION_TTL)
+      .exec();
 
-    this.messages.get(conversationId)!.push(fullMessage);
-
-    // Update conversation
     conversation.lastMessageAt = new Date();
     conversation.messageCount++;
+    await this.writeConversation(conversation);
 
     this.logger.log(`Added message to conversation ${conversationId}: ${fullMessage.id}`);
 
@@ -105,56 +111,45 @@ export class WhatsAppConversationService {
     return fullMessage;
   }
 
-  /**
-   * Get conversation messages
-   */
   async getMessages(
     conversationId: string,
     limit: number = 50,
     offset: number = 0,
   ): Promise<ConversationMessage[]> {
-    const messages = this.messages.get(conversationId) || [];
+    const raw = await this.redis.lrange(messagesKey(conversationId), 0, -1);
 
-    return messages
+    return raw
+      .map((item) => this.reviveMessage(item))
       .toSorted((a, b) => b.timestamp.getTime() - a.timestamp.getTime())
       .slice(offset, offset + limit);
   }
 
-  /**
-   * Search conversations
-   */
   async searchConversations(tenantId: string, query: string): Promise<WhatsAppConversation[]> {
-    return Array.from(this.conversations.values()).filter(
-      (c) =>
-        c.tenantId === tenantId &&
-        (c.phoneNumber.includes(query) ||
-          c.subscriberId?.includes(query) ||
-          c.metadata?.name?.includes(query)),
+    const conversations = await this.readTenantConversations(tenantId);
+
+    return conversations.filter(
+      (conversation) =>
+        conversation.phoneNumber.includes(query) ||
+        conversation.subscriberId?.includes(query) ||
+        conversation.metadata?.name?.includes(query),
     );
   }
 
-  /**
-   * Archive conversation
-   */
   async archiveConversation(conversationId: string): Promise<void> {
-    const conversation = Array.from(this.conversations.values()).find(
-      (c) => c.id === conversationId,
-    );
+    const conversation = await this.readConversation(conversationId);
 
     if (!conversation) {
       throw new Error(`Conversation ${conversationId} not found`);
     }
 
     conversation.status = "archived";
+    await this.writeConversation(conversation);
 
     this.logger.log(`Archived conversation ${conversationId}`);
 
     this.eventEmitter.emit("whatsapp.conversation.archived", conversation);
   }
 
-  /**
-   * Get conversation statistics
-   */
   async getConversationStats(tenantId: string): Promise<{
     total: number;
     active: number;
@@ -162,69 +157,108 @@ export class WhatsAppConversationService {
     archived: number;
     totalMessages: number;
   }> {
-    const conversations = Array.from(this.conversations.values()).filter(
-      (c) => c.tenantId === tenantId,
-    );
+    const conversations = await this.readTenantConversations(tenantId);
 
-    const stats = {
+    return {
       total: conversations.length,
       active: conversations.filter((c) => c.status === "active").length,
       inactive: conversations.filter((c) => c.status === "inactive").length,
       archived: conversations.filter((c) => c.status === "archived").length,
-      totalMessages: Array.from(this.messages.values()).reduce((sum, msgs) => sum + msgs.length, 0),
+      totalMessages: conversations.reduce((sum, c) => sum + c.messageCount, 0),
     };
-
-    return stats;
   }
 
-  /**
-   * Mark conversation as inactive
-   */
   async markInactive(conversationId: string): Promise<void> {
-    const conversation = Array.from(this.conversations.values()).find(
-      (c) => c.id === conversationId,
-    );
+    const conversation = await this.readConversation(conversationId);
 
     if (!conversation) {
       throw new Error(`Conversation ${conversationId} not found`);
     }
 
     conversation.status = "inactive";
+    await this.writeConversation(conversation);
 
     this.logger.log(`Marked conversation ${conversationId} as inactive`);
 
     this.eventEmitter.emit("whatsapp.conversation.inactive", conversation);
   }
 
-  /**
-   * Get recent conversations
-   */
   async getRecentConversations(
     tenantId: string,
     limit: number = 20,
   ): Promise<WhatsAppConversation[]> {
-    return Array.from(this.conversations.values())
-      .filter((c) => c.tenantId === tenantId)
+    const conversations = await this.readTenantConversations(tenantId);
+
+    return conversations
       .toSorted((a, b) => b.lastMessageAt.getTime() - a.lastMessageAt.getTime())
       .slice(0, limit);
   }
 
-  /**
-   * Delete conversation
-   */
   async deleteConversation(conversationId: string): Promise<void> {
-    const key = Array.from(this.conversations.entries()).find(
-      ([_, c]) => c.id === conversationId,
-    )?.[0];
+    const conversation = await this.readConversation(conversationId);
 
-    if (key) {
-      this.conversations.delete(key);
+    if (conversation) {
+      await this.redis.del(idKey(conversation.id));
+      await this.redis.del(aliasKey(conversation.tenantId, conversation.phoneNumber));
+      await this.redis.srem(tenantKey(conversation.tenantId), conversation.id);
     }
 
-    this.messages.delete(conversationId);
+    await this.redis.del(messagesKey(conversationId));
 
     this.logger.log(`Deleted conversation ${conversationId}`);
 
     this.eventEmitter.emit("whatsapp.conversation.deleted", { id: conversationId });
+  }
+
+  private async readConversation(id: string): Promise<WhatsAppConversation | null> {
+    const raw = await this.redis.get(idKey(id));
+    if (!raw) {
+      return null;
+    }
+
+    const conversation = JSON.parse(raw) as WhatsAppConversation;
+    conversation.lastMessageAt = new Date(conversation.lastMessageAt);
+    return conversation;
+  }
+
+  private async readTenantConversations(tenantId: string): Promise<WhatsAppConversation[]> {
+    const ids = await this.redis.smembers(tenantKey(tenantId));
+    if (ids.length === 0) {
+      return [];
+    }
+
+    const raws = await this.redis.mget(ids.map((id) => idKey(id)));
+    const conversations: WhatsAppConversation[] = [];
+
+    for (const raw of raws) {
+      if (!raw) {
+        continue;
+      }
+
+      const conversation = JSON.parse(raw) as WhatsAppConversation;
+      conversation.lastMessageAt = new Date(conversation.lastMessageAt);
+      conversations.push(conversation);
+    }
+
+    return conversations;
+  }
+
+  private async writeConversation(conversation: WhatsAppConversation): Promise<void> {
+    const payload = JSON.stringify(conversation);
+    await this.redis.set(idKey(conversation.id), payload, "EX", CONVERSATION_TTL);
+    await this.redis.set(
+      aliasKey(conversation.tenantId, conversation.phoneNumber),
+      conversation.id,
+      "EX",
+      CONVERSATION_TTL,
+    );
+    await this.redis.sadd(tenantKey(conversation.tenantId), conversation.id);
+    await this.redis.expire(tenantKey(conversation.tenantId), CONVERSATION_TTL);
+  }
+
+  private reviveMessage(raw: string): ConversationMessage {
+    const message = JSON.parse(raw) as ConversationMessage;
+    message.timestamp = new Date(message.timestamp);
+    return message;
   }
 }

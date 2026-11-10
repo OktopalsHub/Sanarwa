@@ -1,5 +1,5 @@
 import { Column, Entity, Index, JoinColumn, ManyToOne } from "typeorm";
-import { BaseEntity } from "../../../database/entities/base.entity";
+import { BaseEntity } from "../../../common/database/entities/base.entity";
 import { Project } from "../../project/entities/project.entity";
 import { TenantMember } from "../../tenant-member/entities/tenant-member.entity";
 import { Tenant } from "../../tenant/entities/tenant.entity";
@@ -69,7 +69,6 @@ export class ApiKey extends BaseEntity {
   @Column({ type: "json", nullable: true })
   metadata?: Record<string, unknown>;
 
-  // Relationships - PROJECT-LEVEL API KEYS
   @ManyToOne(() => Project, (project) => project.apiKeys, {
     onDelete: "CASCADE",
   })
@@ -86,7 +85,6 @@ export class ApiKey extends BaseEntity {
   @Column({ type: "uuid", nullable: true, name: "created_by_id" })
   createdById: string;
 
-  // Virtual properties
   get tenant(): Tenant | undefined {
     return this.project?.tenant;
   }

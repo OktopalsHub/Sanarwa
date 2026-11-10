@@ -1,6 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
 import { IsArray, IsEnum, IsObject, IsOptional } from "class-validator";
-import { TenantMemberRole, TenantMemberStatus } from "src/common/enums";
+import { TenantMemberRole, TenantMemberStatus } from "../../../common/enums";
 import { User } from "../../user/entities/user.entity";
 
 export class CreateTenantMemberDto {

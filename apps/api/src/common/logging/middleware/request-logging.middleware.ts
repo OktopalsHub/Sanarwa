@@ -10,7 +10,6 @@ export class RequestLoggingMiddleware implements NestMiddleware {
     const startTime = Date.now();
     const correlationId = req.headers["x-correlation-id"] as string;
 
-    // Log incoming request
     this.logger.log("Incoming request", {
       correlationId,
       method: req.method,
@@ -22,13 +21,20 @@ export class RequestLoggingMiddleware implements NestMiddleware {
       category: "http_request",
     });
 
-    // Override res.end to log response
     const originalEnd = res.end;
-    res.end = function (chunk?: any, encoding?: any) {
+    res.end = function (
+      this: {
+        logger: {
+          log: (msg: string, meta: unknown) => void;
+          warn: (msg: string, meta: unknown) => void;
+        };
+      },
+      chunk?: any,
+      encoding?: any,
+    ) {
       const duration = Date.now() - startTime;
       const contentLength = res.getHeader("content-length");
 
-      // Log response
       setImmediate(() => {
         const logLevel = res.statusCode >= 400 ? "warn" : "log";
         const logger = (this as any).logger;

@@ -109,24 +109,6 @@ export class CreateProviderConfigDto {
   };
 
   @ApiPropertyOptional({
-    description: "Health check configuration for monitoring provider status",
-    example: {
-      url: "https://status.twilio.com/api/v2/status.json",
-      interval: 300,
-      timeout: 5000,
-      retries: 3,
-    },
-  })
-  @IsOptional()
-  @IsObject()
-  healthCheck?: {
-    url?: string;
-    interval?: number;
-    timeout?: number;
-    retries?: number;
-  };
-
-  @ApiPropertyOptional({
     description: "Additional provider metadata",
     example: { region: "us-east-1", tier: "production" },
   })

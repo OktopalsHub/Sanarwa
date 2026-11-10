@@ -4,7 +4,6 @@ import { DevicePlatform, PushProvider } from "../enums/device-platform.enum";
 import { PushPayload } from "../providers/push/push-provider.interface";
 
 export interface SmartPushPayload extends PushPayload {
-  // Enhanced payload with automatic routing
   targetUsers?: string[];
   targetPlatforms?: DevicePlatform[];
   fallbackToAll?: boolean;
@@ -27,21 +26,16 @@ export class SmartPushRouterService {
 
   constructor(private readonly deviceRegistrationService: DeviceRegistrationService) {}
 
-  /**
-   * Automatically route push notifications to the right providers based on user devices
-   */
   async routePushNotification(
     payload: SmartPushPayload,
     tenantId: string,
     userIds?: string[],
   ): Promise<PushRoutingResult> {
-    // Get target user IDs
     const targetUserIds = userIds || payload.targetUsers || [];
     if (targetUserIds.length === 0) {
       throw new Error("No target users specified for push notification");
     }
 
-    // Get all devices for target subscribers
     const allDevices = await Promise.all(
       targetUserIds.map((subscriberId) =>
         this.deviceRegistrationService.getSubscriberDevices(subscriberId, tenantId),
@@ -59,15 +53,12 @@ export class SmartPushRouterService {
       };
     }
 
-    // Filter by target platforms if specified
     const filteredDevices = payload.targetPlatforms
       ? devices.filter((device) => payload.targetPlatforms!.includes(device.platform))
       : devices;
 
-    // Group devices by provider and platform
     const deviceGroups = this.groupDevicesByProviderAndPlatform(filteredDevices);
 
-    // Create routing plan
     const routingPlan = Object.entries(deviceGroups).map(([key, groupDevices]) => {
       const [provider, platform] = key.split("|") as [PushProvider, DevicePlatform];
 
@@ -79,7 +70,6 @@ export class SmartPushRouterService {
       };
     });
 
-    // Calculate platform breakdown
     const platformBreakdown = filteredDevices.reduce(
       (acc, device) => {
         acc[device.platform] = (acc[device.platform] || 0) + 1;
@@ -99,9 +89,6 @@ export class SmartPushRouterService {
     };
   }
 
-  /**
-   * Group devices by provider and platform for efficient batch sending
-   */
   private groupDevicesByProviderAndPlatform(devices: any[]) {
     return devices.reduce(
       (groups, device) => {
@@ -116,15 +103,12 @@ export class SmartPushRouterService {
     );
   }
 
-  /**
-   * Optimize push payload for specific platform
-   */
   private optimizePayloadForPlatform(
     payload: SmartPushPayload,
     platform: DevicePlatform,
   ): PushPayload {
     const optimized: PushPayload = {
-      deviceTokens: [], // Will be filled by caller
+      deviceTokens: [],
       title: payload.title,
       body: payload.body,
       data: payload.data,
@@ -137,43 +121,34 @@ export class SmartPushRouterService {
       actions: payload.actions,
     };
 
-    // Platform-specific optimizations
     switch (platform) {
       case DevicePlatform.IOS:
         optimized.ios = {
           ...payload.ios,
-          // iOS-specific defaults
           interruptionLevel: payload.ios?.interruptionLevel || "active",
           mutableContent: payload.ios?.mutableContent ?? true,
         };
-        // iOS prefers shorter TTL
-        optimized.ttl = payload.ttl || 3600; // 1 hour
+        optimized.ttl = payload.ttl || 3600;
         break;
 
       case DevicePlatform.ANDROID:
         optimized.android = {
           ...payload.android,
-          // Android-specific defaults
           channelId: payload.android?.channelId || "default",
-          // priority: 'high', // Remove this as it's not in the Android interface
         };
-        // Android can handle longer TTL
-        optimized.ttl = payload.ttl || 86400; // 24 hours
+        optimized.ttl = payload.ttl || 86400;
         break;
 
       case DevicePlatform.WEB:
-        // Web push optimizations
-        optimized.ttl = payload.ttl || 43200; // 12 hours
+        optimized.ttl = payload.ttl || 43200;
         optimized.priority = "high";
-        // Remove iOS/Android specific fields
         delete optimized.ios;
         delete optimized.android;
         break;
 
       case DevicePlatform.DESKTOP:
-        // Desktop optimizations (similar to web)
-        optimized.ttl = payload.ttl || 86400; // 24 hours
-        optimized.priority = "normal"; // Less intrusive for desktop
+        optimized.ttl = payload.ttl || 86400;
+        optimized.priority = "normal";
         delete optimized.ios;
         delete optimized.android;
         break;
@@ -182,9 +157,6 @@ export class SmartPushRouterService {
     return optimized;
   }
 
-  /**
-   * Get recommended push configuration for a tenant based on their device distribution
-   */
   async getPushRecommendations(tenantId: string): Promise<{
     recommendations: Array<{
       priority: "high" | "medium" | "low";
@@ -206,7 +178,6 @@ export class SmartPushRouterService {
       action: string;
     }> = [];
 
-    // Analyze device distribution and provide recommendations
     const { platformBreakdown, providerBreakdown, totalDevices } = deviceStats;
 
     if (totalDevices === 0) {
@@ -218,7 +189,6 @@ export class SmartPushRouterService {
       });
     }
 
-    // iOS recommendations
     const iosDevices = platformBreakdown[DevicePlatform.IOS] || 0;
     if (iosDevices > 0 && !providerBreakdown[PushProvider.APNS]) {
       recommendations.push({
@@ -229,7 +199,6 @@ export class SmartPushRouterService {
       });
     }
 
-    // Android recommendations
     const androidDevices = platformBreakdown[DevicePlatform.ANDROID] || 0;
     if (androidDevices > 0 && !providerBreakdown[PushProvider.FCM]) {
       recommendations.push({
@@ -240,7 +209,6 @@ export class SmartPushRouterService {
       });
     }
 
-    // Web push recommendations
     const webDevices =
       (platformBreakdown[DevicePlatform.WEB] || 0) +
       (platformBreakdown[DevicePlatform.DESKTOP] || 0);
@@ -253,7 +221,6 @@ export class SmartPushRouterService {
       });
     }
 
-    // Provider recommendations based on device distribution
     const primaryProviders: PushProvider[] = [];
     const secondaryProviders: PushProvider[] = [];
 
@@ -267,10 +234,8 @@ export class SmartPushRouterService {
       primaryProviders.push(PushProvider.WEB_PUSH);
     }
 
-    // Always recommend SNS as fallback
     secondaryProviders.push(PushProvider.SNS);
 
-    // Expo recommendation for React Native apps
     if (providerBreakdown[PushProvider.EXPO] > 0) {
       recommendations.push({
         priority: "low",
@@ -290,9 +255,6 @@ export class SmartPushRouterService {
     };
   }
 
-  /**
-   * Test push notification delivery to specific platforms
-   */
   async testPushDelivery(
     tenantId: string,
     userId: string,

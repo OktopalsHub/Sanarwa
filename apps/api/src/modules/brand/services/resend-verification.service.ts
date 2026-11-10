@@ -55,9 +55,6 @@ export class ResendVerificationService {
 
   constructor(private readonly configService: ConfigService) {}
 
-  /**
-   * Add domain to Resend for verification
-   */
   async addDomain(domain: string, apiKey: string): Promise<ResendVerificationResult> {
     try {
       this.logger.log(`Adding domain to Resend: ${domain}`);
@@ -98,9 +95,6 @@ export class ResendVerificationService {
     }
   }
 
-  /**
-   * Check domain verification status with Resend
-   */
   async checkDomainVerificationStatus(
     domain: string,
     apiKey: string,
@@ -108,7 +102,6 @@ export class ResendVerificationService {
     try {
       this.logger.log(`Checking Resend domain verification status for: ${domain}`);
 
-      // First get all domains
       const domainsResponse = await fetch(`${this.baseUrl}/domains`, {
         method: "GET",
         headers: {
@@ -125,7 +118,6 @@ export class ResendVerificationService {
 
       const successData = domainsData as ResendListDomainsResponse;
 
-      // Find the domain
       const domainInfo = successData.data?.find((d: ResendDomainInfo) => d.name === domain);
 
       if (!domainInfo) {
@@ -156,9 +148,6 @@ export class ResendVerificationService {
     }
   }
 
-  /**
-   * Get domain details from Resend
-   */
   async getDomainDetails(domainId: string, apiKey: string): Promise<ResendDomainInfo | null> {
     try {
       const response = await fetch(`${this.baseUrl}/domains/${domainId}`, {
@@ -182,9 +171,6 @@ export class ResendVerificationService {
     }
   }
 
-  /**
-   * Remove domain from Resend
-   */
   async removeDomain(domainId: string, apiKey: string): Promise<boolean> {
     try {
       this.logger.log(`Removing domain from Resend: ${domainId}`);
@@ -210,9 +196,6 @@ export class ResendVerificationService {
     }
   }
 
-  /**
-   * Validate Resend API key
-   */
   async validateResendConfiguration(apiKey: string): Promise<{
     configured: boolean;
     error?: string;
@@ -241,9 +224,6 @@ export class ResendVerificationService {
     }
   }
 
-  /**
-   * Check if domain can send emails through Resend
-   */
   async canSendEmails(
     domain: string,
     apiKey: string,
@@ -275,9 +255,6 @@ export class ResendVerificationService {
     }
   }
 
-  /**
-   * Generate DNS instructions for domain verification
-   */
   generateDomainVerificationInstructions(
     domain: string,
     dnsRecords: Array<{

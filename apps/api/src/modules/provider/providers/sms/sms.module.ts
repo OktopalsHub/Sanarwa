@@ -8,16 +8,27 @@ import { TelnyxProvider } from "./providers/telnyx.provider";
 import { InfobipProvider } from "./providers/infobip.provider";
 import { AfricasTalkingProvider } from "./providers/africastalking.provider";
 import { SMSRoutingService } from "./sms-routing.service";
-import { Message } from "../../../messaging/message.entity";
-import { MessageDelivery } from "../../../messaging/message-delivery.entity";
+import { MessagingEntitiesModule } from "../../../messaging/shared/messaging-entities.module";
+import { ProviderConfig } from "../../provider-config.entity";
+import { ProviderConfigRepository } from "../../provider-config.repository";
+import { ProviderEncryptionService } from "../../provider-encryption.service";
+import { SecurityModule } from "../../../../common/security/security.module";
 import { SMSWebhookController } from "../../controllers/sms-webhook.controller";
 import { SMSConversationController } from "../../controllers/sms-conversation.controller";
 import { SmartSMSRouterService } from "../../services/smart-sms-router.service";
 import { SMSService } from "../../services/sms.service";
+import { WebhookValidatorService } from "../../services/webhook-validator.service";
 import { SMSConversationService } from "../../services/sms-conversation.service";
+import { SmsWebhookIntakeService } from "../../services/sms-webhook-intake.service";
 
 @Module({
-  imports: [ConfigModule, AuthModule, TypeOrmModule.forFeature([Message, MessageDelivery])],
+  imports: [
+    ConfigModule,
+    AuthModule,
+    SecurityModule,
+    TypeOrmModule.forFeature([ProviderConfig]),
+    MessagingEntitiesModule,
+  ],
   controllers: [SMSWebhookController, SMSConversationController],
   providers: [
     TwilioProvider,
@@ -29,6 +40,10 @@ import { SMSConversationService } from "../../services/sms-conversation.service"
     SMSService,
     SMSConversationService,
     SmartSMSRouterService,
+    WebhookValidatorService,
+    ProviderConfigRepository,
+    ProviderEncryptionService,
+    SmsWebhookIntakeService,
   ],
   exports: [
     TwilioProvider,

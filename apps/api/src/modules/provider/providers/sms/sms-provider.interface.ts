@@ -1,14 +1,14 @@
 export interface SMSPayload {
-  to: string; // Phone number in E.164 format
+  to: string;
   message: string;
-  from?: string; // Sender ID or phone number
+  from?: string;
   metadata?: Record<string, any>;
 }
 
 export interface BulkSMSPayload {
-  recipients: string[]; // Array of phone numbers in E.164 format
+  recipients: string[];
   message: string;
-  from?: string; // Sender ID or phone number
+  from?: string;
   metadata?: Record<string, any>;
 }
 
@@ -37,8 +37,8 @@ export interface BulkSMSResponse {
 export interface ISMSProvider {
   sendSMS(payload: SMSPayload): Promise<SMSResponse>;
   sendBulkSMS(payload: BulkSMSPayload): Promise<BulkSMSResponse>;
-  validateConfig(): Promise<boolean>;
+  validateConfig(config?: unknown): Promise<boolean>;
   getProviderName(): string;
-  getSupportedCountries(): string[]; // ISO country codes
-  getCostPerMessage(countryCode: string): number; // Cost in USD
+  getSupportedCountries(): string[];
+  getCostPerMessage(countryCode: string): number;
 }

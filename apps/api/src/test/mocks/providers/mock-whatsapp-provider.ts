@@ -1,10 +1,5 @@
-import {
-  Channel,
-  DeliveryStatus,
-  ProviderConfig,
-  ProviderHealth,
-  ProviderResponse,
-} from "../../../providers/types";
+import { DeliveryStatus, ProviderConfig, ProviderResponse } from "../../../providers/types";
+import { NotificationChannel } from "../../../common/enums/notification-channel.enum";
 import {
   IWhatsAppProvider,
   WhatsAppTemplate,
@@ -13,7 +8,7 @@ import {
 export class MockWhatsAppProvider implements IWhatsAppProvider {
   id = "mock-whatsapp-provider";
   name = "Mock WhatsApp Provider";
-  channel = Channel.WHATSAPP;
+  channel = NotificationChannel.WHATSAPP;
   config: ProviderConfig;
   isInitialized = true;
 
@@ -68,7 +63,6 @@ export class MockWhatsAppProvider implements IWhatsAppProvider {
   }
 
   validateWhatsAppNumber(number: string): boolean {
-    // Mock validation - check if it's a valid WhatsApp number format
     return /^\+\d{10,15}$/.test(number);
   }
 
@@ -101,7 +95,6 @@ export class MockWhatsAppProvider implements IWhatsAppProvider {
   }
 
   validateTemplate(template: WhatsAppTemplate): boolean {
-    // Simple validation - check if template has required fields
     return !!(template.name && template.language && template.components);
   }
 
@@ -109,19 +102,11 @@ export class MockWhatsAppProvider implements IWhatsAppProvider {
     return config && config.credentials && typeof config.credentials === "object";
   }
 
-  async checkHealth(): Promise<{ status: ProviderHealth; lastChecked: Date }> {
-    return {
-      status: this.shouldFail ? ProviderHealth.UNHEALTHY : ProviderHealth.HEALTHY,
-      lastChecked: new Date(),
-    };
-  }
-
   getSupportedMessageTypes(): string[] {
     return this.supportedMessageTypes;
   }
 
   async validatePhoneNumber(phoneNumber: string): Promise<boolean> {
-    // Mock validation - just check if it starts with + and has digits
     return /^\+\d{10,15}$/.test(phoneNumber);
   }
 
@@ -133,7 +118,6 @@ export class MockWhatsAppProvider implements IWhatsAppProvider {
     this.isInitialized = false;
   }
 
-  // Test helper methods
   setShouldFail(shouldFail: boolean, message?: string): void {
     this.shouldFail = shouldFail;
     if (message) {

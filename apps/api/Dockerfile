@@ -3,9 +3,7 @@ RUN corepack enable && corepack prepare pnpm@10.25.0 --activate
 WORKDIR /app
 
 FROM base AS deps
-COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
-COPY apps/api/package.json ./apps/api/
-COPY packages/sdk/package.json ./packages/sdk/
+COPY . .
 RUN pnpm install --frozen-lockfile --filter @sanarwa/api...
 
 FROM base AS builder
@@ -21,4 +19,5 @@ COPY --from=builder /app/apps/api/dist ./dist
 COPY --from=builder /app/apps/api/package.json ./
 COPY --from=builder /app/node_modules ./node_modules
 EXPOSE 9000
+USER node
 CMD ["node", "dist/main.js"]

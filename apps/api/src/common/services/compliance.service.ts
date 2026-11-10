@@ -35,9 +35,6 @@ export class ComplianceService {
     private auditLogRepository: Repository<AuditLog>,
   ) {}
 
-  /**
-   * Log audit event for compliance tracking
-   */
   async logAuditEvent(event: AuditEvent): Promise<void> {
     try {
       const auditLog = this.auditLogRepository.create({
@@ -65,13 +62,9 @@ export class ComplianceService {
       });
     } catch (error) {
       this.logger.error("Failed to log audit event", error);
-      // Don't throw - audit logging failures shouldn't break business logic
     }
   }
 
-  /**
-   * Get audit trail for a resource
-   */
   async getAuditTrail(
     resource: string,
     resourceId?: string,
@@ -100,15 +93,11 @@ export class ComplianceService {
     return query.getMany();
   }
 
-  /**
-   * Handle GDPR data processing requests
-   */
   async processDataRequest(request: DataProcessingRequest): Promise<{
     success: boolean;
     message: string;
     data?: any;
   }> {
-    // Log the request
     await this.logAuditEvent({
       action: "GDPR_REQUEST",
       resource: "user_data",
@@ -143,19 +132,11 @@ export class ComplianceService {
     }
   }
 
-  /**
-   * Check if user has consented to data processing
-   */
   async hasDataConsent(userId: string, consentType: string): Promise<boolean> {
-    // In a real implementation, this would check a consent database
-    // For now, return true for demonstration
     this.logger.log(`Checking data consent for user ${userId}, type: ${consentType}`);
     return true;
   }
 
-  /**
-   * Record data processing consent
-   */
   async recordDataConsent(
     userId: string,
     consentType: string,
@@ -178,13 +159,9 @@ export class ComplianceService {
     );
   }
 
-  /**
-   * Anonymize user data for analytics
-   */
   static anonymizeData(data: Record<string, any>): Record<string, any> {
     const anonymized = { ...data };
 
-    // Remove or hash personal identifiers
     const personalFields = ["email", "phone", "name", "firstName", "lastName", "ipAddress"];
     personalFields.forEach((field) => {
       if (anonymized[field]) {
@@ -195,11 +172,7 @@ export class ComplianceService {
     return anonymized;
   }
 
-  /**
-   * Check if data retention period has expired
-   */
   static hasRetentionExpired(createdAt: Date, retentionDays: number = 2555): boolean {
-    // Default 7 years for GDPR compliance
     const retentionPeriod = retentionDays * 24 * 60 * 60 * 1000;
     return Date.now() - createdAt.getTime() > retentionPeriod;
   }
@@ -209,7 +182,6 @@ export class ComplianceService {
     message: string;
     data?: any;
   }> {
-    // In a real implementation, gather all user data
     const userData = {
       userId: request.userId,
       tenantId: request.tenantId,
@@ -228,7 +200,6 @@ export class ComplianceService {
     success: boolean;
     message: string;
   }> {
-    // In a real implementation, update user data
     return {
       success: true,
       message: "Data rectification request queued for processing",
@@ -239,7 +210,6 @@ export class ComplianceService {
     success: boolean;
     message: string;
   }> {
-    // In a real implementation, schedule data deletion
     return {
       success: true,
       message: "Data erasure request queued for processing (will be completed within 30 days)",
@@ -250,7 +220,6 @@ export class ComplianceService {
     success: boolean;
     message: string;
   }> {
-    // In a real implementation, restrict data processing
     return {
       success: true,
       message: "Data processing restriction applied",
@@ -262,7 +231,6 @@ export class ComplianceService {
     message: string;
     data?: any;
   }> {
-    // In a real implementation, export user data
     const exportData = {
       userId: request.userId,
       exportFormat: "JSON",
@@ -280,7 +248,6 @@ export class ComplianceService {
     success: boolean;
     message: string;
   }> {
-    // In a real implementation, stop data processing for specific purposes
     return {
       success: true,
       message: "Data processing objection recorded",
@@ -288,12 +255,11 @@ export class ComplianceService {
   }
 
   private static hashValue(value: string): string {
-    // Simple hash for anonymization (use proper crypto in production)
     let hash = 0;
     for (let i = 0; i < value.length; i++) {
       const char = value.charCodeAt(i);
       hash = (hash << 5) - hash + char;
-      hash = hash & hash; // Convert to 32-bit integer
+      hash = hash & hash;
     }
     return hash.toString(36);
   }

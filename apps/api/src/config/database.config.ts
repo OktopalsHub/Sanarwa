@@ -39,7 +39,6 @@ export default registerAs("database", () => {
     name: process.env.DATABASE_NAME || "notification_platform",
   };
 
-  // Remove undefined values
   Object.keys(config).forEach((key) => {
     if (config[key] === undefined) {
       delete config[key];

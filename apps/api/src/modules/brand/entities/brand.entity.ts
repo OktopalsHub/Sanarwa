@@ -1,7 +1,7 @@
 import { Column, Entity, ManyToOne, OneToMany } from "typeorm";
 import { BrandStatus } from "../../../common/enums";
 import { WhiteLabelConfig } from "../../../common/interfaces";
-import { BaseEntity } from "../../../database/entities/base.entity";
+import { BaseEntity } from "../../../common/database/entities/base.entity";
 import { Project } from "../../project/entities/project.entity";
 import { TenantMember } from "../../tenant-member/entities/tenant-member.entity";
 import { Tenant } from "../../tenant/entities/tenant.entity";
@@ -80,7 +80,6 @@ export class Brand extends BaseEntity {
   @ManyToOne(() => TenantMember, (tenantMember) => tenantMember.createdBrands)
   createdBy: TenantMember;
 
-  // Relationships
   @ManyToOne(() => Tenant, (tenant) => tenant.brands)
   tenant: Tenant;
 

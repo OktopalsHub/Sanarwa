@@ -30,11 +30,10 @@ export class SessionSecurityService {
   private readonly sessionSecret: string;
 
   constructor(private readonly configService: ConfigService) {
-    this.sessionTimeout = this.configService.get<number>("SESSION_TIMEOUT", 3600000); // 1 hour
+    this.sessionTimeout = this.configService.get<number>("SESSION_TIMEOUT", 3600000);
     this.maxSessionsPerUser = this.configService.get<number>("MAX_SESSIONS_PER_USER", 5);
     this.sessionSecret = this.configService.get<string>("SESSION_SECRET", "default-session-secret");
 
-    // Clean up expired sessions every 5 minutes
     setInterval(
       () => {
         this.cleanupExpiredSessions();
@@ -43,9 +42,6 @@ export class SessionSecurityService {
     );
   }
 
-  /**
-   * Create a new secure session
-   */
   async createSession(
     userId: string,
     tenantId: string,
@@ -53,7 +49,6 @@ export class SessionSecurityService {
     userAgent: string,
     metadata?: Record<string, any>,
   ): Promise<SessionData> {
-    // Check if user has too many active sessions
     await this.enforceSessionLimit(userId);
 
     const sessionId = this.generateSecureSessionId();
@@ -79,9 +74,6 @@ export class SessionSecurityService {
     return session;
   }
 
-  /**
-   * Validate session
-   */
   async validateSession(
     sessionId: string,
     ipAddress?: string,
@@ -111,7 +103,6 @@ export class SessionSecurityService {
       };
     }
 
-    // Check IP address if provided (optional for security)
     if (ipAddress && this.configService.get<boolean>("ENFORCE_SESSION_IP", false)) {
       if (session.ipAddress !== ipAddress) {
         await this.invalidateSession(sessionId);
@@ -125,7 +116,6 @@ export class SessionSecurityService {
       }
     }
 
-    // Update last accessed time
     session.lastAccessedAt = new Date();
     this.sessions.set(sessionId, session);
 
@@ -135,9 +125,6 @@ export class SessionSecurityService {
     };
   }
 
-  /**
-   * Refresh session (extend expiration)
-   */
   async refreshSession(sessionId: string): Promise<SessionData | null> {
     const session = this.sessions.get(sessionId);
 
@@ -155,9 +142,6 @@ export class SessionSecurityService {
     return session;
   }
 
-  /**
-   * Invalidate session
-   */
   async invalidateSession(sessionId: string): Promise<boolean> {
     const session = this.sessions.get(sessionId);
 
@@ -172,9 +156,6 @@ export class SessionSecurityService {
     return true;
   }
 
-  /**
-   * Invalidate all sessions for a user
-   */
   async invalidateUserSessions(userId: string): Promise<number> {
     let invalidatedCount = 0;
 
@@ -190,9 +171,6 @@ export class SessionSecurityService {
     return invalidatedCount;
   }
 
-  /**
-   * Get active sessions for a user
-   */
   async getUserSessions(userId: string): Promise<SessionData[]> {
     const userSessions: SessionData[] = [];
 
@@ -205,16 +183,10 @@ export class SessionSecurityService {
     return userSessions.toSorted((a, b) => b.lastAccessedAt.getTime() - a.lastAccessedAt.getTime());
   }
 
-  /**
-   * Get session by ID
-   */
   async getSession(sessionId: string): Promise<SessionData | null> {
     return this.sessions.get(sessionId) || null;
   }
 
-  /**
-   * Generate secure session token
-   */
   generateSessionToken(sessionId: string): string {
     const timestamp = Date.now().toString();
     const data = `${sessionId}:${timestamp}`;
@@ -223,9 +195,6 @@ export class SessionSecurityService {
     return `${Buffer.from(data).toString("base64")}.${signature}`;
   }
 
-  /**
-   * Verify session token
-   */
   verifySessionToken(token: string): { sessionId: string; timestamp: number } | null {
     try {
       const [encodedData, signature] = token.split(".");
@@ -263,9 +232,6 @@ export class SessionSecurityService {
     }
   }
 
-  /**
-   * Check for suspicious session activity
-   */
   async detectSuspiciousActivity(userId: string): Promise<{
     isSuspicious: boolean;
     reasons: string[];
@@ -275,29 +241,25 @@ export class SessionSecurityService {
     const reasons: string[] = [];
     let riskLevel: "low" | "medium" | "high" = "low";
 
-    // Check for too many concurrent sessions
     if (userSessions.length > this.maxSessionsPerUser * 0.8) {
       reasons.push("High number of concurrent sessions");
       riskLevel = "medium";
     }
 
-    // Check for sessions from different IP addresses
     const uniqueIPs = new Set(userSessions.map((s) => s.ipAddress));
     if (uniqueIPs.size > 3) {
       reasons.push("Sessions from multiple IP addresses");
       riskLevel = "high";
     }
 
-    // Check for sessions from different user agents
     const uniqueUserAgents = new Set(userSessions.map((s) => s.userAgent));
     if (uniqueUserAgents.size > 2) {
       reasons.push("Sessions from multiple devices/browsers");
       if (riskLevel === "low") riskLevel = "medium";
     }
 
-    // Check for rapid session creation
     const recentSessions = userSessions.filter(
-      (s) => s.createdAt > new Date(Date.now() - 10 * 60 * 1000), // Last 10 minutes
+      (s) => s.createdAt > new Date(Date.now() - 10 * 60 * 1000),
     );
     if (recentSessions.length > 3) {
       reasons.push("Rapid session creation");
@@ -311,9 +273,6 @@ export class SessionSecurityService {
     };
   }
 
-  /**
-   * Get session statistics
-   */
   async getSessionStats(): Promise<{
     totalSessions: number;
     activeSessions: number;
@@ -352,9 +311,6 @@ export class SessionSecurityService {
     };
   }
 
-  /**
-   * Clean up expired sessions
-   */
   private async cleanupExpiredSessions(): Promise<void> {
     const now = new Date();
     let cleanedCount = 0;
@@ -371,14 +327,10 @@ export class SessionSecurityService {
     }
   }
 
-  /**
-   * Enforce session limit per user
-   */
   private async enforceSessionLimit(userId: string): Promise<void> {
     const userSessions = await this.getUserSessions(userId);
 
     if (userSessions.length >= this.maxSessionsPerUser) {
-      // Remove oldest sessions
       const sessionsToRemove = userSessions
         .toSorted((a, b) => a.lastAccessedAt.getTime() - b.lastAccessedAt.getTime())
         .slice(0, userSessions.length - this.maxSessionsPerUser + 1);
@@ -393,9 +345,6 @@ export class SessionSecurityService {
     }
   }
 
-  /**
-   * Generate secure session ID
-   */
   private generateSecureSessionId(): string {
     return crypto.randomBytes(32).toString("hex");
   }

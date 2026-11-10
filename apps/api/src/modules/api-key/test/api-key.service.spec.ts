@@ -10,9 +10,7 @@ describe("ApiKeyService", () => {
       providers: [
         {
           provide: ApiKeyService,
-          useValue: {
-            // Mock implementation
-          },
+          useValue: {},
         },
       ],
     }).compile();

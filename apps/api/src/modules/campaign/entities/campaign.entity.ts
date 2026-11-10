@@ -1,5 +1,5 @@
-import { Column, Entity, Index, ManyToOne } from "typeorm";
-import { BaseEntity } from "../../../database/entities/base.entity";
+import { Column, Entity, Index, JoinColumn, ManyToOne } from "typeorm";
+import { BaseEntity } from "../../../common/database/entities/base.entity";
 import { Tenant } from "../../tenant/entities/tenant.entity";
 import { TenantMember } from "../../tenant-member/entities/tenant-member.entity";
 
@@ -52,5 +52,6 @@ export class Campaign extends BaseEntity {
   createdById?: string;
 
   @ManyToOne(() => TenantMember, { nullable: true })
+  @JoinColumn({ name: "created_by" })
   createdBy?: TenantMember;
 }

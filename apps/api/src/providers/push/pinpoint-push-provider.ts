@@ -10,13 +10,8 @@ import {
 } from "@aws-sdk/client-pinpoint";
 import { Injectable } from "@nestjs/common";
 import { BaseProvider } from "../base/base-provider.abstract";
-import {
-  Channel,
-  ProviderConfig,
-  ProviderHealth,
-  ProviderHealthStatus,
-  ProviderResponse,
-} from "../types";
+import { ProviderConfig, ProviderResponse } from "../types";
+import { NotificationChannel } from "../../common/enums/notification-channel.enum";
 import {
   DeviceRegistration,
   IPushProvider,
@@ -30,7 +25,7 @@ export class PinpointPushProvider extends BaseProvider implements IPushProvider 
   private pushConfig: PushConfig;
 
   constructor() {
-    super("pinpoint", "AWS Pinpoint Push", Channel.PUSH);
+    super("pinpoint", "AWS Pinpoint Push", NotificationChannel.PUSH);
   }
 
   async send(payload: PushPayload): Promise<ProviderResponse> {
@@ -46,7 +41,7 @@ export class PinpointPushProvider extends BaseProvider implements IPushProvider 
       const messageRequest: MessageRequest = {
         Addresses: {
           [payload.recipient]: {
-            ChannelType: "GCM" as any, // Default to GCM, should be determined by token format
+            ChannelType: "GCM" as any,
           },
         },
         MessageConfiguration: {
@@ -100,7 +95,7 @@ export class PinpointPushProvider extends BaseProvider implements IPushProvider 
       payloads.forEach((payload) => {
         if (this.validateDeviceToken(payload.recipient)) {
           addresses[payload.recipient] = {
-            ChannelType: "GCM" as any, // Should be determined by token format
+            ChannelType: "GCM" as any,
           };
         }
       });
@@ -109,7 +104,6 @@ export class PinpointPushProvider extends BaseProvider implements IPushProvider 
         return payloads.map(() => this.createErrorResponse("No valid device tokens"));
       }
 
-      // For bulk sending, we'll use the first payload as template
       const templatePayload = payloads[0];
 
       const messageRequest: MessageRequest = {
@@ -128,7 +122,6 @@ export class PinpointPushProvider extends BaseProvider implements IPushProvider 
       const command = new SendMessagesCommand(params);
       const result = await this.pinpointClient.send(command);
 
-      // Map results back to individual responses
       return payloads.map((payload) => {
         const messageResult = result.MessageResponse?.Result?.[payload.recipient];
 
@@ -202,10 +195,7 @@ export class PinpointPushProvider extends BaseProvider implements IPushProvider 
     }
 
     try {
-      // Pinpoint doesn't have a direct unregister method
-      // We would typically disable the endpoint or remove it from segments
       this.logger.log(`Device unregistration requested: ${deviceToken}`);
-      // Implementation would depend on specific Pinpoint setup
     } catch (error) {
       this.logger.error(`Failed to unregister device:`, error);
       throw error;
@@ -217,9 +207,6 @@ export class PinpointPushProvider extends BaseProvider implements IPushProvider 
       return false;
     }
 
-    // Basic validation - should be enhanced based on platform
-    // iOS tokens are typically 64 hex characters
-    // Android tokens are longer and base64-like
     const iosTokenRegex = /^[a-fA-F0-9]{64}$/;
     const androidTokenRegex = /^[A-Za-z0-9_-]+$/;
 
@@ -247,33 +234,6 @@ export class PinpointPushProvider extends BaseProvider implements IPushProvider 
     }
 
     return true;
-  }
-
-  protected async performHealthCheck(): Promise<ProviderHealthStatus> {
-    if (!this.pinpointClient) {
-      throw new Error("Pinpoint client not initialized");
-    }
-
-    try {
-      const command = new GetApplicationSettingsCommand({
-        ApplicationId: this.pushConfig.applicationId,
-      });
-
-      await this.pinpointClient.send(command);
-
-      return {
-        status: ProviderHealth.HEALTHY,
-        lastChecked: new Date(),
-        uptime: 100,
-        metadata: {
-          service: "AWS Pinpoint Push",
-          region: this.pinpointClient.config.region,
-          applicationId: this.pushConfig.applicationId,
-        },
-      };
-    } catch (error) {
-      throw new Error(`Pinpoint health check failed: ${error.message}`, { cause: error });
-    }
   }
 
   protected async onInitialize(): Promise<void> {
@@ -310,7 +270,7 @@ export class PinpointPushProvider extends BaseProvider implements IPushProvider 
       ImageUrl: payload.imageUrl,
       Data: payload.customData,
       Priority: payload.priority === "high" ? "high" : "normal",
-      TimeToLive: payload.timeToLive || 86400, // 24 hours default
+      TimeToLive: payload.timeToLive || 86400,
       CollapseKey: payload.collapseKey,
     };
   }

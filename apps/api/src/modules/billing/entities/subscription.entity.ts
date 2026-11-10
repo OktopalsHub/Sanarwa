@@ -61,19 +61,19 @@ export class Subscription {
   paymentProvider: PaymentProvider;
 
   @Column({ nullable: true })
-  externalSubscriptionId: string; // Polar or Bachs subscription ID
+  externalSubscriptionId: string;
 
   @Column({ nullable: true })
-  externalCustomerId: string; // Polar or Bachs customer ID
+  externalCustomerId: string;
 
   @Column({ type: "decimal", precision: 10, scale: 2, nullable: true })
   monthlyPrice: number;
 
   @Column({ type: "int", nullable: true })
-  includedTokens: number; // Monthly token allowance
+  includedTokens: number;
 
   @Column({ type: "decimal", precision: 10, scale: 4, nullable: true })
-  overageRate: number; // Price per token over limit
+  overageRate: number;
 
   @Column({ type: "timestamp", nullable: true })
   currentPeriodStart: Date;

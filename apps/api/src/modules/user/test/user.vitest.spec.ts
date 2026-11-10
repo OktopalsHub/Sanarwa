@@ -62,7 +62,6 @@ describe("User Module Integration Tests", () => {
       console.log("👤 User profile response:", response.status, response.data);
 
       if (response.status === 404) {
-        // Try alternative endpoint
         const altResponse = await api.get("/auth/profile", {
           headers: { Authorization: `Bearer ${authToken}` },
         });
@@ -92,7 +91,6 @@ describe("User Module Integration Tests", () => {
       console.log("✏️ Update profile response:", response.status, response.data);
 
       if (response.status === 404) {
-        // Try alternative endpoint
         const altResponse = await api.put(`/users/${userId}`, updateData, {
           headers: { Authorization: `Bearer ${authToken}` },
         });
@@ -133,7 +131,6 @@ describe("User Module Integration Tests", () => {
       console.log("🔎 Search users response:", response.status, response.data);
 
       if (response.status === 404) {
-        // Try alternative endpoint
         const altResponse = await api.get("/users", {
           headers: { Authorization: `Bearer ${authToken}` },
           params: { search: "test" },
@@ -167,7 +164,6 @@ describe("User Module Integration Tests", () => {
     });
 
     it("should deactivate user", async () => {
-      // Create another user to deactivate
       const timestamp = Date.now();
       const testUser = {
         email: `deactivate-test-${timestamp}@example.com`,
@@ -195,7 +191,6 @@ describe("User Module Integration Tests", () => {
       console.log("🚫 Deactivate user response:", response.status, response.data);
 
       if (response.status === 404) {
-        // Try alternative endpoint
         const altResponse = await api.patch(
           `/users/${userToDeactivate}`,
           { isActive: false },
@@ -217,7 +212,6 @@ describe("User Module Integration Tests", () => {
       console.log("⚙️ User preferences response:", response.status, response.data);
 
       if (response.status === 404) {
-        // Try alternative endpoint
         const altResponse = await api.get(`/users/${userId}/preferences`, {
           headers: { Authorization: `Bearer ${authToken}` },
         });
@@ -248,7 +242,6 @@ describe("User Module Integration Tests", () => {
       console.log("⚙️ Update preferences response:", response.status, response.data);
 
       if (response.status === 404) {
-        // Try alternative endpoint
         const altResponse = await api.put(`/users/${userId}/preferences`, preferences, {
           headers: { Authorization: `Bearer ${authToken}` },
         });

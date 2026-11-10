@@ -1,6 +1,6 @@
 import { Injectable, Logger } from "@nestjs/common";
-import { Queue } from "bull";
-import { InjectQueue } from "@nestjs/bull";
+import { Queue } from "bullmq";
+import { InjectQueue } from "@nestjs/bullmq";
 import { WEBHOOK_RETRY_QUEUE } from "./webhook-queue.constants";
 
 export interface WebhookRetryJob {
@@ -24,14 +24,11 @@ export class WebhookQueueService {
     private readonly webhookRetryQueue: Queue<WebhookRetryJob>,
   ) {}
 
-  /**
-   * Queue a webhook for retry
-   */
   async queueWebhookRetry(job: WebhookRetryJob): Promise<void> {
     try {
-      await this.webhookRetryQueue.add(job, {
+      await this.webhookRetryQueue.add("process-webhook-retry", job, {
         jobId: `${job.idempotencyKey}-attempt-${job.attempt}`,
-        priority: 10 - job.attempt, // Higher priority for earlier attempts
+        priority: job.attempt,
         delay: this.calculateBackoffDelay(job.attempt),
       });
 
@@ -44,18 +41,11 @@ export class WebhookQueueService {
     }
   }
 
-  /**
-   * Calculate exponential backoff delay in milliseconds
-   */
   private calculateBackoffDelay(attempt: number): number {
-    // Exponential backoff: 2^attempt seconds, capped at 5 minutes
     const delaySeconds = Math.min(Math.pow(2, attempt - 1), 300);
     return delaySeconds * 1000;
   }
 
-  /**
-   * Get queue statistics
-   */
   async getQueueStats(): Promise<{
     active: number;
     waiting: number;
@@ -73,9 +63,6 @@ export class WebhookQueueService {
     };
   }
 
-  /**
-   * Clear failed jobs
-   */
   async clearFailedJobs(): Promise<void> {
     const failedJobs = await this.webhookRetryQueue.getFailed();
     for (const job of failedJobs) {
@@ -84,9 +71,6 @@ export class WebhookQueueService {
     this.logger.log(`Cleared ${failedJobs.length} failed webhook jobs`);
   }
 
-  /**
-   * Retry a specific failed job
-   */
   async retryFailedJob(jobId: string): Promise<void> {
     const job = await this.webhookRetryQueue.getJob(jobId);
     if (!job) {

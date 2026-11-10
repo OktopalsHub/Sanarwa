@@ -19,9 +19,9 @@ import {
   ApiParam,
   ApiCreatedResponse,
 } from "@nestjs/swagger";
-import { CurrentMemberId } from "src/common/decorators";
-import { TenantMemberGuard } from "src/common/guards";
-import { AuthGuard } from "src/modules/auth/guards/jwt-auth.guard";
+import { CurrentMemberId } from "../../common/decorators";
+import { TenantMemberGuard } from "../../common/guards";
+import { AuthGuard } from "../../modules/auth/guards/jwt-auth.guard";
 import { CreateProjectDto } from "./dto/create-project.dto";
 import { ProjectQueryDto } from "./dto/project-query.dto";
 import { UpdateProjectDto } from "./dto/update-project.dto";

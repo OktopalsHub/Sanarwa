@@ -32,7 +32,6 @@ export class SendGridProvider extends BaseEmailProvider {
 
   async initialize(): Promise<void> {
     try {
-      // Dynamic import to avoid bundling if not used
       const sgMail = await import("@sendgrid/mail");
       this.sgMail = sgMail.default;
 
@@ -83,7 +82,6 @@ export class SendGridProvider extends BaseEmailProvider {
         })),
       };
 
-      // Handle template emails
       if (message.templateId) {
         Object.assign(msg, {
           templateId: message.templateId,
@@ -166,7 +164,7 @@ export class SendGridProvider extends BaseEmailProvider {
           status: "sent",
           providerId: this.providerId,
           timestamp: new Date(),
-          cost: 0, // Will be calculated in batch
+          cost: 0,
           metadata: {
             statusCode: res.statusCode,
             headers: res.headers,
@@ -178,7 +176,6 @@ export class SendGridProvider extends BaseEmailProvider {
     } catch (error) {
       this.logger.error("SendGrid bulk email send failed", error);
 
-      // Return failed results for all messages
       return messages.map((_, index) => ({
         messageId: `sg_bulk_failed_${Date.now()}_${index}`,
         status: "failed",
@@ -215,13 +212,11 @@ export class SendGridProvider extends BaseEmailProvider {
       errors.push("Invalid reply-to email format");
     }
 
-    // Test API key if provided
     if (sendGridConfig.apiKey && errors.length === 0) {
       try {
         const sgMail = await import("@sendgrid/mail");
         sgMail.default.setApiKey(sendGridConfig.apiKey);
 
-        // Test with a simple API call
         await sgMail.default.send({
           to: "test@example.com",
           from: sendGridConfig.fromEmail || "test@example.com",
@@ -247,7 +242,6 @@ export class SendGridProvider extends BaseEmailProvider {
   }
 
   async getStats(): Promise<EmailProviderStats> {
-    // In a real implementation, this would fetch from a database or cache
     return {
       totalSent: 0,
       totalFailed: 0,
@@ -256,43 +250,6 @@ export class SendGridProvider extends BaseEmailProvider {
       lastUsed: new Date(),
       costToDate: 0,
     };
-  }
-
-  async healthCheck(): Promise<{ healthy: boolean; latency: number; error?: string }> {
-    const startTime = Date.now();
-
-    try {
-      if (!this.isInitialized) {
-        await this.initialize();
-      }
-
-      // Simple health check - try to access SendGrid API
-      const sendGridConfig = this.config.config as SendGridConfig;
-      const sgMail = await import("@sendgrid/mail");
-      sgMail.default.setApiKey(sendGridConfig.apiKey);
-
-      // Test with sandbox mode
-      await sgMail.default.send({
-        to: "healthcheck@example.com",
-        from: sendGridConfig.fromEmail || "healthcheck@example.com",
-        subject: "Health Check",
-        text: "Health check message",
-        mailSettings: {
-          sandboxMode: { enable: true },
-        },
-      });
-
-      return {
-        healthy: true,
-        latency: Date.now() - startTime,
-      };
-    } catch (error) {
-      return {
-        healthy: false,
-        latency: Date.now() - startTime,
-        error: error.message,
-      };
-    }
   }
 
   async getCost(messageCount: number): Promise<number> {
@@ -305,8 +262,6 @@ export class SendGridProvider extends BaseEmailProvider {
         await this.initialize();
       }
 
-      // SendGrid doesn't provide a direct API to list templates via the mail library
-      // This would require using the SendGrid Web API v3 directly
       this.logger.warn("Template listing not implemented for SendGrid provider");
       return [];
     } catch (error) {
@@ -316,9 +271,8 @@ export class SendGridProvider extends BaseEmailProvider {
   }
 
   private async calculateCost(messageCount: number): Promise<number> {
-    // SendGrid pricing: $0.60 per 1000 emails for first 40k, then $0.55
-    const baseRate = 0.0006; // $0.60 per 1000
-    const discountRate = 0.00055; // $0.55 per 1000 after 40k
+    const baseRate = 0.0006;
+    const discountRate = 0.00055;
     const discountThreshold = 40000;
 
     let cost = 0;
@@ -330,7 +284,6 @@ export class SendGridProvider extends BaseEmailProvider {
       cost += (messageCount - discountThreshold) * discountRate;
     }
 
-    // Add infrastructure fee (30% markup)
     const infrastructureFee = cost * 0.3;
 
     return cost + infrastructureFee;

@@ -1,6 +1,6 @@
 import { Injectable } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
-import { BaseRepository } from "../../../database/repositories/base.repository";
+import { BaseRepository } from "../../../common/database/repositories/base.repository";
 import { Repository } from "typeorm";
 import { DeadLetter, DeadLetterStatus, DeadLetterType } from "../entities/dead-letter.entity";
 
@@ -13,9 +13,6 @@ export class DeadLetterRepository extends BaseRepository<DeadLetter> {
     super(deadLetterRepository);
   }
 
-  /**
-   * Find dead letters by tenant ID
-   */
   async findByTenantId(tenantId: string): Promise<DeadLetter[]> {
     return this.find({
       where: { tenantId },
@@ -23,9 +20,6 @@ export class DeadLetterRepository extends BaseRepository<DeadLetter> {
     });
   }
 
-  /**
-   * Find dead letters by status
-   */
   async findByStatus(status: DeadLetterStatus): Promise<DeadLetter[]> {
     return this.find({
       where: { status },
@@ -33,9 +27,6 @@ export class DeadLetterRepository extends BaseRepository<DeadLetter> {
     });
   }
 
-  /**
-   * Find dead letters by type
-   */
   async findByType(type: DeadLetterType): Promise<DeadLetter[]> {
     return this.find({
       where: { originalType: type },
@@ -43,9 +34,6 @@ export class DeadLetterRepository extends BaseRepository<DeadLetter> {
     });
   }
 
-  /**
-   * Find dead letters by tenant and status
-   */
   async findByTenantAndStatus(tenantId: string, status: DeadLetterStatus): Promise<DeadLetter[]> {
     return this.find({
       where: { tenantId, status },
@@ -53,9 +41,6 @@ export class DeadLetterRepository extends BaseRepository<DeadLetter> {
     });
   }
 
-  /**
-   * Get dead letter statistics for a tenant
-   */
   async getStatsByTenant(tenantId: string): Promise<{
     total: number;
     pendingReview: number;
@@ -80,9 +65,6 @@ export class DeadLetterRepository extends BaseRepository<DeadLetter> {
     };
   }
 
-  /**
-   * Mark dead letter as resolved
-   */
   async markAsResolved(
     id: string,
     resolvedBy: string,
@@ -96,18 +78,12 @@ export class DeadLetterRepository extends BaseRepository<DeadLetter> {
     });
   }
 
-  /**
-   * Mark dead letter as under investigation
-   */
   async markAsUnderInvestigation(id: string): Promise<DeadLetter | null> {
     return this.update(id, {
       status: DeadLetterStatus.UNDER_INVESTIGATION,
     });
   }
 
-  /**
-   * Mark dead letter as ignored
-   */
   async markAsIgnored(
     id: string,
     resolvedBy: string,
@@ -121,9 +97,6 @@ export class DeadLetterRepository extends BaseRepository<DeadLetter> {
     });
   }
 
-  /**
-   * Find recent dead letters (last 24 hours)
-   */
   async findRecent(tenantId?: string): Promise<DeadLetter[]> {
     const yesterday = new Date();
     yesterday.setDate(yesterday.getDate() - 1);
@@ -139,9 +112,6 @@ export class DeadLetterRepository extends BaseRepository<DeadLetter> {
     return queryBuilder.getMany();
   }
 
-  /**
-   * Find dead letters with high retry count
-   */
   async findHighRetryCount(minRetryCount: number = 3): Promise<DeadLetter[]> {
     return this.find({
       where: {

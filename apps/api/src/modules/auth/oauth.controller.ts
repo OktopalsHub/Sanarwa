@@ -15,9 +15,7 @@ export class OAuthController {
   @UseGuards(OAuthGuard)
   @ApiOperation({ summary: "OAuth provider login" })
   @ApiResponse({ status: 302, description: "Redirects to OAuth provider" })
-  async oauthAuth(@Param("provider") provider: string) {
-    // Passport handles the redirect
-  }
+  async oauthAuth(@Param("provider") provider: string) {}
 
   @Get(":provider/callback")
   @UseGuards(OAuthGuard)

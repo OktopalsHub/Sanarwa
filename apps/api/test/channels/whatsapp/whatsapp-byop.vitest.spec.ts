@@ -1,9 +1,3 @@
-/**
- * WhatsApp Multi-WABA (Multiple WhatsApp Business Accounts) Tests
- * Tests creating separate WABA per tenant - the CORRECT approach for multi-tenant SaaS
- * Each tenant gets their own WABA with full 6000 template capacity
- */
-
 import { describe, it, expect, beforeAll, afterAll } from "vitest";
 import {
   createTestSetup,
@@ -24,12 +18,12 @@ describe("📱 WhatsApp Multi-WABA Tests", () => {
   beforeAll(async () => {
     testSetup = await createTestSetup();
 
-    // Create WhatsApp template for BYOP testing
     const templateData = {
       name: "whatsapp-byop-test",
       channel: "WHATSAPP",
       subject: "WhatsApp BYOP: {{title}}",
-      content: JSON.stringify({
+
+      data: JSON.stringify({
         type: "template",
         template: {
           name: "shared_business_notification",
@@ -70,15 +64,12 @@ describe("📱 WhatsApp Multi-WABA Tests", () => {
   afterAll(async () => {
     await cleanupTemplate(testSetup.api, testSetup.authData, whatsappTemplate.id);
 
-    // Cleanup providers and templates
     for (const providerId of createdProviders) {
       try {
         await testSetup.api.delete(`/projects/${testSetup.projectId}/providers/${providerId}`, {
           headers: createAuthHeaders(testSetup.authData.accessToken),
         });
-      } catch (error) {
-        // Ignore cleanup errors
-      }
+      } catch (error) {}
     }
 
     for (const templateId of createdTemplates) {
@@ -86,9 +77,7 @@ describe("📱 WhatsApp Multi-WABA Tests", () => {
         await testSetup.api.delete(`/whatsapp/templates/${templateId}`, {
           headers: createAuthHeaders(testSetup.authData.accessToken),
         });
-      } catch (error) {
-        // Ignore cleanup errors
-      }
+      } catch (error) {}
     }
     console.log("✅ WhatsApp BYOP cleanup completed");
   });
@@ -235,14 +224,14 @@ describe("📱 WhatsApp Multi-WABA Tests", () => {
           templates: [
             {
               name: "ecommerce_order_confirmation",
-              content:
-                "Hello {{customer_name}}, your order {{order_id}} has been confirmed at {{business_name}}. Total: {{amount}}. Thank you for shopping with us!",
+
+              data: "Hello {{customer_name}}, your order {{order_id}} has been confirmed at {{business_name}}. Total: {{amount}}. Thank you for shopping with us!",
               variables: ["customer_name", "order_id", "business_name", "amount"],
             },
             {
               name: "ecommerce_shipping_update",
-              content:
-                "Hi {{customer_name}}, your order {{order_id}} from {{business_name}} has been shipped. Tracking: {{tracking_number}}",
+
+              data: "Hi {{customer_name}}, your order {{order_id}} from {{business_name}} has been shipped. Tracking: {{tracking_number}}",
               variables: ["customer_name", "order_id", "business_name", "tracking_number"],
             },
           ],
@@ -252,14 +241,14 @@ describe("📱 WhatsApp Multi-WABA Tests", () => {
           templates: [
             {
               name: "healthcare_appointment_reminder",
-              content:
-                "Dear {{patient_name}}, this is a reminder for your appointment with {{clinic_name}} on {{date}} at {{time}}.",
+
+              data: "Dear {{patient_name}}, this is a reminder for your appointment with {{clinic_name}} on {{date}} at {{time}}.",
               variables: ["patient_name", "clinic_name", "date", "time"],
             },
             {
               name: "healthcare_test_results",
-              content:
-                "Hello {{patient_name}}, your test results are ready at {{clinic_name}}. Please contact us to schedule a consultation.",
+
+              data: "Hello {{patient_name}}, your test results are ready at {{clinic_name}}. Please contact us to schedule a consultation.",
               variables: ["patient_name", "clinic_name"],
             },
           ],
@@ -269,8 +258,8 @@ describe("📱 WhatsApp Multi-WABA Tests", () => {
           templates: [
             {
               name: "finance_payment_reminder",
-              content:
-                "Dear {{customer_name}}, your payment of {{amount}} to {{company_name}} is due on {{due_date}}. Please make payment to avoid late fees.",
+
+              data: "Dear {{customer_name}}, your payment of {{amount}} to {{company_name}} is due on {{due_date}}. Please make payment to avoid late fees.",
               variables: ["customer_name", "amount", "company_name", "due_date"],
             },
           ],
@@ -284,10 +273,10 @@ describe("📱 WhatsApp Multi-WABA Tests", () => {
           const templatePayload = {
             name: template.name,
             category: category.category,
-            content: template.content,
+            data: template.data,
             variables: template.variables,
-            isShared: true, // Mark as shared template
-            maxTenants: 1000, // Allow up to 1000 tenants per template
+            isShared: true,
+            maxTenants: 1000,
           };
 
           const response = await testSetup.api.post("/whatsapp/templates/shared", templatePayload, {
@@ -323,7 +312,6 @@ describe("📱 WhatsApp Multi-WABA Tests", () => {
     });
 
     it("should demonstrate template reuse across multiple tenants", async () => {
-      // Simulate multiple tenants using the same template
       const tenantConfigurations = [
         {
           tenantId: "tenant_pizza_shop",
@@ -354,14 +342,13 @@ describe("📱 WhatsApp Multi-WABA Tests", () => {
       const templateUsageResults = [];
 
       for (const tenant of tenantConfigurations) {
-        // Each tenant uses the same shared template with their customization
         const notificationPayload = {
-          to: "+2347088200612", // Use real test number
+          to: "+2347088200612",
           message: "Shared template usage test",
           subject: "Multi-tenant Template Test",
           channel: "WHATSAPP",
           metadata: {
-            templateId: "ecommerce_order_confirmation", // Shared template
+            templateId: "ecommerce_order_confirmation",
             templateData: {
               customer_name: "John Doe",
               order_id: "ORD-12345",
@@ -431,7 +418,6 @@ describe("📱 WhatsApp Multi-WABA Tests", () => {
       const creationResults = [];
 
       for (const templateRequest of dynamicTemplateCreation.templateRequests) {
-        // Programmatically create WhatsApp template via Meta API
         const createTemplatePayload = {
           name: templateRequest.name,
           category: templateRequest.category,
@@ -505,7 +491,6 @@ describe("📱 WhatsApp Multi-WABA Tests", () => {
     });
 
     it("should test WhatsApp message rate limiting", async () => {
-      // Test WhatsApp rate limits (1000 messages per second per phone number)
       const rateLimitTests = [];
 
       for (let i = 1; i <= 5; i++) {
@@ -631,7 +616,6 @@ describe("📱 WhatsApp Multi-WABA Tests", () => {
       const testPhoneNumber = "+2347088200612";
       const results = { byop: null, waba: null };
 
-      // Test BYOP performance
       const byopStart = Date.now();
       const byopPayload = {
         to: testPhoneNumber,
@@ -659,7 +643,6 @@ describe("📱 WhatsApp Multi-WABA Tests", () => {
         success: [200, 201].includes(byopResponse.status),
       };
 
-      // Test WABA performance
       const wabaStart = Date.now();
       const wabaPayload = {
         to: testPhoneNumber,

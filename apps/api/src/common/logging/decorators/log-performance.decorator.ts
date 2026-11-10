@@ -4,7 +4,7 @@ export const LOG_PERFORMANCE_KEY = "log_performance";
 
 export interface LogPerformanceOptions {
   operation: string;
-  threshold?: number; // Log as warning if execution time exceeds this (ms)
+  threshold?: number;
   includeArgs?: boolean;
   includeResult?: boolean;
   category?: string;

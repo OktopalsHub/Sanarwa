@@ -6,37 +6,30 @@ import * as promClient from "prom-client";
 export class MetricsService {
   private readonly register: promClient.Registry;
 
-  // HTTP Metrics
   private readonly httpRequestsTotal: promClient.Counter<string>;
   private readonly httpRequestDuration: promClient.Histogram<string>;
   private readonly httpRequestsInProgress: promClient.Gauge<string>;
 
-  // Business Metrics
   private readonly activeUsers: promClient.Gauge<string>;
   private readonly userActions: promClient.Counter<string>;
   private readonly businessEvents: promClient.Counter<string>;
 
-  // Database Metrics
   private readonly databaseQueries: promClient.Counter<string>;
   private readonly databaseQueryDuration: promClient.Histogram<string>;
   private readonly databaseConnections: promClient.Gauge<string>;
 
-  // Security Metrics
   private readonly securityEvents: promClient.Counter<string>;
   private readonly failedLogins: promClient.Counter<string>;
   private readonly rateLimitHits: promClient.Counter<string>;
 
-  // System Metrics
   private readonly memoryUsage: promClient.Gauge<string>;
   private readonly cpuUsage: promClient.Gauge<string>;
 
   constructor(private readonly configService: ConfigService) {
     this.register = new promClient.Registry();
 
-    // Add default metrics (CPU, memory, etc.)
     promClient.collectDefaultMetrics({ register: this.register });
 
-    // HTTP Metrics
     this.httpRequestsTotal = new promClient.Counter({
       name: "http_requests_total",
       help: "Total number of HTTP requests",
@@ -59,7 +52,6 @@ export class MetricsService {
       registers: [this.register],
     });
 
-    // Business Metrics
     this.activeUsers = new promClient.Gauge({
       name: "active_users_total",
       help: "Number of currently active users",
@@ -81,7 +73,6 @@ export class MetricsService {
       registers: [this.register],
     });
 
-    // Database Metrics
     this.databaseQueries = new promClient.Counter({
       name: "database_queries_total",
       help: "Total number of database queries",
@@ -103,7 +94,6 @@ export class MetricsService {
       registers: [this.register],
     });
 
-    // Security Metrics
     this.securityEvents = new promClient.Counter({
       name: "security_events_total",
       help: "Total number of security events",
@@ -125,7 +115,6 @@ export class MetricsService {
       registers: [this.register],
     });
 
-    // System Metrics
     this.memoryUsage = new promClient.Gauge({
       name: "nodejs_memory_usage_bytes",
       help: "Node.js memory usage in bytes",
@@ -139,13 +128,11 @@ export class MetricsService {
       registers: [this.register],
     });
 
-    // Update system metrics periodically
     setInterval(() => {
       this.updateSystemMetrics();
-    }, 10000); // Every 10 seconds
+    }, 10000);
   }
 
-  // HTTP Metrics Methods
   incrementHttpRequests(method: string, route: string, status: number, tenantId?: string) {
     this.httpRequestsTotal.inc({
       method,
@@ -162,8 +149,13 @@ export class MetricsService {
         route,
         status: status.toString(),
       },
-      duration / 1000, // Convert to seconds
+      duration / 1000,
     );
+  }
+
+  recordHttpRequest(method: string, route: string, status: number, duration: number) {
+    this.incrementHttpRequests(method, route, status);
+    this.observeHttpDuration(method, route, status, duration);
   }
 
   incrementHttpInProgress(method: string, route: string) {
@@ -174,7 +166,6 @@ export class MetricsService {
     this.httpRequestsInProgress.dec({ method, route });
   }
 
-  // Business Metrics Methods
   setActiveUsers(count: number, tenantId?: string) {
     this.activeUsers.set({ tenant_id: tenantId || "all" }, count);
   }
@@ -194,23 +185,18 @@ export class MetricsService {
     });
   }
 
-  // Database Metrics Methods
   incrementDatabaseQuery(operation: string, table: string, status: "success" | "error") {
     this.databaseQueries.inc({ operation, table, status });
   }
 
   observeDatabaseQueryDuration(operation: string, table: string, duration: number) {
-    this.databaseQueryDuration.observe(
-      { operation, table },
-      duration / 1000, // Convert to seconds
-    );
+    this.databaseQueryDuration.observe({ operation, table }, duration / 1000);
   }
 
   setDatabaseConnections(count: number) {
     this.databaseConnections.set(count);
   }
 
-  // Security Metrics Methods
   incrementSecurityEvent(eventType: string, severity: string, tenantId?: string) {
     this.securityEvents.inc({
       event_type: eventType,
@@ -233,7 +219,6 @@ export class MetricsService {
     });
   }
 
-  // System Metrics Methods
   private updateSystemMetrics() {
     const memUsage = process.memoryUsage();
     this.memoryUsage.set({ type: "rss" }, memUsage.rss);
@@ -241,18 +226,15 @@ export class MetricsService {
     this.memoryUsage.set({ type: "heapUsed" }, memUsage.heapUsed);
     this.memoryUsage.set({ type: "external" }, memUsage.external);
 
-    // CPU usage calculation (simplified)
     const cpuUsage = process.cpuUsage();
     const totalUsage = cpuUsage.user + cpuUsage.system;
-    this.cpuUsage.set(totalUsage / 1000000); // Convert to seconds
+    this.cpuUsage.set(totalUsage / 1000000);
   }
 
-  // Get metrics for Prometheus endpoint
   async getMetrics(): Promise<string> {
     return this.register.metrics();
   }
 
-  // Get registry for custom metrics
   getRegistry(): promClient.Registry {
     return this.register;
   }

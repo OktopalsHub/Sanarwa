@@ -1,6 +1,6 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
-import { Repository } from "typeorm";
+import { In, Repository } from "typeorm";
 import { DeviceRegistration } from "../entities/device-registration.entity";
 import { DevicePlatform, PushProvider } from "../enums/device-platform.enum";
 
@@ -13,9 +13,6 @@ export class DeviceRegistrationService {
     private readonly deviceRepository: Repository<DeviceRegistration>,
   ) {}
 
-  /**
-   * Register a device for push notifications with automatic platform detection
-   */
   async registerDevice(request: {
     subscriberId: string;
     tenantId: string;
@@ -25,14 +22,12 @@ export class DeviceRegistrationService {
     deviceInfo?: Partial<DeviceRegistration["deviceInfo"]>;
     metadata?: Record<string, any>;
   }): Promise<DeviceRegistration> {
-    // Detect platform and provider automatically
     const { platform, provider } = this.detectPlatformAndProvider(
       request.deviceToken,
       request.userAgent,
       request.appBundleId,
     );
 
-    // Check if device already exists
     const existingDevice = await this.deviceRepository.findOne({
       where: {
         deviceToken: request.deviceToken,
@@ -42,7 +37,6 @@ export class DeviceRegistrationService {
     });
 
     if (existingDevice) {
-      // Update existing device
       existingDevice.platform = platform;
       existingDevice.provider = provider;
       existingDevice.deviceInfo = { ...existingDevice.deviceInfo, ...request.deviceInfo };
@@ -57,7 +51,6 @@ export class DeviceRegistrationService {
       return updated;
     }
 
-    // Create new device registration
     const device = this.deviceRepository.create({
       subscriberId: request.subscriberId,
       tenantId: request.tenantId,
@@ -79,15 +72,11 @@ export class DeviceRegistrationService {
     return saved;
   }
 
-  /**
-   * Automatically detect platform and provider from device token and user agent
-   */
   private detectPlatformAndProvider(
     deviceToken: string,
     userAgent?: string,
     appBundleId?: string,
   ): { platform: DevicePlatform; provider: PushProvider } {
-    // iOS APNS Detection
     if (this.isIOSToken(deviceToken)) {
       return {
         platform: DevicePlatform.IOS,
@@ -95,7 +84,6 @@ export class DeviceRegistrationService {
       };
     }
 
-    // Android FCM Detection
     if (this.isAndroidFCMToken(deviceToken)) {
       return {
         platform: DevicePlatform.ANDROID,
@@ -103,9 +91,7 @@ export class DeviceRegistrationService {
       };
     }
 
-    // Expo Detection (React Native)
     if (this.isExpoToken(deviceToken)) {
-      // Expo can be iOS or Android, detect from user agent or bundle ID
       const platform = this.detectExpoPlatform(userAgent, appBundleId);
       return {
         platform,
@@ -113,7 +99,6 @@ export class DeviceRegistrationService {
       };
     }
 
-    // Web Push Detection
     if (this.isWebPushToken(deviceToken)) {
       return {
         platform: DevicePlatform.WEB,
@@ -121,7 +106,6 @@ export class DeviceRegistrationService {
       };
     }
 
-    // Desktop Detection (usually web push in Electron)
     if (userAgent && this.isDesktopUserAgent(userAgent)) {
       return {
         platform: DevicePlatform.DESKTOP,
@@ -129,47 +113,33 @@ export class DeviceRegistrationService {
       };
     }
 
-    // Fallback: Try to detect from user agent
     if (userAgent) {
       const platformFromUA = this.detectPlatformFromUserAgent(userAgent);
       const provider = this.getDefaultProviderForPlatform(platformFromUA);
       return { platform: platformFromUA, provider };
     }
 
-    // Ultimate fallback
     this.logger.warn(`Could not detect platform for token: ${deviceToken.substring(0, 20)}...`);
     return {
       platform: DevicePlatform.UNKNOWN,
-      provider: PushProvider.SNS, // AWS SNS as universal fallback
+      provider: PushProvider.SNS,
     };
   }
 
-  /**
-   * Detect iOS APNS tokens
-   */
   private isIOSToken(token: string): boolean {
-    // iOS APNS tokens are 64 hex characters (32 bytes)
     return /^[a-fA-F0-9]{64}$/.test(token);
   }
 
-  /**
-   * Detect Android FCM tokens
-   */
   private isAndroidFCMToken(token: string): boolean {
-    // FCM tokens are typically longer and contain specific patterns
     return (
       token.length > 100 &&
       (token.startsWith("c") || token.startsWith("d") || token.startsWith("e")) &&
-      !token.includes(":") && // Not Expo
+      !token.includes(":") &&
       /^[a-zA-Z0-9_-]+$/.test(token)
     );
   }
 
-  /**
-   * Detect Expo tokens
-   */
   private isExpoToken(token: string): boolean {
-    // Expo tokens have format: ExponentPushToken[xxx] or ExpoPushToken[xxx]
     return (
       token.startsWith("ExponentPushToken[") ||
       token.startsWith("ExpoPushToken[") ||
@@ -177,17 +147,10 @@ export class DeviceRegistrationService {
     );
   }
 
-  /**
-   * Detect Web Push tokens
-   */
   private isWebPushToken(token: string): boolean {
-    // Web push tokens are usually very long base64-like strings
     return token.length > 200 && /^[a-zA-Z0-9_-]+$/.test(token) && !this.isAndroidFCMToken(token);
   }
 
-  /**
-   * Detect desktop user agents
-   */
   private isDesktopUserAgent(userAgent: string): boolean {
     const desktopPatterns = [
       /Electron/i,
@@ -205,12 +168,8 @@ export class DeviceRegistrationService {
     );
   }
 
-  /**
-   * Detect platform from Expo token context
-   */
   private detectExpoPlatform(userAgent?: string, appBundleId?: string): DevicePlatform {
     if (appBundleId) {
-      // iOS bundle IDs typically use reverse domain notation
       if (/^[a-zA-Z0-9.-]+\.[a-zA-Z0-9.-]+$/.test(appBundleId)) {
         return DevicePlatform.IOS;
       }
@@ -225,13 +184,9 @@ export class DeviceRegistrationService {
       }
     }
 
-    // Default to Android for Expo if unclear
     return DevicePlatform.ANDROID;
   }
 
-  /**
-   * Detect platform from user agent
-   */
   private detectPlatformFromUserAgent(userAgent: string): DevicePlatform {
     if (/iPhone|iPad|iOS/i.test(userAgent)) {
       return DevicePlatform.IOS;
@@ -245,9 +200,6 @@ export class DeviceRegistrationService {
     return DevicePlatform.WEB;
   }
 
-  /**
-   * Get default provider for platform
-   */
   private getDefaultProviderForPlatform(platform: DevicePlatform): PushProvider {
     switch (platform) {
       case DevicePlatform.IOS:
@@ -262,9 +214,6 @@ export class DeviceRegistrationService {
     }
   }
 
-  /**
-   * Get active devices for a subscriber
-   */
   async getSubscriberDevices(
     subscriberId: string,
     tenantId: string,
@@ -281,9 +230,6 @@ export class DeviceRegistrationService {
     });
   }
 
-  /**
-   * Get devices by platform for a subscriber
-   */
   async getDevicesByPlatform(
     subscriberId: string,
     tenantId: string,
@@ -299,9 +245,6 @@ export class DeviceRegistrationService {
     });
   }
 
-  /**
-   * Deactivate a device
-   */
   async deactivateDevice(
     deviceToken: string,
     subscriberId: string,
@@ -317,8 +260,19 @@ export class DeviceRegistrationService {
   }
 
   /**
-   * Clean up old inactive devices
+   * Prunes tokens a push provider reported as invalid (uninstalled/bad
+   * token). They stop matching the router so future sends skip them.
    */
+  async pruneInvalidTokens(tokens: string[]): Promise<void> {
+    const cleaned = tokens.filter((token) => typeof token === "string" && token.length > 0);
+    if (cleaned.length === 0) {
+      return;
+    }
+
+    await this.deviceRepository.update({ deviceToken: In(cleaned) }, { isActive: false });
+    this.logger.log(`Pruned ${cleaned.length} invalid push token(s)`);
+  }
+
   async cleanupInactiveDevices(daysInactive: number = 30): Promise<number> {
     const cutoffDate = new Date();
     cutoffDate.setDate(cutoffDate.getDate() - daysInactive);
@@ -332,9 +286,6 @@ export class DeviceRegistrationService {
     return result.affected || 0;
   }
 
-  /**
-   * Get device statistics
-   */
   async getDeviceStats(tenantId: string): Promise<{
     totalDevices: number;
     activeDevices: number;
@@ -369,5 +320,15 @@ export class DeviceRegistrationService {
       platformBreakdown,
       providerBreakdown,
     };
+  }
+
+  /** GDPR/right-to-erasure: removes all device registrations for the subscriber. */
+  async eraseSubscriber(tenantId: string, subscriberId: string): Promise<number> {
+    const result = await this.deviceRepository.delete({ tenantId, subscriberId });
+    const count = result.affected ?? 0;
+    if (count > 0) {
+      this.logger.log(`Erased ${count} device registration(s) for subscriber ${subscriberId}`);
+    }
+    return count;
   }
 }

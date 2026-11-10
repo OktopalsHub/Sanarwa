@@ -1,7 +1,7 @@
 import { BaseProviderPayload, IBaseProvider } from "../base/base-provider.interface";
 
 export interface EmailPayload extends BaseProviderPayload {
-  recipient: string; // email address
+  recipient: string;
   subject: string;
   htmlContent?: string;
   textContent?: string;

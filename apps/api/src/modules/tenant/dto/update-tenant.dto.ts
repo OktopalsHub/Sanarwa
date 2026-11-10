@@ -2,7 +2,7 @@ import { ApiPropertyOptional } from "@nestjs/swagger";
 import { PartialType } from "@nestjs/mapped-types";
 import { IsEnum, IsOptional, IsString, Length, Matches } from "class-validator";
 import { CreateTenantDto } from "./create-tenant.dto";
-import { TenantStatus } from "src/common/enums";
+import { TenantStatus } from "../../../common/enums";
 
 export class UpdateTenantDto extends PartialType(CreateTenantDto) {
   @ApiPropertyOptional({

@@ -1,16 +1,11 @@
 import { ISMSProvider } from "../../../providers/sms/sms-provider.interface";
-import {
-  Channel,
-  DeliveryStatus,
-  ProviderConfig,
-  ProviderHealth,
-  ProviderResponse,
-} from "../../../providers/types";
+import { DeliveryStatus, ProviderConfig, ProviderResponse } from "../../../providers/types";
+import { NotificationChannel } from "../../../common/enums/notification-channel.enum";
 
 export class MockSMSProvider implements ISMSProvider {
   id = "mock-sms-provider";
   name = "Mock SMS Provider";
-  channel = Channel.SMS;
+  channel = NotificationChannel.SMS;
   config: ProviderConfig;
   isInitialized = true;
 
@@ -47,13 +42,6 @@ export class MockSMSProvider implements ISMSProvider {
     return config && config.credentials && typeof config.credentials === "object";
   }
 
-  async checkHealth(): Promise<{ status: ProviderHealth; lastChecked: Date }> {
-    return {
-      status: this.shouldFail ? ProviderHealth.UNHEALTHY : ProviderHealth.HEALTHY,
-      lastChecked: new Date(),
-    };
-  }
-
   getSupportedCountries(): string[] {
     return this.supportedCountries;
   }
@@ -63,12 +51,10 @@ export class MockSMSProvider implements ISMSProvider {
   }
 
   formatPhoneNumber(phoneNumber: string, countryCode?: string): string {
-    // Simple formatting - ensure it starts with +
     if (phoneNumber.startsWith("+")) {
       return phoneNumber;
     }
 
-    // Add default country code if provided
     if (countryCode) {
       const countryCodeMap: Record<string, string> = {
         US: "+1",
@@ -82,7 +68,7 @@ export class MockSMSProvider implements ISMSProvider {
       return `${prefix}${phoneNumber}`;
     }
 
-    return `+1${phoneNumber}`; // Default to US
+    return `+1${phoneNumber}`;
   }
 
   async initialize(): Promise<void> {
@@ -93,7 +79,6 @@ export class MockSMSProvider implements ISMSProvider {
     this.isInitialized = false;
   }
 
-  // Test helper methods
   setShouldFail(shouldFail: boolean, message?: string): void {
     this.shouldFail = shouldFail;
     if (message) {

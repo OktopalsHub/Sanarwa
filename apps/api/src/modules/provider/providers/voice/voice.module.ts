@@ -10,6 +10,7 @@ import { VoiceCallTrackingService } from "../../services/voice-call-tracking.ser
 import { VoiceCall } from "../../entities/voice-call.entity";
 
 import { BillingService } from "../../services/billing.service";
+import { WebhookValidatorService } from "../../services/webhook-validator.service";
 import { ApiKeyModule } from "../../../api-key/api-key.module";
 
 @Module({
@@ -20,6 +21,7 @@ import { ApiKeyModule } from "../../../api-key/api-key.module";
     VoiceService,
     VoiceCallTrackingService,
     BillingService,
+    WebhookValidatorService,
   ],
   controllers: [VoiceController, TelnyxWebhookController],
   exports: [TelnyxVoiceProvider, VoiceOrchestratorService, VoiceService, VoiceCallTrackingService],

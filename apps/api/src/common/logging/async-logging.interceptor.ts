@@ -26,6 +26,10 @@ export class AsyncLoggingInterceptor implements NestInterceptor {
   private readonly logger = new Logger(AsyncLoggingInterceptor.name);
 
   intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
+    if (context.getType() !== "http") {
+      return next.handle();
+    }
+
     const startTime = Date.now();
     const request = context.switchToHttp().getRequest<Request>();
     const response = context.switchToHttp().getResponse<Response>();
@@ -42,7 +46,6 @@ export class AsyncLoggingInterceptor implements NestInterceptor {
 
     return next.handle().pipe(
       tap(() => {
-        // Log successful requests asynchronously
         setImmediate(() => {
           this.logRequest({
             ...logData,
@@ -53,7 +56,6 @@ export class AsyncLoggingInterceptor implements NestInterceptor {
         });
       }),
       catchError((error) => {
-        // Log errors asynchronously
         setImmediate(() => {
           this.logRequest({
             ...logData,

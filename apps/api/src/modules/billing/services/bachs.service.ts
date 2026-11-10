@@ -2,7 +2,7 @@ import { Injectable, Logger } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import {
   BillingCurrency,
-  buildNotifiPurchaseReference,
+  buildPurchaseReference,
   packagePriceMinor,
 } from "../constants/token-packages";
 
@@ -76,11 +76,9 @@ export class BachsService {
       throw new Error("bachs_product_unconfigured");
     }
 
-    const reference = buildNotifiPurchaseReference(input.purchaseId);
+    const reference = buildPurchaseReference(input.purchaseId);
     const amount = (input.priceMinor / 100).toFixed(2);
 
-    // Currency-specific CUSTOM product; amount set per session.
-    // See https://docs.bachs.io/api-reference/payments/create-checkout-session
     return this.createCheckoutSession({
       productId,
       currency: input.currency,
@@ -247,7 +245,6 @@ export class BachsService {
       throw new Error("bachs_product_unconfigured");
     }
 
-    // Same CUSTOM product for that currency; small amount to vault the card on Bachs.
     return this.createCheckoutSession({
       productId,
       currency: input.currency,
@@ -275,8 +272,6 @@ export class BachsService {
     providerReference?: string;
     errorCode?: string;
   }> {
-    // Bachs has no documented off-session / saved-card charge API (checkout + webhooks only).
-    // Fail closed rather than invent POST /v1/payments/charges.
     this.logger.warn(
       `Bachs off-session charge refused for purchase ${input.purchaseId}: OFF_SESSION_NOT_SUPPORTED`,
     );
@@ -348,7 +343,7 @@ export class BachsService {
       const response = await fetch(
         `${baseUrl}/v1/subscriptions/${encodeURIComponent(subscriptionId)}`,
         {
-          method: "PATCH",
+          method: "DELETE",
           headers: {
             Authorization: `Bearer ${secretKey}`,
             "Content-Type": "application/json",
@@ -394,7 +389,7 @@ export class BachsService {
       quantity: 1,
     };
     if (input.amount) {
-      lineItem.amount = input.amount;
+      lineItem.pricing = { price_type: "fixed", amount: input.amount };
     }
 
     const response = await fetch(`${baseUrl}/v1/checkout-sessions`, {

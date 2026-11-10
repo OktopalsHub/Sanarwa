@@ -15,7 +15,6 @@ export class TwilioProvider implements ISMSProvider {
   private readonly authToken: string;
   private readonly fromNumber: string;
 
-  // Twilio pricing per country (approximate, in USD)
   private readonly countryPricing: Record<string, number> = {
     US: 0.0075,
     CA: 0.0075,
@@ -29,7 +28,7 @@ export class TwilioProvider implements ISMSProvider {
     JP: 0.08,
     KR: 0.045,
     CN: 0.05,
-    "*": 0.05, // Default for unsupported countries
+    "*": 0.05,
   };
 
   constructor(private configService: ConfigService) {
@@ -103,7 +102,6 @@ export class TwilioProvider implements ISMSProvider {
       const results: BulkSMSResponse["results"] = [];
       let totalCost = 0;
 
-      // Twilio doesn't have native bulk SMS, so we send individual messages
       for (const recipient of payload.recipients) {
         try {
           const smsResult = await this.sendSMS({

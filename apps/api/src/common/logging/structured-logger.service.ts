@@ -39,7 +39,6 @@ export class StructuredLoggerService implements LoggerService {
     this.writeLog("trace", message, context);
   }
 
-  // Business logic specific logging methods
   logUserAction(action: string, userId: string, context?: LogContext) {
     this.log(`User action: ${action}`, {
       ...context,
@@ -81,7 +80,6 @@ export class StructuredLoggerService implements LoggerService {
   }
 
   private writeLog(level: string, message: string, context?: LogContext) {
-    // Sanitize context to remove sensitive data
     const sanitizedContext = context ? LogSanitizer.sanitizeObject(context) : {};
 
     const logEntry = {
@@ -93,14 +91,11 @@ export class StructuredLoggerService implements LoggerService {
       ...sanitizedContext,
     };
 
-    // Limit log entry size
     const finalLogEntry = LogSanitizer.limitObjectSize(logEntry);
 
-    // In production, write structured JSON
     if (this.isProduction) {
       console.log(JSON.stringify(finalLogEntry));
     } else {
-      // In development, use pretty printing
       console.log(`[${level.toUpperCase()}] ${message}`, sanitizedContext || "");
     }
   }

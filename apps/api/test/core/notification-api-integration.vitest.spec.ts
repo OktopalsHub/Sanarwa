@@ -1,17 +1,3 @@
-/**
- * Notification API Integration Tests
- * Tests core notification API functionality, cross-channel quota management, and system integration
- *
- * This file focuses on:
- * - API key authentication and security
- * - Cross-channel quota enforcement
- * - System-wide error handling
- * - Integration between different notification components
- *
- * For specific channel tests, see: test/channels/
- * For billing strategy tests, see: test/billing/
- */
-
 import { describe, it, expect, beforeAll, afterAll } from "vitest";
 import {
   createTestSetup,
@@ -114,7 +100,6 @@ describe("🔗 Notification API Integration Tests", () => {
     });
 
     it("should test cross-channel quota consumption", async () => {
-      // Test notifications across different channels to see quota consumption
       const crossChannelTests = [
         { channel: "EMAIL", to: "email-test@example.com", message: "Cross-channel email test" },
         { channel: "IN_APP", to: "inapp-user-1", message: "Cross-channel in-app test" },
@@ -198,7 +183,6 @@ describe("🔗 Notification API Integration Tests", () => {
 
   describe("⚠️ Quota Limit Enforcement", () => {
     it("should handle quota exceeded scenarios gracefully", async () => {
-      // Try to send notifications that might exceed quota
       const quotaTests: Array<{
         attempt: number;
         status: number;
@@ -226,7 +210,6 @@ describe("🔗 Notification API Integration Tests", () => {
 
         console.log(`🔄 Quota test ${i}:`, response.status, response.data);
 
-        // If we get quota exceeded, break
         if (response.status === 429) {
           console.log("📊 Quota limit reached at attempt", i);
           break;
@@ -297,7 +280,6 @@ describe("🔗 Notification API Integration Tests", () => {
 
     it("should handle malformed notification payload", async () => {
       const invalidPayload = {
-        // Missing required fields
         message: "Test with malformed payload",
       };
 
@@ -321,7 +303,6 @@ describe("🔗 Notification API Integration Tests", () => {
       const response = await testSetup.api.post("/notifications", notificationPayload, {
         headers: {
           "X-API-Key": testSetup.apiKey,
-          // Missing X-Project-ID header intentionally for testing
         },
       });
 

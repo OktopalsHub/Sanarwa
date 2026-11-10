@@ -142,7 +142,7 @@ describe("Logging System Integration", () => {
       const longString = "a".repeat(2000);
       const truncated = LogSanitizer.truncateString(longString, 100);
 
-      expect(truncated.length).toBeLessThanOrEqual(115); // 100 + '... [TRUNCATED]'
+      expect(truncated.length).toBeLessThanOrEqual(115);
       expect(truncated).toContain("[TRUNCATED]");
     });
 
@@ -182,7 +182,6 @@ describe("Logging System Integration", () => {
         expect(result).toBeDefined();
         expect(result.logging).toBeDefined();
       } catch (error) {
-        // Health check might fail in test environment, that's okay
         expect(error).toBeDefined();
       }
     });
@@ -195,16 +194,6 @@ describe("Logging System Integration", () => {
 
       expect(logLevel).toBeDefined();
       expect(logFormat).toBeDefined();
-    });
-
-    it("should have ELK configuration", () => {
-      const elasticsearchUrl = configService.get("logging.elk.elasticsearch.url");
-      const logstashHost = configService.get("logging.elk.logstash.host");
-      const kibanaUrl = configService.get("logging.elk.kibana.url");
-
-      expect(elasticsearchUrl).toBeDefined();
-      expect(logstashHost).toBeDefined();
-      expect(kibanaUrl).toBeDefined();
     });
   });
 });

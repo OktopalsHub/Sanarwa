@@ -17,7 +17,7 @@ import {
   ApiParam,
   ApiQuery,
 } from "@nestjs/swagger";
-import { AuthenticatedRequest } from "src/common/interfaces/request-context.interface";
+import { AuthenticatedRequest } from "../../common/interfaces/request-context.interface";
 import { CurrentUser } from "../auth/decorators/current-user.decorator";
 import { AuthGuard } from "../auth/guards/jwt-auth.guard";
 import { UpdateUserDto, UserQueryDto, UserResponseDto } from "./dto";
@@ -57,7 +57,6 @@ export class UserController {
   async getUsers(@Query() query: UserQueryDto) {
     const result = await this.userService.getUsers(query);
 
-    // Transform the records to exclude sensitive information
     const transformedRecords = result.records.map((user) => this.transformUserResponse(user));
 
     return {

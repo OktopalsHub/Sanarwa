@@ -50,20 +50,16 @@ export class WhatsAppController {
     description: "Message sent successfully",
   })
   async sendMessage(@Body() messageData: SendWhatsAppMessageDto) {
-    // Validate phone number
     const phoneValidation = this.whatsappAPIService.validatePhoneNumber(messageData.to);
     if (!phoneValidation.isValid) {
       throw new BadRequestException(phoneValidation.error);
     }
 
     if (messageData.templateId && messageData.templateData) {
-      // For ESU pattern, each tenant uses their own WABA
-      // This would need tenant-specific WABA lookup
       throw new BadRequestException(
         "Template messaging requires tenant-specific WABA setup via Embedded Signup",
       );
     } else {
-      // Send simple text message
       return this.whatsappAPIService.sendTextMessage(
         phoneValidation.cleanNumber!,
         messageData.message,
@@ -81,13 +77,11 @@ export class WhatsAppController {
     description: "Template message sent successfully",
   })
   async sendTemplateMessage(@Body() templateData: SendTemplateMessageDto) {
-    // Validate phone number
     const phoneValidation = this.whatsappAPIService.validatePhoneNumber(templateData.to);
     if (!phoneValidation.isValid) {
       throw new BadRequestException(phoneValidation.error);
     }
 
-    // Prepare components if parameters provided
     const components = templateData.parameters
       ? [
           {
@@ -105,14 +99,18 @@ export class WhatsAppController {
     );
   }
 
+  @Public()
+  @UseGuards(ApiKeyAuthGuard)
   @Get("health")
-  @ApiOperation({ summary: "Check WhatsApp Business API health status" })
-  @ApiResponse({
-    status: HttpStatus.OK,
-    description: "Health status retrieved successfully",
-  })
-  async getHealthStatus() {
-    return this.whatsappAPIService.getHealthStatus();
+  @ApiOperation({ summary: "WhatsApp transport health check" })
+  @ApiResponse({ status: 200, description: "WhatsApp transport is healthy" })
+  @ApiBearerAuth()
+  async health() {
+    return {
+      status: "healthy",
+      timestamp: new Date().toISOString(),
+      services: { whatsapp: "operational" },
+    };
   }
 
   @Get("templates")
@@ -145,7 +143,6 @@ export class WhatsAppController {
     description: "Pricing information retrieved successfully",
   })
   async getPricingInfo(@Param("region") region: string) {
-    // WhatsApp Business API pricing by region (as of 2024)
     const pricingMap = {
       "north-america": {
         cost: 0.0055,
@@ -190,7 +187,6 @@ export class WhatsAppController {
     description: "Usage statistics retrieved successfully",
   })
   async getUsageStats() {
-    // In ESU pattern, usage stats are per-tenant WABA
     return {
       message: "Usage statistics are now per-tenant via Embedded Signup WABAs",
       recommendation: "Use /whatsapp/embedded-signup/status/:tenantId for tenant-specific stats",

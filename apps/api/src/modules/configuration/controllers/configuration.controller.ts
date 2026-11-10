@@ -20,10 +20,9 @@ import {
   ApiResponse,
   ApiTags,
 } from "@nestjs/swagger";
-import { RequireRoles, Roles } from "src/modules/auth/decorators/roles.decorator";
+import { RequireRoles, Roles } from "../../../modules/auth/decorators/roles.decorator";
 import { AuthGuard } from "../../auth/guards/jwt-auth.guard";
 
-// import { RolesGuard } from '../../modules/auth/guards/roles.guard';
 import { UserRole } from "../../../common/enums";
 
 import {
@@ -356,29 +355,6 @@ export class ConfigurationController {
       success: true,
       changes,
       count: changes.length,
-    };
-  }
-
-  @Get("health")
-  @ApiOperation({ summary: "Configuration management health check" })
-  @ApiResponse({
-    status: 200,
-    description: "Health status",
-  })
-  async healthCheck() {
-    const cacheHealth = await this.cacheService.healthCheck();
-    const watcherStatus = this.watcherService.getStatus();
-
-    return {
-      success: true,
-      health: {
-        cache: cacheHealth,
-        watcher: {
-          status: watcherStatus.isWatching ? "healthy" : "inactive",
-          watchedCount: watcherStatus.watchedCount,
-        },
-        timestamp: new Date(),
-      },
     };
   }
 }

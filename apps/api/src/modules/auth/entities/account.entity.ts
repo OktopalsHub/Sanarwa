@@ -1,6 +1,6 @@
 import { Entity, Column, ManyToOne, JoinColumn, Index } from "typeorm";
 import { User } from "../../user/entities/user.entity";
-import { BaseEntity } from "../../../database/entities/base.entity";
+import { BaseEntity } from "../../../common/database/entities/base.entity";
 
 @Entity("account")
 @Index(["userId"])

@@ -1,11 +1,11 @@
 import { Test, TestingModule } from "@nestjs/testing";
-import { UserRole } from "../../modules/auth/enums/user-role.enum";
-import type { Mocked } from "vitest";
+import { UserRole } from "../../../common/enums/user.enum";
 import {
   CreateConfigurationDto,
   RollbackConfigurationDto,
   UpdateConfigurationDto,
 } from "../dto/configuration.dto";
+import type { Mocked } from "vitest";
 import { ConfigurationVersion, VersionAction } from "../entities/configuration-version.entity";
 import {
   Configuration,
@@ -42,11 +42,6 @@ describe("ConfigurationController", () => {
     id: "user-id",
     role: UserRole.ADMIN,
   };
-
-  const mockRequest = {
-    user: mockUser,
-  };
-
   beforeEach(async () => {
     const mockConfigurationService = {
       create: vi.fn(),
@@ -67,7 +62,6 @@ describe("ConfigurationController", () => {
     const mockCacheService = {
       getStats: vi.fn(),
       clear: vi.fn(),
-      healthCheck: vi.fn(),
     };
 
     const mockWatcherService = {
@@ -124,7 +118,7 @@ describe("ConfigurationController", () => {
       };
       configurationService.create.mockResolvedValue(result);
 
-      const response = await controller.create(createDto, mockRequest);
+      const response = await controller.create("user-id", createDto);
 
       expect(response.success).toBe(true);
       expect(response.configuration).toEqual(mockConfiguration);
@@ -138,7 +132,7 @@ describe("ConfigurationController", () => {
       };
       configurationService.create.mockResolvedValue(result);
 
-      const response = await controller.create(createDto, mockRequest);
+      const response = await controller.create("user-id", createDto);
 
       expect(response.success).toBe(false);
       expect(response.errors).toEqual(["Invalid value"]);
@@ -191,7 +185,7 @@ describe("ConfigurationController", () => {
       };
       configurationService.update.mockResolvedValue(result);
 
-      const response = await controller.update("test-id", updateDto, mockRequest);
+      const response = await controller.update("user-id", "test-id", updateDto);
 
       expect(response.success).toBe(true);
       expect(response.configuration.value).toBe("updated-value");
@@ -205,7 +199,7 @@ describe("ConfigurationController", () => {
       };
       configurationService.update.mockResolvedValue(result);
 
-      const response = await controller.update("test-id", updateDto, mockRequest);
+      const response = await controller.update("user-id", "test-id", updateDto);
 
       expect(response.success).toBe(false);
       expect(response.errors).toEqual(["Invalid value"]);
@@ -216,7 +210,7 @@ describe("ConfigurationController", () => {
     it("should delete configuration successfully", async () => {
       configurationService.delete.mockResolvedValue();
 
-      const response = await controller.remove("test-id", mockRequest);
+      const response = await controller.remove("user-id", "test-id");
 
       expect(response.success).toBe(true);
       expect(response.message).toBe("Configuration deleted successfully");
@@ -237,7 +231,7 @@ describe("ConfigurationController", () => {
       };
       configurationService.rollback.mockResolvedValue(rolledBackConfig);
 
-      const response = await controller.rollback("test-id", rollbackDto, mockRequest);
+      const response = await controller.rollback("user-id", "test-id", rollbackDto);
 
       expect(response.success).toBe(true);
       expect(response.configuration).toEqual(rolledBackConfig);
@@ -301,7 +295,7 @@ describe("ConfigurationController", () => {
       };
       configurationService.bulkOperation.mockResolvedValue(bulkResult);
 
-      const response = await controller.bulkOperation(bulkDto, mockRequest);
+      const response = await controller.bulkOperation("user-id", bulkDto);
 
       expect(response.success).toBe(true);
       expect(response.summary.total).toBe(2);
@@ -414,9 +408,8 @@ describe("ConfigurationController", () => {
     });
   });
 
-  describe("healthCheck", () => {
-    it("should return health status", async () => {
-      const cacheHealth = { status: "healthy" as const };
+  describe("getWatcherStatus", () => {
+    it("should return the watcher status passthrough", async () => {
       const watcherStatus = {
         isWatching: true,
         watchedCount: 5,
@@ -424,21 +417,15 @@ describe("ConfigurationController", () => {
         pollInterval: 30000,
         watchPatterns: ["*"],
       };
-
-      cacheService.healthCheck.mockResolvedValue(cacheHealth);
       watcherService.getStatus.mockReturnValue(watcherStatus);
 
-      const response = await controller.healthCheck();
+      const response = await controller.getWatcherStatus();
 
       expect(response.success).toBe(true);
-      expect(response.health.cache).toEqual(cacheHealth);
-      expect(response.health.watcher.status).toBe("healthy");
-      expect(response.health.watcher.watchedCount).toBe(5);
-      expect(response.health.timestamp).toBeInstanceOf(Date);
+      expect(response.watcher).toEqual(watcherStatus);
     });
 
-    it("should return inactive watcher status when not watching", async () => {
-      const cacheHealth = { status: "healthy" as const };
+    it("should return the inactive status when not watching", async () => {
       const watcherStatus = {
         isWatching: false,
         watchedCount: 0,
@@ -446,13 +433,25 @@ describe("ConfigurationController", () => {
         pollInterval: 30000,
         watchPatterns: ["*"],
       };
-
-      cacheService.healthCheck.mockResolvedValue(cacheHealth);
       watcherService.getStatus.mockReturnValue(watcherStatus);
 
-      const response = await controller.healthCheck();
+      const response = await controller.getWatcherStatus();
 
-      expect(response.health.watcher.status).toBe("inactive");
+      expect(response.success).toBe(true);
+      expect(response.watcher.isWatching).toBe(false);
+      expect(response.watcher.watchedCount).toBe(0);
+    });
+  });
+
+  describe("getCacheStats", () => {
+    it("should return cache statistics", async () => {
+      const stats = { totalKeys: 12, memoryUsage: "12 entries" };
+      cacheService.getStats.mockResolvedValue(stats);
+
+      const response = await controller.getCacheStats();
+
+      expect(response.success).toBe(true);
+      expect(response.cache).toBe(stats);
     });
   });
 });

@@ -25,7 +25,6 @@ export class AuditLogInterceptor implements NestInterceptor {
     const user = request.user;
     const startTime = Date.now();
 
-    // Extract resource ID from request parameters
     let resourceId = "unknown";
     if (auditOptions.resourceIdParam && request.params[auditOptions.resourceIdParam]) {
       resourceId = request.params[auditOptions.resourceIdParam];
@@ -34,8 +33,13 @@ export class AuditLogInterceptor implements NestInterceptor {
     }
 
     const baseLogData = {
-      tenantId: user?.tenantId || request.headers["x-tenant-id"],
-      userId: user?.id,
+      tenantId:
+        request.member?.tenantId ||
+        request.auth?.activeOrganizationId ||
+        user?.tenantId ||
+        request.headers["x-tenant-id"],
+      userId: user?.id || request.auth?.principalId,
+      tenantMemberId: request.member?.id ?? null,
       action: auditOptions.action,
       resourceType: auditOptions.resourceType,
       resourceId,
@@ -43,7 +47,7 @@ export class AuditLogInterceptor implements NestInterceptor {
         auditOptions.description || `${auditOptions.action} ${auditOptions.resourceType}`,
       ipAddress: request.ip,
       userAgent: request.get("User-Agent"),
-      sessionId: request.sessionID,
+      sessionId: request.sessionID ?? request.auth?.sessionId,
       correlationId: request.headers["x-correlation-id"],
       requestId: request.headers["x-request-id"],
       apiVersion: request.headers["api-version"],
@@ -54,7 +58,6 @@ export class AuditLogInterceptor implements NestInterceptor {
       tap((response) => {
         const duration = Date.now() - startTime;
 
-        // Log successful operation
         this.auditLogService
           .createAuditLog({
             ...baseLogData,
@@ -75,7 +78,6 @@ export class AuditLogInterceptor implements NestInterceptor {
       catchError((error) => {
         const duration = Date.now() - startTime;
 
-        // Log failed operation
         this.auditLogService
           .createAuditLog({
             ...baseLogData,

@@ -1,8 +1,3 @@
-/**
- * Email Quota Management Tests
- * Tests email quota limits, usage tracking, and billing models
- */
-
 import { describe, it, expect, beforeAll, afterAll } from "vitest";
 import {
   createTestSetup,
@@ -19,12 +14,12 @@ describe("📧 Email Quota Management Tests", () => {
   beforeAll(async () => {
     testSetup = await createTestSetup();
 
-    // Create email template for testing
     const templateData = {
       name: "email-quota-test",
       channel: "EMAIL",
       subject: "Quota Test: {{title}}",
-      content: `
+
+      data: `
         <html>
           <body>
             <h2>{{title}}</h2>
@@ -148,7 +143,6 @@ describe("📧 Email Quota Management Tests", () => {
     });
 
     it("should handle quota exceeded scenarios gracefully", async () => {
-      // Try to send many emails to test quota limits
       const quotaTests = [];
 
       for (let i = 1; i <= 5; i++) {
@@ -187,7 +181,6 @@ describe("📧 Email Quota Management Tests", () => {
 
         console.log(`🔄 Email quota test ${i}:`, response.status, response.data);
 
-        // If quota exceeded, break early
         if (response.status === 429) {
           console.log("📊 Email quota limit reached at attempt", i);
           break;

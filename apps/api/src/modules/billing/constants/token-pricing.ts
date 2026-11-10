@@ -1,20 +1,24 @@
-export type BillingChannel = "email" | "sms" | "push" | "whatsapp" | "in_app" | "voice";
+import {
+  isBillableChannel,
+  NotificationChannel,
+  type BillingChannel,
+} from "../../../common/enums/notification-channel.enum";
+
+export type { BillingChannel };
 
 export type BillingMode = "managed" | "byo";
 
-/** BYO-eligible channels — customer brings provider credentials. */
 export const BYO_ELIGIBLE_CHANNELS: BillingChannel[] = [
-  "email",
-  "sms",
-  "push",
-  "whatsapp",
-  "voice",
+  NotificationChannel.EMAIL,
+  NotificationChannel.SMS,
+  NotificationChannel.PUSH,
+  NotificationChannel.WHATSAPP,
+  NotificationChannel.VOICE,
+  NotificationChannel.CHAT,
 ];
 
-/** Always Sanarwa-managed — not BYO (Novu-style in-app / realtime). */
-export const MANAGED_ONLY_CHANNELS: BillingChannel[] = ["in_app"];
+export const MANAGED_ONLY_CHANNELS: BillingChannel[] = [NotificationChannel.IN_APP];
 
-/** Sanarwa pays delivery — per-channel weights include provider COGS. */
 export const MANAGED_CHANNEL_TOKEN_COST: Record<BillingChannel, number> = {
   email: 1,
   push: 0.5,
@@ -22,12 +26,11 @@ export const MANAGED_CHANNEL_TOKEN_COST: Record<BillingChannel, number> = {
   sms: 24,
   whatsapp: 48,
   voice: 250,
+  chat: 1,
 };
 
-/** Novu-style BYO: 1 token = 1 event, any BYO channel. */
 export const BYO_EVENT_TOKEN_COST = 1;
 
-/** Free tokens granted when a new workspace is created. */
 export const WELCOME_SIGNUP_TOKENS = 3_000;
 
 export function isByoEligibleChannel(channel: BillingChannel): boolean {
@@ -60,10 +63,19 @@ export function resolveTokenCost(channel: BillingChannel, mode: BillingMode, uni
   return Math.ceil(perUnit * count);
 }
 
-export function normalizeBillingChannel(eventType: string): BillingChannel {
+export type BillingChannelResolution =
+  | { readonly kind: "channel"; readonly channel: BillingChannel }
+  | { readonly kind: "unrecognized"; readonly eventType: string };
+
+export function resolveBillingChannel(eventType: string): BillingChannelResolution {
   const key = eventType.toLowerCase();
-  if (key in MANAGED_CHANNEL_TOKEN_COST) {
-    return key as BillingChannel;
+  if (isBillableChannel(key)) {
+    return { kind: "channel", channel: key };
   }
-  return "email";
+  return { kind: "unrecognized", eventType };
+}
+
+export function normalizeBillingChannel(eventType: string): BillingChannel {
+  const resolution = resolveBillingChannel(eventType);
+  return resolution.kind === "channel" ? resolution.channel : NotificationChannel.EMAIL;
 }

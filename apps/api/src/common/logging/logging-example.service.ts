@@ -6,17 +6,14 @@ export class LoggingExampleService {
   constructor(private readonly logger: StructuredLoggerService) {}
 
   async exampleUserAction(userId: string, action: string) {
-    // Log user actions for analytics
     this.logger.logUserAction(action, userId, {
       correlationId: "req-123",
       metadata: { source: "web" },
     });
 
     try {
-      // Simulate some business logic
       const result = await this.performBusinessLogic();
 
-      // Log successful business events
       this.logger.logBusinessEvent("user_profile_updated", {
         userId,
         correlationId: "req-123",
@@ -24,7 +21,6 @@ export class LoggingExampleService {
 
       return result;
     } catch (error) {
-      // Structured error logging
       this.logger.error("Failed to update user profile", error.stack, {
         userId,
         correlationId: "req-123",
@@ -38,11 +34,9 @@ export class LoggingExampleService {
     const startTime = Date.now();
 
     try {
-      // Simulate database query
       const query = "SELECT * FROM users WHERE active = true";
       const result = await this.simulateDbQuery();
 
-      // Log database performance
       this.logger.logDatabaseQuery(query, Date.now() - startTime, {
         correlationId: "req-123",
         rowCount: result.length,
@@ -60,7 +54,6 @@ export class LoggingExampleService {
   }
 
   async exampleSecurityEvent(userId: string, ipAddress: string) {
-    // Log security events for monitoring
     this.logger.logSecurityEvent("suspicious_login_attempt", "medium", {
       userId,
       ipAddress,
@@ -73,10 +66,8 @@ export class LoggingExampleService {
     const startTime = Date.now();
 
     try {
-      // Simulate API call
       const response = await this.simulateApiCall();
 
-      // Log API performance
       this.logger.logApiCall(method, endpoint, Date.now() - startTime, {
         correlationId: "req-123",
         statusCode: 200,
@@ -96,7 +87,6 @@ export class LoggingExampleService {
   }
 
   private async performBusinessLogic() {
-    // Simulate async operation
     await new Promise((resolve) => setTimeout(resolve, 100));
     return { success: true };
   }

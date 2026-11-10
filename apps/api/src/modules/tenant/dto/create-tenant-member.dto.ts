@@ -1,5 +1,5 @@
 import { IsEnum, IsOptional } from "class-validator";
-import { TenantMemberRole } from "src/common/enums";
+import { TenantMemberRole } from "../../../common/enums";
 
 export class CreateTenantMemberDto {
   @IsEnum(TenantMemberRole)

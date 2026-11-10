@@ -1,10 +1,10 @@
 import { Test, TestingModule } from "@nestjs/testing";
-import { Channel, ProviderConfig, ProviderHealth } from "../types";
+import { ProviderConfig, ProviderHealth } from "../types";
+import { NotificationChannel } from "../../common/enums/notification-channel.enum";
 import { AsiaSMSProvider } from "./asia-sms-provider";
 import { SMSPayload } from "./sms-provider.interface";
 import type { Mock } from "vitest";
 
-// Mock fetch globally
 global.fetch = vi.fn();
 
 describe("AsiaSMSProvider", () => {
@@ -23,7 +23,7 @@ describe("AsiaSMSProvider", () => {
     validConfig = {
       id: "asia-sms-provider",
       name: "Asia SMS Provider",
-      channel: Channel.SMS,
+      channel: NotificationChannel.SMS,
       priority: 1,
       isActive: true,
       credentials: {
@@ -48,7 +48,7 @@ describe("AsiaSMSProvider", () => {
       expect(provider.isInitialized).toBe(true);
       expect(provider.id).toBe("asia-sms");
       expect(provider.name).toBe("Asia SMS Provider");
-      expect(provider.channel).toBe(Channel.SMS);
+      expect(provider.channel).toBe(NotificationChannel.SMS);
     });
 
     it("should fail initialization with missing apiKey", async () => {
@@ -267,42 +267,7 @@ describe("AsiaSMSProvider", () => {
     });
   });
 
-  describe("health checks", () => {
-    beforeEach(async () => {
-      await provider.initialize(validConfig);
-    });
-
-    it("should return healthy status when API is accessible", async () => {
-      const mockAccountResponse = {
-        status: "active",
-        friendly_name: "Test Account",
-      };
-
-      mockFetch.mockResolvedValue({
-        ok: true,
-        json: () => Promise.resolve(mockAccountResponse),
-      } as Response);
-
-      const healthStatus = await provider.checkHealth();
-
-      expect(healthStatus.status).toBe(ProviderHealth.HEALTHY);
-      expect(healthStatus.metadata?.service).toBe("Asia SMS Provider");
-      expect(healthStatus.metadata?.accountStatus).toBe("active");
-    });
-
-    it("should return unhealthy status when API is not accessible", async () => {
-      mockFetch.mockResolvedValue({
-        ok: false,
-        status: 401,
-        statusText: "Unauthorized",
-      } as Response);
-
-      const healthStatus = await provider.checkHealth();
-
-      expect(healthStatus.status).toBe(ProviderHealth.UNHEALTHY);
-      expect(healthStatus.metadata?.error).toContain("Asia SMS health check failed");
-    });
-  });
+  // Health checks moved to the circuit breaker (common/errors/services/circuit-breaker.service.ts); providers no longer own a checkHealth API.
 
   describe("Asia SMS-specific methods", () => {
     beforeEach(async () => {

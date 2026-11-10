@@ -70,7 +70,6 @@ export class Configuration {
   @UpdateDateColumn({ name: "updated_at" })
   updatedAt: Date;
 
-  // Computed properties for convenience
   get scope(): ConfigurationScope {
     return this.tenantId ? ConfigurationScope.TENANT : ConfigurationScope.GLOBAL;
   }
@@ -80,7 +79,7 @@ export class Configuration {
   }
 
   get environment(): string {
-    return "development"; // Default environment
+    return "development";
   }
 
   get status(): ConfigurationStatus {

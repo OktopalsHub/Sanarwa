@@ -1,8 +1,3 @@
-/**
- * In-App Notifications Quota Management Tests
- * Tests in-app notification quotas, real-time delivery, and quota limits
- */
-
 import { describe, it, expect, beforeAll, afterAll } from "vitest";
 import {
   createTestSetup,
@@ -20,12 +15,12 @@ describe("📱 In-App Notifications Quota Tests", () => {
   beforeAll(async () => {
     testSetup = await createTestSetup();
 
-    // Create in-app notification template
     const templateData = {
       name: "inapp-quota-test",
       channel: "IN_APP",
       subject: "In-App: {{title}}",
-      content: JSON.stringify({
+
+      data: JSON.stringify({
         title: "{{title}}",
         message: "Hi {{firstName}}, {{message}}",
         icon: "{{icon}}",
@@ -141,7 +136,6 @@ describe("📱 In-App Notifications Quota Tests", () => {
     });
 
     it("should test in-app quota exceeded scenario", async () => {
-      // Try to send many in-app notifications to trigger quota limit
       const quotaTests: Array<{
         attempt: number;
         status: number;
@@ -188,7 +182,6 @@ describe("📱 In-App Notifications Quota Tests", () => {
 
         console.log(`🔄 In-app quota test ${i}:`, response.status, response.data);
 
-        // If we get quota exceeded, break
         if (response.status === 429) {
           console.log("📊 In-app quota limit reached at attempt", i);
           break;
@@ -375,9 +368,9 @@ describe("📱 In-App Notifications Quota Tests", () => {
 
     it("should validate in-app notification payload", async () => {
       const invalidPayload = {
-        to: "", // Empty recipient
-        message: "", // Empty message
-        subject: "", // Empty subject
+        to: "",
+        message: "",
+        subject: "",
         channel: "IN_APP",
       };
 
@@ -402,7 +395,6 @@ describe("📱 In-App Notifications Quota Tests", () => {
         metadata: {
           templateId: inAppTemplate.name,
           templateData: {
-            // Missing required fields
             invalidField: "should be ignored",
           },
         },

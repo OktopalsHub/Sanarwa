@@ -84,14 +84,6 @@ export class AndroidCertificateDataDto {
   })
   @IsString({ message: "Package name must be a string" })
   packageName: string;
-
-  @ApiPropertyOptional({
-    description: "Legacy FCM server key (deprecated)",
-    example: "AAAA1234567:ABC...",
-  })
-  @IsOptional()
-  @IsString({ message: "Server key must be a string" })
-  serverKey?: string;
 }
 
 export class CreatePushCertificateDto {

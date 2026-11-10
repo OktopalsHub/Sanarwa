@@ -1,15 +1,9 @@
-/**
- * Brand Module HTTP Tests
- * Tests branding functionality with BYOP and fallback scenarios
- */
-
 import axios, { AxiosInstance } from "axios";
 
 describe("Brand Module HTTP Tests", () => {
   const baseURL = "http://localhost:9000/api/v1";
   let api: AxiosInstance;
 
-  // Use the same test account from project tests
   const testAccount = {
     email: `brand-test-${Date.now()}@example.com`,
     password: "BrandTestPassword123!",
@@ -23,9 +17,8 @@ describe("Brand Module HTTP Tests", () => {
   let byopProjectId: string;
   let fallbackProjectId: string;
 
-  // Brand test data
-  let customBrand: any; // Brand with full customization
-  let fallbackBrand: any; // Brand with minimal/no customization (uses defaults)
+  let customBrand: any;
+  let fallbackBrand: any;
 
   beforeAll(async () => {
     api = axios.create({
@@ -59,14 +52,12 @@ describe("Brand Module HTTP Tests", () => {
   async function setupTestAccount(): Promise<void> {
     console.log("🔧 Setting up test account for brand testing...");
 
-    // Register test account
     const registerResponse = await api.post("/auth/register", testAccount);
     expect(registerResponse.status).toBe(201);
 
     authToken = registerResponse.data.access_token;
     userId = registerResponse.data.user.id;
 
-    // Get tenant ID
     const workspacesResponse = await api.get("/tenant-members/user-workspaces", {
       headers: { Authorization: `Bearer ${authToken}` },
     });
@@ -82,7 +73,6 @@ describe("Brand Module HTTP Tests", () => {
   async function setupTestProjects(): Promise<void> {
     console.log("🔧 Setting up test projects for branding...");
 
-    // Create BYOP project
     const byopProjectResponse = await api.post(
       "/projects",
       {
@@ -122,7 +112,6 @@ describe("Brand Module HTTP Tests", () => {
     expect(byopProjectResponse.status).toBe(201);
     byopProjectId = byopProjectResponse.data.id;
 
-    // Create fallback project
     const fallbackProjectResponse = await api.post(
       "/projects",
       {
@@ -134,7 +123,6 @@ describe("Brand Module HTTP Tests", () => {
           enableVoice: false,
           enablePush: false,
         },
-        // No custom providers - uses system defaults
       },
       {
         headers: { Authorization: `Bearer ${authToken}` },
@@ -211,7 +199,6 @@ describe("Brand Module HTTP Tests", () => {
         expect(response.data).toHaveProperty("contactInfo");
         expect(response.data.projectId).toBe(byopProjectId);
 
-        // Store for later tests
         customBrand = response.data;
 
         console.log(`✅ Custom brand created: ${customBrand.id}`);
@@ -220,7 +207,6 @@ describe("Brand Module HTTP Tests", () => {
       it("should create minimal brand for fallback project (uses defaults)", async () => {
         const brandData = {
           name: "Fallback Brand",
-          // Minimal configuration - most fields will use system defaults
           primaryColor: "#007BFF",
         };
 
@@ -233,21 +219,17 @@ describe("Brand Module HTTP Tests", () => {
         expect(response.data.name).toBe(brandData.name);
         expect(response.data.primaryColor).toBe(brandData.primaryColor);
 
-        // Should have default values for missing fields
         expect(response.data).toHaveProperty("backgroundColor");
         expect(response.data).toHaveProperty("textColor");
         expect(response.data).toHaveProperty("emailTemplate");
         expect(response.data).toHaveProperty("smsTemplate");
 
-        // Default email template should be applied
         expect(response.data.emailTemplate).toHaveProperty("headerHtml");
         expect(response.data.emailTemplate).toHaveProperty("footerHtml");
 
-        // Default SMS template should be applied
         expect(response.data.smsTemplate).toHaveProperty("signature");
         expect(response.data.smsTemplate).toHaveProperty("optOutText");
 
-        // Store for later tests
         fallbackBrand = response.data;
 
         console.log(`✅ Fallback brand created: ${fallbackBrand.id}`);
@@ -257,7 +239,6 @@ describe("Brand Module HTTP Tests", () => {
         const response = await api.post(
           `/projects/${byopProjectId}/brand`,
           {
-            // missing name
             primaryColor: "#FF0000",
           },
           {
@@ -335,13 +316,11 @@ describe("Brand Module HTTP Tests", () => {
         expect(response.data.name).toBe("Fallback Brand");
         expect(response.data.primaryColor).toBe("#007BFF");
 
-        // Should have system defaults applied
         expect(response.data.backgroundColor).toBeDefined();
         expect(response.data.textColor).toBeDefined();
         expect(response.data.emailTemplate).toBeDefined();
         expect(response.data.smsTemplate).toBeDefined();
 
-        // Default templates should be present
         expect(response.data.emailTemplate.headerHtml).toBeDefined();
         expect(response.data.emailTemplate.footerHtml).toBeDefined();
         expect(response.data.smsTemplate.signature).toBeDefined();
@@ -423,8 +402,7 @@ describe("Brand Module HTTP Tests", () => {
         expect(response.data.emailTemplate.headerHtml).toContain("Enhanced Fallback");
         expect(response.data.socialLinks.website).toBe("https://enhancedfallback.com");
 
-        // Should preserve existing values not in update
-        expect(response.data.primaryColor).toBe("#007BFF"); // Original value
+        expect(response.data.primaryColor).toBe("#007BFF");
       });
 
       it("should validate color formats on update", async () => {
@@ -461,7 +439,6 @@ describe("Brand Module HTTP Tests", () => {
       let deleteTestBrandId: string;
 
       beforeAll(async () => {
-        // Create a project and brand specifically for deletion testing
         const projectResponse = await api.post(
           "/projects",
           {
@@ -494,7 +471,6 @@ describe("Brand Module HTTP Tests", () => {
 
         expect(response.status).toBe(204);
 
-        // Verify brand is deleted
         const getResponse = await api.get(`/projects/${deleteTestProjectId}/brand`, {
           headers: { Authorization: `Bearer ${authToken}` },
         });
@@ -534,7 +510,7 @@ describe("Brand Module HTTP Tests", () => {
         expect(response.status).toBe(200);
         expect(response.data).toHaveProperty("html");
         expect(response.data.html).toContain("Updated Custom Brand");
-        expect(response.data.html).toContain("#E74C3C"); // Primary color
+        expect(response.data.html).toContain("#E74C3C");
         expect(response.data.html).toContain("Test Notification");
         expect(response.data.html).toContain("Take Action");
       });
@@ -558,7 +534,7 @@ describe("Brand Module HTTP Tests", () => {
         expect(response.status).toBe(200);
         expect(response.data).toHaveProperty("html");
         expect(response.data.html).toContain("Enhanced Fallback Brand");
-        expect(response.data.html).toContain("#007BFF"); // Primary color
+        expect(response.data.html).toContain("#007BFF");
         expect(response.data.html).toContain("Fallback Test");
       });
 
@@ -579,8 +555,8 @@ describe("Brand Module HTTP Tests", () => {
         expect(response.status).toBe(200);
         expect(response.data).toHaveProperty("text");
         expect(response.data.text).toContain("Your verification code is 123456");
-        expect(response.data.text).toContain("Updated Custom Brand"); // Signature
-        expect(response.data.text).toContain("Text STOP to unsubscribe"); // Opt-out text
+        expect(response.data.text).toContain("Updated Custom Brand");
+        expect(response.data.text).toContain("Text STOP to unsubscribe");
       });
 
       it("should preview SMS template with fallback branding", async () => {
@@ -600,7 +576,7 @@ describe("Brand Module HTTP Tests", () => {
         expect(response.status).toBe(200);
         expect(response.data).toHaveProperty("text");
         expect(response.data.text).toContain("Welcome to our service!");
-        expect(response.data.text).toContain("Enhanced Fallback Brand"); // Signature
+        expect(response.data.text).toContain("Enhanced Fallback Brand");
       });
 
       it("should validate preview request data", async () => {
@@ -643,7 +619,6 @@ describe("Brand Module HTTP Tests", () => {
         expect(response.data.colors.primary).toBe("#007BFF");
         expect(response.data.colors.secondary).toBe("#28A745");
 
-        // Should have default logo if none specified
         expect(response.data).toHaveProperty("logo");
       });
     });
@@ -663,7 +638,7 @@ describe("Brand Module HTTP Tests", () => {
         expect(response.data).toHaveProperty("recommendations");
 
         expect(response.data.isValid).toBe(true);
-        expect(response.data.completeness).toBeGreaterThan(80); // High completeness for custom brand
+        expect(response.data.completeness).toBeGreaterThan(80);
       });
 
       it("should validate fallback brand configuration", async () => {
@@ -673,7 +648,7 @@ describe("Brand Module HTTP Tests", () => {
 
         expect(response.status).toBe(200);
         expect(response.data.isValid).toBe(true);
-        expect(response.data.completeness).toBeLessThan(100); // Lower completeness due to defaults
+        expect(response.data.completeness).toBeLessThan(100);
         expect(Array.isArray(response.data.recommendations)).toBe(true);
       });
     });
@@ -696,7 +671,6 @@ describe("Brand Module HTTP Tests", () => {
         expect(response.data.results).toHaveProperty("missing_colors");
         expect(response.data.results).toHaveProperty("missing_templates");
 
-        // Each scenario should have fallback values
         expect(response.data.results.missing_logo).toHaveProperty("fallback");
         expect(response.data.results.missing_colors).toHaveProperty("fallback");
         expect(response.data.results.missing_templates).toHaveProperty("fallback");
@@ -719,7 +693,6 @@ describe("Brand Module HTTP Tests", () => {
     });
 
     it("should validate project ownership for brand operations", async () => {
-      // All brand operations should be limited to project owner's tenant
       const response = await api.get(`/projects/${byopProjectId}/brand`, {
         headers: { Authorization: `Bearer ${authToken}` },
       });

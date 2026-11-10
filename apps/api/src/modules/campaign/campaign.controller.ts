@@ -12,8 +12,8 @@ import {
   UseGuards,
 } from "@nestjs/common";
 import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from "@nestjs/swagger";
-import { CurrentMemberId, CurrentTenantId } from "src/common/decorators";
-import { TenantMemberGuard } from "src/common/guards";
+import { CurrentMemberId, CurrentTenantId } from "../../common/decorators";
+import { TenantMemberGuard } from "../../common/guards";
 import { AuthGuard } from "../auth/guards/jwt-auth.guard";
 import { CampaignService } from "./campaign.service";
 import { CampaignQueryDto } from "./dto/campaign-query.dto";
@@ -58,6 +58,14 @@ export class CampaignController {
     @Body() dto: UpdateCampaignDto,
   ) {
     return this.campaignService.update(tenantId, id, dto);
+  }
+
+  @Post(":id/dispatch")
+  @ApiOperation({
+    summary: "Dispatch a campaign (topic or list audience → queued/scheduled sends)",
+  })
+  async dispatch(@CurrentTenantId() tenantId: string, @Param("id") id: string) {
+    return this.campaignService.dispatch(tenantId, id);
   }
 
   @Delete(":id")

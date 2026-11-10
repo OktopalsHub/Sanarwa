@@ -1,13 +1,17 @@
 import { Entity, Column, ManyToOne, JoinColumn, Index } from "typeorm";
 import { User } from "../../user/entities/user.entity";
-import { BaseEntity } from "../../../database/entities/base.entity";
+import { BaseEntity } from "../../../common/database/entities/base.entity";
 
 @Entity("session")
 @Index(["userId"])
+@Index(["activeOrganizationId"])
 @Index(["token"], { unique: true })
 export class Session extends BaseEntity {
   @Column({ name: "user_id", type: "char", length: 36 })
   userId: string;
+
+  @Column({ name: "active_organization_id", type: "varchar", length: 36, nullable: true })
+  activeOrganizationId?: string | null;
 
   @Column({ name: "expires_at", type: "timestamp" })
   expiresAt: Date;

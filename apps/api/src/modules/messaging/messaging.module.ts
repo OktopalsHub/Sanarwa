@@ -1,3 +1,4 @@
+import { BullModule } from "@nestjs/bullmq";
 import { Module } from "@nestjs/common";
 import { TypeOrmModule } from "@nestjs/typeorm";
 import { AuthModule } from "../auth/auth.module";
@@ -9,6 +10,7 @@ import { NotificationsModule } from "../notifications/notifications.module";
 import { NotificationLog } from "../notifications/entities/notification-log.entity";
 import { AuthEmailService } from "../auth/services/auth-email.service";
 
+import { NOTIFICATION_ADMIN_QUEUE } from "./queue/notification-queue.constants";
 import { DeadLetterProcessor } from "./queue/dead-letter.processor";
 import { NotificationQueueModule } from "./queue/notification-queue.module";
 import { MessagingEntitiesModule } from "./shared/messaging-entities.module";
@@ -24,6 +26,7 @@ import { MessageRepository, MessageDeliveryRepository, DeadLetterRepository } fr
   imports: [
     MessagingEntitiesModule,
     TypeOrmModule.forFeature([NotificationLog]),
+    BullModule.registerQueue({ name: NOTIFICATION_ADMIN_QUEUE }),
     NotificationQueueModule,
     MessagingServicesModule,
     TemplateModule,

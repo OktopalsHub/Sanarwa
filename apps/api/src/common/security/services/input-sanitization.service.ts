@@ -21,7 +21,6 @@ export interface SanitizationResult {
 export class InputSanitizationService {
   private readonly logger = new Logger(InputSanitizationService.name);
 
-  // SQL injection patterns
   private readonly sqlInjectionPatterns = [
     /(\b(SELECT|INSERT|UPDATE|DELETE|DROP|CREATE|ALTER|EXEC|EXECUTE|UNION|SCRIPT)\b)/gi,
     /(\b(OR|AND)\s+\d+\s*=\s*\d+)/gi,
@@ -32,7 +31,6 @@ export class InputSanitizationService {
     /('(\s*|\+|\|\|)+(SELECT|INSERT|UPDATE|DELETE|DROP|CREATE|ALTER|EXEC|EXECUTE|UNION))/gi,
   ];
 
-  // XSS patterns
   private readonly xssPatterns = [
     /<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi,
     /<iframe\b[^<]*(?:(?!<\/iframe>)<[^<]*)*<\/iframe>/gi,
@@ -46,7 +44,6 @@ export class InputSanitizationService {
     /<\s*\/?\s*(script|iframe|object|embed|form|meta|link|style)\b[^>]*>/gi,
   ];
 
-  // Command injection patterns
   private readonly commandInjectionPatterns = [
     /(\||&|;|`|\$\(|\${)/g,
     /(wget|curl|nc|netcat|telnet|ssh|ftp|tftp)/gi,
@@ -55,7 +52,6 @@ export class InputSanitizationService {
     /(echo|print).*(\||&|;|`)/gi,
   ];
 
-  // Path traversal patterns
   private readonly pathTraversalPatterns = [
     /\.\.\//g,
     /\.\.\\/g,
@@ -65,9 +61,6 @@ export class InputSanitizationService {
     /\.\.%5c/gi,
   ];
 
-  /**
-   * Sanitize input string with comprehensive security checks
-   */
   sanitize(input: string, options: SanitizationOptions = {}): SanitizationResult {
     if (!input || typeof input !== "string") {
       return {
@@ -81,7 +74,6 @@ export class InputSanitizationService {
     const removedPatterns: string[] = [];
     let wasModified = false;
 
-    // Remove null bytes
     if (options.removeNullBytes !== false) {
       const beforeNullBytes = sanitized;
       sanitized = sanitized.replace(/\0/g, "");
@@ -91,7 +83,6 @@ export class InputSanitizationService {
       }
     }
 
-    // Trim whitespace
     if (options.trimWhitespace !== false) {
       const beforeTrim = sanitized;
       sanitized = sanitized.trim();
@@ -101,7 +92,6 @@ export class InputSanitizationService {
       }
     }
 
-    // Prevent SQL injection
     if (options.preventSqlInjection !== false) {
       const beforeSql = sanitized;
       sanitized = this.removeSqlInjectionPatterns(sanitized);
@@ -111,7 +101,6 @@ export class InputSanitizationService {
       }
     }
 
-    // Prevent XSS
     if (options.preventXss !== false) {
       const beforeXss = sanitized;
       sanitized = this.removeXssPatterns(sanitized, options);
@@ -121,7 +110,6 @@ export class InputSanitizationService {
       }
     }
 
-    // Prevent command injection
     if (options.preventCommandInjection !== false) {
       const beforeCmd = sanitized;
       sanitized = this.removeCommandInjectionPatterns(sanitized);
@@ -131,7 +119,6 @@ export class InputSanitizationService {
       }
     }
 
-    // Remove path traversal attempts
     const beforePath = sanitized;
     sanitized = this.removePathTraversalPatterns(sanitized);
     if (sanitized !== beforePath) {
@@ -139,7 +126,6 @@ export class InputSanitizationService {
       removedPatterns.push("path_traversal");
     }
 
-    // Enforce maximum length
     if (options.maxLength && sanitized.length > options.maxLength) {
       sanitized = sanitized.substring(0, options.maxLength);
       wasModified = true;
@@ -157,9 +143,6 @@ export class InputSanitizationService {
     };
   }
 
-  /**
-   * Sanitize object recursively
-   */
   sanitizeObject(
     obj: Record<string, any>,
     options: SanitizationOptions = {},
@@ -206,9 +189,6 @@ export class InputSanitizationService {
     };
   }
 
-  /**
-   * Sanitize array recursively
-   */
   sanitizeArray(
     arr: any[],
     options: SanitizationOptions = {},
@@ -249,25 +229,16 @@ export class InputSanitizationService {
     };
   }
 
-  /**
-   * Validate email format
-   */
   validateEmail(email: string): boolean {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return emailRegex.test(email);
   }
 
-  /**
-   * Validate phone number format
-   */
   validatePhoneNumber(phone: string): boolean {
     const phoneRegex = /^\+?[1-9]\d{1,14}$/;
     return phoneRegex.test(phone.replace(/[\s\-(\)]/g, ""));
   }
 
-  /**
-   * Validate URL format
-   */
   validateUrl(url: string): boolean {
     try {
       const urlObj = new URL(url);
@@ -277,9 +248,6 @@ export class InputSanitizationService {
     }
   }
 
-  /**
-   * Escape HTML entities
-   */
   escapeHtml(input: string): string {
     const htmlEntities: Record<string, string> = {
       "&": "&amp;",
@@ -293,9 +261,6 @@ export class InputSanitizationService {
     return input.replace(/[&<>"'/]/g, (match) => htmlEntities[match]);
   }
 
-  /**
-   * Validate JSON structure
-   */
   validateJson(input: string): {
     isValid: boolean;
     parsed?: any;
@@ -309,9 +274,6 @@ export class InputSanitizationService {
     }
   }
 
-  /**
-   * Check for suspicious patterns
-   */
   detectSuspiciousPatterns(input: string): {
     isSuspicious: boolean;
     detectedPatterns: string[];
@@ -319,22 +281,18 @@ export class InputSanitizationService {
   } {
     const detectedPatterns: string[] = [];
 
-    // Check for SQL injection
     if (this.sqlInjectionPatterns.some((pattern) => pattern.test(input))) {
       detectedPatterns.push("sql_injection");
     }
 
-    // Check for XSS
     if (this.xssPatterns.some((pattern) => pattern.test(input))) {
       detectedPatterns.push("xss");
     }
 
-    // Check for command injection
     if (this.commandInjectionPatterns.some((pattern) => pattern.test(input))) {
       detectedPatterns.push("command_injection");
     }
 
-    // Check for path traversal
     if (this.pathTraversalPatterns.some((pattern) => pattern.test(input))) {
       detectedPatterns.push("path_traversal");
     }
@@ -357,10 +315,6 @@ export class InputSanitizationService {
     };
   }
 
-  /**
-   * Private helper methods
-   */
-
   private removeSqlInjectionPatterns(input: string): string {
     let sanitized = input;
 
@@ -375,10 +329,8 @@ export class InputSanitizationService {
     let sanitized = input;
 
     if (!options.allowHtml) {
-      // Remove all HTML tags if HTML is not allowed
       sanitized = sanitized.replace(/<[^>]*>/g, "");
     } else if (options.allowedTags && options.allowedTags.length > 0) {
-      // Remove only non-allowed HTML tags
       const allowedTagsRegex = new RegExp(
         `<(?!/?(?:${options.allowedTags.join("|")})\\b)[^>]*>`,
         "gi",
@@ -386,7 +338,6 @@ export class InputSanitizationService {
       sanitized = sanitized.replace(allowedTagsRegex, "");
     }
 
-    // Remove XSS patterns
     this.xssPatterns.forEach((pattern) => {
       sanitized = sanitized.replace(pattern, "");
     });

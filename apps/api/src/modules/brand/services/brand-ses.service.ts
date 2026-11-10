@@ -2,7 +2,7 @@ import { BadRequestException, Injectable, Inject } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
 import { NotificationChannel } from "../../../common/enums/notification-channel.enum";
-import { BaseRepository } from "../../../database/repositories/base.repository";
+import { BaseRepository } from "../../../common/database/repositories/base.repository";
 import { BRAND_REPO } from "../brand.tokens";
 import { Brand } from "../entities/brand.entity";
 import { ProviderConfig } from "../../provider/provider-config.entity";
@@ -28,8 +28,6 @@ export class BrandSesService {
   ) {}
 
   private async isBYOKTenant(tenantId: string): Promise<boolean> {
-    // Check if tenant has any active BYOK provider for email channel
-    // BYOK = tenant-provided SES/SendGrid/etc via provider_configs
     const count = await this.providerConfigRepository
       .createQueryBuilder("pc")
       .innerJoin("pc.project", "p")
@@ -41,10 +39,6 @@ export class BrandSesService {
     return count > 0;
   }
 
-  /**
-   * Get SES domain verification instructions
-   * Generic for any custom domain - supports optional Cloudflare auto-setup if token provided
-   */
   async getSESDomainVerificationInstructions(
     tenantId: string,
     id: string,
@@ -83,22 +77,18 @@ export class BrandSesService {
       );
     }
 
-    // Check BYOK vs Managed - Cloudflare only for managed
     const isBYOK = await this.isBYOKTenant(tenantId);
     const isManaged = !isBYOK;
-    const cloudflareAvailable = isManaged; // Hide CTA for BYOK
+    const cloudflareAvailable = isManaged;
 
-    // Validate SES configuration
     const sesStatus = await this.sesVerificationService.validateSESConfiguration();
     if (!sesStatus.configured) {
       throw new BadRequestException(`SES is not properly configured: ${sesStatus.error}`);
     }
 
-    // Check if domain is already being verified or verified
     let verificationResult =
       await this.sesVerificationService.checkDomainVerificationStatus(targetDomain);
 
-    // If domain is not in SES, start verification process
     if (verificationResult.status === "NotStarted") {
       verificationResult = await this.sesVerificationService.startDomainVerification(targetDomain);
 
@@ -108,7 +98,6 @@ export class BrandSesService {
         );
       }
 
-      // Save SES verification info to brand
       const updateData: Partial<Brand> = {
         domain: targetDomain,
         whiteLabelConfig: {
@@ -125,33 +114,55 @@ export class BrandSesService {
       await this.brandRepository.update(id, updateData);
     }
 
-    // Generate DNS instructions
     const instructions = this.sesVerificationService.generateDomainVerificationInstructions(
       targetDomain,
       verificationResult.verificationToken!,
     );
 
-    // Generic Cloudflare auto-setup for any custom domain - ONLY for managed service
     let cloudflareAutoSetup: any = null;
     if (cloudflareApiToken) {
       if (isBYOK) {
-        cloudflareAutoSetup = { attempted: false, successful: false, error: "BYOK tenants manage DNS themselves - Cloudflare auto only for managed service" };
+        cloudflareAutoSetup = {
+          attempted: false,
+          successful: false,
+          error: "BYOK tenants manage DNS themselves - Cloudflare auto only for managed service",
+        };
       } else {
         try {
           const cfValidation = await this.cloudflareDNSService.validateAPIToken(cloudflareApiToken);
           if (!cfValidation.valid) {
             cloudflareAutoSetup = { attempted: true, successful: false, error: cfValidation.error };
           } else {
-            const zoneId = await this.cloudflareDNSService.getZoneId(targetDomain, cloudflareApiToken);
+            const zoneId = await this.cloudflareDNSService.getZoneId(
+              targetDomain,
+              cloudflareApiToken,
+            );
             if (!zoneId) {
-              cloudflareAutoSetup = { attempted: true, successful: false, error: `No Cloudflare zone for ${targetDomain}` };
+              cloudflareAutoSetup = {
+                attempted: true,
+                successful: false,
+                error: `No Cloudflare zone for ${targetDomain}`,
+              };
             } else {
               const recordId = await this.cloudflareDNSService.addDNSRecord(
                 zoneId,
-                { type: instructions.instructions.recordType, name: instructions.instructions.name, content: instructions.instructions.value, ttl: 300, proxied: false },
+                {
+                  type: instructions.instructions.recordType,
+                  name: instructions.instructions.name,
+                  content: instructions.instructions.value,
+                  ttl: 300,
+                  proxied: false,
+                },
                 cloudflareApiToken,
               );
-              cloudflareAutoSetup = recordId ? { attempted: true, successful: true, recordId, message: "TXT added via Cloudflare (managed)" } : { attempted: true, successful: false, error: "Failed to add TXT via Cloudflare" };
+              cloudflareAutoSetup = recordId
+                ? {
+                    attempted: true,
+                    successful: true,
+                    recordId,
+                    message: "TXT added via Cloudflare (managed)",
+                  }
+                : { attempted: true, successful: false, error: "Failed to add TXT via Cloudflare" };
             }
           }
         } catch (error) {
@@ -160,7 +171,6 @@ export class BrandSesService {
       }
     }
 
-    // Check domain health
     const domainHealth = await this.dnsVerificationService.checkDomainHealth(targetDomain);
 
     return {
@@ -176,21 +186,20 @@ export class BrandSesService {
     };
   }
 
-  /**
-   * Verify domain with AWS SES - generic custom domain with optional Cloudflare auto
-   */
-  async verifySESDomain(tenantId: string, id: string, domain: string, cloudflareApiToken?: string): Promise<Brand> {
+  async verifySESDomain(
+    tenantId: string,
+    id: string,
+    domain: string,
+    cloudflareApiToken?: string,
+  ): Promise<Brand> {
     const brand = await getBrandOrThrow(this.brandRepository, tenantId, id);
 
-    // Validate prerequisites for domain verification
     validateDomainVerificationPrerequisites(brand, domain);
 
-    // Check SES verification status
     const verificationResult =
       await this.sesVerificationService.checkDomainVerificationStatus(domain);
 
     if (!verificationResult.verified) {
-      // Update brand with current status
       const updateData: Partial<Brand> = {
         domain,
         whiteLabelConfig: {
@@ -218,7 +227,6 @@ export class BrandSesService {
       );
     }
 
-    // Domain verified successfully with SES
     const updateData: Partial<Brand> = {
       domain,
       whiteLabelConfig: {
@@ -238,9 +246,6 @@ export class BrandSesService {
     return updated || brand;
   }
 
-  /**
-   * Setup DKIM with AWS SES - generic custom domain with optional Cloudflare auto (managed only)
-   */
   async setupSESDKIM(
     tenantId: string,
     id: string,
@@ -263,24 +268,20 @@ export class BrandSesService {
   }> {
     const brand = await getBrandOrThrow(this.brandRepository, tenantId, id);
 
-    // Validate prerequisites
     validateEmailVerificationPrerequisites(brand, "DKIM");
 
-    // Check if domain is verified with SES first
     if (!brand.whiteLabelConfig?.domains?.sesVerified) {
       throw new BadRequestException(
         "Domain must be verified with SES before setting up DKIM. Please verify your domain first.",
       );
     }
 
-    // Enable DKIM with SES
     const dkimResult = await this.sesVerificationService.enableDKIM(brand.domain!);
 
     if (!dkimResult.enabled || !dkimResult.dkimTokens) {
       throw new BadRequestException(`Failed to enable DKIM with SES: ${dkimResult.error}`);
     }
 
-    // Update brand with DKIM info
     const updateData: Partial<Brand> = {
       whiteLabelConfig: {
         ...brand.whiteLabelConfig,
@@ -296,33 +297,58 @@ export class BrandSesService {
 
     const updated = await this.brandRepository.update(id, updateData);
 
-    // Generate DKIM DNS instructions
     const dkimInstructions = this.sesVerificationService.generateDKIMInstructions(
       brand.domain!,
       dkimResult.dkimTokens,
     );
 
-    // Generic Cloudflare auto for custom domain DKIM - ONLY for managed service
     const isBYOK = await this.isBYOKTenant(tenantId);
     const isManaged = !isBYOK;
     const cloudflareAvailable = isManaged;
     let cloudflareAutoSetup: any = null;
     if (cloudflareApiToken) {
       if (isBYOK) {
-        cloudflareAutoSetup = { attempted: false, successful: false, error: "BYOK tenants manage DKIM DNS themselves - Cloudflare auto only for managed service" };
+        cloudflareAutoSetup = {
+          attempted: false,
+          successful: false,
+          error:
+            "BYOK tenants manage DKIM DNS themselves - Cloudflare auto only for managed service",
+        };
       } else {
         try {
           const cfValidation = await this.cloudflareDNSService.validateAPIToken(cloudflareApiToken);
           if (!cfValidation.valid) {
             cloudflareAutoSetup = { attempted: true, successful: false, error: cfValidation.error };
           } else {
-            const zoneId = await this.cloudflareDNSService.getZoneId(brand.domain!, cloudflareApiToken);
+            const zoneId = await this.cloudflareDNSService.getZoneId(
+              brand.domain!,
+              cloudflareApiToken,
+            );
             if (!zoneId) {
-              cloudflareAutoSetup = { attempted: true, successful: false, error: `No Cloudflare zone for ${brand.domain}` };
+              cloudflareAutoSetup = {
+                attempted: true,
+                successful: false,
+                error: `No Cloudflare zone for ${brand.domain}`,
+              };
             } else {
-              const records = dkimInstructions.instructions.map((inst) => ({ type: inst.recordType, name: inst.name, content: inst.value, ttl: 300, proxied: false }));
-              const result = await this.cloudflareDNSService.addDNSRecords(zoneId, records as any, cloudflareApiToken);
-              cloudflareAutoSetup = { attempted: true, successful: result.failed.length === 0, successfulRecords: result.successful, failedRecords: result.failed };
+              const records = dkimInstructions.instructions.map((inst) => ({
+                type: inst.recordType,
+                name: inst.name,
+                content: inst.value,
+                ttl: 300,
+                proxied: false,
+              }));
+              const result = await this.cloudflareDNSService.addDNSRecords(
+                zoneId,
+                records as any,
+                cloudflareApiToken,
+              );
+              cloudflareAutoSetup = {
+                attempted: true,
+                successful: result.failed.length === 0,
+                successfulRecords: result.successful,
+                failedRecords: result.failed,
+              };
             }
           }
         } catch (error) {
@@ -341,9 +367,6 @@ export class BrandSesService {
     };
   }
 
-  /**
-   * Check SES DKIM verification status
-   */
   async checkSESDKIMStatus(
     tenantId: string,
     id: string,
@@ -362,10 +385,8 @@ export class BrandSesService {
       throw new BadRequestException("Domain must be set before checking DKIM status");
     }
 
-    // Check DKIM status with SES
     const dkimStatus = await this.sesVerificationService.checkDKIMStatus(brand.domain);
 
-    // Update brand with current DKIM status
     if (dkimStatus.enabled) {
       const updateData: Partial<Brand> = {
         whiteLabelConfig: {
@@ -393,9 +414,6 @@ export class BrandSesService {
     };
   }
 
-  /**
-   * Check if domain can send emails through SES
-   */
   async checkSESEmailCapability(
     tenantId: string,
     id: string,
@@ -419,7 +437,6 @@ export class BrandSesService {
       };
     }
 
-    // Check SES email capability
     const emailCapability = await this.sesVerificationService.canSendEmails(brand.domain);
 
     if (!emailCapability.canSend) {
@@ -435,7 +452,6 @@ export class BrandSesService {
       };
     }
 
-    // Check DKIM status for better deliverability
     const dkimStatus = await this.sesVerificationService.checkDKIMStatus(brand.domain);
 
     const recommendations: string[] = [];

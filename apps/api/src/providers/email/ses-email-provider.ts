@@ -1,13 +1,8 @@
 import { SESClient, SendEmailCommand, SendEmailCommandInput } from "@aws-sdk/client-ses";
 import { Injectable } from "@nestjs/common";
 import { BaseProvider } from "../base/base-provider.abstract";
-import {
-  Channel,
-  ProviderConfig,
-  ProviderHealth,
-  ProviderHealthStatus,
-  ProviderResponse,
-} from "../types";
+import { ProviderConfig, ProviderResponse } from "../types";
+import { NotificationChannel } from "../../common/enums/notification-channel.enum";
 import { EmailConfig, EmailPayload, IEmailProvider } from "./email-provider.interface";
 
 @Injectable()
@@ -16,7 +11,7 @@ export class SESEmailProvider extends BaseProvider implements IEmailProvider {
   private emailConfig: EmailConfig;
 
   constructor() {
-    super("ses", "AWS SES", Channel.EMAIL);
+    super("ses", "AWS SES", NotificationChannel.EMAIL);
   }
 
   async send(payload: EmailPayload): Promise<ProviderResponse> {
@@ -79,13 +74,11 @@ export class SESEmailProvider extends BaseProvider implements IEmailProvider {
 
     const credentials = config.credentials as EmailConfig;
 
-    // Check required fields
     if (!credentials.fromEmail) {
       this.logger.error("SES configuration missing fromEmail");
       return false;
     }
 
-    // Validate email format
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(credentials.fromEmail)) {
       this.logger.error("SES configuration has invalid fromEmail format");
@@ -100,35 +93,9 @@ export class SESEmailProvider extends BaseProvider implements IEmailProvider {
     return true;
   }
 
-  protected async performHealthCheck(): Promise<ProviderHealthStatus> {
-    if (!this.sesClient) {
-      throw new Error("SES client not initialized");
-    }
-
-    try {
-      // Test SES connectivity by getting send quota
-      const { GetSendQuotaCommand } = await import("@aws-sdk/client-ses");
-      const command = new GetSendQuotaCommand({});
-      await this.sesClient.send(command);
-
-      return {
-        status: ProviderHealth.HEALTHY,
-        lastChecked: new Date(),
-        uptime: 100,
-        metadata: {
-          service: "AWS SES",
-          region: this.sesClient.config.region,
-        },
-      };
-    } catch (error) {
-      throw new Error(`SES health check failed: ${error.message}`, { cause: error });
-    }
-  }
-
   protected async onInitialize(): Promise<void> {
     this.emailConfig = this.config.credentials as EmailConfig;
 
-    // Initialize SES client
     this.sesClient = new SESClient({
       region: this.emailConfig.region || "us-east-1",
       credentials: this.emailConfig.apiKey
@@ -136,7 +103,7 @@ export class SESEmailProvider extends BaseProvider implements IEmailProvider {
             accessKeyId: this.emailConfig.apiKey,
             secretAccessKey: this.config.credentials.secretKey || "",
           }
-        : undefined, // Use default credential chain if no explicit credentials
+        : undefined,
     });
 
     this.logger.log(
@@ -151,9 +118,6 @@ export class SESEmailProvider extends BaseProvider implements IEmailProvider {
     }
   }
 
-  /**
-   * Get SES sending statistics
-   */
   async getSendingStatistics(): Promise<any> {
     if (!this.sesClient) {
       throw new Error("SES client not initialized");
@@ -170,9 +134,6 @@ export class SESEmailProvider extends BaseProvider implements IEmailProvider {
     }
   }
 
-  /**
-   * Get SES send quota
-   */
   async getSendQuota(): Promise<any> {
     if (!this.sesClient) {
       throw new Error("SES client not initialized");

@@ -8,16 +8,12 @@ export class BrandedPushService {
 
   constructor(private readonly brandService: BrandService) {}
 
-  /**
-   * Enhance push notification with brand configuration
-   */
   async enhancePushWithBrand(
     tenantId: string,
     payload: PushPayload,
     brandId?: string,
   ): Promise<PushPayload> {
     try {
-      // If no brand ID provided, try to find a default brand for the tenant
       if (!brandId) {
         const brands = await this.brandService.getBrands(tenantId, { limit: 1 });
         if (!brands.records || brands.records.length === 0) {
@@ -29,20 +25,16 @@ export class BrandedPushService {
         brandId = brands.records[0].id;
       }
 
-      // Get brand configuration
       const brand = await this.brandService.getBrandById(tenantId, brandId!);
 
-      // Enhance push notification with brand elements
       const enhancedPayload: PushPayload = {
         ...payload,
       };
 
-      // Use brand name in title if not specified
       if (!payload.title && brand.name) {
         enhancedPayload.title = brand.name;
       }
 
-      // Add brand colors and styling
       if (brand.primaryColor || brand.logo) {
         enhancedPayload.android = {
           ...payload.android,
@@ -51,7 +43,6 @@ export class BrandedPushService {
         };
       }
 
-      // Add brand-specific deep linking
       if (brand.domain && !payload.deepLink) {
         enhancedPayload.deepLink = {
           url: `https://${brand.domain}/app`,
@@ -59,7 +50,6 @@ export class BrandedPushService {
         };
       }
 
-      // Add brand metadata
       enhancedPayload.data = {
         ...payload.data,
         brandId: brand.id,
@@ -76,14 +66,10 @@ export class BrandedPushService {
         `Failed to enhance push notification with brand configuration: ${error.message}`,
         error,
       );
-      // Return original payload if brand enhancement fails
       return payload;
     }
   }
 
-  /**
-   * Get push notification recommendations for a brand
-   */
   async getPushRecommendations(
     tenantId: string,
     brandId: string,
@@ -108,7 +94,6 @@ export class BrandedPushService {
 
       let score = 0;
 
-      // Check brand name (20 points)
       if (brand.name) {
         score += 20;
       } else {
@@ -120,7 +105,6 @@ export class BrandedPushService {
         });
       }
 
-      // Check brand colors (20 points)
       if (brand.primaryColor) {
         score += 20;
       } else {
@@ -132,7 +116,6 @@ export class BrandedPushService {
         });
       }
 
-      // Check brand logo (20 points)
       if (brand.logo) {
         score += 20;
       } else {
@@ -144,7 +127,6 @@ export class BrandedPushService {
         });
       }
 
-      // Check domain for deep linking (20 points)
       if (brand.domain) {
         score += 20;
       } else {
@@ -156,7 +138,6 @@ export class BrandedPushService {
         });
       }
 
-      // Check description for context (20 points)
       if (brand.description) {
         score += 20;
       } else {
@@ -168,7 +149,6 @@ export class BrandedPushService {
         });
       }
 
-      // Determine status based on score
       let status: "excellent" | "good" | "needs_improvement" | "poor";
       if (score >= 90) {
         status = "excellent";
@@ -198,9 +178,6 @@ export class BrandedPushService {
     }
   }
 
-  /**
-   * Create branded push notification template
-   */
   createBrandedPushTemplate(brand: any, basePayload: Partial<PushPayload>): PushPayload {
     return {
       deviceTokens: [],

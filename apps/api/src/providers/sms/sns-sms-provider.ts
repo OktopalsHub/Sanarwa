@@ -6,13 +6,8 @@ import {
 } from "@aws-sdk/client-sns";
 import { Injectable } from "@nestjs/common";
 import { BaseProvider } from "../base/base-provider.abstract";
-import {
-  Channel,
-  ProviderConfig,
-  ProviderHealth,
-  ProviderHealthStatus,
-  ProviderResponse,
-} from "../types";
+import { ProviderConfig, ProviderResponse } from "../types";
+import { NotificationChannel } from "../../common/enums/notification-channel.enum";
 import { ISMSProvider, SMSConfig, SMSPayload } from "./sms-provider.interface";
 
 @Injectable()
@@ -32,11 +27,10 @@ export class SNSSMSProvider extends BaseProvider implements ISMSProvider {
     "IN",
     "BR",
     "MX",
-    // Add more countries as needed
   ];
 
   constructor() {
-    super("sns", "AWS SNS SMS", Channel.SMS);
+    super("sns", "AWS SNS SMS", NotificationChannel.SMS);
   }
 
   async send(payload: SMSPayload): Promise<ProviderResponse> {
@@ -84,8 +78,6 @@ export class SNSSMSProvider extends BaseProvider implements ISMSProvider {
 
     const credentials = config.credentials as SMSConfig;
 
-    // SNS can work with default AWS credentials, so API key is optional
-    // But if provided, it should be valid
     if (credentials.apiKey && !credentials.apiSecret) {
       this.logger.error("SNS configuration has apiKey but missing apiSecret");
       return false;
@@ -94,35 +86,9 @@ export class SNSSMSProvider extends BaseProvider implements ISMSProvider {
     return true;
   }
 
-  protected async performHealthCheck(): Promise<ProviderHealthStatus> {
-    if (!this.snsClient) {
-      throw new Error("SNS client not initialized");
-    }
-
-    try {
-      // Test SNS connectivity by getting SMS attributes
-      const command = new GetSMSAttributesCommand({});
-      await this.snsClient.send(command);
-
-      return {
-        status: ProviderHealth.HEALTHY,
-        lastChecked: new Date(),
-        uptime: 100,
-        metadata: {
-          service: "AWS SNS SMS",
-          region: this.snsClient.config.region,
-          supportedCountries: this.supportedCountries.length,
-        },
-      };
-    } catch (error) {
-      throw new Error(`SNS health check failed: ${error.message}`, { cause: error });
-    }
-  }
-
   protected async onInitialize(): Promise<void> {
     this.smsConfig = this.config.credentials as SMSConfig;
 
-    // Initialize SNS client
     this.snsClient = new SNSClient({
       region: this.smsConfig.region || "us-east-1",
       credentials: this.smsConfig.apiKey
@@ -130,7 +96,7 @@ export class SNSSMSProvider extends BaseProvider implements ISMSProvider {
             accessKeyId: this.smsConfig.apiKey,
             secretAccessKey: this.smsConfig.apiSecret || "",
           }
-        : undefined, // Use default credential chain if no explicit credentials
+        : undefined,
     });
 
     this.logger.log(
@@ -154,20 +120,16 @@ export class SNSSMSProvider extends BaseProvider implements ISMSProvider {
   }
 
   formatPhoneNumber(phoneNumber: string, countryCode?: string): string {
-    // Remove all non-digit characters
     const cleaned = phoneNumber.replace(/\D/g, "");
 
-    // If number already starts with +, return as is
     if (phoneNumber.startsWith("+")) {
       return phoneNumber;
     }
 
-    // If number starts with country code, add +
     if (cleaned.length > 10) {
       return `+${cleaned}`;
     }
 
-    // Add default country code if provided
     if (countryCode) {
       const countryCodeMap: Record<string, string> = {
         US: "1",
@@ -190,7 +152,6 @@ export class SNSSMSProvider extends BaseProvider implements ISMSProvider {
       }
     }
 
-    // Default to US format if no country code provided
     if (cleaned.length === 10) {
       return `+1${cleaned}`;
     }
@@ -198,9 +159,6 @@ export class SNSSMSProvider extends BaseProvider implements ISMSProvider {
     return `+${cleaned}`;
   }
 
-  /**
-   * Get SMS spending limit
-   */
   async getSMSSpendingLimit(): Promise<any> {
     if (!this.snsClient) {
       throw new Error("SNS client not initialized");
@@ -216,9 +174,6 @@ export class SNSSMSProvider extends BaseProvider implements ISMSProvider {
     }
   }
 
-  /**
-   * Set SMS attributes (like spending limit)
-   */
   async setSMSAttributes(attributes: Record<string, string>): Promise<void> {
     if (!this.snsClient) {
       throw new Error("SNS client not initialized");

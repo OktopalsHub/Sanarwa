@@ -5,6 +5,8 @@ import { EventEmitter2 } from "@nestjs/event-emitter";
 import { WhatsAppBusinessAPIService } from "./whatsapp-business-api.service";
 import { WhatsAppMediaService } from "./whatsapp-media.service";
 import { Message } from "../../messaging/message.entity";
+import { InjectRedis } from "@nestjs-modules/ioredis";
+import type Redis from "ioredis";
 
 export interface WhatsAppConversation {
   conversationId: string;
@@ -33,8 +35,8 @@ export interface WhatsAppRateLimit {
 @Injectable()
 export class WhatsAppAdvancedService {
   private readonly logger = new Logger(WhatsAppAdvancedService.name);
-  private readonly conversationCache = new Map<string, WhatsAppConversation>();
-  private readonly rateLimitMap = new Map<string, WhatsAppRateLimit>();
+  private readonly CONVERSATION_TTL = 60 * 60 * 24 * 30;
+  private readonly RATE_LIMIT_TTL = 60 * 60 * 24;
 
   constructor(
     @InjectRepository(Message)
@@ -42,11 +44,9 @@ export class WhatsAppAdvancedService {
     private readonly whatsappApi: WhatsAppBusinessAPIService,
     private readonly mediaService: WhatsAppMediaService,
     private readonly eventEmitter: EventEmitter2,
+    @InjectRedis() private readonly redis: Redis,
   ) {}
 
-  /**
-   * Send interactive message (buttons, lists)
-   */
   async sendInteractiveMessage(
     phoneNumber: string,
     interactiveType: "button" | "list",
@@ -63,8 +63,7 @@ export class WhatsAppAdvancedService {
     try {
       this.logger.log(`Sending interactive ${interactiveType} message to ${phoneNumber}`);
 
-      // Check rate limit
-      const rateLimitCheck = this.checkRateLimit(tenantId);
+      const rateLimitCheck = await this.checkRateLimit(tenantId);
       if (!rateLimitCheck.allowed) {
         throw new BadRequestException("Rate limit exceeded");
       }
@@ -106,7 +105,6 @@ export class WhatsAppAdvancedService {
         },
       };
 
-      // Send via API (simulated)
       this.logger.log(`Interactive message prepared for ${phoneNumber}`);
 
       this.eventEmitter.emit("whatsapp.interactive.sent", {
@@ -123,9 +121,6 @@ export class WhatsAppAdvancedService {
     }
   }
 
-  /**
-   * Send location message
-   */
   async sendLocationMessage(
     phoneNumber: string,
     latitude: number,
@@ -167,9 +162,6 @@ export class WhatsAppAdvancedService {
     }
   }
 
-  /**
-   * Get conversation history
-   */
   async getConversationHistory(phoneNumber: string, limit: number = 50): Promise<Message[]> {
     try {
       const messages = await this.messageRepository.find({
@@ -189,9 +181,6 @@ export class WhatsAppAdvancedService {
     }
   }
 
-  /**
-   * Mark message as read
-   */
   async markMessageAsRead(
     messageId: string,
     phoneNumberId: string,
@@ -199,9 +188,6 @@ export class WhatsAppAdvancedService {
   ): Promise<{ success: boolean }> {
     try {
       this.logger.log(`Marking message ${messageId} as read`);
-
-      // Call WhatsApp API to mark as read
-      // This would be implemented in the business API service
 
       this.eventEmitter.emit("whatsapp.message.read", {
         messageId,
@@ -215,13 +201,18 @@ export class WhatsAppAdvancedService {
     }
   }
 
-  /**
-   * Get conversation list
-   */
   async getConversationList(tenantId: string, limit: number = 20): Promise<WhatsAppConversation[]> {
     try {
-      const conversations = Array.from(this.conversationCache.values())
-        .filter((c) => c.status !== "closed")
+      const ids = await this.redis.smembers(this.tenantConversationsKey(tenantId));
+      if (ids.length === 0) {
+        return [];
+      }
+
+      const raws = await this.redis.mget(ids.map((id) => this.conversationKey(id)));
+      const conversations = raws
+        .filter((raw): raw is string => raw !== null)
+        .map((raw) => this.reviveConversation(raw))
+        .filter((conversation) => conversation.status !== "closed")
         .toSorted((a, b) => b.lastMessageTime.getTime() - a.lastMessageTime.getTime())
         .slice(0, limit);
 
@@ -232,15 +223,18 @@ export class WhatsAppAdvancedService {
     }
   }
 
-  /**
-   * Archive conversation
-   */
   async archiveConversation(conversationId: string): Promise<{ success: boolean }> {
     try {
-      const conversation = this.conversationCache.get(conversationId);
-      if (conversation) {
+      const raw = await this.redis.get(this.conversationKey(conversationId));
+      if (raw) {
+        const conversation = this.reviveConversation(raw);
         conversation.status = "archived";
-        this.conversationCache.set(conversationId, conversation);
+        await this.redis.set(
+          this.conversationKey(conversationId),
+          JSON.stringify(conversation),
+          "EX",
+          this.CONVERSATION_TTL,
+        );
       }
 
       this.logger.log(`Archived conversation ${conversationId}`);
@@ -251,45 +245,58 @@ export class WhatsAppAdvancedService {
     }
   }
 
-  /**
-   * Check rate limit
-   */
-  private checkRateLimit(tenantId: string): { allowed: boolean; remaining: number } {
-    const now = new Date();
-    let rateLimit = this.rateLimitMap.get(tenantId);
-
-    if (!rateLimit || rateLimit.resetTime < now) {
-      rateLimit = {
-        messagesPerSecond: 80,
-        messagesPerDay: 1000,
-        currentUsage: 0,
-        resetTime: new Date(now.getTime() + 24 * 60 * 60 * 1000),
-      };
+  private async checkRateLimit(tenantId: string): Promise<{ allowed: boolean; remaining: number }> {
+    const key = this.rateLimitKey(tenantId);
+    const count = await this.redis.incr(key);
+    if (count === 1) {
+      await this.redis.expire(key, this.RATE_LIMIT_TTL);
     }
 
-    const allowed = rateLimit.currentUsage < rateLimit.messagesPerDay;
-    if (allowed) {
-      rateLimit.currentUsage++;
-    }
-
-    this.rateLimitMap.set(tenantId, rateLimit);
+    const messagesPerDay = 1000;
+    const allowed = count <= messagesPerDay;
 
     return {
       allowed,
-      remaining: rateLimit.messagesPerDay - rateLimit.currentUsage,
+      remaining: Math.max(0, messagesPerDay - count),
     };
   }
 
-  /**
-   * Get rate limit status
-   */
-  getRateLimitStatus(tenantId: string): WhatsAppRateLimit | null {
-    return this.rateLimitMap.get(tenantId) || null;
+  async getRateLimitStatus(tenantId: string): Promise<WhatsAppRateLimit | null> {
+    const key = this.rateLimitKey(tenantId);
+    const raw = await this.redis.get(key);
+    if (!raw) {
+      return null;
+    }
+
+    const currentUsage = Number.parseInt(raw, 10);
+    const pttl = await this.redis.pttl(key);
+
+    return {
+      messagesPerSecond: 80,
+      messagesPerDay: 1000,
+      currentUsage,
+      resetTime: new Date(Date.now() + Math.max(0, pttl)),
+    };
   }
 
-  /**
-   * Handle message reaction
-   */
+  private conversationKey(conversationId: string): string {
+    return `wa:adv:conv:${conversationId}`;
+  }
+
+  private tenantConversationsKey(tenantId: string): string {
+    return `wa:adv:conv:tenant:${tenantId}`;
+  }
+
+  private rateLimitKey(tenantId: string): string {
+    return `wa:rl:${tenantId}`;
+  }
+
+  private reviveConversation(raw: string): WhatsAppConversation {
+    const conversation = JSON.parse(raw) as WhatsAppConversation;
+    conversation.lastMessageTime = new Date(conversation.lastMessageTime);
+    return conversation;
+  }
+
   async handleMessageReaction(payload: {
     messageId: string;
     reaction: string;
@@ -309,9 +316,6 @@ export class WhatsAppAdvancedService {
     }
   }
 
-  /**
-   * Handle message edit
-   */
   async handleMessageEdit(payload: {
     messageId: string;
     newText: string;
@@ -330,9 +334,6 @@ export class WhatsAppAdvancedService {
     }
   }
 
-  /**
-   * Handle message deletion
-   */
   async handleMessageDeletion(payload: {
     messageId: string;
     deletedTimestamp: number;
@@ -349,9 +350,6 @@ export class WhatsAppAdvancedService {
     }
   }
 
-  /**
-   * Get template performance metrics
-   */
   async getTemplateMetrics(templateName: string): Promise<{
     sent: number;
     delivered: number;
@@ -386,13 +384,12 @@ export class WhatsAppAdvancedService {
     }
   }
 
-  /**
-   * Update conversation metadata
-   */
-  updateConversationMetadata(conversationId: string, metadata: Record<string, any>): void {
-    const conversation = this.conversationCache.get(conversationId);
-    if (conversation) {
-      // Store metadata in conversation
+  async updateConversationMetadata(
+    conversationId: string,
+    metadata: Record<string, any>,
+  ): Promise<void> {
+    const raw = await this.redis.get(this.conversationKey(conversationId));
+    if (raw) {
       this.logger.log(`Updated metadata for conversation ${conversationId}`);
     }
   }

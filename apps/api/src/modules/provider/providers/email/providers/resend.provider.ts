@@ -82,11 +82,9 @@ export class ResendProvider extends BaseEmailProvider {
         })),
       };
 
-      // Handle template emails (Resend supports React Email templates)
       if (message.templateId) {
-        // Resend uses React Email for templates, but for now we'll handle as HTML
         Object.assign(payload, {
-          html: message.html, // Assume template is already rendered
+          html: message.html,
         });
       }
 
@@ -142,7 +140,6 @@ export class ResendProvider extends BaseEmailProvider {
   }
 
   async sendBulkEmails(messages: EmailMessage[]): Promise<EmailDeliveryResult[]> {
-    // Resend doesn't have a bulk API, so send individually
     const results: EmailDeliveryResult[] = [];
 
     for (const message of messages) {
@@ -189,7 +186,6 @@ export class ResendProvider extends BaseEmailProvider {
       errors.push("Invalid reply-to email format");
     }
 
-    // Test API key if provided
     if (resendConfig.apiKey && errors.length === 0) {
       try {
         const response = await fetch(`${this.baseUrl}/domains`, {
@@ -218,7 +214,6 @@ export class ResendProvider extends BaseEmailProvider {
   }
 
   async getStats(): Promise<EmailProviderStats> {
-    // In a real implementation, this would fetch from a database or cache
     return {
       totalSent: 0,
       totalFailed: 0,
@@ -229,54 +224,18 @@ export class ResendProvider extends BaseEmailProvider {
     };
   }
 
-  async healthCheck(): Promise<{ healthy: boolean; latency: number; error?: string }> {
-    const startTime = Date.now();
-
-    try {
-      if (!this.isInitialized) {
-        await this.initialize();
-      }
-
-      const resendConfig = this.config.config as ResendConfig;
-
-      const response = await fetch(`${this.baseUrl}/domains`, {
-        method: "GET",
-        headers: {
-          Authorization: `Bearer ${resendConfig.apiKey}`,
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error(`Health check failed: ${response.statusText}`);
-      }
-
-      return {
-        healthy: true,
-        latency: Date.now() - startTime,
-      };
-    } catch (error) {
-      return {
-        healthy: false,
-        latency: Date.now() - startTime,
-        error: error.message,
-      };
-    }
-  }
-
   async getCost(messageCount: number): Promise<number> {
     return this.calculateCost(messageCount);
   }
 
   async getTemplates(): Promise<Array<{ id: string; name: string; subject: string }>> {
-    // Resend doesn't have a template API in the same way, templates are handled via React Email
     this.logger.warn("Template listing not implemented for Resend provider");
     return [];
   }
 
   private async calculateCost(messageCount: number): Promise<number> {
-    // Resend pricing: Free tier up to 3,000 emails/month, then $0.0006 per email
     const freeTierLimit = 3000;
-    const rate = 0.0006; // $0.06 per 100 emails
+    const rate = 0.0006;
 
     let cost = 0;
 
@@ -284,7 +243,6 @@ export class ResendProvider extends BaseEmailProvider {
       cost = (messageCount - freeTierLimit) * rate;
     }
 
-    // Add infrastructure fee (30% markup)
     const infrastructureFee = cost * 0.3;
 
     return cost + infrastructureFee;

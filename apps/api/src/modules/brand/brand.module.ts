@@ -1,6 +1,6 @@
 import { Module } from "@nestjs/common";
 import { TypeOrmModule } from "@nestjs/typeorm";
-import { provideBaseRepository } from "../../database/repositories/provide-base-repository";
+import { provideBaseRepository } from "../../common/database/repositories/provide-base-repository";
 import { TenantMemberModule } from "../tenant-member/tenant-member.module";
 import { AuthModule } from "../auth/auth.module";
 import { BrandController } from "./brand.controller";

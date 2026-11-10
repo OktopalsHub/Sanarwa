@@ -14,25 +14,24 @@ export class TelnyxProvider implements ISMSProvider {
   private readonly apiKey: string;
   private readonly messagingProfileId: string;
 
-  // Telnyx pricing (competitive global rates, in USD)
   private readonly countryPricing: Record<string, number> = {
-    US: 0.004, // United States - very competitive
-    CA: 0.004, // Canada
-    GB: 0.035, // United Kingdom
-    DE: 0.065, // Germany
-    FR: 0.065, // France
-    AU: 0.045, // Australia
-    IN: 0.0035, // India - very competitive
-    BR: 0.015, // Brazil
-    MX: 0.015, // Mexico
-    JP: 0.065, // Japan
-    KR: 0.035, // South Korea
-    CN: 0.04, // China
-    NG: 0.02, // Nigeria
-    ZA: 0.03, // South Africa
-    KE: 0.025, // Kenya
-    GH: 0.02, // Ghana
-    "*": 0.035, // Default for other countries
+    US: 0.004,
+    CA: 0.004,
+    GB: 0.035,
+    DE: 0.065,
+    FR: 0.065,
+    AU: 0.045,
+    IN: 0.0035,
+    BR: 0.015,
+    MX: 0.015,
+    JP: 0.065,
+    KR: 0.035,
+    CN: 0.04,
+    NG: 0.02,
+    ZA: 0.03,
+    KE: 0.025,
+    GH: 0.02,
+    "*": 0.035,
   };
 
   constructor(private configService: ConfigService) {
@@ -106,7 +105,6 @@ export class TelnyxProvider implements ISMSProvider {
       const results: BulkSMSResponse["results"] = [];
       let totalCost = 0;
 
-      // Telnyx doesn't have native bulk SMS, so we send individual messages
       for (const recipient of payload.recipients) {
         try {
           const smsResult = await this.sendSMS({
@@ -169,7 +167,6 @@ export class TelnyxProvider implements ISMSProvider {
   }
 
   private extractCountryCode(phoneNumber: string): string {
-    // Simple extraction - in production, use libphonenumber-js
     if (phoneNumber.startsWith("+1")) return "US";
     if (phoneNumber.startsWith("+44")) return "GB";
     if (phoneNumber.startsWith("+49")) return "DE";

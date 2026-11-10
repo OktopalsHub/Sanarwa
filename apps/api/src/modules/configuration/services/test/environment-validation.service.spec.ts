@@ -32,7 +32,6 @@ describe("EnvironmentValidationService", () => {
 
   describe("validateEnvironment", () => {
     it("should return no errors for valid configuration", () => {
-      // Mock valid configuration
       configService.get.mockImplementation((key: string) => {
         const config = {
           DATABASE_URL: "postgres://user:pass@localhost:5432/db",
@@ -53,7 +52,6 @@ describe("EnvironmentValidationService", () => {
     });
 
     it("should return errors for missing required variables", () => {
-      // Mock missing required variables
       configService.get.mockImplementation((key: string) => {
         const config = {
           NODE_ENV: "development",
@@ -120,7 +118,6 @@ describe("EnvironmentValidationService", () => {
           SESSION_SECRET: "a-very-secure-session-secret-32-chars",
           REDIS_URL: "redis://localhost:6379",
           GOOGLE_CLIENT_ID: "google-client-id",
-          // Missing GOOGLE_CLIENT_SECRET
           NODE_ENV: "development",
         };
         return config[key];
@@ -142,7 +139,6 @@ describe("EnvironmentValidationService", () => {
           SESSION_SECRET: "a-very-secure-session-secret-32-chars",
           REDIS_URL: "redis://localhost:6379",
           VOICE_PROVIDER: "twilio",
-          // Missing Twilio configuration
           NODE_ENV: "development",
         };
         return config[key];
@@ -179,7 +175,6 @@ describe("EnvironmentValidationService", () => {
       configService.get.mockImplementation((key: string) => {
         const config = {
           NODE_ENV: "development",
-          // Missing required variables
         };
         return config[key];
       });

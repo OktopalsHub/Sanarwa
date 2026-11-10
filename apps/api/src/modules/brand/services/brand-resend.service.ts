@@ -1,5 +1,5 @@
 import { BadRequestException, Injectable, Inject, Logger } from "@nestjs/common";
-import { BaseRepository } from "../../../database/repositories/base.repository";
+import { BaseRepository } from "../../../common/database/repositories/base.repository";
 import { BRAND_REPO } from "../brand.tokens";
 import { Brand } from "../entities/brand.entity";
 import { getBrandOrThrow } from "./brand-lookup";
@@ -24,9 +24,6 @@ export class BrandResendService {
     private readonly cloudflareDNSService: CloudflareDNSService,
   ) {}
 
-  /**
-   * Get Resend domain verification instructions with Cloudflare DNS auto-setup
-   */
   async getResendDomainVerificationInstructions(
     tenantId: string,
     id: string,
@@ -67,20 +64,17 @@ export class BrandResendService {
       throw new BadRequestException("Resend API key is required");
     }
 
-    // Validate Resend configuration
     const resendStatus =
       await this.resendVerificationService.validateResendConfiguration(resendApiKey);
     if (!resendStatus.configured) {
       throw new BadRequestException(`Resend is not properly configured: ${resendStatus.error}`);
     }
 
-    // Check if domain is already being verified or verified
     let verificationResult = await this.resendVerificationService.checkDomainVerificationStatus(
       targetDomain,
       resendApiKey,
     );
 
-    // If domain is not in Resend, add it
     if (verificationResult.status === "not_started") {
       verificationResult = await this.resendVerificationService.addDomain(
         targetDomain,
@@ -93,7 +87,6 @@ export class BrandResendService {
         );
       }
 
-      // Save Resend domain info to brand
       const updateData: Partial<Brand> = {
         domain: targetDomain,
         whiteLabelConfig: {
@@ -110,7 +103,6 @@ export class BrandResendService {
       await this.brandRepository.update(id, updateData);
     }
 
-    // Generate DNS instructions
     const instructions = this.resendVerificationService.generateDomainVerificationInstructions(
       targetDomain,
       verificationResult.dnsRecords!,
@@ -118,10 +110,8 @@ export class BrandResendService {
 
     let cloudflareSetup: any = undefined;
 
-    // If Cloudflare API token provided, attempt auto-setup
     if (cloudflareApiToken) {
       try {
-        // Validate Cloudflare token
         const cfValidation = await this.cloudflareDNSService.validateAPIToken(cloudflareApiToken);
         if (!cfValidation.valid) {
           cloudflareSetup = {
@@ -131,7 +121,6 @@ export class BrandResendService {
             errors: [`Invalid Cloudflare API token: ${cfValidation.error}`],
           };
         } else {
-          // Get zone ID
           const zoneId = await this.cloudflareDNSService.getZoneId(
             targetDomain,
             cloudflareApiToken,
@@ -144,12 +133,10 @@ export class BrandResendService {
               errors: [`Could not find Cloudflare zone for domain: ${targetDomain}`],
             };
           } else {
-            // Convert Resend records to Cloudflare format
             const cfRecords = this.cloudflareDNSService.convertResendRecordsToCloudflare(
               verificationResult.dnsRecords!,
             );
 
-            // Add DNS records
             const addResult = await this.cloudflareDNSService.addDNSRecords(
               zoneId,
               cfRecords,
@@ -183,9 +170,6 @@ export class BrandResendService {
     };
   }
 
-  /**
-   * Verify domain with Resend
-   */
   async verifyResendDomain(
     tenantId: string,
     id: string,
@@ -194,17 +178,14 @@ export class BrandResendService {
   ): Promise<Brand> {
     const brand = await getBrandOrThrow(this.brandRepository, tenantId, id);
 
-    // Validate prerequisites for domain verification
     validateDomainVerificationPrerequisites(brand, domain);
 
-    // Check Resend verification status
     const verificationResult = await this.resendVerificationService.checkDomainVerificationStatus(
       domain,
       resendApiKey,
     );
 
     if (!verificationResult.verified) {
-      // Update brand with current status
       const updateData: Partial<Brand> = {
         domain,
         whiteLabelConfig: {
@@ -230,7 +211,6 @@ export class BrandResendService {
       );
     }
 
-    // Domain verified successfully with Resend
     const updateData: Partial<Brand> = {
       domain,
       whiteLabelConfig: {
@@ -250,9 +230,6 @@ export class BrandResendService {
     return updated || brand;
   }
 
-  /**
-   * Check if domain can send emails through Resend
-   */
   async checkResendEmailCapability(
     tenantId: string,
     id: string,
@@ -273,7 +250,6 @@ export class BrandResendService {
       };
     }
 
-    // Check Resend email capability
     const emailCapability = await this.resendVerificationService.canSendEmails(
       brand.domain,
       resendApiKey,
@@ -300,9 +276,6 @@ export class BrandResendService {
     };
   }
 
-  /**
-   * Get Resend email setup recommendations for a brand
-   */
   async getResendEmailRecommendations(
     tenantId: string,
     brandId: string,
@@ -314,7 +287,6 @@ export class BrandResendService {
 
       let score = 0;
 
-      // Check basic configuration (30 points)
       if (brand.defaultFromEmail && brand.defaultFromName) {
         score += 30;
       } else {
@@ -326,7 +298,6 @@ export class BrandResendService {
         });
       }
 
-      // Check domain configuration (20 points)
       if (brand.domain) {
         score += 20;
       } else {
@@ -338,7 +309,6 @@ export class BrandResendService {
         });
       }
 
-      // Check Resend API key (10 points)
       if (resendApiKey) {
         score += 10;
       } else {
@@ -350,7 +320,6 @@ export class BrandResendService {
         });
       }
 
-      // Check Resend verification (30 points)
       if (resendApiKey && brand.domain) {
         try {
           const verificationResult =

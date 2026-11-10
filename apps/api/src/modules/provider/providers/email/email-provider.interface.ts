@@ -28,7 +28,7 @@ export interface EmailAttachment {
   content: Buffer | string;
   contentType?: string;
   encoding?: string;
-  cid?: string; // For inline attachments
+  cid?: string;
 }
 
 export interface EmailDeliveryResult {
@@ -82,10 +82,8 @@ export abstract class BaseEmailProvider {
     config: Record<string, any>,
   ): Promise<{ isValid: boolean; errors: string[] }>;
   abstract getStats(): Promise<EmailProviderStats>;
-  abstract healthCheck(): Promise<{ healthy: boolean; latency: number; error?: string }>;
   abstract getCost(messageCount: number): Promise<number>;
 
-  // Optional methods that providers can override
   async sendBulkEmails?(messages: EmailMessage[]): Promise<EmailDeliveryResult[]> {
     return Promise.all(messages.map((msg) => this.sendEmail(msg)));
   }

@@ -1,5 +1,5 @@
 import { Column, Entity, Index, ManyToOne, JoinColumn } from "typeorm";
-import { BaseEntity } from "../../../database/entities/base.entity";
+import { BaseEntity } from "../../../common/database/entities/base.entity";
 import { Tenant } from "../../tenant/entities/tenant.entity";
 
 export type WebhookEvent =
@@ -43,7 +43,6 @@ export class Webhook extends BaseEntity {
   @Column({ type: "boolean", default: true })
   active: boolean;
 
-  // Relationships
   @ManyToOne(() => Tenant, (tenant) => tenant.webhooks, {
     onDelete: "CASCADE",
   })

@@ -1,6 +1,6 @@
 import { Injectable } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
-import { BaseRepository } from "src/database/repositories";
+import { BaseRepository } from "../../common/database/repositories";
 import { Repository } from "typeorm";
 import { Invite } from "./entities/invite.entity";
 
@@ -16,21 +16,21 @@ export class InviteRepository extends BaseRepository<Invite> {
   async findByToken(token: string): Promise<Invite | null> {
     return this.findOne({
       where: { token },
-      relations: ["tenant", "invitedBy"],
+      relations: { tenant: true, invitedBy: true },
     });
   }
 
   async findByEmailAndTenant(email: string, tenantId: string): Promise<Invite | null> {
     return this.findOne({
       where: { email, tenant: { id: tenantId } },
-      relations: ["tenant", "invitedBy"],
+      relations: { tenant: true, invitedBy: true },
     });
   }
 
   async findPendingInvitesByTenant(tenantId: string): Promise<Invite[]> {
     return this.find({
       where: { tenantId, status: "pending" },
-      relations: ["invitedBy"],
+      relations: { invitedBy: true },
     });
   }
 }

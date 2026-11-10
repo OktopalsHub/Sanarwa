@@ -56,7 +56,6 @@ describe("Subscription Module Integration Tests", () => {
       console.log("📋 Subscription plans response:", response.status, response.data);
 
       if (response.status === 404) {
-        // Try alternative endpoint from billing
         const altResponse = await api.get("/billing/plans", {
           headers: { Authorization: `Bearer ${authToken}` },
         });
@@ -85,7 +84,6 @@ describe("Subscription Module Integration Tests", () => {
       console.log("💳 Create subscription response:", response.status, response.data);
 
       if (response.status === 404) {
-        // Try alternative endpoint from billing
         const altResponse = await api.post("/billing/subscriptions", subscriptionData, {
           headers: { Authorization: `Bearer ${authToken}` },
         });
@@ -108,7 +106,6 @@ describe("Subscription Module Integration Tests", () => {
       console.log("📊 Current subscription response:", response.status, response.data);
 
       if (response.status === 404) {
-        // Try alternative endpoint from billing
         const altResponse = await api.get("/billing/subscriptions", {
           headers: { Authorization: `Bearer ${authToken}` },
         });

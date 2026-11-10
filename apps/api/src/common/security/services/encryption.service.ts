@@ -20,9 +20,9 @@ export interface EncryptionOptions {
 export class EncryptionService {
   private readonly logger = new Logger(EncryptionService.name);
   private readonly algorithm = "aes-256-gcm";
-  private readonly keyLength = 32; // 256 bits
-  private readonly ivLength = 16; // 128 bits
-  private readonly tagLength = 16; // 128 bits
+  private readonly keyLength = 32;
+  private readonly ivLength = 16;
+  private readonly tagLength = 16;
   private readonly encryptionKeys: Map<string, Buffer> = new Map();
   private readonly currentKeyVersion: string;
 
@@ -31,21 +31,16 @@ export class EncryptionService {
     this.initializeEncryptionKeys();
   }
 
-  /**
-   * Initialize encryption keys from configuration
-   */
   private initializeEncryptionKeys(): void {
     const primaryKey = this.configService.get<string>("PROVIDER_ENCRYPTION_KEY");
     if (!primaryKey) {
       throw new Error("PROVIDER_ENCRYPTION_KEY environment variable is required");
     }
 
-    // Generate random salt for key derivation
     const salt = crypto.randomBytes(32);
     const derivedKey = crypto.scryptSync(primaryKey, salt, this.keyLength);
     this.encryptionKeys.set(this.currentKeyVersion, derivedKey);
 
-    // Load additional key versions for key rotation support
     const keyVersions = this.configService.get<string>("ENCRYPTION_KEY_VERSIONS", "");
     if (keyVersions) {
       const versions = keyVersions.split(",");
@@ -63,9 +58,6 @@ export class EncryptionService {
     this.logger.log(`Initialized encryption with ${this.encryptionKeys.size} key versions`);
   }
 
-  /**
-   * Encrypt sensitive data
-   */
   async encrypt(
     data: string | Record<string, any>,
     options: EncryptionOptions = {},
@@ -84,7 +76,6 @@ export class EncryptionService {
 
       const cipher = crypto.createCipheriv(algorithm, encryptionKey, iv) as crypto.CipherGCM;
 
-      // Add additional authenticated data if provided
       if (options.additionalData) {
         cipher.setAAD(Buffer.from(options.additionalData, "utf8"));
       }
@@ -110,9 +101,6 @@ export class EncryptionService {
     }
   }
 
-  /**
-   * Decrypt sensitive data
-   */
   async decrypt(encryptedResult: EncryptionResult, additionalData?: string): Promise<string> {
     try {
       const encryptionKey = this.encryptionKeys.get(encryptedResult.keyVersion);
@@ -132,7 +120,6 @@ export class EncryptionService {
 
       decipher.setAuthTag(tag);
 
-      // Add additional authenticated data if provided
       if (additionalData) {
         decipher.setAAD(Buffer.from(additionalData, "utf8"));
       }
@@ -150,9 +137,6 @@ export class EncryptionService {
     }
   }
 
-  /**
-   * Encrypt provider configuration data
-   */
   async encryptProviderConfig(config: Record<string, any>): Promise<Record<string, any>> {
     if (!config || typeof config !== "object") {
       return config;
@@ -178,9 +162,6 @@ export class EncryptionService {
     return encryptedConfig;
   }
 
-  /**
-   * Decrypt provider configuration data
-   */
   async decryptProviderConfig(config: Record<string, any>): Promise<Record<string, any>> {
     if (!config || typeof config !== "object") {
       return config;
@@ -204,9 +185,6 @@ export class EncryptionService {
     return decryptedConfig;
   }
 
-  /**
-   * Hash sensitive data (one-way)
-   */
   async hash(data: string, salt?: string): Promise<{ hash: string; salt: string }> {
     const actualSalt = salt || crypto.randomBytes(16).toString("hex");
     const hash = crypto.scryptSync(data, actualSalt, 64).toString("hex");
@@ -214,9 +192,6 @@ export class EncryptionService {
     return { hash, salt: actualSalt };
   }
 
-  /**
-   * Verify hashed data
-   */
   async verifyHash(data: string, hash: string, salt: string): Promise<boolean> {
     try {
       const computedHash = crypto.scryptSync(data, salt, 64).toString("hex");
@@ -227,16 +202,10 @@ export class EncryptionService {
     }
   }
 
-  /**
-   * Generate secure random token
-   */
   generateSecureToken(length: number = 32): string {
     return crypto.randomBytes(length).toString("hex");
   }
 
-  /**
-   * Generate API key
-   */
   generateApiKey(): { key: string; hash: string; prefix: string } {
     const key = `nk_${crypto.randomBytes(32).toString("hex")}`;
     const hash = crypto.createHash("sha256").update(key).digest("hex");
@@ -245,9 +214,6 @@ export class EncryptionService {
     return { key, hash, prefix };
   }
 
-  /**
-   * Rotate encryption keys
-   */
   async rotateKeys(newKeyVersion: string, newKey: string): Promise<void> {
     try {
       const salt = crypto.randomBytes(32);
@@ -261,27 +227,19 @@ export class EncryptionService {
     }
   }
 
-  /**
-   * Re-encrypt data with new key version
-   */
   async reencryptWithNewKey(
     encryptedResult: EncryptionResult,
     newKeyVersion: string,
     additionalData?: string,
   ): Promise<EncryptionResult> {
-    // First decrypt with old key
     const decryptedData = await this.decrypt(encryptedResult, additionalData);
 
-    // Then encrypt with new key
     return this.encrypt(decryptedData, {
       keyVersion: newKeyVersion,
       additionalData,
     });
   }
 
-  /**
-   * Get encryption metadata
-   */
   getEncryptionInfo(): {
     algorithm: string;
     keyLength: number;
@@ -300,9 +258,6 @@ export class EncryptionService {
     };
   }
 
-  /**
-   * Validate encryption key format
-   */
   static validateEncryptionKey(key: string): boolean {
     if (!key || typeof key !== "string") {
       return false;
@@ -310,16 +265,9 @@ export class EncryptionService {
     return key.length >= 32;
   }
 
-  /**
-   * Generate new encryption key
-   */
   static generateEncryptionKey(): string {
     return crypto.randomBytes(32).toString("hex");
   }
-
-  /**
-   * Private helper methods
-   */
 
   private shouldEncryptField(fieldName: string, value: any): boolean {
     if (typeof value !== "string" && typeof value !== "object") {

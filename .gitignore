@@ -24,6 +24,7 @@ coverage/
 # Dotfiles / agent / editor (allow only .github and .env.example)
 .*
 !.gitignore
+!.dockerignore
 !.env.example
 !**/.env.example
 !.github/

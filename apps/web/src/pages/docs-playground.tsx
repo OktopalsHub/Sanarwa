@@ -5,9 +5,9 @@ import { Send } from "@/lib/icons";
 import { AdvancedApiPlayground } from "@/components/docs/advanced-api-playground";
 import { ApiPlayground } from "@/components/docs/api-playground";
 import { FeedbackSystem } from "@/components/docs/feedback-system";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Badge } from "@sanarwa/ui/badge";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@sanarwa/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@sanarwa/ui/tabs";
 import { apiEndpoints } from "@/lib/data/sdk-examples";
 import {
   GlobeAltIcon,
@@ -18,12 +18,10 @@ import {
 
 export default function PlaygroundPage() {
   const handleApiExecute = async (request: any) => {
-    // Simulate API execution with realistic delay
     const startTime = Date.now();
     await new Promise((resolve) => setTimeout(resolve, 1000 + Math.random() * 1000));
     const duration = Date.now() - startTime;
 
-    // Simulate different responses based on the endpoint
     if (request.url.includes("/email")) {
       const responseData = {
         id: "msg_" + Math.random().toString(36).substr(2, 9),
@@ -71,19 +69,17 @@ export default function PlaygroundPage() {
 
   return (
     <div className="space-y-8">
-      {/* Header */}
       <div className="space-y-4">
         <div className="flex items-center gap-2">
           <CommandLineIcon className="h-6 w-6 text-primary" />
           <h1 className="text-4xl font-bold tracking-tight">API Playground</h1>
         </div>
         <p className="text-xl text-muted-foreground max-w-3xl">
-          Test Notifi's APIs directly from your browser. Experiment with different parameters, see
+          Test Sanarwa's APIs directly from your browser. Experiment with different parameters, see
           real responses, and generate code examples for your applications.
         </p>
       </div>
 
-      {/* Features Overview */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card>
           <CardContent className="pt-6">
@@ -126,13 +122,12 @@ export default function PlaygroundPage() {
               <h3 className="font-medium">All Endpoints</h3>
             </div>
             <p className="text-sm text-muted-foreground">
-              Access all Notifi API endpoints in one place
+              Access all Sanarwa API endpoints in one place
             </p>
           </CardContent>
         </Card>
       </div>
 
-      {/* Advanced API Playground */}
       <Card>
         <CardHeader>
           <CardTitle>Advanced API Playground</CardTitle>
@@ -145,7 +140,7 @@ export default function PlaygroundPage() {
           <AdvancedApiPlayground
             initialRequest={{
               method: "POST",
-              url: "https://api.notifi.com/v1/notifications/email",
+              url: "https://api.sanarwa.com/v1/notifications/email",
               headers: {
                 "Content-Type": "application/json",
                 Authorization: "Bearer YOUR_API_KEY",
@@ -168,12 +163,11 @@ export default function PlaygroundPage() {
         </CardContent>
       </Card>
 
-      {/* API Endpoints */}
       <div className="space-y-6">
         <div>
           <h2 className="text-2xl font-semibold mb-2">API Endpoints Reference</h2>
           <p className="text-muted-foreground">
-            Explore and test all available Notifi API endpoints. Each endpoint includes parameter
+            Explore and test all available Sanarwa API endpoints. Each endpoint includes parameter
             documentation, request/response examples, and live testing capabilities.
           </p>
         </div>
@@ -326,18 +320,17 @@ export default function PlaygroundPage() {
         </Tabs>
       </div>
 
-      {/* Getting Started */}
       <Card>
         <CardHeader>
           <CardTitle>Getting Started with the API Playground</CardTitle>
-          <CardDescription>Follow these steps to start testing Notifi's APIs</CardDescription>
+          <CardDescription>Follow these steps to start testing Sanarwa's APIs</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="grid gap-4 md:grid-cols-2">
             <div className="space-y-3">
               <h4 className="font-medium">1. Authentication</h4>
               <p className="text-sm text-muted-foreground">
-                Add your API key in the Headers tab. You can find your API key in the Notifi
+                Add your API key in the Headers tab. You can find your API key in the Sanarwa
                 dashboard under Settings → API Keys.
               </p>
             </div>
@@ -366,7 +359,6 @@ export default function PlaygroundPage() {
         </CardContent>
       </Card>
 
-      {/* Feedback */}
       <FeedbackSystem page="playground" category="api-testing" />
     </div>
   );

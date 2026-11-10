@@ -1,17 +1,17 @@
 import { Injectable, CanActivate, ExecutionContext, UnauthorizedException } from "@nestjs/common";
 import { Reflector } from "@nestjs/core";
-import { JwtService } from "@nestjs/jwt";
 import { PUBLIC_KEY } from "../decorators/public.decorator";
+import { auth } from "../better-auth";
 
 @Injectable()
 export class AuthGuard implements CanActivate {
-  constructor(
-    private jwtService: JwtService,
-    private reflector: Reflector,
-  ) {}
+  constructor(private reflector: Reflector) {}
 
-  canActivate(context: ExecutionContext): boolean {
-    // Check if the route is marked as public
+  async canActivate(context: ExecutionContext): Promise<boolean> {
+    if (context.getType() !== "http") {
+      return true;
+    }
+
     const isPublic = this.reflector.getAllAndOverride<boolean>(PUBLIC_KEY, [
       context.getHandler(),
       context.getClass(),
@@ -22,46 +22,36 @@ export class AuthGuard implements CanActivate {
     }
 
     const request = context.switchToHttp().getRequest();
-    const authHeader = request.headers.authorization;
 
-    if (!authHeader) {
-      throw new UnauthorizedException("Missing authorization header");
-    }
-
-    const [scheme, token] = authHeader.split(" ");
-
-    if (scheme !== "Bearer") {
-      throw new UnauthorizedException("Invalid authorization scheme");
-    }
-
-    if (!token) {
-      throw new UnauthorizedException("Missing token");
-    }
-
+    let session: Awaited<ReturnType<typeof auth.api.getSession>> = null;
     try {
-      // Use JwtService which already has the secret configured
-      const payload = this.jwtService.verify(token);
-
-      // Set auth context on request
-      request.auth = {
-        principalId: payload.sub, // User ID
-        tokenType: "jwt",
-        issuedAt: new Date(payload.iat * 1000),
-        expiresAt: new Date(payload.exp * 1000),
-      };
-
-      // Also attach user for backward compatibility
-      request.user = {
-        id: payload.sub,
-        sub: payload.sub,
-        email: payload.email,
-        provider: payload.provider || "password",
-      };
-
-      return true;
-    } catch (error) {
-      console.error("JWT verification error:", error.message);
-      throw new UnauthorizedException("Invalid or expired token");
+      session = await auth.api.getSession({ headers: request.headers });
+    } catch {
+      session = null;
     }
+
+    if (!session?.user) {
+      throw new UnauthorizedException("Not authenticated");
+    }
+
+    const user = session.user as { id: string; email?: string | null };
+    request.auth = {
+      principalId: user.id,
+      tokenType: "session",
+      issuedAt: new Date(
+        (session.session as { createdAt?: Date } | undefined)?.createdAt ?? Date.now(),
+      ),
+      expiresAt: (session.session as { expiresAt?: Date } | undefined)?.expiresAt ?? null,
+      activeOrganizationId:
+        (session.session as { activeOrganizationId?: string } | undefined)?.activeOrganizationId ??
+        null,
+    };
+    request.user = {
+      id: user.id,
+      sub: user.id,
+      email: user.email,
+      provider: "session",
+    };
+    return true;
   }
 }

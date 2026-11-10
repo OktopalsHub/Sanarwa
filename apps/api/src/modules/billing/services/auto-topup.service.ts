@@ -15,7 +15,6 @@ import {
 import { TenantPaymentMethod } from "../entities/tenant-payment-method.entity";
 import { Tenant } from "../../tenant/entities/tenant.entity";
 import { PaymentProvider } from "../enums/payment-provider.enum";
-import { PolarService } from "./polar.service";
 import { PaymentMethodService } from "./payment-method.service";
 import { TokenManagementService } from "../../token-management/services/token-management.service";
 import { resolvePackage, BillingCurrency } from "../constants/token-packages";
@@ -35,7 +34,6 @@ export class AutoTopupService {
     private paymentMethodRepository: Repository<TenantPaymentMethod>,
     @InjectRepository(Tenant)
     private tenantRepository: Repository<Tenant>,
-    private polarService: PolarService,
     private paymentMethodService: PaymentMethodService,
     private tokenManagementService: TokenManagementService,
     private dataSource: DataSource,
@@ -45,7 +43,7 @@ export class AutoTopupService {
   async getAutoTopupConfig(tenantId: string) {
     const config = await this.autoTopupConfigRepository.findOne({
       where: { tenantId },
-      relations: ["paymentMethod"],
+      relations: { paymentMethod: true },
     });
 
     if (!config) {
@@ -97,7 +95,7 @@ export class AutoTopupService {
 
         if (paymentMethod.provider === PaymentProvider.BACHS) {
           throw new BadRequestException(
-            "Bachs cards cannot be used for auto top-up. Use Nomba (NGN) or Polar (USD).",
+            "Bachs does not support off-session charges, so a saved Bachs card cannot fund auto-top-up.",
           );
         }
 
@@ -144,7 +142,6 @@ export class AutoTopupService {
     try {
       this.logger.log("Processing auto topups...");
 
-      // Get all enabled auto topup configs
       const configs = await this.autoTopupConfigRepository.find({
         where: { enabled: true },
       });
@@ -159,7 +156,6 @@ export class AutoTopupService {
     }
   }
 
-  /** Called by webhook handlers when a provider reports a completed setup intent. */
   async completePaymentMethodSetup(input: {
     tenantId: string;
     provider: PaymentProvider;
@@ -171,14 +167,6 @@ export class AutoTopupService {
     cardBrand?: string;
     cardLast4?: string;
   }): Promise<void> {
-    if (!input.externalCustomerId) {
-      if (input.providerReference) {
-        const details = await this.polarService.getCheckoutDetails(input.providerReference);
-        input.externalCustomerId = details.customerId;
-        input.externalPaymentMethodId = details.paymentMethodId ?? input.externalPaymentMethodId;
-      }
-    }
-
     if (!input.externalCustomerId) {
       this.logger.warn(`Payment method setup missing customer for tenant ${input.tenantId}`);
       return;
@@ -205,8 +193,6 @@ export class AutoTopupService {
   }
 
   private async processAutoTopupForTenant(config: AutoTopupConfig): Promise<void> {
-    // Claim under a row lock so multi-instance crons cannot double-charge.
-    // Create the PENDING purchase inside the transaction, then charge outside.
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
@@ -357,7 +343,7 @@ export class AutoTopupService {
     try {
       const tenant = await this.tenantRepository.findOne({
         where: { id: lockedConfig.tenantId },
-        relations: ["owner"],
+        relations: { owner: true },
       });
 
       const charge = await this.paymentMethodService.chargeOffSession({
@@ -379,7 +365,6 @@ export class AutoTopupService {
       }
 
       if (charge.status !== "success") {
-        // Leave PENDING so the 30-minute guard blocks a second charge; webhook/sync can confirm.
         return;
       }
 
@@ -411,7 +396,7 @@ export class AutoTopupService {
         break;
 
       case ScheduleFrequency.WEEKLY:
-        const targetDay = config.scheduleDayOfWeek || 1; // Default to Monday
+        const targetDay = config.scheduleDayOfWeek || 1;
         const currentDay = nextRun.getDay();
         let daysUntilTarget = targetDay - currentDay;
 

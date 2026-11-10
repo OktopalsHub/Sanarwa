@@ -10,9 +10,7 @@ describe("BrandService", () => {
       providers: [
         {
           provide: BrandService,
-          useValue: {
-            // Mock implementation
-          },
+          useValue: {},
         },
       ],
     }).compile();

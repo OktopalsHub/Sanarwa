@@ -31,13 +31,12 @@ export class ProjectApiController {
     @CurrentUser() user: any,
     @Body() createDto: CreateProviderConfigDto,
   ) {
-    // Add project ID to the DTO
     const configDto = {
       ...createDto,
       projectId,
     };
 
-    return this.providerService.createConfig(user.tenantId, configDto);
+    return this.providerService.createConfig(configDto);
   }
 
   @Get(":id/providers")
@@ -56,7 +55,6 @@ export class ProjectApiController {
     try {
       return await this.providerService.findConfigsByProject(user.tenantId, projectId, query);
     } catch (error) {
-      // Return empty list if there's a database error (table might not exist yet)
       console.log("Provider query error:", error.message);
       return {
         configs: [],
@@ -99,23 +97,20 @@ export class ProjectApiController {
     @Query("startDate") startDate?: string,
     @Query("endDate") endDate?: string,
   ) {
-    const start = startDate ? new Date(startDate) : new Date(Date.now() - 30 * 24 * 60 * 60 * 1000); // Default to 30 days ago
-    const end = endDate ? new Date(endDate) : new Date(); // Default to now
+    const start = startDate ? new Date(startDate) : new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+    const end = endDate ? new Date(endDate) : new Date();
 
-    // Get token usage stats for the project
     let tokenStats;
     try {
       tokenStats = await this.tokenManagementService.getTokenUsageStats(user.tenantId, start, end);
     } catch (error) {
       console.log("Token stats error:", error.message);
-      // Return mock data if token management isn't fully set up
       tokenStats = {
         totalTokensUsed: 0,
         remainingTokens: 10000,
       };
     }
 
-    // Check if project has BYOP providers configured
     let hasByopProviders = false;
     try {
       const providers = await this.providerService.findConfigsByProject(user.tenantId, projectId, {
@@ -123,11 +118,9 @@ export class ProjectApiController {
       });
       hasByopProviders = providers.configs.length > 0;
     } catch (error) {
-      // If provider check fails, assume no BYOP
       hasByopProviders = false;
     }
 
-    // Get project-specific usage data
     const usage = {
       projectId,
       billingModel: hasByopProviders ? "event-based" : "quota-based",
@@ -137,15 +130,14 @@ export class ProjectApiController {
       },
       usage: hasByopProviders
         ? {
-            // BYOP: Event-based billing (like Novu.co)
             totalEvents: tokenStats.totalTokensUsed || 0,
             emailEvents: Math.floor((tokenStats.totalTokensUsed || 0) * 0.6),
             inAppEvents: Math.floor((tokenStats.totalTokensUsed || 0) * 0.3),
             smsEvents: Math.floor((tokenStats.totalTokensUsed || 0) * 0.1),
             eventCost: {
-              email: 0.001, // $0.001 per email event
-              inApp: 0.0005, // $0.0005 per in-app event
-              sms: 0.01, // $0.01 per SMS event
+              email: 0.001,
+              inApp: 0.0005,
+              sms: 0.01,
             },
             totalCost: (
               Math.floor((tokenStats.totalTokensUsed || 0) * 0.6) * 0.001 +
@@ -154,7 +146,6 @@ export class ProjectApiController {
             ).toFixed(4),
           }
         : {
-            // Non-BYOP: Quota-based billing
             totalNotifications: tokenStats.totalTokensUsed || 0,
             emailNotifications: Math.floor((tokenStats.totalTokensUsed || 0) * 0.6),
             inAppNotifications: Math.floor((tokenStats.totalTokensUsed || 0) * 0.3),
@@ -164,12 +155,10 @@ export class ProjectApiController {
           },
       quotas: hasByopProviders
         ? {
-            // BYOP: No quotas, unlimited events (user pays per event)
             model: "unlimited",
             note: "Using BYOP providers - pay per event sent",
           }
         : {
-            // Non-BYOP: Traditional quota limits
             email: {
               used: Math.floor((tokenStats.totalTokensUsed || 0) * 0.6),
               limit: 10000,
@@ -202,20 +191,17 @@ export class ProjectApiController {
   @ApiResponse({ status: 403, description: "Forbidden" })
   @ApiResponse({ status: 404, description: "Project not found" })
   async getQuotas(@Param("id") projectId: string, @CurrentUser() user: any) {
-    // Get current token balance
     let balance;
     try {
       balance = await this.tokenManagementService.getBalance(user.tenantId);
     } catch (error) {
       console.log("Balance error:", error.message);
-      // Return mock balance if token management isn't fully set up
       balance = {
         balance: 10000,
         reserved: 0,
       };
     }
 
-    // Check if project has BYOP providers configured
     let hasByopProviders = false;
     try {
       const providers = await this.providerService.findConfigsByProject(user.tenantId, projectId, {
@@ -231,7 +217,6 @@ export class ProjectApiController {
       billingModel: hasByopProviders ? "event-based" : "quota-based",
       quotas: hasByopProviders
         ? {
-            // BYOP: Event-based billing - no quotas, unlimited events
             model: "unlimited",
             eventPricing: {
               email: { price: 0.001, currency: "USD", unit: "per event" },
@@ -242,7 +227,6 @@ export class ProjectApiController {
             providers: "Custom providers configured",
           }
         : {
-            // Non-BYOP: Traditional quota system
             email: {
               limit: 10000,
               used: 0,
@@ -289,7 +273,6 @@ export class ProjectApiController {
       const date = new Date(startDate);
       date.setDate(date.getDate() + i);
 
-      // Add some randomness to make it look realistic
       const variance = Math.floor(Math.random() * dailyAverage * 0.4) - dailyAverage * 0.2;
       const dayUsage = Math.max(0, dailyAverage + variance);
 

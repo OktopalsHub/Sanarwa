@@ -11,7 +11,7 @@ import {
 interface MailgunConfig {
   apiKey: string;
   domain: string;
-  region?: "us" | "eu"; // US or EU region
+  region?: "us" | "eu";
   fromEmail?: string;
   fromName?: string;
   testMode?: boolean;
@@ -87,14 +87,12 @@ export class MailgunProvider extends BaseEmailProvider {
         messageData["h:Reply-To"] = message.replyTo;
       }
 
-      // Add custom headers
       if (message.headers) {
         Object.entries(message.headers).forEach(([key, value]) => {
           messageData[`h:${key}`] = value;
         });
       }
 
-      // Handle attachments
       if (message.attachments && message.attachments.length > 0) {
         messageData.attachment = message.attachments.map((att) => ({
           filename: att.filename,
@@ -102,12 +100,10 @@ export class MailgunProvider extends BaseEmailProvider {
         }));
       }
 
-      // Test mode
       if (mailgunConfig.testMode) {
         messageData["o:testmode"] = "yes";
       }
 
-      // Template support
       if (message.templateId) {
         messageData.template = message.templateId;
         if (message.templateData) {
@@ -122,7 +118,7 @@ export class MailgunProvider extends BaseEmailProvider {
 
       return {
         messageId: response.id || `mg_${Date.now()}`,
-        status: "queued", // Mailgun queues messages
+        status: "queued",
         providerId: this.providerId,
         timestamp: new Date(),
         cost: await this.calculateCost(Array.isArray(message.to) ? message.to.length : 1),
@@ -184,7 +180,6 @@ export class MailgunProvider extends BaseEmailProvider {
       errors.push("Invalid from email format");
     }
 
-    // Test API key and domain if provided
     if (mailgunConfig.apiKey && mailgunConfig.domain && errors.length === 0) {
       try {
         const Mailgun = await import("mailgun.js");
@@ -200,7 +195,6 @@ export class MailgunProvider extends BaseEmailProvider {
           url: baseUrl,
         });
 
-        // Test by getting domain info
         await mg.domains.get(mailgunConfig.domain);
       } catch (error) {
         if (error.status === 401) {
@@ -243,10 +237,10 @@ export class MailgunProvider extends BaseEmailProvider {
       return {
         totalSent,
         totalFailed,
-        averageLatency: 0, // Mailgun doesn't provide latency stats
+        averageLatency: 0,
         deliveryRate: totalSent > 0 ? ((totalSent - totalFailed) / totalSent) * 100 : 0,
         lastUsed: new Date(),
-        costToDate: 0, // Would need to calculate based on usage
+        costToDate: 0,
       };
     } catch (error) {
       this.logger.error("Failed to fetch Mailgun stats", error);
@@ -257,32 +251,6 @@ export class MailgunProvider extends BaseEmailProvider {
         deliveryRate: 0,
         lastUsed: new Date(),
         costToDate: 0,
-      };
-    }
-  }
-
-  async healthCheck(): Promise<{ healthy: boolean; latency: number; error?: string }> {
-    const startTime = Date.now();
-
-    try {
-      if (!this.isInitialized) {
-        await this.initialize();
-      }
-
-      const mailgunConfig = this.config.config as MailgunConfig;
-
-      // Test by getting domain info
-      await this.mailgun.domains.get(mailgunConfig.domain);
-
-      return {
-        healthy: true,
-        latency: Date.now() - startTime,
-      };
-    } catch (error) {
-      return {
-        healthy: false,
-        latency: Date.now() - startTime,
-        error: error.message,
       };
     }
   }
@@ -346,21 +314,19 @@ export class MailgunProvider extends BaseEmailProvider {
   }
 
   private async calculateCost(messageCount: number): Promise<number> {
-    // Mailgun pricing: $0.80 per 1000 emails for first 5k, then tiered pricing
     let cost = 0;
 
     if (messageCount <= 5000) {
-      cost = messageCount * 0.0008; // $0.80 per 1000
+      cost = messageCount * 0.0008;
     } else if (messageCount <= 10000) {
       cost = 5000 * 0.0008;
-      cost += (messageCount - 5000) * 0.0007; // $0.70 per 1000
+      cost += (messageCount - 5000) * 0.0007;
     } else {
       cost = 5000 * 0.0008;
       cost += 5000 * 0.0007;
-      cost += (messageCount - 10000) * 0.0006; // $0.60 per 1000
+      cost += (messageCount - 10000) * 0.0006;
     }
 
-    // Add infrastructure fee (30% markup)
     const infrastructureFee = cost * 0.3;
 
     return cost + infrastructureFee;

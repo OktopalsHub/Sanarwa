@@ -1,16 +1,16 @@
 export interface VoiceSettings {
-  language: string; // 'en-US', 'en-GB', 'es-ES', etc.
-  gender?: "male" | "female"; // Optional for backward compatibility
-  name?: string; // Specific voice name
-  speed?: number; // 0.5 (slow) to 2.0 (fast) - Optional for Telnyx
-  pitch?: number; // 0.5 (low) to 2.0 (high) - Optional for Telnyx
+  language: string;
+  gender?: "male" | "female";
+  name?: string;
+  speed?: number;
+  pitch?: number;
   quality?: "standard" | "premium" | "neural";
-  voice?: string; // Telnyx voice identifier like 'Telnyx.Natural.abbie'
+  voice?: string;
 }
 
 export interface TTSPayload {
   text: string;
-  voice?: VoiceSettings; // Optional for simpler usage
+  voice?: VoiceSettings;
   outputFormat?: "mp3" | "wav" | "ogg";
   sampleRate?: number;
   metadata?: Record<string, any>;
@@ -23,9 +23,9 @@ export interface TTSResponse {
   success: boolean;
   audioUrl?: string;
   audioBuffer?: Buffer;
-  duration?: number; // in seconds
+  duration?: number;
   characterCount?: number;
-  cost?: number; // in USD
+  cost?: number;
   provider: string;
   error?: string;
   metadata?: Record<string, any>;
@@ -39,7 +39,7 @@ export interface VoiceCallPayload {
   participants: string[];
   callType: "voice_only" | "video_call";
   initiatorId: string;
-  maxDuration?: number; // in seconds
+  maxDuration?: number;
   recordCall?: boolean;
   metadata?: Record<string, any>;
 }
@@ -48,8 +48,8 @@ export interface VoiceCallResponse {
   success: boolean;
   roomId?: string;
   roomUrl?: string;
-  accessTokens?: Record<string, string>; // participant -> token
-  cost?: number; // per minute
+  accessTokens?: Record<string, string>;
+  cost?: number;
   provider: string;
   error?: string;
   metadata?: Record<string, any>;

@@ -8,7 +8,7 @@ import {
   MaxLength,
 } from "class-validator";
 import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
-import { WhiteLabelConfig } from "src/common/interfaces";
+import { WhiteLabelConfig } from "../../../common/interfaces";
 
 export class CreateBrandDto {
   @ApiProperty({

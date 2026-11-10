@@ -61,14 +61,14 @@ export class UserService {
   async getByEmailWithPassword(email: string): Promise<User | null> {
     return this.userRepository.findOne({
       where: { email },
-      select: ["id", "email", "name", "password"] as any,
+      select: { id: true, email: true, name: true, password: true } as any,
     });
   }
 
   async getUserByIdWithPassword(id: string): Promise<User | null> {
     return this.userRepository.findOne({
       where: { id },
-      select: ["id", "email", "password"] as any,
+      select: { id: true, email: true, password: true } as any,
     });
   }
 
@@ -123,7 +123,6 @@ export class UserService {
     }
   }
 
-  // Internal method for system updates that can modify sensitive fields
   async updateUserInternal(id: string, data: DeepPartial<User>): Promise<User> {
     await this.userRepository.update(id, data as any);
     return this.getUserById(id);
@@ -140,17 +139,14 @@ export class UserService {
       .createQueryBuilder("user")
       .select(["user.id", "user.email", "user.name", "user.createdAt", "user.updatedAt"]);
 
-    // Apply filters
     if (search) {
       queryBuilder.andWhere("(user.name ILIKE :search OR user.email ILIKE :search)", {
         search: `%${search}%`,
       });
     }
 
-    // Apply sorting
     queryBuilder.orderBy(`user.${sortBy}`, sortOrder);
 
-    // Apply pagination
     queryBuilder.skip((page - 1) * limit).take(limit);
 
     const [data, total] = await queryBuilder.getManyAndCount();

@@ -1,9 +1,6 @@
 import { Column, CreateDateColumn, Entity, Index, PrimaryGeneratedColumn } from "typeorm";
+import { NotificationChannel } from "../../../common/enums/notification-channel.enum";
 
-/**
- * Minimal logging entity for notification transport
- * Only stores delivery tracking data, not content
- */
 @Entity("notification_logs")
 @Index(["tenantId", "createdAt"])
 @Index(["trackingId"])
@@ -15,11 +12,11 @@ export class NotificationLog {
   @Column({ name: "tracking_id", unique: true })
   trackingId: string;
 
-  @Column()
-  channel: "email" | "sms" | "push" | "whatsapp" | "webhook" | "in_app";
+  @Column({ type: "varchar", length: 32 })
+  channel: NotificationChannel;
 
   @Column()
-  to: string; // Destination (email, phone, device token, etc.)
+  to: string;
 
   @Column()
   status: "queued" | "sent" | "delivered" | "failed" | "cancelled";
@@ -31,7 +28,7 @@ export class NotificationLog {
   projectId: string;
 
   @Column({ name: "external_id", nullable: true })
-  externalId?: string; // Provider's ID (Twilio SID, SendGrid ID, etc.)
+  externalId?: string;
 
   @Column({ type: "text", nullable: true })
   error?: string;
@@ -48,7 +45,6 @@ export class NotificationLog {
   @Column({ type: "timestamp", nullable: true, name: "failed_at" })
   failedAt?: Date;
 
-  // Optional: Store minimal metadata for debugging (not content)
   @Column({ type: "jsonb", nullable: true })
   metadata?: {
     templateId?: string;
@@ -57,6 +53,9 @@ export class NotificationLog {
     webhookUrl?: string;
     messageId?: string;
     deliveryId?: string;
+    projectId?: string;
+    storagePolicy?: string;
+    brandId?: string;
   };
 
   @CreateDateColumn({ name: "created_at" })

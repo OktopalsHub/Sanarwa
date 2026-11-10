@@ -19,9 +19,7 @@ export function PerformanceMonitorComponent({
 
     let cleanup: (() => void) | undefined;
 
-    // Initialize performance monitoring
     if (enableWebVitals) {
-      // Monitor Core Web Vitals
       PerformanceMonitor.observeLCP((entry) => {
         const metric = {
           name: "LCP",
@@ -37,7 +35,7 @@ export function PerformanceMonitorComponent({
       });
 
       PerformanceMonitor.observeFID((entry) => {
-        const fidEntry = entry as any; // Type assertion for FID entry
+        const fidEntry = entry as any;
         const metric = {
           name: "FID",
           value: (fidEntry.processingStart || entry.startTime) - entry.startTime,
@@ -52,7 +50,7 @@ export function PerformanceMonitorComponent({
       });
 
       PerformanceMonitor.observeCLS((entry) => {
-        const clsEntry = entry as any; // Type assertion for CLS entry
+        const clsEntry = entry as any;
         const metric = {
           name: "CLS",
           value: clsEntry.value || 0,
@@ -67,9 +65,7 @@ export function PerformanceMonitorComponent({
       });
     }
 
-    // Monitor custom metrics
     if (enableCustomMetrics) {
-      // Monitor route changes
       const originalPushState = history.pushState;
       const originalReplaceState = history.replaceState;
 
@@ -77,7 +73,6 @@ export function PerformanceMonitorComponent({
         PerformanceMonitor.startMeasure("route-change");
         originalPushState.apply(history, args);
 
-        // End measurement after a short delay to capture rendering
         setTimeout(() => {
           PerformanceMonitor.endMeasure("route-change");
         }, 100);
@@ -92,13 +87,11 @@ export function PerformanceMonitorComponent({
         }, 100);
       };
 
-      // Monitor resource loading
       const observer = new PerformanceObserver((list) => {
         list.getEntries().forEach((entry) => {
           if (entry.entryType === "resource") {
             const resourceEntry = entry as PerformanceResourceTiming;
 
-            // Report slow resources
             if (resourceEntry.duration > 1000) {
               console.warn("Slow resource detected:", {
                 name: resourceEntry.name,
@@ -124,7 +117,6 @@ export function PerformanceMonitorComponent({
 
       observer.observe({ entryTypes: ["resource"] });
 
-      // Cleanup function
       cleanup = () => {
         PerformanceMonitor.disconnect();
         observer.disconnect();
@@ -136,11 +128,9 @@ export function PerformanceMonitorComponent({
     return cleanup;
   }, [enableWebVitals, enableCustomMetrics, reportingEndpoint]);
 
-  // This component doesn't render anything
   return null;
 }
 
-// Utility function to send metrics to reporting endpoint
 async function sendMetricToEndpoint(metric: any, endpoint: string) {
   try {
     await fetch(endpoint, {
@@ -160,7 +150,6 @@ async function sendMetricToEndpoint(metric: any, endpoint: string) {
   }
 }
 
-// Hook for measuring component performance
 export function useComponentPerformance(componentName: string) {
   useEffect(() => {
     PerformanceMonitor.startMeasure(`component-${componentName}`);
@@ -171,7 +160,6 @@ export function useComponentPerformance(componentName: string) {
   }, [componentName]);
 }
 
-// Hook for measuring async operations
 export function useAsyncPerformance() {
   const measureAsync = async function <T>(
     operationName: string,
@@ -192,7 +180,6 @@ export function useAsyncPerformance() {
   return { measureAsync };
 }
 
-// Component for displaying performance metrics (development only)
 export function PerformanceDebugger() {
   useEffect(() => {
     if (process.env.NODE_ENV !== "development") return;

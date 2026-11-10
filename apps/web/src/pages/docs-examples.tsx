@@ -6,9 +6,9 @@ import { CodeRunner } from "@/components/docs/code-runner";
 import { FeedbackSystem } from "@/components/docs/feedback-system";
 import { InteractiveCodeExample } from "@/components/docs/interactive-code-example";
 import { SdkTester } from "@/components/docs/sdk-tester";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Badge } from "@sanarwa/ui/badge";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@sanarwa/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@sanarwa/ui/tabs";
 import { sdkExamples } from "@/lib/data/sdk-examples";
 import {
   PlayIcon,
@@ -20,10 +20,8 @@ import {
 
 export default function ExamplesPage() {
   const handleRunExample = async (code: string, parameters: Record<string, any>) => {
-    // Simulate API execution
     await new Promise((resolve) => setTimeout(resolve, 1500));
 
-    // Return mock response based on the code content
     if (code.includes("email.send")) {
       return {
         id: "msg_" + Math.random().toString(36).substr(2, 9),
@@ -54,19 +52,17 @@ export default function ExamplesPage() {
 
   return (
     <div className="space-y-8">
-      {/* Header */}
       <div className="space-y-4">
         <div className="flex items-center gap-2">
           <PlayIcon className="h-6 w-6 text-primary" />
           <h1 className="text-4xl font-bold tracking-tight">Interactive Examples</h1>
         </div>
         <p className="text-xl text-muted-foreground max-w-3xl">
-          Try out Notifi's APIs and SDKs with live, runnable code examples. Modify parameters and
+          Try out Sanarwa's APIs and SDKs with live, runnable code examples. Modify parameters and
           see real-time results.
         </p>
       </div>
 
-      {/* Quick Start Examples */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -80,13 +76,8 @@ export default function ExamplesPage() {
         </CardHeader>
         <CardContent>
           <Tabs defaultValue="javascript" className="w-full">
-            <TabsList className="grid w-full grid-cols-6">
-              <TabsTrigger value="javascript">JavaScript</TabsTrigger>
-              <TabsTrigger value="python">Python</TabsTrigger>
-              <TabsTrigger value="php">PHP</TabsTrigger>
-              <TabsTrigger value="java">Java</TabsTrigger>
-              <TabsTrigger value="go">Go</TabsTrigger>
-              <TabsTrigger value="dotnet">.NET</TabsTrigger>
+            <TabsList className="grid w-full grid-cols-1">
+              <TabsTrigger value="javascript">JavaScript / TypeScript</TabsTrigger>
             </TabsList>
 
             <TabsContent value="javascript" className="space-y-6 mt-6">
@@ -98,61 +89,10 @@ export default function ExamplesPage() {
                 />
               ))}
             </TabsContent>
-
-            <TabsContent value="python" className="space-y-6 mt-6">
-              {sdkExamples.python.map((example) => (
-                <InteractiveCodeExample
-                  key={example.id}
-                  example={example}
-                  onRun={handleRunExample}
-                />
-              ))}
-            </TabsContent>
-
-            <TabsContent value="php" className="space-y-6 mt-6">
-              {sdkExamples.php.map((example) => (
-                <InteractiveCodeExample
-                  key={example.id}
-                  example={example}
-                  onRun={handleRunExample}
-                />
-              ))}
-            </TabsContent>
-
-            <TabsContent value="java" className="space-y-6 mt-6">
-              {sdkExamples.java.map((example) => (
-                <InteractiveCodeExample
-                  key={example.id}
-                  example={example}
-                  onRun={handleRunExample}
-                />
-              ))}
-            </TabsContent>
-
-            <TabsContent value="go" className="space-y-6 mt-6">
-              {sdkExamples.go.map((example) => (
-                <InteractiveCodeExample
-                  key={example.id}
-                  example={example}
-                  onRun={handleRunExample}
-                />
-              ))}
-            </TabsContent>
-
-            <TabsContent value="dotnet" className="space-y-6 mt-6">
-              {sdkExamples.dotnet.map((example) => (
-                <InteractiveCodeExample
-                  key={example.id}
-                  example={example}
-                  onRun={handleRunExample}
-                />
-              ))}
-            </TabsContent>
           </Tabs>
         </CardContent>
       </Card>
 
-      {/* Live Code Runner */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -167,15 +107,15 @@ export default function ExamplesPage() {
         <CardContent>
           <CodeRunner
             language="javascript"
-            title="Try Notifi SDK"
-            description="Write and run JavaScript code using the Notifi SDK"
-            initialCode={`// Import the Notifi SDK
-import { NotifiClient } from '@notifi/sdk';
+            title="Try Sanarwa SDK"
+            description="Write and run JavaScript code using the Sanarwa SDK"
+            initialCode={`// Import the Sanarwa SDK
+import { Sanarwa } from '@sanarwa/sdk';
 
 // Initialize the client
-const client = new NotifiClient({
+const client = new Sanarwa({
   apiKey: 'your-api-key', // Use sandbox key for testing
-  baseUrl: 'https://api-sandbox.notifi.com'
+  baseUrl: 'https://api-sandbox.sanarwa.com'
 });
 
 // Send a test email
@@ -183,7 +123,7 @@ async function sendTestEmail() {
   try {
     const result = await client.email.send({
       to: 'test@example.com',
-      subject: 'Hello from Notifi!',
+      subject: 'Hello from Sanarwa!',
       template: 'welcome-template',
       variables: {
         name: 'Developer',
@@ -205,7 +145,6 @@ sendTestEmail();`}
         </CardContent>
       </Card>
 
-      {/* SDK Test Suite */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -222,7 +161,6 @@ sendTestEmail();`}
         </CardContent>
       </Card>
 
-      {/* Advanced Examples */}
       <div className="space-y-6">
         <div>
           <h2 className="text-2xl font-semibold mb-2">Advanced Use Cases</h2>
@@ -314,7 +252,6 @@ sendTestEmail();`}
         </div>
       </div>
 
-      {/* Learning Resources */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -322,7 +259,7 @@ sendTestEmail();`}
             Learning Resources
           </CardTitle>
           <CardDescription>
-            Additional resources to help you master Notifi's platform
+            Additional resources to help you master Sanarwa's platform
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -358,7 +295,6 @@ sendTestEmail();`}
         </CardContent>
       </Card>
 
-      {/* Feedback */}
       <FeedbackSystem page="examples" category="documentation" />
     </div>
   );

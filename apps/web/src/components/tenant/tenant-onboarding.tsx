@@ -1,7 +1,7 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { Button } from "@sanarwa/ui/button";
+import { Input } from "@sanarwa/ui/input";
 import { useTenant } from "@/contexts/tenant-context";
 import { getTenantPathSegment } from "@/lib/tenant-path";
 import { CreateTenantRequest } from "@/lib/types/tenant";

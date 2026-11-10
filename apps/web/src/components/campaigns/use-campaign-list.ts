@@ -1,6 +1,6 @@
 import { useRouter } from "@/compat/next-navigation";
 import { useTenantBasePath } from "@/hooks/use-tenant-slug";
-import { campaignApi } from "@/lib/api/campaigns";
+import { campaignApi } from "@sanarwa/api-client";
 import type { Campaign } from "@/lib/types/campaign";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";

@@ -22,9 +22,6 @@ export class WhatsAppMediaService {
 
   constructor(private readonly httpService: HttpService) {}
 
-  /**
-   * Upload media to WhatsApp
-   */
   async uploadMedia(
     phoneNumberId: string,
     accessToken: string,
@@ -63,14 +60,10 @@ export class WhatsAppMediaService {
     }
   }
 
-  /**
-   * Download media from WhatsApp
-   */
   async downloadMedia(mediaId: string, accessToken: string): Promise<Buffer> {
     try {
       this.logger.log(`Downloading media: ${mediaId}`);
 
-      // Get media URL
       const urlResponse = await firstValueFrom(
         this.httpService.get(`${this.baseUrl}/${mediaId}`, {
           headers: {
@@ -81,7 +74,6 @@ export class WhatsAppMediaService {
 
       const mediaUrl = urlResponse.data.url;
 
-      // Download media
       const mediaResponse = await firstValueFrom(
         this.httpService.get(mediaUrl, {
           responseType: "arraybuffer",
@@ -100,9 +92,6 @@ export class WhatsAppMediaService {
     }
   }
 
-  /**
-   * Send media message
-   */
   async sendMediaMessage(
     phoneNumberId: string,
     accessToken: string,
@@ -142,15 +131,11 @@ export class WhatsAppMediaService {
     }
   }
 
-  /**
-   * Validate media file
-   */
   validateMediaFile(
     buffer: Buffer,
     mediaType: string,
-    maxSize: number = 16 * 1024 * 1024, // 16MB default
+    maxSize: number = 16 * 1024 * 1024,
   ): { isValid: boolean; error?: string } {
-    // Check size
     if (buffer.length > maxSize) {
       return {
         isValid: false,
@@ -158,7 +143,6 @@ export class WhatsAppMediaService {
       };
     }
 
-    // Check type
     const validTypes = ["image/jpeg", "image/png", "video/mp4", "application/pdf", "audio/mpeg"];
 
     if (!validTypes.includes(mediaType)) {
@@ -171,9 +155,6 @@ export class WhatsAppMediaService {
     return { isValid: true };
   }
 
-  /**
-   * Get media info
-   */
   async getMediaInfo(
     mediaId: string,
     accessToken: string,

@@ -1,4 +1,5 @@
-import { Channel, ProviderConfig, ProviderHealthStatus, ProviderResponse } from "../types";
+import { ProviderConfig, ProviderResponse } from "../types";
+import { NotificationChannel } from "../../common/enums/notification-channel.enum";
 
 export interface BaseProviderPayload {
   recipient: string;
@@ -9,32 +10,15 @@ export interface BaseProviderPayload {
 export interface IBaseProvider {
   readonly id: string;
   readonly name: string;
-  readonly channel: Channel;
+  readonly channel: NotificationChannel;
   readonly config: ProviderConfig;
   readonly isInitialized: boolean;
 
-  /**
-   * Send a notification through this provider
-   */
   send(payload: BaseProviderPayload): Promise<ProviderResponse>;
 
-  /**
-   * Validate the provider configuration
-   */
   validateConfig(config: ProviderConfig): Promise<boolean>;
 
-  /**
-   * Check the health status of the provider
-   */
-  checkHealth(): Promise<ProviderHealthStatus>;
-
-  /**
-   * Initialize the provider with configuration
-   */
   initialize(config: ProviderConfig): Promise<void>;
 
-  /**
-   * Clean up resources when provider is destroyed
-   */
   destroy(): Promise<void>;
 }

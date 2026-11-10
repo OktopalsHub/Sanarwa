@@ -1,4 +1,3 @@
-// Central monitoring service that coordinates all monitoring components
 import { alertManager } from "./alert-manager";
 import { analyticsTracker } from "./analytics-tracker";
 import { performanceMonitor } from "./performance-monitor";
@@ -13,12 +12,11 @@ interface MonitoringConfig {
   flushInterval?: number;
 }
 
-class MonitoringService {
+export class MonitoringService {
   private config: MonitoringConfig;
   private isInitialized: boolean = false;
 
   constructor(config: Partial<MonitoringConfig> = {}) {
-    // Disable monitoring in development by default
     const isDevelopment = process.env.NODE_ENV === "development";
 
     this.config = {
@@ -45,7 +43,6 @@ class MonitoringService {
     }
 
     try {
-      // Initialize performance monitoring
       if (this.config.enablePerformanceMonitoring) {
         performanceMonitor.enable();
         if (process.env.NODE_ENV !== "development") {
@@ -53,7 +50,6 @@ class MonitoringService {
         }
       }
 
-      // Initialize analytics tracking
       if (this.config.enableAnalytics) {
         analyticsTracker.enable();
         if (process.env.NODE_ENV !== "development") {
@@ -61,7 +57,6 @@ class MonitoringService {
         }
       }
 
-      // Initialize alerting
       if (this.config.enableAlerting) {
         alertManager.enable();
         if (process.env.NODE_ENV !== "development") {
@@ -69,7 +64,6 @@ class MonitoringService {
         }
       }
 
-      // Set up global error handling
       if (this.config.enableErrorReporting) {
         this.setupGlobalErrorHandling();
         if (process.env.NODE_ENV !== "development") {
@@ -77,7 +71,6 @@ class MonitoringService {
         }
       }
 
-      // Request notification permission for critical alerts
       if (this.config.enableAlerting) {
         this.requestNotificationPermission();
       }
@@ -92,7 +85,6 @@ class MonitoringService {
   }
 
   private setupGlobalErrorHandling() {
-    // Handle uncaught JavaScript errors
     window.addEventListener("error", (event) => {
       const error = event.error || new Error(event.message);
       this.reportError(error, {
@@ -103,7 +95,6 @@ class MonitoringService {
       });
     });
 
-    // Handle unhandled promise rejections
     window.addEventListener("unhandledrejection", (event) => {
       const error = event.reason instanceof Error ? event.reason : new Error(String(event.reason));
       this.reportError(error, {
@@ -111,13 +102,11 @@ class MonitoringService {
       });
     });
 
-    // Only intercept console errors in production
     if (process.env.NODE_ENV === "production") {
       const originalConsoleError = console.error;
       console.error = (...args) => {
         originalConsoleError.apply(console, args);
 
-        // Only report if it looks like an actual error
         if (args.length > 0 && (args[0] instanceof Error || typeof args[0] === "string")) {
           this.reportError(args[0] instanceof Error ? args[0] : new Error(String(args[0])), {
             type: "console_error",
@@ -142,12 +131,10 @@ class MonitoringService {
     if (!this.config.enableErrorReporting) return;
 
     try {
-      // Track error in analytics
       if (this.config.enableAnalytics) {
         analyticsTracker.trackError(error, context);
       }
 
-      // Create alert for critical errors
       if (this.config.enableAlerting) {
         const isCritical = this.isCriticalError(error, context);
         if (isCritical) {
@@ -164,7 +151,10 @@ class MonitoringService {
   }
 
   private isCriticalError(error: Error, context?: Record<string, any>): boolean {
-    // Define criteria for critical errors
+    if (context?.severity === "critical") {
+      return true;
+    }
+
     const criticalPatterns = [
       /network error/i,
       /authentication failed/i,
@@ -187,6 +177,16 @@ class MonitoringService {
   public trackPerformance(name: string, value: number, context?: Record<string, any>) {
     if (this.config.enablePerformanceMonitoring) {
       performanceMonitor.recordMetric(name, value, context);
+    }
+
+    const threshold = context?.threshold;
+    if (this.config.enableAlerting && typeof threshold === "number" && value > threshold) {
+      alertManager.createCustomAlert(
+        "performance",
+        "high",
+        `Performance threshold exceeded for ${name}: ${value} exceeds ${threshold}`,
+        { name, value, threshold, ...context },
+      );
     }
   }
 
@@ -245,7 +245,6 @@ class MonitoringService {
   public updateConfig(newConfig: Partial<MonitoringConfig>) {
     this.config = { ...this.config, ...newConfig };
 
-    // Apply config changes
     if (this.isInitialized) {
       if (this.config.enablePerformanceMonitoring) {
         performanceMonitor.enable();
@@ -273,7 +272,6 @@ class MonitoringService {
     try {
       performanceMonitor.destroy();
       analyticsTracker.destroy();
-      // alertManager doesn't need explicit cleanup
 
       this.isInitialized = false;
       console.log("Monitoring service destroyed");
@@ -283,13 +281,10 @@ class MonitoringService {
   }
 }
 
-// Create singleton instance
 export const monitoringService = new MonitoringService();
 
-// Export individual services for direct access if needed
 export { alertManager, analyticsTracker, performanceMonitor };
 
-// Utility functions for common monitoring tasks
 export function withMonitoring<T extends (...args: any[]) => any>(name: string, fn: T): T {
   return ((...args: any[]) => {
     return monitoringService.measurePerformance(name, () => fn(...args));

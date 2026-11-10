@@ -2,8 +2,8 @@
 
 import { AuthDivider } from "@/components/auth/auth-page-shell";
 import { AuthOAuthButtons } from "@/components/auth/auth-oauth-buttons";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { Button } from "@sanarwa/ui/button";
+import { Input } from "@sanarwa/ui/input";
 import { useAuth } from "@/contexts/auth-context";
 import { redirectAfterAuth } from "@/lib/auth/post-auth-redirect";
 import { LoginCredentials } from "@/lib/types/auth";

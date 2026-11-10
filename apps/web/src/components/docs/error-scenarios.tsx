@@ -2,18 +2,12 @@
 
 import { AlertTriangle, Bug, ExternalLink, Zap } from "@/lib/icons";
 
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Badge } from "@sanarwa/ui/badge";
+import { Button } from "@sanarwa/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@sanarwa/ui/card";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@sanarwa/ui/collapsible";
+import { Input } from "@sanarwa/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@sanarwa/ui/select";
 import { toast } from "@/lib/utils/toast";
 import {
   ExclamationTriangleIcon,
@@ -81,7 +75,7 @@ const defaultScenarios: ErrorScenario[] = [
       'Missing "Bearer" prefix in Authorization header',
     ],
     errorExample: {
-      request: `curl -X POST https://api.notifi.com/v1/notifications/email \\
+      request: `curl -X POST https://api.sanarwa.com/v1/notifications/email \\
   -H "Authorization: Bearer invalid_key_123" \\
   -H "Content-Type: application/json" \\
   -d '{"to": "user@example.com", "subject": "Test"}'`,
@@ -103,10 +97,10 @@ const defaultScenarios: ErrorScenario[] = [
         title: "Verify API Key Format",
         description: "Ensure your API key follows the correct format and is properly configured.",
         code: `// Check API key format
-const apiKey = process.env.NOTIFI_API_KEY;
+const apiKey = process.env.SANARWA_API_KEY;
 
 if (!apiKey) {
-  throw new Error('NOTIFI_API_KEY environment variable is not set');
+  throw new Error('SANARWA_API_KEY environment variable is not set');
 }
 
 if (!apiKey.startsWith('nk_live_') && !apiKey.startsWith('nk_test_')) {
@@ -114,11 +108,11 @@ if (!apiKey.startsWith('nk_live_') && !apiKey.startsWith('nk_test_')) {
 }
 
 // Correct usage
-const client = new NotifiClient({
+const client = new Sanarwa({
   apiKey: apiKey,
   baseUrl: apiKey.startsWith('nk_live_') 
-    ? 'https://api.notifi.com' 
-    : 'https://api-sandbox.notifi.com'
+    ? 'https://api.sanarwa.com' 
+    : 'https://api-sandbox.sanarwa.com'
 });`,
         language: "javascript",
       },
@@ -128,9 +122,9 @@ const client = new NotifiClient({
         code: `// Test API key
 async function verifyApiKey() {
   try {
-    const response = await fetch('https://api.notifi.com/v1/auth/verify', {
+    const response = await fetch('https://api.sanarwa.com/v1/auth/verify', {
       headers: {
-        'Authorization': \`Bearer \${process.env.NOTIFI_API_KEY}\`,
+        'Authorization': \`Bearer \${process.env.SANARWA_API_KEY}\`,
         'Content-Type': 'application/json'
       }
     });
@@ -311,7 +305,7 @@ const result = await rateLimitHandler.executeWithRetry(() =>
   client.email.send({
     to: 'user@example.com',
     subject: 'Test',
-    content: 'Hello World'
+    data: 'Hello World'
   })
 );`,
         language: "javascript",
@@ -390,7 +384,6 @@ export function ErrorScenarios({ scenarios = defaultScenarios }: ErrorScenariosP
 
   return (
     <div className="space-y-6">
-      {/* Search and Filters */}
       <div className="space-y-4">
         <div className="relative">
           <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -437,12 +430,10 @@ export function ErrorScenarios({ scenarios = defaultScenarios }: ErrorScenariosP
         </div>
       </div>
 
-      {/* Results Count */}
       <div className="text-sm text-muted-foreground">
         Showing {filteredScenarios.length} of {scenarios.length} error scenarios
       </div>
 
-      {/* Error Scenarios */}
       <div className="space-y-4">
         {filteredScenarios.map((scenario) => {
           const CategoryIcon = categoryIcons[scenario.category] || AlertTriangle;
@@ -491,7 +482,6 @@ export function ErrorScenarios({ scenarios = defaultScenarios }: ErrorScenariosP
 
                 <CollapsibleContent>
                   <CardContent className="pt-0 space-y-6">
-                    {/* Common Causes */}
                     <div className="space-y-2">
                       <h4 className="font-medium">Common Causes</h4>
                       <ul className="list-disc list-inside space-y-1 text-sm text-muted-foreground">
@@ -501,7 +491,6 @@ export function ErrorScenarios({ scenarios = defaultScenarios }: ErrorScenariosP
                       </ul>
                     </div>
 
-                    {/* Error Example */}
                     <div className="space-y-2">
                       <h4 className="font-medium">Error Example</h4>
                       {scenario.errorExample.request && (
@@ -526,7 +515,6 @@ export function ErrorScenarios({ scenarios = defaultScenarios }: ErrorScenariosP
                       </div>
                     </div>
 
-                    {/* Solutions */}
                     <div className="space-y-4">
                       <h4 className="font-medium">Solutions</h4>
                       {scenario.solutions.map((solution, index) => (
@@ -576,7 +564,6 @@ export function ErrorScenarios({ scenarios = defaultScenarios }: ErrorScenariosP
                       ))}
                     </div>
 
-                    {/* Prevention */}
                     <div className="space-y-2">
                       <h4 className="font-medium">Prevention Tips</h4>
                       <ul className="list-disc list-inside space-y-1 text-sm text-muted-foreground">
@@ -586,7 +573,6 @@ export function ErrorScenarios({ scenarios = defaultScenarios }: ErrorScenariosP
                       </ul>
                     </div>
 
-                    {/* Related Errors */}
                     {scenario.relatedErrors && scenario.relatedErrors.length > 0 && (
                       <div className="space-y-2">
                         <h4 className="font-medium">Related Errors</h4>

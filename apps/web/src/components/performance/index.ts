@@ -1,4 +1,3 @@
-// Performance optimization components and utilities
 export {
   ChartSkeleton,
   ComponentSkeleton,
@@ -29,7 +28,6 @@ export { LazyLoad, OptimizedList, useVirtualScroll, VirtualScroll } from "./virt
 
 export { ServiceWorkerRegistration } from "./service-worker-registration";
 
-// Re-export performance utilities
 export {
   addResourceHints,
   calculateVisibleItems,

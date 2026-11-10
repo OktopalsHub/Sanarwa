@@ -1,4 +1,4 @@
-import { ApiClient, createApiClient } from "./client";
+import { ApiClient, apiClient as sharedApiClient } from "./client";
 
 export interface TokenBalance {
   balance: number;
@@ -45,7 +45,6 @@ export interface CheckoutContextResponse {
   defaultCurrency: "USD" | "NGN";
   availableCurrencies: Array<"USD" | "NGN">;
   bachsConfigured: boolean;
-  nombaConfigured: boolean;
   providers: string[];
   countryCode?: string;
 }
@@ -104,7 +103,7 @@ class BillingApiClient {
   private apiClient: ApiClient;
 
   constructor(apiClient?: ApiClient) {
-    this.apiClient = apiClient || createApiClient();
+    this.apiClient = apiClient ?? sharedApiClient;
   }
 
   async getTokenBalance(): Promise<{

@@ -25,9 +25,9 @@ import { ApiKeyResponseDto, ApiKeyListResponseDto } from "./dto/api-key-response
 import { CreateApiKeyDto } from "./dto/create-api-key.dto";
 import { UpdateApiKeyDto } from "./dto/update-api-key.dto";
 import { ApiKeyQueryDto } from "./dto/api-key-query.dto";
-import { CurrentMemberId, CurrentTenantId } from "src/common/decorators";
-import { TenantMemberGuard } from "src/common/guards";
-import { AuthGuard } from "src/modules/auth/guards/jwt-auth.guard";
+import { CurrentMemberId, CurrentTenantId } from "../../common/decorators";
+import { TenantMemberGuard } from "../../common/guards";
+import { AuthGuard } from "../../modules/auth/guards/jwt-auth.guard";
 
 @ApiTags("API Keys")
 @ApiBearerAuth()

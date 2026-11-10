@@ -5,17 +5,9 @@ import { CircuitBreakerService } from "./services/circuit-breaker.service";
 import { ErrorClassificationService } from "./services/error-classification.service";
 import { ErrorRecoveryService } from "./services/error-recovery.service";
 
-// Import the actual service classes for type checking
-import { AlertService } from "../alerts/alert.service";
 import { ConfigService } from "@nestjs/config";
-import type { Mock } from "vitest";
-
-// Mock the AlertService
-const mockAlertService = {
-  sendAlert: vi.fn(),
-  createAlert: vi.fn(),
-  getAlerts: vi.fn(),
-};
+import { getRedisConnectionToken } from "@nestjs-modules/ioredis";
+import Redis from "ioredis-mock";
 
 const mockConfigService = {
   get: vi.fn(),
@@ -35,8 +27,8 @@ describe("ErrorsModule", () => {
         CircuitBreakerService,
         ErrorRecoveryService,
         {
-          provide: AlertService,
-          useValue: mockAlertService,
+          provide: getRedisConnectionToken(),
+          useValue: new Redis(),
         },
         {
           provide: ConfigService,
@@ -75,11 +67,7 @@ describe("ErrorsModule", () => {
   });
 
   it("should register GlobalExceptionFilter as APP_FILTER", () => {
-    // Test that GlobalExceptionFilter can be instantiated with all dependencies
-    const globalExceptionFilter = new GlobalExceptionFilter(
-      module.get(AlertService),
-      module.get(ConfigService),
-    );
+    const globalExceptionFilter = new GlobalExceptionFilter(module.get(ConfigService));
     expect(globalExceptionFilter).toBeDefined();
     expect(globalExceptionFilter).toBeInstanceOf(GlobalExceptionFilter);
   });
@@ -92,11 +80,5 @@ describe("ErrorsModule", () => {
     expect(errorClassificationService).toBeDefined();
     expect(circuitBreakerService).toBeDefined();
     expect(errorRecoveryService).toBeDefined();
-  });
-
-  it("should provide alert service", () => {
-    const alertService = module.get(AlertService);
-
-    expect(alertService).toBeDefined();
   });
 });

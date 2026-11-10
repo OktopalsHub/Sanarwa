@@ -1,12 +1,13 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { Cron, CronExpression } from "@nestjs/schedule";
-import { Repository } from "typeorm";
-import { InjectRepository } from "@nestjs/typeorm";
+import { InjectRedis } from "@nestjs-modules/ioredis";
+import type Redis from "ioredis";
+import * as crypto from "crypto";
 
 export interface DigestConfig {
   frequency: "instant" | "daily" | "weekly" | "monthly";
   maxNotificationsPerDigest?: number;
-  timeWindow?: number; // in minutes
+  timeWindow?: number;
 }
 
 export interface DigestNotification {
@@ -15,8 +16,8 @@ export interface DigestNotification {
   tenantId: string;
   channel: string;
   title: string;
-  content: string;
-  data?: Record<string, any>;
+  data: string;
+  variables?: Record<string, any>;
   createdAt: Date;
   templateId?: string;
 }
@@ -33,19 +34,19 @@ export interface DigestBatch {
   sentAt?: Date;
 }
 
+const REGISTRY_KEY = "digest:queues";
+const queueKey = (key: string) => `digest:q:${key}`;
+const lockKey = (key: string) => `digest:lock:${key}`;
+
 @Injectable()
 export class DigestService {
   private readonly logger = new Logger(DigestService.name);
-  private digestQueue: Map<string, DigestNotification[]> = new Map();
   private digestConfigs: Map<string, DigestConfig> = new Map();
 
-  constructor() {
+  constructor(@InjectRedis() private readonly redis: Redis) {
     this.initializeDefaultConfigs();
   }
 
-  /**
-   * Initialize default digest configurations
-   */
   private initializeDefaultConfigs(): void {
     this.digestConfigs.set("instant", {
       frequency: "instant",
@@ -56,63 +57,45 @@ export class DigestService {
     this.digestConfigs.set("daily", {
       frequency: "daily",
       maxNotificationsPerDigest: 50,
-      timeWindow: 1440, // 24 hours
+      timeWindow: 1440,
     });
 
     this.digestConfigs.set("weekly", {
       frequency: "weekly",
       maxNotificationsPerDigest: 100,
-      timeWindow: 10080, // 7 days
+      timeWindow: 10080,
     });
 
     this.digestConfigs.set("monthly", {
       frequency: "monthly",
       maxNotificationsPerDigest: 200,
-      timeWindow: 43200, // 30 days
+      timeWindow: 43200,
     });
   }
 
-  /**
-   * Add notification to digest queue
-   */
   async queueNotificationForDigest(
     notification: DigestNotification,
     config: DigestConfig,
   ): Promise<void> {
-    const queueKey = `${notification.tenantId}:${notification.subscriberId}:${notification.channel}:${config.frequency}`;
+    const queueKeyName = `${notification.tenantId}:${notification.subscriberId}:${notification.channel}:${config.frequency}`;
 
-    if (!this.digestQueue.has(queueKey)) {
-      this.digestQueue.set(queueKey, []);
-    }
+    const count = await this.redis.rpush(queueKey(queueKeyName), JSON.stringify(notification));
+    await this.redis.sadd(REGISTRY_KEY, queueKeyName);
 
-    const queue = this.digestQueue.get(queueKey)!;
-    queue.push(notification);
+    this.logger.debug(`Queued notification for digest: ${queueKeyName} (total: ${count})`);
 
-    this.logger.debug(`Queued notification for digest: ${queueKey} (total: ${queue.length})`);
-
-    // Check if we should send immediately (for instant frequency)
-    if (config.frequency === "instant" && queue.length >= (config.maxNotificationsPerDigest || 1)) {
-      await this.sendDigest(queueKey);
+    if (config.frequency === "instant" && count >= (config.maxNotificationsPerDigest || 1)) {
+      await this.sendDigest(queueKeyName);
     }
   }
 
-  /**
-   * Get digest configuration for subscriber
-   */
   getDigestConfig(frequency: string): DigestConfig | undefined {
     return this.digestConfigs.get(frequency);
   }
 
-  /**
-   * Send digest for a queue
-   */
-  async sendDigest(queueKey: string): Promise<DigestBatch | null> {
-    const queue = this.digestQueue.get(queueKey);
-    if (!queue || queue.length === 0) {
-      return null;
-    }
-
-    const [tenantId, subscriberId, channel, frequency] = queueKey.split(":");
+  async sendDigest(queueKeyName: string): Promise<DigestBatch | null> {
+    const key = queueKey(queueKeyName);
+    const [tenantId, subscriberId, channel, frequency] = queueKeyName.split(":");
     const config = this.digestConfigs.get(frequency);
 
     if (!config) {
@@ -120,12 +103,17 @@ export class DigestService {
       return null;
     }
 
-    // Limit notifications in digest
     const maxNotifications = config.maxNotificationsPerDigest || 50;
-    const notificationsToSend = queue.splice(0, maxNotifications);
+    const raw = await this.redis.lpop(key, maxNotifications);
+    const notificationsToSend = this.parseNotifications(raw);
+
+    if (notificationsToSend.length === 0) {
+      await this.redis.srem(REGISTRY_KEY, queueKeyName);
+      return null;
+    }
 
     const digest: DigestBatch = {
-      id: `digest_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      id: `digest_${Date.now()}_${crypto.randomBytes(9).toString("base64url")}`,
       subscriberId,
       tenantId,
       channel,
@@ -139,111 +127,95 @@ export class DigestService {
       `Sending digest for ${subscriberId} on ${channel}: ${notificationsToSend.length} notifications`,
     );
 
-    // Clean up empty queue
-    if (queue.length === 0) {
-      this.digestQueue.delete(queueKey);
+    const remaining = await this.redis.llen(key);
+    if (remaining === 0) {
+      await this.redis.srem(REGISTRY_KEY, queueKeyName);
     }
 
     return digest;
   }
 
-  /**
-   * Process daily digests (runs at 9 AM)
-   */
   @Cron(CronExpression.EVERY_DAY_AT_9AM)
   async processDailyDigests(): Promise<void> {
     this.logger.log("Processing daily digests...");
     await this.processDigestsByFrequency("daily");
   }
 
-  /**
-   * Process weekly digests (runs every Monday at 9 AM)
-   */
   @Cron("0 9 * * 1")
   async processWeeklyDigests(): Promise<void> {
     this.logger.log("Processing weekly digests...");
     await this.processDigestsByFrequency("weekly");
   }
 
-  /**
-   * Process monthly digests (runs on 1st of month at 9 AM)
-   */
   @Cron("0 9 1 * *")
   async processMonthlyDigests(): Promise<void> {
     this.logger.log("Processing monthly digests...");
     await this.processDigestsByFrequency("monthly");
   }
 
-  /**
-   * Process digests by frequency
-   */
   private async processDigestsByFrequency(frequency: string): Promise<void> {
-    const keysToProcess: string[] = [];
-
-    // Find all queues matching this frequency
-    for (const [key] of this.digestQueue) {
-      if (key.endsWith(`:${frequency}`)) {
-        keysToProcess.push(key);
-      }
-    }
+    const keysToProcess = (await this.redis.smembers(REGISTRY_KEY)).filter((key) =>
+      key.endsWith(`:${frequency}`),
+    );
 
     this.logger.log(`Found ${keysToProcess.length} ${frequency} digests to process`);
 
     for (const key of keysToProcess) {
+      const token = crypto.randomBytes(16).toString("hex");
+      const acquired = await this.redis.set(lockKey(key), token, "PX", 60000, "NX");
+      if (acquired !== "OK") {
+        this.logger.debug(`Digest ${key} is being processed on another instance, skipping`);
+        continue;
+      }
+
       try {
         await this.sendDigest(key);
       } catch (error) {
         this.logger.error(`Failed to send digest for ${key}:`, error);
+      } finally {
+        const held = await this.redis.get(lockKey(key));
+        if (held === token) {
+          await this.redis.del(lockKey(key));
+        }
       }
     }
   }
 
-  /**
-   * Get queue statistics
-   */
-  getQueueStats(): {
+  async getQueueStats(): Promise<{
     totalQueues: number;
     totalNotifications: number;
     queuesByFrequency: Record<string, number>;
-  } {
+  }> {
+    const queueKeys = await this.redis.smembers(REGISTRY_KEY);
     let totalNotifications = 0;
     const queuesByFrequency: Record<string, number> = {};
 
-    for (const [key, notifications] of this.digestQueue) {
+    for (const key of queueKeys) {
+      const count = await this.redis.llen(queueKey(key));
       const frequency = key.split(":")[3];
-      totalNotifications += notifications.length;
-      queuesByFrequency[frequency] = (queuesByFrequency[frequency] || 0) + notifications.length;
+      totalNotifications += count;
+      queuesByFrequency[frequency] = (queuesByFrequency[frequency] || 0) + count;
     }
 
     return {
-      totalQueues: this.digestQueue.size,
+      totalQueues: queueKeys.length,
       totalNotifications,
       queuesByFrequency,
     };
   }
 
-  /**
-   * Clear digest queue for a subscriber
-   */
   async clearSubscriberDigests(subscriberId: string, tenantId: string): Promise<void> {
-    const keysToDelete: string[] = [];
+    const queueKeys = await this.redis.smembers(REGISTRY_KEY);
+    const keysToDelete = queueKeys.filter((key) => key.includes(`${tenantId}:${subscriberId}`));
 
-    for (const key of this.digestQueue.keys()) {
-      if (key.includes(`${tenantId}:${subscriberId}`)) {
-        keysToDelete.push(key);
-      }
-    }
-
-    for (const key of keysToDelete) {
-      this.digestQueue.delete(key);
+    if (keysToDelete.length > 0) {
+      await this.redis.del(keysToDelete.map((key) => queueKey(key)));
+      await this.redis.srem(REGISTRY_KEY, ...keysToDelete);
     }
 
     this.logger.log(`Cleared ${keysToDelete.length} digest queues for subscriber ${subscriberId}`);
   }
 
-  /**
-   * Aggregate similar notifications in digest
-   */
   aggregateNotifications(notifications: DigestNotification[]): DigestNotification[] {
     const aggregated: Map<string, DigestNotification> = new Map();
 
@@ -252,9 +224,8 @@ export class DigestService {
 
       if (aggregated.has(key)) {
         const existing = aggregated.get(key)!;
-        // Increment count in data
-        if (!existing.data) existing.data = {};
-        existing.data.count = (existing.data.count || 1) + 1;
+        if (!existing.variables) existing.variables = {};
+        existing.variables.count = (existing.variables.count || 1) + 1;
       } else {
         aggregated.set(key, { ...notification });
       }
@@ -263,18 +234,32 @@ export class DigestService {
     return Array.from(aggregated.values());
   }
 
-  /**
-   * Get pending digests for a subscriber
-   */
-  getPendingDigests(subscriberId: string, tenantId: string): DigestNotification[] {
-    const pending: DigestNotification[] = [];
+  async getPendingDigests(subscriberId: string, tenantId: string): Promise<DigestNotification[]> {
+    const queueKeys = await this.redis.smembers(REGISTRY_KEY);
+    const keys = queueKeys.filter((key) => key.includes(`${tenantId}:${subscriberId}`));
 
-    for (const [key, notifications] of this.digestQueue) {
-      if (key.includes(`${tenantId}:${subscriberId}`)) {
-        pending.push(...notifications);
-      }
+    if (keys.length === 0) {
+      return [];
+    }
+
+    const pending: DigestNotification[] = [];
+    for (const key of keys) {
+      const raw = await this.redis.lrange(queueKey(key), 0, -1);
+      pending.push(...this.parseNotifications(raw));
     }
 
     return pending;
+  }
+
+  private parseNotifications(raw: string[] | null): DigestNotification[] {
+    if (!raw) {
+      return [];
+    }
+
+    return raw.map((item) => {
+      const notification = JSON.parse(item) as DigestNotification;
+      notification.createdAt = new Date(notification.createdAt);
+      return notification;
+    });
   }
 }

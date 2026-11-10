@@ -13,15 +13,81 @@ export interface ProviderTemplate {
 }
 
 const PROVIDER_TEMPLATES: ProviderTemplate[] = [
-  { id: "email.sendgrid", name: "SendGrid", providerId: "sendgrid", channel: NotificationChannel.EMAIL, isPopular: true, difficulty: "easy" },
-  { id: "email.mailgun", name: "Mailgun", providerId: "mailgun", channel: NotificationChannel.EMAIL, isPopular: true, difficulty: "easy" },
-  { id: "email.ses", name: "Amazon SES", providerId: "ses", channel: NotificationChannel.EMAIL, difficulty: "medium" },
-  { id: "sms.twilio", name: "Twilio", providerId: "twilio", channel: NotificationChannel.SMS, isPopular: true, difficulty: "easy" },
-  { id: "sms.termii", name: "Termii", providerId: "termii", channel: NotificationChannel.SMS, isPopular: true, difficulty: "easy" },
-  { id: "sms.africastalking", name: "Africa's Talking", providerId: "africastalking", channel: NotificationChannel.SMS, difficulty: "easy" },
-  { id: "push.fcm", name: "Firebase Cloud Messaging", providerId: "fcm", channel: NotificationChannel.PUSH, isPopular: true, difficulty: "medium" },
-  { id: "push.expo", name: "Expo Push", providerId: "expo-push", channel: NotificationChannel.PUSH, difficulty: "easy" },
-  { id: "chat.slack", name: "Slack", providerId: "slack", channel: NotificationChannel.CHAT, difficulty: "easy" },
+  {
+    id: "email.sendgrid",
+    name: "SendGrid",
+    providerId: "sendgrid",
+    channel: NotificationChannel.EMAIL,
+    isPopular: true,
+    difficulty: "easy",
+  },
+  {
+    id: "email.mailgun",
+    name: "Mailgun",
+    providerId: "mailgun",
+    channel: NotificationChannel.EMAIL,
+    isPopular: true,
+    difficulty: "easy",
+  },
+  {
+    id: "email.ses",
+    name: "Amazon SES",
+    providerId: "ses",
+    channel: NotificationChannel.EMAIL,
+    difficulty: "medium",
+  },
+  {
+    id: "email.smtp",
+    name: "SMTP",
+    providerId: "smtp",
+    channel: NotificationChannel.EMAIL,
+    difficulty: "easy",
+  },
+  {
+    id: "sms.twilio",
+    name: "Twilio",
+    providerId: "twilio",
+    channel: NotificationChannel.SMS,
+    isPopular: true,
+    difficulty: "easy",
+  },
+  {
+    id: "sms.termii",
+    name: "Termii",
+    providerId: "termii",
+    channel: NotificationChannel.SMS,
+    isPopular: true,
+    difficulty: "easy",
+  },
+  {
+    id: "sms.africastalking",
+    name: "Africa's Talking",
+    providerId: "africastalking",
+    channel: NotificationChannel.SMS,
+    difficulty: "easy",
+  },
+  {
+    id: "push.fcm",
+    name: "Firebase Cloud Messaging",
+    providerId: "fcm",
+    channel: NotificationChannel.PUSH,
+    isPopular: true,
+    difficulty: "medium",
+  },
+  {
+    id: "push.expo",
+    name: "Expo Push",
+    providerId: "expo-push",
+    channel: NotificationChannel.PUSH,
+    difficulty: "easy",
+  },
+  {
+    id: "chat.slack",
+    name: "Slack",
+    providerId: "slack",
+    channel: NotificationChannel.CHAT,
+    difficulty: "easy",
+  },
 ];
 
 @Injectable()
@@ -65,7 +131,10 @@ export class ProviderTemplateService {
   getConfigurationHints(templateId: string): string[] {
     const template = this.getTemplate(templateId);
     if (!template) return [];
-    return [`Configure credentials for ${template.name}`, "Store provider secrets in encrypted configuration"];
+    return [
+      `Configure credentials for ${template.name}`,
+      "Store provider secrets in encrypted configuration",
+    ];
   }
 
   getRecommendedTemplates(requirements: unknown): ProviderTemplate[] {

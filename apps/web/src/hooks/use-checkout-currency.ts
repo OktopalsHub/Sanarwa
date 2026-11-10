@@ -1,13 +1,12 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { billingApi } from "@/lib/api";
+import { billingApi } from "@sanarwa/api-client";
 
 interface CheckoutContextResponse {
   defaultCurrency: "USD" | "NGN";
   availableCurrencies: Array<"USD" | "NGN">;
   bachsConfigured: boolean;
-  nombaConfigured: boolean;
   providers: string[];
   countryCode?: string;
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { tenantApi } from "@/lib/api/tenant";
+import { apiClient, tenantApi } from "@sanarwa/api-client";
 import { getApiErrorMessage } from "@/lib/utils/api-error-message";
 import { toast } from "@/lib/utils/toast";
 import {
@@ -165,7 +165,6 @@ export function TenantProvider({ children }: TenantProviderProps) {
 
       dispatch({ type: "CURRENT_TENANT_SET", payload: tenant });
 
-      // Log tenant switch (fire and forget)
       try {
         const { auditLogger } = await import("@/lib/services/audit-logger");
         auditLogger.logTenantSwitch(tenantId);
@@ -250,7 +249,6 @@ export function TenantProvider({ children }: TenantProviderProps) {
 
       try {
         await tenantApi.inviteMember(state.currentTenant.id, data);
-        // Refresh tenant data to get updated member list
         await refreshTenants();
       } catch (error) {
         dispatch({
@@ -307,12 +305,15 @@ export function TenantProvider({ children }: TenantProviderProps) {
     dispatch({ type: "CLEAR_ERROR" });
   }, []);
 
-  // Load tenants when user is authenticated
   useEffect(() => {
     if (isAuthenticated) {
       refreshTenants();
     }
   }, [isAuthenticated, refreshTenants]);
+
+  useEffect(() => {
+    apiClient.setTenant(state.currentTenant?.id ?? null);
+  }, [state.currentTenant?.id, isAuthenticated]);
 
   const value: TenantContextType = {
     ...state,

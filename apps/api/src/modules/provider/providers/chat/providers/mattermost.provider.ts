@@ -5,13 +5,11 @@ import { IChatProvider, ChatPayload, ChatResponse } from "../chat-provider.inter
 interface MattermostTeam {
   id: string;
   name: string;
-  // Add other fields as needed
 }
 
 interface MattermostPostResponse {
   id: string;
   message?: string;
-  // Add other fields as needed
 }
 
 @Injectable()
@@ -29,7 +27,6 @@ export class MattermostProvider implements IChatProvider {
 
   async sendMessage(payload: ChatPayload): Promise<ChatResponse> {
     try {
-      // Use webhook if available, otherwise use API
       if (this.webhookUrl) {
         return await this.sendViaWebhook(payload);
       } else if (this.accessToken && this.serverUrl) {
@@ -85,11 +82,9 @@ export class MattermostProvider implements IChatProvider {
   }
 
   private async sendViaAPI(payload: ChatPayload): Promise<ChatResponse> {
-    // First, get channel ID if channel name is provided
     let channelId = payload.channel;
 
     if (!channelId.match(/^[a-z0-9]{26}$/)) {
-      // It's a channel name, need to get channel ID
       const channelResponse = await fetch(
         `${this.serverUrl}/api/v4/teams/name/${payload.channel}`,
         {

@@ -2,20 +2,20 @@
 
 import { User } from "@/lib/icons";
 
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@sanarwa/ui/badge";
+import { Button } from "@sanarwa/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@sanarwa/ui/card";
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
-import { Label } from "@/components/ui/label";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Textarea } from "@/components/ui/textarea";
+} from "@sanarwa/ui/dialog";
+import { Label } from "@sanarwa/ui/label";
+import { ScrollArea } from "@sanarwa/ui/scroll-area";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@sanarwa/ui/tabs";
+import { Textarea } from "@sanarwa/ui/textarea";
 import { Workflow } from "@/lib/types/workflow";
 import {
   ExclamationTriangleIcon,
@@ -95,9 +95,7 @@ export function WorkflowTestRunner({ workflow, isOpen, onClose }: WorkflowTestRu
     try {
       const parsed = JSON.parse(value);
       setTestData(parsed);
-    } catch (error) {
-      // Invalid JSON, keep the string but don't update testData
-    }
+    } catch (error) {}
   };
 
   const runTest = async () => {
@@ -115,7 +113,6 @@ export function WorkflowTestRunner({ workflow, isOpen, onClose }: WorkflowTestRu
     setTestResults((prev) => [testResult, ...prev]);
 
     try {
-      // Simulate test execution
       const results = await simulateWorkflowExecution(workflow, testData);
 
       const completedResult: TestResult = {
@@ -147,7 +144,6 @@ export function WorkflowTestRunner({ workflow, isOpen, onClose }: WorkflowTestRu
   const simulateWorkflowExecution = async (workflow: Workflow, testData: TestData) => {
     const results: TestResult["results"] = [];
 
-    // Get execution order (simplified - start with triggers)
     const triggerNodes = workflow.nodes.filter((node) => node.type === "trigger");
     const executionQueue = [...triggerNodes];
     const executed = new Set<string>();
@@ -158,12 +154,10 @@ export function WorkflowTestRunner({ workflow, isOpen, onClose }: WorkflowTestRu
 
       const startTime = Date.now();
 
-      // Simulate processing delay
       await new Promise((resolve) => setTimeout(resolve, 500 + Math.random() * 1500));
 
       const executionTime = Date.now() - startTime;
 
-      // Simulate success/failure (85% success rate)
       const success = Math.random() > 0.15;
 
       const result = {
@@ -178,7 +172,6 @@ export function WorkflowTestRunner({ workflow, isOpen, onClose }: WorkflowTestRu
       results.push(result);
       executed.add(currentNode.id);
 
-      // Add connected nodes to queue if current node succeeded
       if (success) {
         const connections = workflow.connections.filter((c) => c.sourceNodeId === currentNode.id);
         connections.forEach((conn) => {

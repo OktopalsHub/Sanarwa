@@ -1,6 +1,6 @@
 import { Column, Entity, Index, ManyToOne, OneToMany } from "typeorm";
 import { TenantMemberRole, TenantMemberStatus } from "../../../common/enums";
-import { BaseEntity } from "../../../database/entities/base.entity";
+import { BaseEntity } from "../../../common/database/entities/base.entity";
 import { ApiKey } from "../../api-key/entities/api-key.entity";
 import { Brand } from "../../brand/entities/brand.entity";
 import { Configuration } from "../../configuration/entities/configuration.entity";
@@ -31,17 +31,18 @@ export class TenantMember extends BaseEntity {
   })
   status: TenantMemberStatus;
 
-  // @Column({ type: 'json', nullable: true })
-  // permissions?: string[];
+  @Column({ type: "text", nullable: true, name: "name" })
+  name?: string | null;
 
-  // Foreign key columns
+  @Column({ type: "text", nullable: true, name: "avatar" })
+  avatar?: string | null;
+
   @Column({ type: "uuid" })
   tenantId: string;
 
   @Column({ type: "uuid" })
   userId: string;
 
-  // Relationships
   @ManyToOne(() => Tenant, (tenant) => tenant.members)
   tenant: Tenant;
 

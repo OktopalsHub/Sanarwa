@@ -1,16 +1,10 @@
 import dayjs from "dayjs";
 
-/**
- * Timezone offset mapping (in minutes)
- * Covers major timezones worldwide
- */
 const TIMEZONE_OFFSETS: Record<string, number> = {
-  // UTC
   UTC: 0,
   GMT: 0,
 
-  // Americas
-  "America/New_York": -300, // EST/EDT
+  "America/New_York": -300,
   "America/Chicago": -360,
   "America/Denver": -420,
   "America/Los_Angeles": -480,
@@ -21,7 +15,6 @@ const TIMEZONE_OFFSETS: Record<string, number> = {
   "America/Buenos_Aires": -180,
   "America/Sao_Paulo": -180,
 
-  // Europe
   "Europe/London": 0,
   "Europe/Paris": 60,
   "Europe/Berlin": 60,
@@ -33,7 +26,6 @@ const TIMEZONE_OFFSETS: Record<string, number> = {
   "Europe/Moscow": 180,
   "Europe/Istanbul": 180,
 
-  // Asia
   "Asia/Tokyo": 540,
   "Asia/Shanghai": 480,
   "Asia/Hong_Kong": 480,
@@ -46,7 +38,6 @@ const TIMEZONE_OFFSETS: Record<string, number> = {
   "Asia/Manila": 480,
   "Asia/Seoul": 540,
 
-  // Australia & Pacific
   "Australia/Sydney": 600,
   "Australia/Melbourne": 600,
   "Australia/Brisbane": 600,
@@ -56,13 +47,7 @@ const TIMEZONE_OFFSETS: Record<string, number> = {
   "Pacific/Tongatapu": 780,
 };
 
-/**
- * DateTime Helper - Lightweight timezone and scheduling utilities using dayjs
- */
 export class DateTimeHelper {
-  /**
-   * Convert UTC time to subscriber's timezone
-   */
   static convertToSubscriberTimezone(utcDate: Date, timezone: string): Date {
     try {
       const offset = this.getTimezoneOffset(timezone);
@@ -73,9 +58,6 @@ export class DateTimeHelper {
     }
   }
 
-  /**
-   * Convert subscriber's local time to UTC
-   */
   static convertToUTC(localDate: Date, timezone: string): Date {
     try {
       const offset = this.getTimezoneOffset(timezone);
@@ -86,16 +68,10 @@ export class DateTimeHelper {
     }
   }
 
-  /**
-   * Get timezone offset in minutes
-   */
   static getTimezoneOffset(timezone: string): number {
     return TIMEZONE_OFFSETS[timezone] ?? 0;
   }
 
-  /**
-   * Get current time in subscriber's timezone
-   */
   static getCurrentTimeInTimezone(timezone: string): Date {
     try {
       const offset = this.getTimezoneOffset(timezone);
@@ -105,40 +81,27 @@ export class DateTimeHelper {
     }
   }
 
-  /**
-   * Schedule notification for specific time in subscriber's timezone
-   */
-  static scheduleForTime(
-    sendTime: string, // HH:mm format
-    timezone: string,
-    recurringDays?: number[], // 0-6 (Sunday-Saturday)
-  ): Date {
+  static scheduleForTime(sendTime: string, timezone: string, recurringDays?: number[]): Date {
     try {
-      // Parse send time
       const [hours, minutes] = sendTime.split(":").map(Number);
 
-      // Get current time in subscriber's timezone
       const offset = this.getTimezoneOffset(timezone);
       const now = new Date();
       const localNow = new Date(now.getTime() + offset * 60000);
 
-      // Create next send time in local timezone
       let nextSend = new Date(localNow);
       nextSend.setHours(hours, minutes, 0, 0);
 
-      // If time has passed today, schedule for tomorrow
       if (nextSend <= localNow) {
         nextSend.setDate(nextSend.getDate() + 1);
       }
 
-      // If recurringDays specified, find next matching day
       if (recurringDays && recurringDays.length > 0) {
         while (!recurringDays.includes(nextSend.getDay())) {
           nextSend.setDate(nextSend.getDate() + 1);
         }
       }
 
-      // Convert back to UTC for storage
       return new Date(nextSend.getTime() - offset * 60000);
     } catch (error) {
       console.warn(`Error scheduling for time: ${error}`);
@@ -146,9 +109,6 @@ export class DateTimeHelper {
     }
   }
 
-  /**
-   * Get next occurrence of a recurring notification
-   */
   static getNextRecurrence(
     currentDate: Date,
     frequency: "daily" | "weekly" | "monthly",
@@ -169,7 +129,6 @@ export class DateTimeHelper {
           break;
       }
 
-      // Check if within end date
       if (endDate && next > endDate) {
         return null;
       }
@@ -181,16 +140,10 @@ export class DateTimeHelper {
     }
   }
 
-  /**
-   * Check if notification is ready to send
-   */
   static isReadyToSend(scheduledFor: Date): boolean {
     return dayjs(scheduledFor).isBefore(dayjs()) || dayjs(scheduledFor).isSame(dayjs());
   }
 
-  /**
-   * Get time until notification should be sent (in milliseconds)
-   */
   static getTimeUntilSend(scheduledFor: Date): number {
     const now = dayjs();
     const scheduled = dayjs(scheduledFor);
@@ -198,9 +151,6 @@ export class DateTimeHelper {
     return Math.max(0, diff);
   }
 
-  /**
-   * Format date for display in subscriber's timezone
-   */
   static formatInTimezone(
     date: Date,
     timezone: string,
@@ -216,9 +166,6 @@ export class DateTimeHelper {
     }
   }
 
-  /**
-   * Format date using simple formatting
-   */
   private static formatDate(date: Date, format: string): string {
     const year = date.getUTCFullYear();
     const month = String(date.getUTCMonth() + 1).padStart(2, "0");
@@ -236,13 +183,7 @@ export class DateTimeHelper {
       .replace("ss", seconds);
   }
 
-  /**
-   * Parse time string in subscriber's timezone
-   */
-  static parseTimeInTimezone(
-    timeString: string, // HH:mm format
-    timezone: string,
-  ): Date {
+  static parseTimeInTimezone(timeString: string, timezone: string): Date {
     try {
       const [hours, minutes] = timeString.split(":").map(Number);
       const offset = this.getTimezoneOffset(timezone);
@@ -259,23 +200,14 @@ export class DateTimeHelper {
     }
   }
 
-  /**
-   * Validate timezone
-   */
   static isValidTimezone(timezone: string): boolean {
     return timezone in TIMEZONE_OFFSETS;
   }
 
-  /**
-   * Get all valid timezones
-   */
   static getValidTimezones(): string[] {
     return Object.keys(TIMEZONE_OFFSETS);
   }
 
-  /**
-   * Add time to a date
-   */
   static addTime(
     date: Date,
     amount: number,
@@ -311,9 +243,6 @@ export class DateTimeHelper {
     return result;
   }
 
-  /**
-   * Subtract time from a date
-   */
   static subtractTime(
     date: Date,
     amount: number,
@@ -322,27 +251,18 @@ export class DateTimeHelper {
     return this.addTime(date, -amount, unit);
   }
 
-  /**
-   * Get start of day in UTC
-   */
   static getStartOfDay(date: Date = new Date()): Date {
     const result = new Date(date);
     result.setUTCHours(0, 0, 0, 0);
     return result;
   }
 
-  /**
-   * Get end of day in UTC
-   */
   static getEndOfDay(date: Date = new Date()): Date {
     const result = new Date(date);
     result.setUTCHours(23, 59, 59, 999);
     return result;
   }
 
-  /**
-   * Get start of week in UTC (Sunday)
-   */
   static getStartOfWeek(date: Date = new Date()): Date {
     const result = new Date(date);
     const day = result.getUTCDay();
@@ -352,9 +272,6 @@ export class DateTimeHelper {
     return result;
   }
 
-  /**
-   * Get end of week in UTC (Saturday)
-   */
   static getEndOfWeek(date: Date = new Date()): Date {
     const result = new Date(date);
     const day = result.getUTCDay();
@@ -364,9 +281,6 @@ export class DateTimeHelper {
     return result;
   }
 
-  /**
-   * Get start of month in UTC
-   */
   static getStartOfMonth(date: Date = new Date()): Date {
     const result = new Date(date);
     result.setUTCDate(1);
@@ -374,9 +288,6 @@ export class DateTimeHelper {
     return result;
   }
 
-  /**
-   * Get end of month in UTC
-   */
   static getEndOfMonth(date: Date = new Date()): Date {
     const result = new Date(date);
     result.setUTCMonth(result.getUTCMonth() + 1);
@@ -385,23 +296,14 @@ export class DateTimeHelper {
     return result;
   }
 
-  /**
-   * Check if date is in the past
-   */
   static isPast(date: Date): boolean {
     return date < new Date();
   }
 
-  /**
-   * Check if date is in the future
-   */
   static isFuture(date: Date): boolean {
     return date > new Date();
   }
 
-  /**
-   * Check if two dates are on the same day
-   */
   static isSameDay(date1: Date, date2: Date): boolean {
     return (
       date1.getUTCFullYear() === date2.getUTCFullYear() &&
@@ -410,9 +312,6 @@ export class DateTimeHelper {
     );
   }
 
-  /**
-   * Get difference between two dates in specified unit
-   */
   static getDifference(
     date1: Date,
     date2: Date,

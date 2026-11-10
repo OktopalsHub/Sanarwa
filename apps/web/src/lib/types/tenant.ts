@@ -1,4 +1,3 @@
-// Enums matching backend
 export enum TenantStatus {
   ACTIVE = "active",
   SUSPENDED = "suspended",
@@ -26,7 +25,6 @@ export enum InviteStatus {
   CANCELLED = "cancelled",
 }
 
-// Core interfaces matching backend entities
 export interface TenantQuotas {
   notifications: {
     daily?: number;
@@ -86,7 +84,6 @@ export interface TenantSettings {
     enableClickTracking?: boolean;
     enableUnsubscribeTracking?: boolean;
   };
-  // Legacy settings for backward compatibility
   allowMemberInvites?: boolean;
   requireEmailVerification?: boolean;
   maxMembers?: number;
@@ -145,24 +142,23 @@ export interface Tenant {
   name: string;
   description?: string;
   subdomain?: string;
-  slug?: string; // Added for compatibility
+  slug?: string;
   status: TenantStatus;
   quotas: TenantQuotas;
   settings?: TenantSettings;
   billingInfo?: TenantBillingInfo;
   contactInfo?: TenantContactInfo;
   usage?: TenantUsage;
-  branding?: BrandingConfig; // Added for compatibility
-  subscription?: SubscriptionPlan; // Added for compatibility
+  branding?: BrandingConfig;
+  subscription?: SubscriptionPlan;
   lastActiveAt?: Date;
   deletedAt?: Date;
   createdAt: Date;
   updatedAt: Date;
 
-  // Relationships (populated when needed)
-  user?: any; // Will be typed in auth.ts
+  user?: any;
   members?: TenantMember[];
-  roles?: any[]; // Will be typed in permissions.ts
+  roles?: any[];
 }
 
 export interface TenantMember {
@@ -177,9 +173,8 @@ export interface TenantMember {
   createdAt: Date;
   updatedAt: Date;
 
-  // Relationships
   tenant?: Tenant;
-  user?: any; // Will be typed in auth.ts
+  user?: any;
   userId?: string;
   tenantId?: string;
 }
@@ -199,14 +194,12 @@ export interface Invitation {
   createdAt: Date;
   updatedAt: Date;
 
-  // Relationships
   tenant?: Tenant;
   tenantId?: string;
-  invitedBy?: any; // Will be typed in auth.ts
-  acceptedBy?: any; // Will be typed in auth.ts
+  invitedBy?: any;
+  acceptedBy?: any;
 }
 
-// Legacy interface for backward compatibility
 export interface BrandingConfig {
   id: string;
   name: string;
@@ -228,7 +221,6 @@ export interface BrandingConfig {
   customCss?: string;
 }
 
-// Request/Response DTOs
 export interface CreateTenantRequest {
   name: string;
   description?: string;
@@ -286,14 +278,12 @@ export interface TenantQueryParams {
   sortOrder?: "ASC" | "DESC";
 }
 
-// Legacy types for backward compatibility
 export type TenantRole = TenantMemberRole;
 export type Permission = string;
 export type SubscriptionPlan = "free" | "pro" | "enterprise";
 export type InvitationStatus = InviteStatus;
 export interface TenantInvitation extends Invitation {}
 
-// State management
 export interface TenantState {
   currentTenant: Tenant | null;
   tenants: Tenant[];
@@ -303,7 +293,6 @@ export interface TenantState {
   error: string | null;
 }
 
-// API response wrappers
 export interface TenantApiResponse<T = any> {
   data: T;
   success: boolean;
@@ -317,7 +306,6 @@ export interface ValidationError {
   code: string;
 }
 
-// Events
 export interface TenantCreatedEvent {
   tenantId: string;
   tenantName: string;

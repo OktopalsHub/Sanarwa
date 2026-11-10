@@ -11,7 +11,6 @@ interface MonitoringProviderProps {
 }
 
 export default function MonitoringProvider({ children }: MonitoringProviderProps) {
-  // Disable all monitoring in development
   if (process.env.NODE_ENV === "development") {
     return <>{children}</>;
   }
@@ -20,10 +19,8 @@ export default function MonitoringProvider({ children }: MonitoringProviderProps
   const { selectedTenant } = useTenant();
 
   useEffect(() => {
-    // Initialize monitoring service
     monitoringService.initialize();
 
-    // Set up global error handling
     const handleUnhandledError = (event: ErrorEvent) => {
       reportError(event.error || new Error(event.message), {
         context: "unhandled_error",
@@ -42,11 +39,9 @@ export default function MonitoringProvider({ children }: MonitoringProviderProps
       });
     };
 
-    // Add global error listeners
     window.addEventListener("error", handleUnhandledError);
     window.addEventListener("unhandledrejection", handleUnhandledRejection);
 
-    // Cleanup
     return () => {
       window.removeEventListener("error", handleUnhandledError);
       window.removeEventListener("unhandledrejection", handleUnhandledRejection);
@@ -54,7 +49,6 @@ export default function MonitoringProvider({ children }: MonitoringProviderProps
     };
   }, []);
 
-  // Update user context when user changes
   useEffect(() => {
     if (user) {
       setUser({
@@ -67,12 +61,11 @@ export default function MonitoringProvider({ children }: MonitoringProviderProps
         id: user.id,
         email: user.email,
         name: user.name,
-        preferences: user.preferences,
+        preferences: (user as any).preferences,
       });
     }
   }, [user, selectedTenant]);
 
-  // Update tenant context when tenant changes
   useEffect(() => {
     if (selectedTenant) {
       setContext("tenant", {
@@ -84,7 +77,6 @@ export default function MonitoringProvider({ children }: MonitoringProviderProps
     }
   }, [selectedTenant]);
 
-  // Track application lifecycle events
   useEffect(() => {
     const trackAppStart = () => {
       monitoringService.trackEvent("app_start", {
@@ -110,10 +102,8 @@ export default function MonitoringProvider({ children }: MonitoringProviderProps
       });
     };
 
-    // Track app start
     trackAppStart();
 
-    // Add lifecycle event listeners
     document.addEventListener("visibilitychange", trackAppVisibilityChange);
     window.addEventListener("beforeunload", trackAppBeforeUnload);
 

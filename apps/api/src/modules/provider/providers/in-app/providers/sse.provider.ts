@@ -40,7 +40,6 @@ export class SSEProvider implements IInAppProvider {
         },
       };
 
-      // Send to each user via SSE
       for (const userId of users) {
         try {
           await this.sendSSEToUser(userId, notificationPayload);
@@ -93,7 +92,6 @@ export class SSEProvider implements IInAppProvider {
         },
       };
 
-      // Send to room via SSE API
       const response = await fetch(`${this.sseServerUrl}/api/rooms/${roomId}/notify`, {
         method: "POST",
         headers: {
@@ -129,7 +127,6 @@ export class SSEProvider implements IInAppProvider {
   }
 
   private async sendSSEToUser(userId: string, payload: any): Promise<void> {
-    // Send notification via SSE server
     const response = await fetch(`${this.sseServerUrl}/api/users/${userId}/notify`, {
       method: "POST",
       headers: {
@@ -138,10 +135,9 @@ export class SSEProvider implements IInAppProvider {
       },
       body: JSON.stringify({
         ...payload,
-        // SSE-specific formatting
         event: "notification",
         data: JSON.stringify(payload.data),
-        retry: 3000, // Retry after 3 seconds if connection lost
+        retry: 3000,
       }),
     });
 

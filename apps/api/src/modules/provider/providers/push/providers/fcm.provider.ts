@@ -21,7 +21,10 @@ export class FCMProvider implements IPushProvider {
   constructor(private configService: ConfigService) {
     this.serverKey = this.configService.get("FCM_SERVER_KEY") || "";
     this.projectId = this.configService.get("FCM_PROJECT_ID") || "";
-    this.serviceAccountJson = this.configService.get("FCM_SERVICE_ACCOUNT_JSON") || this.configService.get("FCM_SERVICE_ACCOUNT") || "";
+    this.serviceAccountJson =
+      this.configService.get("FCM_SERVICE_ACCOUNT_JSON") ||
+      this.configService.get("FCM_SERVICE_ACCOUNT") ||
+      "";
   }
 
   async sendPushNotification(payload: PushPayload): Promise<PushResponse> {
@@ -30,12 +33,10 @@ export class FCMProvider implements IPushProvider {
         ? payload.deviceTokens
         : [payload.deviceTokens];
 
-      // Prefer HTTP v1 if service account available (world-class, not legacy serverKey)
       if (this.serviceAccountJson && this.projectId) {
         return this.sendViaHttpV1(tokens, payload);
       }
 
-      // Build FCM payload with deep linking support
       const fcmPayload: any = {
         registration_ids: tokens,
         notification: {
@@ -48,7 +49,6 @@ export class FCMProvider implements IPushProvider {
         },
         data: {
           ...payload.data,
-          // Add deep link data for client-side handling
           ...(payload.deepLink && {
             deep_link: payload.deepLink.url,
             fallback_url: payload.deepLink.fallbackUrl,
@@ -60,7 +60,6 @@ export class FCMProvider implements IPushProvider {
         time_to_live: payload.ttl || 3600,
       };
 
-      // Add Android-specific options
       if (payload.android) {
         fcmPayload.android = {
           notification: {
@@ -83,7 +82,6 @@ export class FCMProvider implements IPushProvider {
         };
       }
 
-      // Add iOS-specific options (APNS)
       if (payload.ios) {
         fcmPayload.apns = {
           payload: {
@@ -102,13 +100,11 @@ export class FCMProvider implements IPushProvider {
               "interruption-level": payload.ios.interruptionLevel || "active",
               category: payload.category || payload.ios.threadId,
             },
-            // Custom data
             ...fcmPayload.data,
           },
         };
       }
 
-      // Add action buttons if provided
       if (payload.actions && payload.actions.length > 0) {
         fcmPayload.data.actions = JSON.stringify(payload.actions);
       }
@@ -172,31 +168,59 @@ export class FCMProvider implements IPushProvider {
         message: {
           token: deviceToken,
           notification: { title: payload.title, body: payload.body, image: payload.imageUrl },
-          data: payload.data ? Object.fromEntries(Object.entries(payload.data).map(([k, v]) => [k, String(v)])) : undefined,
+          data: payload.data
+            ? Object.fromEntries(Object.entries(payload.data).map(([k, v]) => [k, String(v)]))
+            : undefined,
           android: payload.android
-            ? { notification: { channel_id: payload.android.channelId, color: payload.android.color, icon: payload.android.icon, tag: payload.android.tag } }
+            ? {
+                notification: {
+                  channel_id: payload.android.channelId,
+                  color: payload.android.color,
+                  icon: payload.android.icon,
+                  tag: payload.android.tag,
+                },
+              }
             : undefined,
           apns: payload.ios
-            ? { payload: { aps: { alert: { title: payload.title, body: payload.body }, badge: payload.badge, sound: payload.sound || "default" } } }
+            ? {
+                payload: {
+                  aps: {
+                    alert: { title: payload.title, body: payload.body },
+                    badge: payload.badge,
+                    sound: payload.sound || "default",
+                  },
+                },
+              }
             : undefined,
         },
       };
 
-      const res = await fetch(`https://fcm.googleapis.com/v1/projects/${this.projectId}/messages:send`, {
-        method: "POST",
-        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
-        body: JSON.stringify(message),
-      });
+      const res = await fetch(
+        `https://fcm.googleapis.com/v1/projects/${this.projectId}/messages:send`,
+        {
+          method: "POST",
+          headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+          body: JSON.stringify(message),
+        },
+      );
       if (res.ok) successCount++;
       else {
         failureCount++;
         failedTokens.push(deviceToken);
-        this.logger.warn(`FCM v1 failed for ${deviceToken.slice(0, 8)}: ${res.status} ${await res.text()}`);
+        this.logger.warn(
+          `FCM v1 failed for ${deviceToken.slice(0, 8)}: ${res.status} ${await res.text()}`,
+        );
       }
     }
 
     this.logger.log(`FCM v1 push sent - Success: ${successCount}, Failure: ${failureCount}`);
-    return { success: failureCount === 0, successCount, failureCount, failedTokens, provider: "fcm" };
+    return {
+      success: failureCount === 0,
+      successCount,
+      failureCount,
+      failedTokens,
+      provider: "fcm",
+    };
   }
 
   async validateConfig(): Promise<boolean> {

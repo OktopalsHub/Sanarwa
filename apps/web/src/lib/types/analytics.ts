@@ -1,9 +1,6 @@
-// Analytics and metrics types
-
 import { NotificationChannel, NotificationStatus } from "./notification";
 import { ProviderType } from "./provider";
 
-// Enums for analytics
 export enum MetricType {
   DELIVERY = "delivery",
   ENGAGEMENT = "engagement",
@@ -36,7 +33,6 @@ export enum ExportFormat {
   PDF = "pdf",
 }
 
-// Core analytics interfaces
 export interface DeliveryMetrics {
   totalSent: number;
   totalDelivered: number;
@@ -44,7 +40,7 @@ export interface DeliveryMetrics {
   totalPending: number;
   deliveryRate: number;
   failureRate: number;
-  averageDeliveryTime: number; // in milliseconds
+  averageDeliveryTime: number;
   channelBreakdown: ChannelMetrics[];
   providerBreakdown: ProviderMetrics[];
   timeSeriesData: TimeSeriesPoint[];
@@ -134,15 +130,14 @@ export interface ChannelEngagementMetrics {
   bounceRate: number;
 }
 
-// Usage and performance metrics
 export interface UsageMetrics {
   totalNotifications: number;
   totalUsers: number;
   totalTemplates: number;
   totalProviders: number;
   apiCalls: number;
-  storageUsed: number; // in bytes
-  bandwidthUsed: number; // in bytes
+  storageUsed: number;
+  bandwidthUsed: number;
   quotaUsage: QuotaUsageMetrics;
   costMetrics: CostMetrics;
   timeSeriesData: UsageTimeSeriesPoint[];
@@ -201,7 +196,7 @@ export interface UsageTimeSeriesPoint {
 export interface PerformanceMetrics {
   averageProcessingTime: number;
   averageQueueTime: number;
-  throughput: number; // notifications per second
+  throughput: number;
   errorRate: number;
   systemLoad: number;
   memoryUsage: number;
@@ -235,7 +230,6 @@ export interface ServiceHealthMetrics {
   lastCheck: Date;
 }
 
-// Reporting and export interfaces
 export interface AnalyticsReport {
   id: string;
   name: string;
@@ -266,9 +260,9 @@ export enum ReportType {
 
 export interface ReportSchedule {
   frequency: "daily" | "weekly" | "monthly" | "quarterly";
-  time: string; // HH:MM format
-  dayOfWeek?: number; // 0-6 for weekly
-  dayOfMonth?: number; // 1-31 for monthly
+  time: string;
+  dayOfWeek?: number;
+  dayOfMonth?: number;
   timezone: string;
 }
 
@@ -297,7 +291,6 @@ export interface ExportResult {
   createdAt: Date;
 }
 
-// Dashboard and visualization
 export interface DashboardWidget {
   id: string;
   type: WidgetType;
@@ -311,7 +304,7 @@ export interface DashboardWidget {
   };
   config: WidgetConfig;
   filters?: AnalyticsFilters;
-  refreshInterval?: number; // in seconds
+  refreshInterval?: number;
   isVisible: boolean;
 }
 
@@ -359,7 +352,6 @@ export interface DashboardLayout {
   containerPadding: [number, number];
 }
 
-// Real-time analytics
 export interface RealTimeMetrics {
   timestamp: Date;
   activeConnections: number;
@@ -377,7 +369,6 @@ export interface RecentEvent {
   data: Record<string, any>;
 }
 
-// Request/Response DTOs
 export interface MetricsRequest {
   type: MetricType;
   filters: AnalyticsFilters;
@@ -426,7 +417,6 @@ export interface UpdateDashboardRequest extends Partial<CreateDashboardRequest> 
   id: string;
 }
 
-// Query parameters
 export interface AnalyticsQueryParams {
   type?: MetricType;
   timeRange?: TimeRange;
@@ -440,7 +430,6 @@ export interface AnalyticsQueryParams {
   limit?: number;
 }
 
-// State management
 export interface AnalyticsState {
   deliveryMetrics?: DeliveryMetrics;
   engagementStats?: EngagementStats;
@@ -453,7 +442,6 @@ export interface AnalyticsState {
   error: string | null;
 }
 
-// API response wrappers
 export interface AnalyticsApiResponse<T = any> {
   data: T;
   success: boolean;
@@ -472,7 +460,6 @@ export interface ValidationError {
   code: string;
 }
 
-// Events
 export interface MetricsUpdatedEvent {
   tenantId: string;
   type: MetricType;

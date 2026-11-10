@@ -43,9 +43,6 @@ export class SMSConversationController {
     private readonly conversationService: SMSConversationService,
   ) {}
 
-  /**
-   * Send a new SMS (starts a new conversation)
-   */
   @Post("send")
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: "Send a new SMS (starts a new conversation)" })
@@ -78,9 +75,6 @@ export class SMSConversationController {
     }
   }
 
-  /**
-   * Send a message in an existing conversation (maintains provider continuity)
-   */
   @Post("conversation/send")
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: "Send a message in an existing conversation" })
@@ -107,9 +101,6 @@ export class SMSConversationController {
     }
   }
 
-  /**
-   * Get conversation history
-   */
   @Get("conversation/:conversationId/history")
   @ApiOperation({ summary: "Get conversation history" })
   @ApiResponse({ status: 200, description: "History retrieved successfully" })
@@ -133,9 +124,6 @@ export class SMSConversationController {
     }
   }
 
-  /**
-   * Get active conversations for a tenant
-   */
   @Get("conversations")
   @ApiOperation({ summary: "Get active conversations for a tenant" })
   @ApiResponse({ status: 200, description: "Active conversations retrieved successfully" })
@@ -166,9 +154,6 @@ export class SMSConversationController {
     }
   }
 
-  /**
-   * Send bulk SMS messages
-   */
   @Post("bulk-send")
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: "Send bulk SMS messages" })
@@ -194,9 +179,6 @@ export class SMSConversationController {
     }
   }
 
-  /**
-   * Get SMS analytics for a tenant
-   */
   @Get("analytics")
   @ApiOperation({ summary: "Get SMS analytics for a tenant" })
   @ApiResponse({ status: 200, description: "Analytics retrieved successfully" })
@@ -226,9 +208,6 @@ export class SMSConversationController {
     }
   }
 
-  /**
-   * Test SMS functionality
-   */
   @Post("test")
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: "Test SMS functionality" })

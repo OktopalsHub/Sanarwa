@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { projectApi } from "@/lib/api/project";
+import { projectApi } from "@sanarwa/api-client";
 import {
   Dialog,
   DialogContent,
@@ -10,11 +10,11 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
+} from "@sanarwa/ui/dialog";
+import { Button } from "@sanarwa/ui/button";
+import { Input } from "@sanarwa/ui/input";
+import { Label } from "@sanarwa/ui/label";
+import { Textarea } from "@sanarwa/ui/textarea";
 import { useForm } from "react-hook-form";
 import { CreateProjectRequest } from "@/lib/types/project";
 import { useTenant } from "@/contexts/tenant-context";

@@ -1,23 +1,24 @@
 import { ConfigService } from "@nestjs/config";
+import { getRedisConnectionToken } from "@nestjs-modules/ioredis";
+import { CircuitBreakerService } from "../../../common/errors/services/circuit-breaker.service";
 import { Test, TestingModule } from "@nestjs/testing";
 import { getRepositoryToken } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
-import { IBaseProvider } from "../../providers/base/base-provider.interface";
-import { ProviderFactory } from "../../providers/factory/provider-factory";
-import { ProviderHealthMonitor } from "../../providers/health/provider-health-monitor";
-import { Channel, DeliveryStatus, ProviderHealth } from "../../providers/types";
-import { ProviderConfigValidator } from "./provider-config-validator";
-import { ProviderConfig } from "./provider-config.entity";
-import { ProviderEncryptionService } from "./provider-encryption.service";
-import { ProviderPerformanceTracker } from "./provider-performance-tracker";
-import { ProviderService } from "./provider.service";
+import { IBaseProvider } from "../../../providers/base/base-provider.interface";
+import { ProviderFactory } from "../../../providers/factory/provider-factory";
+import { DeliveryStatus } from "../../../providers/types";
+import { NotificationChannel } from "../../../common/enums/notification-channel.enum";
+import { ProviderConfigValidator } from "../provider-config-validator";
+import { ProviderConfig } from "../provider-config.entity";
+import { ProviderEncryptionService } from "../provider-encryption.service";
+import { ProviderPerformanceTracker } from "../provider-performance-tracker";
+import { ProviderService } from "../provider.service";
 import type { Mock, Mocked } from "vitest";
 
 describe("ProviderService", () => {
   let service: ProviderService;
   let providerConfigRepository: Mocked<Repository<ProviderConfig>>;
   let providerFactory: Mocked<ProviderFactory>;
-  let healthMonitor: Mocked<ProviderHealthMonitor>;
   let performanceTracker: Mocked<ProviderPerformanceTracker>;
   let configValidator: Mocked<ProviderConfigValidator>;
   let encryptionService: Mocked<ProviderEncryptionService>;
@@ -26,11 +27,11 @@ describe("ProviderService", () => {
   const mockProvider: Mocked<IBaseProvider> = {
     id: "test-provider",
     name: "Test Provider",
-    channel: Channel.EMAIL,
+    channel: NotificationChannel.EMAIL,
     config: {
       id: "config-1",
       name: "Test Config",
-      channel: Channel.EMAIL,
+      channel: NotificationChannel.EMAIL,
       priority: 1,
       isActive: true,
       credentials: {},
@@ -38,7 +39,6 @@ describe("ProviderService", () => {
     isInitialized: true,
     send: vi.fn(),
     validateConfig: vi.fn(),
-    checkHealth: vi.fn(),
     initialize: vi.fn(),
     destroy: vi.fn(),
   };
@@ -49,7 +49,7 @@ describe("ProviderService", () => {
     providerId: "aws_ses",
     providerName: "AWS SES",
     providerType: "aws_ses" as any,
-    channel: Channel.EMAIL,
+    channel: NotificationChannel.EMAIL,
     config: { accessKeyId: "encrypted", secretAccessKey: "encrypted" },
     priority: 1,
     isActive: true,
@@ -79,13 +79,19 @@ describe("ProviderService", () => {
           },
         },
         {
-          provide: ProviderHealthMonitor,
+          provide: getRedisConnectionToken(),
           useValue: {
-            registerProvider: vi.fn(),
-            recordSuccess: vi.fn(),
-            recordFailure: vi.fn(),
-            checkProviderHealth: vi.fn(),
+            get: vi.fn().mockResolvedValue(null),
+            set: vi.fn().mockResolvedValue("OK"),
+            del: vi.fn().mockResolvedValue(0),
+            sadd: vi.fn().mockResolvedValue(1),
+            smembers: vi.fn().mockResolvedValue([]),
+            srem: vi.fn().mockResolvedValue(1),
           },
+        },
+        {
+          provide: CircuitBreakerService,
+          useClass: CircuitBreakerService,
         },
         {
           provide: ProviderPerformanceTracker,
@@ -111,7 +117,7 @@ describe("ProviderService", () => {
         {
           provide: ConfigService,
           useValue: {
-            get: vi.fn(),
+            get: vi.fn((_key: string, defaultValue?: unknown) => defaultValue),
           },
         },
       ],
@@ -120,7 +126,6 @@ describe("ProviderService", () => {
     service = module.get<ProviderService>(ProviderService);
     providerConfigRepository = module.get(getRepositoryToken(ProviderConfig));
     providerFactory = module.get(ProviderFactory);
-    healthMonitor = module.get(ProviderHealthMonitor);
     performanceTracker = module.get(ProviderPerformanceTracker);
     configValidator = module.get(ProviderConfigValidator);
     encryptionService = module.get(ProviderEncryptionService);
@@ -139,7 +144,7 @@ describe("ProviderService", () => {
 
     const options = {
       tenantId: "tenant-1",
-      channel: Channel.EMAIL,
+      channel: NotificationChannel.EMAIL,
     };
 
     it("should send notification successfully with first provider", async () => {
@@ -149,8 +154,8 @@ describe("ProviderService", () => {
         timestamp: new Date(),
       };
 
-      // Mock provider selection
       const queryBuilder = {
+        innerJoin: vi.fn().mockReturnThis(),
         where: vi.fn().mockReturnThis(),
         andWhere: vi.fn().mockReturnThis(),
         orderBy: vi.fn().mockReturnThis(),
@@ -159,16 +164,14 @@ describe("ProviderService", () => {
       };
       providerConfigRepository.createQueryBuilder.mockReturnValue(queryBuilder as any);
 
-      // Mock encryption
       encryptionService.decrypt.mockResolvedValue({
         accessKeyId: "decrypted-key",
         secretAccessKey: "decrypted-secret",
       });
 
-      // Mock performance tracker
       performanceTracker.getMetrics.mockResolvedValue({
         providerId: "aws_ses",
-        channel: Channel.EMAIL,
+        channel: NotificationChannel.EMAIL,
         successRate: 95,
         averageResponseTime: 100,
         totalRequests: 100,
@@ -178,7 +181,6 @@ describe("ProviderService", () => {
         errorRate: 5,
       });
 
-      // Mock provider factory and provider
       providerFactory.createProvider.mockResolvedValue(mockProvider);
       mockProvider.send.mockResolvedValue(mockResponse);
 
@@ -187,7 +189,6 @@ describe("ProviderService", () => {
       expect(result.success).toBe(true);
       expect(result.response).toEqual(mockResponse);
       expect(result.providerId).toBe("aws_ses");
-      expect(healthMonitor.recordSuccess).toHaveBeenCalled();
       expect(performanceTracker.recordSuccess).toHaveBeenCalled();
     });
 
@@ -205,8 +206,8 @@ describe("ProviderService", () => {
         timestamp: new Date(),
       };
 
-      // Mock provider selection returning two providers
       const queryBuilder = {
+        innerJoin: vi.fn().mockReturnThis(),
         where: vi.fn().mockReturnThis(),
         andWhere: vi.fn().mockReturnThis(),
         orderBy: vi.fn().mockReturnThis(),
@@ -222,7 +223,7 @@ describe("ProviderService", () => {
 
       performanceTracker.getMetrics.mockResolvedValue({
         providerId: "aws_ses",
-        channel: Channel.EMAIL,
+        channel: NotificationChannel.EMAIL,
         successRate: 95,
         averageResponseTime: 100,
         totalRequests: 100,
@@ -232,7 +233,6 @@ describe("ProviderService", () => {
         errorRate: 5,
       });
 
-      // First provider fails, second succeeds
       const mockProvider2 = { ...mockProvider, id: "sendgrid" };
       providerFactory.createProvider
         .mockResolvedValueOnce(mockProvider)
@@ -246,16 +246,12 @@ describe("ProviderService", () => {
       expect(result.success).toBe(true);
       expect(result.response).toEqual(mockResponse);
       expect(result.providerId).toBe("sendgrid");
-      expect(healthMonitor.recordFailure).toHaveBeenCalledWith(
-        "aws_ses",
-        Channel.EMAIL,
-        "Provider failed",
-      );
-      expect(healthMonitor.recordSuccess).toHaveBeenCalled();
+      expect(performanceTracker.recordFailure).toHaveBeenCalled();
     });
 
     it("should throw error when all providers fail", async () => {
       const queryBuilder = {
+        innerJoin: vi.fn().mockReturnThis(),
         where: vi.fn().mockReturnThis(),
         andWhere: vi.fn().mockReturnThis(),
         orderBy: vi.fn().mockReturnThis(),
@@ -271,7 +267,7 @@ describe("ProviderService", () => {
 
       performanceTracker.getMetrics.mockResolvedValue({
         providerId: "aws_ses",
-        channel: Channel.EMAIL,
+        channel: NotificationChannel.EMAIL,
         successRate: 95,
         averageResponseTime: 100,
         totalRequests: 100,
@@ -288,11 +284,12 @@ describe("ProviderService", () => {
         "All providers failed. Last error: All providers failed",
       );
 
-      expect(healthMonitor.recordFailure).toHaveBeenCalled();
+      expect(performanceTracker.recordFailure).toHaveBeenCalled();
     });
 
     it("should throw error when no providers available", async () => {
       const queryBuilder = {
+        innerJoin: vi.fn().mockReturnThis(),
         where: vi.fn().mockReturnThis(),
         andWhere: vi.fn().mockReturnThis(),
         orderBy: vi.fn().mockReturnThis(),
@@ -316,12 +313,11 @@ describe("ProviderService", () => {
 
       const options = {
         tenantId: "tenant-1",
-        channel: Channel.EMAIL,
+        channel: NotificationChannel.EMAIL,
       };
 
-      configService.get.mockReturnValue(100); // Batch size
+      configService.get.mockReturnValue(100);
 
-      // Mock successful send for all
       vi.spyOn(service, "send").mockResolvedValue({
         success: true,
         response: {
@@ -345,11 +341,12 @@ describe("ProviderService", () => {
     it("should select providers based on options", async () => {
       const options = {
         tenantId: "tenant-1",
-        channel: Channel.EMAIL,
+        channel: NotificationChannel.EMAIL,
         country: "US",
       };
 
       const queryBuilder = {
+        innerJoin: vi.fn().mockReturnThis(),
         where: vi.fn().mockReturnThis(),
         andWhere: vi.fn().mockReturnThis(),
         orderBy: vi.fn().mockReturnThis(),
@@ -358,6 +355,12 @@ describe("ProviderService", () => {
       };
       providerConfigRepository.createQueryBuilder.mockReturnValue(queryBuilder as any);
 
+      configService.get.mockImplementation((key: string, defaultValue?: unknown) => {
+        if (key === "PROVIDER_MIN_SUCCESS_RATE") return 80;
+        if (key === "CIRCUIT_BREAKER_FAILURE_THRESHOLD") return 5;
+        return defaultValue;
+      });
+
       encryptionService.decrypt.mockResolvedValue({
         accessKeyId: "decrypted-key",
         secretAccessKey: "decrypted-secret",
@@ -365,7 +368,7 @@ describe("ProviderService", () => {
 
       performanceTracker.getMetrics.mockResolvedValue({
         providerId: "aws_ses",
-        channel: Channel.EMAIL,
+        channel: NotificationChannel.EMAIL,
         successRate: 95,
         averageResponseTime: 100,
         totalRequests: 100,
@@ -379,22 +382,24 @@ describe("ProviderService", () => {
 
       expect(providers).toHaveLength(1);
       expect(providers[0].providerId).toBe("aws_ses");
-      expect(queryBuilder.where).toHaveBeenCalledWith("provider.tenantId = :tenantId", {
+      expect(queryBuilder.innerJoin).toHaveBeenCalledWith("provider.project", "project");
+      expect(queryBuilder.where).toHaveBeenCalledWith("project.tenantId = :tenantId", {
         tenantId: "tenant-1",
       });
       expect(queryBuilder.andWhere).toHaveBeenCalledWith("provider.channel = :channel", {
-        channel: Channel.EMAIL,
+        channel: NotificationChannel.EMAIL,
       });
     });
 
     it("should exclude specified providers", async () => {
       const options = {
         tenantId: "tenant-1",
-        channel: Channel.EMAIL,
+        channel: NotificationChannel.EMAIL,
         excludeProviders: ["aws_ses"],
       };
 
       const queryBuilder = {
+        innerJoin: vi.fn().mockReturnThis(),
         where: vi.fn().mockReturnThis(),
         andWhere: vi.fn().mockReturnThis(),
         orderBy: vi.fn().mockReturnThis(),
@@ -416,17 +421,11 @@ describe("ProviderService", () => {
   describe("validateProviderConfig", () => {
     it("should validate provider configuration successfully", async () => {
       configValidator.validate.mockResolvedValue(true);
-      providerFactory.createProvider.mockResolvedValue(mockProvider);
-      mockProvider.checkHealth.mockResolvedValue({
-        status: ProviderHealth.HEALTHY,
-        lastChecked: new Date(),
-      });
 
       const isValid = await service.validateProviderConfig(mockProviderConfig);
 
       expect(isValid).toBe(true);
       expect(configValidator.validate).toHaveBeenCalledWith(mockProviderConfig);
-      expect(mockProvider.checkHealth).toHaveBeenCalled();
     });
 
     it("should return false for invalid configuration", async () => {
@@ -438,13 +437,8 @@ describe("ProviderService", () => {
       expect(configValidator.validate).toHaveBeenCalledWith(mockProviderConfig);
     });
 
-    it("should return false when provider health check fails", async () => {
-      configValidator.validate.mockResolvedValue(true);
-      providerFactory.createProvider.mockResolvedValue(mockProvider);
-      mockProvider.checkHealth.mockResolvedValue({
-        status: ProviderHealth.UNHEALTHY,
-        lastChecked: new Date(),
-      });
+    it("should return false when validation throws", async () => {
+      configValidator.validate.mockRejectedValue(new Error("validation blew up"));
 
       const isValid = await service.validateProviderConfig(mockProviderConfig);
 
@@ -471,7 +465,7 @@ describe("ProviderService", () => {
       const result = await service.updateProviderConfig(
         "tenant-1",
         "aws_ses",
-        Channel.EMAIL,
+        NotificationChannel.EMAIL,
         updates,
       );
 
@@ -484,18 +478,32 @@ describe("ProviderService", () => {
       providerConfigRepository.findOne.mockResolvedValue(null);
 
       await expect(
-        service.updateProviderConfig("tenant-1", "aws_ses", Channel.EMAIL, {}),
+        service.updateProviderConfig("tenant-1", "aws_ses", NotificationChannel.EMAIL, {}),
       ).rejects.toThrow("Provider configuration not found: aws_ses for email");
     });
   });
 
   describe("toggleProvider", () => {
     it("should enable/disable provider", async () => {
-      await service.toggleProvider("tenant-1", "aws_ses", Channel.EMAIL, false);
+      providerConfigRepository.find.mockResolvedValue([mockProviderConfig]);
+      providerConfigRepository.save.mockResolvedValue({ ...mockProviderConfig, isActive: false });
 
-      expect(providerConfigRepository.update).toHaveBeenCalledWith(
-        { tenantId: "tenant-1", providerId: "aws_ses", channel: Channel.EMAIL },
-        { isActive: false },
+      await service.toggleProvider("tenant-1", "aws_ses", NotificationChannel.EMAIL, false);
+
+      expect(providerConfigRepository.find).toHaveBeenCalledWith({
+        where: {
+          project: { tenant: { id: "tenant-1" } },
+          providerId: "aws_ses",
+          channel: NotificationChannel.EMAIL,
+        },
+        relations: {
+          project: {
+            tenant: true,
+          },
+        },
+      });
+      expect(providerConfigRepository.save).toHaveBeenCalledWith(
+        expect.objectContaining({ isActive: false }),
       );
     });
   });
@@ -504,15 +512,20 @@ describe("ProviderService", () => {
     it("should return available providers for tenant and channel", async () => {
       providerConfigRepository.find.mockResolvedValue([mockProviderConfig]);
 
-      const providers = await service.getAvailableProviders("tenant-1", Channel.EMAIL);
+      const providers = await service.getAvailableProviders("tenant-1", NotificationChannel.EMAIL);
 
       expect(providers).toHaveLength(1);
       expect(providers[0]).toEqual(mockProviderConfig);
       expect(providerConfigRepository.find).toHaveBeenCalledWith({
         where: {
-          tenantId: "tenant-1",
-          channel: Channel.EMAIL,
+          project: { tenant: { id: "tenant-1" } },
+          channel: NotificationChannel.EMAIL,
           isActive: true,
+        },
+        relations: {
+          project: {
+            tenant: true,
+          },
         },
         order: {
           priority: "ASC",
@@ -522,30 +535,11 @@ describe("ProviderService", () => {
     });
   });
 
-  describe("getProviderHealth", () => {
-    it("should return provider health status", async () => {
-      const healthResult = {
-        providerId: "aws_ses",
-        channel: Channel.EMAIL,
-        isHealthy: true,
-        status: { status: ProviderHealth.HEALTHY, lastChecked: new Date() },
-        metrics: {},
-      };
-
-      healthMonitor.checkProviderHealth.mockResolvedValue(healthResult);
-
-      const result = await service.getProviderHealth("aws_ses", Channel.EMAIL);
-
-      expect(result).toEqual(healthResult);
-      expect(healthMonitor.checkProviderHealth).toHaveBeenCalledWith("aws_ses", Channel.EMAIL);
-    });
-  });
-
   describe("getProviderMetrics", () => {
     it("should return provider performance metrics", async () => {
       const metrics = {
         providerId: "aws_ses",
-        channel: Channel.EMAIL,
+        channel: NotificationChannel.EMAIL,
         successRate: 95,
         averageResponseTime: 100,
         totalRequests: 100,
@@ -557,10 +551,13 @@ describe("ProviderService", () => {
 
       performanceTracker.getMetrics.mockResolvedValue(metrics);
 
-      const result = await service.getProviderMetrics("aws_ses", Channel.EMAIL);
+      const result = await service.getProviderMetrics("aws_ses", NotificationChannel.EMAIL);
 
       expect(result).toEqual(metrics);
-      expect(performanceTracker.getMetrics).toHaveBeenCalledWith("aws_ses", Channel.EMAIL);
+      expect(performanceTracker.getMetrics).toHaveBeenCalledWith(
+        "aws_ses",
+        NotificationChannel.EMAIL,
+      );
     });
   });
 });

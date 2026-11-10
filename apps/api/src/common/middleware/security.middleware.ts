@@ -11,13 +11,11 @@ export function configureSecurityMiddleware(
 ) {
   const nodeEnv = process.env.NODE_ENV || "development";
 
-  // Enhanced Security middleware - Helmet (skip for API documentation routes)
   app.use((req, res, next) => {
     if (req.path.startsWith("/api/v1/auth/reference")) {
       return next();
     }
 
-    // Apply Helmet for all other routes
     helmet({
       contentSecurityPolicy: {
         directives: {
@@ -25,7 +23,7 @@ export function configureSecurityMiddleware(
           styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
           scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'"],
           imgSrc: ["'self'", "data:", "https:", "blob:"],
-          connectSrc: ["'self'", "ws:", "wss:", "https://api.sentry.io"],
+          connectSrc: ["'self'", "ws:", "wss:"],
           fontSrc: ["'self'", "https:", "data:", "https://fonts.gstatic.com"],
           objectSrc: ["'none'"],
           mediaSrc: ["'self'", "blob:"],
@@ -36,7 +34,7 @@ export function configureSecurityMiddleware(
       crossOriginEmbedderPolicy: false,
       crossOriginResourcePolicy: { policy: "cross-origin" },
       hsts: {
-        maxAge: 31536000, // 1 year
+        maxAge: 31536000,
         includeSubDomains: true,
         preload: true,
       },
@@ -46,7 +44,6 @@ export function configureSecurityMiddleware(
     })(req, res, next);
   });
 
-  // HTTP request logging - Morgan
   if (nodeEnv === "production") {
     app.use(
       morgan("combined", {
@@ -56,8 +53,7 @@ export function configureSecurityMiddleware(
           },
         },
         skip: (req) => {
-          // Skip logging for health check endpoints
-          return req.url?.includes("/health") || req.url?.includes("/metrics");
+          return req.url?.includes("/metrics");
         },
       }),
     );
@@ -70,8 +66,7 @@ export function configureSecurityMiddleware(
           },
         },
         skip: (req) => {
-          // Skip logging for health check endpoints
-          return req.url?.includes("/health") || req.url?.includes("/metrics");
+          return req.url?.includes("/metrics");
         },
       }),
     );
@@ -87,15 +82,12 @@ export function configureCORS(app: INestApplication, configService: ConfigServic
 
   app.enableCors({
     origin: (origin, callback) => {
-      // Allow requests with no origin (like mobile apps or curl requests)
       if (!origin) return callback(null, true);
 
-      // Check if the origin is in the allowed list
       if (corsOrigins.includes(origin) || corsOrigins.includes("*")) {
         return callback(null, true);
       }
 
-      // In development, be more permissive
       if (process.env.NODE_ENV === "development") {
         return callback(null, true);
       }
@@ -111,6 +103,6 @@ export function configureCORS(app: INestApplication, configService: ConfigServic
       "X-API-Key",
     ],
     credentials: true,
-    optionsSuccessStatus: 200, // Some legacy browsers choke on 204
+    optionsSuccessStatus: 200,
   });
 }

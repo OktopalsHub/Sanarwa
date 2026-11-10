@@ -1,9 +1,9 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Progress } from "@/components/ui/progress";
-import { Separator } from "@/components/ui/separator";
+import { Button } from "@sanarwa/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@sanarwa/ui/card";
+import { Progress } from "@sanarwa/ui/progress";
+import { Separator } from "@sanarwa/ui/separator";
 import { Tenant } from "@/lib/types/tenant";
 import {
   CheckIcon,
@@ -92,7 +92,6 @@ const plans: SubscriptionPlan[] = [
   },
 ];
 
-// Mock usage data - in real app this would come from API
 const mockUsageData = {
   messages: {
     used: 2847,
@@ -118,7 +117,6 @@ export function TenantBillingSettings({ tenant }: TenantBillingSettingsProps) {
   const handleUpgrade = async (planId: string) => {
     setIsLoading(true);
     try {
-      // In a real app, this would redirect to Stripe or handle payment
       const response = await fetch(`/api/billing/upgrade`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -194,7 +192,6 @@ export function TenantBillingSettings({ tenant }: TenantBillingSettingsProps) {
 
   return (
     <div className="space-y-6">
-      {/* Current Plan */}
       <Card>
         <CardHeader>
           <CardTitle>Current Subscription</CardTitle>
@@ -224,7 +221,6 @@ export function TenantBillingSettings({ tenant }: TenantBillingSettingsProps) {
             )}
           </div>
 
-          {/* Usage Statistics */}
           <div className="space-y-4">
             <h4 className="font-medium">Usage This Month</h4>
 
@@ -267,7 +263,6 @@ export function TenantBillingSettings({ tenant }: TenantBillingSettingsProps) {
         </CardContent>
       </Card>
 
-      {/* Available Plans */}
       <Card>
         <CardHeader>
           <CardTitle>Available Plans</CardTitle>
@@ -343,7 +338,6 @@ export function TenantBillingSettings({ tenant }: TenantBillingSettingsProps) {
         </CardContent>
       </Card>
 
-      {/* Billing Information */}
       {tenant.subscription && tenant.subscription !== "free" && (
         <Card>
           <CardHeader>

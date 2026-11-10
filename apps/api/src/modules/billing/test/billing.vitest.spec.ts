@@ -101,7 +101,6 @@ describe("Billing Module Integration Tests", () => {
       expect([200, 401, 403, 500]).toContain(response.status);
       if (response.status === 200) {
         expect(response.data).toHaveProperty("defaultCurrency");
-        expect(response.data).toHaveProperty("nombaConfigured");
       }
     });
 

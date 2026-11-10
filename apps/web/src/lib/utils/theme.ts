@@ -1,27 +1,17 @@
-/**
- * Theme utilities for dynamic theming and branding
- */
-
 import { BrandingColors } from "@/contexts/branding-context";
 
-/**
- * Generate CSS custom properties from branding colors
- */
 export function generateCSSVariables(
   colors: BrandingColors,
   isDark = false,
 ): Record<string, string> {
   const variables: Record<string, string> = {};
 
-  // Map branding colors to CSS custom properties
   Object.entries(colors).forEach(([key, value]) => {
     const cssVar = `--${key.replace(/([A-Z])/g, "-$1").toLowerCase()}`;
     variables[cssVar] = value;
   });
 
-  // Generate additional derived colors for dark mode
   if (isDark) {
-    // Adjust colors for dark mode if needed
     variables["--background"] = colors.background || "oklch(0.145 0 0)";
     variables["--foreground"] = colors.foreground || "oklch(0.985 0 0)";
     variables["--card"] = "oklch(0.205 0 0)";
@@ -29,7 +19,6 @@ export function generateCSSVariables(
     variables["--popover"] = "oklch(0.205 0 0)";
     variables["--popover-foreground"] = "oklch(0.985 0 0)";
   } else {
-    // Light mode defaults
     variables["--background"] = colors.background || "oklch(1 0 0)";
     variables["--foreground"] = colors.foreground || "oklch(0.145 0 0)";
     variables["--card"] = "oklch(1 0 0)";
@@ -41,9 +30,6 @@ export function generateCSSVariables(
   return variables;
 }
 
-/**
- * Apply CSS variables to document root
- */
 export function applyCSSVariables(variables: Record<string, string>): void {
   const root = document.documentElement;
 
@@ -52,9 +38,6 @@ export function applyCSSVariables(variables: Record<string, string>): void {
   });
 }
 
-/**
- * Remove CSS variables from document root
- */
 export function removeCSSVariables(variables: string[]): void {
   const root = document.documentElement;
 
@@ -63,9 +46,6 @@ export function removeCSSVariables(variables: string[]): void {
   });
 }
 
-/**
- * Generate theme-aware color variations
- */
 export function generateColorVariations(baseColor: string): {
   50: string;
   100: string;
@@ -79,8 +59,6 @@ export function generateColorVariations(baseColor: string): {
   900: string;
   950: string;
 } {
-  // This is a simplified implementation
-  // In a real application, you might use a color manipulation library
   return {
     50: baseColor,
     100: baseColor,
@@ -96,42 +74,28 @@ export function generateColorVariations(baseColor: string): {
   };
 }
 
-/**
- * Create smooth theme transition
- */
 export function createThemeTransition(duration = 300): void {
   const root = document.documentElement;
 
-  // Add transition class
   root.classList.add("theme-transitioning");
 
-  // Remove transition class after animation completes
   setTimeout(() => {
     root.classList.remove("theme-transitioning");
   }, duration);
 }
 
-/**
- * Detect user's preferred color scheme
- */
 export function getPreferredColorScheme(): "light" | "dark" {
   if (typeof window === "undefined") return "light";
 
   return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
 }
 
-/**
- * Check if user prefers reduced motion
- */
 export function prefersReducedMotion(): boolean {
   if (typeof window === "undefined") return false;
 
   return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 }
 
-/**
- * Generate theme-aware shadows
- */
 export function generateShadows(isDark = false): Record<string, string> {
   if (isDark) {
     return {
@@ -154,9 +118,6 @@ export function generateShadows(isDark = false): Record<string, string> {
   };
 }
 
-/**
- * Create a complete theme configuration
- */
 export interface ThemeConfig {
   colors: BrandingColors;
   typography: {
@@ -194,9 +155,6 @@ export function createThemeConfig(
   };
 }
 
-/**
- * Apply complete theme configuration
- */
 export function applyThemeConfig(config: ThemeConfig): void {
   const variables = {
     ...generateCSSVariables(config.colors),
@@ -210,23 +168,14 @@ export function applyThemeConfig(config: ThemeConfig): void {
   applyCSSVariables(variables);
 }
 
-/**
- * Interpolate between two colors
- */
 export function interpolateColor(color1: string, color2: string, factor: number): string {
-  // Simplified color interpolation
-  // In a real implementation, you'd want proper color space interpolation
   return factor < 0.5 ? color1 : color2;
 }
 
-/**
- * Generate accessible color pairs
- */
 export function generateAccessiblePairs(baseColor: string): {
   light: { background: string; foreground: string };
   dark: { background: string; foreground: string };
 } {
-  // Simplified implementation
   return {
     light: {
       background: "oklch(1 0 0)",

@@ -1,7 +1,3 @@
-/**
- * Project-related types for the Notifi platform
- */
-
 export enum ProjectStatus {
   ACTIVE = "active",
   INACTIVE = "inactive",
@@ -20,7 +16,6 @@ export interface Project {
   createdAt: Date;
   updatedAt: Date;
 
-  // Computed properties
   apiKeysCount?: number;
   providerConfigsCount?: number;
   memberCount?: number;

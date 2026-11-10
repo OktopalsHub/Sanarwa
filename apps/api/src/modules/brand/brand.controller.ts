@@ -12,9 +12,9 @@ import {
   UseGuards,
 } from "@nestjs/common";
 import { ApiBearerAuth, ApiOperation, ApiParam, ApiResponse, ApiTags } from "@nestjs/swagger";
-import { CurrentMemberId, CurrentTenantId } from "src/common/decorators";
-import { TenantMemberGuard } from "src/common/guards";
-import { AuthGuard } from "src/modules/auth/guards/jwt-auth.guard";
+import { CurrentMemberId, CurrentTenantId } from "../../common/decorators";
+import { TenantMemberGuard } from "../../common/guards";
+import { AuthGuard } from "../../modules/auth/guards/jwt-auth.guard";
 import { BrandService } from "./brand.service";
 import { BrandQueryDto } from "./dtos/brand-query.dto";
 import { CreateBrandDto } from "./dtos/create-brand.dto";
@@ -156,9 +156,11 @@ export class BrandController {
     return this.brandDomainService.getDomainVerificationInstructions(tenantId, brandId, domain);
   }
 
-  // SES-specific endpoints
   @Get("/:brandId/ses-domain-verification-instructions")
-  @ApiOperation({ summary: "Get SES domain verification instructions - generic custom domain + optional Cloudflare auto" })
+  @ApiOperation({
+    summary:
+      "Get SES domain verification instructions - generic custom domain + optional Cloudflare auto",
+  })
   @ApiParam({ name: "brandId", description: "Brand ID" })
   @ApiResponse({ status: 200, description: "SES verification instructions retrieved" })
   @ApiResponse({ status: 401, description: "Unauthorized" })
@@ -168,11 +170,18 @@ export class BrandController {
     @Query("domain") domain?: string,
     @Query("cloudflareApiToken") cloudflareApiToken?: string,
   ) {
-    return this.brandSesService.getSESDomainVerificationInstructions(tenantId, brandId, domain, cloudflareApiToken);
+    return this.brandSesService.getSESDomainVerificationInstructions(
+      tenantId,
+      brandId,
+      domain,
+      cloudflareApiToken,
+    );
   }
 
   @Post("/:brandId/verify-ses-domain")
-  @ApiOperation({ summary: "Verify domain with AWS SES - generic custom domain + optional Cloudflare auto" })
+  @ApiOperation({
+    summary: "Verify domain with AWS SES - generic custom domain + optional Cloudflare auto",
+  })
   @ApiParam({ name: "brandId", description: "Brand ID" })
   @ApiResponse({ status: 200, description: "SES domain verification initiated" })
   @ApiResponse({ status: 400, description: "Bad Request" })
@@ -182,11 +191,18 @@ export class BrandController {
     @Param("brandId") brandId: string,
     @Body() body: { domain: string; cloudflareApiToken?: string },
   ) {
-    return this.brandSesService.verifySESDomain(tenantId, brandId, body.domain, body.cloudflareApiToken);
+    return this.brandSesService.verifySESDomain(
+      tenantId,
+      brandId,
+      body.domain,
+      body.cloudflareApiToken,
+    );
   }
 
   @Post("/:brandId/setup-ses-dkim")
-  @ApiOperation({ summary: "Setup DKIM with AWS SES - generic custom domain + optional Cloudflare auto" })
+  @ApiOperation({
+    summary: "Setup DKIM with AWS SES - generic custom domain + optional Cloudflare auto",
+  })
   @ApiParam({ name: "brandId", description: "Brand ID" })
   @ApiResponse({ status: 200, description: "SES DKIM setup initiated" })
   @ApiResponse({ status: 401, description: "Unauthorized" })
@@ -243,7 +259,6 @@ export class BrandController {
     return this.brandMessagingConfigService.getEmailRecommendations(tenantId, brandId);
   }
 
-  // Resend-specific endpoints
   @Post("/:brandId/resend-domain-verification-instructions")
   @ApiOperation({
     summary: "Get Resend domain verification instructions with Cloudflare DNS auto-setup",
@@ -311,7 +326,6 @@ export class BrandController {
     return this.brandResendService.getResendEmailRecommendations(tenantId, brandId, resendApiKey);
   }
 
-  // Push notification endpoints
   @Get("/:brandId/push-config")
   @ApiOperation({ summary: "Get brand push notification configuration" })
   @ApiParam({ name: "brandId", description: "Brand ID" })

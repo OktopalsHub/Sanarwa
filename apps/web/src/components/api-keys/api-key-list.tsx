@@ -4,17 +4,11 @@ import { Filter } from "@/lib/icons";
 
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@sanarwa/ui/card";
+import { Badge } from "@sanarwa/ui/badge";
+import { Button } from "@sanarwa/ui/button";
+import { Input } from "@sanarwa/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@sanarwa/ui/select";
 import {
   EllipsisHorizontalIcon,
   MagnifyingGlassIcon,
@@ -29,11 +23,10 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+} from "@sanarwa/ui/dropdown-menu";
 import { useTenant } from "@/contexts/tenant-context";
-import { apiClient } from "@/lib/api/client";
-import { apiKeyApi } from "@/lib/api/api-key";
-import { projectApi } from "@/lib/api/project";
+import { apiKeyApi } from "@sanarwa/api-client";
+import { projectApi } from "@sanarwa/api-client";
 import { toast } from "sonner";
 
 export function ApiKeyList() {
@@ -50,7 +43,6 @@ export function ApiKeyList() {
     queryKey: ["api-keys", selectedTenant?.id, searchQuery, statusFilter],
     queryFn: async () => {
       if (selectedTenant?.id) {
-        apiClient.setTenant(selectedTenant.id);
       }
       const projectsResult = await projectApi.getProjects({ limit: 100 });
       const projects = projectsResult.data || [];
@@ -141,7 +133,6 @@ export function ApiKeyList() {
 
   const handleRevokeKey = async (keyId: string, keyName: string) => {
     try {
-      // TODO: Implement API key revocation
       toast.success(`${keyName} has been revoked`);
     } catch (error) {
       toast.error("Failed to revoke API key");
@@ -180,7 +171,6 @@ export function ApiKeyList() {
 
   return (
     <div className="space-y-6">
-      {/* Filters */}
       <div className="flex gap-4">
         <div className="relative flex-1 max-w-sm">
           <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -203,7 +193,6 @@ export function ApiKeyList() {
         </Select>
       </div>
 
-      {/* API Keys List */}
       {apiKeys.length === 0 ? (
         <Card>
           <CardContent className="pt-6">
@@ -267,7 +256,6 @@ export function ApiKeyList() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {/* API Key Display */}
                   <div className="flex items-center gap-2">
                     <Input
                       value={visibleKeys.has(apiKey.id) ? apiKey.key : maskApiKey(apiKey.key)}
@@ -290,7 +278,6 @@ export function ApiKeyList() {
                     </Button>
                   </div>
 
-                  {/* Metadata */}
                   <div className="flex items-center justify-between text-sm text-muted-foreground">
                     <div className="flex items-center gap-4">
                       <span>Created {formatDate(apiKey.createdAt)}</span>

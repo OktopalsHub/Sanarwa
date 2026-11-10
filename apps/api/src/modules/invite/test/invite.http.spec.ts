@@ -1,15 +1,9 @@
-/**
- * Invite Module HTTP Tests
- * Tests invitation system endpoints via HTTP calls
- */
-
 import axios, { AxiosInstance } from "axios";
 
 describe("Invite Module HTTP Tests", () => {
   const baseURL = "http://localhost:9000/api/v1";
   let api: AxiosInstance;
 
-  // Test data
   const testUser = {
     email: `invite-owner-${Date.now()}@example.com`,
     password: "TestPassword123!",
@@ -34,13 +28,11 @@ describe("Invite Module HTTP Tests", () => {
     api = axios.create({
       baseURL,
       timeout: 10000,
-      validateStatus: () => true, // Don't throw on HTTP errors
+      validateStatus: () => true,
     });
 
-    // Wait for server to be ready
     await waitForServer();
 
-    // Setup test data
     await setupTestData();
   });
 
@@ -62,7 +54,6 @@ describe("Invite Module HTTP Tests", () => {
   }
 
   async function setupTestData(): Promise<void> {
-    // Register user (will create tenant automatically)
     const response = await api.post("/auth/register", testUser);
     expect(response.status).toBe(201);
 
@@ -72,7 +63,6 @@ describe("Invite Module HTTP Tests", () => {
       userId: response.data.user.id,
     };
 
-    // Get tenant ID
     const workspacesResponse = await api.get("/tenant-members/user-workspaces", {
       headers: {
         Authorization: `Bearer ${authTokens.accessToken}`,
@@ -109,7 +99,6 @@ describe("Invite Module HTTP Tests", () => {
         expect(response.data.status).toBe("PENDING");
         expect(response.data).toHaveProperty("expiresAt");
 
-        // Store for later tests
         inviteId = response.data.id;
         inviteCode = response.data.inviteCode;
       });
@@ -194,8 +183,6 @@ describe("Invite Module HTTP Tests", () => {
       });
 
       it("should not allow non-admin to create invitations", async () => {
-        // This would need a member user token to test properly
-        // For now, test with invalid tenant access
         const response = await api.post(
           "/tenants/00000000-0000-0000-0000-000000000000/invites",
           {
@@ -365,8 +352,6 @@ describe("Invite Module HTTP Tests", () => {
       });
 
       it("should not resend expired invitation", async () => {
-        // This would need an expired invitation to test properly
-        // For now, test with non-existent invitation
         const response = await api.post(
           `/tenants/${tenantId}/invites/00000000-0000-0000-0000-000000000000/resend`,
           {},
@@ -391,7 +376,6 @@ describe("Invite Module HTTP Tests", () => {
 
         expect(response.status).toBe(204);
 
-        // Verify invitation was cancelled
         const getResponse = await api.get(`/tenants/${tenantId}/invites/${inviteId}`, {
           headers: {
             Authorization: `Bearer ${authTokens.accessToken}`,
@@ -410,7 +394,6 @@ describe("Invite Module HTTP Tests", () => {
     let newInviteCode: string;
 
     beforeAll(async () => {
-      // Create a new invitation for acceptance tests
       const response = await api.post(
         `/tenants/${tenantId}/invites`,
         {
@@ -447,7 +430,6 @@ describe("Invite Module HTTP Tests", () => {
       });
 
       it("should not get expired invitation", async () => {
-        // This would need an expired invitation to test properly
         const response = await api.get("/invites/expired-code");
 
         expect(response.status).toBe(404);
@@ -456,13 +438,10 @@ describe("Invite Module HTTP Tests", () => {
 
     describe("POST /invites/:code/accept", () => {
       it("should accept invitation for existing user", async () => {
-        // This would require registering a user with the invited email first
-        // For now, test the endpoint structure
         const response = await api.post(`/invites/${newInviteCode}/accept`, {
           password: "AcceptPassword123!",
         });
 
-        // Could be 200 (accepted) or 400 (user doesn't exist) or other validation
         expect([200, 400, 404]).toContain(response.status);
       });
 
@@ -473,7 +452,6 @@ describe("Invite Module HTTP Tests", () => {
           password: "NewPassword123!",
         });
 
-        // Could be 200 (accepted) or 400 (validation) depending on implementation
         expect([200, 201, 400]).toContain(response.status);
       });
 
@@ -486,9 +464,7 @@ describe("Invite Module HTTP Tests", () => {
       });
 
       it("should validate required fields for new user", async () => {
-        const response = await api.post(`/invites/${newInviteCode}/accept`, {
-          // missing required fields
-        });
+        const response = await api.post(`/invites/${newInviteCode}/accept`, {});
 
         expect(response.status).toBe(400);
       });
@@ -539,7 +515,6 @@ describe("Invite Module HTTP Tests", () => {
     });
 
     it("should handle concurrent invitation operations", async () => {
-      // Test creating multiple invitations simultaneously
       const invitePromises = Array.from({ length: 3 }, (_, i) =>
         api.post(
           `/tenants/${tenantId}/invites`,
@@ -557,7 +532,6 @@ describe("Invite Module HTTP Tests", () => {
 
       const responses = await Promise.all(invitePromises);
 
-      // All should succeed or fail gracefully
       responses.forEach((response) => {
         expect([201, 400, 409]).toContain(response.status);
       });

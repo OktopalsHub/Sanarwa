@@ -37,7 +37,7 @@ export interface MessageLogEvent {
 export interface MessageLogDetail extends MessageLogListItem {
   failedAt?: string;
   scheduledAt?: string;
-  content?: string | null;
+  data?: string | null;
   events: MessageLogEvent[];
   deliveries: Array<{
     id: string;

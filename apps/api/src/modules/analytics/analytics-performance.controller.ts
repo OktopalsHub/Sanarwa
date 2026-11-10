@@ -1,10 +1,10 @@
 import { Get, Query, Controller, UseGuards } from "@nestjs/common";
 import { ApiTags, ApiBearerAuth, ApiOperation, ApiParam, ApiResponse } from "@nestjs/swagger";
-import { CurrentTenantId } from "src/common/decorators";
-import { TenantContextGuard } from "src/common/guards";
+import { CurrentTenantId } from "../../common/decorators";
+import { TenantContextGuard } from "../../common/guards";
 import { AuthGuard } from "../auth/guards/jwt-auth.guard";
 import { PerformanceMetricsService } from "./performance-metrics.service";
-import { MessageChannel as NotificationChannel } from "../messaging/message.entity";
+import { NotificationChannel } from "../../common/enums/notification-channel.enum";
 
 @ApiTags("Analytics")
 @ApiBearerAuth()
@@ -13,12 +13,6 @@ import { MessageChannel as NotificationChannel } from "../messaging/message.enti
 export class AnalyticsPerformanceController {
   constructor(private readonly performanceMetricsService: PerformanceMetricsService) {}
 
-  /**
-   * Get system performance metrics
-   */
-  /**
-   * Get system performance metrics
-   */
   @Get("performance/system")
   @ApiOperation({ summary: "Get system performance metrics" })
   @ApiResponse({ status: 200, description: "System metrics retrieved successfully" })
@@ -33,12 +27,6 @@ export class AnalyticsPerformanceController {
     );
   }
 
-  /**
-   * Get provider performance metrics
-   */
-  /**
-   * Get provider performance metrics
-   */
   @Get("performance/providers")
   @ApiOperation({ summary: "Get provider performance metrics" })
   @ApiResponse({ status: 200, description: "Provider metrics retrieved successfully" })
@@ -57,12 +45,6 @@ export class AnalyticsPerformanceController {
     );
   }
 
-  /**
-   * Get tenant performance metrics
-   */
-  /**
-   * Get tenant performance metrics
-   */
   @Get("performance/tenant/:tenantId")
   @ApiOperation({ summary: "Get tenant performance metrics" })
   @ApiParam({ name: "tenantId", description: "Tenant ID" })
@@ -80,12 +62,6 @@ export class AnalyticsPerformanceController {
     );
   }
 
-  /**
-   * Get performance trends
-   */
-  /**
-   * Get performance trends
-   */
   @Get("performance/trends")
   @ApiOperation({ summary: "Get performance trends" })
   @ApiResponse({ status: 200, description: "Performance trends retrieved successfully" })
@@ -104,12 +80,6 @@ export class AnalyticsPerformanceController {
     );
   }
 
-  /**
-   * Get real-time metrics
-   */
-  /**
-   * Get real-time metrics
-   */
   @Get("performance/realtime")
   @ApiOperation({ summary: "Get real-time performance metrics" })
   @ApiResponse({ status: 200, description: "Real-time metrics retrieved successfully" })

@@ -7,20 +7,12 @@ describe("assertSafeWebhookUrl", () => {
   });
 
   it("rejects local and private addresses", async () => {
-    await expect(assertSafeWebhookUrl("http://127.0.0.1/webhook")).rejects.toThrow(
-      "blocked host",
-    );
-    await expect(assertSafeWebhookUrl("http://10.0.0.5/webhook")).rejects.toThrow(
-      "blocked host",
-    );
-    await expect(assertSafeWebhookUrl("http://localhost/webhook")).rejects.toThrow(
-      "blocked host",
-    );
+    await expect(assertSafeWebhookUrl("http://127.0.0.1/webhook")).rejects.toThrow("blocked host");
+    await expect(assertSafeWebhookUrl("http://10.0.0.5/webhook")).rejects.toThrow("blocked host");
+    await expect(assertSafeWebhookUrl("http://localhost/webhook")).rejects.toThrow("blocked host");
   });
 
   it("rejects non-http protocols", async () => {
-    await expect(assertSafeWebhookUrl("file:///etc/passwd")).rejects.toThrow(
-      "http or https",
-    );
+    await expect(assertSafeWebhookUrl("file:///etc/passwd")).rejects.toThrow("http or https");
   });
 });

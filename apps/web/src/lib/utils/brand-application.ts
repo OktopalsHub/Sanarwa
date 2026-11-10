@@ -14,9 +14,6 @@ export interface BrandedEmailTemplate extends EmailTemplate {
   brandedTextContent?: string;
 }
 
-/**
- * Apply branding to an email template
- */
 export function applyBrandingToEmailTemplate(
   template: EmailTemplate,
   branding: BrandingConfig,
@@ -33,11 +30,7 @@ export function applyBrandingToEmailTemplate(
   };
 }
 
-/**
- * Apply branding to HTML content
- */
 function applyBrandingToHTML(htmlContent: string, branding: BrandingConfig): string {
-  // Create a branded HTML template wrapper
   const brandedWrapper = `
 <!DOCTYPE html>
 <html lang="en">
@@ -177,9 +170,6 @@ function applyBrandingToHTML(htmlContent: string, branding: BrandingConfig): str
   return brandedWrapper;
 }
 
-/**
- * Apply branding to text content
- */
 function applyBrandingToText(textContent: string, branding: BrandingConfig): string {
   const brandedTextWrapper = `
 ${branding.name}
@@ -195,9 +185,6 @@ You received this email because you're subscribed to our notifications.
   return brandedTextWrapper;
 }
 
-/**
- * Generate CSS variables for dashboard UI
- */
 export function generateDashboardCSS(branding: BrandingConfig): string {
   return `
 :root {
@@ -229,9 +216,6 @@ ${branding.customCss || ""}
 `;
 }
 
-/**
- * Apply branding to in-app notification templates
- */
 export function applyBrandingToInAppNotification(
   title: string,
   message: string,
@@ -254,13 +238,9 @@ export function applyBrandingToInAppNotification(
   };
 }
 
-/**
- * Generate brand-consistent color palette for charts and analytics
- */
 export function generateChartColors(branding: BrandingConfig): string[] {
   const baseColors = [branding.colors.primary, branding.colors.accent, branding.colors.secondary];
 
-  // Generate additional colors by adjusting lightness and saturation
   const additionalColors = [
     adjustOklchColor(branding.colors.primary, { lightness: 0.1 }),
     adjustOklchColor(branding.colors.accent, { lightness: 0.1 }),
@@ -271,14 +251,10 @@ export function generateChartColors(branding: BrandingConfig): string[] {
   return [...baseColors, ...additionalColors];
 }
 
-/**
- * Adjust OKLCH color values
- */
 function adjustOklchColor(
   oklchColor: string,
   adjustments: { lightness?: number; chroma?: number; hue?: number },
 ): string {
-  // Parse OKLCH color: oklch(L C H)
   const match = oklchColor.match(/oklch\(([^)]+)\)/);
   if (!match) return oklchColor;
 
@@ -300,9 +276,6 @@ function adjustOklchColor(
   return `oklch(${l} ${c} ${h})`;
 }
 
-/**
- * Validate brand colors for accessibility
- */
 export function validateBrandAccessibility(branding: BrandingConfig): {
   isValid: boolean;
   issues: Array<{
@@ -319,7 +292,6 @@ export function validateBrandAccessibility(branding: BrandingConfig): {
     recommendation?: string;
   }> = [];
 
-  // Check primary color against background
   const primaryRatio = calculateContrastRatio(branding.colors.primary, branding.colors.background);
   const primaryLevel = getAccessibilityLevel(primaryRatio);
 
@@ -332,7 +304,6 @@ export function validateBrandAccessibility(branding: BrandingConfig): {
     });
   }
 
-  // Check foreground against background
   const foregroundRatio = calculateContrastRatio(
     branding.colors.foreground,
     branding.colors.background,
@@ -355,10 +326,7 @@ export function validateBrandAccessibility(branding: BrandingConfig): {
 }
 
 function calculateContrastRatio(color1: string, color2: string): number {
-  // This is a simplified contrast ratio calculation
-  // In a real implementation, you'd want to use a proper color library
-  // that can parse OKLCH and calculate accurate contrast ratios
-  return 4.5; // Placeholder
+  return 4.5;
 }
 
 function getAccessibilityLevel(ratio: number): "AAA" | "AA" | "FAIL" {

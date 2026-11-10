@@ -1,28 +1,19 @@
 import { Injectable, Logger, NotFoundException } from "@nestjs/common";
-import { In, Repository } from "typeorm";
 import { InjectRepository } from "@nestjs/typeorm";
+import { In, IsNull, LessThanOrEqual, MoreThan, Not, Or, Repository } from "typeorm";
+import {
+  InAppNotification,
+  InAppNotificationStatus,
+  InAppNotificationType,
+} from "../../messaging/entities/in-app-notification.entity";
+import { getPaginationSummary } from "../../../common/dto/pagination.dto";
+import { IPaginatedData } from "../../../common/interfaces";
+import { eraseInboxBySubscriber } from "./inbox-erase";
 import {
   NotificationCenterItem,
   NotificationCenterStatus,
-} from "../entities/notification-center.entity";
-import { getPaginationSummary } from "../../../common/dto/pagination.dto";
-import { IPaginatedData } from "../../../common/interfaces";
-
-export interface CreateNotificationCenterItemDto {
-  tenantId: string;
-  subscriberId: string;
-  title: string;
-  content: string;
-  description?: string;
-  channel: string;
-  actionUrl?: string;
-  actionLabel?: string;
-  imageUrl?: string;
-  metadata?: Record<string, any>;
-  templateId?: string;
-  messageId?: string;
-  expiresAt?: Date;
-}
+  toItem,
+} from "./notification-center.types";
 
 export interface NotificationCenterStats {
   total: number;
@@ -39,48 +30,92 @@ function clampLimit(limit: number | undefined, fallback = 20): number {
   return Math.min(Math.floor(n), MAX_PAGE_LIMIT);
 }
 
+function activeExpiryFilter(now: Date) {
+  return { expiresAt: Or(IsNull(), MoreThan(now)) };
+}
+
+function statusFilter(status?: NotificationCenterStatus) {
+  if (status === NotificationCenterStatus.ARCHIVED) {
+    return { archived: true };
+  }
+
+  if (status === NotificationCenterStatus.READ) {
+    return { archived: false, readAt: Not(IsNull()) };
+  }
+
+  if (status === NotificationCenterStatus.UNREAD) {
+    return { archived: false, readAt: IsNull() };
+  }
+
+  return { archived: false };
+}
+
 @Injectable()
 export class NotificationCenterService {
   private readonly logger = new Logger(NotificationCenterService.name);
 
   constructor(
-    @InjectRepository(NotificationCenterItem)
-    private readonly repository: Repository<NotificationCenterItem>,
+    @InjectRepository(InAppNotification)
+    private readonly repository: Repository<InAppNotification>,
   ) {}
 
-  /**
-   * Add notification to center
-   */
-  async addNotification(dto: CreateNotificationCenterItemDto): Promise<NotificationCenterItem> {
-    const item = this.repository.create({
-      ...dto,
-      status: NotificationCenterStatus.UNREAD,
+  async upsertInboundItem(dto: {
+    tenantId: string;
+    title: string;
+    data: string;
+    channel: string;
+    messageId: string;
+    threadId?: string;
+    expiresAt?: Date;
+    metadata?: Record<string, any>;
+  }): Promise<NotificationCenterItem> {
+    const existing = await this.repository.findOne({
+      where: { tenantId: dto.tenantId, messageId: dto.messageId },
     });
 
-    const saved = await this.repository.save(item);
-    this.logger.log(`Added notification to center for subscriber ${dto.subscriberId}`);
+    if (existing) {
+      existing.message = dto.data ?? existing.message;
+      existing.title = dto.title ?? existing.title;
+      existing.expiresAt = dto.expiresAt ?? existing.expiresAt;
+      if (dto.threadId) {
+        existing.metadata = {
+          ...(existing.metadata as Record<string, any>),
+          threadId: dto.threadId,
+        };
+      }
+      return toItem(await this.repository.save(existing));
+    }
 
-    return saved;
+    const saved = await this.repository.save(
+      this.repository.create({
+        tenantId: dto.tenantId,
+        title: dto.title,
+        message: dto.data,
+        type: InAppNotificationType.INFO,
+        status: InAppNotificationStatus.DELIVERED,
+        category: "email-reply",
+        seen: false,
+        archived: false,
+        channel: dto.channel,
+        messageId: dto.messageId,
+        expiresAt: dto.expiresAt,
+        metadata: { ...dto.metadata, threadId: dto.threadId },
+      }),
+    );
+
+    return toItem(saved);
   }
 
-  /**
-   * Get notification by ID (tenant-scoped)
-   */
   async getNotification(id: string, tenantId: string): Promise<NotificationCenterItem> {
-    const notification = await this.repository.findOne({
-      where: { id, tenantId },
-    });
+    const notification = await this.repository.findOne({ where: { id, tenantId } });
 
     if (!notification) {
       throw new NotFoundException(`Notification ${id} not found`);
     }
 
-    return notification;
+    return toItem(notification);
   }
 
-  /**
-   * Get subscriber's notification feed
-   */
   async getNotificationFeed(
     subscriberId: string,
     tenantId: string,
@@ -91,118 +126,85 @@ export class NotificationCenterService {
     const safeLimit = clampLimit(limit);
     const safePage = Math.max(1, Number(page) || 1);
 
-    const query = this.repository
-      .createQueryBuilder("notification")
-      .where("notification.subscriberId = :subscriberId", { subscriberId })
-      .andWhere("notification.tenantId = :tenantId", { tenantId });
-
-    if (status) {
-      query.andWhere("notification.status = :status", { status });
-    }
-
-    // Exclude expired notifications
-    query.andWhere("(notification.expiresAt IS NULL OR notification.expiresAt > NOW())");
-
-    const total = await query.getCount();
-
-    const notifications = await query
-      .orderBy("notification.createdAt", "DESC")
-      .skip((safePage - 1) * safeLimit)
-      .take(safeLimit)
-      .getMany();
+    const [rows, total] = await this.repository.findAndCount({
+      where: {
+        subscriberId,
+        tenantId,
+        ...statusFilter(status),
+        ...activeExpiryFilter(new Date()),
+      },
+      order: { createdAt: "DESC" },
+      skip: (safePage - 1) * safeLimit,
+      take: safeLimit,
+    });
 
     return getPaginationSummary(
-      notifications,
+      rows.map(toItem),
       total,
       { page: safePage, limit: safeLimit },
       "notifications",
     );
   }
 
-  /**
-   * Mark notification as read
-   */
   async markAsRead(id: string, tenantId: string): Promise<NotificationCenterItem> {
-    const notification = await this.getNotification(id, tenantId);
+    const notification = await this.repository.findOne({ where: { id, tenantId } });
 
-    notification.status = NotificationCenterStatus.READ;
+    if (!notification) {
+      throw new NotFoundException(`Notification ${id} not found`);
+    }
+
     notification.readAt = new Date();
+    notification.status = InAppNotificationStatus.READ;
 
-    const updated = await this.repository.save(notification);
+    const saved = await this.repository.save(notification);
     this.logger.log(`Marked notification ${id} as read`);
-
-    return updated;
+    return toItem(saved);
   }
 
-  /**
-   * Mark multiple notifications as read
-   */
   async markMultipleAsRead(ids: string[], tenantId: string): Promise<void> {
     if (!ids.length) return;
     await this.repository.update(
       { id: In(ids), tenantId },
-      {
-        status: NotificationCenterStatus.READ,
-        readAt: new Date(),
-      },
+      { readAt: new Date(), status: InAppNotificationStatus.READ },
     );
 
     this.logger.log(`Marked ${ids.length} notifications as read`);
   }
 
-  /**
-   * Mark all notifications as read for subscriber
-   */
   async markAllAsRead(subscriberId: string, tenantId: string): Promise<void> {
     await this.repository.update(
-      {
-        subscriberId,
-        tenantId,
-        status: NotificationCenterStatus.UNREAD,
-      },
-      {
-        status: NotificationCenterStatus.READ,
-        readAt: new Date(),
-      },
+      { subscriberId, tenantId, readAt: IsNull(), archived: false },
+      { readAt: new Date(), status: InAppNotificationStatus.READ },
     );
 
     this.logger.log(`Marked all notifications as read for subscriber ${subscriberId}`);
   }
 
-  /**
-   * Archive notification
-   */
   async archiveNotification(id: string, tenantId: string): Promise<NotificationCenterItem> {
-    const notification = await this.getNotification(id, tenantId);
+    const notification = await this.repository.findOne({ where: { id, tenantId } });
 
-    notification.status = NotificationCenterStatus.ARCHIVED;
+    if (!notification) {
+      throw new NotFoundException(`Notification ${id} not found`);
+    }
+
+    notification.archived = true;
     notification.archivedAt = new Date();
 
-    const updated = await this.repository.save(notification);
+    const saved = await this.repository.save(notification);
     this.logger.log(`Archived notification ${id}`);
-
-    return updated;
+    return toItem(saved);
   }
 
-  /**
-   * Archive multiple notifications
-   */
   async archiveMultiple(ids: string[], tenantId: string): Promise<void> {
     if (!ids.length) return;
     await this.repository.update(
       { id: In(ids), tenantId },
-      {
-        status: NotificationCenterStatus.ARCHIVED,
-        archivedAt: new Date(),
-      },
+      { archived: true, archivedAt: new Date() },
     );
 
     this.logger.log(`Archived ${ids.length} notifications`);
   }
 
-  /**
-   * Delete notification
-   */
   async deleteNotification(id: string, tenantId: string): Promise<void> {
     const result = await this.repository.delete({ id, tenantId });
     if (!result.affected) {
@@ -211,61 +213,42 @@ export class NotificationCenterService {
     this.logger.log(`Deleted notification ${id}`);
   }
 
-  /**
-   * Delete multiple notifications
-   */
   async deleteMultiple(ids: string[], tenantId: string): Promise<void> {
     if (!ids.length) return;
     await this.repository.delete({ id: In(ids), tenantId });
     this.logger.log(`Deleted ${ids.length} notifications`);
   }
 
-  /**
-   * Get notification center statistics
-   */
   async getStats(subscriberId: string, tenantId: string): Promise<NotificationCenterStats> {
-    const baseWhere = {
-      subscriberId,
-      tenantId,
-    };
+    const now = new Date();
 
-    const activeFilter = "(notification.expiresAt IS NULL OR notification.expiresAt > NOW())";
-    const buildCount = (status?: NotificationCenterStatus) => {
-      const query = this.repository
-        .createQueryBuilder("notification")
-        .where("notification.subscriberId = :subscriberId", { subscriberId })
-        .andWhere("notification.tenantId = :tenantId", { tenantId })
-        .andWhere(activeFilter);
-      if (status) query.andWhere("notification.status = :status", { status });
-      return query.getCount();
-    };
+    const count = (where: Record<string, unknown>) =>
+      this.repository.count({
+        where: { subscriberId, tenantId, ...activeExpiryFilter(now), ...where },
+      });
 
     const [total, unread, read, archived] = await Promise.all([
-      buildCount(),
-      buildCount(NotificationCenterStatus.UNREAD),
-      buildCount(NotificationCenterStatus.READ),
-      buildCount(NotificationCenterStatus.ARCHIVED),
+      count({ archived: false }),
+      count({ archived: false, readAt: IsNull() }),
+      count({ archived: false, readAt: Not(IsNull()) }),
+      count({ archived: true }),
     ]);
 
     return { total, unread, read, archived };
   }
 
-  /**
-   * Get unread count
-   */
   async getUnreadCount(subscriberId: string, tenantId: string): Promise<number> {
-    return this.repository
-      .createQueryBuilder("notification")
-      .where("notification.subscriberId = :subscriberId", { subscriberId })
-      .andWhere("notification.tenantId = :tenantId", { tenantId })
-      .andWhere("notification.status = :status", { status: NotificationCenterStatus.UNREAD })
-      .andWhere("(notification.expiresAt IS NULL OR notification.expiresAt > NOW())")
-      .getCount();
+    return this.repository.count({
+      where: {
+        subscriberId,
+        tenantId,
+        archived: false,
+        readAt: IsNull(),
+        ...activeExpiryFilter(new Date()),
+      },
+    });
   }
 
-  /**
-   * Search notifications
-   */
   async searchNotifications(
     subscriberId: string,
     tenantId: string,
@@ -275,37 +258,67 @@ export class NotificationCenterService {
   ): Promise<IPaginatedData<NotificationCenterItem>> {
     const safeLimit = clampLimit(limit);
     const safePage = Math.max(1, Number(page) || 1);
+    const like = `%${query}%`;
 
-    const qb = this.repository
-      .createQueryBuilder("notification")
-      .where("notification.subscriberId = :subscriberId", { subscriberId })
-      .andWhere("notification.tenantId = :tenantId", { tenantId })
-      .andWhere(
-        "(notification.title ILIKE :query OR notification.content ILIKE :query OR notification.description ILIKE :query)",
-        { query: `%${query}%` },
-      );
+    const [rows, countRows] = await Promise.all([
+      this.repository.query(
+        `SELECT id,
+                tenant_id AS "tenantId",
+                subscriber_id AS "subscriberId",
+                title,
+                message,
+                type,
+                status,
+                data,
+                metadata,
+                template_id AS "templateId",
+                category,
+                action_url AS "actionUrl",
+                actions,
+                scheduled_at AS "scheduledAt",
+                sent_at AS "sentAt",
+                delivered_at AS "deliveredAt",
+                read_at AS "readAt",
+                expires_at AS "expiresAt",
+                transaction_id AS "transactionId",
+                seen,
+                seen_at AS "seenAt",
+                archived,
+                archived_at AS "archivedAt",
+                message_id AS "messageId",
+                delivery_id AS "deliveryId",
+                created_at AS "createdAt",
+                updated_at AS "updatedAt"
+         FROM in_app_notifications
+         WHERE tenant_id = $1 AND subscriber_id = $2
+           AND archived = false
+           AND (expires_at IS NULL OR expires_at > NOW())
+           AND (title ILIKE $3 OR message ILIKE $3 OR metadata->>'description' ILIKE $3)
+         ORDER BY created_at DESC
+         OFFSET $4 LIMIT $5`,
+        [tenantId, subscriberId, like, (safePage - 1) * safeLimit, safeLimit],
+      ),
+      this.repository.query(
+        `SELECT COUNT(*)::int AS count FROM in_app_notifications
+         WHERE tenant_id = $1 AND subscriber_id = $2
+           AND archived = false
+           AND (expires_at IS NULL OR expires_at > NOW())
+           AND (title ILIKE $3 OR message ILIKE $3 OR metadata->>'description' ILIKE $3)`,
+        [tenantId, subscriberId, like],
+      ),
+    ]);
 
-    qb.andWhere("(notification.expiresAt IS NULL OR notification.expiresAt > NOW())");
-
-    const total = await qb.getCount();
-
-    const notifications = await qb
-      .orderBy("notification.createdAt", "DESC")
-      .skip((safePage - 1) * safeLimit)
-      .take(safeLimit)
-      .getMany();
+    const total = Number(countRows?.[0]?.count ?? 0);
+    const items = (rows as InAppNotification[]).map(toItem);
 
     return getPaginationSummary(
-      notifications,
+      items,
       total,
       { page: safePage, limit: safeLimit },
       "notifications",
     );
   }
 
-  /**
-   * Get notifications by channel
-   */
   async getNotificationsByChannel(
     subscriberId: string,
     tenantId: string,
@@ -316,62 +329,46 @@ export class NotificationCenterService {
     const safeLimit = clampLimit(limit);
     const safePage = Math.max(1, Number(page) || 1);
 
-    const queryBuilder = this.repository
-      .createQueryBuilder("notification")
-      .where("notification.subscriberId = :subscriberId", { subscriberId })
-      .andWhere("notification.tenantId = :tenantId", { tenantId })
-      .andWhere("notification.channel = :channel", { channel });
-
-    queryBuilder.andWhere("(notification.expiresAt IS NULL OR notification.expiresAt > NOW())");
-
-    const total = await queryBuilder.getCount();
-
-    const notifications = await queryBuilder
-      .orderBy("notification.createdAt", "DESC")
-      .skip((safePage - 1) * safeLimit)
-      .take(safeLimit)
-      .getMany();
+    const [rows, total] = await this.repository.findAndCount({
+      where: {
+        subscriberId,
+        tenantId,
+        channel,
+        archived: false,
+        ...activeExpiryFilter(new Date()),
+      },
+      order: { createdAt: "DESC" },
+      skip: (safePage - 1) * safeLimit,
+      take: safeLimit,
+    });
 
     return getPaginationSummary(
-      notifications,
+      rows.map(toItem),
       total,
       { page: safePage, limit: safeLimit },
       "notifications",
     );
   }
 
-  /**
-   * Clean up expired notifications
-   */
   async cleanupExpiredNotifications(): Promise<number> {
-    const result = await this.repository
-      .createQueryBuilder()
-      .delete()
-      .where("expires_at IS NOT NULL AND expires_at < NOW()")
-      .execute();
+    const result = await this.repository.delete({
+      expiresAt: LessThanOrEqual(new Date()),
+    });
 
     const count = result.affected || 0;
     this.logger.log(`Cleaned up ${count} expired notifications`);
-
     return count;
   }
 
   /**
-   * Bulk add notifications
+   * GDPR/right-to-erasure slice for the in-app inbox (deep inbox behavior, shared seam).
+   * Deletes all inbox rows for the Subscriber (any status, including archived/not-yet-expired),
+   * matching `subscriberId` and `userId` across both inbox API contracts.
+   * Cross-store subscriber data is erased via `PreferencesService.eraseSubscriberData`.
    */
-  async bulkAddNotifications(
-    items: CreateNotificationCenterItemDto[],
-  ): Promise<NotificationCenterItem[]> {
-    const notifications = items.map((item) =>
-      this.repository.create({
-        ...item,
-        status: NotificationCenterStatus.UNREAD,
-      }),
-    );
-
-    const saved = await this.repository.save(notifications);
-    this.logger.log(`Bulk added ${saved.length} notifications`);
-
-    return saved;
+  async deleteBySubscriber(tenantId: string, subscriberId: string): Promise<number> {
+    const count = await eraseInboxBySubscriber(this.repository, tenantId, subscriberId);
+    this.logger.log(`Erased ${count} inbox notifications for subscriber ${subscriberId}`);
+    return count;
   }
 }

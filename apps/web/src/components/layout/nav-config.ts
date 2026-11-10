@@ -5,6 +5,7 @@ import {
   IconChartBar,
   IconCreditCard,
   IconCube,
+  IconHash,
   IconHome,
   IconInbox,
   IconKey,
@@ -29,6 +30,7 @@ export const sendingSegments: NavigationItem[] = [
 
 export const setupSegments: NavigationItem[] = [
   { name: "Projects", segment: "projects", icon: IconCube },
+  { name: "Channels", segment: "channels", icon: IconHash },
   { name: "Providers", segment: "providers", icon: IconBolt },
   { name: "API Keys", segment: "api-keys", icon: IconKey },
   { name: "Webhooks", segment: "webhooks", icon: IconLink },

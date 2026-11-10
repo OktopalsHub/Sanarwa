@@ -1,25 +1,14 @@
 import { Test, TestingModule } from "@nestjs/testing";
 import { TokenManagementService } from "../services/token-management.service";
-import { Repository } from "typeorm";
+import { Repository, DataSource } from "typeorm";
 import { getRepositoryToken } from "@nestjs/typeorm";
+import { TokenBalance, TokenTransaction } from "../../billing/entities/token-balance.entity";
 import type { Mock, Mocked } from "vitest";
-
-// Mock entity for token management
-class TokenEntity {
-  id: string;
-  tenantId: string;
-  userId: string;
-  tokenType: string;
-  token: string;
-  expiresAt: Date;
-  isActive: boolean;
-  createdAt: Date;
-  updatedAt: Date;
-}
 
 describe("TokenManagementService", () => {
   let service: TokenManagementService;
-  let tokenRepository: Mocked<Repository<TokenEntity>>;
+  let tokenBalanceRepository: Mocked<Repository<TokenBalance>>;
+  let tokenTransactionRepository: Mocked<Repository<TokenTransaction>>;
 
   beforeEach(async () => {
     const mockRepository = {
@@ -41,133 +30,93 @@ describe("TokenManagementService", () => {
       providers: [
         TokenManagementService,
         {
-          provide: getRepositoryToken(TokenEntity),
+          provide: getRepositoryToken(TokenBalance),
           useValue: mockRepository,
+        },
+        {
+          provide: getRepositoryToken(TokenTransaction),
+          useValue: mockRepository,
+        },
+        {
+          provide: DataSource,
+          useValue: {
+            transaction: vi.fn((cb) => cb({})),
+          },
         },
       ],
     }).compile();
 
     service = module.get<TokenManagementService>(TokenManagementService);
-    tokenRepository = module.get(getRepositoryToken(TokenEntity));
+    tokenBalanceRepository = module.get(getRepositoryToken(TokenBalance));
+    tokenTransactionRepository = module.get(getRepositoryToken(TokenTransaction));
   });
 
   it("should be defined", () => {
     expect(service).toBeDefined();
   });
 
-  describe("generateToken", () => {
-    it("should generate a new token", async () => {
-      const tokenData = {
+  describe("getBalance", () => {
+    it("should return the tenant's token balance", async () => {
+      tokenBalanceRepository.findOne.mockResolvedValue({
         tenantId: "tenant-1",
-        userId: "user-1",
-        tokenType: "access",
-        expiresIn: 3600,
-      };
+        totalTokens: 100,
+        usedTokens: 30,
+        availableTokens: 70,
+        reservedTokens: 0,
+      } as TokenBalance);
 
-      const mockToken = {
-        id: "1",
-        ...tokenData,
-        token: "generated-token",
-        expiresAt: new Date(Date.now() + 3600 * 1000),
-        isActive: true,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      };
+      const result = await service.getBalance("tenant-1");
 
-      tokenRepository.create.mockReturnValue(mockToken as TokenEntity);
-      tokenRepository.save.mockResolvedValue(mockToken as TokenEntity);
+      expect(result.totalTokens).toBe(100);
+      expect(result.availableTokens).toBe(70);
+    });
 
-      const result = await service.generateToken(tokenData);
+    it("should create a zero balance when the tenant has none", async () => {
+      tokenBalanceRepository.findOne.mockResolvedValue(null);
+      tokenBalanceRepository.create.mockReturnValue({
+        tenantId: "tenant-1",
+        totalTokens: 0,
+        usedTokens: 0,
+        availableTokens: 0,
+        reservedTokens: 0,
+      } as TokenBalance);
+      tokenBalanceRepository.save.mockResolvedValue({
+        tenantId: "tenant-1",
+        totalTokens: 0,
+        usedTokens: 0,
+        availableTokens: 0,
+        reservedTokens: 0,
+      } as TokenBalance);
 
-      expect(result).toBeDefined();
-      expect(result.token).toBeDefined();
-      expect(tokenRepository.create).toHaveBeenCalled();
-      expect(tokenRepository.save).toHaveBeenCalled();
+      const result = await service.getBalance("tenant-1");
+
+      expect(result.availableTokens).toBe(0);
     });
   });
 
-  describe("validateToken", () => {
-    it("should validate active token", async () => {
-      const mockToken = {
-        id: "1",
+  describe("checkSufficientTokens", () => {
+    it("should return false when the tenant has insufficient tokens", async () => {
+      tokenBalanceRepository.findOne.mockResolvedValue({
         tenantId: "tenant-1",
-        userId: "user-1",
-        tokenType: "access",
-        token: "valid-token",
-        expiresAt: new Date(Date.now() + 3600 * 1000),
-        isActive: true,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      };
+        totalTokens: 10,
+        usedTokens: 10,
+        availableTokens: 0,
+        reservedTokens: 0,
+      } as TokenBalance);
 
-      tokenRepository.findOne.mockResolvedValue(mockToken as TokenEntity);
-
-      const result = await service.validateToken("valid-token");
-
-      expect(result).toBeTruthy();
-      expect(result.isActive).toBe(true);
-      expect(tokenRepository.findOne).toHaveBeenCalledWith({
-        where: { token: "valid-token", isActive: true },
-      });
+      await expect(service.checkSufficientTokens("tenant-1", 5)).resolves.toBe(false);
     });
 
-    it("should reject expired token", async () => {
-      const mockToken = {
-        id: "1",
+    it("should return true when the tenant has enough tokens", async () => {
+      tokenBalanceRepository.findOne.mockResolvedValue({
         tenantId: "tenant-1",
-        userId: "user-1",
-        tokenType: "access",
-        token: "expired-token",
-        expiresAt: new Date(Date.now() - 3600 * 1000), // Expired
-        isActive: true,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      };
+        totalTokens: 100,
+        usedTokens: 0,
+        availableTokens: 100,
+        reservedTokens: 0,
+      } as TokenBalance);
 
-      tokenRepository.findOne.mockResolvedValue(mockToken as TokenEntity);
-
-      const result = await service.validateToken("expired-token");
-
-      expect(result).toBeFalsy();
-    });
-  });
-
-  describe("revokeToken", () => {
-    it("should revoke token", async () => {
-      const mockToken = {
-        id: "1",
-        token: "token-to-revoke",
-        isActive: true,
-      };
-
-      tokenRepository.findOne.mockResolvedValue(mockToken as TokenEntity);
-      tokenRepository.save.mockResolvedValue({ ...mockToken, isActive: false } as TokenEntity);
-
-      await service.revokeToken("token-to-revoke");
-
-      expect(tokenRepository.save).toHaveBeenCalledWith({
-        ...mockToken,
-        isActive: false,
-      });
-    });
-  });
-
-  describe("cleanupExpiredTokens", () => {
-    it("should cleanup expired tokens", async () => {
-      const queryBuilder = {
-        where: vi.fn().mockReturnThis(),
-        andWhere: vi.fn().mockReturnThis(),
-        getMany: vi.fn().mockResolvedValue([]),
-      };
-
-      tokenRepository.createQueryBuilder.mockReturnValue(queryBuilder as any);
-
-      await service.cleanupExpiredTokens();
-
-      expect(tokenRepository.createQueryBuilder).toHaveBeenCalled();
-      expect(queryBuilder.where).toHaveBeenCalledWith("expiresAt < :now", {
-        now: expect.any(Date),
-      });
+      await expect(service.checkSufficientTokens("tenant-1", 5)).resolves.toBe(true);
     });
   });
 });

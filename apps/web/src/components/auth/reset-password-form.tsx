@@ -1,10 +1,10 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { authApi } from "@/lib/api/auth";
+import { Button } from "@sanarwa/ui/button";
+import { Card } from "@sanarwa/ui/card";
+import { Input } from "@sanarwa/ui/input";
+import { Label } from "@sanarwa/ui/label";
+import { authApi } from "@sanarwa/api-client";
 import Link from "@/compat/next-link";
 import { useRouter, useSearchParams } from "@/compat/next-navigation";
 import { useState } from "react";

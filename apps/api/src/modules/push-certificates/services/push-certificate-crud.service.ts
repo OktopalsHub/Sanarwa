@@ -26,7 +26,6 @@ export class PushCertificateCrudService {
     tenantId: string,
     createDto: CreatePushCertificateDto,
   ): Promise<PushCertificate> {
-    // Validate tenant exists
     const tenant = await this.tenantRepository.findOne({
       where: { id: tenantId },
     });
@@ -34,7 +33,6 @@ export class PushCertificateCrudService {
       throw new NotFoundException("Tenant not found");
     }
 
-    // Validate project if provided
     let project: Project | undefined;
     if (createDto.projectId) {
       project =
@@ -46,7 +44,6 @@ export class PushCertificateCrudService {
       }
     }
 
-    // Validate certificate data
     const certificate = new PushCertificate();
     Object.assign(certificate, createDto);
     certificate.tenantId = tenantId;
@@ -63,7 +60,6 @@ export class PushCertificateCrudService {
 
     const result = await this.certificateRepository.save(certificate);
 
-    // Emit event
     this.eventEmitter.emit("certificate.created", {
       certificateId: result.id,
       tenantId,
@@ -79,11 +75,9 @@ export class PushCertificateCrudService {
     file: any,
     metadata: any,
   ): Promise<PushCertificate> {
-    // Parse certificate file based on type
     let certificateData: any;
 
     if (metadata.type === "ios") {
-      // Parse iOS certificate (.p12 or .pem)
       certificateData = {
         certificateData: file.buffer.toString("base64"),
         certificatePassword: metadata.password,
@@ -91,7 +85,6 @@ export class PushCertificateCrudService {
         teamId: metadata.teamId,
       };
     } else if (metadata.type === "android") {
-      // Parse Android service account key (.json)
       const keyData = JSON.parse(file.buffer.toString());
       certificateData = {
         serviceAccountKey: JSON.stringify(keyData),
@@ -151,7 +144,7 @@ export class PushCertificateCrudService {
   async getCertificate(id: string, tenantId: string): Promise<PushCertificate> {
     const certificate = await this.certificateRepository.findOne({
       where: { id, tenantId },
-      relations: ["tenant", "project", "createdBy"],
+      relations: { tenant: true, project: true, createdBy: true },
     });
 
     if (!certificate) {
@@ -168,7 +161,6 @@ export class PushCertificateCrudService {
   ): Promise<PushCertificate> {
     const certificate = await this.getCertificate(id, tenantId);
 
-    // Validate updated certificate if critical fields changed
     if (updateDto.certificateData) {
       const tempCertificate = new PushCertificate();
       Object.assign(tempCertificate, certificate);
@@ -184,7 +176,6 @@ export class PushCertificateCrudService {
 
     const updatedCertificate = await this.getCertificate(id, tenantId);
 
-    // Emit event
     this.eventEmitter.emit("certificate.updated", {
       certificateId: id,
       tenantId: certificate.tenantId,
@@ -199,7 +190,6 @@ export class PushCertificateCrudService {
 
     await this.certificateRepository.remove(certificate);
 
-    // Emit event
     this.eventEmitter.emit("certificate.deleted", {
       certificateId: id,
       tenantId: certificate.tenantId,
@@ -232,7 +222,6 @@ export class PushCertificateCrudService {
 
     const result = await this.certificateRepository.save(duplicatedCertificate);
 
-    // Emit event
     this.eventEmitter.emit("certificate.duplicated", {
       originalCertificateId: id,
       newCertificateId: result.id,

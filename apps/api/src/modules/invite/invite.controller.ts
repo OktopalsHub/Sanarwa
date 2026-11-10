@@ -11,9 +11,9 @@ import {
   UseGuards,
 } from "@nestjs/common";
 import { ApiBearerAuth, ApiOperation, ApiParam, ApiResponse, ApiTags } from "@nestjs/swagger";
-import { CurrentMemberId, CurrentTenantId } from "src/common/decorators";
-import { TenantMemberGuard } from "src/common/guards";
-import { AuthGuard } from "src/modules/auth/guards/jwt-auth.guard";
+import { CurrentMemberId, CurrentTenantId } from "../../common/decorators";
+import { TenantMemberGuard } from "../../common/guards";
+import { AuthGuard } from "../../modules/auth/guards/jwt-auth.guard";
 import { CreateInviteDto } from "./dto/create-invite.dto";
 import { InviteQueryDto } from "./dto/invite-query.dto";
 import { InviteService } from "./invite.service";

@@ -3,13 +3,13 @@ import { ConfigService } from "@nestjs/config";
 import { Test, TestingModule } from "@nestjs/testing";
 import { getRepositoryToken } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
-import { EncryptionService } from "../../../common/security/services/encryption.service";
-import type { Mocked } from "vitest";
+import { EncryptionService } from "../../../../common/security/services/encryption.service";
 import {
   CreateConfigurationDto,
   RollbackConfigurationDto,
   UpdateConfigurationDto,
 } from "../../dto/configuration.dto";
+import type { Mocked } from "vitest";
 import { ConfigurationVersion, VersionAction } from "../../entities/configuration-version.entity";
 import {
   Configuration,
@@ -48,8 +48,16 @@ describe("ConfigurationService", () => {
     keyVersion: "v1",
   };
 
+  let mockQueryBuilder: {
+    where: ReturnType<typeof vi.fn>;
+    andWhere: ReturnType<typeof vi.fn>;
+    getOne: ReturnType<typeof vi.fn>;
+    getMany: ReturnType<typeof vi.fn>;
+    orderBy: ReturnType<typeof vi.fn>;
+  };
+
   beforeEach(async () => {
-    const mockQueryBuilder = {
+    mockQueryBuilder = {
       where: vi.fn().mockReturnThis(),
       andWhere: vi.fn().mockReturnThis(),
       getOne: vi.fn(),
@@ -165,7 +173,7 @@ describe("ConfigurationService", () => {
       expect(encryptionService.encrypt).toHaveBeenCalledWith("test-value");
       expect(configRepository.create).toHaveBeenCalledWith(
         expect.objectContaining({
-          value: JSON.stringify(mockEncryptionResult),
+          value: mockEncryptionResult,
         }),
       );
     });
@@ -288,7 +296,7 @@ describe("ConfigurationService", () => {
     } as ConfigurationVersion;
 
     it("should rollback configuration successfully", async () => {
-      configRepository.findOne.mockResolvedValue(mockConfiguration);
+      mockQueryBuilder.getOne.mockResolvedValue(mockConfiguration);
       versionRepository.findOne.mockResolvedValue(mockVersion);
       encryptionService.decrypt.mockResolvedValue("current-value");
       encryptionService.encrypt.mockResolvedValue(mockEncryptionResult);
@@ -301,7 +309,7 @@ describe("ConfigurationService", () => {
         ...mockConfiguration,
         value: "previous-value",
       };
-      configRepository.findOne
+      mockQueryBuilder.getOne
         .mockResolvedValueOnce(mockConfiguration)
         .mockResolvedValueOnce(rolledBackConfig);
 
@@ -314,7 +322,7 @@ describe("ConfigurationService", () => {
 
     it("should throw error when version does not belong to configuration", async () => {
       const wrongVersion = { ...mockVersion, configurationId: "wrong-id" };
-      configRepository.findOne.mockResolvedValue(mockConfiguration);
+      mockQueryBuilder.getOne.mockResolvedValue(mockConfiguration);
       versionRepository.findOne.mockResolvedValue(wrongVersion);
 
       await expect(service.rollback("test-id", rollbackDto)).rejects.toThrow(
@@ -325,7 +333,7 @@ describe("ConfigurationService", () => {
 
   describe("delete", () => {
     it("should delete configuration successfully", async () => {
-      configRepository.findOne.mockResolvedValue(mockConfiguration);
+      mockQueryBuilder.getOne.mockResolvedValue(mockConfiguration);
       versionRepository.find.mockResolvedValue([]);
       versionRepository.create.mockReturnValue({} as ConfigurationVersion);
       versionRepository.save.mockResolvedValue({} as ConfigurationVersion);
@@ -360,6 +368,7 @@ describe("ConfigurationService", () => {
         "bulk.key1": { isValid: true },
         "bulk.key2": { isValid: true },
       });
+      validationService.validateValue.mockResolvedValue({ isValid: true });
 
       mockQueryBuilder.getOne.mockResolvedValue(null);
       configRepository.create.mockReturnValue(mockConfiguration);
@@ -378,11 +387,12 @@ describe("ConfigurationService", () => {
         "bulk.key1": { isValid: false, errors: ["Invalid value"] },
         "bulk.key2": { isValid: true },
       });
+      validationService.validateValue.mockResolvedValue({ isValid: true });
 
       const result = await service.bulkOperation(bulkDto, "user-id");
 
       expect(result.successful).toHaveLength(0);
-      expect(result.failed).toHaveLength(2);
+      expect(result.failed).toHaveLength(1);
       expect(result.failed[0].error).toContain("Validation failed");
     });
   });

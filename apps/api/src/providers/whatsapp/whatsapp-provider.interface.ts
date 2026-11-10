@@ -1,7 +1,7 @@
 import { BaseProviderPayload, IBaseProvider } from "../base/base-provider.interface";
 
 export interface WhatsAppPayload extends BaseProviderPayload {
-  recipient: string; // WhatsApp number in E.164 format
+  recipient: string;
   message: WhatsAppMessage;
   templateName?: string;
   templateLanguage?: string;
@@ -106,27 +106,15 @@ export interface WhatsAppTemplateParameter {
 export interface IWhatsAppProvider extends IBaseProvider {
   send(payload: WhatsAppPayload): Promise<import("../types").ProviderResponse>;
 
-  /**
-   * Send a template message
-   */
   sendTemplate(
     recipient: string,
     template: WhatsAppTemplate,
     parameters?: Record<string, any>,
   ): Promise<import("../types").ProviderResponse>;
 
-  /**
-   * Validate WhatsApp number format
-   */
   validateWhatsAppNumber(number: string): boolean;
 
-  /**
-   * Get available message templates
-   */
   getTemplates(): Promise<WhatsAppTemplate[]>;
 
-  /**
-   * Validate template parameters
-   */
   validateTemplate(template: WhatsAppTemplate): boolean;
 }

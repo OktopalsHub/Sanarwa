@@ -2,11 +2,11 @@
 
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Input } from "@/components/ui/input";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@sanarwa/ui/card";
+import { Button } from "@sanarwa/ui/button";
+import { Badge } from "@sanarwa/ui/badge";
+import { Avatar, AvatarFallback, AvatarImage } from "@sanarwa/ui/avatar";
+import { Input } from "@sanarwa/ui/input";
 import {
   PlusIcon,
   MagnifyingGlassIcon,
@@ -19,11 +19,10 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+} from "@sanarwa/ui/dropdown-menu";
 import { toast } from "sonner";
 import { useTenant } from "@/contexts/tenant-context";
-import { tenantApi } from "@/lib/api/tenant";
-import { apiClient } from "@/lib/api/client";
+import { tenantApi } from "@sanarwa/api-client";
 
 interface ProjectMembersProps {
   projectId: string;
@@ -37,7 +36,6 @@ export function ProjectMembers({ projectId: _projectId }: ProjectMembersProps) {
     queryKey: ["project-members", selectedTenant?.id, searchQuery],
     queryFn: async () => {
       if (!selectedTenant?.id) return [];
-      apiClient.setTenant(selectedTenant.id);
       const tenantMembers = await tenantApi.getTenantMembers(selectedTenant.id);
       return tenantMembers
         .filter((member) => {
@@ -97,7 +95,6 @@ export function ProjectMembers({ projectId: _projectId }: ProjectMembersProps) {
 
   const handleRemoveMember = async (memberId: string, memberName: string) => {
     try {
-      // TODO: Implement member removal API call
       toast.success(`${memberName} has been removed from the project`);
     } catch (error) {
       toast.error("Failed to remove member");
@@ -139,7 +136,6 @@ export function ProjectMembers({ projectId: _projectId }: ProjectMembersProps) {
         </Button>
       </div>
 
-      {/* Search */}
       <div className="relative max-w-sm">
         <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
         <Input
@@ -150,7 +146,6 @@ export function ProjectMembers({ projectId: _projectId }: ProjectMembersProps) {
         />
       </div>
 
-      {/* Members List */}
       {members.length === 0 ? (
         <Card>
           <CardContent className="pt-6">

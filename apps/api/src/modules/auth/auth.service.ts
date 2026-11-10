@@ -47,7 +47,6 @@ export class AuthService {
       throw new ConflictException("Email already registered");
     }
 
-    // Provide default name if not provided
     const userName = name || `User ${email.split("@")[0]}`;
 
     const hashedPassword = await argon2.hash(password);
@@ -62,7 +61,6 @@ export class AuthService {
 
     await this.userRepository.save(user);
 
-    // Create credential account
     const account = this.accountRepository.create({
       id: randomUUID(),
       userId: user.id,
@@ -74,17 +72,16 @@ export class AuthService {
 
     const tokens = this.generateTokens(user);
 
-    // Create session record
     const sessionToken = randomUUID();
-    const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days
+    const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
 
     const session = this.sessionRepository.create({
       id: randomUUID(),
       userId: user.id,
       token: sessionToken,
       expiresAt,
-      ipAddress: null, // Will be set by middleware if needed
-      userAgent: null, // Will be set by middleware if needed
+      ipAddress: null,
+      userAgent: null,
     });
 
     await this.sessionRepository.save(session);
@@ -125,14 +122,12 @@ export class AuthService {
 
     let hashedPassword: string | null = null;
 
-    // Check account table first
     const account = await this.accountRepository.findOne({
       where: { userId: user.id, providerId: "credential" },
     });
     if (account?.password) {
       hashedPassword = account.password;
     } else if (user.password) {
-      // Check user table (for custom auth)
       hashedPassword = user.password;
     }
 
@@ -143,9 +138,7 @@ export class AuthService {
     let isPasswordValid = false;
     try {
       isPasswordValid = await argon2.verify(hashedPassword, password);
-    } catch {
-      // Invalid hash format — reject login (do not fall back to plaintext compare)
-    }
+    } catch {}
 
     if (!isPasswordValid) {
       throw new UnauthorizedException("Invalid credentials");
@@ -153,17 +146,16 @@ export class AuthService {
 
     const tokens = this.generateTokens(user);
 
-    // Create session record
     const sessionToken = randomUUID();
-    const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days
+    const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
 
     const session = this.sessionRepository.create({
       id: randomUUID(),
       userId: user.id,
       token: sessionToken,
       expiresAt,
-      ipAddress: null, // Will be set by middleware if needed
-      userAgent: null, // Will be set by middleware if needed
+      ipAddress: null,
+      userAgent: null,
     });
 
     await this.sessionRepository.save(session);
@@ -223,7 +215,6 @@ export class AuthService {
     user.password = newHashedPassword;
     await this.userRepository.save(user);
 
-    // Update account password
     const account = await this.accountRepository.findOne({
       where: { userId: userId, providerId: "credential" },
     });
@@ -240,21 +231,14 @@ export class AuthService {
 
     const user = await this.userRepository.findOne({ where: { email } });
     if (!user) {
-      // Don't reveal if email exists
       return { message: "If email exists, reset link will be sent" };
     }
-
-    // TODO: Generate reset token and send email
-    // This should be implemented with a reset token stored in DB with expiry
 
     return { message: "If email exists, reset link will be sent" };
   }
 
   async resetPassword(resetPasswordDto: ResetPasswordDto) {
     const { token, newPassword } = resetPasswordDto;
-
-    // TODO: Verify reset token and get user
-    // This should validate the token and extract user ID
 
     throw new BadRequestException("Invalid or expired reset token");
   }
@@ -280,7 +264,6 @@ export class AuthService {
   }
 
   async logout(userId: string) {
-    // Invalidate all sessions for this user
     await this.sessionRepository.delete({ userId });
     return { message: "Logged out successfully" };
   }

@@ -77,11 +77,9 @@ export class PerformanceLoggingInterceptor implements NestInterceptor {
   }
 
   private sanitizeArgs(args: any[]): any {
-    // Remove sensitive data from arguments
     return args.map((arg) => {
       if (typeof arg === "object" && arg !== null) {
         const sanitized = { ...arg };
-        // Remove common sensitive fields
         delete sanitized.password;
         delete sanitized.token;
         delete sanitized.secret;
@@ -95,7 +93,6 @@ export class PerformanceLoggingInterceptor implements NestInterceptor {
   private sanitizeResult(result: any): any {
     if (typeof result === "object" && result !== null) {
       const sanitized = { ...result };
-      // Remove sensitive fields from result
       delete sanitized.password;
       delete sanitized.token;
       delete sanitized.secret;

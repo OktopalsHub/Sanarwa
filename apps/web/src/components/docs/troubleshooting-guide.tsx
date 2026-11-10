@@ -1,10 +1,10 @@
 "use client";
 
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { Input } from "@/components/ui/input";
+import { Badge } from "@sanarwa/ui/badge";
+import { Button } from "@sanarwa/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@sanarwa/ui/card";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@sanarwa/ui/collapsible";
+import { Input } from "@sanarwa/ui/input";
 import { toast } from "@/lib/utils/toast";
 import {
   ExclamationTriangleIcon,
@@ -107,7 +107,6 @@ export function TroubleshootingGuide({ items }: TroubleshootingGuideProps) {
 
   return (
     <div className="space-y-6">
-      {/* Search and Filters */}
       <div className="space-y-4">
         <div className="relative">
           <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -154,12 +153,10 @@ export function TroubleshootingGuide({ items }: TroubleshootingGuideProps) {
         </div>
       </div>
 
-      {/* Results Count */}
       <div className="text-sm text-muted-foreground">
         Showing {filteredItems.length} of {items.length} troubleshooting guides
       </div>
 
-      {/* Troubleshooting Items */}
       <div className="space-y-4">
         {filteredItems.map((item) => (
           <Card key={item.id} className="overflow-hidden">
@@ -197,7 +194,6 @@ export function TroubleshootingGuide({ items }: TroubleshootingGuideProps) {
 
               <CollapsibleContent>
                 <CardContent className="pt-0 space-y-6">
-                  {/* Symptoms */}
                   <div className="space-y-2">
                     <h4 className="font-medium flex items-center gap-2">
                       <ExclamationTriangleIcon className="h-4 w-4 text-orange-500" />
@@ -210,7 +206,6 @@ export function TroubleshootingGuide({ items }: TroubleshootingGuideProps) {
                     </ul>
                   </div>
 
-                  {/* Possible Causes */}
                   <div className="space-y-2">
                     <h4 className="font-medium">Possible Causes</h4>
                     <ul className="list-disc list-inside space-y-1 text-sm text-muted-foreground">
@@ -220,7 +215,6 @@ export function TroubleshootingGuide({ items }: TroubleshootingGuideProps) {
                     </ul>
                   </div>
 
-                  {/* Solutions */}
                   <div className="space-y-4">
                     <h4 className="font-medium flex items-center gap-2">
                       <CheckCircleIcon className="h-4 w-4 text-green-500" />
@@ -273,7 +267,6 @@ export function TroubleshootingGuide({ items }: TroubleshootingGuideProps) {
                     ))}
                   </div>
 
-                  {/* Related Links */}
                   {item.relatedLinks && item.relatedLinks.length > 0 && (
                     <div className="space-y-2">
                       <h4 className="font-medium">Related Resources</h4>

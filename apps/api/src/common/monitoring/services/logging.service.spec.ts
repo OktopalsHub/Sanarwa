@@ -30,7 +30,6 @@ describe("LoggingService", () => {
 
   describe("info", () => {
     it("should log info messages", () => {
-      // Just verify the service method exists and can be called
       expect(() => {
         service.info("Test info message", { tenantId: "test-tenant" });
       }).not.toThrow();

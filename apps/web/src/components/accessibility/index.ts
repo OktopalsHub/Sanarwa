@@ -1,4 +1,3 @@
-// Accessibility components and utilities
 export { HighContrastMode, useContrastMode } from "./high-contrast-mode";
 export { Announcement, FocusTrap, KeyboardNavigation, RovingTabindex } from "./keyboard-navigation";
 export {
@@ -15,7 +14,6 @@ export {
 } from "./screen-reader";
 export { SkipLinks, useSkipLinkTarget } from "./skip-links";
 
-// Re-export accessibility utilities
 export {
   A11yTesting,
   AriaUtils,

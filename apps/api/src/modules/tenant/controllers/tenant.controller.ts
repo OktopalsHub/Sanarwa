@@ -23,13 +23,13 @@ import {
   ApiParam,
   ApiCreatedResponse,
 } from "@nestjs/swagger";
-import { CurrentMember, CurrentTenantId } from "src/common/decorators";
-import { IPaginatedData } from "src/common/dto/pagination.dto";
-import { TenantMemberGuard } from "src/common/guards";
+import { CurrentMember, CurrentTenantId } from "../../../common/decorators";
+import { IPaginatedData } from "../../../common/dto/pagination.dto";
+import { TenantMemberGuard } from "../../../common/guards";
 import {
   AuthenticatedRequest,
   MemberContext,
-} from "src/common/interfaces/request-context.interface";
+} from "../../../common/interfaces/request-context.interface";
 import { CurrentUser } from "../../auth/decorators/current-user.decorator";
 import { TenantMemberResponseDto, UserTenantsQueryDto } from "../../tenant-member/dto";
 import { TenantMemberService } from "../../tenant-member/tenant-member.service";

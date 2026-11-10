@@ -2,7 +2,7 @@ import { Injectable } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
 import { NotificationChannel } from "../../common/enums/notification-channel.enum";
-import { BaseRepository } from "../../database/repositories/base.repository";
+import { BaseRepository } from "../../common/database/repositories/base.repository";
 import { ProviderConfig } from "./provider-config.entity";
 
 @Injectable()
@@ -14,9 +14,6 @@ export class ProviderConfigRepository extends BaseRepository<ProviderConfig> {
     super(providerConfigRepository);
   }
 
-  /**
-   * Find provider configs by tenant ID (through project)
-   */
   async findByTenantId(tenantId: string): Promise<ProviderConfig[]> {
     return this.providerConfigRepository
       .createQueryBuilder("config")
@@ -27,13 +24,10 @@ export class ProviderConfigRepository extends BaseRepository<ProviderConfig> {
       .getMany();
   }
 
-  /**
-   * Find provider configs by project ID
-   */
   async findByProjectId(projectId: string): Promise<ProviderConfig[]> {
     return this.providerConfigRepository.find({
       where: { projectId },
-      relations: ["project"],
+      relations: { project: true },
       order: {
         priority: "ASC",
         createdAt: "DESC",
@@ -41,9 +35,6 @@ export class ProviderConfigRepository extends BaseRepository<ProviderConfig> {
     });
   }
 
-  /**
-   * Find active provider configs for tenant and channel
-   */
   async findActiveByTenantAndChannel(
     tenantId: string,
     channel: NotificationChannel,
@@ -59,9 +50,6 @@ export class ProviderConfigRepository extends BaseRepository<ProviderConfig> {
       .getMany();
   }
 
-  /**
-   * Find provider config by ID and tenant ID (through project)
-   */
   async findByIdAndTenant(id: string, tenantId: string): Promise<ProviderConfig | null> {
     return this.providerConfigRepository
       .createQueryBuilder("config")
@@ -71,9 +59,6 @@ export class ProviderConfigRepository extends BaseRepository<ProviderConfig> {
       .getOne();
   }
 
-  /**
-   * Find provider config by provider ID, channel, and tenant
-   */
   async findByProviderAndTenant(
     providerId: string,
     channel: NotificationChannel,
@@ -86,15 +71,5 @@ export class ProviderConfigRepository extends BaseRepository<ProviderConfig> {
       .andWhere("config.channel = :channel", { channel })
       .andWhere("project.tenantId = :tenantId", { tenantId })
       .getOne();
-  }
-
-  /**
-   * Update health status for a provider config
-   */
-  async updateHealthStatus(id: string, healthStatus: string, lastHealthCheck: Date): Promise<void> {
-    await this.providerConfigRepository.update(id, {
-      healthStatus,
-      lastHealthCheck,
-    });
   }
 }

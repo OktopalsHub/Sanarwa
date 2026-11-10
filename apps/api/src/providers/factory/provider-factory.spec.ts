@@ -1,19 +1,13 @@
 import { Test, TestingModule } from "@nestjs/testing";
 import { BaseProvider } from "../base/base-provider.abstract";
 import { BaseProviderPayload } from "../base/base-provider.interface";
+import { ProviderConfig, ProviderHealth, ProviderHealthStatus, ProviderResponse } from "../types";
+import { NotificationChannel } from "../../common/enums/notification-channel.enum";
 import type { Mock } from "vitest";
-import {
-  Channel,
-  ProviderConfig,
-  ProviderHealth,
-  ProviderHealthStatus,
-  ProviderResponse,
-} from "../types";
 import { ProviderFactory } from "./provider-factory";
 
-// Mock provider for testing
 class MockEmailProvider extends BaseProvider {
-  constructor(id: string, name: string, channel: Channel) {
+  constructor(id: string, name: string, channel: NotificationChannel) {
     super(id, name, channel);
   }
 
@@ -34,7 +28,7 @@ class MockEmailProvider extends BaseProvider {
 }
 
 class MockSMSProvider extends BaseProvider {
-  constructor(id: string, name: string, channel: Channel) {
+  constructor(id: string, name: string, channel: NotificationChannel) {
     super(id, name, channel);
   }
 
@@ -71,53 +65,57 @@ describe("ProviderFactory", () => {
 
   describe("provider registration", () => {
     it("should register a provider successfully", () => {
-      factory.registerProvider("mock-email", Channel.EMAIL, MockEmailProvider);
+      factory.registerProvider("mock-email", NotificationChannel.EMAIL, MockEmailProvider);
 
-      expect(factory.isProviderRegistered("mock-email", Channel.EMAIL)).toBe(true);
-      expect(factory.getAvailableProviders(Channel.EMAIL)).toContain("mock-email");
+      expect(factory.isProviderRegistered("mock-email", NotificationChannel.EMAIL)).toBe(true);
+      expect(factory.getAvailableProviders(NotificationChannel.EMAIL)).toContain("mock-email");
     });
 
     it("should register multiple providers for different channels", () => {
-      factory.registerProvider("mock-email", Channel.EMAIL, MockEmailProvider);
-      factory.registerProvider("mock-sms", Channel.SMS, MockSMSProvider);
+      factory.registerProvider("mock-email", NotificationChannel.EMAIL, MockEmailProvider);
+      factory.registerProvider("mock-sms", NotificationChannel.SMS, MockSMSProvider);
 
-      expect(factory.isProviderRegistered("mock-email", Channel.EMAIL)).toBe(true);
-      expect(factory.isProviderRegistered("mock-sms", Channel.SMS)).toBe(true);
+      expect(factory.isProviderRegistered("mock-email", NotificationChannel.EMAIL)).toBe(true);
+      expect(factory.isProviderRegistered("mock-sms", NotificationChannel.SMS)).toBe(true);
 
-      expect(factory.getAvailableProviders(Channel.EMAIL)).toEqual(["mock-email"]);
-      expect(factory.getAvailableProviders(Channel.SMS)).toEqual(["mock-sms"]);
+      expect(factory.getAvailableProviders(NotificationChannel.EMAIL)).toEqual(["mock-email"]);
+      expect(factory.getAvailableProviders(NotificationChannel.SMS)).toEqual(["mock-sms"]);
     });
 
     it("should allow overwriting existing provider registration", () => {
-      factory.registerProvider("mock-email", Channel.EMAIL, MockEmailProvider);
-      factory.registerProvider("mock-email", Channel.EMAIL, MockEmailProvider);
+      factory.registerProvider("mock-email", NotificationChannel.EMAIL, MockEmailProvider);
+      factory.registerProvider("mock-email", NotificationChannel.EMAIL, MockEmailProvider);
 
-      expect(factory.isProviderRegistered("mock-email", Channel.EMAIL)).toBe(true);
-      expect(factory.getAvailableProviders(Channel.EMAIL)).toEqual(["mock-email"]);
+      expect(factory.isProviderRegistered("mock-email", NotificationChannel.EMAIL)).toBe(true);
+      expect(factory.getAvailableProviders(NotificationChannel.EMAIL)).toEqual(["mock-email"]);
     });
   });
 
   describe("provider creation", () => {
     beforeEach(() => {
-      factory.registerProvider("mock-email", Channel.EMAIL, MockEmailProvider);
+      factory.registerProvider("mock-email", NotificationChannel.EMAIL, MockEmailProvider);
     });
 
     it("should create a provider instance successfully", async () => {
       const config: ProviderConfig = {
         id: "test-provider",
         name: "Test Provider",
-        channel: Channel.EMAIL,
+        channel: NotificationChannel.EMAIL,
         priority: 1,
         isActive: true,
         credentials: {},
       };
 
-      const provider = await factory.createProvider("mock-email", Channel.EMAIL, config);
+      const provider = await factory.createProvider(
+        "mock-email",
+        NotificationChannel.EMAIL,
+        config,
+      );
 
       expect(provider).toBeInstanceOf(MockEmailProvider);
       expect(provider.id).toBe("test-provider");
       expect(provider.name).toBe("Test Provider");
-      expect(provider.channel).toBe(Channel.EMAIL);
+      expect(provider.channel).toBe(NotificationChannel.EMAIL);
       expect(provider.isInitialized).toBe(true);
 
       await provider.destroy();
@@ -127,37 +125,37 @@ describe("ProviderFactory", () => {
       const config: ProviderConfig = {
         id: "test-provider",
         name: "Test Provider",
-        channel: Channel.EMAIL,
-        priority: 1,
-        isActive: true,
-        credentials: {},
-      };
-
-      await expect(factory.createProvider("unregistered", Channel.EMAIL, config)).rejects.toThrow(
-        "Provider unregistered for channel email is not registered",
-      );
-    });
-
-    it("should throw error for invalid configuration", async () => {
-      const invalidConfig: ProviderConfig = {
-        id: "",
-        name: "Test Provider",
-        channel: Channel.EMAIL,
+        channel: NotificationChannel.EMAIL,
         priority: 1,
         isActive: true,
         credentials: {},
       };
 
       await expect(
-        factory.createProvider("mock-email", Channel.EMAIL, invalidConfig),
+        factory.createProvider("unregistered", NotificationChannel.EMAIL, config),
+      ).rejects.toThrow("Provider unregistered for channel email is not registered");
+    });
+
+    it("should throw error for invalid configuration", async () => {
+      const invalidConfig: ProviderConfig = {
+        id: "",
+        name: "Test Provider",
+        channel: NotificationChannel.EMAIL,
+        priority: 1,
+        isActive: true,
+        credentials: {},
+      };
+
+      await expect(
+        factory.createProvider("mock-email", NotificationChannel.EMAIL, invalidConfig),
       ).rejects.toThrow("Failed to create provider mock-email");
     });
   });
 
   describe("provider management", () => {
     beforeEach(() => {
-      factory.registerProvider("mock-email", Channel.EMAIL, MockEmailProvider);
-      factory.registerProvider("mock-sms", Channel.SMS, MockSMSProvider);
+      factory.registerProvider("mock-email", NotificationChannel.EMAIL, MockEmailProvider);
+      factory.registerProvider("mock-sms", NotificationChannel.SMS, MockSMSProvider);
     });
 
     it("should get all registered providers", () => {
@@ -166,44 +164,47 @@ describe("ProviderFactory", () => {
       expect(providers).toHaveLength(2);
       expect(providers).toContainEqual({
         providerId: "mock-email",
-        channel: Channel.EMAIL,
+        channel: NotificationChannel.EMAIL,
       });
       expect(providers).toContainEqual({
         providerId: "mock-sms",
-        channel: Channel.SMS,
+        channel: NotificationChannel.SMS,
       });
     });
 
     it("should unregister a provider", () => {
-      expect(factory.unregisterProvider("mock-email", Channel.EMAIL)).toBe(true);
-      expect(factory.isProviderRegistered("mock-email", Channel.EMAIL)).toBe(false);
-      expect(factory.getAvailableProviders(Channel.EMAIL)).toEqual([]);
+      expect(factory.unregisterProvider("mock-email", NotificationChannel.EMAIL)).toBe(true);
+      expect(factory.isProviderRegistered("mock-email", NotificationChannel.EMAIL)).toBe(false);
+      expect(factory.getAvailableProviders(NotificationChannel.EMAIL)).toEqual([]);
     });
 
     it("should return false when unregistering non-existent provider", () => {
-      expect(factory.unregisterProvider("non-existent", Channel.EMAIL)).toBe(false);
+      expect(factory.unregisterProvider("non-existent", NotificationChannel.EMAIL)).toBe(false);
     });
 
     it("should clear all providers", () => {
       factory.clearProviders();
 
       expect(factory.getAllRegisteredProviders()).toHaveLength(0);
-      expect(factory.getAvailableProviders(Channel.EMAIL)).toEqual([]);
-      expect(factory.getAvailableProviders(Channel.SMS)).toEqual([]);
+      expect(factory.getAvailableProviders(NotificationChannel.EMAIL)).toEqual([]);
+      expect(factory.getAvailableProviders(NotificationChannel.SMS)).toEqual([]);
     });
   });
 
   describe("channel filtering", () => {
     beforeEach(() => {
-      factory.registerProvider("email-1", Channel.EMAIL, MockEmailProvider);
-      factory.registerProvider("email-2", Channel.EMAIL, MockEmailProvider);
-      factory.registerProvider("sms-1", Channel.SMS, MockSMSProvider);
+      factory.registerProvider("email-1", NotificationChannel.EMAIL, MockEmailProvider);
+      factory.registerProvider("email-2", NotificationChannel.EMAIL, MockEmailProvider);
+      factory.registerProvider("sms-1", NotificationChannel.SMS, MockSMSProvider);
     });
 
     it("should return providers for specific channel only", () => {
-      expect(factory.getAvailableProviders(Channel.EMAIL)).toEqual(["email-1", "email-2"]);
-      expect(factory.getAvailableProviders(Channel.SMS)).toEqual(["sms-1"]);
-      expect(factory.getAvailableProviders(Channel.PUSH)).toEqual([]);
+      expect(factory.getAvailableProviders(NotificationChannel.EMAIL)).toEqual([
+        "email-1",
+        "email-2",
+      ]);
+      expect(factory.getAvailableProviders(NotificationChannel.SMS)).toEqual(["sms-1"]);
+      expect(factory.getAvailableProviders(NotificationChannel.PUSH)).toEqual([]);
     });
   });
 });

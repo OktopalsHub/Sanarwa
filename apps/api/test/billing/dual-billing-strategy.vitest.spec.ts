@@ -1,9 +1,3 @@
-/**
- * Dual Billing Strategy Tests
- * Tests BYOP (event-based) vs Traditional (quota-based) billing models
- * Demonstrates cost efficiency and billing model switching
- */
-
 import { describe, it, expect, beforeAll, afterAll } from "vitest";
 import { createTestSetup, TestSetup, expectValidStatusCodes } from "../channels/shared/test-utils";
 
@@ -60,14 +54,12 @@ describe("💰 Dual Billing Strategy Tests", () => {
     });
 
     it("should switch billing model when BYOP providers are configured", async () => {
-      // First check current billing model
       const currentResponse = await testSetup.api.get(`/projects/${testSetup.projectId}/quotas`, {
         headers: { Authorization: `Bearer ${testSetup.authData.accessToken}` },
       });
 
       console.log("💰 Current billing model:", currentResponse.status, currentResponse.data);
 
-      // Try to switch to event-based billing
       const switchResponse = await testSetup.api.patch(
         `/projects/${testSetup.projectId}/billing`,
         {
@@ -93,12 +85,11 @@ describe("💰 Dual Billing Strategy Tests", () => {
 
   describe("📊 Event vs Quota Counting", () => {
     it("should test BYOP event counting vs traditional quota consumption", async () => {
-      // Test how events are counted differently in each model
       const testEvents = [
         { to: "user1@example.com", channel: "EMAIL", recipients: 1 },
         { to: "user2@example.com", channel: "EMAIL", recipients: 1 },
         { to: "user3@example.com", channel: "EMAIL", recipients: 1 },
-        { to: ["user1@example.com", "user2@example.com"], channel: "EMAIL", recipients: 2 }, // Bulk send
+        { to: ["user1@example.com", "user2@example.com"], channel: "EMAIL", recipients: 2 },
       ];
 
       const eventResults = [];
@@ -137,7 +128,6 @@ describe("💰 Dual Billing Strategy Tests", () => {
         });
       }
 
-      // Analyze billing differences
       const totalRecipients = eventResults.reduce((sum, result) => sum + result.recipients, 0);
       const totalEvents = eventResults.reduce((sum, result) => sum + result.eventsCounted, 0);
       const totalQuotaConsumed = eventResults.reduce(
@@ -155,7 +145,6 @@ describe("💰 Dual Billing Strategy Tests", () => {
     });
 
     it("should demonstrate cost efficiency differences", async () => {
-      // Simulate different volume scenarios
       const scenarios = [
         { name: "Low Volume", monthlyEmails: 1000, monthlyInApp: 2000 },
         { name: "Medium Volume", monthlyEmails: 10000, monthlyInApp: 25000 },
@@ -165,14 +154,14 @@ describe("💰 Dual Billing Strategy Tests", () => {
 
       const pricing = {
         traditional: {
-          low: 29, // $29/month for 1k emails, 5k in-app
-          medium: 99, // $99/month for 10k emails, 25k in-app
-          high: 299, // $299/month for 50k emails, 100k in-app
-          enterprise: 999, // $999/month for 200k emails, 500k in-app
+          low: 29,
+          medium: 99,
+          high: 299,
+          enterprise: 999,
         },
         byop: {
-          emailCost: 0.001, // $0.001 per email event
-          inAppCost: 0.0005, // $0.0005 per in-app event
+          emailCost: 0.001,
+          inAppCost: 0.0005,
         },
       };
 
@@ -207,7 +196,6 @@ describe("💰 Dual Billing Strategy Tests", () => {
 
   describe("📈 Usage Tracking and Analytics", () => {
     it("should track usage and billing metrics", async () => {
-      // Check usage tracking after sending notifications
       const response = await testSetup.api.get(`/projects/${testSetup.projectId}/usage`, {
         headers: { Authorization: `Bearer ${testSetup.authData.accessToken}` },
       });
@@ -280,7 +268,6 @@ describe("💰 Dual Billing Strategy Tests", () => {
 
   describe("🔄 Billing Model Migration", () => {
     it("should handle billing model migration gracefully", async () => {
-      // Test migrating from quota-based to event-based
       const migrationPayload = {
         fromModel: "quota-based",
         toModel: "event-based",

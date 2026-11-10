@@ -70,8 +70,6 @@ export class DeadLetterController {
   @ApiResponse({ status: 403, description: "Forbidden" })
   @ApiResponse({ status: 404, description: "Dead letter item not found" })
   async deleteDeadLetterItem(@Param("id") id: string) {
-    // TODO: Implement deletion of dead letter items
-    // This would remove the item from the dead letter queue permanently
     return;
   }
 

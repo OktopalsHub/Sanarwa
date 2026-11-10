@@ -6,9 +6,15 @@ import { BrandTestingTool } from "@/components/branding/brand-testing-tool";
 import { BrandingConfigurator } from "@/components/branding/branding-configurator";
 import { EmailDomainSetup } from "@/components/email/email-domain-setup";
 import { EmailBYOKBanner } from "@/components/email/email-byok-banner";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@sanarwa/ui/tabs";
 import { useBranding } from "@/contexts/branding-context";
-import { EyeIcon, CubeIcon, SwatchIcon, BeakerIcon, EnvelopeIcon } from "@heroicons/react/24/outline";
+import {
+  EyeIcon,
+  CubeIcon,
+  SwatchIcon,
+  BeakerIcon,
+  EnvelopeIcon,
+} from "@heroicons/react/24/outline";
 import { useIsBYOK } from "@/lib/query/hooks/use-email-setup";
 import { useTenant } from "@/contexts/tenant-context";
 

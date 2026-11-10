@@ -32,7 +32,6 @@ export class SNSProvider implements IPushProvider {
       let failureCount = 0;
       const failedTokens: string[] = [];
 
-      // Build platform-specific messages with deep linking support
       const gcmData = {
         ...payload.data,
         ...(payload.deepLink && {
@@ -56,7 +55,6 @@ export class SNSProvider implements IPushProvider {
       const message = {
         default: payload.body,
 
-        // Android (GCM/FCM)
         GCM: JSON.stringify({
           notification: {
             title: payload.title,
@@ -77,7 +75,6 @@ export class SNSProvider implements IPushProvider {
           time_to_live: payload.ttl || 3600,
         }),
 
-        // iOS (APNS)
         APNS: JSON.stringify({
           aps: {
             alert: {
@@ -99,7 +96,6 @@ export class SNSProvider implements IPushProvider {
           ...apnsData,
         }),
 
-        // iOS Sandbox (for development)
         APNS_SANDBOX: JSON.stringify({
           aps: {
             alert: {
@@ -117,7 +113,6 @@ export class SNSProvider implements IPushProvider {
 
       for (const token of tokens) {
         try {
-          // Create endpoint for the token
           const endpointCommand = new CreatePlatformEndpointCommand({
             PlatformApplicationArn: this.platformApplicationArn,
             Token: token,
@@ -125,7 +120,6 @@ export class SNSProvider implements IPushProvider {
 
           const endpointResult = await this.snsClient.send(endpointCommand);
 
-          // Publish to the endpoint
           const publishCommand = new PublishCommand({
             TargetArn: endpointResult.EndpointArn,
             Message: JSON.stringify(message),

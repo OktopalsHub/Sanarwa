@@ -1,7 +1,7 @@
 import { Send } from "@/lib/icons";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@sanarwa/ui/badge";
+import { Button } from "@sanarwa/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@sanarwa/ui/card";
 import {
   ArrowRightIcon,
   BoltIcon,
@@ -14,9 +14,8 @@ import Link from "@/compat/next-link";
 export default function DocsPage() {
   return (
     <div className="space-y-8">
-      {/* Hero Section */}
       <div className="space-y-4">
-        <h1 className="text-4xl font-bold tracking-tight">Notifi Documentation</h1>
+        <h1 className="text-4xl font-bold tracking-tight">Sanarwa Documentation</h1>
         <p className="text-xl text-muted-foreground max-w-3xl">
           Everything you need to integrate multi-channel communication into your application. Send
           emails, SMS, push notifications, in-app messages, and voice calls with our powerful APIs
@@ -24,7 +23,6 @@ export default function DocsPage() {
         </p>
       </div>
 
-      {/* Quick Start Cards */}
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         <Card className="group hover:shadow-md transition-shadow">
           <CardHeader>
@@ -32,7 +30,7 @@ export default function DocsPage() {
               <BookOpenIcon className="h-5 w-5 text-primary" />
               <CardTitle className="text-lg">Quick Start</CardTitle>
             </div>
-            <CardDescription>Get up and running with Notifi in under 5 minutes</CardDescription>
+            <CardDescription>Get up and running with Sanarwa in under 5 minutes</CardDescription>
           </CardHeader>
           <CardContent>
             <Link href="/docs/quick-start">
@@ -81,7 +79,6 @@ export default function DocsPage() {
         </Card>
       </div>
 
-      {/* Popular Guides */}
       <div className="space-y-6">
         <h2 className="text-2xl font-semibold">Popular Guides</h2>
         <div className="grid gap-4 md:grid-cols-2">
@@ -151,35 +148,28 @@ export default function DocsPage() {
         </div>
       </div>
 
-      {/* SDK Languages */}
       <div className="space-y-6">
         <h2 className="text-2xl font-semibold">Supported Languages</h2>
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {[
-            { name: "JavaScript/Node.js", href: "/docs/sdks/javascript", popular: true },
-            { name: "Python", href: "/docs/sdks/python", popular: true },
-            { name: "PHP", href: "/docs/sdks/php" },
-            { name: "Java", href: "/docs/sdks/java" },
-            { name: "Go", href: "/docs/sdks/go" },
-            { name: ".NET", href: "/docs/sdks/dotnet" },
-          ].map((sdk) => (
-            <Link key={sdk.name} href={sdk.href} className="group">
-              <div className="flex items-center justify-between p-3 rounded-lg border hover:bg-accent transition-colors">
-                <span className="font-medium group-hover:text-primary transition-colors">
-                  {sdk.name}
-                </span>
-                {sdk.popular && (
-                  <Badge variant="outline" className="text-xs">
-                    Popular
-                  </Badge>
-                )}
-              </div>
-            </Link>
-          ))}
+          {[{ name: "JavaScript/Node.js", href: "/docs/sdks/javascript", popular: true }].map(
+            (sdk) => (
+              <Link key={sdk.name} href={sdk.href} className="group">
+                <div className="flex items-center justify-between p-3 rounded-lg border hover:bg-accent transition-colors">
+                  <span className="font-medium group-hover:text-primary transition-colors">
+                    {sdk.name}
+                  </span>
+                  {sdk.popular && (
+                    <Badge variant="outline" className="text-xs">
+                      Popular
+                    </Badge>
+                  )}
+                </div>
+              </Link>
+            ),
+          )}
         </div>
       </div>
 
-      {/* Communication Channels */}
       <div className="space-y-6">
         <h2 className="text-2xl font-semibold">Communication Channels</h2>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">

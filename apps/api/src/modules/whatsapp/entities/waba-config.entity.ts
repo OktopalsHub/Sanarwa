@@ -7,7 +7,6 @@ import {
   OneToMany,
 } from "typeorm";
 import { TenantWABAConfig } from "./tenant-waba-config.entity";
-import { TenantWABAAssignment } from "./tenant-waba-assignment.entity";
 
 @Entity("waba_configs")
 export class WABAConfig {
@@ -15,7 +14,7 @@ export class WABAConfig {
   id: string;
 
   @Column({ nullable: true })
-  tenantId: string; // If BYOP (tenant-owned)
+  tenantId: string;
 
   @Column()
   businessAccountId: string;
@@ -33,7 +32,7 @@ export class WABAConfig {
   isActive: boolean;
 
   @Column({ default: false })
-  isByop: boolean; // Tenant-owned vs platform-managed
+  isByop: boolean;
 
   @Column({ default: "global" })
   region: string;
@@ -59,16 +58,12 @@ export class WABAConfig {
   @OneToMany(() => TenantWABAConfig, (config) => config.waba)
   tenantConfigs: TenantWABAConfig[];
 
-  @OneToMany(() => TenantWABAAssignment, (assignment) => assignment.waba)
-  assignments: TenantWABAAssignment[];
-
   @CreateDateColumn()
   createdAt: Date;
 
   @UpdateDateColumn()
   updatedAt: Date;
 
-  // Helper methods for ESU pattern (1 tenant per WABA)
   canCreateTemplate(): boolean {
     return this.isActive && this.templateCount < this.maxTemplates;
   }

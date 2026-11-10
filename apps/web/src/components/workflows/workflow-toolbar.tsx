@@ -1,7 +1,7 @@
 "use client";
 
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { Badge } from "@sanarwa/ui/badge";
+import { Button } from "@sanarwa/ui/button";
 import { Workflow } from "@/lib/types/workflow";
 import { cn } from "@/lib/utils";
 import {
@@ -79,7 +79,6 @@ export function WorkflowToolbar({
         className,
       )}
     >
-      {/* Workflow Info */}
       <div className="flex items-center gap-2 mr-4">
         <h3 className="font-medium text-sm">{workflow.name}</h3>
         <Badge variant="outline" className="flex items-center gap-1">
@@ -91,7 +90,6 @@ export function WorkflowToolbar({
         </Badge>
       </div>
 
-      {/* Action Buttons */}
       <div className="flex items-center gap-1">
         {!readonly && (
           <>
@@ -167,7 +165,6 @@ export function WorkflowToolbar({
         </Button>
       </div>
 
-      {/* Workflow Stats */}
       <div className="flex items-center gap-4 ml-4 text-xs text-muted-foreground">
         <span>{workflow.nodes.length} nodes</span>
         <span>{workflow.connections.length} connections</span>

@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
-import { TenantMemberRole, TenantMemberStatus } from "src/common/enums";
+import { TenantMemberRole, TenantMemberStatus } from "../../../common/enums";
 
 export class TenantMemberUserDto {
   @ApiProperty({
@@ -103,18 +103,4 @@ export class TenantMemberResponseDto {
     type: TenantMemberTenantDto,
   })
   tenant?: TenantMemberTenantDto;
-
-  // @ApiProperty({
-  //   description: 'Tenant member creation timestamp',
-  //   example: '2024-01-01T00:00:00.000Z',
-  //   type: Date,
-  // })
-  // createdAt: Date;
-
-  // @ApiProperty({
-  //   description: 'Tenant member last update timestamp',
-  //   example: '2024-01-01T00:00:00.000Z',
-  //   type: Date,
-  // })
-  // updatedAt: Date;
 }

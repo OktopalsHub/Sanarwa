@@ -1,18 +1,30 @@
 import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
 import { Type } from "class-transformer";
-import { IsArray, IsEnum, IsObject, IsOptional, IsString, ValidateNested } from "class-validator";
-import { MessageChannel, MessagePriority, MessageRecipient } from "../message.entity";
+import {
+  ArrayNotEmpty,
+  IsArray,
+  IsEnum,
+  IsIn,
+  IsObject,
+  IsOptional,
+  IsString,
+  ValidateIf,
+  ValidateNested,
+} from "class-validator";
+import { MessagePriority, MessageRecipient } from "../message.entity";
+import { NotificationChannel } from "../../../common/enums/notification-channel.enum";
+import { CHAT_CHANNEL_PROVIDERS, ChatProvider } from "../../../common/enums/chat-provider.enum";
 
 export class SendMessageDto {
   @ApiProperty({
     description: "Channels to send the message through",
-    enum: MessageChannel,
+    enum: NotificationChannel,
     isArray: true,
-    example: [MessageChannel.EMAIL, MessageChannel.SMS],
+    example: [NotificationChannel.EMAIL, NotificationChannel.SMS],
   })
   @IsArray()
-  @IsEnum(MessageChannel, { each: true })
-  channels: MessageChannel[];
+  @IsEnum(NotificationChannel, { each: true })
+  channels: NotificationChannel[];
 
   @ApiProperty({
     description: "List of message recipients",
@@ -32,11 +44,11 @@ export class SendMessageDto {
   templateId?: string;
 
   @ApiProperty({
-    description: "Data for template variables or message content",
+    description: "Template variables substituted into the template at render time",
     example: { name: "John", orderNumber: "12345" },
   })
   @IsObject()
-  data: Record<string, any>;
+  variables: Record<string, any>;
 
   @ApiPropertyOptional({
     description: "Message priority",
@@ -56,12 +68,12 @@ export class SendMessageDto {
   subject?: string;
 
   @ApiPropertyOptional({
-    description: "Message content/body",
+    description: "Message body (raw text/HTML when not using a template)",
     example: "Thank you for signing up!",
   })
   @IsOptional()
   @IsString()
-  content?: string;
+  data?: string;
 
   @ApiPropertyOptional({
     description: "Schedule message for future delivery",
@@ -86,6 +98,28 @@ export class SendMessageDto {
   @IsOptional()
   @IsString()
   brandId?: string;
+
+  @ApiPropertyOptional({
+    description: "Chat provider used when the `chat` channel is selected (defaults to slack)",
+    enum: CHAT_CHANNEL_PROVIDERS,
+  })
+  @IsOptional()
+  @IsIn(CHAT_CHANNEL_PROVIDERS)
+  chatProvider?: ChatProvider;
+
+  @ApiPropertyOptional({
+    description:
+      "Fallback behaviour when a delivery fails terminally. `true` cascades through the " +
+      "requested `channels[]` in order; an array of channels is appended after them. " +
+      "When set, channels are attempted sequentially per recipient instead of in parallel.",
+    example: true,
+  })
+  @IsOptional()
+  @ValidateIf((dto) => typeof dto.fallback !== "boolean")
+  @IsArray()
+  @ArrayNotEmpty()
+  @IsEnum(NotificationChannel, { each: true })
+  fallback?: boolean | NotificationChannel[];
 }
 
 export class MessageRecipientDto implements MessageRecipient {
@@ -135,6 +169,45 @@ export class MessageRecipientDto implements MessageRecipient {
   @IsOptional()
   @IsString()
   userId?: string;
+
+  @ApiPropertyOptional({
+    description: "Slack channel or user ID (or incoming webhook URL) for chat delivery",
+    example: "C0123456789",
+  })
+  @IsOptional()
+  @IsString()
+  slackChannel?: string;
+
+  @ApiPropertyOptional({
+    description: "Slack incoming webhook URL for chat delivery",
+    example: "https://hooks.slack.com/services/T000/B000/XXXX",
+  })
+  @IsOptional()
+  @IsString()
+  slackWebhookUrl?: string;
+
+  @ApiPropertyOptional({
+    description: "Discord incoming webhook URL for chat delivery",
+    example: "https://discord.com/api/webhooks/123456/abc",
+  })
+  @IsOptional()
+  @IsString()
+  discordWebhookUrl?: string;
+
+  @ApiPropertyOptional({
+    description: "Telegram chat ID for chat delivery",
+    example: "-1001234567890",
+  })
+  @IsOptional()
+  @IsString()
+  telegramChatId?: string;
+
+  @ApiPropertyOptional({
+    description: "Generic chat destination used when the provider-specific field is absent",
+  })
+  @IsOptional()
+  @IsString()
+  chatAddress?: string;
 
   @ApiPropertyOptional({
     description: "Additional recipient metadata",

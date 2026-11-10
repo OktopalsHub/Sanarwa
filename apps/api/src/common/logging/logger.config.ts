@@ -1,10 +1,9 @@
 import { ConfigService } from "@nestjs/config";
-import { LoggerModuleAsyncParams } from "nestjs-pino";
-import { Request } from "express";
+import { LoggerModuleAsyncParams, Params } from "nestjs-pino";
 
 export const loggerConfig: LoggerModuleAsyncParams = {
   inject: [ConfigService],
-  useFactory: (configService: ConfigService) => {
+  useFactory: (configService: ConfigService): Params => {
     const isProduction = configService.get("NODE_ENV") === "production";
     const logLevel = configService.get("LOG_LEVEL", "info");
 
@@ -27,7 +26,7 @@ export const loggerConfig: LoggerModuleAsyncParams = {
         },
         timestamp: () => `,"timestamp":"${new Date().toISOString()}"`,
         messageKey: "message",
-        customProps: (req: Request) => {
+        customProps: (req: any) => {
           if (!req) return {};
 
           return {
@@ -39,7 +38,7 @@ export const loggerConfig: LoggerModuleAsyncParams = {
           };
         },
         serializers: {
-          req: (req: Request) => {
+          req: (req: any) => {
             if (!req) return {};
 
             return {
@@ -91,9 +90,8 @@ export const loggerConfig: LoggerModuleAsyncParams = {
           censor: "[REDACTED]",
         },
         autoLogging: {
-          ignore: (req: Request) => {
-            // Skip logging for health checks and metrics
-            return req.url?.includes("/health") || req.url?.includes("/metrics");
+          ignore: (req: any) => {
+            return req.url?.includes("/metrics");
           },
         },
       },

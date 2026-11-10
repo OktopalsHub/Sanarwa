@@ -1,14 +1,7 @@
-/**
- * Accessibility utilities for the Notifi platform
- * Provides comprehensive a11y support including keyboard navigation,
- * screen reader compatibility, and WCAG 2.1 AA compliance
- */
-
 "use client";
 
 import { useEffect, useState } from "react";
 
-// Keyboard navigation constants
 export const KEYBOARD_KEYS = {
   ENTER: "Enter",
   SPACE: " ",
@@ -24,14 +17,12 @@ export const KEYBOARD_KEYS = {
   PAGE_DOWN: "PageDown",
 } as const;
 
-// ARIA live region types
 export const LIVE_REGIONS = {
   POLITE: "polite",
   ASSERTIVE: "assertive",
   OFF: "off",
 } as const;
 
-// Focus management utilities
 export class FocusManager {
   private static focusStack: HTMLElement[] = [];
 
@@ -103,7 +94,6 @@ export class FocusManager {
   }
 }
 
-// Screen reader utilities
 export class ScreenReaderUtils {
   private static liveRegion: HTMLElement | null = null;
 
@@ -116,7 +106,6 @@ export class ScreenReaderUtils {
       this.liveRegion.setAttribute("aria-live", LIVE_REGIONS[priority]);
       this.liveRegion.textContent = message;
 
-      // Clear after announcement to allow repeated messages
       setTimeout(() => {
         if (this.liveRegion) {
           this.liveRegion.textContent = "";
@@ -136,7 +125,6 @@ export class ScreenReaderUtils {
   static describedBy(elementId: string, description: string): string {
     const descriptionId = `${elementId}-description`;
 
-    // Create description element if it doesn't exist
     if (!document.getElementById(descriptionId)) {
       const descElement = document.createElement("div");
       descElement.id = descriptionId;
@@ -149,7 +137,6 @@ export class ScreenReaderUtils {
   }
 }
 
-// Keyboard navigation hooks
 export function useKeyboardNavigation(
   containerRef: React.RefObject<HTMLElement>,
   options: {
@@ -261,7 +248,6 @@ function navigateToLast(container: HTMLElement) {
   focusableElements[focusableElements.length - 1]?.focus();
 }
 
-// Skip link utilities
 export function useSkipLinks() {
   useEffect(() => {
     const skipLinks = document.querySelectorAll("[data-skip-link]");
@@ -290,7 +276,6 @@ export function useSkipLinks() {
   }, []);
 }
 
-// Reduced motion detection
 export function useReducedMotion() {
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
 
@@ -309,7 +294,6 @@ export function useReducedMotion() {
   return prefersReducedMotion;
 }
 
-// High contrast detection
 export function useHighContrast() {
   const [prefersHighContrast, setPrefersHighContrast] = useState(false);
 
@@ -328,7 +312,6 @@ export function useHighContrast() {
   return prefersHighContrast;
 }
 
-// ARIA utilities
 export const AriaUtils = {
   generateId: (prefix: string = "aria") => `${prefix}-${Math.random().toString(36).substr(2, 9)}`,
 
@@ -371,16 +354,13 @@ export const AriaUtils = {
   },
 };
 
-// Color contrast utilities
 export function getContrastRatio(color1: string, color2: string): number {
   const getLuminance = (color: string): number => {
-    // Convert hex to RGB
     const hex = color.replace("#", "");
     const r = parseInt(hex.substr(0, 2), 16) / 255;
     const g = parseInt(hex.substr(2, 2), 16) / 255;
     const b = parseInt(hex.substr(4, 2), 16) / 255;
 
-    // Calculate relative luminance
     const sRGB = [r, g, b].map((c) => {
       return c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
     });
@@ -411,7 +391,6 @@ export function meetsWCAGContrast(
   }
 }
 
-// Accessibility testing utilities (for development)
 export const A11yTesting = {
   checkFocusableElements: (container: HTMLElement) => {
     const focusableElements = FocusManager.getFocusableElements(container);
@@ -446,7 +425,6 @@ export const A11yTesting = {
     const color = styles.color;
     const backgroundColor = styles.backgroundColor;
 
-    // This is a simplified check - in production, you'd want more robust color parsing
     console.log("Color contrast check:", { color, backgroundColor });
   },
 };

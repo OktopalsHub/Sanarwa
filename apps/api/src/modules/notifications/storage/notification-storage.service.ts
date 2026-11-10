@@ -1,14 +1,12 @@
+import { NotificationChannel } from "../../../common/enums/notification-channel.enum";
 import { Injectable, Logger } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
-import { EventEmitter2 } from "@nestjs/event-emitter";
 import { NotificationLog } from "../entities/notification-log.entity";
-import { NotificationCenterItem } from "../entities/notification-center.entity";
 import { TenantSettings } from "../../tenant/entities/tenant-settings.entity";
 import { Message, MessagePriority, MessageStatus } from "../../messaging/message.entity";
 import { MessageDelivery, MessageDeliveryStatus } from "../../messaging/message-delivery.entity";
 import { NotificationStoragePolicy } from "../enums/notification-storage-policy.enum";
-import { NotificationChannel } from "../engine/notification-engine.types";
 
 export interface PersistSendContextInput {
   tenantId: string;
@@ -33,7 +31,6 @@ export interface PersistSendContextResult {
   log: NotificationLog;
   message?: Message;
   delivery?: MessageDelivery;
-  centerItem?: NotificationCenterItem;
 }
 
 @Injectable()
@@ -43,15 +40,12 @@ export class NotificationStorageService {
   constructor(
     @InjectRepository(NotificationLog)
     private readonly logRepository: Repository<NotificationLog>,
-    @InjectRepository(NotificationCenterItem)
-    private readonly centerRepository: Repository<NotificationCenterItem>,
     @InjectRepository(TenantSettings)
     private readonly tenantSettingsRepository: Repository<TenantSettings>,
     @InjectRepository(Message)
     private readonly messageRepository: Repository<Message>,
     @InjectRepository(MessageDelivery)
     private readonly deliveryRepository: Repository<MessageDelivery>,
-    private readonly eventEmitter: EventEmitter2,
   ) {}
 
   async getStoragePolicy(tenantId: string): Promise<NotificationStoragePolicy> {
@@ -127,17 +121,16 @@ export class NotificationStorageService {
     const persistBody = this.shouldPersistBody(input.policy);
     const persistMetadata = this.shouldPersistMetadata(input.policy);
 
-    const messageChannel = this.toMessageChannel(input.channel);
     const messagePriority = this.toMessagePriority(input.priority);
 
     let message: Message | undefined;
     let delivery: MessageDelivery | undefined;
 
-    if (messageChannel && !input.skipMessageRecord) {
+    if (!input.skipMessageRecord) {
       message = await this.messageRepository.save(
         this.messageRepository.create({
           tenantId: input.tenantId,
-          channels: [messageChannel],
+          channels: [input.channel],
           recipients: [
             {
               id: input.subscriberId ?? input.to,
@@ -145,9 +138,9 @@ export class NotificationStorageService {
             },
           ],
           templateId: input.templateId,
-          data: persistBody ? (input.metadata ?? {}) : {},
+          variables: persistBody ? (input.metadata ?? {}) : {},
           subject: persistBody ? input.title : undefined,
-          content: persistBody ? input.message : undefined,
+          data: persistBody ? input.message : undefined,
           scheduledAt: input.scheduledAt,
           priority: messagePriority,
           status: input.scheduledAt ? MessageStatus.PENDING : MessageStatus.PROCESSING,
@@ -163,8 +156,9 @@ export class NotificationStorageService {
 
       delivery = await this.deliveryRepository.save(
         this.deliveryRepository.create({
+          tenantId: input.tenantId,
           messageId: message.id,
-          channel: messageChannel,
+          channel: input.channel,
           providerId: "pending",
           recipient: input.to,
           status: MessageDeliveryStatus.PENDING,
@@ -208,75 +202,7 @@ export class NotificationStorageService {
       } as NotificationLog;
     }
 
-    let centerItem: NotificationCenterItem | undefined;
-    if (persistBody && this.isInAppChannel(input.channel)) {
-      centerItem = await this.writeNotificationCenter({
-        tenantId: input.tenantId,
-        subscriberId: input.subscriberId ?? input.to,
-        title: input.title ?? "Notification",
-        content: input.message,
-        channel: input.channel,
-        templateId: input.templateId,
-        messageId: message?.id,
-        expiresAt: input.expiresAt ?? (await this.buildExpiresAt(input.tenantId)),
-        metadata: input.metadata,
-      });
-    }
-
-    return { log, message, delivery, centerItem };
-  }
-
-  async writeNotificationCenter(input: {
-    tenantId: string;
-    subscriberId: string;
-    title: string;
-    content: string;
-    channel: string;
-    templateId?: string;
-    messageId?: string;
-    expiresAt?: Date;
-    metadata?: Record<string, any>;
-    actionUrl?: string;
-    imageUrl?: string;
-  }): Promise<NotificationCenterItem> {
-    const expiresAt = input.expiresAt ?? (await this.buildExpiresAt(input.tenantId));
-
-    const item = await this.centerRepository.save(
-      this.centerRepository.create({
-        tenantId: input.tenantId,
-        subscriberId: input.subscriberId,
-        title: input.title,
-        content: input.content,
-        channel: input.channel,
-        templateId: input.templateId,
-        messageId: input.messageId,
-        expiresAt,
-        metadata: input.metadata,
-        actionUrl: input.actionUrl,
-        imageUrl: input.imageUrl,
-      }),
-    );
-
-    this.eventEmitter.emit("notification.created", {
-      subscriberId: input.subscriberId,
-      notification: item,
-    });
-
-    return item;
-  }
-
-  async writeFullStorageInApp(input: {
-    tenantId: string;
-    subscriberId: string;
-    title: string;
-    content: string;
-    channel: string;
-    templateId?: string;
-    messageId?: string;
-    expiresAt?: Date;
-    metadata?: Record<string, any>;
-  }): Promise<NotificationCenterItem | undefined> {
-    return this.writeNotificationCenter(input);
+    return { log, message, delivery };
   }
 
   async updateDeliveryOutcome(
@@ -289,6 +215,15 @@ export class NotificationStorageService {
       providerId?: string;
     },
   ): Promise<void> {
+    if (!logId && deliveryId) {
+      const row = await this.logRepository
+        .createQueryBuilder("log")
+        .where("log.metadata->>'deliveryId' = :deliveryId", { deliveryId })
+        .getOne();
+      if (row) {
+        logId = row.id;
+      }
+    }
     if (deliveryId) {
       const deliveryUpdate: Partial<MessageDelivery> = {
         status:
@@ -331,39 +266,13 @@ export class NotificationStorageService {
 
   async finalizeEphemeral(messageId: string, logId?: string): Promise<void> {
     await this.messageRepository.update(messageId, {
-      content: undefined,
+      data: undefined,
       subject: undefined,
-      data: {},
+      variables: {},
     });
 
     if (logId) {
       await this.logRepository.delete(logId);
-    }
-  }
-
-  private async buildExpiresAt(tenantId: string): Promise<Date> {
-    const days = await this.getContentRetentionDays(tenantId);
-    const expiresAt = new Date();
-    expiresAt.setDate(expiresAt.getDate() + days);
-    return expiresAt;
-  }
-
-  private isInAppChannel(channel: NotificationChannel): boolean {
-    return channel === "in_app";
-  }
-
-  private toMessageChannel(channel: NotificationChannel): Message["channels"][number] | null {
-    switch (channel) {
-      case "email":
-        return "email" as Message["channels"][number];
-      case "sms":
-        return "sms" as Message["channels"][number];
-      case "push":
-        return "push" as Message["channels"][number];
-      case "whatsapp":
-        return "whatsapp" as Message["channels"][number];
-      default:
-        return null;
     }
   }
 

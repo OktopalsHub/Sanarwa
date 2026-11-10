@@ -12,16 +12,6 @@ export interface PurchaseTokenPackDto {
   type?: TokenPurchaseType;
 }
 
-export interface LegacyPurchaseTokensDto {
-  tenantId: string;
-  tokenAmount: number;
-  paymentProvider: PaymentProvider;
-  type?: TokenPurchaseType;
-  metadata?: Record<string, unknown>;
-}
-
-export type PurchaseTokensDto = PurchaseTokenPackDto | LegacyPurchaseTokensDto;
-
 export interface TokenPurchaseCheckoutResult {
   purchaseId: string;
   checkoutUrl: string;
@@ -33,7 +23,6 @@ export interface CheckoutContextResult {
   defaultCurrency: BillingCurrency;
   availableCurrencies: BillingCurrency[];
   bachsConfigured: boolean;
-  nombaConfigured: boolean;
   providers: PaymentProvider[];
   countryCode?: string;
 }

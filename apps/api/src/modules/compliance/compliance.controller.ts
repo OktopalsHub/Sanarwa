@@ -21,9 +21,6 @@ import { ComplianceService } from "./compliance.service";
 export class ComplianceController {
   constructor(private readonly complianceService: ComplianceService) {}
 
-  /**
-   * GDPR Data Portability - Export user data
-   */
   @Get("data-export/:userId")
   @ApiOperation({ summary: "Export user data (GDPR)" })
   @ApiParam({ name: "userId", description: "User ID" })
@@ -50,9 +47,6 @@ export class ComplianceController {
     return this.complianceService.exportUserData(request);
   }
 
-  /**
-   * GDPR Right to Erasure - Delete user data
-   */
   @Delete("data-erasure/:userId")
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: "Erasure of user data (GDPR)" })
@@ -76,9 +70,6 @@ export class ComplianceController {
     return this.complianceService.deleteUserData(request);
   }
 
-  /**
-   * Automated data retention cleanup
-   */
   @Post("retention-cleanup")
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: "Trigger retention cleanup" })
@@ -88,9 +79,6 @@ export class ComplianceController {
     return this.complianceService.performRetentionCleanup(tenantId);
   }
 
-  /**
-   * Record user consent
-   */
   @Post("consent")
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({ summary: "Record user consent" })
@@ -117,9 +105,6 @@ export class ComplianceController {
     return this.complianceService.recordConsent(consent);
   }
 
-  /**
-   * Revoke user consent
-   */
   @Delete("consent/:userId/:consentType")
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: "Revoke user consent" })
@@ -136,9 +121,6 @@ export class ComplianceController {
     return this.complianceService.revokeConsent(userId, tenantId, consentType);
   }
 
-  /**
-   * Get user consent records
-   */
   @Get("consent/:userId")
   @ApiOperation({ summary: "Get user consent records" })
   @ApiParam({ name: "userId", description: "User ID" })
@@ -151,9 +133,6 @@ export class ComplianceController {
     return this.complianceService.getUserConsentRecords(userId, tenantId);
   }
 
-  /**
-   * Update communication preferences
-   */
   @Post("preferences/:userId")
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: "Update communication preferences" })
@@ -174,9 +153,6 @@ export class ComplianceController {
     return this.complianceService.updateCommunicationPreferences(userId, tenantId, preferences);
   }
 
-  /**
-   * Get user communication preferences
-   */
   @Get("preferences/:userId")
   @ApiOperation({ summary: "Get user communication preferences" })
   @ApiParam({ name: "userId", description: "User ID" })
@@ -189,9 +165,6 @@ export class ComplianceController {
     return this.complianceService.getUserCommunicationPreferences(userId, tenantId);
   }
 
-  /**
-   * Get privacy audit trail
-   */
   @Get("audit-trail/:userId")
   @ApiOperation({ summary: "Get privacy audit trail" })
   @ApiParam({ name: "userId", description: "User ID" })

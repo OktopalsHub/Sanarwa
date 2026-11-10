@@ -46,9 +46,6 @@ export class ProviderCostTrackerService {
     private readonly providerConfigRepository: Repository<ProviderConfig>,
   ) {}
 
-  /**
-   * Calculate cost for a specific usage
-   */
   calculateCost(
     costModel: ProviderCostModel,
     messageCount: number,
@@ -58,7 +55,6 @@ export class ProviderCostTrackerService {
     let infrastructureCost = 0;
 
     if (costModel.type === "per_message") {
-      // Calculate tiered pricing
       if (costModel.tiers) {
         let remaining = messageCount;
         for (const tier of costModel.tiers) {
@@ -71,7 +67,6 @@ export class ProviderCostTrackerService {
         providerCost = messageCount * costModel.baseRate;
       }
 
-      // Add infrastructure fee
       if (costModel.infrastructureFee) {
         infrastructureCost = messageCount * costModel.infrastructureFee;
       }
@@ -80,7 +75,6 @@ export class ProviderCostTrackerService {
       infrastructureCost = costModel.infrastructureFee || 0;
     }
 
-    // Apply minimum charge
     if (costModel.minimumCharge && providerCost < costModel.minimumCharge) {
       providerCost = costModel.minimumCharge;
     }
@@ -93,15 +87,12 @@ export class ProviderCostTrackerService {
       infrastructureCost,
       breakdown: {
         base: providerCost,
-        overage: 0, // TODO: Implement overage calculation
+        overage: 0,
         infrastructure: infrastructureCost,
       },
     };
   }
 
-  /**
-   * Log provider usage for cost tracking
-   */
   async logUsage(
     providerConfigId: string,
     usage: {
@@ -122,7 +113,6 @@ export class ProviderCostTrackerService {
       throw new Error(`Provider config ${providerConfigId} not found`);
     }
 
-    // Calculate costs based on provider's cost model
     const costModel = this.extractCostModel(providerConfig);
     const costResult = this.calculateCost(costModel, usage.messageCount);
 
@@ -149,9 +139,6 @@ export class ProviderCostTrackerService {
     );
   }
 
-  /**
-   * Get usage metrics for a provider
-   */
   async getUsageMetrics(
     providerConfigId: string,
     startDate: Date,
@@ -173,7 +160,6 @@ export class ProviderCostTrackerService {
       order: { periodStart: "ASC" },
     });
 
-    // Aggregate metrics
     const totalMessages = usageLogs.reduce((sum, log) => sum + log.messageCount, 0);
     const successfulMessages = usageLogs.reduce((sum, log) => sum + log.successfulCount, 0);
     const failedMessages = usageLogs.reduce((sum, log) => sum + log.failedCount, 0);
@@ -181,17 +167,14 @@ export class ProviderCostTrackerService {
     const infrastructureCost = usageLogs.reduce((sum, log) => sum + log.infrastructureCost, 0);
     const providerCost = usageLogs.reduce((sum, log) => sum + log.providerCost, 0);
 
-    // Calculate average latency
     const totalLatency = usageLogs.reduce(
       (sum, log) => sum + log.averageLatencyMs * log.messageCount,
       0,
     );
     const averageLatency = totalMessages > 0 ? totalLatency / totalMessages : 0;
 
-    // Calculate delivery rate
     const deliveryRate = totalMessages > 0 ? (successfulMessages / totalMessages) * 100 : 0;
 
-    // Aggregate error breakdown
     const errorBreakdown: Record<string, number> = {};
     usageLogs.forEach((log) => {
       if (log.errorBreakdown) {
@@ -222,9 +205,6 @@ export class ProviderCostTrackerService {
     };
   }
 
-  /**
-   * Get cost trends over time
-   */
   async getCostTrends(
     tenantId: string,
     channel?: NotificationChannel,
@@ -250,7 +230,6 @@ export class ProviderCostTrackerService {
       queryBuilder.andWhere("usage.periodEnd <= :endDate", { endDate });
     }
 
-    // Group by time period
     let dateFormat: string;
     switch (granularity) {
       case "hour":
@@ -286,9 +265,6 @@ export class ProviderCostTrackerService {
     }));
   }
 
-  /**
-   * Compare costs between providers
-   */
   async compareProviderCosts(
     tenantId: string,
     channel: NotificationChannel,
@@ -335,7 +311,6 @@ export class ProviderCostTrackerService {
       deliveryRate: (parseInt(result.successfulCount) / parseInt(result.messageCount)) * 100,
     }));
 
-    // Generate recommendations
     const recommendations: string[] = [];
     if (providers.length > 1) {
       const cheapest = providers[0];
@@ -348,7 +323,6 @@ export class ProviderCostTrackerService {
         );
       }
 
-      // Check delivery rates
       const bestDelivery = providers.reduce((best, current) =>
         current.deliveryRate > best.deliveryRate ? current : best,
       );
@@ -363,21 +337,17 @@ export class ProviderCostTrackerService {
     return { providers, recommendations };
   }
 
-  /**
-   * Check for cost alerts
-   */
   async checkCostAlerts(
     tenantId: string,
     thresholds: {
       dailyLimit?: number;
       monthlyLimit?: number;
-      spikeThreshold?: number; // Percentage increase
+      spikeThreshold?: number;
     },
   ): Promise<CostAlert[]> {
     const alerts: CostAlert[] = [];
     const now = new Date();
 
-    // Check daily costs
     if (thresholds.dailyLimit) {
       const dayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
       const dayEnd = new Date(dayStart.getTime() + 24 * 60 * 60 * 1000);
@@ -403,7 +373,6 @@ export class ProviderCostTrackerService {
       }
     }
 
-    // Check monthly costs
     if (thresholds.monthlyLimit) {
       const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
       const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0);
@@ -421,7 +390,6 @@ export class ProviderCostTrackerService {
       }
     }
 
-    // Check for unusual spikes
     if (thresholds.spikeThreshold) {
       const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
       const yesterdayStart = new Date(todayStart.getTime() - 24 * 60 * 60 * 1000);
@@ -451,9 +419,6 @@ export class ProviderCostTrackerService {
     return alerts;
   }
 
-  /**
-   * Get cost optimization recommendations
-   */
   async getCostOptimizationRecommendations(
     tenantId: string,
     channel?: NotificationChannel,
@@ -475,13 +440,11 @@ export class ProviderCostTrackerService {
     const recommendations: any[] = [];
     let totalPotentialSavings = 0;
 
-    // Analyze provider usage patterns
     const endDate = new Date();
-    const startDate = new Date(endDate.getTime() - 30 * 24 * 60 * 60 * 1000); // Last 30 days
+    const startDate = new Date(endDate.getTime() - 30 * 24 * 60 * 60 * 1000);
 
     const comparison = await this.compareProviderCosts(tenantId, channel!, startDate, endDate);
 
-    // Provider switching recommendations
     if (comparison.providers.length > 1) {
       const cheapest = comparison.providers[0];
       const current = comparison.providers.find((p) => p.messageCount > 0);
@@ -489,7 +452,6 @@ export class ProviderCostTrackerService {
       if (current && current.providerId !== cheapest.providerId) {
         const savings = (current.costPerMessage - cheapest.costPerMessage) * current.messageCount;
         if (savings > 10) {
-          // Only recommend if savings > $10
           recommendations.push({
             type: "provider_switch",
             title: `Switch to ${cheapest.providerName}`,
@@ -503,10 +465,9 @@ export class ProviderCostTrackerService {
       }
     }
 
-    // Volume optimization
     const volumeAnalysis = await this.analyzeVolumePatterns(tenantId, channel, startDate, endDate);
     if (volumeAnalysis.wastedMessages > 100) {
-      const savings = volumeAnalysis.wastedMessages * 0.001; // Estimate $0.001 per wasted message
+      const savings = volumeAnalysis.wastedMessages * 0.001;
       recommendations.push({
         type: "volume_optimization",
         title: "Reduce Failed Messages",
@@ -588,7 +549,6 @@ export class ProviderCostTrackerService {
   }
 
   private extractCostModel(providerConfig: ProviderConfig): ProviderCostModel {
-    // Extract cost model from provider metadata or use defaults
     const metadata = providerConfig.metadata || {};
 
     return {

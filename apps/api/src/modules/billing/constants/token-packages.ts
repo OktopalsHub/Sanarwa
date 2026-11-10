@@ -203,24 +203,25 @@ export function packagePriceMinor(pkg: TokenPackageCatalogItem): number {
   return Math.round(pkg.price * 100);
 }
 
-export function parseNotifiPurchaseReference(reference?: string | null): string | null {
+const PURCHASE_REFERENCE_PREFIX = "sanarwa_purchase_";
+
+const PAYMENT_METHOD_SETUP_PREFIX = "sanarwa_pm_setup_";
+
+export function parsePurchaseReference(reference?: string | null): string | null {
   if (!reference) return null;
-  const prefix = "notifi_purchase_";
-  if (!reference.startsWith(prefix)) return null;
-  return reference.slice(prefix.length) || null;
+  if (!reference.startsWith(PURCHASE_REFERENCE_PREFIX)) return null;
+  return reference.slice(PURCHASE_REFERENCE_PREFIX.length) || null;
 }
 
-export function buildNotifiPurchaseReference(purchaseId: string): string {
-  return `notifi_purchase_${purchaseId}`;
+export function buildPurchaseReference(purchaseId: string): string {
+  return `${PURCHASE_REFERENCE_PREFIX}${purchaseId}`;
 }
 
-const PAYMENT_METHOD_SETUP_PREFIX = "notifi_pm_setup_";
-
-export function buildNotifiPaymentMethodSetupReference(setupReference: string): string {
+export function buildPaymentMethodSetupReference(setupReference: string): string {
   return `${PAYMENT_METHOD_SETUP_PREFIX}${setupReference}`;
 }
 
-export function parseNotifiPaymentMethodSetupReference(reference?: string | null): string | null {
+export function parsePaymentMethodSetupReference(reference?: string | null): string | null {
   if (!reference) return null;
   if (!reference.startsWith(PAYMENT_METHOD_SETUP_PREFIX)) return null;
   return reference.slice(PAYMENT_METHOD_SETUP_PREFIX.length) || null;

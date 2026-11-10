@@ -1,6 +1,6 @@
 "use client";
 
-import { Card } from "@/components/ui/card";
+import { Card } from "@sanarwa/ui/card";
 import { cn } from "@/lib/utils";
 import { useTheme } from "next-themes";
 import {
@@ -56,7 +56,6 @@ export function DashboardChart({
   const { theme } = useTheme();
   const isDark = theme === "dark";
 
-  // Use provided colors or fall back to default colors
   const chartColors = colors && colors.length > 0 ? colors : COLORS;
 
   const chartProps = {

@@ -1,9 +1,3 @@
-/**
- * Email BYOP (Bring Your Own Provider) Tests
- * Tests SES, Resend, and other email provider configurations
- * Event-based billing model testing
- */
-
 import { describe, it, expect, beforeAll, afterAll } from "vitest";
 import {
   createTestSetup,
@@ -23,12 +17,12 @@ describe("📧 Email BYOP Tests", () => {
   beforeAll(async () => {
     testSetup = await createTestSetup();
 
-    // Create email template for BYOP testing
     const templateData = {
       name: "email-byop-test",
       channel: "EMAIL",
       subject: "BYOP Test: {{title}}",
-      content: `
+
+      data: `
         <html>
           <body>
             <h2>{{title}}</h2>
@@ -54,15 +48,12 @@ describe("📧 Email BYOP Tests", () => {
   afterAll(async () => {
     await cleanupTemplate(testSetup.api, testSetup.authData, emailTemplate.id);
 
-    // Cleanup providers
     for (const providerId of createdProviders) {
       try {
         await testSetup.api.delete(`/projects/${testSetup.projectId}/providers/${providerId}`, {
           headers: { Authorization: `Bearer ${testSetup.authData.accessToken}` },
         });
-      } catch (error) {
-        // Ignore cleanup errors
-      }
+      } catch (error) {}
     }
     console.log("✅ Email BYOP cleanup completed");
   });
@@ -143,7 +134,7 @@ describe("📧 Email BYOP Tests", () => {
       const resendConfig = {
         providerId: "resend-byop-email-test",
         providerName: "Resend Email BYOP",
-        providerType: "sendgrid", // Using sendgrid as closest match
+        providerType: "sendgrid",
         channel: "email",
         config: {
           apiKey: "re_test_api_key_12345",
@@ -226,7 +217,6 @@ describe("📧 Email BYOP Tests", () => {
     });
 
     it("should verify event-based billing when BYOP is configured", async () => {
-      // After configuring BYOP providers, check if billing model switches
       const quotaResponse = await testSetup.api.get(`/projects/${testSetup.projectId}/quotas`, {
         headers: { Authorization: `Bearer ${testSetup.authData.accessToken}` },
       });
@@ -246,11 +236,10 @@ describe("📧 Email BYOP Tests", () => {
     });
 
     it("should demonstrate email BYOP cost efficiency", async () => {
-      // Simulate high-volume email scenario to show BYOP benefits
       const emailVolumeTest = {
         monthlyEmails: 50000,
-        traditionalEmailCost: 299, // $299/month for 50k email quota
-        byopEmailCost: 50000 * 0.001, // $0.001 per email event
+        traditionalEmailCost: 299,
+        byopEmailCost: 50000 * 0.001,
         savings: 299 - 50000 * 0.001,
       };
 
@@ -265,7 +254,6 @@ describe("📧 Email BYOP Tests", () => {
         `   Cost reduction: ${Math.round((emailVolumeTest.savings / emailVolumeTest.traditionalEmailCost) * 100)}%`,
       );
 
-      // Test a batch of email notifications to simulate volume
       const batchSize = 5;
       const batchResults = [];
 

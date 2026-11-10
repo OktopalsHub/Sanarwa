@@ -13,10 +13,10 @@ import {
   Zap,
 } from "@/lib/icons";
 
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Separator } from "@/components/ui/separator";
+import { Button } from "@sanarwa/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@sanarwa/ui/card";
+import { ScrollArea } from "@sanarwa/ui/scroll-area";
+import { Separator } from "@sanarwa/ui/separator";
 import { WorkflowPosition } from "@/lib/types/workflow";
 import { cn } from "@/lib/utils";
 import {
@@ -179,7 +179,6 @@ export function WorkflowNodePalette({ onAddNode, className }: WorkflowNodePalett
   };
 
   const handleNodeClick = (template: NodeTemplate) => {
-    // Add node at a default position (center of canvas)
     onAddNode(template.type, { x: 400, y: 300 });
   };
 

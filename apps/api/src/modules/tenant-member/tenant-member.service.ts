@@ -1,10 +1,10 @@
 import { Inject, Injectable, Logger, NotFoundException } from "@nestjs/common";
 import { EventEmitter2, OnEvent } from "@nestjs/event-emitter";
-import { getPaginationSummary, IPaginatedData } from "src/common/dto/pagination.dto";
+import { getPaginationSummary, IPaginatedData } from "../../common/dto/pagination.dto";
 
 import { TenantMemberRole } from "../../common/enums";
 import { TenantCreatedEvent, TenantMemberCreatedEvent } from "../../common/events/tenant.event";
-import { BaseRepository } from "../../database/repositories/base.repository";
+import { BaseRepository } from "../../common/database/repositories/base.repository";
 import { Tenant } from "../tenant/entities/tenant.entity";
 import {
   CreateTenantMemberDto,
@@ -66,7 +66,6 @@ export class TenantMemberService {
       ])
       .where("member.tenant.id = :tenantId", { tenantId });
 
-    // Apply filters
     if (role) {
       queryBuilder.andWhere("member.role = :role", { role });
     }
@@ -78,15 +77,12 @@ export class TenantMemberService {
       );
     }
 
-    // Apply sorting
     queryBuilder.orderBy(`member.${sortBy}`, sortOrder);
 
-    // Apply pagination
     queryBuilder.skip((page - 1) * limit).take(limit);
 
     const [members, total] = await queryBuilder.getManyAndCount();
 
-    // Transform to response DTOs
     const transformedMembers = members.map((member) => this.transformMemberResponse(member));
 
     return getPaginationSummary(transformedMembers, total, { page, limit }, "Tenant Members");
@@ -156,14 +152,14 @@ export class TenantMemberService {
   async getMemberByUserId(tenantId: string, userId: string): Promise<TenantMember | null> {
     return this.tenantMemberRepository.findOne({
       where: { tenant: { id: tenantId }, user: { id: userId } },
-      relations: ["user", "tenant"],
+      relations: { user: true, tenant: true },
     });
   }
 
   async findByUserEmail(tenantId: string, email: string): Promise<TenantMember | null> {
     return this.tenantMemberRepository.findOne({
       where: { tenant: { id: tenantId }, user: { email } },
-      relations: ["user", "tenant"],
+      relations: { user: true, tenant: true },
     });
   }
 
@@ -217,7 +213,6 @@ export class TenantMemberService {
       ])
       .where("member.user.id = :userId", { userId });
 
-    // Apply filters
     if (role) {
       queryBuilder.andWhere("member.role = :role", { role });
     }
@@ -228,7 +223,6 @@ export class TenantMemberService {
       });
     }
 
-    // Apply sorting
     let orderByField = "member.createdAt";
     if (sortBy === "tenantName") {
       orderByField = "tenant.name";
@@ -238,12 +232,10 @@ export class TenantMemberService {
 
     queryBuilder.orderBy(orderByField, sortOrder);
 
-    // Apply pagination
     queryBuilder.skip((page - 1) * limit).take(limit);
 
     const [members, total] = await queryBuilder.getManyAndCount();
 
-    // Transform to response DTOs
     const transformedMembers = members.map((member) => this.transformUserTenantResponse(member));
 
     return getPaginationSummary(transformedMembers, total, { page, limit }, "User Tenants");
@@ -267,10 +259,6 @@ export class TenantMemberService {
     };
   }
 
-  /**
-   * Event listener for tenant creation
-   * Automatically creates the tenant owner membership
-   */
   @OnEvent("tenant.created")
   async handleTenantCreated(event: TenantCreatedEvent): Promise<void> {
     try {
@@ -279,7 +267,6 @@ export class TenantMemberService {
         user: event.creator,
       });
     } catch (error) {
-      // Log error but don't throw to prevent tenant creation rollback
       this.logger.error("Failed to create tenant owner membership:", error.message, {
         error: error.stack,
         tenantId: event.tenant.id,

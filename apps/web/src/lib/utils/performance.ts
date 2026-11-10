@@ -1,11 +1,5 @@
-/**
- * Performance optimization utilities for the Notifi platform
- * Includes lazy loading, code splitting, and performance monitoring
- */
-
 import { ComponentType, lazy } from "react";
 
-// Lazy loading utilities
 export function createLazyComponent<T extends ComponentType<any>>(
   importFn: () => Promise<{ default: T }>,
   fallback?: React.ComponentType,
@@ -22,7 +16,6 @@ export function createLazyComponent<T extends ComponentType<any>>(
   return LazyComponent;
 }
 
-// Dynamic import with retry logic
 export async function dynamicImport<T>(
   importFn: () => Promise<T>,
   retries: number = 3,
@@ -39,7 +32,6 @@ export async function dynamicImport<T>(
   throw new Error("Dynamic import failed after retries");
 }
 
-// Image lazy loading utilities
 export function createImageLoader(src: string, quality: number = 75) {
   return `/_next/image?url=${encodeURIComponent(src)}&w=3840&q=${quality}`;
 }
@@ -56,7 +48,6 @@ export function getOptimizedImageProps(src: string, alt: string, width?: number,
   };
 }
 
-// Performance monitoring
 export class PerformanceMonitor {
   private static metrics: Map<string, number> = new Map();
   private static observers: Map<string, PerformanceObserver> = new Map();
@@ -129,7 +120,6 @@ export class PerformanceMonitor {
   }
 }
 
-// Bundle size optimization utilities
 export function preloadRoute(href: string) {
   if (typeof window !== "undefined") {
     const link = document.createElement("link");
@@ -141,7 +131,6 @@ export function preloadRoute(href: string) {
 
 export function preloadComponent(importFn: () => Promise<any>) {
   if (typeof window !== "undefined") {
-    // Preload on idle
     if ("requestIdleCallback" in window) {
       requestIdleCallback(() => importFn());
     } else {
@@ -150,7 +139,6 @@ export function preloadComponent(importFn: () => Promise<any>) {
   }
 }
 
-// Memory optimization utilities
 export class MemoryManager {
   private static cache: Map<string, any> = new Map();
   private static maxCacheSize = 100;
@@ -176,7 +164,6 @@ export class MemoryManager {
   }
 }
 
-// Debounce and throttle utilities for performance
 export function debounce<T extends (...args: any[]) => any>(
   func: T,
   wait: number,
@@ -214,7 +201,6 @@ export function throttle<T extends (...args: any[]) => any>(
   };
 }
 
-// Virtual scrolling utilities
 export function calculateVisibleItems(
   containerHeight: number,
   itemHeight: number,
@@ -236,10 +222,8 @@ export function calculateVisibleItems(
   };
 }
 
-// Resource hints utilities
 export function addResourceHints() {
   if (typeof window !== "undefined") {
-    // DNS prefetch for external domains
     const dnsPrefetchDomains = ["fonts.googleapis.com", "fonts.gstatic.com"];
 
     dnsPrefetchDomains.forEach((domain) => {
@@ -249,7 +233,6 @@ export function addResourceHints() {
       document.head.appendChild(link);
     });
 
-    // Preconnect to critical domains
     const preconnectDomains = ["https://fonts.googleapis.com"];
 
     preconnectDomains.forEach((domain) => {
@@ -262,7 +245,6 @@ export function addResourceHints() {
   }
 }
 
-// Critical CSS utilities
 export function loadNonCriticalCSS(href: string) {
   if (typeof window !== "undefined") {
     const link = document.createElement("link");
@@ -276,7 +258,6 @@ export function loadNonCriticalCSS(href: string) {
   }
 }
 
-// Service Worker utilities
 export function registerServiceWorker(swPath: string = "/sw.js") {
   if (
     typeof window !== "undefined" &&
@@ -296,13 +277,10 @@ export function registerServiceWorker(swPath: string = "/sw.js") {
   }
 }
 
-// Web Vitals reporting
 export function reportWebVitals(metric: any) {
   if (process.env.NODE_ENV === "production") {
-    // Send to analytics service
     console.log("Web Vital:", metric);
 
-    // Example: Send to Google Analytics
     if (typeof window !== "undefined" && "gtag" in window) {
       (window as any).gtag("event", metric.name, {
         event_category: "Web Vitals",

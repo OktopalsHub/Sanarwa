@@ -1,10 +1,10 @@
-import { Controller, Post, Get, Body, Param, Query, UseGuards } from "@nestjs/common";
+import { Controller, Post, Get, Body, Param, UseGuards } from "@nestjs/common";
 import { ApiTags, ApiOperation, ApiResponse, ApiHeader } from "@nestjs/swagger";
 import { ApiKeyAuthGuard } from "../api-key/guards/api-key-auth.guard";
 import { CurrentApiKey } from "../auth/decorators/current-api-key.decorator";
 import { CurrentProjectId } from "../auth/decorators/current-project.decorator";
 import { Public } from "../auth/decorators/public.decorator";
-import { ApiKey } from "../api-key/entities/api-key.entity";
+import { MachineApiKey } from "../auth/decorators/current-api-key.decorator";
 
 import { NotificationRequestDto, BulkNotificationRequestDto } from "./dto/notification-request.dto";
 import {
@@ -31,12 +31,10 @@ export class NotificationController {
   @ApiHeader({ name: "X-API-Key", description: "API Key for authentication", required: true })
   async sendNotification(
     @Body() request: NotificationRequestDto,
-    @CurrentApiKey() apiKey: ApiKey,
+    @CurrentApiKey() apiKey: MachineApiKey,
     @CurrentProjectId() projectId: string,
   ): Promise<NotificationResponseDto> {
-    // API key is validated and available
-    // You can access: apiKey.id, apiKey.project, projectId, etc.
-    return this.notificationService.sendNotification(request);
+    return this.notificationService.sendNotification(request, apiKey);
   }
 
   @Post("bulk")
@@ -49,11 +47,10 @@ export class NotificationController {
   @ApiHeader({ name: "X-API-Key", description: "API Key for authentication", required: true })
   async sendBulkNotifications(
     @Body() request: BulkNotificationRequestDto,
-    @CurrentApiKey() apiKey: ApiKey,
+    @CurrentApiKey() apiKey: MachineApiKey,
     @CurrentProjectId() projectId: string,
   ): Promise<BulkNotificationResponseDto> {
-    // API key is validated and available
-    return this.notificationService.sendBulkNotifications(request);
+    return this.notificationService.sendBulkNotifications(request, apiKey);
   }
 
   @Get(":id/status")
@@ -65,8 +62,8 @@ export class NotificationController {
   })
   async getStatus(
     @Param("id") id: string,
-    @Query("tenantId") tenantId: string,
+    @CurrentApiKey() apiKey: MachineApiKey,
   ): Promise<NotificationStatusDto> {
-    return this.notificationService.getNotificationStatus(id, tenantId);
+    return this.notificationService.getNotificationStatus(id, apiKey.tenantId ?? "");
   }
 }

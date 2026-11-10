@@ -2,27 +2,15 @@
 
 import { Send, Webhook } from "@/lib/icons";
 
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-} from "@/components/ui/sheet";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Textarea } from "@/components/ui/textarea";
+import { Badge } from "@sanarwa/ui/badge";
+import { Button } from "@sanarwa/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@sanarwa/ui/card";
+import { Input } from "@sanarwa/ui/input";
+import { Label } from "@sanarwa/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@sanarwa/ui/select";
+import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@sanarwa/ui/sheet";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@sanarwa/ui/tabs";
+import { Textarea } from "@sanarwa/ui/textarea";
 import {
   ActionConfig,
   ConditionConfig,
@@ -44,7 +32,6 @@ interface WorkflowNodeConfigProps {
   onPreview?: (node: WorkflowNode) => void;
 }
 
-// Validation schemas for different node types
 const triggerConfigSchema = z.object({
   type: z.enum(["event", "time", "api", "webhook"]),
   eventName: z.string().optional(),
@@ -169,7 +156,6 @@ export function WorkflowNodeConfig({
   );
 }
 
-// General node configuration component
 function GeneralNodeConfig({
   node,
   onSave,
@@ -227,7 +213,6 @@ function GeneralNodeConfig({
   );
 }
 
-// Trigger node configuration
 function TriggerNodeConfig({
   node,
   onSave,
@@ -338,7 +323,6 @@ function TriggerNodeConfig({
   );
 }
 
-// Action node configuration
 function ActionNodeConfig({
   node,
   onSave,
@@ -459,7 +443,6 @@ function ActionNodeConfig({
   );
 }
 
-// Condition node configuration
 function ConditionNodeConfig({
   node,
   onSave,
@@ -542,7 +525,6 @@ function ConditionNodeConfig({
   );
 }
 
-// Delay node configuration
 function DelayNodeConfig({
   node,
   onSave,
@@ -609,7 +591,6 @@ function DelayNodeConfig({
   );
 }
 
-// Split node configuration
 function SplitNodeConfig({
   node,
   onSave,

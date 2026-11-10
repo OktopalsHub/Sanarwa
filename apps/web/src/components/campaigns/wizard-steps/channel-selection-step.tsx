@@ -1,6 +1,6 @@
 "use client";
 
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent } from "@sanarwa/ui/card";
 import type { CommunicationChannel } from "@/lib/types/campaign";
 import { useState } from "react";
 import { ChannelCard } from "./channel-card";

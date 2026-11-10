@@ -1,7 +1,7 @@
 import { Injectable, Inject, NotFoundException } from "@nestjs/common";
 import { getPaginationSummary } from "../../common/dto/pagination.dto";
 import { IPaginatedData } from "../../common/interfaces";
-import { BaseRepository } from "../../database/repositories/base.repository";
+import { BaseRepository } from "../../common/database/repositories/base.repository";
 import { BRAND_REPO } from "./brand.tokens";
 import { CreateBrandDto } from "./dtos/create-brand.dto";
 import { UpdateBrandDto } from "./dtos/update-brand.dto";
@@ -48,7 +48,6 @@ export class BrandService {
       ])
       .where("brand.tenantId = :tenantId", { tenantId });
 
-    // Apply filters
     if (query?.search) {
       queryBuilder.andWhere("(brand.name ILIKE :search OR brand.description ILIKE :search)", {
         search: `%${query.search}%`,
@@ -59,17 +58,14 @@ export class BrandService {
       queryBuilder.andWhere("brand.status = :status", { status: query.status });
     }
 
-    // Apply sorting
     const sortField = query?.sortBy || "createdAt";
     const sortOrder = query?.sortOrder || "DESC";
     queryBuilder.orderBy(`brand.${sortField}`, sortOrder);
 
-    // Apply pagination
     queryBuilder.skip((page - 1) * limit).take(limit);
 
     const [brands, total] = await queryBuilder.getManyAndCount();
 
-    // Transform to only include necessary fields
     const sanitizedBrands = brands.map((brand) => ({
       id: brand.id,
       name: brand.name,
@@ -99,7 +95,7 @@ export class BrandService {
   }
 
   async updateBrand(tenantId: string, id: string, updateDto: UpdateBrandDto): Promise<Brand> {
-    await this.getBrandById(tenantId, id); // Verify exists
+    await this.getBrandById(tenantId, id);
 
     const updated = await this.brandRepository.update(id, updateDto);
     if (!updated) {
@@ -110,7 +106,7 @@ export class BrandService {
   }
 
   async removeBrand(tenantId: string, id: string): Promise<void> {
-    await this.getBrandById(tenantId, id); // Verify exists
+    await this.getBrandById(tenantId, id);
     await this.brandRepository.delete(id);
   }
 }

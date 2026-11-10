@@ -10,6 +10,7 @@ import {
 } from "typeorm";
 import { TenantMember } from "../tenant-member/entities/tenant-member.entity";
 import { MessageDelivery } from "./message-delivery.entity";
+import { NotificationChannel } from "../../common/enums/notification-channel.enum";
 
 export enum MessageStatus {
   PENDING = "pending",
@@ -28,25 +29,21 @@ export enum MessagePriority {
   URGENT = "urgent",
 }
 
-export enum MessageChannel {
-  EMAIL = "email",
-  SMS = "sms",
-  PUSH = "push",
-  WHATSAPP = "whatsapp",
-  VOICE = "voice",
-}
-
 export interface MessageRecipient {
   id: string;
   email?: string;
   phone?: string;
   deviceToken?: string;
   whatsappNumber?: string;
+  slackChannel?: string;
+  slackWebhookUrl?: string;
+  discordWebhookUrl?: string;
+  telegramChatId?: string;
+  chatAddress?: string;
   userId?: string;
   metadata?: Record<string, any>;
 }
 
-// Export type alias for convenience
 export type Recipient = MessageRecipient;
 
 @Entity("messages")
@@ -65,13 +62,13 @@ export class Message {
   templateId?: string;
 
   @Column({ type: "json" })
-  channels: MessageChannel[];
+  channels: NotificationChannel[];
 
   @Column({ type: "json" })
   recipients: MessageRecipient[];
 
   @Column({ type: "json" })
-  data: Record<string, any>;
+  variables: Record<string, any>;
 
   @Column({
     type: "enum",
@@ -94,7 +91,7 @@ export class Message {
   subject?: string;
 
   @Column({ type: "text", nullable: true })
-  content?: string;
+  data?: string;
 
   @Column({ type: "json", nullable: true })
   metadata?: Record<string, any>;

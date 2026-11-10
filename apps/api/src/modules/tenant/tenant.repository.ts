@@ -1,6 +1,6 @@
 import { Injectable } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
-import { BaseRepository } from "../../database/repositories/base.repository";
+import { BaseRepository } from "../../common/database/repositories/base.repository";
 import { Like, Repository } from "typeorm";
 import { Tenant } from "./entities/tenant.entity";
 
@@ -16,7 +16,7 @@ export class TenantRepository extends BaseRepository<Tenant> {
   async findSlugsStartingWith(baseSlug: string): Promise<string[]> {
     const tenants = await this.tenantRepository.find({
       where: { subdomain: Like(`${baseSlug}%`) },
-      select: ["subdomain"], // Only fetch the `subdomain` field
+      select: { subdomain: true },
     });
 
     return tenants.map((tenant: Tenant) => tenant.subdomain);

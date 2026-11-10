@@ -1,7 +1,7 @@
 "use client";
 
 import { AppShell } from "@/components/layout";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@sanarwa/ui/tabs";
 import { TeamManagement } from "@/components/tenant/team-management";
 import { BrandAssetManager } from "@/components/branding/brand-asset-manager";
 import { BrandPreview } from "@/components/branding/brand-preview";

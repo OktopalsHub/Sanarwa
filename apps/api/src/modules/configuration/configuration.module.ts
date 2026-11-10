@@ -1,7 +1,7 @@
 import { Module } from "@nestjs/common";
 import { EventEmitterModule } from "@nestjs/event-emitter";
 import { TypeOrmModule } from "@nestjs/typeorm";
-import { SecurityModule } from "src/common/security/security.module";
+import { SecurityModule } from "../../common/security/security.module";
 import { AuthModule } from "../auth/auth.module";
 import { ConfigurationController } from "./controllers/configuration.controller";
 import { ConfigurationVersion } from "./entities/configuration-version.entity";

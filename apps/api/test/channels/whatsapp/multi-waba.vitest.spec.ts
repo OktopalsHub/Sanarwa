@@ -1,9 +1,3 @@
-/**
- * Multi-WABA (WhatsApp Business Account) Management Tests
- * Tests tenant-owned WABAs (BYOP) and platform-managed WABA pools
- * Solves the 6000 template limit with unlimited scaling
- */
-
 import { describe, it, expect, beforeAll, afterAll } from "vitest";
 import {
   createTestSetup,
@@ -22,15 +16,12 @@ describe("🏢 Multi-WABA Management Tests", () => {
   });
 
   afterAll(async () => {
-    // Cleanup created WABAs
     for (const wabaId of createdWABAs) {
       try {
         await testSetup.api.delete(`/whatsapp/waba/${wabaId}`, {
           headers: createAuthHeaders(testSetup.authData.accessToken),
         });
-      } catch (error) {
-        // Ignore cleanup errors
-      }
+      } catch (error) {}
     }
     console.log("✅ Multi-WABA cleanup completed");
   });

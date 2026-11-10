@@ -68,7 +68,6 @@ export class TenantWABAConfig {
   @UpdateDateColumn({ name: "updated_at" })
   updatedAt: Date;
 
-  // Helper methods
   recordMessage(cost: number = 0): void {
     this.usage.messagesSent++;
     this.usage.totalCost += cost;

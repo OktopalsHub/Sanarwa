@@ -1,15 +1,9 @@
-/**
- * Tenant Member Module HTTP Tests
- * Tests tenant member management endpoints via HTTP calls
- */
-
 import axios, { AxiosInstance } from "axios";
 
 describe("Tenant Member Module HTTP Tests", () => {
   const baseURL = "http://localhost:9000/api/v1";
   let api: AxiosInstance;
 
-  // Test data
   const testUser = {
     email: `member-test-${Date.now()}@example.com`,
     password: "TestPassword123!",
@@ -36,13 +30,11 @@ describe("Tenant Member Module HTTP Tests", () => {
     api = axios.create({
       baseURL,
       timeout: 10000,
-      validateStatus: () => true, // Don't throw on HTTP errors
+      validateStatus: () => true,
     });
 
-    // Wait for server to be ready
     await waitForServer();
 
-    // Register test users and setup tenant
     await setupTestData();
   });
 
@@ -64,7 +56,6 @@ describe("Tenant Member Module HTTP Tests", () => {
   }
 
   async function setupTestData(): Promise<void> {
-    // Register first user (will be tenant owner)
     const response1 = await api.post("/auth/register", testUser);
     expect(response1.status).toBe(201);
 
@@ -74,7 +65,6 @@ describe("Tenant Member Module HTTP Tests", () => {
       userId: response1.data.user.id,
     };
 
-    // Register second user
     const response2 = await api.post("/auth/register", testUser2);
     expect(response2.status).toBe(201);
 
@@ -84,7 +74,6 @@ describe("Tenant Member Module HTTP Tests", () => {
       userId: response2.data.user.id,
     };
 
-    // Get tenant ID from user1's workspaces
     const workspacesResponse = await api.get("/tenant-members/user-workspaces", {
       headers: {
         Authorization: `Bearer ${authTokens.user1.accessToken}`,
@@ -98,13 +87,7 @@ describe("Tenant Member Module HTTP Tests", () => {
   }
 
   describe("Tenant Member Management (Invitation-Based)", () => {
-    // Note: Members are added through invitation system only
-    // This section tests member management after they've joined via invitation
-
     beforeAll(async () => {
-      // Simulate that user2 joined via invitation
-      // In real scenario, this would happen through invite acceptance
-      // For testing, we'll get the existing owner membership
       const membersResponse = await api.get(`/tenants/${tenantId}/members`, {
         headers: {
           Authorization: `Bearer ${authTokens.user1.accessToken}`,
@@ -128,9 +111,8 @@ describe("Tenant Member Module HTTP Tests", () => {
         expect(response.data).toHaveProperty("data");
         expect(response.data).toHaveProperty("pagination");
         expect(Array.isArray(response.data.data)).toBe(true);
-        expect(response.data.data.length).toBeGreaterThanOrEqual(2); // Owner + added member
+        expect(response.data.data.length).toBeGreaterThanOrEqual(2);
 
-        // Check member structure
         const member = response.data.data[0];
         expect(member).toHaveProperty("id");
         expect(member).toHaveProperty("role");
@@ -223,7 +205,6 @@ describe("Tenant Member Module HTTP Tests", () => {
       });
 
       it("should not get member from different tenant", async () => {
-        // Try to access member with wrong tenant ID
         const response = await api.get(
           `/tenants/00000000-0000-0000-0000-000000000000/members/${memberId}`,
           {
@@ -314,7 +295,6 @@ describe("Tenant Member Module HTTP Tests", () => {
 
         expect(response.status).toBe(204);
 
-        // Verify member was removed
         const getResponse = await api.get(`/tenants/${tenantId}/members/${memberId}`, {
           headers: {
             Authorization: `Bearer ${authTokens.user1.accessToken}`,
@@ -337,7 +317,6 @@ describe("Tenant Member Module HTTP Tests", () => {
       });
 
       it("should not remove member without proper permissions", async () => {
-        // First add the member back
         const addResponse = await api.post(
           `/tenants/${tenantId}/members`,
           {
@@ -354,7 +333,6 @@ describe("Tenant Member Module HTTP Tests", () => {
         if (addResponse.status === 201) {
           const newMemberId = addResponse.data.id;
 
-          // Try to remove as non-owner
           const response = await api.delete(`/tenants/${tenantId}/members/${newMemberId}`, {
             headers: {
               Authorization: `Bearer ${authTokens.user2.accessToken}`,
@@ -458,7 +436,6 @@ describe("Tenant Member Module HTTP Tests", () => {
       expect(response1.status).toBe(200);
       expect(response2.status).toBe(200);
 
-      // Users should have different workspaces
       const user1Workspaces = response1.data;
       const user2Workspaces = response2.data;
 
@@ -467,19 +444,16 @@ describe("Tenant Member Module HTTP Tests", () => {
     });
 
     it("should validate tenant member access permissions", async () => {
-      // Test that users can only manage members in tenants they have proper permissions for
       const response = await api.get(`/tenants/${tenantId}/members`, {
         headers: {
           Authorization: `Bearer ${authTokens.user2.accessToken}`,
         },
       });
 
-      // User2 might not have access to manage members, or only see their own membership
       expect([200, 403, 404]).toContain(response.status);
     });
 
     it("should handle invalid member operations gracefully", async () => {
-      // Test various invalid operations
       const invalidOperations = [
         api.get("/tenants/invalid-uuid/members", {
           headers: { Authorization: `Bearer ${authTokens.user1.accessToken}` },

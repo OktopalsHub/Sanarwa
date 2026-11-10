@@ -15,14 +15,12 @@ export function useBrandApplication() {
   const { branding } = useBranding();
   const [appliedCSS, setAppliedCSS] = useState<string>("");
 
-  // Apply branding CSS to the document
   useEffect(() => {
     if (!branding) return;
 
     const css = generateDashboardCSS(branding);
     setAppliedCSS(css);
 
-    // Apply CSS to document
     let styleElement = document.getElementById("brand-application-styles");
     if (!styleElement) {
       styleElement = document.createElement("style");
@@ -32,7 +30,6 @@ export function useBrandApplication() {
     styleElement.textContent = css;
 
     return () => {
-      // Cleanup on unmount
       const element = document.getElementById("brand-application-styles");
       if (element) {
         element.remove();
@@ -40,7 +37,6 @@ export function useBrandApplication() {
     };
   }, [branding]);
 
-  // Apply branding to email templates
   const applyToEmailTemplate = useCallback(
     (template: EmailTemplate): BrandedEmailTemplate | null => {
       if (!branding) return null;
@@ -49,19 +45,16 @@ export function useBrandApplication() {
     [branding],
   );
 
-  // Get chart colors based on branding
   const chartColors = useMemo(() => {
     if (!branding) return [];
     return generateChartColors(branding);
   }, [branding]);
 
-  // Validate accessibility
   const accessibilityReport = useMemo(() => {
     if (!branding) return { isValid: true, issues: [] };
     return validateBrandAccessibility(branding);
   }, [branding]);
 
-  // Get brand-aware component styles
   const getComponentStyles = useCallback(
     (component: "button" | "card" | "input" | "badge") => {
       if (!branding) return {};
@@ -108,7 +101,6 @@ export function useBrandApplication() {
     [branding],
   );
 
-  // Generate brand package for export
   const generateBrandPackage = useCallback(() => {
     if (!branding) return null;
 
@@ -141,7 +133,6 @@ export function useBrandApplication() {
   };
 }
 
-// Hook for applying branding to specific components
 export function useBrandedComponent(componentType: "button" | "card" | "input" | "badge") {
   const { getComponentStyles, branding } = useBrandApplication();
 
@@ -156,7 +147,6 @@ export function useBrandedComponent(componentType: "button" | "card" | "input" |
   };
 }
 
-// Hook for branded email templates
 export function useBrandedEmailTemplates() {
   const { applyToEmailTemplate, branding } = useBrandApplication();
   const [templates, setTemplates] = useState<BrandedEmailTemplate[]>([]);

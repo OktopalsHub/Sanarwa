@@ -154,7 +154,7 @@ describe("EncryptionService", () => {
   describe("generateSecureToken", () => {
     it("should generate a secure token of specified length", () => {
       const token = service.generateSecureToken(16);
-      expect(token).toHaveLength(32); // 16 bytes = 32 hex characters
+      expect(token).toHaveLength(32);
     });
 
     it("should generate different tokens each time", () => {
@@ -176,7 +176,7 @@ describe("EncryptionService", () => {
 
     it("should generate a valid encryption key", () => {
       const key = EncryptionService.generateEncryptionKey();
-      expect(key).toHaveLength(64); // 32 bytes = 64 hex characters
+      expect(key).toHaveLength(64);
       expect(EncryptionService.validateEncryptionKey(key)).toBe(true);
     });
   });

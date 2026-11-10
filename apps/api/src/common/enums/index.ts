@@ -5,3 +5,4 @@ export * from "./tenant.enum";
 export * from "./user.enum";
 export * from "./project.enum";
 export * from "./brand.enum";
+export * from "./template.enum";

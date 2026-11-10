@@ -1,7 +1,7 @@
 import { Get, Param, Query, Controller, UseGuards } from "@nestjs/common";
 import { ApiTags, ApiBearerAuth, ApiOperation, ApiParam, ApiResponse } from "@nestjs/swagger";
-import { CurrentTenantId } from "src/common/decorators";
-import { TenantContextGuard } from "src/common/guards";
+import { CurrentTenantId } from "../../common/decorators";
+import { TenantContextGuard } from "../../common/guards";
 import { AuthGuard } from "../auth/guards/jwt-auth.guard";
 import { AuditLogService } from "./audit-log.service";
 import { AuditExportDto, AuditQueryDto } from "./dto/audit-query.dto";
@@ -13,12 +13,6 @@ import { AuditExportDto, AuditQueryDto } from "./dto/audit-query.dto";
 export class AnalyticsAuditController {
   constructor(private readonly auditLogService: AuditLogService) {}
 
-  /**
-   * Get audit logs
-   */
-  /**
-   * Get audit logs
-   */
   @Get("audit-logs")
   @ApiOperation({ summary: "Get audit logs" })
   @ApiResponse({ status: 200, description: "Audit logs retrieved successfully" })
@@ -39,12 +33,6 @@ export class AnalyticsAuditController {
     return this.auditLogService.getAuditLogs(auditQuery);
   }
 
-  /**
-   * Get audit trail for a notification
-   */
-  /**
-   * Get audit trail for a notification
-   */
   @Get("audit-logs/notification/:notificationId")
   @ApiOperation({ summary: "Get notification audit trail" })
   @ApiParam({ name: "notificationId", description: "Notification ID" })
@@ -58,12 +46,6 @@ export class AnalyticsAuditController {
     return this.auditLogService.getNotificationAuditTrail(notificationId, tenantId);
   }
 
-  /**
-   * Get audit statistics
-   */
-  /**
-   * Get audit statistics
-   */
   @Get("audit-logs/statistics")
   @ApiOperation({ summary: "Get audit statistics" })
   @ApiResponse({ status: 200, description: "Audit statistics retrieved successfully" })
@@ -80,12 +62,6 @@ export class AnalyticsAuditController {
     );
   }
 
-  /**
-   * Export audit logs
-   */
-  /**
-   * Export audit logs
-   */
   @Get("audit-logs/export")
   @ApiOperation({ summary: "Export audit logs" })
   @ApiResponse({ status: 200, description: "Audit logs exported successfully" })

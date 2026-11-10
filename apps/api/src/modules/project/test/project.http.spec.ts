@@ -1,15 +1,9 @@
-/**
- * Project Module HTTP Tests
- * Tests project CRUD operations and SDK functionality
- */
-
 import axios, { AxiosInstance } from "axios";
 
 describe("Project Module HTTP Tests", () => {
   const baseURL = "http://localhost:9000/api/v1";
   let api: AxiosInstance;
 
-  // Test account setup
   const testAccount = {
     email: `sdk-test-${Date.now()}@example.com`,
     password: "SDKTestPassword123!",
@@ -21,9 +15,8 @@ describe("Project Module HTTP Tests", () => {
   let userId: string;
   let tenantId: string;
 
-  // Project test data
-  let byopProject: any; // Project with BYOP configuration
-  let fallbackProject: any; // Project without BYOP (uses fallbacks)
+  let byopProject: any;
+  let fallbackProject: any;
 
   beforeAll(async () => {
     api = axios.create({
@@ -56,14 +49,12 @@ describe("Project Module HTTP Tests", () => {
   async function setupTestAccount(): Promise<void> {
     console.log("🔧 Setting up test account for SDK testing...");
 
-    // Register test account
     const registerResponse = await api.post("/auth/register", testAccount);
     expect(registerResponse.status).toBe(201);
 
     authToken = registerResponse.data.access_token;
     userId = registerResponse.data.user.id;
 
-    // Get tenant ID
     const workspacesResponse = await api.get("/tenant-members/user-workspaces", {
       headers: { Authorization: `Bearer ${authToken}` },
     });
@@ -132,7 +123,6 @@ describe("Project Module HTTP Tests", () => {
         expect(response.data.tenantId).toBe(tenantId);
         expect(response.data.createdById).toBe(userId);
 
-        // Store for later tests
         byopProject = response.data;
 
         console.log(`✅ BYOP Project created: ${byopProject.id}`);
@@ -148,7 +138,6 @@ describe("Project Module HTTP Tests", () => {
             enableVoice: false,
             enablePush: true,
           },
-          // No providers specified - should use tenant/system defaults
         };
 
         const response = await api.post("/projects", projectData, {
@@ -161,12 +150,10 @@ describe("Project Module HTTP Tests", () => {
         expect(response.data).toHaveProperty("apiKey");
         expect(response.data.settings).toEqual(projectData.settings);
 
-        // Should have fallback providers assigned
         expect(response.data).toHaveProperty("providers");
         expect(response.data.providers).toHaveProperty("sms");
         expect(response.data.providers).toHaveProperty("email");
 
-        // Store for later tests
         fallbackProject = response.data;
 
         console.log(`✅ Fallback Project created: ${fallbackProject.id}`);
@@ -176,7 +163,6 @@ describe("Project Module HTTP Tests", () => {
         const response = await api.post(
           "/projects",
           {
-            // missing name
             description: "Invalid project",
           },
           {
@@ -226,15 +212,13 @@ describe("Project Module HTTP Tests", () => {
         expect(response.data).toHaveProperty("data");
         expect(response.data).toHaveProperty("pagination");
         expect(Array.isArray(response.data.data)).toBe(true);
-        expect(response.data.data.length).toBeGreaterThanOrEqual(2); // Our two test projects
+        expect(response.data.data.length).toBeGreaterThanOrEqual(2);
 
-        // Check pagination structure
         expect(response.data.pagination).toHaveProperty("total");
         expect(response.data.pagination).toHaveProperty("page");
         expect(response.data.pagination).toHaveProperty("limit");
         expect(response.data.pagination).toHaveProperty("totalPages");
 
-        // Verify projects are returned
         const projectNames = response.data.data.map((p: any) => p.name);
         expect(projectNames).toContain("BYOP Test Project");
         expect(projectNames).toContain("Fallback Test Project");
@@ -298,7 +282,6 @@ describe("Project Module HTTP Tests", () => {
         expect(response.data.providers.sms.primary).toBe("telnyx");
         expect(response.data.providers.email.primary).toBe("ses");
 
-        // Should include encrypted provider configs
         expect(response.data.providers.sms).toHaveProperty("config");
         expect(response.data.providers.email).toHaveProperty("config");
       });
@@ -313,7 +296,6 @@ describe("Project Module HTTP Tests", () => {
         expect(response.data.name).toBe("Fallback Test Project");
         expect(response.data).toHaveProperty("providers");
 
-        // Should have fallback providers
         expect(response.data.providers).toHaveProperty("sms");
         expect(response.data.providers).toHaveProperty("email");
       });
@@ -327,7 +309,6 @@ describe("Project Module HTTP Tests", () => {
       });
 
       it("should not get project from different tenant", async () => {
-        // This would need another tenant's project to test properly
         const response = await api.get("/projects/invalid-project-id", {
           headers: { Authorization: `Bearer ${authToken}` },
         });
@@ -345,14 +326,14 @@ describe("Project Module HTTP Tests", () => {
             enableSMS: true,
             enableEmail: true,
             enableVoice: true,
-            enablePush: true, // Added push notifications
+            enablePush: true,
           },
           providers: {
             sms: {
               primary: "telnyx",
               config: {
                 apiKey: "updated-telnyx-key",
-                fromNumber: "+1987654321", // Updated number
+                fromNumber: "+1987654321",
                 messagingProfileId: "updated-profile-id",
               },
             },
@@ -361,7 +342,7 @@ describe("Project Module HTTP Tests", () => {
               config: {
                 accessKeyId: "updated-aws-key",
                 secretAccessKey: "updated-aws-secret",
-                region: "us-west-2", // Updated region
+                region: "us-west-2",
                 fromEmail: "noreply@updatedbyop.com",
                 fromName: "Updated BYOP",
               },
@@ -489,7 +470,6 @@ describe("Project Module HTTP Tests", () => {
       let deleteTestProject: any;
 
       beforeAll(async () => {
-        // Create a project specifically for deletion testing
         const response = await api.post(
           "/projects",
           {
@@ -511,7 +491,6 @@ describe("Project Module HTTP Tests", () => {
 
         expect(response.status).toBe(204);
 
-        // Verify project is soft deleted
         const getResponse = await api.get(`/projects/${deleteTestProject.id}`, {
           headers: { Authorization: `Bearer ${authToken}` },
         });
@@ -556,7 +535,6 @@ describe("Project Module HTTP Tests", () => {
         expect(response.data.apiKey).not.toBe(oldApiKey);
         expect(response.data.apiKey.length).toBeGreaterThan(20);
 
-        // Update stored project data
         byopProject.apiKey = response.data.apiKey;
       });
 
@@ -586,7 +564,6 @@ describe("Project Module HTTP Tests", () => {
         expect(response.data).toHaveProperty("push");
         expect(response.data).toHaveProperty("period");
 
-        // Each channel should have usage stats
         expect(response.data.sms).toHaveProperty("sent");
         expect(response.data.sms).toHaveProperty("delivered");
         expect(response.data.sms).toHaveProperty("failed");
@@ -641,7 +618,6 @@ describe("Project Module HTTP Tests", () => {
         expect(response.data.results).toHaveProperty("sms");
         expect(response.data.results).toHaveProperty("email");
 
-        // Each test should have a status
         expect(response.data.results.sms).toHaveProperty("status");
         expect(response.data.results.email).toHaveProperty("status");
       });
@@ -691,7 +667,6 @@ describe("Project Module HTTP Tests", () => {
     });
 
     it("should validate project ownership", async () => {
-      // All projects should belong to the current tenant
       const response = await api.get("/projects", {
         headers: { Authorization: `Bearer ${authToken}` },
       });

@@ -40,7 +40,6 @@ export class WebSocketProvider implements IInAppProvider {
         },
       };
 
-      // Send to each user via WebSocket
       for (const userId of users) {
         try {
           await this.sendToUser(userId, notificationPayload);
@@ -86,7 +85,6 @@ export class WebSocketProvider implements IInAppProvider {
         },
       };
 
-      // Send to room via WebSocket API
       const response = await fetch(
         `${this.socketUrl.replace("ws://", "http://").replace("wss://", "https://")}/api/rooms/${roomId}/notify`,
         {
@@ -125,8 +123,6 @@ export class WebSocketProvider implements IInAppProvider {
   }
 
   private async sendToUser(userId: string, payload: any): Promise<void> {
-    // In a real implementation, this would use Socket.IO or similar
-    // For now, we'll use HTTP API to trigger WebSocket send
     const response = await fetch(
       `${this.socketUrl.replace("ws://", "http://").replace("wss://", "https://")}/api/users/${userId}/notify`,
       {

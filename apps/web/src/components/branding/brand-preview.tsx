@@ -2,11 +2,11 @@
 
 import { Mail, MessageSquare, Phone, Send } from "@/lib/icons";
 
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Badge } from "@sanarwa/ui/badge";
+import { Button } from "@sanarwa/ui/button";
+import { Card } from "@sanarwa/ui/card";
+import { Input } from "@sanarwa/ui/input";
+import { Label } from "@sanarwa/ui/label";
 import { BrandingConfig } from "@/contexts/branding-context";
 import { cn } from "@/lib/utils";
 import {
@@ -27,7 +27,6 @@ interface BrandPreviewProps {
 }
 
 export function BrandPreview({ branding, className }: BrandPreviewProps) {
-  // Create a style object for preview
   const previewStyle = {
     "--preview-primary": branding.colors.primary,
     "--preview-secondary": branding.colors.secondary,
@@ -52,7 +51,6 @@ export function BrandPreview({ branding, className }: BrandPreviewProps) {
           </p>
         </div>
 
-        {/* Header Preview */}
         <div className="space-y-4">
           <h4 className="text-md font-medium">Header & Navigation</h4>
           <div
@@ -104,7 +102,6 @@ export function BrandPreview({ branding, className }: BrandPreviewProps) {
           </div>
         </div>
 
-        {/* Dashboard Cards Preview */}
         <div className="space-y-4">
           <h4 className="text-md font-medium">Dashboard Cards</h4>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -152,7 +149,6 @@ export function BrandPreview({ branding, className }: BrandPreviewProps) {
           </div>
         </div>
 
-        {/* Form Elements Preview */}
         <div className="space-y-4">
           <h4 className="text-md font-medium">Form Elements</h4>
           <div
@@ -220,7 +216,6 @@ export function BrandPreview({ branding, className }: BrandPreviewProps) {
           </div>
         </div>
 
-        {/* Status Badges Preview */}
         <div className="space-y-4">
           <h4 className="text-md font-medium">Status Indicators</h4>
           <div
@@ -272,7 +267,6 @@ export function BrandPreview({ branding, className }: BrandPreviewProps) {
           </div>
         </div>
 
-        {/* Email Template Preview */}
         <div className="space-y-4">
           <h4 className="text-md font-medium">Email Template Preview</h4>
           <div

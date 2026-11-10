@@ -1,8 +1,8 @@
 "use client";
 
 import { PermissionGate } from "@/components/auth/permission-gate";
-import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
+import { Button } from "@sanarwa/ui/button";
+import { Separator } from "@sanarwa/ui/separator";
 import { useTenantBasePath } from "@/hooks/use-tenant-slug";
 import { cn } from "@/lib/utils";
 import { IconBolt } from "@tabler/icons-react";

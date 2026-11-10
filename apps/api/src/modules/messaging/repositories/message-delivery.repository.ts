@@ -1,9 +1,9 @@
 import { Injectable } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
-import { BaseRepository } from "../../../database/repositories/base.repository";
+import { BaseRepository } from "../../../common/database/repositories/base.repository";
 import { Repository } from "typeorm";
 import { MessageDelivery, MessageDeliveryStatus } from "../message-delivery.entity";
-import { MessageChannel } from "../message.entity";
+import { NotificationChannel } from "../../../common/enums/notification-channel.enum";
 
 @Injectable()
 export class MessageDeliveryRepository extends BaseRepository<MessageDelivery> {
@@ -24,15 +24,15 @@ export class MessageDeliveryRepository extends BaseRepository<MessageDelivery> {
   async findByStatus(status: MessageDeliveryStatus): Promise<MessageDelivery[]> {
     return this.find({
       where: { status },
-      relations: ["message"],
+      relations: { message: true },
       order: { createdAt: "ASC" },
     });
   }
 
-  async findByChannel(channel: MessageChannel): Promise<MessageDelivery[]> {
+  async findByChannel(channel: NotificationChannel): Promise<MessageDelivery[]> {
     return this.find({
       where: { channel },
-      relations: ["message"],
+      relations: { message: true },
       order: { createdAt: "DESC" },
     });
   }
@@ -40,7 +40,7 @@ export class MessageDeliveryRepository extends BaseRepository<MessageDelivery> {
   async findByProviderMessageId(providerMessageId: string): Promise<MessageDelivery | null> {
     return this.findOne({
       where: { providerMessageId },
-      relations: ["message"],
+      relations: { message: true },
     });
   }
 

@@ -3,9 +3,6 @@ import { getRepositoryToken } from "@nestjs/typeorm";
 import type { Mocked } from "vitest";
 import { Repository } from "typeorm";
 
-/**
- * Creates a mock repository with common methods
- */
 export function createMockRepository<T extends Record<string, any> = any>(): Partial<
   Repository<T>
 > {
@@ -43,9 +40,6 @@ export function createMockRepository<T extends Record<string, any> = any>(): Par
   };
 }
 
-/**
- * Gets a mock repository from a testing module
- */
 export function getMockRepository<T extends Record<string, any>>(
   module: TestingModule,
   entity: new () => T,
@@ -53,9 +47,6 @@ export function getMockRepository<T extends Record<string, any>>(
   return module.get(getRepositoryToken(entity));
 }
 
-/**
- * Creates a mock ConfigService with default values
- */
 export function createMockConfigService(config: Record<string, any> = {}) {
   return {
     get: vi.fn((key: string, defaultValue?: any) => {
@@ -71,9 +62,6 @@ export function createMockConfigService(config: Record<string, any> = {}) {
   };
 }
 
-/**
- * Creates a mock Logger
- */
 export function createMockLogger() {
   return {
     log: vi.fn(),
@@ -84,9 +72,6 @@ export function createMockLogger() {
   };
 }
 
-/**
- * Creates a mock Redis client
- */
 export function createMockRedis() {
   return {
     get: vi.fn(),
@@ -116,9 +101,6 @@ export function createMockRedis() {
   };
 }
 
-/**
- * Creates a mock HTTP response object
- */
 export function createMockResponse() {
   const res = {
     status: vi.fn().mockReturnThis(),
@@ -132,9 +114,6 @@ export function createMockResponse() {
   return res;
 }
 
-/**
- * Creates a mock HTTP request object
- */
 export function createMockRequest(overrides: any = {}) {
   return {
     body: {},
@@ -147,16 +126,10 @@ export function createMockRequest(overrides: any = {}) {
   };
 }
 
-/**
- * Waits for a specified amount of time (useful for async testing)
- */
 export function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-/**
- * Creates a mock execution context for guards and interceptors
- */
 export function createMockExecutionContext(request: any = {}, response: any = {}) {
   return {
     switchToHttp: () => ({
@@ -168,9 +141,6 @@ export function createMockExecutionContext(request: any = {}, response: any = {}
   };
 }
 
-/**
- * Creates a mock JWT payload
- */
 export function createMockJwtPayload(overrides: any = {}) {
   return {
     sub: "user-123",
@@ -183,9 +153,6 @@ export function createMockJwtPayload(overrides: any = {}) {
   };
 }
 
-/**
- * Creates a mock provider response
- */
 export function createMockProviderResponse(overrides: any = {}) {
   return {
     messageId: "mock-message-" + Math.random().toString(36).substring(2, 11),
@@ -195,9 +162,6 @@ export function createMockProviderResponse(overrides: any = {}) {
   };
 }
 
-/**
- * Creates a mock notification payload
- */
 export function createMockNotificationPayload(overrides: any = {}) {
   return {
     to: "test@example.com",
@@ -208,9 +172,6 @@ export function createMockNotificationPayload(overrides: any = {}) {
   };
 }
 
-/**
- * Asserts that a function throws an error with a specific message
- */
 export async function expectToThrow(
   fn: () => Promise<any> | any,
   expectedMessage?: string | RegExp,
@@ -230,9 +191,6 @@ export async function expectToThrow(
   }
 }
 
-/**
- * Creates a mock Bull job
- */
 export function createMockBullJob(data: any = {}, opts: any = {}) {
   return {
     id: "job-" + Math.random().toString(36).substring(2, 11),
@@ -248,9 +206,6 @@ export function createMockBullJob(data: any = {}, opts: any = {}) {
   };
 }
 
-/**
- * Creates a mock Bull queue
- */
 export function createMockBullQueue() {
   return {
     add: vi.fn(),
@@ -267,9 +222,6 @@ export function createMockBullQueue() {
   };
 }
 
-/**
- * Validates that an object matches a partial structure
- */
 export function expectObjectToMatch(actual: any, expected: any) {
   Object.keys(expected).forEach((key) => {
     if (typeof expected[key] === "object" && expected[key] !== null) {
@@ -281,27 +233,18 @@ export function expectObjectToMatch(actual: any, expected: any) {
   });
 }
 
-/**
- * Creates a date that is X days from now
- */
 export function daysFromNow(days: number): Date {
   const date = new Date();
   date.setDate(date.getDate() + days);
   return date;
 }
 
-/**
- * Creates a date that is X hours from now
- */
 export function hoursFromNow(hours: number): Date {
   const date = new Date();
   date.setHours(date.getHours() + hours);
   return date;
 }
 
-/**
- * Resets all mocks in an object
- */
 export function resetMocks(mockObject: any) {
   Object.keys(mockObject).forEach((key) => {
     if (vi.isMockFunction(mockObject[key])) {

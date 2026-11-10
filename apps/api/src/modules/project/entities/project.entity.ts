@@ -1,7 +1,7 @@
 import { Template } from "../../template/template.entity";
 import { Column, Entity, Index, ManyToOne, OneToMany, OneToOne } from "typeorm";
 import { ProjectStatus } from "../../../common/enums";
-import { BaseEntity } from "../../../database/entities/base.entity";
+import { BaseEntity } from "../../../common/database/entities/base.entity";
 import { ApiKey } from "../../api-key/entities/api-key.entity";
 import { Brand } from "../../brand/entities/brand.entity";
 import { ProviderConfig } from "../../provider/provider-config.entity";
@@ -30,11 +30,9 @@ export class Project extends BaseEntity {
   @Column({ type: "json", nullable: true })
   metadata?: Record<string, any>;
 
-  // Foreign key columns
   @Column({ type: "uuid" })
   tenantId: string;
 
-  // Relationships
   @ManyToOne(() => Tenant, (tenant) => tenant.projects)
   tenant: Tenant;
 

@@ -2,11 +2,11 @@
 
 import { Activity, User, Users } from "@/lib/icons";
 
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Progress } from "@/components/ui/progress";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Badge } from "@sanarwa/ui/badge";
+import { Button } from "@sanarwa/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@sanarwa/ui/card";
+import { Progress } from "@sanarwa/ui/progress";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@sanarwa/ui/tabs";
 import {
   SignalIcon,
   ExclamationTriangleIcon,
@@ -63,16 +63,13 @@ export default function MonitoringDashboard() {
   useEffect(() => {
     loadMonitoringData();
 
-    // Set up real-time updates
-    const interval = setInterval(loadMonitoringData, 30000); // Update every 30 seconds
+    const interval = setInterval(loadMonitoringData, 30000);
 
     return () => clearInterval(interval);
   }, []);
 
   const loadMonitoringData = async () => {
     try {
-      // In a real implementation, you'd fetch this from your monitoring API
-      // For now, we'll simulate the data
       const mockMetrics: MonitoringMetrics = {
         errors: {
           total: Math.floor(Math.random() * 50),
@@ -175,7 +172,6 @@ export default function MonitoringDashboard() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold">System Monitoring</h1>
@@ -191,7 +187,6 @@ export default function MonitoringDashboard() {
         </div>
       </div>
 
-      {/* Key Metrics Overview */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -252,7 +247,6 @@ export default function MonitoringDashboard() {
         </Card>
       </div>
 
-      {/* Detailed Monitoring */}
       <Tabs defaultValue="alerts" className="space-y-4">
         <TabsList>
           <TabsTrigger value="alerts">Active Alerts</TabsTrigger>

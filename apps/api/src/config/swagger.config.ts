@@ -1,12 +1,15 @@
 import { DocumentBuilder } from "@nestjs/swagger";
 
+import { API_PREFIX } from "../common/http/api-prefix";
+
 export function createSwaggerConfig() {
   return new DocumentBuilder()
     .setTitle("Sanarwa API")
     .setDescription("API for Sanarwa notification platform")
     .setVersion("1.0")
-    .addServer("http://localhost:3000", "Development")
-    .addServer("https://staging-api.sanarwa.com", "Staging")
+    .addServer(`http://localhost:3000/${API_PREFIX}`, "Development")
+    .addServer(`https://staging-api.sanarwa.com/${API_PREFIX}`, "Staging")
+    .addServer(`https://api.sanarwa.com/${API_PREFIX}`, "Production")
     .addTag("Auth", "Authentication endpoints")
     .addTag("OAuth", "OAuth integration")
     .addTag("Users", "User management")

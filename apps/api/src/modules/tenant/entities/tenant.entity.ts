@@ -11,7 +11,7 @@ import {
 } from "typeorm";
 import { TenantStatus } from "../../../common/enums";
 import { TenantQuotas, TenantUsage } from "../../../common/interfaces";
-import { BaseEntity } from "../../../database/entities/base.entity";
+import { BaseEntity } from "../../../common/database/entities/base.entity";
 import { Brand } from "../../brand/entities/brand.entity";
 import { Invite } from "../../invite/entities/invite.entity";
 import { Project } from "../../project/entities/project.entity";
@@ -20,7 +20,6 @@ import { TenantMember } from "../../tenant-member/entities/tenant-member.entity"
 import { User } from "../../user/entities/user.entity";
 import { PushCertificate } from "../../push-certificates/entities/push-certificate.entity";
 import { Webhook } from "../../webhook/entities/webhook.entity";
-import { TenantBillingInfo } from "./tenant-billing-info.entity";
 import { TenantSettings } from "./tenant-settings.entity";
 
 @Entity("tenants")
@@ -55,7 +54,6 @@ export class Tenant extends BaseEntity {
   @DeleteDateColumn({ nullable: true, type: "timestamp", name: "deleted_at" })
   deletedAt?: Date;
 
-  // Relationships
   @Column({ name: "owner_id" })
   ownerId: string;
 
@@ -68,12 +66,6 @@ export class Tenant extends BaseEntity {
     nullable: true,
   })
   settings?: TenantSettings;
-
-  @OneToOne(() => TenantBillingInfo, (billingInfo) => billingInfo.tenant, {
-    cascade: true,
-    nullable: true,
-  })
-  billingInfo?: TenantBillingInfo;
 
   @OneToMany(() => TenantMember, (member) => member.tenant)
   members: TenantMember[];

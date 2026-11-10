@@ -5,7 +5,7 @@ import { AppShell } from "@/components/layout";
 import { useRouter } from "@/compat/next-navigation";
 import { ArrowLeftIcon } from "@heroicons/react/24/outline";
 
-import { Button } from "@/components/ui/button";
+import { Button } from "@sanarwa/ui/button";
 
 import { useTenantSlug } from "@/hooks/use-tenant-slug";
 import { useParams } from "@tanstack/react-router";

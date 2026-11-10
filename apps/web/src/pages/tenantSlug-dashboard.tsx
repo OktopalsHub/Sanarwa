@@ -2,7 +2,7 @@
 
 import { DashboardOverview } from "@/components/dashboard";
 import { AppShell } from "@/components/layout";
-import { Button } from "@/components/ui/button";
+import { Button } from "@sanarwa/ui/button";
 import { useEnsureTenantFromSlug, useTenantBasePath } from "@/hooks/use-tenant-slug";
 import { useTenant } from "@/contexts/tenant-context";
 import Link from "@/compat/next-link";
@@ -57,7 +57,9 @@ export default function TenantDashboardPage() {
             <h1 className="text-2xl font-semibold tracking-tight text-foreground md:text-3xl">
               Dashboard
             </h1>
-            <p className="text-sm text-muted-foreground">Delivery and sending activity · last 30 days</p>
+            <p className="text-sm text-muted-foreground">
+              Delivery and sending activity · last 30 days
+            </p>
           </div>
           <div className="flex shrink-0 flex-wrap gap-2">
             <Button asChild variant="outline" size="sm">

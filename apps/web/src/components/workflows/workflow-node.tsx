@@ -2,9 +2,9 @@
 
 import { Bell, Clock, GitBranch, Mail, MessageSquare, Phone, Zap } from "@/lib/icons";
 
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@sanarwa/ui/badge";
+import { Button } from "@sanarwa/ui/button";
+import { Card, CardContent } from "@sanarwa/ui/card";
 import { WorkflowNode, WorkflowNodeType } from "@/lib/types/workflow";
 import { cn } from "@/lib/utils";
 import { useDraggable } from "@dnd-kit/core";
@@ -85,7 +85,6 @@ export function WorkflowNodeComponent({
   const IconComponent = NODE_ICONS[node.type];
   const nodeColorClass = NODE_COLORS[node.type];
 
-  // Get action-specific icon for action nodes
   const getActionIcon = () => {
     if (node.type === "action" && "type" in node.data.config) {
       const actionType = (node.data.config as any).type;
@@ -154,7 +153,6 @@ export function WorkflowNodeComponent({
         onClick={handleClick}
       >
         <CardContent className="p-4">
-          {/* Node Header */}
           <div className="flex items-center justify-between mb-2">
             <div className="flex items-center gap-2">
               <ActualIcon className="h-4 w-4" />
@@ -180,7 +178,6 @@ export function WorkflowNodeComponent({
             )}
           </div>
 
-          {/* Node Content */}
           <div className="space-y-2">
             <h4 className="font-medium text-sm truncate">{node.data.label}</h4>
 
@@ -188,7 +185,6 @@ export function WorkflowNodeComponent({
               <p className="text-xs text-muted-foreground line-clamp-2">{node.data.description}</p>
             )}
 
-            {/* Node-specific content */}
             {node.type === "trigger" && "type" in node.data.config && (
               <Badge variant="outline" className="text-xs">
                 {(node.data.config as any).type}
@@ -208,7 +204,6 @@ export function WorkflowNodeComponent({
             )}
           </div>
 
-          {/* Connection Points */}
           {!readonly && (
             <div className="absolute -right-2 top-1/2 -translate-y-1/2">
               <Button
@@ -222,7 +217,6 @@ export function WorkflowNodeComponent({
             </div>
           )}
 
-          {/* Input connection point */}
           {node.type !== "trigger" && (
             <div className="absolute -left-2 top-1/2 -translate-y-1/2">
               <div className="h-3 w-3 rounded-full bg-background border-2 border-muted-foreground" />

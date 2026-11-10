@@ -18,7 +18,7 @@ import {
   ApiResponse,
   ApiTags,
 } from "@nestjs/swagger";
-import { TenantMemberGuard } from "src/common/guards";
+import { TenantMemberGuard } from "../../common/guards";
 import { CreateWebhookDto, UpdateWebhookDto, WebhookResponseDto } from "./dto";
 import { WebhookService } from "./webhook.service";
 

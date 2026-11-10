@@ -2,20 +2,14 @@
 
 import { Filter, Send, Target, User, Users } from "@/lib/icons";
 
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Separator } from "@/components/ui/separator";
-import { campaignApi } from "@/lib/api/campaigns";
+import { Badge } from "@sanarwa/ui/badge";
+import { Button } from "@sanarwa/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@sanarwa/ui/card";
+import { Input } from "@sanarwa/ui/input";
+import { Label } from "@sanarwa/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@sanarwa/ui/select";
+import { Separator } from "@sanarwa/ui/separator";
+import { campaignApi } from "@sanarwa/api-client";
 import type { AudienceConfig, AudienceFilter } from "@/lib/types/campaign";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -98,14 +92,12 @@ export function AudienceTargetingStep({ data, onUpdate }: AudienceTargetingStepP
   const [estimatedSize, setEstimatedSize] = useState<number | undefined>(data?.estimatedSize);
   const [showAdvanced, setShowAdvanced] = useState(false);
 
-  // Fetch audience segments
   const { data: segments, isLoading: segmentsLoading } = useQuery({
     queryKey: ["audience-segments"],
     queryFn: campaignApi.getAudienceSegments,
     enabled: audienceType === "segment",
   });
 
-  // Estimate audience size for custom filters
   const { data: sizeEstimate, refetch: refetchEstimate } = useQuery({
     queryKey: ["audience-estimate", customFilters],
     queryFn: () => campaignApi.estimateAudienceSize(customFilters),
@@ -220,7 +212,6 @@ export function AudienceTargetingStep({ data, onUpdate }: AudienceTargetingStepP
 
   return (
     <div className="space-y-6">
-      {/* Audience Type Selection */}
       <div className="space-y-4">
         <Label className="text-base font-medium">Target Audience</Label>
         <div className="grid gap-4">
@@ -259,7 +250,6 @@ export function AudienceTargetingStep({ data, onUpdate }: AudienceTargetingStepP
         </div>
       </div>
 
-      {/* Segment Selection */}
       {audienceType === "segment" && (
         <div className="space-y-4">
           <div className="flex items-center justify-between">
@@ -314,7 +304,6 @@ export function AudienceTargetingStep({ data, onUpdate }: AudienceTargetingStepP
         </div>
       )}
 
-      {/* Custom Filters */}
       {audienceType === "custom" && (
         <div className="space-y-4">
           <div className="flex items-center justify-between">
@@ -416,7 +405,6 @@ export function AudienceTargetingStep({ data, onUpdate }: AudienceTargetingStepP
         </div>
       )}
 
-      {/* Audience Size Estimate */}
       {(estimatedSize !== undefined || sizeEstimate) && (
         <Card className="bg-blue-50 border-blue-200 dark:bg-blue-950/20 dark:border-blue-800">
           <CardContent className="pt-6">
@@ -436,7 +424,6 @@ export function AudienceTargetingStep({ data, onUpdate }: AudienceTargetingStepP
         </Card>
       )}
 
-      {/* Advanced Options */}
       <div className="space-y-4">
         <Button
           variant="ghost"

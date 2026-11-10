@@ -1,11 +1,11 @@
 "use client";
 
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
+import { Badge } from "@sanarwa/ui/badge";
+import { Button } from "@sanarwa/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@sanarwa/ui/card";
+import { Skeleton } from "@sanarwa/ui/skeleton";
 import { useTenantBasePath } from "@/hooks/use-tenant-slug";
-import { messagingApi } from "@/lib/api/messaging";
+import { messagingApi } from "@sanarwa/api-client";
 import { useQuery } from "@tanstack/react-query";
 import { IconArrowLeft } from "@tabler/icons-react";
 import Link from "@/compat/next-link";
@@ -112,9 +112,9 @@ export function MessageDetail({ messageId }: { messageId: string }) {
           <CardTitle>Message body</CardTitle>
         </CardHeader>
         <CardContent>
-          {data.hasContent && data.content ? (
+          {data.hasContent && data.data ? (
             <pre className="max-h-[32rem] overflow-auto whitespace-pre-wrap break-words rounded-md border bg-muted/20 p-4 text-sm">
-              {data.content}
+              {data.data}
             </pre>
           ) : (
             <p className="text-sm text-muted-foreground">

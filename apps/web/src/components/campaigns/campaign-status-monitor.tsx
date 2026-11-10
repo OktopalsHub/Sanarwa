@@ -2,11 +2,11 @@
 
 import { Activity, AlertCircle, CheckCircle, Clock, XCircle } from "@/lib/icons";
 
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Progress } from "@/components/ui/progress";
-import { campaignApi } from "@/lib/api/campaigns";
+import { Badge } from "@sanarwa/ui/badge";
+import { Button } from "@sanarwa/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@sanarwa/ui/card";
+import { Progress } from "@sanarwa/ui/progress";
+import { campaignApi } from "@sanarwa/api-client";
 import type { Campaign, ChannelAnalytics } from "@/lib/types/campaign";
 import { CHANNEL_ICONS } from "./campaign-status";
 import { useQuery } from "@tanstack/react-query";
@@ -53,7 +53,7 @@ const STATUS_COLORS = {
 export function CampaignStatusMonitor({
   campaignId,
   campaign: initialCampaign,
-  refreshInterval = 10000, // 10 seconds
+  refreshInterval = 10000,
   enableWebSocket = true,
 }: CampaignStatusMonitorProps) {
   const [lastUpdate, setLastUpdate] = useState<Date>(new Date());
@@ -69,7 +69,6 @@ export function CampaignStatusMonitor({
     }>
   >([]);
 
-  // Fetch campaign data with real-time updates
   const { data: campaign, isLoading } = useQuery({
     queryKey: ["campaign", campaignId],
     queryFn: () => campaignApi.getCampaign(campaignId),
@@ -78,7 +77,6 @@ export function CampaignStatusMonitor({
     refetchIntervalInBackground: true,
   });
 
-  // Fetch detailed analytics
   const { data: analytics } = useQuery({
     queryKey: ["campaign-analytics", campaignId],
     queryFn: () => campaignApi.getCampaignAnalytics(campaignId),
@@ -92,12 +90,9 @@ export function CampaignStatusMonitor({
 
   const isActive = campaign?.status === "active";
 
-  // WebSocket connection for real-time updates
   useEffect(() => {
     if (!enableWebSocket || !isActive) return;
 
-    // Simulate WebSocket connection for real-time updates
-    // In a real implementation, this would connect to your WebSocket server
     const simulateRealtimeEvents = () => {
       const eventTypes = [
         { type: "info" as const, message: "Campaign is actively sending messages" },
@@ -117,13 +112,12 @@ export function CampaignStatusMonitor({
         message: randomEvent.message,
       };
 
-      setRealtimeEvents((prev) => [newEvent, ...prev.slice(0, 9)]); // Keep last 10 events
+      setRealtimeEvents((prev) => [newEvent, ...prev.slice(0, 9)]);
       setConnectionStatus("connected");
     };
 
-    // Simulate connection
     setConnectionStatus("connected");
-    const interval = setInterval(simulateRealtimeEvents, 15000); // New event every 15 seconds
+    const interval = setInterval(simulateRealtimeEvents, 15000);
 
     return () => {
       clearInterval(interval);
@@ -131,9 +125,7 @@ export function CampaignStatusMonitor({
     };
   }, [enableWebSocket, isActive]);
 
-  // Add error handling for failed API calls
   const handleRetry = () => {
-    // Force refetch of campaign data
     window.location.reload();
   };
 
@@ -164,7 +156,6 @@ export function CampaignStatusMonitor({
 
   return (
     <div className="space-y-6">
-      {/* Campaign Status Overview */}
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
@@ -211,7 +202,6 @@ export function CampaignStatusMonitor({
         </CardContent>
       </Card>
 
-      {/* Performance Metrics */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -221,7 +211,6 @@ export function CampaignStatusMonitor({
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {/* Delivery Rate */}
             <div className="space-y-2">
               <div className="flex justify-between items-center">
                 <span className="text-sm font-medium">Delivery Rate</span>
@@ -232,7 +221,6 @@ export function CampaignStatusMonitor({
               <Progress value={campaign.analytics.deliveryRate} className="h-2" />
             </div>
 
-            {/* Open Rate */}
             <div className="space-y-2">
               <div className="flex justify-between items-center">
                 <span className="text-sm font-medium">Open Rate</span>
@@ -243,7 +231,6 @@ export function CampaignStatusMonitor({
               <Progress value={campaign.analytics.openRate} className="h-2" />
             </div>
 
-            {/* Click Rate */}
             <div className="space-y-2">
               <div className="flex justify-between items-center">
                 <span className="text-sm font-medium">Click Rate</span>
@@ -257,7 +244,6 @@ export function CampaignStatusMonitor({
         </CardContent>
       </Card>
 
-      {/* Channel Breakdown */}
       <Card>
         <CardHeader>
           <CardTitle>Channel Performance</CardTitle>
@@ -309,7 +295,6 @@ export function CampaignStatusMonitor({
         </CardContent>
       </Card>
 
-      {/* Real-time Activity Feed */}
       {isActive && (
         <Card>
           <CardHeader>

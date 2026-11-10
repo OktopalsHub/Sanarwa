@@ -1,31 +1,30 @@
+import swc from "unplugin-swc";
 import { defineConfig } from "vitest/config";
 
 export default defineConfig({
+  plugins: [
+    swc.vite({
+      module: { type: "es6" },
+      jsc: {
+        target: "es2022",
+        parser: { syntax: "typescript", decorators: true },
+        transform: { legacyDecorator: true, decoratorMetadata: true },
+      },
+    }),
+  ],
   test: {
     globals: true,
     environment: "node",
     setupFiles: ["./test/vitest.setup.ts"],
-    include: [
-      "src/app.controller.spec.ts",
-      "src/common/errors/services/circuit-breaker.service.spec.ts",
-      "src/common/errors/services/error-classification.service.spec.ts",
-      "src/common/errors/exceptions/base.exception.spec.ts",
-      "src/common/errors/errors.module.spec.ts",
-      "src/common/helpers/**/*.spec.ts",
-      "src/common/security/services/input-sanitization.service.spec.ts",
-      "src/providers/sms/**/*.spec.ts",
-      "src/modules/tenant/services/tenant-schema.service.spec.ts",
-      "src/modules/configuration/services/test/configuration-validation.service.spec.ts",
-      "src/modules/brand/tests/brand.service.spec.ts",
-      "src/modules/billing/test/bachs*.spec.ts",
-      "src/modules/billing/test/nomba*.spec.ts",
-      "src/modules/billing/test/polar*.spec.ts",
-      "src/modules/billing/test/token-packages.spec.ts",
-      "src/modules/billing/test/confirm-token-purchase.spec.ts",
-      "src/modules/messaging/test/messaging-log.spec.ts",
+    include: ["src/**/*.spec.ts"],
+    exclude: [
+      "**/node_modules/**",
+      "**/dist/**",
+      "**/*.e2e.spec.ts",
+      "**/*.http.spec.ts",
+      "**/*.integration.spec.ts",
+      "**/*.vitest.spec.ts",
     ],
-    exclude: ["**/node_modules/**", "**/dist/**"],
-    // Never load developer .env that points at real Postgres
     env: {
       NODE_ENV: "test",
       DATABASE_URL: "sqlite::memory:",

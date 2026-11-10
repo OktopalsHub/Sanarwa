@@ -1,7 +1,7 @@
 import { PartialType, ApiPropertyOptional } from "@nestjs/swagger";
 import { IsEnum, IsOptional } from "class-validator";
 import { CreateBrandDto } from "./create-brand.dto";
-import { BrandStatus } from "src/common/enums";
+import { BrandStatus } from "../../../common/enums";
 
 export class UpdateBrandDto extends PartialType(CreateBrandDto) {
   @ApiPropertyOptional({

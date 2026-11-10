@@ -5,20 +5,15 @@ import {
   HttpException,
   HttpStatus,
   Logger,
-  Inject,
 } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { Request, Response } from "express";
-import { AlertService } from "../../alerts/alert.service";
 
 @Catch()
 export class GlobalExceptionFilter implements ExceptionFilter {
   private readonly logger = new Logger(GlobalExceptionFilter.name);
 
-  constructor(
-    @Inject(AlertService) private readonly alertService: AlertService,
-    private readonly configService: ConfigService,
-  ) {}
+  constructor(private readonly configService: ConfigService) {}
 
   async catch(exception: unknown, host: ArgumentsHost): Promise<void> {
     const ctx = host.switchToHttp();
@@ -44,7 +39,6 @@ export class GlobalExceptionFilter implements ExceptionFilter {
       originalError = exception;
     } else if (exception instanceof Error) {
       originalError = exception;
-      // Don't expose internal error messages in production
       if (this.configService.get("NODE_ENV") === "production") {
         message = "Internal server error";
       } else {
@@ -53,15 +47,6 @@ export class GlobalExceptionFilter implements ExceptionFilter {
       this.logger.error(exception.message, exception.stack);
     } else {
       this.logger.error("Unknown exception", exception);
-    }
-
-    // Send alert for 5xx errors
-    if (status >= 500 && originalError) {
-      try {
-        await this.alertService.send5xxAlert(originalError, request, status);
-      } catch (alertError) {
-        this.logger.error("Failed to send alert", alertError);
-      }
     }
 
     const errorResponse = {
@@ -80,7 +65,6 @@ export class GlobalExceptionFilter implements ExceptionFilter {
       },
     };
 
-    // Log error for monitoring
     this.logger.error(
       `${request.method} ${request.url} - ${status} - ${message}`,
       originalError?.stack,

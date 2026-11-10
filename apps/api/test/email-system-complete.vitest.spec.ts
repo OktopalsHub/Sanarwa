@@ -1,8 +1,3 @@
-/**
- * Complete Email System Integration Test
- * Tests the entire flow: User → Tenant → Project → API Key → SDK → Email Providers
- */
-
 import { describe, it, expect, beforeAll } from "vitest";
 import axios, { AxiosInstance } from "axios";
 
@@ -10,7 +5,6 @@ describe("🚀 Complete Email System Integration Test", () => {
   const baseURL = "http://localhost:9000/api/v1";
   let api: AxiosInstance;
 
-  // Test data
   const timestamp = Date.now();
   const testUser = {
     email: `complete-test-${timestamp}@example.com`,
@@ -19,7 +13,6 @@ describe("🚀 Complete Email System Integration Test", () => {
     lastName: "Tester",
   };
 
-  // Test flow data
   let flowData: {
     user: { id: string; email: string };
     auth: { accessToken: string };
@@ -48,7 +41,7 @@ describe("🚀 Complete Email System Integration Test", () => {
         if (response.status === 200) return;
       } catch (error) {
         if (i === maxRetries - 1) {
-          throw new Error("Server not ready. Start with: npm run start:dev");
+          throw new Error("Server not ready. Start with: pnpm dev");
         }
         await new Promise((resolve) => setTimeout(resolve, 1000));
       }
@@ -74,7 +67,6 @@ describe("🚀 Complete Email System Integration Test", () => {
         accessToken: response.data.access_token,
       };
 
-      // Tenant is usually created automatically on user registration
       flowData.tenant = {
         id: response.data.user.tenantId || `tenant_${timestamp}`,
         name: `${testUser.firstName}'s Workspace`,
@@ -112,7 +104,6 @@ describe("🚀 Complete Email System Integration Test", () => {
         };
         console.log("✅ Step 2 Complete: Project created");
       } else {
-        // Mock project for testing
         flowData.project = {
           id: `proj_${timestamp}`,
           name: projectPayload.name,
@@ -149,7 +140,6 @@ describe("🚀 Complete Email System Integration Test", () => {
         };
         console.log("✅ Step 3 Complete: API key created");
       } else {
-        // Mock API key for testing
         flowData.apiKey = {
           id: `key_${timestamp}`,
           key: `nf_proj_dev_${Buffer.from(`complete_${timestamp}`).toString("base64url")}`,
@@ -251,7 +241,6 @@ Status: {{status}}
         };
         console.log("✅ Step 4 Complete: Email template created");
       } else {
-        // Mock template for testing
         flowData.template = {
           id: `tpl_${timestamp}`,
           name: templatePayload.name,
@@ -340,7 +329,8 @@ Status: {{status}}
           },
         ],
         subject: `Complete System Test - HTML Email ${timestamp}`,
-        content: `
+
+        data: `
           <h1>🎉 Complete System Test - HTML Email</h1>
           <p>This is a <strong>direct HTML email</strong> sent without using a template.</p>
           <div style="background: #e7f3ff; padding: 15px; border-radius: 5px; margin: 15px 0;">
@@ -449,7 +439,8 @@ Status: {{status}}
           },
         ],
         subject: `SES Fallback Test ${timestamp}`,
-        content: `
+
+        data: `
           <h2>🔄 SES Fallback Provider Test</h2>
           <p>This email is testing the SES fallback provider functionality.</p>
           <p><strong>Test ID:</strong> fallback_${timestamp}</p>
@@ -465,7 +456,7 @@ Status: {{status}}
         headers: {
           Authorization: `Bearer ${flowData.apiKey.key}`,
           "X-Project-ID": flowData.project.id,
-          "X-Force-Provider": "ses", // Force SES provider
+          "X-Force-Provider": "ses",
         },
       });
 
@@ -509,7 +500,6 @@ Status: {{status}}
       console.log("🚀 Complete Email System is Working Correctly!");
       console.log("=".repeat(60));
 
-      // Final validation
       expect(flowData.user.id).toBeTruthy();
       expect(flowData.auth.accessToken).toBeTruthy();
       expect(flowData.project.id).toBeTruthy();

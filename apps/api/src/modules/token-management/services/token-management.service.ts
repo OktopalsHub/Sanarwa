@@ -43,7 +43,6 @@ export class TokenManagementService {
       });
 
       if (!balance) {
-        // Create initial balance record
         balance = this.tokenBalanceRepository.create({
           tenantId,
           totalTokens: 0,
@@ -85,8 +84,6 @@ export class TokenManagementService {
     await queryRunner.startTransaction();
 
     try {
-      // Purchase transactions are idempotent by referenceId. This protects
-      // webhook/sync retries even if the purchase claim is retried.
       if (type === TokenTransactionType.PURCHASE && referenceId) {
         const existingTransaction = await queryRunner.manager.findOne(TokenTransaction, {
           where: { tenantId, type, referenceId },
@@ -111,7 +108,6 @@ export class TokenManagementService {
         }
       }
 
-      // Get or create balance record with lock
       let balance = await queryRunner.manager.findOne(TokenBalance, {
         where: { tenantId },
         lock: { mode: "pessimistic_write" },
@@ -127,7 +123,6 @@ export class TokenManagementService {
         });
       }
 
-      // Update balance
       const newTotalTokens = Number(balance.totalTokens) + amount;
       const newAvailableTokens = Number(balance.availableTokens) + amount;
 
@@ -140,7 +135,6 @@ export class TokenManagementService {
 
       await queryRunner.manager.save(balance);
 
-      // Create transaction record
       const transaction = queryRunner.manager.create(TokenTransaction, {
         tenantId,
         type,
@@ -186,7 +180,6 @@ export class TokenManagementService {
     await queryRunner.startTransaction();
 
     try {
-      // Get balance record with lock
       const balance = await queryRunner.manager.findOne(TokenBalance, {
         where: { tenantId: dto.tenantId },
         lock: { mode: "pessimistic_write" },
@@ -204,7 +197,6 @@ export class TokenManagementService {
         );
       }
 
-      // Update balance
       const newUsedTokens = Number(balance.usedTokens) + dto.amount;
       const newAvailableTokens = availableTokens - dto.amount;
 
@@ -214,11 +206,10 @@ export class TokenManagementService {
 
       await queryRunner.manager.save(balance);
 
-      // Create transaction record
       const transaction = queryRunner.manager.create(TokenTransaction, {
         tenantId: dto.tenantId,
         type: TokenTransactionType.USAGE,
-        amount: -dto.amount, // Negative for usage
+        amount: -dto.amount,
         balanceAfter: newAvailableTokens,
         description: dto.description || `Used ${dto.amount} tokens`,
         metadata: dto.metadata,
@@ -333,11 +324,9 @@ export class TokenManagementService {
       balance.reservedTokens = reservedTokens - amount;
 
       if (consume) {
-        // Consume the tokens (mark as used)
         balance.usedTokens = Number(balance.usedTokens) + amount;
         balance.lastUsage = new Date();
 
-        // Create usage transaction
         const transaction = queryRunner.manager.create(TokenTransaction, {
           tenantId,
           type: TokenTransactionType.USAGE,
@@ -348,7 +337,6 @@ export class TokenManagementService {
 
         await queryRunner.manager.save(transaction);
       } else {
-        // Release back to available
         balance.availableTokens = Number(balance.availableTokens) + amount;
       }
 

@@ -10,6 +10,8 @@ export interface DomainVerificationResult {
   verificationToken?: string;
 }
 
+const VERIFICATION_TOKEN_PREFIX = "sanarwa-verify=";
+
 export interface DKIMVerificationResult {
   verified: boolean;
   selector?: string;
@@ -30,9 +32,6 @@ export class DnsVerificationService {
   private readonly logger = new Logger(DnsVerificationService.name);
   private readonly resolveTxt = promisify(dns.resolveTxt);
 
-  /**
-   * Verify domain ownership by checking for a TXT record
-   */
   async verifyDomainOwnership(
     domain: string,
     expectedToken: string,
@@ -46,7 +45,6 @@ export class DnsVerificationService {
 
       this.logger.debug(`Found TXT records for ${verificationDomain}:`, flatRecords);
 
-      // Check if any record matches our expected token
       const verified = flatRecords.some((record) => record.includes(expectedToken));
 
       return {
@@ -64,9 +62,6 @@ export class DnsVerificationService {
     }
   }
 
-  /**
-   * Verify DKIM configuration by checking DNS records
-   */
   async verifyDKIM(domain: string, selector: string = "default"): Promise<DKIMVerificationResult> {
     try {
       const dkimDomain = `${selector}._domainkey.${domain}`;
@@ -77,7 +72,6 @@ export class DnsVerificationService {
 
       this.logger.debug(`Found DKIM records for ${dkimDomain}:`, flatRecords);
 
-      // Look for DKIM record (should contain v=DKIM1)
       const dkimRecord = flatRecords.find((record) => record.includes("v=DKIM1"));
 
       if (!dkimRecord) {
@@ -87,7 +81,6 @@ export class DnsVerificationService {
         };
       }
 
-      // Extract public key from DKIM record
       const publicKeyMatch = dkimRecord.match(/p=([A-Za-z0-9+/=]+)/);
       const publicKey = publicKeyMatch ? publicKeyMatch[1] : undefined;
 
@@ -106,9 +99,6 @@ export class DnsVerificationService {
     }
   }
 
-  /**
-   * Verify DMARC policy by checking DNS records
-   */
   async verifyDMARC(domain: string): Promise<DMARCVerificationResult> {
     try {
       const dmarcDomain = `_dmarc.${domain}`;
@@ -119,7 +109,6 @@ export class DnsVerificationService {
 
       this.logger.debug(`Found DMARC records for ${dmarcDomain}:`, flatRecords);
 
-      // Look for DMARC record (should contain v=DMARC1)
       const dmarcRecord = flatRecords.find((record) => record.includes("v=DMARC1"));
 
       if (!dmarcRecord) {
@@ -129,7 +118,6 @@ export class DnsVerificationService {
         };
       }
 
-      // Parse DMARC record
       const policyMatch = dmarcRecord.match(/p=(none|quarantine|reject)/);
       const percentageMatch = dmarcRecord.match(/pct=(\d+)/);
       const reportEmailMatch = dmarcRecord.match(/rua=mailto:([^;]+)/);
@@ -149,9 +137,6 @@ export class DnsVerificationService {
     }
   }
 
-  /**
-   * Generate a verification token for domain ownership
-   */
   generateVerificationToken(domain: string, brandId: string): string {
     const timestamp = Date.now();
     const hash = require("crypto")
@@ -160,12 +145,9 @@ export class DnsVerificationService {
       .digest("hex")
       .substring(0, 32);
 
-    return `notifi-verify=${hash}`;
+    return `${VERIFICATION_TOKEN_PREFIX}${hash}`;
   }
 
-  /**
-   * Check if a domain has valid MX records (for email sending)
-   */
   async checkMXRecords(domain: string): Promise<boolean> {
     try {
       const resolveMx = promisify(dns.resolveMx);
@@ -177,9 +159,6 @@ export class DnsVerificationService {
     }
   }
 
-  /**
-   * Comprehensive domain health check
-   */
   async checkDomainHealth(domain: string): Promise<{
     hasMX: boolean;
     hasA: boolean;
@@ -212,9 +191,6 @@ export class DnsVerificationService {
     }
   }
 
-  /**
-   * Generate DKIM key pair for domain signing
-   */
   async generateDKIMKeyPair(): Promise<{
     publicKey: string;
     privateKey: string;
@@ -238,7 +214,6 @@ export class DnsVerificationService {
             this.logger.error("Failed to generate DKIM key pair:", err);
             reject(err);
           } else {
-            // Convert public key to DNS format (remove headers/footers and format)
             const publicKeyClean = publicKey
               .replace(/-----BEGIN PUBLIC KEY-----/, "")
               .replace(/-----END PUBLIC KEY-----/, "")

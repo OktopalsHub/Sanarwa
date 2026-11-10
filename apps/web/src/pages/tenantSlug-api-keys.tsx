@@ -3,7 +3,7 @@
 import { ApiKeyList } from "@/components/api-keys/api-key-list";
 import { CreateApiKeyDialog } from "@/components/api-keys/create-api-key-dialog";
 import { AppShell } from "@/components/layout";
-import { Button } from "@/components/ui/button";
+import { Button } from "@sanarwa/ui/button";
 import { PlusIcon } from "@heroicons/react/24/outline";
 
 import { useState } from "react";

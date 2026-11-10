@@ -1,9 +1,8 @@
 "use client";
 
-import { Skeleton } from "@/components/ui/skeleton";
+import { Skeleton } from "@sanarwa/ui/skeleton";
 import { Suspense, lazy } from "react";
 
-// Loading fallback components
 export function ComponentSkeleton({ className }: { className?: string }) {
   return (
     <div className={className}>
@@ -65,7 +64,6 @@ export function FormSkeleton() {
   );
 }
 
-// Lazy-loaded components with proper fallbacks
 export const LazyCampaignBuilder = lazy(() =>
   import("@/components/campaigns/campaign-wizard").then((module) => ({
     default: module.CampaignWizard,
@@ -96,7 +94,6 @@ export const LazyTeamManagement = lazy(() =>
   })),
 );
 
-// Wrapper components with Suspense
 interface LazyWrapperProps {
   children: React.ReactNode;
   fallback?: React.ReactNode;
@@ -111,7 +108,6 @@ export function LazyWrapper({ children, fallback, className }: LazyWrapperProps)
   );
 }
 
-// Specific lazy wrappers for common components
 export function LazyCampaignBuilderWrapper(props: any) {
   return (
     <LazyWrapper fallback={<FormSkeleton />}>

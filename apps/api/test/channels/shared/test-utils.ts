@@ -1,7 +1,3 @@
-/**
- * Shared test utilities for notification channel testing
- */
-
 import axios, { AxiosInstance } from "axios";
 import { expect } from "vitest";
 
@@ -45,7 +41,6 @@ export async function createTestSetup(): Promise<TestSetup> {
 
   await waitForServer(api);
 
-  // Register user and create project
   const response = await api.post("/auth/register", testUser);
 
   if (response.status !== 201) {
@@ -58,7 +53,6 @@ export async function createTestSetup(): Promise<TestSetup> {
     tenantId: response.data.user.tenantId || `tenant_${timestamp}`,
   };
 
-  // Create project
   const projectResponse = await api.post(
     "/projects",
     {
@@ -76,7 +70,6 @@ export async function createTestSetup(): Promise<TestSetup> {
   if (projectResponse.status === 201) {
     projectId = projectResponse.data.id;
 
-    // Create API key
     const apiKeyResponse = await api.post(
       `/projects/${projectId}/api-keys`,
       {
@@ -114,7 +107,7 @@ export async function waitForServer(api: AxiosInstance, maxRetries = 10): Promis
       if (response.status === 200) return;
     } catch (error) {
       if (i === maxRetries - 1) {
-        throw new Error("Server not ready. Start with: npm run start:dev");
+        throw new Error("Server not ready. Start with: pnpm dev");
       }
       await new Promise((resolve) => setTimeout(resolve, 1000));
     }
@@ -137,7 +130,6 @@ export async function createTemplate(
       channel: templateData.channel,
     };
   } else {
-    // Return mock template if creation fails
     return {
       id: `tpl_${templateData.channel.toLowerCase()}_${Date.now()}`,
       name: templateData.name,
@@ -155,19 +147,13 @@ export async function cleanupTemplate(
     await api.delete(`/tenants/${authData.tenantId}/templates/${templateId}`, {
       headers: { Authorization: `Bearer ${authData.accessToken}` },
     });
-  } catch (error) {
-    // Ignore cleanup errors
-  }
+  } catch (error) {}
 }
 
 export function expectValidStatusCodes(actualStatus: number, expectedCodes: number[]): void {
   expect(expectedCodes).toContain(actualStatus);
 }
 
-/**
- * Creates proper API key headers for public SDK endpoints
- * Uses X-API-Key header instead of Bearer token (which is for JWT auth)
- */
 export function createApiKeyHeaders(apiKey: string, projectId: string): Record<string, string> {
   return {
     "X-API-Key": apiKey,
@@ -176,9 +162,6 @@ export function createApiKeyHeaders(apiKey: string, projectId: string): Record<s
   };
 }
 
-/**
- * Creates headers for authenticated admin endpoints (uses Bearer JWT)
- */
 export function createAuthHeaders(accessToken: string): Record<string, string> {
   return {
     Authorization: `Bearer ${accessToken}`,

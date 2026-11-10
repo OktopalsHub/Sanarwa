@@ -1,6 +1,6 @@
 import { IsArray, IsEmail, IsEnum, IsOptional, IsString } from "class-validator";
 import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
-import { TenantMemberRole } from "src/common/enums";
+import { TenantMemberRole } from "../../../common/enums";
 
 export class CreateInviteDto {
   @ApiProperty({

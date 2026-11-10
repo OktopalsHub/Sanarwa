@@ -42,11 +42,9 @@ export class Invite {
   @Column({ type: "timestamp", name: "expires_at" })
   expiresAt: Date;
 
-  // Foreign key columns
   @Column({ type: "uuid" })
   tenantId: string;
 
-  // Relationships
   @ManyToOne(() => Tenant, (tenant) => tenant.invites, { onDelete: "CASCADE" })
   tenant: Tenant;
 

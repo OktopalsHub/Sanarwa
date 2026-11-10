@@ -84,8 +84,6 @@ export class PushCertificateController {
     @UploadedFile() file: any,
     @Body() body: any,
   ) {
-    // Parse certificate file and create certificate
-    // This would handle different certificate formats
     return this.certificateCrudService.createCertificateFromFile(tenantId, file, body);
   }
 

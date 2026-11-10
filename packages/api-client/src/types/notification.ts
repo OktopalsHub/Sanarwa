@@ -1,4 +1,3 @@
-// Enums matching backend
 export enum NotificationStatus {
   PENDING = "pending",
   PROCESSING = "processing",
@@ -19,14 +18,15 @@ export enum NotificationType {
   MARKETING = "marketing",
 }
 
-export enum NotificationChannel {
-  EMAIL = "email",
-  SMS = "sms",
-  PUSH = "push",
-  WHATSAPP = "whatsapp",
-  IN_APP = "in_app",
-  WEBHOOK = "webhook",
-}
+/** The workspace channel vocabulary — a single source of truth (@sanarwa/shared-types). */
+export { NotificationChannel } from "@sanarwa/shared-types";
+import { NotificationChannel } from "@sanarwa/shared-types";
+
+/** The campaign/UI channel set — deliverable and billable, excludes webhook and chat. Keeps raw-string assignability. */
+export type CommunicationChannel = `${Exclude<
+  NotificationChannel,
+  NotificationChannel.WEBHOOK | NotificationChannel.CHAT
+>}`;
 
 export enum NotificationPriority {
   LOW = "low",
@@ -42,7 +42,6 @@ export enum Priority {
   URGENT = "urgent",
 }
 
-// Core interfaces
 export interface Recipient {
   id: string;
   email?: string;
@@ -61,30 +60,27 @@ export interface NotificationAction {
   style?: "primary" | "secondary" | "danger";
 }
 
-// Main notification interface (from notification module)
 export interface Notification {
   id: string;
   tenantId: string;
   templateId?: string;
   channels: NotificationChannel[];
   recipients: Recipient[];
-  data: Record<string, any>;
+  variables: Record<string, any>;
   status: NotificationStatus;
   priority: Priority;
   scheduledAt?: Date;
   subject?: string;
-  content?: string;
+  data?: string;
   metadata?: Record<string, any>;
   retryCount: number;
   errorMessage?: string;
   createdAt: Date;
   updatedAt: Date;
 
-  // Relationships
   deliveries?: NotificationDelivery[];
 }
 
-// In-app notification interface (from notifications module)
 export interface InAppNotification {
   id: string;
   title: string;
@@ -93,7 +89,7 @@ export interface InAppNotification {
   status: NotificationStatus;
   channels: NotificationChannel[];
   priority: NotificationPriority;
-  data?: Record<string, any>;
+  variables: Record<string, any>;
   metadata?: Record<string, any>;
   templateId?: string;
   category?: string;
@@ -110,9 +106,8 @@ export interface InAppNotification {
   createdAt: Date;
   updatedAt: Date;
 
-  // Relationships
-  user?: any; // Will be typed in auth.ts
-  tenant?: any; // Will be typed in tenant.ts
+  user?: any;
+  tenant?: any;
 }
 
 export interface NotificationDelivery {
@@ -132,11 +127,9 @@ export interface NotificationDelivery {
   createdAt: Date;
   updatedAt: Date;
 
-  // Relationships
   notification?: Notification;
 }
 
-// Subscription management
 export interface NotificationSubscription {
   id: string;
   userId: string;
@@ -149,7 +142,6 @@ export interface NotificationSubscription {
   updatedAt: Date;
 }
 
-// Queue management
 export interface NotificationQueue {
   id: string;
   tenantId: string;
@@ -169,16 +161,15 @@ export interface NotificationQueue {
   updatedAt: Date;
 }
 
-// Request/Response DTOs
 export interface CreateNotificationRequest {
   templateId?: string;
   channels: NotificationChannel[];
   recipients: Recipient[];
-  data: Record<string, any>;
+  variables: Record<string, any>;
   priority?: Priority;
   scheduledAt?: Date;
   subject?: string;
-  content?: string;
+  data?: string;
   metadata?: Record<string, any>;
 }
 
@@ -188,7 +179,7 @@ export interface CreateInAppNotificationRequest {
   type?: NotificationType;
   channels?: NotificationChannel[];
   priority?: NotificationPriority;
-  data?: Record<string, any>;
+  variables: Record<string, any>;
   metadata?: Record<string, any>;
   templateId?: string;
   category?: string;
@@ -250,7 +241,6 @@ export interface NotificationStatusUpdate {
   timestamp: Date;
 }
 
-// Analytics and metrics
 export interface NotificationMetrics {
   totalSent: number;
   totalDelivered: number;
@@ -282,7 +272,6 @@ export interface TimeSeriesPoint {
   read?: number;
 }
 
-// Job and queue interfaces
 export interface NotificationJobData {
   notificationId: string;
   tenantId: string;
@@ -303,7 +292,6 @@ export interface QueueStatus {
   paused: boolean;
 }
 
-// State management
 export interface NotificationState {
   notifications: Notification[];
   inAppNotifications: InAppNotification[];
@@ -314,7 +302,6 @@ export interface NotificationState {
   error: string | null;
 }
 
-// API response wrappers
 export interface NotificationApiResponse<T = any> {
   data: T;
   success: boolean;
@@ -338,7 +325,6 @@ export interface PaginationInfo {
   hasPrev: boolean;
 }
 
-// Events
 export interface NotificationCreatedEvent {
   notificationId: string;
   tenantId: string;

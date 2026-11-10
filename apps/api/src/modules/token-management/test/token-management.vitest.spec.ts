@@ -52,7 +52,7 @@ describe("Token Management Module Integration Tests", () => {
       const tokenData = {
         name: "Test API Token",
         permissions: ["read", "write"],
-        expiresIn: 3600, // 1 hour
+        expiresIn: 3600,
       };
 
       const response = await api.post("/tokens/generate", tokenData, {
@@ -115,7 +115,7 @@ describe("Token Management Module Integration Tests", () => {
     it("should refresh token", async () => {
       const refreshData = {
         tokenId: "test-token-id-123",
-        expiresIn: 7200, // 2 hours
+        expiresIn: 7200,
       };
 
       const response = await api.post("/tokens/refresh", refreshData, {

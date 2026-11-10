@@ -2,20 +2,14 @@
 
 import { Send, User } from "@/lib/icons";
 
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Textarea } from "@/components/ui/textarea";
+import { Badge } from "@sanarwa/ui/badge";
+import { Button } from "@sanarwa/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@sanarwa/ui/card";
+import { Input } from "@sanarwa/ui/input";
+import { Label } from "@sanarwa/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@sanarwa/ui/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@sanarwa/ui/tabs";
+import { Textarea } from "@sanarwa/ui/textarea";
 import { toast } from "@/lib/utils/toast";
 import {
   CheckIcon,
@@ -58,7 +52,7 @@ interface AdvancedApiPlaygroundProps {
 const commonHeaders = {
   "Content-Type": "application/json",
   Accept: "application/json",
-  "User-Agent": "Notifi-Playground/1.0",
+  "User-Agent": "Sanarwa-Playground/1.0",
 };
 
 const httpMethods = ["GET", "POST", "PUT", "DELETE", "PATCH", "HEAD", "OPTIONS"];
@@ -68,7 +62,7 @@ export function AdvancedApiPlayground({ initialRequest, onExecute }: AdvancedApi
     id: crypto.randomUUID(),
     name: "New Request",
     method: "GET",
-    url: "https://api.notifi.com/v1/",
+    url: "https://api.sanarwa.com/v1/",
     headers: { ...commonHeaders },
     timestamp: new Date(),
     ...initialRequest,
@@ -91,7 +85,6 @@ export function AdvancedApiPlayground({ initialRequest, onExecute }: AdvancedApi
         const result = await onExecute(request);
         setResponse(result);
       } else {
-        // Simulate API call
         await new Promise((resolve) => setTimeout(resolve, 500 + Math.random() * 1500));
 
         const mockResponse: ApiResponse = {
@@ -118,9 +111,8 @@ export function AdvancedApiPlayground({ initialRequest, onExecute }: AdvancedApi
         setResponse(mockResponse);
       }
 
-      // Add to history
       const historyItem = { ...request, timestamp: new Date() };
-      setHistory((prev) => [historyItem, ...prev.slice(0, 9)]); // Keep last 10
+      setHistory((prev) => [historyItem, ...prev.slice(0, 9)]);
     } catch (error) {
       const errorResponse: ApiResponse = {
         status: 500,
@@ -242,7 +234,6 @@ print(response.json())`;
 
   return (
     <div className="space-y-6">
-      {/* Request Builder */}
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
@@ -260,7 +251,6 @@ print(response.json())`;
           </div>
         </CardHeader>
         <CardContent className="space-y-4">
-          {/* Request Name */}
           <div className="space-y-2">
             <Label>Request Name</Label>
             <Input
@@ -270,7 +260,6 @@ print(response.json())`;
             />
           </div>
 
-          {/* Method and URL */}
           <div className="flex gap-2">
             <div className="w-32">
               <Label>Method</Label>
@@ -295,12 +284,11 @@ print(response.json())`;
               <Input
                 value={request.url}
                 onChange={(e) => setRequest((prev) => ({ ...prev, url: e.target.value }))}
-                placeholder="https://api.notifi.com/v1/..."
+                placeholder="https://api.sanarwa.com/v1/..."
               />
             </div>
           </div>
 
-          {/* Headers */}
           <div className="space-y-2">
             <Label>Headers</Label>
             <div className="space-y-2">
@@ -354,7 +342,6 @@ print(response.json())`;
             </div>
           </div>
 
-          {/* Request Body */}
           {["POST", "PUT", "PATCH"].includes(request.method) && (
             <div className="space-y-2">
               <Label>Request Body</Label>
@@ -368,7 +355,6 @@ print(response.json())`;
             </div>
           )}
 
-          {/* Execute Button */}
           <Button onClick={handleExecute} disabled={isExecuting || !request.url} className="w-full">
             {isExecuting ? (
               <ArrowPathIcon className="h-4 w-4 animate-spin mr-2" />
@@ -380,7 +366,6 @@ print(response.json())`;
         </CardContent>
       </Card>
 
-      {/* Response */}
       {response && (
         <Card>
           <CardHeader>
@@ -454,7 +439,6 @@ print(response.json())`;
         </Card>
       )}
 
-      {/* Code Generation */}
       <Card>
         <CardHeader>
           <CardTitle>Code Generation</CardTitle>
@@ -492,9 +476,7 @@ print(response.json())`;
         </CardContent>
       </Card>
 
-      {/* History and Saved Requests */}
       <div className="grid gap-6 md:grid-cols-2">
-        {/* History */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -534,7 +516,6 @@ print(response.json())`;
           </CardContent>
         </Card>
 
-        {/* Saved Requests */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">

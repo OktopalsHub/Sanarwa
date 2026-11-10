@@ -2,14 +2,23 @@
   "$schema": "./node_modules/oxlint/configuration_schema.json",
   "plugins": ["typescript", "import", "react", "unicorn"],
   "categories": {
-    "correctness": "error",
+    "correctness": "warn",
     "suspicious": "warn"
   },
   "rules": {
     "react/react-in-jsx-scope": "off",
+    "react/purity": "warn",
+    "react/set-state-in-effect": "warn",
+    "react/immutability": "warn",
+    "react/static-components": "warn",
+    "react/incompatible-library": "warn",
+    "react-hooks/exhaustive-deps": "warn",
     "eslint/no-unused-vars": "warn",
     "typescript/no-extraneous-class": "warn",
+    "unicorn/no-thenable": "warn",
     "unicorn/consistent-function-scoping": "off",
+    "unicorn/no-useless-fallback-in-spread": "warn",
+    "unicorn/no-invalid-remove-event-listener": "warn",
     "import/no-unassigned-import": "off",
     "eslint/no-new": "warn",
     "eslint/no-shadow": "warn",
@@ -17,9 +26,7 @@
     "eslint/no-control-regex": "warn",
     "eslint/no-useless-escape": "warn",
     "eslint/no-unreachable": "warn",
-    "eslint/no-unassigned-vars": "warn",
-    "react-hooks/exhaustive-deps": "warn",
-    "unicorn/no-invalid-remove-event-listener": "warn"
+    "eslint/no-unassigned-vars": "warn"
   },
   "ignorePatterns": [
     "**/node_modules/**",

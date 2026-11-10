@@ -1,11 +1,4 @@
-export enum Channel {
-  EMAIL = "email",
-  SMS = "sms",
-  PUSH = "push",
-  WHATSAPP = "whatsapp",
-  IN_APP = "in_app",
-  VOICE = "voice",
-}
+import { NotificationChannel } from "../../common/enums/notification-channel.enum";
 
 export enum DeliveryStatus {
   PENDING = "pending",
@@ -15,13 +8,6 @@ export enum DeliveryStatus {
   BOUNCED = "bounced",
   OPENED = "opened",
   CLICKED = "clicked",
-}
-
-export enum ProviderHealth {
-  HEALTHY = "healthy",
-  DEGRADED = "degraded",
-  UNHEALTHY = "unhealthy",
-  UNKNOWN = "unknown",
 }
 
 export interface Recipient {
@@ -46,18 +32,9 @@ export interface ProviderResponse {
 export interface ProviderConfig {
   id: string;
   name: string;
-  channel: Channel;
+  channel: NotificationChannel;
   priority: number;
   isActive: boolean;
   credentials: Record<string, any>;
   settings?: Record<string, any>;
-}
-
-export interface ProviderHealthStatus {
-  status: ProviderHealth;
-  lastChecked: Date;
-  responseTime?: number;
-  errorRate?: number;
-  uptime?: number;
-  metadata?: Record<string, any>;
 }

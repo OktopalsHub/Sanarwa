@@ -1,7 +1,6 @@
 import { lookup } from "node:dns/promises";
 import { isIP } from "node:net";
 
-/** Reject non-http(s) and private/metadata hosts (SSRF). */
 export async function assertSafeWebhookUrl(url: string): Promise<void> {
   let parsed: URL;
   try {

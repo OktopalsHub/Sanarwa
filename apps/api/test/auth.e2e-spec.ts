@@ -4,19 +4,12 @@ describe("Auth & Tenant HTTP Tests", () => {
   const baseURL = "http://localhost:9000/api/v1";
   const api = axios.create({ baseURL });
 
-  // Test data
   const testUser = {
     email: `test@example.com`,
     password: "TestPassword123!",
     firstName: "Test",
     lastName: "User",
   };
-  // const testUser = {
-  //   email: `test-${Date.now()}@example.com`,
-  //   password: 'TestPassword123!',
-  //   firstName: 'Test',
-  //   lastName: 'User',
-  // };
   const testUser3 = {
     email: `test-${Date.now()}@example.com`,
     password: "TestPassword123!",
@@ -32,7 +25,6 @@ describe("Auth & Tenant HTTP Tests", () => {
   let authTokens: any = {};
 
   beforeAll(async () => {
-    // Wait for server to be ready
     await waitForServer();
   });
 
@@ -44,7 +36,7 @@ describe("Auth & Tenant HTTP Tests", () => {
         return;
       } catch (error) {
         if (i === maxRetries - 1) {
-          console.log("❌ Server not ready. Please start the server with: npm run start:dev");
+          console.log("❌ Server not ready. Please start the server with: pnpm dev");
           console.log("   Then run: npm run test:auth");
           throw new Error("Server not ready. Please start the server first.");
         }
@@ -68,7 +60,6 @@ describe("Auth & Tenant HTTP Tests", () => {
           expect(response.data.user.firstName).toBe(testUser.firstName);
           expect(response.data.user.lastName).toBe(testUser.lastName);
 
-          // Store tokens for later tests
           authTokens.user1 = {
             accessToken: response.data.access_token,
             refreshToken: response.data.refresh_token,
@@ -98,7 +89,7 @@ describe("Auth & Tenant HTTP Tests", () => {
         try {
           await api.post("/auth/signup", {
             email: "invalid-email",
-            password: "123", // too short
+            password: "123",
           });
           fail("Should have thrown validation error");
         } catch (error) {
@@ -169,7 +160,6 @@ describe("Auth & Tenant HTTP Tests", () => {
           expect(response.data).toHaveProperty("refresh_token");
           expect(response.data).toHaveProperty("user");
 
-          // Update stored tokens
           authTokens.user1.accessToken = response.data.access_token;
           authTokens.user1.refreshToken = response.data.refresh_token;
 
@@ -262,14 +252,12 @@ describe("Auth & Tenant HTTP Tests", () => {
 
           expect(response.status).toBe(204);
 
-          // Verify login with new password works
           const loginResponse = await api.post("/auth/login", {
             email: testUser.email,
             password: newPassword,
           });
           expect(loginResponse.status).toBe(200);
 
-          // Update test data for subsequent tests
           testUser.password = newPassword;
 
           console.log("✅ Password change successful");
@@ -333,7 +321,6 @@ describe("Auth & Tenant HTTP Tests", () => {
 
         it("should accept forgot password request for non-existing email (security)", async () => {
           try {
-            // Should not reveal if email exists
             const response = await api.post("/auth/forgot-password", {
               email: "nonexistent@example.com",
             });
@@ -354,7 +341,6 @@ describe("Auth & Tenant HTTP Tests", () => {
 
   describe("Tenant Management", () => {
     beforeAll(async () => {
-      // Register second user for tenant member tests
       try {
         const response = await api.post("/auth/signup", testUser2);
 

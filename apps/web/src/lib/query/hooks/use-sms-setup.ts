@@ -1,6 +1,6 @@
 "use client";
 
-import { apiClient } from "@/lib/api/client";
+import { apiClient } from "@sanarwa/api-client";
 import { useMutation, useQuery } from "@tanstack/react-query";
 
 export function useSMSProviders(tenantId?: string) {
@@ -17,7 +17,12 @@ export function useSMSProviders(tenantId?: string) {
 export function useCreateSMSProvider() {
   return useMutation({
     mutationFn: async (data: { tenantId: string; providerId: string; config: any }) => {
-      return apiClient.post(`/provider-configs`, { providerId: data.providerId, channel: "SMS", config: data.config, priority: 1 } as any) as any;
+      return apiClient.post(`/provider-configs`, {
+        providerId: data.providerId,
+        channel: "SMS",
+        config: data.config,
+        priority: 1,
+      } as any) as any;
     },
   });
 }
@@ -25,7 +30,9 @@ export function useCreateSMSProvider() {
 export function useTestSMS() {
   return useMutation({
     mutationFn: async (data: { providerId: string; phone: string; message: string }) => {
-      return apiClient.post(`/provider-configs/${data.providerId}/test`, { testData: { phone: data.phone, message: data.message } } as any) as any;
+      return apiClient.post(`/provider-configs/${data.providerId}/test`, {
+        testData: { phone: data.phone, message: data.message },
+      } as any) as any;
     },
   });
 }

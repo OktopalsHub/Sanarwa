@@ -16,10 +16,10 @@
   },
   "dependencies": {
     "@sanarwa/shared-types": "workspace:*",
-    "axios": "^1.12.2"
+    "axios": "^1.21.1"
   },
   "devDependencies": {
-    "@types/node": "^20",
-    "typescript": "^5.9.3"
+    "@types/node": "^26.6.6",
+    "typescript": "^6.0.3"
   }
 }

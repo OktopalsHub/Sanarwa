@@ -7,8 +7,8 @@ import { AutoTopupSettings } from "@/components/billing/auto-topup-settings";
 import { TokenPacks } from "@/components/billing/subscription-plans";
 import { BillingHistory } from "@/components/billing/billing-history";
 import { AppShell } from "@/components/layout";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { billingApi } from "@/lib/api";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@sanarwa/ui/tabs";
+import { billingApi } from "@sanarwa/api-client";
 import { CreditCardIcon, CubeIcon, ClockIcon } from "@heroicons/react/24/outline";
 
 function CheckoutStatusBanner() {
@@ -24,11 +24,13 @@ function CheckoutStatusBanner() {
         const s = await billingApi.getPurchaseStatus(purchaseId);
         if (s.status === "completed" || s.status === "failed") return s;
       } catch {}
-      // poll fallback via sync after 30s
       return billingApi.syncPurchase(purchaseId).catch(() => null);
     },
     enabled: checkout === "success" && !!purchaseId,
-    refetchInterval: (query) => (query.state.data?.status === "completed" || query.state.data?.status === "failed" ? false : 2500),
+    refetchInterval: (query) =>
+      query.state.data?.status === "completed" || query.state.data?.status === "failed"
+        ? false
+        : 2500,
     staleTime: 0,
   });
 
@@ -36,7 +38,9 @@ function CheckoutStatusBanner() {
     return (
       <div className="rounded-lg border bg-muted/40 px-4 py-3 text-sm">
         <p className="font-medium">Checkout cancelled</p>
-        <p className="mt-1 text-muted-foreground">Checkout was cancelled. You can pick a pack and try again.</p>
+        <p className="mt-1 text-muted-foreground">
+          Checkout was cancelled. You can pick a pack and try again.
+        </p>
       </div>
     );
   }

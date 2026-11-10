@@ -1,134 +1,108 @@
 import type { AxiosInstance, AxiosResponse } from "axios";
 
+import type { NotificationCenterItem, PaginatedResponse } from "../types";
+
+/**
+ * The notification centre lives under `/tenants/{tenantId}/notifications/center`,
+ * so every method needs the tenant id. The API key alone is not enough.
+ */
 export class NotificationCenterComponent {
-  constructor(private client: AxiosInstance) {}
+  constructor(private readonly client: AxiosInstance) {}
 
-  /**
-   * Get notification feed
-   */
-  async getFeed(params?: {
-    subscriberId?: string;
-    page?: number;
-    limit?: number;
-    status?: "unread" | "read" | "archived";
-  }): Promise<any> {
-    const response: AxiosResponse<any> = await this.client.get("/notifications/center/feed", {
-      params,
-    });
+  private base(tenantId: string): string {
+    return `/tenants/${tenantId}/notifications/center`;
+  }
+
+  async getFeed(
+    tenantId: string,
+    subscriberId: string,
+    params?: { page?: number; limit?: number; status?: string },
+  ): Promise<PaginatedResponse<NotificationCenterItem>> {
+    const response: AxiosResponse<PaginatedResponse<NotificationCenterItem>> =
+      await this.client.get(`${this.base(tenantId)}/feed/${subscriberId}`, { params });
     return response.data;
   }
 
-  /**
-   * Get notification by ID
-   */
-  async getNotification(id: string): Promise<any> {
-    const response: AxiosResponse<any> = await this.client.get(`/notifications/center/${id}`);
-    return response.data;
-  }
-
-  /**
-   * Mark notification as read
-   */
-  async markAsRead(id: string): Promise<any> {
-    const response: AxiosResponse<any> = await this.client.patch(
-      `/notifications/center/${id}/read`,
+  async getNotification(tenantId: string, id: string): Promise<NotificationCenterItem> {
+    const response: AxiosResponse<NotificationCenterItem> = await this.client.get(
+      `${this.base(tenantId)}/${id}`,
     );
     return response.data;
   }
 
-  /**
-   * Mark multiple notifications as read
-   */
-  async markMultipleAsRead(ids: string[]): Promise<void> {
-    await this.client.post("/notifications/center/bulk/read", { ids });
-  }
-
-  /**
-   * Mark all notifications as read
-   */
-  async markAllAsRead(subscriberId: string): Promise<void> {
-    await this.client.post(`/notifications/center/${subscriberId}/read-all`);
-  }
-
-  /**
-   * Archive notification
-   */
-  async archiveNotification(id: string): Promise<any> {
-    const response: AxiosResponse<any> = await this.client.patch(
-      `/notifications/center/${id}/archive`,
+  async markAsRead(tenantId: string, id: string): Promise<unknown> {
+    const response: AxiosResponse<unknown> = await this.client.patch(
+      `${this.base(tenantId)}/${id}/read`,
     );
     return response.data;
   }
 
-  /**
-   * Archive multiple notifications
-   */
-  async archiveMultiple(ids: string[]): Promise<void> {
-    await this.client.post("/notifications/center/bulk/archive", { ids });
+  async markMultipleAsRead(tenantId: string, ids: string[]): Promise<void> {
+    await this.client.post(`${this.base(tenantId)}/bulk/read`, { ids });
   }
 
-  /**
-   * Delete notification
-   */
-  async deleteNotification(id: string): Promise<void> {
-    await this.client.delete(`/notifications/center/${id}`);
-  }
-
-  /**
-   * Delete multiple notifications
-   */
-  async deleteMultiple(ids: string[]): Promise<void> {
-    await this.client.post("/notifications/center/bulk/delete", { ids });
-  }
-
-  /**
-   * Get notification center statistics
-   */
-  async getStats(subscriberId: string): Promise<any> {
-    const response: AxiosResponse<any> = await this.client.get(
-      `/notifications/center/stats/${subscriberId}`,
+  async markAllAsRead(tenantId: string, subscriberId: string): Promise<unknown> {
+    const response: AxiosResponse<unknown> = await this.client.post(
+      `${this.base(tenantId)}/${subscriberId}/read-all`,
     );
     return response.data;
   }
 
-  /**
-   * Get unread count
-   */
-  async getUnreadCount(subscriberId: string): Promise<any> {
-    const response: AxiosResponse<any> = await this.client.get(
-      `/notifications/center/unread/${subscriberId}`,
+  async archiveNotification(tenantId: string, id: string): Promise<unknown> {
+    const response: AxiosResponse<unknown> = await this.client.patch(
+      `${this.base(tenantId)}/${id}/archive`,
     );
     return response.data;
   }
 
-  /**
-   * Search notifications
-   */
-  async search(params: {
-    subscriberId: string;
-    query: string;
-    page?: number;
-    limit?: number;
-  }): Promise<any> {
-    const response: AxiosResponse<any> = await this.client.get(
-      `/notifications/center/search/${params.subscriberId}`,
-      { params: { q: params.query, page: params.page, limit: params.limit } },
+  async archiveMultiple(tenantId: string, ids: string[]): Promise<void> {
+    await this.client.post(`${this.base(tenantId)}/bulk/archive`, { ids });
+  }
+
+  async deleteNotification(tenantId: string, id: string): Promise<void> {
+    await this.client.delete(`${this.base(tenantId)}/${id}`);
+  }
+
+  async deleteMultiple(tenantId: string, ids: string[]): Promise<void> {
+    await this.client.post(`${this.base(tenantId)}/bulk/delete`, { ids });
+  }
+
+  async getStats(tenantId: string, subscriberId: string): Promise<unknown> {
+    const response: AxiosResponse<unknown> = await this.client.get(
+      `${this.base(tenantId)}/stats/${subscriberId}`,
     );
     return response.data;
   }
 
-  /**
-   * Get notifications by channel
-   */
-  async getByChannel(params: {
-    subscriberId: string;
-    channel: string;
-    page?: number;
-    limit?: number;
-  }): Promise<any> {
-    const response: AxiosResponse<any> = await this.client.get(
-      `/notifications/center/channel/${params.subscriberId}/${params.channel}`,
-      { params: { page: params.page, limit: params.limit } },
+  async getUnreadCount(tenantId: string, subscriberId: string): Promise<unknown> {
+    const response: AxiosResponse<unknown> = await this.client.get(
+      `${this.base(tenantId)}/unread/${subscriberId}`,
+    );
+    return response.data;
+  }
+
+  async search(
+    tenantId: string,
+    subscriberId: string,
+    query: string,
+    params?: { page?: number; limit?: number },
+  ): Promise<unknown> {
+    const response: AxiosResponse<unknown> = await this.client.get(
+      `${this.base(tenantId)}/search/${subscriberId}`,
+      { params: { ...params, q: query } },
+    );
+    return response.data;
+  }
+
+  async getByChannel(
+    tenantId: string,
+    subscriberId: string,
+    channel: string,
+    params?: { page?: number; limit?: number },
+  ): Promise<unknown> {
+    const response: AxiosResponse<unknown> = await this.client.get(
+      `${this.base(tenantId)}/channel/${subscriberId}/${channel}`,
+      { params },
     );
     return response.data;
   }

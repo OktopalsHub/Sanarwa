@@ -57,7 +57,6 @@ export function ConditionalRender({
   return condition ? <>{children}</> : <>{fallback}</>;
 }
 
-// Higher-order component for permission-based rendering
 export function withPermissions<P extends object>(
   Component: React.ComponentType<P>,
   requiredPermissions: Permission[],

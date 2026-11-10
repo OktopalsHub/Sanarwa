@@ -3,15 +3,14 @@
 import { Send, User } from "@/lib/icons";
 
 import { AppShell } from "@/components/layout";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@sanarwa/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@sanarwa/ui/card";
 import { WorkflowCanvas } from "@/components/workflows";
 import { Workflow } from "@/lib/types/workflow";
 import { PlusIcon, QueueListIcon } from "@heroicons/react/24/outline";
 
 import { useState } from "react";
 
-// Sample workflow data
 const sampleWorkflow: Workflow = {
   id: "workflow-1",
   name: "Welcome Email Sequence",
@@ -171,7 +170,6 @@ export default function WorkflowsPage() {
         </div>
 
         <div className="grid gap-6">
-          {/* Sample Workflow Card */}
           <Card className="cursor-pointer hover:shadow-md transition-shadow">
             <CardHeader>
               <div className="flex items-center justify-between">
@@ -197,7 +195,6 @@ export default function WorkflowsPage() {
             </CardContent>
           </Card>
 
-          {/* Empty State */}
           <Card className="border-dashed">
             <CardContent className="flex flex-col items-center justify-center py-12">
               <QueueListIcon className="h-12 w-12 text-muted-foreground mb-4" />

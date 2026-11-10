@@ -2,10 +2,10 @@
 
 import { Droplets, FileText, Repeat, Send, Zap } from "@/lib/icons";
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@sanarwa/ui/card";
+import { Input } from "@sanarwa/ui/input";
+import { Label } from "@sanarwa/ui/label";
+import { Textarea } from "@sanarwa/ui/textarea";
 import type { CampaignType } from "@/lib/types/campaign";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { DocumentTextIcon, BoltIcon, SwatchIcon, ArrowPathIcon } from "@heroicons/react/24/outline";
@@ -81,14 +81,12 @@ export function BasicInfoStep({ data, onUpdate }: BasicInfoStepProps) {
 
   return (
     <div className="space-y-6">
-      {/* Campaign Name */}
       <div className="space-y-2">
         <Label htmlFor="name">Campaign Name *</Label>
         <Input id="name" placeholder="Enter campaign name" {...register("name")} />
         {errors.name && <p className="text-sm text-destructive">{errors.name.message}</p>}
       </div>
 
-      {/* Campaign Description */}
       <div className="space-y-2">
         <Label htmlFor="description">Description</Label>
         <Textarea
@@ -102,7 +100,6 @@ export function BasicInfoStep({ data, onUpdate }: BasicInfoStepProps) {
         )}
       </div>
 
-      {/* Campaign Type */}
       <div className="space-y-3">
         <Label>Campaign Type *</Label>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -142,7 +139,6 @@ export function BasicInfoStep({ data, onUpdate }: BasicInfoStepProps) {
         {errors.type && <p className="text-sm text-destructive">{errors.type.message}</p>}
       </div>
 
-      {/* Campaign Type Info */}
       {watchedValues.type && (
         <Card className="bg-muted/50">
           <CardContent className="pt-6">

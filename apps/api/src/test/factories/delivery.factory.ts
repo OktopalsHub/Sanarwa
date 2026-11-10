@@ -2,7 +2,7 @@ import {
   MessageDeliveryStatus as DeliveryStatus,
   MessageDelivery as NotificationDelivery,
 } from "../../modules/messaging/message-delivery.entity";
-import { MessageChannel as NotificationChannel } from "../../modules/messaging/message.entity";
+import { NotificationChannel } from "../../common/enums/notification-channel.enum";
 
 export class DeliveryFactory {
   static create(overrides: Partial<NotificationDelivery> = {}): NotificationDelivery {
@@ -22,7 +22,7 @@ export class DeliveryFactory {
       openedAt: undefined,
       clickedAt: undefined,
       metadata: undefined,
-      message: null as any, // Will be set by the caller if needed
+      message: null as any,
       createdAt: new Date(),
       updatedAt: new Date(),
     };
@@ -68,7 +68,7 @@ export class DeliveryFactory {
       ...overrides,
       status: DeliveryStatus.DELIVERED,
       providerMessageId: "msg-" + Math.random().toString(36).substr(2, 9),
-      sentAt: new Date(Date.now() - 60000), // 1 minute ago
+      sentAt: new Date(Date.now() - 60000),
       deliveredAt: new Date(),
     });
   }

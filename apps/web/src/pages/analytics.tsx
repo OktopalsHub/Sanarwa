@@ -8,9 +8,7 @@ function AnalyticsContent() {
     <AppShell>
       <div className="p-6">
         <div className="max-w-7xl mx-auto">
-          {/* <PermissionGate permissions={['analytics:read']}> */}
           <AnalyticsDashboard />
-          {/* </PermissionGate> */}
         </div>
       </div>
     </AppShell>
@@ -18,9 +16,5 @@ function AnalyticsContent() {
 }
 
 export default function AnalyticsPage() {
-  return (
-    /* <ProtectedRoute> */
-    <AnalyticsContent />
-    /* </ProtectedRoute> */
-  );
+  return <AnalyticsContent />;
 }

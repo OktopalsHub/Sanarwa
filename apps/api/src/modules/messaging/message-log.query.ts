@@ -60,7 +60,7 @@ export function mapLogsToMessageListRecords(
     sentAt?: Date;
     deliveredAt?: Date;
   }>,
-  messages: Array<{ id: string; subject?: string | null; content?: string | null }>,
+  messages: Array<{ id: string; subject?: string | null; data?: string | null }>,
 ) {
   const messageById = new Map(messages.map((message) => [message.id, message]));
   return logs.map((log) => {
@@ -74,7 +74,7 @@ export function mapLogsToMessageListRecords(
       projectId: log.projectId,
       messageId: log.metadata?.messageId,
       subject: message?.subject ?? null,
-      hasContent: Boolean(message?.content || message?.subject),
+      hasContent: Boolean(message?.data || message?.subject),
       error: log.error,
       createdAt: log.createdAt,
       sentAt: log.sentAt,

@@ -1,8 +1,3 @@
-/**
- * Project Management Tests
- * Tests project CRUD operations, API key management, and provider configuration
- */
-
 import { describe, it, expect, beforeAll } from "vitest";
 import axios, { AxiosInstance } from "axios";
 
@@ -10,7 +5,6 @@ describe("Project Management Tests", () => {
   const baseURL = "http://localhost:9000/api/v1";
   let api: AxiosInstance;
 
-  // Test account setup
   const timestamp = Date.now();
   const testAccount = {
     email: `project-test-${timestamp}@example.com`,
@@ -23,9 +17,8 @@ describe("Project Management Tests", () => {
   let userId: string;
   let tenantId: string;
 
-  // Project test data
-  let byopProject: any; // Project with BYOP configuration
-  let fallbackProject: any; // Project without BYOP (uses fallbacks)
+  let byopProject: any;
+  let fallbackProject: any;
   let createdProjects: Array<{ id: string; name: string; type: string }> = [];
 
   beforeAll(async () => {
@@ -50,7 +43,7 @@ describe("Project Management Tests", () => {
         }
       } catch (error) {
         if (i === maxRetries - 1) {
-          throw new Error("Server not ready. Please start with: npm run start:dev");
+          throw new Error("Server not ready. Please start with: pnpm dev");
         }
         await new Promise((resolve) => setTimeout(resolve, 2000));
       }
@@ -60,14 +53,12 @@ describe("Project Management Tests", () => {
   async function setupTestAccount(): Promise<void> {
     console.log("🔧 Setting up test account for project testing...");
 
-    // Register test account
     const registerResponse = await api.post("/auth/signup", testAccount);
     expect(registerResponse.status).toBe(201);
 
     authToken = registerResponse.data.access_token;
     userId = registerResponse.data.user.id;
 
-    // Get tenant ID
     const workspacesResponse = await api.get("/tenant-members/user-workspaces", {
       headers: { Authorization: `Bearer ${authToken}` },
     });
@@ -177,7 +168,6 @@ describe("Project Management Tests", () => {
             enableVoice: false,
             enablePush: true,
           },
-          // No providers specified - should use tenant/system defaults
         };
 
         const response = await api.post("/projects", projectData, {
@@ -192,7 +182,6 @@ describe("Project Management Tests", () => {
           expect(response.data).toHaveProperty("apiKey");
           expect(response.data.settings).toEqual(projectData.settings);
 
-          // Should have fallback providers assigned
           expect(response.data).toHaveProperty("providers");
           expect(response.data.providers).toHaveProperty("sms");
           expect(response.data.providers).toHaveProperty("email");
@@ -229,7 +218,6 @@ describe("Project Management Tests", () => {
         const response = await api.post(
           "/projects",
           {
-            // missing name
             description: "Invalid project",
           },
           {
@@ -285,7 +273,6 @@ describe("Project Management Tests", () => {
           expect(response.data).toHaveProperty("pagination");
           expect(Array.isArray(response.data.data)).toBe(true);
 
-          // Check pagination structure
           expect(response.data.pagination).toHaveProperty("total");
           expect(response.data.pagination).toHaveProperty("page");
           expect(response.data.pagination).toHaveProperty("limit");
@@ -390,14 +377,14 @@ describe("Project Management Tests", () => {
             enableSMS: true,
             enableEmail: true,
             enableVoice: true,
-            enablePush: true, // Added push notifications
+            enablePush: true,
           },
           providers: {
             sms: {
               primary: "telnyx",
               config: {
                 apiKey: "updated-telnyx-key",
-                fromNumber: "+1987654321", // Updated number
+                fromNumber: "+1987654321",
                 messagingProfileId: "updated-profile-id",
               },
             },
@@ -459,7 +446,6 @@ describe("Project Management Tests", () => {
           expect(response.data.apiKey).not.toBe(oldApiKey);
           expect(response.data.apiKey.length).toBeGreaterThan(20);
 
-          // Update stored project data
           byopProject.apiKey = response.data.apiKey;
 
           console.log("✅ API key regeneration working");
@@ -665,7 +651,6 @@ describe("Project Management Tests", () => {
     let deleteTestProject: any;
 
     beforeAll(async () => {
-      // Create a project specifically for deletion testing
       const response = await api.post(
         "/projects",
         {
@@ -696,7 +681,6 @@ describe("Project Management Tests", () => {
         console.log("Project deletion:", response.status, response.data);
 
         if (response.status === 204) {
-          // Verify project is soft deleted
           const getResponse = await api.get(`/projects/${deleteTestProject.id}`, {
             headers: { Authorization: `Bearer ${authToken}` },
           });
@@ -737,7 +721,6 @@ describe("Project Management Tests", () => {
     });
 
     it("should validate project ownership", async () => {
-      // All projects should belong to the current tenant
       const response = await api.get("/projects", {
         headers: { Authorization: `Bearer ${authToken}` },
       });
@@ -795,7 +778,6 @@ describe("Project Management Tests", () => {
       console.log("🚀 Project Management System Validated!");
       console.log("=".repeat(55));
 
-      // Final validation
       expect(authToken).toBeTruthy();
       expect(tenantId).toBeTruthy();
       expect(byopProject).toBeTruthy();

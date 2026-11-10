@@ -1,5 +1,5 @@
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@sanarwa/ui/button";
+import { Card, CardContent } from "@sanarwa/ui/card";
 import { IconPlayerPause, IconPlayerPlay, IconPlayerStop, IconX } from "@tabler/icons-react";
 
 interface CampaignBulkBarProps {

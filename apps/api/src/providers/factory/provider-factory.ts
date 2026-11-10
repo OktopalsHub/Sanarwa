@@ -1,6 +1,7 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { IBaseProvider } from "../base/base-provider.interface";
-import { Channel, ProviderConfig } from "../types";
+import { ProviderConfig } from "../types";
+import { NotificationChannel } from "../../common/enums/notification-channel.enum";
 import { IProviderFactory } from "./provider-factory.interface";
 
 type ProviderConstructor = new (...args: any[]) => IBaseProvider;
@@ -10,12 +11,9 @@ export class ProviderFactory implements IProviderFactory {
   private readonly logger = new Logger(ProviderFactory.name);
   private readonly providers = new Map<string, ProviderConstructor>();
 
-  /**
-   * Create a provider instance
-   */
   async createProvider(
     providerId: string,
-    channel: Channel,
+    channel: NotificationChannel,
     config: ProviderConfig,
   ): Promise<IBaseProvider> {
     const providerKey = this.getProviderKey(providerId, channel);
@@ -28,10 +26,8 @@ export class ProviderFactory implements IProviderFactory {
     try {
       this.logger.log(`Creating provider instance: ${providerId} for channel ${channel}`);
 
-      // Create provider instance with basic parameters
       const provider = new ProviderClass(config.id, config.name, channel);
 
-      // Initialize the provider with configuration
       await provider.initialize(config);
 
       this.logger.log(`Provider ${providerId} created and initialized successfully`);
@@ -44,10 +40,7 @@ export class ProviderFactory implements IProviderFactory {
     }
   }
 
-  /**
-   * Get available provider types for a channel
-   */
-  getAvailableProviders(channel: Channel): string[] {
+  getAvailableProviders(channel: NotificationChannel): string[] {
     const providers: string[] = [];
 
     for (const [key] of this.providers) {
@@ -60,10 +53,11 @@ export class ProviderFactory implements IProviderFactory {
     return providers;
   }
 
-  /**
-   * Register a new provider type
-   */
-  registerProvider(providerId: string, channel: Channel, providerClass: ProviderConstructor): void {
+  registerProvider(
+    providerId: string,
+    channel: NotificationChannel,
+    providerClass: ProviderConstructor,
+  ): void {
     const providerKey = this.getProviderKey(providerId, channel);
 
     if (this.providers.has(providerKey)) {
@@ -76,32 +70,23 @@ export class ProviderFactory implements IProviderFactory {
     this.logger.log(`Registered provider: ${providerId} for channel ${channel}`);
   }
 
-  /**
-   * Check if a provider type is registered
-   */
-  isProviderRegistered(providerId: string, channel: Channel): boolean {
+  isProviderRegistered(providerId: string, channel: NotificationChannel): boolean {
     const providerKey = this.getProviderKey(providerId, channel);
     return this.providers.has(providerKey);
   }
 
-  /**
-   * Get all registered providers
-   */
-  getAllRegisteredProviders(): Array<{ providerId: string; channel: Channel }> {
-    const result: Array<{ providerId: string; channel: Channel }> = [];
+  getAllRegisteredProviders(): Array<{ providerId: string; channel: NotificationChannel }> {
+    const result: Array<{ providerId: string; channel: NotificationChannel }> = [];
 
     for (const [key] of this.providers) {
       const [providerId, channel] = key.split(":");
-      result.push({ providerId, channel: channel as Channel });
+      result.push({ providerId, channel: channel as NotificationChannel });
     }
 
     return result;
   }
 
-  /**
-   * Unregister a provider
-   */
-  unregisterProvider(providerId: string, channel: Channel): boolean {
+  unregisterProvider(providerId: string, channel: NotificationChannel): boolean {
     const providerKey = this.getProviderKey(providerId, channel);
     const existed = this.providers.has(providerKey);
 
@@ -113,18 +98,12 @@ export class ProviderFactory implements IProviderFactory {
     return existed;
   }
 
-  /**
-   * Clear all registered providers
-   */
   clearProviders(): void {
     this.providers.clear();
     this.logger.log("Cleared all registered providers");
   }
 
-  /**
-   * Generate a unique key for provider registration
-   */
-  private getProviderKey(providerId: string, channel: Channel): string {
+  private getProviderKey(providerId: string, channel: NotificationChannel): string {
     return `${providerId}:${channel}`;
   }
 }

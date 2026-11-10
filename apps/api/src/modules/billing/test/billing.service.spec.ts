@@ -1,7 +1,6 @@
 import { Test, TestingModule } from "@nestjs/testing";
 import { getRepositoryToken } from "@nestjs/typeorm";
 import { BillingService } from "../services/billing.service";
-import { PolarService } from "../services/polar.service";
 import { TokenManagementService } from "../../token-management/services/token-management.service";
 import { Subscription } from "../entities/subscription.entity";
 import { TokenPurchase } from "../entities/token-purchase.entity";
@@ -22,7 +21,6 @@ describe("BillingService", () => {
         { provide: getRepositoryToken(AutoTopupConfig), useValue: {} },
         { provide: getRepositoryToken(TokenBalance), useValue: {} },
         { provide: getRepositoryToken(TokenTransaction), useValue: {} },
-        { provide: PolarService, useValue: {} },
         { provide: TokenManagementService, useValue: {} },
         { provide: ConfigService, useValue: { get: () => undefined } },
         { provide: TenantService, useValue: {} },

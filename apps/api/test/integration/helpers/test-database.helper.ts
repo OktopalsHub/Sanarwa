@@ -5,7 +5,6 @@ import {
 } from "../../../src/test/sqlite-test-data-source";
 import { Column, CreateDateColumn, Entity, PrimaryGeneratedColumn } from "typeorm";
 
-/** Isolated entity for helper-based SQLite tests (avoids app entity graph). */
 @Entity("test_helper_rows")
 export class TestHelperRow {
   @PrimaryGeneratedColumn("uuid")

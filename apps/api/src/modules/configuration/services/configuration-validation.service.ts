@@ -20,7 +20,6 @@ export class ConfigurationValidationService {
   private readonly logger = new Logger(ConfigurationValidationService.name);
   private readonly ajv: Ajv;
 
-  // Built-in validation schemas for common configuration types
   private readonly builtInSchemas: Record<string, ConfigurationSchema> = {
     string: {
       type: "string",
@@ -96,9 +95,6 @@ export class ConfigurationValidationService {
     this.registerBuiltInSchemas();
   }
 
-  /**
-   * Validate a configuration value against a schema
-   */
   async validateValue(value: string, schemaName?: string): Promise<ValidationResult> {
     try {
       if (!schemaName) {
@@ -115,7 +111,6 @@ export class ConfigurationValidationService {
       try {
         parsedValue = JSON.parse(value);
       } catch {
-        // If not JSON, treat as string
         parsedValue = value;
       }
 
@@ -143,9 +138,6 @@ export class ConfigurationValidationService {
     }
   }
 
-  /**
-   * Validate multiple configurations
-   */
   async validateConfigurations(
     configurations: Array<{
       key: string;
@@ -162,9 +154,6 @@ export class ConfigurationValidationService {
     return results;
   }
 
-  /**
-   * Register a custom validation schema
-   */
   registerSchema(name: string, schema: ConfigurationSchema): void {
     try {
       this.ajv.addSchema(schema, name);
@@ -175,30 +164,19 @@ export class ConfigurationValidationService {
     }
   }
 
-  /**
-   * Get available schema names
-   */
   getAvailableSchemas(): string[] {
     return Object.keys(this.builtInSchemas);
   }
 
-  /**
-   * Get schema by name
-   */
   private getSchema(name: string): ConfigurationSchema | null {
-    // Check built-in schemas first
     if (this.builtInSchemas[name]) {
       return this.builtInSchemas[name];
     }
 
-    // Check registered schemas
     const schema = this.ajv.getSchema(name);
     return (schema?.schema as ConfigurationSchema) || null;
   }
 
-  /**
-   * Register built-in schemas
-   */
   private registerBuiltInSchemas(): void {
     for (const [name, schema] of Object.entries(this.builtInSchemas)) {
       try {
@@ -209,9 +187,6 @@ export class ConfigurationValidationService {
     }
   }
 
-  /**
-   * Validate environment-specific configuration requirements
-   */
   async validateEnvironmentConfig(
     environment: string,
     configurations: Record<string, string>,
@@ -235,9 +210,6 @@ export class ConfigurationValidationService {
     return { isValid: true };
   }
 
-  /**
-   * Get required configurations for an environment
-   */
   private getRequiredConfigsForEnvironment(environment: string): string[] {
     const baseRequired = [
       "DATABASE_HOST",

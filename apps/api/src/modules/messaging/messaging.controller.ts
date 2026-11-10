@@ -3,6 +3,8 @@ import {
   Controller,
   Delete,
   Get,
+  Headers,
+  Patch,
   Req,
   UnauthorizedException,
   Param,
@@ -10,6 +12,8 @@ import {
   Query,
   UseGuards,
 } from "@nestjs/common";
+import { IsEnum, IsObject, IsOptional, IsString } from "class-validator";
+import { MessagePriority } from "./message.entity";
 import { ApiBearerAuth, ApiHeader, ApiOperation, ApiResponse, ApiTags } from "@nestjs/swagger";
 import { CurrentTenantId } from "../../common/decorators/current-context.decorator";
 import { TenantMemberGuard } from "../../common/guards";
@@ -23,6 +27,28 @@ import {
 } from "./dto/notification-response.dto";
 import { BulkMessageDto, SendMessageDto } from "./dto/send-message.dto";
 import { MessagingService } from "./messaging.service";
+
+export class UpdateMessageDto {
+  @IsOptional()
+  @IsString()
+  data?: string;
+
+  @IsOptional()
+  @IsString()
+  subject?: string;
+
+  @IsOptional()
+  @IsObject()
+  variables?: Record<string, any>;
+
+  @IsOptional()
+  @IsEnum(MessagePriority)
+  priority?: MessagePriority;
+
+  @IsOptional()
+  @IsString()
+  scheduledAt?: string;
+}
 
 @ApiTags("messaging")
 @Controller("messaging")
@@ -50,6 +76,7 @@ export class MessagingController {
   async sendMessage(
     @Body() sendMessageDto: SendMessageDto,
     @Req() req: { apiKey?: { tenantId?: string; projectId?: string } },
+    @Headers("x-idempotency-key") idempotencyKey?: string,
   ) {
     const tenantId = req.apiKey?.tenantId;
     const projectId = req.apiKey?.projectId;
@@ -63,6 +90,7 @@ export class MessagingController {
         metadata: { ...sendMessageDto.metadata, projectId },
       },
       tenantId,
+      idempotencyKey,
     );
   }
 
@@ -212,5 +240,43 @@ export class MessagingController {
   })
   async cancelMessage(@Param("id") messageId: string, @CurrentTenantId() tenantId?: string) {
     return this.messagingService.cancelMessage(messageId, tenantId);
+  }
+
+  @Patch(":id")
+  @UseGuards(AuthGuard, TenantMemberGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: "Edit a scheduled message (title/body/data/priority/send time)" })
+  @ApiResponse({
+    status: 200,
+    description: "Scheduled message updated successfully",
+  })
+  @ApiResponse({
+    status: 400,
+    description: "Bad Request - Message already started or cannot be edited",
+  })
+  @ApiResponse({
+    status: 401,
+    description: "Unauthorized",
+  })
+  @ApiResponse({
+    status: 404,
+    description: "Message not found",
+  })
+  async updateScheduledMessage(
+    @Param("id") messageId: string,
+    @Body() dto: UpdateMessageDto,
+    @CurrentTenantId() tenantId?: string,
+  ) {
+    return this.messagingService.updateScheduledMessage(
+      messageId,
+      {
+        data: dto.data,
+        subject: dto.subject,
+        variables: dto.variables,
+        priority: dto.priority,
+        scheduledAt: dto.scheduledAt ? new Date(dto.scheduledAt) : undefined,
+      },
+      tenantId,
+    );
   }
 }

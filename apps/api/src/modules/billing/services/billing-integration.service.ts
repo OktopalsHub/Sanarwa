@@ -1,7 +1,7 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { TokenManagementService } from "../../token-management/services/token-management.service";
 import { TokenTransactionType } from "../entities/token-balance.entity";
-import { BillingMode, normalizeBillingChannel, resolveTokenCost } from "../constants/token-pricing";
+import { BillingMode, resolveBillingChannel, resolveTokenCost } from "../constants/token-pricing";
 
 @Injectable()
 export class BillingIntegrationService {
@@ -21,7 +21,17 @@ export class BillingIntegrationService {
     reason: string;
     billingMode: BillingMode;
   } {
-    const channel = normalizeBillingChannel(eventType);
+    const resolution = resolveBillingChannel(eventType);
+    if (resolution.kind === "unrecognized") {
+      return {
+        charged: false,
+        amount: 0,
+        currency: "tokens",
+        billingMode,
+        reason: `Unrecognized billing channel: ${eventType}`,
+      };
+    }
+    const channel = resolution.channel;
     const units =
       channel === "voice"
         ? Math.ceil(Number(metadata?.durationMinutes ?? metadata?.voiceMinutes ?? eventCount) || 1)

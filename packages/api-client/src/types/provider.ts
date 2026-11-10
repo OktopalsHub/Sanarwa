@@ -1,6 +1,3 @@
-// Provider management types
-
-// Enums matching backend
 export enum ProviderType {
   EMAIL = "email",
   SMS = "sms",
@@ -55,14 +52,13 @@ export enum WhatsAppProviderType {
   MESSAGEBIRD_WHATSAPP = "messagebird_whatsapp",
 }
 
-// Core provider interface
 export interface Provider {
   id: string;
   tenantId: string;
   name: string;
   description?: string;
   type: ProviderType;
-  subtype: string; // EmailProviderType | SmsProviderType | etc.
+  subtype: string;
   status: ProviderStatus;
   priority: number;
   isDefault: boolean;
@@ -78,13 +74,10 @@ export interface Provider {
   updatedAt: Date;
   createdBy: string;
 
-  // Relationships
-  tenant?: any; // Will be typed in tenant.ts
+  tenant?: any;
 }
 
-// Provider configuration base interface
 export interface ProviderConfig {
-  // Common configuration
   timeout?: number;
   retryAttempts?: number;
   retryDelay?: number;
@@ -94,7 +87,6 @@ export interface ProviderConfig {
     requestsPerHour?: number;
   };
 
-  // Provider-specific configuration (discriminated union)
   credentials:
     | EmailProviderConfig
     | SmsProviderConfig
@@ -103,7 +95,6 @@ export interface ProviderConfig {
     | WebhookProviderConfig;
 }
 
-// Email provider configurations
 export interface EmailProviderConfig {
   type: EmailProviderType;
   config: AwsSesConfig | SendGridConfig | MailgunConfig | PostmarkConfig | SmtpConfig;
@@ -152,7 +143,6 @@ export interface SmtpConfig {
   fromName?: string;
 }
 
-// SMS provider configurations
 export interface SmsProviderConfig {
   type: SmsProviderType;
   config: TwilioSmsConfig | AwsSnsConfig | TermiiConfig | NexmoConfig | MessageBirdSmsConfig;
@@ -190,10 +180,9 @@ export interface MessageBirdSmsConfig {
   originator: string;
 }
 
-// Push notification provider configurations
 export interface PushProviderConfig {
   type: PushProviderType;
-  config: FirebaseConfig | AwsPinpointConfig | ApnsConfig | FcmConfig | OneSignalConfig;
+  config: FirebaseConfig | AwsPinpointConfig | ApnsConfig | OneSignalConfig;
 }
 
 export interface FirebaseConfig {
@@ -218,17 +207,11 @@ export interface ApnsConfig {
   production: boolean;
 }
 
-export interface FcmConfig {
-  serverKey: string;
-  senderId: string;
-}
-
 export interface OneSignalConfig {
   appId: string;
   restApiKey: string;
 }
 
-// WhatsApp provider configurations
 export interface WhatsAppProviderConfig {
   type: WhatsAppProviderType;
   config: WhatsAppBusinessConfig | TwilioWhatsAppConfig | MessageBirdWhatsAppConfig;
@@ -252,7 +235,6 @@ export interface MessageBirdWhatsAppConfig {
   channelId: string;
 }
 
-// Webhook provider configuration
 export interface WebhookProviderConfig {
   type: "webhook";
   config: WebhookConfig;
@@ -277,7 +259,6 @@ export interface WebhookConfig {
   };
 }
 
-// Provider health and monitoring
 export interface ProviderHealthCheck {
   id: string;
   providerId: string;
@@ -318,24 +299,22 @@ export interface ProviderTimeSeriesPoint {
   averageResponseTime: number;
 }
 
-// Provider failover and priority
 export interface ProviderFailoverConfig {
   tenantId: string;
   channel: ProviderType;
   providers: ProviderPriority[];
-  failoverThreshold: number; // Failure rate threshold to trigger failover
-  cooldownPeriod: number; // Minutes before retrying failed provider
-  healthCheckInterval: number; // Minutes between health checks
+  failoverThreshold: number;
+  cooldownPeriod: number;
+  healthCheckInterval: number;
 }
 
 export interface ProviderPriority {
   providerId: string;
   priority: number;
   isActive: boolean;
-  weight?: number; // For load balancing
+  weight?: number;
 }
 
-// Request/Response DTOs
 export interface CreateProviderRequest {
   name: string;
   description?: string;
@@ -363,33 +342,28 @@ export interface TestProviderRequest {
 }
 
 export interface ProviderTestData {
-  // Email test data
   email?: {
     to: string;
     subject: string;
     body: string;
   };
 
-  // SMS test data
   sms?: {
     to: string;
     message: string;
   };
 
-  // Push test data
   push?: {
     deviceToken: string;
     title: string;
     body: string;
   };
 
-  // WhatsApp test data
   whatsapp?: {
     to: string;
     message: string;
   };
 
-  // Webhook test data
   webhook?: {
     payload: Record<string, any>;
   };
@@ -418,7 +392,6 @@ export interface ProviderQueryParams {
   sortOrder?: "ASC" | "DESC";
 }
 
-// State management
 export interface ProviderState {
   providers: Provider[];
   failoverConfigs: ProviderFailoverConfig[];
@@ -428,7 +401,6 @@ export interface ProviderState {
   error: string | null;
 }
 
-// API response wrappers
 export interface ProviderApiResponse<T = any> {
   data: T;
   success: boolean;
@@ -442,7 +414,6 @@ export interface ValidationError {
   code: string;
 }
 
-// Events
 export interface ProviderCreatedEvent {
   providerId: string;
   tenantId: string;

@@ -1,16 +1,11 @@
 import { IPushProvider } from "../../../providers/push/push-provider.interface";
-import {
-  Channel,
-  DeliveryStatus,
-  ProviderConfig,
-  ProviderHealth,
-  ProviderResponse,
-} from "../../../providers/types";
+import { DeliveryStatus, ProviderConfig, ProviderResponse } from "../../../providers/types";
+import { NotificationChannel } from "../../../common/enums/notification-channel.enum";
 
 export class MockPushProvider implements IPushProvider {
   id = "mock-push-provider";
   name = "Mock Push Provider";
-  channel = Channel.PUSH;
+  channel = NotificationChannel.PUSH;
   config: ProviderConfig;
   isInitialized = true;
 
@@ -47,13 +42,6 @@ export class MockPushProvider implements IPushProvider {
     return config && config.credentials && typeof config.credentials === "object";
   }
 
-  async checkHealth(): Promise<{ status: ProviderHealth; lastChecked: Date }> {
-    return {
-      status: this.shouldFail ? ProviderHealth.UNHEALTHY : ProviderHealth.HEALTHY,
-      lastChecked: new Date(),
-    };
-  }
-
   async registerDevice(
     registration: import("../../../providers/push/push-provider.interface").DeviceRegistration,
   ): Promise<void> {
@@ -61,7 +49,6 @@ export class MockPushProvider implements IPushProvider {
   }
 
   async unregisterDevice(deviceToken: string): Promise<void> {
-    // Remove all registrations for this device token
     for (const registration of this.registeredDevices) {
       if (registration.includes(deviceToken)) {
         this.registeredDevices.delete(registration);
@@ -70,7 +57,6 @@ export class MockPushProvider implements IPushProvider {
   }
 
   validateDeviceToken(deviceToken: string): boolean {
-    // Simple validation - just check if it's a non-empty string
     return typeof deviceToken === "string" && deviceToken.length > 0;
   }
 
@@ -107,7 +93,6 @@ export class MockPushProvider implements IPushProvider {
     this.registeredDevices.clear();
   }
 
-  // Test helper methods
   setShouldFail(shouldFail: boolean, message?: string): void {
     this.shouldFail = shouldFail;
     if (message) {

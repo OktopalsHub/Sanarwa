@@ -1,4 +1,4 @@
-import { tenantApi } from "@/lib/api/tenant";
+import { tenantApi } from "@sanarwa/api-client";
 import { getTenantPathSegment } from "@/lib/tenant-path";
 import { getApiErrorMessage } from "@/lib/utils/api-error-message";
 import { toast } from "@/lib/utils/toast";

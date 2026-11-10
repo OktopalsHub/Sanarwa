@@ -3,7 +3,7 @@ import { ConfigService } from "@nestjs/config";
 import {
   BillingMode,
   channelTokenCosts,
-  normalizeBillingChannel,
+  resolveBillingChannel,
   resolveTokenCost,
 } from "../../billing/constants/token-pricing";
 
@@ -28,9 +28,6 @@ export class BillingService {
 
   constructor(private readonly configService: ConfigService) {}
 
-  /**
-   * Calculate token cost for a notification event
-   */
   async calculateEventBilling(
     tenantId: string,
     eventType: string,
@@ -39,7 +36,16 @@ export class BillingService {
     billingMode: BillingMode = "managed",
   ): Promise<BillingResult> {
     try {
-      const channel = normalizeBillingChannel(eventType);
+      const resolution = resolveBillingChannel(eventType);
+      if (resolution.kind === "unrecognized") {
+        return {
+          charged: false,
+          amount: 0,
+          currency: "tokens",
+          reason: `Unrecognized billing channel: ${eventType}`,
+        };
+      }
+      const channel = resolution.channel;
       const units =
         channel === "voice"
           ? Math.ceil(
@@ -76,9 +82,6 @@ export class BillingService {
     return channelTokenCosts(mode);
   }
 
-  /**
-   * Calculate total cost for multiple events
-   */
   async calculateTotalCost(
     events: Array<{ type: string; count: number }>,
     billingMode: BillingMode = "managed",
@@ -86,41 +89,21 @@ export class BillingService {
     let totalCost = 0;
 
     for (const event of events) {
-      const channel = normalizeBillingChannel(event.type);
-      totalCost += resolveTokenCost(channel, billingMode, event.count);
+      const resolution = resolveBillingChannel(event.type);
+      if (resolution.kind === "unrecognized") {
+        throw new Error(`Unrecognized billing channel: ${event.type}`);
+      }
+      totalCost += resolveTokenCost(resolution.channel, billingMode, event.count);
     }
 
     return totalCost;
   }
 
-  /**
-   * Deduct voice usage from tenant quota
-   */
   async deductVoiceUsage(tenantId: string, usage: VoiceUsageData): Promise<void> {
     try {
       this.logger.log(
         `Deducting voice usage for tenant ${tenantId}: ${usage.voiceMinutes} minutes, ${usage.ttsCharacters} TTS chars`,
       );
-
-      // Here you would integrate with your actual billing/quota system
-      // For example:
-      // - Update tenant's remaining voice minutes
-      // - Log usage for billing purposes
-      // - Check if tenant has exceeded quota
-      // - Send alerts if quota is low
-
-      // Example implementation (replace with your actual billing logic):
-      /*
-      await this.quotaService.deductUsage(tenantId, {
-        type: 'voice_minutes',
-        amount: usage.voiceMinutes,
-        metadata: {
-          provider: usage.provider,
-          ttsCharacters: usage.ttsCharacters,
-          timestamp: usage.timestamp,
-        }
-      });
-      */
 
       this.logger.log(`Voice usage deducted successfully for tenant: ${tenantId}`);
     } catch (error) {
@@ -129,19 +112,13 @@ export class BillingService {
     }
   }
 
-  /**
-   * Get voice usage pricing
-   */
   getVoicePricing(): { voicePerMinute: number; ttsPerCharacter: number } {
     return {
-      voicePerMinute: 0.025, // $0.025 per minute (example)
-      ttsPerCharacter: 0.000016, // $16 per 1M characters
+      voicePerMinute: 0.025,
+      ttsPerCharacter: 0.000016,
     };
   }
 
-  /**
-   * Check if billing is enabled
-   */
   isBillingEnabled(): boolean {
     return this.configService.get<boolean>("BILLING_ENABLED", true);
   }

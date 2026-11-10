@@ -1,9 +1,3 @@
-/**
- * Real WhatsApp Message Testing
- * Tests sending actual WhatsApp messages to real phone numbers
- * Tests both BYOP and WABA configurations
- */
-
 import { describe, it, expect, beforeAll, afterAll } from "vitest";
 import {
   createTestSetup,
@@ -69,14 +63,12 @@ describe("📱 Real WhatsApp Message Tests", () => {
           console.log(`❌ Failed to send to ${phoneNumber}:`, response.data);
         }
 
-        // Add delay between messages to avoid rate limiting
         await new Promise((resolve) => setTimeout(resolve, 2000));
       }
 
       const successCount = results.filter((r) => r.success).length;
       console.log(`📊 BYOP Results: ${successCount}/${results.length} messages sent successfully`);
 
-      // Test should pass if at least one message was sent or if we get expected error codes
       results.forEach((result) => {
         expectValidStatusCodes(result.status, [200, 201, 400, 401, 403, 404, 422, 500]);
       });
@@ -85,7 +77,7 @@ describe("📱 Real WhatsApp Message Tests", () => {
     });
 
     it("should send WhatsApp template message via BYOP", async () => {
-      const phoneNumber = testPhoneNumbers[0]; // Test with first number
+      const phoneNumber = testPhoneNumbers[0];
 
       console.log(`📋 Sending BYOP template message to ${phoneNumber}...`);
 
@@ -167,14 +159,12 @@ describe("📱 Real WhatsApp Message Tests", () => {
           console.log(`❌ Failed to send to ${phoneNumber}:`, response.data);
         }
 
-        // Add delay between messages to avoid rate limiting
         await new Promise((resolve) => setTimeout(resolve, 2000));
       }
 
       const successCount = results.filter((r) => r.success).length;
       console.log(`📊 WABA Results: ${successCount}/${results.length} messages sent successfully`);
 
-      // Test should pass if at least one message was sent or if we get expected error codes
       results.forEach((result) => {
         expectValidStatusCodes(result.status, [200, 201, 400, 401, 403, 404, 422, 500]);
       });
@@ -183,7 +173,7 @@ describe("📱 Real WhatsApp Message Tests", () => {
     });
 
     it("should send WABA template message with hello_world template", async () => {
-      const phoneNumber = testPhoneNumbers[0]; // Test with first number
+      const phoneNumber = testPhoneNumbers[0];
 
       console.log(`📋 Sending WABA hello_world template to ${phoneNumber}...`);
 
@@ -222,7 +212,6 @@ describe("📱 Real WhatsApp Message Tests", () => {
       const phoneNumber = testPhoneNumbers[0];
       const results = { byop: null, waba: null };
 
-      // Test BYOP performance
       console.log("📊 Testing BYOP performance...");
       const byopStart = Date.now();
       const byopResponse = await testSetup.api.post(
@@ -245,10 +234,8 @@ describe("📱 Real WhatsApp Message Tests", () => {
         success: [200, 201].includes(byopResponse.status),
       };
 
-      // Wait before next test
       await new Promise((resolve) => setTimeout(resolve, 3000));
 
-      // Test WABA performance
       console.log("📊 Testing WABA performance...");
       const wabaStart = Date.now();
       const wabaResponse = await testSetup.api.post(
@@ -271,7 +258,6 @@ describe("📱 Real WhatsApp Message Tests", () => {
         success: [200, 201].includes(wabaResponse.status),
       };
 
-      // Log results
       console.log("📊 Performance Comparison Results:");
       console.log(`   BYOP: ${results.byop.responseTime}ms (Status: ${results.byop.status})`);
       console.log(`   WABA: ${results.waba.responseTime}ms (Status: ${results.waba.status})`);

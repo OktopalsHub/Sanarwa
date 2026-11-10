@@ -2,22 +2,13 @@
 
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { providerApi } from "@/lib/api/provider";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import {
-  Cog6ToothIcon,
-  ChartBarIcon,
-  SignalIcon,
-  ExclamationCircleIcon,
-  BeakerIcon,
-} from "@heroicons/react/24/outline";
+import { providerApi } from "@sanarwa/api-client";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@sanarwa/ui/card";
+import { Badge } from "@sanarwa/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@sanarwa/ui/tabs";
+import { Cog6ToothIcon, ChartBarIcon, ExclamationCircleIcon } from "@heroicons/react/24/outline";
 import { ProviderConfiguration } from "./provider-configuration";
 import { ProviderMetrics } from "./provider-metrics";
-import { ProviderHealthCheck } from "./provider-health-check";
-import { toast } from "sonner";
 
 interface ProviderDetailsProps {
   providerId: string;
@@ -25,7 +16,6 @@ interface ProviderDetailsProps {
 
 export function ProviderDetails({ providerId }: ProviderDetailsProps) {
   const [activeTab, setActiveTab] = useState("configuration");
-  const [isTesting, setIsTesting] = useState(false);
 
   const {
     data: provider,
@@ -48,37 +38,6 @@ export function ProviderDetails({ providerId }: ProviderDetailsProps) {
         return "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300";
       default:
         return "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300";
-    }
-  };
-
-  const getHealthColor = (health: string) => {
-    switch (health) {
-      case "healthy":
-        return "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300";
-      case "degraded":
-        return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300";
-      case "unhealthy":
-        return "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300";
-      default:
-        return "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300";
-    }
-  };
-
-  const handleTestProvider = async () => {
-    if (!provider) return;
-
-    setIsTesting(true);
-    try {
-      const result = await providerApi.testProvider(providerId);
-      if (result.success) {
-        toast.success("Provider test successful");
-      } else {
-        toast.error(`Provider test failed: ${result.message}`);
-      }
-    } catch (error: any) {
-      toast.error(`Provider test failed: ${error.message}`);
-    } finally {
-      setIsTesting(false);
     }
   };
 
@@ -113,7 +72,6 @@ export function ProviderDetails({ providerId }: ProviderDetailsProps) {
 
   return (
     <div className="space-y-6">
-      {/* Provider Header */}
       <Card>
         <CardHeader>
           <div className="flex items-start justify-between">
@@ -121,21 +79,12 @@ export function ProviderDetails({ providerId }: ProviderDetailsProps) {
               <div className="flex items-center gap-3">
                 <CardTitle className="text-2xl">{provider.name}</CardTitle>
                 <Badge className={getStatusColor(provider.status)}>{provider.status}</Badge>
-                <Badge className={getHealthColor(provider.healthStatus)}>
-                  {provider.healthStatus}
-                </Badge>
                 {provider.isDefault && <Badge variant="outline">Default</Badge>}
               </div>
               <CardDescription className="text-base">
                 {provider.type} • {provider.subtype}
                 {provider.description && ` • ${provider.description}`}
               </CardDescription>
-            </div>
-            <div className="flex gap-2">
-              <Button variant="outline" size="sm" onClick={handleTestProvider} disabled={isTesting}>
-                <BeakerIcon className="h-4 w-4 mr-2" />
-                {isTesting ? "Testing..." : "Test"}
-              </Button>
             </div>
           </div>
         </CardHeader>
@@ -163,9 +112,8 @@ export function ProviderDetails({ providerId }: ProviderDetailsProps) {
         </CardContent>
       </Card>
 
-      {/* Provider Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="configuration">
             <Cog6ToothIcon className="h-4 w-4 mr-2" />
             Configuration
@@ -173,10 +121,6 @@ export function ProviderDetails({ providerId }: ProviderDetailsProps) {
           <TabsTrigger value="metrics">
             <ChartBarIcon className="h-4 w-4 mr-2" />
             Metrics
-          </TabsTrigger>
-          <TabsTrigger value="health">
-            <SignalIcon className="h-4 w-4 mr-2" />
-            Health
           </TabsTrigger>
         </TabsList>
 
@@ -186,10 +130,6 @@ export function ProviderDetails({ providerId }: ProviderDetailsProps) {
 
         <TabsContent value="metrics">
           <ProviderMetrics providerId={providerId} />
-        </TabsContent>
-
-        <TabsContent value="health">
-          <ProviderHealthCheck providerId={providerId} />
         </TabsContent>
       </Tabs>
     </div>

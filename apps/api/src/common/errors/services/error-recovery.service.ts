@@ -8,9 +8,6 @@ export class ErrorRecoveryService {
 
   constructor(private readonly circuitBreakerService: CircuitBreakerService) {}
 
-  /**
-   * Attempt to recover from an error using various strategies
-   */
   async attemptRecovery<T>(
     error: ClassifiedError,
     operation: () => Promise<T>,
@@ -18,7 +15,6 @@ export class ErrorRecoveryService {
   ): Promise<T> {
     this.logger.debug(`Attempting recovery for error: ${error.code}`);
 
-    // Use default strategies if none provided
     if (strategies.length === 0) {
       strategies = this.getDefaultStrategies(error);
     }
@@ -32,17 +28,13 @@ export class ErrorRecoveryService {
         return result;
       } catch (strategyError) {
         this.logger.warn(`Recovery strategy ${strategy.type} failed:`, strategyError.message);
-        lastError = strategyError;
+        lastError = strategyError as typeof lastError;
       }
     }
 
-    // If all recovery strategies failed, throw the last error
     throw lastError;
   }
 
-  /**
-   * Execute a specific recovery strategy
-   */
   private async executeStrategy<T>(
     strategy: RecoveryStrategy,
     operation: () => Promise<T>,
@@ -62,9 +54,6 @@ export class ErrorRecoveryService {
     }
   }
 
-  /**
-   * Execute retry strategy with exponential backoff
-   */
   private async executeRetryStrategy<T>(
     strategy: RecoveryStrategy,
     operation: () => Promise<T>,
@@ -94,7 +83,6 @@ export class ErrorRecoveryService {
           throw retryError;
         }
 
-        // Check if error is retryable
         if (strategy.condition && !strategy.condition(error)) {
           throw retryError;
         }
@@ -106,9 +94,6 @@ export class ErrorRecoveryService {
     throw error;
   }
 
-  /**
-   * Execute fallback strategy
-   */
   private async executeFallbackStrategy<T>(
     strategy: RecoveryStrategy,
     operation: () => Promise<T>,
@@ -127,9 +112,6 @@ export class ErrorRecoveryService {
     }
   }
 
-  /**
-   * Execute circuit breaker strategy
-   */
   private async executeCircuitBreakerStrategy<T>(
     strategy: RecoveryStrategy,
     operation: () => Promise<T>,
@@ -140,9 +122,6 @@ export class ErrorRecoveryService {
     return this.circuitBreakerService.execute(serviceName, operation, error.context);
   }
 
-  /**
-   * Execute graceful degradation strategy
-   */
   private async executeGracefulDegradationStrategy<T>(
     strategy: RecoveryStrategy,
     operation: () => Promise<T>,
@@ -153,24 +132,18 @@ export class ErrorRecoveryService {
     } catch (operationError) {
       this.logger.warn("Operation failed, attempting graceful degradation");
 
-      // Return a degraded but functional response
       if (strategy.fallbackValue !== undefined) {
         this.logger.log("Using degraded fallback response");
         return strategy.fallbackValue;
       }
 
-      // If no fallback value, try to provide a minimal response
       return this.createDegradedResponse<T>(error);
     }
   }
 
-  /**
-   * Get default recovery strategies based on error type
-   */
   private getDefaultStrategies(error: ClassifiedError): RecoveryStrategy[] {
     const strategies: RecoveryStrategy[] = [];
 
-    // Add retry strategy for retryable errors
     if (error.retryable) {
       strategies.push({
         type: "retry",
@@ -182,14 +155,12 @@ export class ErrorRecoveryService {
       });
     }
 
-    // Add circuit breaker for provider errors
     if (error.category === "provider") {
       strategies.push({
         type: "circuit_breaker",
       });
     }
 
-    // Add graceful degradation for recoverable errors
     if (error.recoverable) {
       strategies.push({
         type: "graceful_degradation",
@@ -200,12 +171,7 @@ export class ErrorRecoveryService {
     return strategies;
   }
 
-  /**
-   * Create a degraded response for graceful degradation
-   */
   private createDegradedResponse<T>(error: ClassifiedError): T {
-    // This is a generic degraded response
-    // In practice, this should be customized based on the operation type
     const degradedResponse = {
       success: false,
       degraded: true,
@@ -220,38 +186,25 @@ export class ErrorRecoveryService {
     return degradedResponse as T;
   }
 
-  /**
-   * Sleep utility for retry delays
-   */
   private sleep(ms: number): Promise<void> {
     return new Promise((resolve) => setTimeout(resolve, ms));
   }
 
-  /**
-   * Check if an error should trigger recovery
-   */
   shouldAttemptRecovery(error: ClassifiedError): boolean {
-    // Don't attempt recovery for validation errors
     if (error.category === "validation") {
       return false;
     }
 
-    // Don't attempt recovery for authentication/authorization errors
     if (error.category === "authentication" || error.category === "authorization") {
       return false;
     }
 
-    // Attempt recovery for retryable or recoverable errors
     return error.retryable || error.recoverable;
   }
 
-  /**
-   * Get recovery metrics for monitoring
-   */
-  getRecoveryMetrics(): Record<string, any> {
+  async getRecoveryMetrics(): Promise<Record<string, any>> {
     return {
-      circuitBreakerMetrics: this.circuitBreakerService.getMetrics(),
-      // Add more recovery metrics as needed
+      circuitBreakerMetrics: await this.circuitBreakerService.getMetrics(),
     };
   }
 }

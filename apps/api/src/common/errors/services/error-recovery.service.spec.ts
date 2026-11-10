@@ -8,6 +8,8 @@ import {
 } from "../types/error.types";
 import { CircuitBreakerService } from "./circuit-breaker.service";
 import { ErrorRecoveryService } from "./error-recovery.service";
+import { getRedisConnectionToken } from "@nestjs-modules/ioredis";
+import Redis from "ioredis-mock";
 
 describe("ErrorRecoveryService", () => {
   let service: ErrorRecoveryService;
@@ -30,7 +32,14 @@ describe("ErrorRecoveryService", () => {
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      providers: [ErrorRecoveryService, CircuitBreakerService],
+      providers: [
+        ErrorRecoveryService,
+        CircuitBreakerService,
+        {
+          provide: getRedisConnectionToken(),
+          useValue: new Redis(),
+        },
+      ],
     }).compile();
 
     service = module.get<ErrorRecoveryService>(ErrorRecoveryService);
@@ -48,7 +57,7 @@ describe("ErrorRecoveryService", () => {
         {
           type: "retry",
           maxAttempts: 2,
-          initialDelay: 10, // Short delay for testing
+          initialDelay: 10,
         },
       ];
 
@@ -165,7 +174,6 @@ describe("ErrorRecoveryService", () => {
 
       expect(result).toBe("success");
       expect(mockOperation).toHaveBeenCalledTimes(3);
-      // Should have some delay due to backoff (at least 10ms + 20ms)
       expect(endTime - startTime).toBeGreaterThan(25);
     });
 
@@ -181,7 +189,7 @@ describe("ErrorRecoveryService", () => {
           maxAttempts: 2,
           initialDelay: 100,
           backoffMultiplier: 10,
-          maxDelay: 50, // Lower than calculated delay
+          maxDelay: 50,
         },
       ];
 
@@ -190,7 +198,6 @@ describe("ErrorRecoveryService", () => {
       const endTime = Date.now();
 
       expect(result).toBe("success");
-      // Should not exceed maxDelay significantly (allowing some buffer for test execution)
       expect(endTime - startTime).toBeLessThan(200);
     });
 
@@ -277,8 +284,8 @@ describe("ErrorRecoveryService", () => {
   });
 
   describe("getRecoveryMetrics", () => {
-    it("should return recovery metrics", () => {
-      const metrics = service.getRecoveryMetrics();
+    it("should return recovery metrics", async () => {
+      const metrics = await service.getRecoveryMetrics();
 
       expect(metrics).toHaveProperty("circuitBreakerMetrics");
       expect(typeof metrics.circuitBreakerMetrics).toBe("object");

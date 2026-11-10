@@ -1,27 +1,39 @@
-import { InjectQueue, Process, Processor } from "@nestjs/bull";
+import { InjectQueue, OnWorkerEvent, Processor, WorkerHost } from "@nestjs/bullmq";
 import { Injectable, Logger } from "@nestjs/common";
-import { Job, Queue } from "bull";
-import { BaseProviderPayload } from "../../../providers/base/base-provider.interface";
-import { ProviderService } from "../../provider/provider.service";
+import { Job, Queue, UnrecoverableError } from "bullmq";
 import { TemplateService } from "../../template/template.service";
 import {
   MessageDeliveryStatus as DeliveryStatus,
   MessageDelivery,
 } from "../message-delivery.entity";
 import { Message, MessageStatus, MessagePriority as Priority } from "../message.entity";
-import { NOTIFICATION_DELIVERY_QUEUE, NOTIFICATION_QUEUE } from "./notification-queue.constants";
+import {
+  NOTIFICATION_ADMIN_QUEUE,
+  NOTIFICATION_DELIVERY_QUEUE,
+  NOTIFICATION_QUEUE,
+} from "./notification-queue.constants";
 import {
   AlertJobData,
   DeadLetterJobData,
   DeliveryJobData,
   NotificationJobData,
 } from "./notification-queue.service";
+import { isFinalAttempt } from "./job-attempts";
+import { DeliveryExecutorService } from "../../notifications/engine/delivery-executor.service";
+import { NotificationStorageService } from "../../notifications/storage/notification-storage.service";
+import { DeliveryEventType } from "../enums/delivery-event-type.enum";
+import { DeliveryEventService } from "../events/delivery-event.service";
+import { ConsentService } from "../../preferences/consent.service";
+import { ProjectQuotaService } from "../../quotas/project-quota.service";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
+import { ChatProvider } from "../../../common/enums/chat-provider.enum";
+import { NotificationChannel } from "../../../common/enums/notification-channel.enum";
+import { resolveAddress } from "../resolve-address";
 
 @Processor(NOTIFICATION_QUEUE)
 @Injectable()
-export class NotificationProcessor {
+export class NotificationProcessor extends WorkerHost {
   private readonly logger = new Logger(NotificationProcessor.name);
 
   constructor(
@@ -29,48 +41,91 @@ export class NotificationProcessor {
     private readonly messageRepository: Repository<Message>,
     @InjectRepository(MessageDelivery)
     private readonly deliveryRepository: Repository<MessageDelivery>,
-    private readonly providerService: ProviderService,
     private readonly templateService: TemplateService,
+    private readonly deliveryExecutor: DeliveryExecutorService,
+    private readonly consentService: ConsentService,
+    private readonly deliveryEventService: DeliveryEventService,
+    private readonly projectQuota: ProjectQuotaService,
+    private readonly storageService: NotificationStorageService,
     @InjectQueue(NOTIFICATION_QUEUE)
     private readonly notificationQueue: Queue<
       NotificationJobData | DeadLetterJobData | AlertJobData
     >,
     @InjectQueue(NOTIFICATION_DELIVERY_QUEUE)
     private readonly deliveryQueue: Queue<DeliveryJobData>,
-  ) {}
+    @InjectQueue(NOTIFICATION_ADMIN_QUEUE)
+    private readonly adminQueue: Queue<DeadLetterJobData | AlertJobData>,
+  ) {
+    super();
+  }
 
-  /**
-   * Process notification job
-   */
-  @Process("process-notification")
+  async process(
+    job: Job<NotificationJobData | DeadLetterJobData | AlertJobData>,
+    token?: string,
+  ): Promise<void> {
+    switch (job.name) {
+      case "process-notification":
+        return this.processNotification(job as Job<NotificationJobData>);
+      case "handle-failed-notification":
+        return this.handleFailedNotification(job as Job<NotificationJobData>);
+      case "retry-notification":
+        return this.retryNotification(job as Job<NotificationJobData & { originalError: string }>);
+      default:
+        throw new Error(`No handler for job "${job.name}" on ${NOTIFICATION_QUEUE}`);
+    }
+  }
+
+  @OnWorkerEvent("failed")
+  async onNotificationFailed(job: Job<NotificationJobData>): Promise<void> {
+    if (job.name !== "process-notification" || !isFinalAttempt(job)) {
+      return;
+    }
+
+    try {
+      await this.notificationQueue.add(
+        "handle-failed-notification",
+        { ...job.data, retryCount: job.attemptsMade },
+        {
+          priority: 10,
+          attempts: 3,
+          backoff: { type: "exponential", delay: 2000 },
+        },
+      );
+
+      this.logger.error(
+        `Notification ${job.data.notificationId} exhausted its attempts, queued failure handling`,
+      );
+    } catch (error) {
+      this.logger.error(
+        `Notification ${job.data.notificationId} failed terminally and could not be queued for handling: ${error.message}`,
+      );
+    }
+  }
+
   async processNotification(job: Job<NotificationJobData>): Promise<void> {
     const { notificationId, tenantId, retryCount = 0 } = job.data;
 
     this.logger.log(`Processing notification ${notificationId} (attempt ${retryCount + 1})`);
 
     try {
-      // Get message with deliveries
       const message = await this.messageRepository.findOne({
         where: { id: notificationId, tenantId },
-        relations: ["deliveries"],
+        relations: { deliveries: true },
       });
 
       if (!message) {
         throw new Error(`Message ${notificationId} not found`);
       }
 
-      // Update status to processing
       message.status = MessageStatus.PROCESSING;
       await this.messageRepository.save(message);
 
-      // Create delivery records if they don't exist
       if (!message.deliveries || message.deliveries.length === 0) {
         await this.createDeliveryRecords(message);
 
-        // Reload message with deliveries
         const updatedMessage = await this.messageRepository.findOne({
           where: { id: notificationId },
-          relations: ["deliveries"],
+          relations: { deliveries: true },
         });
 
         if (updatedMessage) {
@@ -78,26 +133,25 @@ export class NotificationProcessor {
         }
       }
 
-      // Render template if needed
-      let renderedContent = message.content;
-      let renderedSubject = message.subject;
+      const payload = job.data.payload;
+
+      let renderedContent = payload?.data ?? message.data;
+      let renderedSubject = payload?.subject ?? message.subject;
 
       if (message.templateId) {
         try {
           const rendered = await this.templateService.render({
             templateId: message.templateId,
             tenantId: message.tenantId,
-            data: message.data,
+            variables: message.variables,
           });
-          renderedContent = rendered.content;
+          renderedContent = rendered.data;
           renderedSubject = rendered.subject;
         } catch (error) {
           this.logger.warn(`Failed to render template ${message.templateId}: ${error.message}`);
-          // Continue with original content if template rendering fails
         }
       }
 
-      // Queue delivery jobs for each delivery
       const deliveryJobs = message.deliveries.map((delivery) => ({
         notificationId: message.id,
         deliveryId: delivery.id,
@@ -106,14 +160,17 @@ export class NotificationProcessor {
         providerId: delivery.providerId || "auto-select",
         recipient: delivery.recipient,
         templateData: {
-          ...message.data,
+          variables: { ...(payload?.variables ?? message.variables) },
           subject: renderedSubject,
-          content: renderedContent,
+          data: renderedContent,
+          templateId: payload?.templateId ?? message.templateId,
+          brandId: payload?.brandId,
+          storagePolicy: payload?.storagePolicy ?? message.metadata?.["storagePolicy"],
           metadata: message.metadata,
+          chatProvider: payload?.chatProvider ?? message.metadata?.["chatProvider"],
         },
       }));
 
-      // Add bulk delivery jobs
       const jobs = deliveryJobs.map((jobData, index) => ({
         name: "process-delivery",
         data: { ...jobData, retryCount: 0 },
@@ -124,41 +181,42 @@ export class NotificationProcessor {
             type: "exponential",
             delay: 1000,
           },
-          delay: index * 20, // Minimal 250 plan (was 100)
+          delay: index * 20,
         },
       }));
 
+      if (jobs.length === 0) {
+        await this.messageRepository.update(notificationId, {
+          status: MessageStatus.FAILED,
+          errorMessage: "No recipient address available for any channel",
+        });
+        this.logger.error(`Notification ${notificationId} has no deliverable recipient`);
+        return;
+      }
+
       await this.deliveryQueue.addBulk(jobs);
 
-      // Update message status
-      message.status = MessageStatus.SENT;
-      await this.messageRepository.save(message);
-
-      this.logger.log(`Successfully processed notification ${notificationId}`);
+      this.logger.log(
+        `Notification ${notificationId} handed ${jobs.length} deliveries to the queue`,
+      );
     } catch (error) {
       this.logger.error(`Failed to process notification ${notificationId}: ${error.message}`);
 
-      // Update message status to failed
       await this.messageRepository.update(notificationId, {
         status: MessageStatus.FAILED,
         errorMessage: error.message,
       });
 
-      throw error; // Re-throw to trigger Bull's retry mechanism
+      throw error;
     }
   }
 
-  /**
-   * Process delivery job - minimal 250 plan: 5 concurrency for 4GB shared box
-   */
-  @Process({ name: "process-delivery", concurrency: 5 })
   async processDelivery(job: Job<DeliveryJobData>): Promise<void> {
     const {
       notificationId,
       deliveryId,
       tenantId,
       channel,
-      providerId,
       recipient,
       templateData,
       retryCount = 0,
@@ -168,77 +226,272 @@ export class NotificationProcessor {
       `Processing delivery ${deliveryId} for notification ${notificationId} (${channel} to ${recipient}, attempt ${retryCount + 1})`,
     );
 
+    let delivery: MessageDelivery | undefined;
+
     try {
-      // Get delivery record
-      const delivery = await this.deliveryRepository.findOne({
-        where: { id: deliveryId, messageId: notificationId },
-      });
+      delivery =
+        (await this.deliveryRepository.findOne({
+          where: { id: deliveryId, messageId: notificationId },
+        })) ?? undefined;
 
       if (!delivery) {
         throw new Error(`Delivery ${deliveryId} not found`);
       }
 
-      // Update delivery status to processing
-      delivery.status = DeliveryStatus.SENT;
-      await this.deliveryRepository.save(delivery);
+      if (delivery.status === DeliveryStatus.DELIVERED || delivery.status === DeliveryStatus.SENT) {
+        // At-least-once: a stalled job the queue re-runs may already be done.
+        // Acknowledge it instead of sending a duplicate to the provider.
+        this.logger.log(
+          `Delivery ${deliveryId} is already ${delivery.status} — acknowledging duplicate job without re-sending`,
+        );
+        return;
+      }
 
-      // Prepare provider payload
-      const payload: BaseProviderPayload = {
-        recipient,
-        data: {
-          ...templateData,
-          subject: templateData.subject,
-          content: templateData.content,
-        },
-        metadata: {
-          notificationId,
-          deliveryId,
-          tenantId,
-          ...templateData.metadata,
-        },
-      };
-
-      // Send via provider
-      const result = await this.providerService.send(payload, {
+      const verdict = await this.consentService.checkConsent({
         tenantId,
-        channel: channel as any,
-        excludeProviders: providerId === "auto-select" ? [] : undefined,
+        address: recipient,
+        subscriberId: delivery.metadata?.["subscriberId"],
+        channel: delivery.channel,
+        priority: delivery.metadata?.["priority"],
       });
 
-      // Update delivery with provider response
-      delivery.providerId = result.providerId;
-      delivery.providerMessageId = result.response?.messageId;
-      delivery.providerResponse = result.response;
+      if (!verdict.allowed && verdict.reason === "quiet_hours") {
+        this.logger.log(`Deferring delivery ${deliveryId} for ${verdict.delayMs}ms (quiet hours)`);
+
+        await this.deliveryQueue.add("process-delivery", job.data, {
+          delay: verdict.delayMs,
+          attempts: 5,
+          backoff: { type: "exponential", delay: 1000 },
+        });
+
+        return;
+      }
+
+      if (!verdict.allowed) {
+        this.logger.log(`Skipping delivery ${deliveryId}: ${verdict.reason}`);
+
+        await this.deliveryRepository.update(deliveryId, {
+          status: DeliveryStatus.SKIPPED,
+          errorMessage: `Skipped: ${verdict.reason}`,
+        });
+        await this.updateNotificationStatusFromDeliveries(notificationId);
+
+        return;
+      }
+
+      // Burst protection at delivery time (covers scheduled sends). The row
+      // being delivered already counts toward the window, so exclude it.
+      const projectId =
+        typeof delivery.metadata?.["projectId"] === "string"
+          ? (delivery.metadata["projectId"] as string)
+          : typeof templateData.metadata?.["projectId"] === "string"
+            ? (templateData.metadata["projectId"] as string)
+            : undefined;
+      const quota = await this.projectQuota.checkQuota({
+        tenantId,
+        projectId,
+        excludeDeliveryId: deliveryId,
+      });
+      if (!quota.allowed) {
+        this.logger.log(`Skipping delivery ${deliveryId}: project_quota`);
+        await this.deliveryRepository.update(deliveryId, {
+          status: DeliveryStatus.SKIPPED,
+          errorMessage: "Skipped: project_quota",
+        });
+        await this.updateNotificationStatusFromDeliveries(notificationId);
+        return;
+      }
+
+      const outcome = await this.deliveryExecutor.deliver({
+        tenantId,
+        channel: delivery.channel,
+        to: recipient,
+        subject: templateData.subject,
+        data: templateData.data,
+        variables: templateData.variables ?? templateData,
+        templateId: templateData.templateId,
+        templateData,
+        brandId: templateData.brandId,
+        messageId: notificationId,
+        deliveryId,
+        metadata: {
+          ...templateData.metadata,
+          brandId: templateData.brandId,
+          chatProvider: templateData.chatProvider,
+          webhookUrl:
+            templateData.webhookUrl ??
+            templateData.metadata?.webhookUrl ??
+            templateData.variables?.webhookUrl,
+        },
+        webhookUrl:
+          templateData.webhookUrl ??
+          templateData.metadata?.webhookUrl ??
+          templateData.variables?.webhookUrl,
+      });
+
+      await this.deliveryEventService.record({
+        tenantId,
+        channel: delivery.channel,
+        provider: outcome.providerId ?? "unknown",
+        type: outcome.status === "sent" ? DeliveryEventType.SENT : DeliveryEventType.DROPPED,
+        messageId: notificationId,
+        deliveryId,
+        reasonCode: outcome.status === "failed" ? "provider_failed" : undefined,
+        diagnostic:
+          outcome.status === "failed" ? (outcome.error ?? "Provider reported failure") : undefined,
+        providerMessageId: outcome.externalId,
+        occurredAt: new Date(),
+      });
+
+      if (outcome.status === "failed") {
+        const error = outcome.error ?? "Delivery failed";
+        if (outcome.retryable === false) {
+          throw new UnrecoverableError(error);
+        }
+        throw new Error(error);
+      }
+
+      delivery.providerId = outcome.providerId ?? "unknown";
+      delivery.providerMessageId = outcome.externalId;
       delivery.status = DeliveryStatus.DELIVERED;
+      delivery.sentAt = new Date();
       delivery.deliveredAt = new Date();
 
       await this.deliveryRepository.save(delivery);
+      await this.finalizeLog(deliveryId, "delivered", {
+        externalId: outcome.externalId,
+        providerId: outcome.providerId,
+      });
 
-      // Update parent notification status if all deliveries are complete
       await this.updateNotificationStatusFromDeliveries(notificationId);
 
-      this.logger.log(`Successfully processed delivery ${deliveryId} via ${result.providerId}`);
+      this.logger.log(`Successfully processed delivery ${deliveryId} via ${outcome.providerId}`);
     } catch (error) {
       this.logger.error(`Failed to process delivery ${deliveryId}: ${error.message}`);
 
-      // Update delivery status to failed
       await this.deliveryRepository.update(deliveryId, {
         status: DeliveryStatus.FAILED,
         errorMessage: error.message,
         retryCount: retryCount + 1,
       });
+      await this.finalizeLog(deliveryId, "failed", {
+        error: error.message,
+        providerId: delivery?.providerId,
+      });
 
-      // Update parent notification status
       await this.updateNotificationStatusFromDeliveries(notificationId);
 
-      throw error; // Re-throw to trigger Bull's retry mechanism
+      const terminal = isFinalAttempt(job) || error instanceof UnrecoverableError;
+
+      if (terminal && delivery) {
+        try {
+          await this.enqueueChannelFallback(delivery, job.data);
+        } catch (fallbackError) {
+          this.logger.error(
+            `Failed to enqueue channel fallback for delivery ${deliveryId}: ${(fallbackError as Error).message}`,
+          );
+        }
+      }
+
+      throw error;
     }
   }
 
   /**
-   * Handle failed notification jobs
+   * Roll a terminally failed delivery over to the next channel in its
+   * `fallbackChain` (persisted on the delivery metadata at send time). The
+   * rollover delivery carries the remaining chain so each channel rolls over
+   * at most once. Returns silently when there is nothing left to fall back
+   * to — a delivery without a chain behaves exactly as before.
    */
-  @Process("handle-failed-notification")
+  private async enqueueChannelFallback(
+    delivery: MessageDelivery,
+    jobData: DeliveryJobData,
+  ): Promise<void> {
+    const chain = Array.isArray(delivery.metadata?.["fallbackChain"])
+      ? (delivery.metadata["fallbackChain"] as unknown[]).filter(
+          (channel): channel is NotificationChannel =>
+            typeof channel === "string" &&
+            (Object.values(NotificationChannel) as string[]).includes(channel),
+        )
+      : [];
+
+    if (chain.length === 0) {
+      return;
+    }
+
+    const { notificationId, tenantId } = jobData;
+    const message = await this.messageRepository.findOne({ where: { id: notificationId } });
+    const subscriberId =
+      typeof delivery.metadata?.["subscriberId"] === "string"
+        ? delivery.metadata["subscriberId"]
+        : undefined;
+
+    const recipients = message?.recipients ?? [];
+    const recipient =
+      recipients.find((candidate) =>
+        subscriberId ? (candidate.userId ?? candidate.id) === subscriberId : false,
+      ) ?? (recipients.length === 1 ? recipients[0] : undefined);
+
+    if (!message || !recipient) {
+      this.logger.warn(
+        `Delivery ${delivery.id} failed terminally but its fallback recipient could not be resolved — no fallback enqueued`,
+      );
+      return;
+    }
+
+    const chatProvider = message.metadata?.["chatProvider"] as ChatProvider | undefined;
+
+    for (const [index, channel] of chain.entries()) {
+      const address = resolveAddress(recipient, channel, chatProvider);
+
+      if (!address) {
+        continue;
+      }
+
+      const remaining = chain.slice(index + 1);
+      const created = await this.deliveryRepository.save(
+        this.deliveryRepository.create({
+          messageId: notificationId,
+          tenantId,
+          channel,
+          providerId: "pending",
+          recipient: address,
+          status: DeliveryStatus.PENDING,
+          metadata: {
+            ...delivery.metadata,
+            fallbackChain: remaining.length > 0 ? remaining : undefined,
+          },
+        }),
+      );
+
+      await this.deliveryQueue.add(
+        "process-delivery",
+        {
+          notificationId,
+          deliveryId: created.id,
+          tenantId,
+          channel,
+          providerId: "auto-select",
+          recipient: address,
+          templateData: jobData.templateData,
+          retryCount: 0,
+        },
+        { attempts: 5, backoff: { type: "exponential", delay: 1000 } },
+      );
+
+      this.logger.log(
+        `Delivery ${delivery.id} (${delivery.channel}) failed terminally — rolled over to ${channel} (delivery ${created.id})`,
+      );
+      await this.updateNotificationStatusFromDeliveries(notificationId);
+      return;
+    }
+
+    this.logger.warn(
+      `Delivery ${delivery.id} exhausted its fallback chain (${chain.join(", ")}) — no reachable fallback channel`,
+    );
+  }
+
   async handleFailedNotification(job: Job<NotificationJobData>): Promise<void> {
     const { notificationId, tenantId, retryCount = 0 } = job.data;
 
@@ -247,10 +500,9 @@ export class NotificationProcessor {
     );
 
     try {
-      // Get the message for context
       const message = await this.messageRepository.findOne({
         where: { id: notificationId, tenantId },
-        relations: ["deliveries"],
+        relations: { deliveries: true },
       });
 
       if (!message) {
@@ -258,13 +510,11 @@ export class NotificationProcessor {
         return;
       }
 
-      // Update message status to failed
       await this.messageRepository.update(notificationId, {
         status: MessageStatus.FAILED,
         errorMessage: "Failed after all retry attempts",
       });
 
-      // Add to dead letter queue for manual review
       await this.addToDeadLetterQueue({
         type: "notification",
         id: notificationId,
@@ -275,7 +525,7 @@ export class NotificationProcessor {
         retryCount,
         messageData: {
           subject: message.subject,
-          content: message.content,
+          data: message.data,
           channels: message.channels,
           recipients: message.recipients,
           templateId: message.templateId,
@@ -283,7 +533,6 @@ export class NotificationProcessor {
         },
       });
 
-      // Send alert to administrators
       await this.sendFailureAlert({
         type: "notification_failure",
         notificationId,
@@ -305,10 +554,6 @@ export class NotificationProcessor {
     }
   }
 
-  /**
-   * Handle failed delivery jobs
-   */
-  @Process("handle-failed-delivery")
   async handleFailedDelivery(job: Job<DeliveryJobData>): Promise<void> {
     const { deliveryId, notificationId, tenantId, channel, recipient, retryCount = 0 } = job.data;
 
@@ -317,7 +562,6 @@ export class NotificationProcessor {
     );
 
     try {
-      // Get the delivery for context
       const delivery = await this.deliveryRepository.findOne({
         where: { id: deliveryId, messageId: notificationId },
       });
@@ -327,17 +571,14 @@ export class NotificationProcessor {
         return;
       }
 
-      // Update delivery status to failed
       await this.deliveryRepository.update(deliveryId, {
         status: DeliveryStatus.FAILED,
         errorMessage: "Failed after all retry attempts",
         retryCount: retryCount + 1,
       });
 
-      // Update parent notification status
       await this.updateNotificationStatusFromDeliveries(notificationId);
 
-      // Add to dead letter queue for manual review
       await this.addToDeadLetterQueue({
         type: "delivery",
         id: deliveryId,
@@ -355,7 +596,6 @@ export class NotificationProcessor {
         },
       });
 
-      // Send alert to administrators (only for critical channels or high-priority messages)
       const shouldAlert = await this.shouldSendDeliveryAlert(notificationId, channel, retryCount);
       if (shouldAlert) {
         await this.sendFailureAlert({
@@ -382,23 +622,34 @@ export class NotificationProcessor {
     }
   }
 
-  /**
-   * Create delivery records for message
-   */
   private async createDeliveryRecords(message: Message): Promise<void> {
     const deliveries: Partial<MessageDelivery>[] = [];
+    const fallbackAddress =
+      message.recipients.length === 1 && typeof message.metadata?.["to"] === "string"
+        ? message.metadata["to"]
+        : undefined;
 
     for (const channel of message.channels) {
       for (const recipient of message.recipients) {
-        const recipientAddress = this.getRecipientAddress(recipient, channel);
+        const recipientAddress =
+          resolveAddress(
+            recipient,
+            channel,
+            message.metadata?.["chatProvider"] as ChatProvider | undefined,
+          ) ?? fallbackAddress;
 
         if (recipientAddress) {
           deliveries.push({
             messageId: message.id,
+            tenantId: message.tenantId,
             channel,
             providerId: "pending",
             recipient: recipientAddress,
             status: DeliveryStatus.PENDING,
+            metadata: {
+              subscriberId: recipient.userId ?? recipient.id,
+              priority: message.priority,
+            },
           });
         }
       }
@@ -409,29 +660,25 @@ export class NotificationProcessor {
     }
   }
 
-  /**
-   * Get recipient address for channel
-   */
-  private getRecipientAddress(recipient: any, channel: string): string | null {
-    switch (channel) {
-      case "email":
-        return recipient.email || null;
-      case "sms":
-        return recipient.phone || null;
-      case "whatsapp":
-        return recipient.whatsappNumber || null;
-      case "push":
-        return recipient.deviceToken || null;
-      case "in_app":
-        return recipient.userId || null;
-      default:
-        return recipient.id || null;
+  private async finalizeLog(
+    deliveryId: string,
+    status: "sent" | "delivered" | "failed",
+    outcome: { externalId?: string; error?: string; providerId?: string },
+  ): Promise<void> {
+    try {
+      await this.storageService.updateDeliveryOutcome(deliveryId, undefined, {
+        status,
+        externalId: outcome.externalId,
+        error: outcome.error,
+        providerId: outcome.providerId,
+      });
+    } catch (logError) {
+      this.logger.warn(
+        `Failed to finalize delivery log ${deliveryId}: ${(logError as Error).message}`,
+      );
     }
   }
 
-  /**
-   * Update notification status based on delivery statuses
-   */
   private async updateNotificationStatusFromDeliveries(notificationId: string): Promise<void> {
     const deliveries = await this.deliveryRepository.find({
       where: { messageId: notificationId },
@@ -452,7 +699,13 @@ export class NotificationProcessor {
       )
     ) {
       notificationStatus = MessageStatus.SENT;
-    } else if (deliveryStatuses.every((status) => status === DeliveryStatus.FAILED)) {
+    } else if (
+      deliveryStatuses.every((status) =>
+        [DeliveryStatus.FAILED, DeliveryStatus.SKIPPED, DeliveryStatus.UNSUBSCRIBED].includes(
+          status,
+        ),
+      )
+    ) {
       notificationStatus = MessageStatus.FAILED;
     } else {
       notificationStatus = MessageStatus.PROCESSING;
@@ -463,9 +716,6 @@ export class NotificationProcessor {
     });
   }
 
-  /**
-   * Add failed job to dead letter queue for manual review
-   */
   private async addToDeadLetterQueue(data: {
     type: "notification" | "delivery";
     id: string;
@@ -478,8 +728,6 @@ export class NotificationProcessor {
     deliveryData?: any;
   }): Promise<void> {
     try {
-      // Add to dead letter queue with high priority for manual review
-      // Add to dead letter queue
       const jobData = {
         type: "dead_letter",
         originalType: data.type,
@@ -493,7 +741,7 @@ export class NotificationProcessor {
         deliveryData: data.deliveryData,
       };
 
-      await this.notificationQueue.add("handle-dead-letter", jobData, {
+      await this.adminQueue.add("handle-dead-letter", jobData, {
         priority: data.type === "notification" ? 10 : 5,
         attempts: 1,
         removeOnComplete: false,
@@ -508,9 +756,6 @@ export class NotificationProcessor {
     }
   }
 
-  /**
-   * Send failure alert to administrators
-   */
   private async sendFailureAlert(alert: {
     type: string;
     notificationId?: string;
@@ -524,8 +769,6 @@ export class NotificationProcessor {
     metadata?: any;
   }): Promise<void> {
     try {
-      // Send alert via internal notification system
-      // Add alert job
       const alertJobData = {
         type: "system_alert",
         alert: {
@@ -550,7 +793,7 @@ export class NotificationProcessor {
 
       const priority = this.getAlertPriority(alert.severity);
 
-      await this.notificationQueue.add("process-alert", alertJobData, {
+      await this.adminQueue.add("process-alert", alertJobData, {
         priority,
         attempts: 3,
         backoff: {
@@ -567,37 +810,30 @@ export class NotificationProcessor {
     }
   }
 
-  /**
-   * Determine if delivery failure should trigger an alert
-   */
   private async shouldSendDeliveryAlert(
     notificationId: string,
     channel: string,
     retryCount: number,
   ): Promise<boolean> {
     try {
-      // Get message to check priority
       const message = await this.messageRepository.findOne({
         where: { id: notificationId },
-        select: ["priority", "channels"],
+        select: { priority: true, channels: true },
       });
 
       if (!message) {
         return false;
       }
 
-      // Always alert for high/urgent priority messages
       if (message.priority === "high" || message.priority === "urgent") {
         return true;
       }
 
-      // Alert for critical channels (email, sms) after multiple retries
       const criticalChannels = ["email", "sms"];
       if (criticalChannels.includes(channel) && retryCount >= 3) {
         return true;
       }
 
-      // Alert if this is the only channel and it failed
       if (message.channels.length === 1 && retryCount >= 2) {
         return true;
       }
@@ -605,20 +841,14 @@ export class NotificationProcessor {
       return false;
     } catch (error) {
       this.logger.error(`Error determining alert necessity: ${error.message}`);
-      return false; // Default to no alert on error
+      return false;
     }
   }
 
-  /**
-   * Get alert recipients based on tenant and severity
-   */
   private async getAlertRecipients(tenantId: string, severity: string): Promise<string[]> {
     try {
-      // In a real implementation, this would fetch from tenant configuration
-      // For now, return system administrators
       const systemAdmins = process.env.SYSTEM_ADMIN_EMAILS?.split(",") || [];
 
-      // For critical alerts, include more recipients
       if (severity === "critical" || severity === "high") {
         const tenantAdmins = process.env.TENANT_ADMIN_EMAILS?.split(",") || [];
         return [...systemAdmins, ...tenantAdmins];
@@ -631,36 +861,28 @@ export class NotificationProcessor {
     }
   }
 
-  /**
-   * Process retry with exponential backoff
-   */
-  @Process("retry-notification")
   async retryNotification(
     job: Job<NotificationJobData & { originalError: string }>,
   ): Promise<void> {
     const { notificationId, tenantId, retryCount = 0, originalError } = job.data;
     const maxRetries = 5;
-    const baseDelay = 1000; // 1 second
+    const baseDelay = 1000;
 
     this.logger.log(
       `Retrying notification ${notificationId} (attempt ${retryCount + 1}/${maxRetries})`,
     );
 
     if (retryCount >= maxRetries) {
-      // Max retries reached, handle as failed
       await this.handleFailedNotification(job);
       return;
     }
 
     try {
-      // Calculate exponential backoff delay
       const delay = baseDelay * Math.pow(2, retryCount);
 
-      // Add jitter to prevent thundering herd
       const jitter = Math.random() * 1000;
       const totalDelay = delay + jitter;
 
-      // Re-queue with delay
       const jobData: NotificationJobData = {
         notificationId,
         tenantId,
@@ -684,32 +906,24 @@ export class NotificationProcessor {
     }
   }
 
-  /**
-   * Process retry for delivery
-   */
-  @Process("retry-delivery")
   async retryDelivery(job: Job<DeliveryJobData & { originalError: string }>): Promise<void> {
     const { deliveryId, notificationId, tenantId, retryCount = 0, originalError } = job.data;
     const maxRetries = 3;
-    const baseDelay = 2000; // 2 seconds
+    const baseDelay = 2000;
 
     this.logger.log(`Retrying delivery ${deliveryId} (attempt ${retryCount + 1}/${maxRetries})`);
 
     if (retryCount >= maxRetries) {
-      // Max retries reached, handle as failed
       await this.handleFailedDelivery(job);
       return;
     }
 
     try {
-      // Calculate exponential backoff delay
       const delay = baseDelay * Math.pow(2, retryCount);
 
-      // Add jitter to prevent thundering herd
       const jitter = Math.random() * 500;
       const totalDelay = delay + jitter;
 
-      // Re-queue with delay
       const jobData: DeliveryJobData = {
         ...job.data,
         retryCount: retryCount + 1,
@@ -729,39 +943,33 @@ export class NotificationProcessor {
     }
   }
 
-  /**
-   * Convert priority enum to numeric value for Bull queue
-   */
   private getPriorityValue(priority: Priority): number {
     switch (priority) {
       case Priority.URGENT:
-        return 10;
+        return 1;
       case Priority.HIGH:
-        return 5;
+        return 2;
       case Priority.NORMAL:
-        return 1;
+        return 3;
       case Priority.LOW:
-        return -5;
+        return 4;
       default:
-        return 1;
+        return 3;
     }
   }
 
-  /**
-   * Get alert priority value
-   */
   private getAlertPriority(severity: string): number {
     switch (severity) {
       case "critical":
-        return 20;
-      case "high":
-        return 15;
-      case "medium":
-        return 5;
-      case "low":
         return 1;
+      case "high":
+        return 2;
+      case "medium":
+        return 3;
+      case "low":
+        return 4;
       default:
-        return 5;
+        return 3;
     }
   }
 }

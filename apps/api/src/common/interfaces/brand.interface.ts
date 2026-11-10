@@ -8,7 +8,6 @@ export interface WhiteLabelConfig {
     verificationToken?: string;
     lastVerificationAttempt?: Date;
     verificationError?: string;
-    // Cloudflare auto-setup
     cloudflareAutoSetup?: {
       attempted: boolean;
       successful: boolean;
@@ -16,14 +15,12 @@ export interface WhiteLabelConfig {
       error?: string;
       message?: string;
     };
-    // SES-specific fields
     sesVerified?: boolean;
     sesVerifiedAt?: Date;
     sesVerificationToken?: string;
     sesVerificationStatus?: string;
     lastSESVerificationAttempt?: Date;
     sesVerificationError?: string;
-    // Resend-specific fields
     resendVerified?: boolean;
     resendVerifiedAt?: Date;
     resendDomainId?: string;
@@ -39,7 +36,6 @@ export interface WhiteLabelConfig {
     verifiedAt?: Date;
     lastVerificationAttempt?: Date;
     verificationError?: string;
-    // Cloudflare auto-setup for DKIM
     cloudflareAutoSetup?: {
       attempted: boolean;
       successful: boolean;
@@ -48,7 +44,6 @@ export interface WhiteLabelConfig {
       error?: string;
       message?: string;
     };
-    // SES-specific DKIM fields
     sesEnabled?: boolean;
     sesVerified?: boolean;
     sesVerifiedAt?: Date;

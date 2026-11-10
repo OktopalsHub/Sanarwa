@@ -1,7 +1,7 @@
 import { Body, Get, Param, Post, Query, Controller, UseGuards } from "@nestjs/common";
 import { ApiTags, ApiBearerAuth, ApiOperation, ApiParam, ApiResponse } from "@nestjs/swagger";
-import { CurrentTenantId } from "src/common/decorators";
-import { TenantContextGuard } from "src/common/guards";
+import { CurrentTenantId } from "../../common/decorators";
+import { TenantContextGuard } from "../../common/guards";
 import { AuthGuard } from "../auth/guards/jwt-auth.guard";
 import { AnalyticsService } from "./analytics.service";
 import { AdvancedAnalyticsService } from "./advanced-analytics.service";
@@ -25,12 +25,6 @@ export class AnalyticsController {
     private readonly deliveryTrackingService: DeliveryTrackingService,
   ) {}
 
-  /**
-   * Get delivery rate analytics
-   */
-  /**
-   * Get delivery rate analytics
-   */
   @Get("delivery-rates")
   @ApiOperation({ summary: "Get delivery rate analytics" })
   @ApiResponse({ status: 200, description: "Delivery rates retrieved successfully" })
@@ -51,15 +45,27 @@ export class AnalyticsController {
     return this.analyticsService.getDeliveryRateAnalytics(analyticsQuery);
   }
 
-  /**
-   * Get channel analytics
-   */
-  /**
-   * Get channel analytics
-   */
+  @Get("event-rates")
+  @ApiOperation({ summary: "Get delivery-event rates (bounce/open/click/complaint) by channel" })
+  @ApiResponse({ status: 200, description: "Event rates retrieved successfully" })
+  @ApiResponse({ status: 401, description: "Unauthorized" })
+  async getEventRates(
+    @CurrentTenantId() tenantId: string,
+    @Query("channel") channel?: string,
+    @Query("startDate") startDate?: string,
+    @Query("endDate") endDate?: string,
+  ) {
+    return this.analyticsService.getEventRates({
+      tenantId,
+      channel: channel as any,
+      startDate: startDate ? new Date(startDate) : undefined,
+      endDate: endDate ? new Date(endDate) : undefined,
+    });
+  }
+
   @Get("channels")
   @ApiOperation({ summary: "Get channel analytics" })
-  @ApiResponse({ status: 200, description: "Channel analytics retrieved successfully" })
+  @ApiResponse({ status: 200, description: "NotificationChannel analytics retrieved successfully" })
   @ApiResponse({ status: 401, description: "Unauthorized" })
   async getChannelAnalytics(
     @CurrentTenantId() tenantId: string,
@@ -74,12 +80,6 @@ export class AnalyticsController {
     return this.analyticsService.getChannelAnalytics(analyticsQuery);
   }
 
-  /**
-   * Get provider analytics
-   */
-  /**
-   * Get provider analytics
-   */
   @Get("providers")
   @ApiOperation({ summary: "Get provider analytics" })
   @ApiResponse({ status: 200, description: "Provider analytics retrieved successfully" })
@@ -98,12 +98,6 @@ export class AnalyticsController {
     return this.analyticsService.getProviderAnalytics(analyticsQuery);
   }
 
-  /**
-   * Get time series data
-   */
-  /**
-   * Get time series data
-   */
   @Get("time-series")
   @ApiOperation({ summary: "Get time series analytics data" })
   @ApiResponse({ status: 200, description: "Time series data retrieved successfully" })
@@ -119,12 +113,6 @@ export class AnalyticsController {
     return this.analyticsService.getTimeSeriesData(analyticsQuery, query.interval);
   }
 
-  /**
-   * Get comprehensive tenant analytics
-   */
-  /**
-   * Get comprehensive tenant analytics
-   */
   @Get("tenant/:tenantId")
   @ApiOperation({ summary: "Get overall tenant analytics" })
   @ApiParam({ name: "tenantId", description: "Tenant ID" })
@@ -142,12 +130,6 @@ export class AnalyticsController {
     );
   }
 
-  /**
-   * Get analytics dashboard for current tenant
-   */
-  /**
-   * Get analytics dashboard for current tenant
-   */
   @Get("dashboard")
   @ApiOperation({ summary: "Get analytics dashboard data" })
   @ApiResponse({ status: 200, description: "Dashboard data retrieved successfully" })
@@ -164,12 +146,6 @@ export class AnalyticsController {
     );
   }
 
-  /**
-   * Get top performing providers
-   */
-  /**
-   * Get top performing providers
-   */
   @Get("providers/top")
   @ApiOperation({ summary: "Get top performing providers" })
   @ApiResponse({ status: 200, description: "Top providers retrieved successfully" })
@@ -188,12 +164,6 @@ export class AnalyticsController {
     );
   }
 
-  /**
-   * Get delivery trends comparison
-   */
-  /**
-   * Get delivery trends comparison
-   */
   @Get("trends")
   @ApiOperation({ summary: "Get delivery trends comparison" })
   @ApiResponse({ status: 200, description: "Delivery trends retrieved successfully" })
@@ -211,12 +181,6 @@ export class AnalyticsController {
     );
   }
 
-  /**
-   * Get delivery statistics
-   */
-  /**
-   * Get delivery statistics
-   */
   @Get("delivery-stats")
   @ApiOperation({ summary: "Get delivery statistics" })
   @ApiResponse({ status: 200, description: "Delivery statistics retrieved successfully" })
@@ -233,12 +197,6 @@ export class AnalyticsController {
     );
   }
 
-  /**
-   * Get delivery history for a notification
-   */
-  /**
-   * Get delivery history for a notification
-   */
   @Get("delivery-history/:notificationId")
   @ApiOperation({ summary: "Get delivery history by notification ID" })
   @ApiParam({ name: "notificationId", description: "Notification ID" })
@@ -252,12 +210,6 @@ export class AnalyticsController {
     return this.deliveryTrackingService.getDeliveryHistory(notificationId, tenantId);
   }
 
-  /**
-   * Get multiple delivery statuses
-   */
-  /**
-   * Get multiple delivery statuses
-   */
   @Post("delivery-status/batch")
   @ApiOperation({ summary: "Get batch delivery statuses" })
   @ApiResponse({ status: 200, description: "Batch delivery statuses retrieved successfully" })

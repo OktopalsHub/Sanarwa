@@ -4,16 +4,16 @@ import { ComputerDesktopIcon, MoonIcon, SunIcon } from "@heroicons/react/24/outl
 import { useTheme } from "next-themes";
 import { useEffect, useState } from "react";
 
-import { Button } from "@/components/ui/button";
+import { Button } from "@sanarwa/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+} from "@sanarwa/ui/dropdown-menu";
 import { createThemeTransition, prefersReducedMotion } from "@/lib/utils/theme";
 
-export function ThemeToggle() {
+export function ThemeToggle({ className }: { className?: string }) {
   const { setTheme, resolvedTheme, theme } = useTheme();
   const [mounted, setMounted] = useState(false);
 
@@ -22,7 +22,6 @@ export function ThemeToggle() {
   }, []);
 
   const handleThemeChange = (newTheme: string) => {
-    // Create smooth transition if user doesn't prefer reduced motion
     if (!prefersReducedMotion()) {
       createThemeTransition();
     }
@@ -32,28 +31,13 @@ export function ThemeToggle() {
   if (!mounted) {
     return (
       <div className="flex items-center gap-1">
-        <Button variant="ghost" size="icon" className="w-9 h-9">
+        <Button variant="ghost" size="icon" className={`w-9 h-9 ${className ?? ""}`}>
           <SunIcon className="h-4 w-4" />
           <span className="sr-only">Toggle theme</span>
-        </Button>
-        <Button variant="ghost" size="icon" className="w-9 h-9">
-          <ComputerDesktopIcon className="h-4 w-4" />
-          <span className="sr-only">Toggle contrast</span>
         </Button>
       </div>
     );
   }
-
-  const getThemeIcon = () => {
-    if (theme === "system") {
-      return <ComputerDesktopIcon className="h-4 w-4" />;
-    }
-    return resolvedTheme === "dark" ? (
-      <MoonIcon className="h-4 w-4" />
-    ) : (
-      <SunIcon className="h-4 w-4" />
-    );
-  };
 
   const isActive = (themeOption: string) => theme === themeOption;
 
@@ -64,26 +48,26 @@ export function ThemeToggle() {
           <Button
             variant="ghost"
             size="icon"
-            className="w-9 h-9 relative overflow-hidden transition-all duration-300 ease-in-out hover:bg-accent hover:text-accent-foreground hover:scale-105 active:scale-95 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+            className={`w-9 h-9 relative overflow-hidden transition-[background-color,color,transform] duration-200 ease-[cubic-bezier(0.16,1,0.3,1)] hover:bg-accent hover:text-accent-foreground active:scale-95 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ${className ?? ""}`}
             aria-label={`Current theme: ${theme}. Click to change theme.`}
           >
             <div className="relative w-4 h-4">
               <SunIcon
-                className={`h-4 w-4 absolute inset-0 transition-all duration-500 ease-in-out ${
+                className={`h-4 w-4 absolute inset-0 transition-[transform,opacity] duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] ${
                   resolvedTheme === "light" && theme !== "system"
                     ? "rotate-0 scale-100 opacity-100"
                     : "rotate-90 scale-0 opacity-0"
                 }`}
               />
               <MoonIcon
-                className={`h-4 w-4 absolute inset-0 transition-all duration-500 ease-in-out ${
+                className={`h-4 w-4 absolute inset-0 transition-[transform,opacity] duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] ${
                   resolvedTheme === "dark" && theme !== "system"
                     ? "rotate-0 scale-100 opacity-100"
                     : "-rotate-90 scale-0 opacity-0"
                 }`}
               />
               <ComputerDesktopIcon
-                className={`h-4 w-4 absolute inset-0 transition-all duration-500 ease-in-out ${
+                className={`h-4 w-4 absolute inset-0 transition-[transform,opacity] duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] ${
                   theme === "system"
                     ? "rotate-0 scale-100 opacity-100"
                     : "rotate-180 scale-0 opacity-0"

@@ -1,8 +1,8 @@
 import { Send } from "@/lib/icons";
 import { CodeBlock } from "@/components/docs/code-block";
 import { FeedbackSystem } from "@/components/docs/feedback-system";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@sanarwa/ui/badge";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@sanarwa/ui/card";
 import {
   ArrowDownTrayIcon,
   ArrowTopRightOnSquareIcon,
@@ -14,7 +14,6 @@ import Link from "@/compat/next-link";
 export default function JavaScriptSDKPage() {
   return (
     <div className="space-y-8">
-      {/* Header */}
       <div className="space-y-4">
         <div className="flex items-center gap-2">
           <CodeBracketIcon className="h-6 w-6 text-primary" />
@@ -31,7 +30,6 @@ export default function JavaScriptSDKPage() {
         </div>
       </div>
 
-      {/* Installation */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -39,37 +37,36 @@ export default function JavaScriptSDKPage() {
             Installation
           </CardTitle>
           <CardDescription>
-            Install the Notifi JavaScript SDK using your preferred package manager
+            Install the Sanarwa JavaScript SDK using your preferred package manager
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <CodeBlock language="bash" title="npm">
-            {`npm install @notifi/sdk`}
+            {`npm install @sanarwa/sdk`}
           </CodeBlock>
           <CodeBlock language="bash" title="yarn">
-            {`yarn add @notifi/sdk`}
+            {`yarn add @sanarwa/sdk`}
           </CodeBlock>
           <CodeBlock language="bash" title="pnpm">
-            {`pnpm add @notifi/sdk`}
+            {`pnpm add @sanarwa/sdk`}
           </CodeBlock>
         </CardContent>
       </Card>
 
-      {/* Quick Start */}
       <Card>
         <CardHeader>
           <CardTitle>Quick Start</CardTitle>
           <CardDescription>
-            Get started with the Notifi SDK in just a few lines of code
+            Get started with the Sanarwa SDK in just a few lines of code
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <CodeBlock language="javascript" title="Basic Setup">
-            {`import { NotifiClient } from '@notifi/sdk';
+            {`import { Sanarwa } from '@sanarwa/sdk';
 
-const client = new NotifiClient({
-  apiKey: process.env.NOTIFI_API_KEY,
-  baseUrl: 'https://api.notifi.com'
+const client = new Sanarwa({
+  apiKey: process.env.SANARWA_API_KEY,
+  baseUrl: 'https://api.sanarwa.com'
 });
 
 // Send your first email
@@ -94,7 +91,6 @@ async function sendWelcomeEmail() {
         </CardContent>
       </Card>
 
-      {/* More Examples */}
       <div className="grid gap-6 md:grid-cols-2">
         <Card>
           <CardHeader>
@@ -129,7 +125,6 @@ async function sendWelcomeEmail() {
         </Card>
       </div>
 
-      {/* Feedback */}
       <FeedbackSystem page="javascript-sdk" category="sdk-documentation" />
     </div>
   );

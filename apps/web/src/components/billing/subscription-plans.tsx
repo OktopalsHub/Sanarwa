@@ -1,11 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@sanarwa/ui/badge";
+import { Button } from "@sanarwa/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@sanarwa/ui/card";
 import { useCheckoutCurrency } from "@/hooks/use-checkout-currency";
-import { billingApi } from "@/lib/api";
+import { billingApi } from "@sanarwa/api-client";
 import {
   type CurrencyCode,
   formatMoney,
@@ -16,7 +16,6 @@ import {
 } from "@/lib/pricing";
 import { toast } from "sonner";
 
-/** Pay-as-you-go token packs — not subscription plans. */
 export function TokenPacks() {
   const { currency, setCurrency, availableCurrencies, isReady } = useCheckoutCurrency();
   const [pendingPackId, setPendingPackId] = useState<string | null>(null);
@@ -106,5 +105,4 @@ export function TokenPacks() {
   );
 }
 
-/** @deprecated Use TokenPacks — system is pay-as-you-go, not subscriptions */
 export const SubscriptionPlans = TokenPacks;

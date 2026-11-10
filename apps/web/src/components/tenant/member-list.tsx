@@ -2,9 +2,9 @@
 
 import { Shield, ShieldCheck, User, UserCheck, UserX, Users } from "@/lib/icons";
 
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback, AvatarImage } from "@sanarwa/ui/avatar";
+import { Badge } from "@sanarwa/ui/badge";
+import { Button } from "@sanarwa/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -12,15 +12,8 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+} from "@sanarwa/ui/dropdown-menu";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@sanarwa/ui/table";
 import { useAuth } from "@/contexts/auth-context";
 import { useTenant } from "@/contexts/tenant-context";
 import { Tenant, TenantMember, TenantRole } from "@/lib/types/tenant";
@@ -102,12 +95,10 @@ export function MemberList({ members, tenant }: MemberListProps) {
   };
 
   const canEditMember = (member: TenantMember) => {
-    // Users can't edit themselves or owners
     if (member.userId === user?.id || member.role === "owner") {
       return false;
     }
 
-    // Only owners and admins can edit members
     const currentUserMembership = members.find((m) => m.userId === user?.id);
     return currentUserMembership?.role === "owner" || currentUserMembership?.role === "admin";
   };
@@ -166,10 +157,7 @@ export function MemberList({ members, tenant }: MemberListProps) {
                           <span className="ml-2 text-xs text-muted-foreground">(You)</span>
                         )}
                       </div>
-                      <div className="text-sm text-muted-foreground">
-                        {/* In a real app, this would show the user's email */}
-                        user@example.com
-                      </div>
+                      <div className="text-sm text-muted-foreground">user@example.com</div>
                     </div>
                   </div>
                 </TableCell>
@@ -232,7 +220,6 @@ export function MemberList({ members, tenant }: MemberListProps) {
         </TableBody>
       </Table>
 
-      {/* Edit Member Dialog */}
       {editingMember && (
         <EditMemberDialog
           member={editingMember}

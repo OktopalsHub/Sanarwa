@@ -2,13 +2,13 @@
 
 import { Send } from "@/lib/icons";
 
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Textarea } from "@/components/ui/textarea";
+import { Badge } from "@sanarwa/ui/badge";
+import { Button } from "@sanarwa/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@sanarwa/ui/card";
+import { Input } from "@sanarwa/ui/input";
+import { Label } from "@sanarwa/ui/label";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@sanarwa/ui/tabs";
+import { Textarea } from "@sanarwa/ui/textarea";
 import { toast } from "@/lib/utils/toast";
 import {
   ExclamationCircleIcon,
@@ -53,7 +53,7 @@ interface ApiPlaygroundProps {
 
 export function ApiPlayground({
   endpoint,
-  baseUrl = "https://api.notifi.com",
+  baseUrl = "https://api.sanarwa.com/api/v1",
   onExecute,
 }: ApiPlaygroundProps) {
   const [isExecuting, setIsExecuting] = useState(false);
@@ -84,17 +84,14 @@ export function ApiPlayground({
     setResponse(null);
 
     try {
-      // Build the request
       let url = `${baseUrl}${endpoint.path}`;
 
-      // Replace path parameters
       Object.entries(parameters).forEach(([key, value]) => {
         if (endpoint.parameters?.find((p) => p.name === key && p.in === "path")) {
           url = url.replace(`{${key}}`, encodeURIComponent(value));
         }
       });
 
-      // Add query parameters
       const queryParams = new URLSearchParams();
       Object.entries(parameters).forEach(([key, value]) => {
         if (endpoint.parameters?.find((p) => p.name === key && p.in === "query") && value) {
@@ -116,7 +113,6 @@ export function ApiPlayground({
       if (onExecute) {
         result = await onExecute(request);
       } else {
-        // Simulate API call for demo purposes
         await new Promise((resolve) => setTimeout(resolve, 1000));
         result = {
           status: 200,
@@ -143,14 +139,12 @@ export function ApiPlayground({
   const generateCurlCommand = () => {
     let url = `${baseUrl}${endpoint.path}`;
 
-    // Replace path parameters
     Object.entries(parameters).forEach(([key, value]) => {
       if (endpoint.parameters?.find((p) => p.name === key && p.in === "path")) {
         url = url.replace(`{${key}}`, encodeURIComponent(value));
       }
     });
 
-    // Add query parameters
     const queryParams = new URLSearchParams();
     Object.entries(parameters).forEach(([key, value]) => {
       if (endpoint.parameters?.find((p) => p.name === key && p.in === "query") && value) {
@@ -163,12 +157,10 @@ export function ApiPlayground({
 
     let curl = `curl -X ${endpoint.method} "${url}"`;
 
-    // Add headers
     Object.entries(headers).forEach(([key, value]) => {
       curl += ` \\\n  -H "${key}: ${value}"`;
     });
 
-    // Add body
     if (requestBody && ["POST", "PUT", "PATCH"].includes(endpoint.method)) {
       curl += ` \\\n  -d '${requestBody}'`;
     }

@@ -1,4 +1,4 @@
-import type { ApiError } from "@/lib/api/client";
+import type { ApiError } from "@sanarwa/api-client";
 
 export interface ErrorHandlerOptions {
   showToast?: boolean;
@@ -6,17 +6,12 @@ export interface ErrorHandlerOptions {
   onError?: (error: ApiError) => void;
 }
 
-// Default error handler for queries and mutations
-// This now delegates to the centralized error handler
 export function handleApiError(error: unknown, options: ErrorHandlerOptions = {}) {
-  // TODO: Import and use apiErrorHandler when available
   console.error("Query error:", error, options);
-  throw error; // Temporary fallback
+  throw error;
 }
 
-// Get user-friendly error message based on error type
 function getErrorMessage(error: ApiError): string {
-  // Handle specific error codes
   switch (error.code) {
     case "NO_TENANT_SELECTED":
       return "Please select a tenant to continue";
@@ -38,7 +33,6 @@ function getErrorMessage(error: ApiError): string {
       break;
   }
 
-  // Handle HTTP status codes
   switch (error.status) {
     case 400:
       return error.message || "Invalid request";
@@ -65,14 +59,12 @@ function getErrorMessage(error: ApiError): string {
   }
 }
 
-// Query error handler for consistent error handling across queries
 export const queryErrorHandler = (error: unknown) => {
   return handleApiError(error, {
-    showToast: false, // Don't show toast for queries by default
+    showToast: false,
   });
 };
 
-// Mutation error handler with toast notifications
 export const mutationErrorHandler = (error: unknown, customMessage?: string) => {
   return handleApiError(error, {
     showToast: true,
@@ -80,7 +72,6 @@ export const mutationErrorHandler = (error: unknown, customMessage?: string) => 
   });
 };
 
-// Network error detector
 export function isNetworkError(error: unknown): boolean {
   if (error instanceof Error) {
     return (
@@ -93,7 +84,6 @@ export function isNetworkError(error: unknown): boolean {
   return false;
 }
 
-// Authentication error detector
 export function isAuthError(error: unknown): boolean {
   if (error && typeof error === "object" && "status" in error) {
     return (error as ApiError).status === 401;
@@ -101,7 +91,6 @@ export function isAuthError(error: unknown): boolean {
   return false;
 }
 
-// Permission error detector
 export function isPermissionError(error: unknown): boolean {
   if (error && typeof error === "object" && "status" in error) {
     return (error as ApiError).status === 403;
@@ -109,7 +98,6 @@ export function isPermissionError(error: unknown): boolean {
   return false;
 }
 
-// Validation error detector
 export function isValidationError(error: unknown): boolean {
   if (error && typeof error === "object" && "status" in error) {
     return (error as ApiError).status === 422;
@@ -117,7 +105,6 @@ export function isValidationError(error: unknown): boolean {
   return false;
 }
 
-// Extract validation errors from API response
 export function getValidationErrors(error: unknown): Record<string, string[]> | null {
   if (isValidationError(error)) {
     const apiError = error as ApiError;

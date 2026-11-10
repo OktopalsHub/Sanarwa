@@ -1,12 +1,12 @@
 "use client";
 
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Textarea } from "@/components/ui/textarea";
+import { Badge } from "@sanarwa/ui/badge";
+import { Button } from "@sanarwa/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@sanarwa/ui/card";
+import { Input } from "@sanarwa/ui/input";
+import { Label } from "@sanarwa/ui/label";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@sanarwa/ui/tabs";
+import { Textarea } from "@sanarwa/ui/textarea";
 import { toast } from "@/lib/utils/toast";
 import {
   ExclamationCircleIcon,

@@ -1,8 +1,8 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Button } from "@sanarwa/ui/button";
+import { Input } from "@sanarwa/ui/input";
+import { Label } from "@sanarwa/ui/label";
 import { cn } from "@/lib/utils";
 import { ArrowUpTrayIcon, XMarkIcon } from "@heroicons/react/24/outline";
 import { useCallback, useRef, useState } from "react";

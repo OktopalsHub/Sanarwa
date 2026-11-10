@@ -1,7 +1,7 @@
 "use client";
 
 import { useAuth } from "@/contexts/auth-context";
-import { tenantApi } from "@/lib/api/tenant";
+import { tenantApi } from "@sanarwa/api-client";
 import { getTenantPathSegment } from "@/lib/tenant-path";
 import { useNavigate } from "@tanstack/react-router";
 import { useEffect, type ReactNode } from "react";
@@ -11,7 +11,6 @@ interface TenantRouteRedirectProps {
   children?: ReactNode;
 }
 
-/** Redirects legacy global routes to /{subdomain}/{suffix} */
 export function TenantRouteRedirect({ suffix, children }: TenantRouteRedirectProps) {
   const navigate = useNavigate();
   const { isAuthenticated, isLoading } = useAuth();

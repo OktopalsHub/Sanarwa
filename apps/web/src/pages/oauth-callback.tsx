@@ -1,52 +1,49 @@
 "use client";
 
-import { redirectAfterAuth } from "@/lib/auth/post-auth-redirect";
-import { authApi } from "@/lib/api/auth";
-import { toastApiError } from "@/lib/utils/api-error-message";
 import { useRouter, useSearchParams } from "@/compat/next-navigation";
+import { useAuth } from "@/contexts/auth-context";
 import { useEffect, useState } from "react";
 
 export default function OAuthCallbackPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { user, isAuthenticated, login } = useAuth();
   const [error, setError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const handleOAuthCallback = async () => {
+      // better-auth client manages the OAuth flow internally.
+      // The provider callback route hydrates the session automatically.
+      // We wait for the session to be hydrated and then redirect.
       try {
-        const accessToken =
-          searchParams.get("accessToken") || searchParams.get("access_token");
-        const refreshToken =
-          searchParams.get("refreshToken") || searchParams.get("refresh_token");
-        const errorParam = searchParams.get("error");
-
-        if (errorParam) {
-          setError(decodeURIComponent(errorParam));
-          setTimeout(() => router.push("/login"), 3000);
-          return;
+        // Wait a moment for session hydration, then check auth state.
+        await new Promise((resolve) => setTimeout(resolve, 500));
+        if (!isAuthenticated) {
+          setError("OAuth sign-in failed — no session created");
         }
-
-        if (!accessToken) {
-          setError("Invalid OAuth callback — missing access token");
-          setTimeout(() => router.push("/login"), 3000);
-          return;
-        }
-
-        authApi.setAuthToken(accessToken);
-        if (refreshToken) {
-          authApi.setRefreshToken(refreshToken);
-        }
-
-        await redirectAfterAuth(router);
+        setIsLoading(false);
+        void router.push("/dashboard");
       } catch (err) {
-        toastApiError(err, "OAuth sign-in failed");
+        console.error("OAuth callback error:", err);
         setError("Failed to process OAuth callback");
-        setTimeout(() => router.push("/login"), 3000);
+        setIsLoading(false);
       }
     };
 
     void handleOAuthCallback();
-  }, [searchParams, router]);
+  }, [searchParams, router, isAuthenticated, login]);
+
+  if (isLoading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-[var(--color-paper)] px-4">
+        <div className="space-y-4 text-center">
+          <div className="mx-auto size-8 animate-spin rounded-full border-2 border-[var(--color-rule)] border-t-[var(--hm-accent)]" />
+          <p className="text-[var(--color-muted)]">Completing sign in…</p>
+        </div>
+      </div>
+    );
+  }
 
   if (error) {
     return (

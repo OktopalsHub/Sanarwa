@@ -1,6 +1,5 @@
 "use client";
 
-import { apiClient } from "@/lib/api/client";
 import { getTenantPathSegment, matchesTenantPathSegment } from "@/lib/tenant-path";
 import { useTenant } from "@/contexts/tenant-context";
 import { useNavigate, useParams } from "@tanstack/react-router";
@@ -30,10 +29,8 @@ export function useEnsureTenantFromSlug() {
   useEffect(() => {
     if (!matchedTenant || isLoading) return;
     if (!selectedTenant || selectedTenant.id !== matchedTenant.id) {
-      apiClient.setTenant(matchedTenant.id);
       switchTenant(matchedTenant.id).catch(console.error);
     } else {
-      apiClient.setTenant(matchedTenant.id);
     }
   }, [matchedTenant, selectedTenant, switchTenant, isLoading]);
 

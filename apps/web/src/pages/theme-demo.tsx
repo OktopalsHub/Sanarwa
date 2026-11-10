@@ -1,7 +1,7 @@
 import { BrandingConfigurator } from "@/components/branding/branding-configurator";
 import { ThemeConfigurator } from "@/components/theme/theme-configurator";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@sanarwa/ui/card";
+import { Separator } from "@sanarwa/ui/separator";
 
 export default function ThemeDemoPage() {
   return (
@@ -13,21 +13,18 @@ export default function ThemeDemoPage() {
 
       <Separator />
 
-      {/* Theme Configuration */}
       <section>
         <ThemeConfigurator />
       </section>
 
       <Separator />
 
-      {/* Branding Configuration */}
       <section>
         <BrandingConfigurator />
       </section>
 
       <Separator />
 
-      {/* Component Showcase */}
       <section className="space-y-6">
         <div>
           <h2 className="text-2xl font-bold mb-2">Component Showcase</h2>

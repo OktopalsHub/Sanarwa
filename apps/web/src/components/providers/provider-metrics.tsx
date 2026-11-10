@@ -2,16 +2,10 @@
 
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { providerApi } from "@/lib/api/provider";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
+import { providerApi } from "@sanarwa/api-client";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@sanarwa/ui/card";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@sanarwa/ui/select";
+import { Badge } from "@sanarwa/ui/badge";
 import {
   ArrowTrendingUpIcon,
   ArrowTrendingDownIcon,
@@ -116,7 +110,6 @@ export function ProviderMetrics({ providerId }: ProviderMetricsProps) {
         </Select>
       </div>
 
-      {/* Key Metrics */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card>
           <CardContent className="pt-6">
@@ -178,7 +171,6 @@ export function ProviderMetrics({ providerId }: ProviderMetricsProps) {
         </Card>
       </div>
 
-      {/* Error Breakdown */}
       {metrics.errorBreakdown && metrics.errorBreakdown.length > 0 && (
         <Card>
           <CardHeader>
@@ -207,7 +199,6 @@ export function ProviderMetrics({ providerId }: ProviderMetricsProps) {
         </Card>
       )}
 
-      {/* Performance Trends */}
       <Card>
         <CardHeader>
           <CardTitle>Performance Trends</CardTitle>
@@ -224,7 +215,6 @@ export function ProviderMetrics({ providerId }: ProviderMetricsProps) {
         </CardContent>
       </Card>
 
-      {/* Usage by Time */}
       <Card>
         <CardHeader>
           <CardTitle>Usage Distribution</CardTitle>

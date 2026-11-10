@@ -26,6 +26,6 @@ export default function VerifyEmailPage() {
 }
 
 export const metadata = {
-  title: "Verify Email - Notifi",
+  title: "Verify Email - Sanarwa",
   description: "Verify your email address",
 };

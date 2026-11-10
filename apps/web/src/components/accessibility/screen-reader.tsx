@@ -3,7 +3,6 @@
 import { ScreenReaderUtils } from "@/lib/utils/accessibility";
 import React, { useEffect, useRef, useState } from "react";
 
-// Screen reader only text component
 interface ScreenReaderOnlyProps {
   children: React.ReactNode;
   as?: keyof React.JSX.IntrinsicElements;
@@ -19,7 +18,6 @@ export function ScreenReaderOnly({
   return <ElementType className={`sr-only ${className}`}>{children}</ElementType>;
 }
 
-// Live region component for announcements
 interface LiveRegionProps {
   children?: React.ReactNode;
   priority?: "polite" | "assertive" | "off";
@@ -47,7 +45,6 @@ export function LiveRegion({
   );
 }
 
-// Status component for form validation and other status updates
 interface StatusProps {
   message: string;
   type?: "error" | "success" | "warning" | "info";
@@ -61,12 +58,10 @@ export function Status({ message, type = "info", visible = true, className = "" 
   useEffect(() => {
     if (visible && message) {
       setAnnouncement(message);
-      // Clear announcement after it's been read
       const timer = setTimeout(() => setAnnouncement(""), 1000);
       return () => clearTimeout(timer);
     }
 
-    // Return empty cleanup function for other code paths
     return () => {};
   }, [message, visible]);
 
@@ -87,7 +82,6 @@ export function Status({ message, type = "info", visible = true, className = "" 
 
   return (
     <>
-      {/* Visible status message */}
       <div
         role={getAriaRole()}
         aria-live={type === "error" ? "assertive" : "polite"}
@@ -96,13 +90,11 @@ export function Status({ message, type = "info", visible = true, className = "" 
         {message}
       </div>
 
-      {/* Screen reader announcement */}
       <LiveRegion priority={type === "error" ? "assertive" : "polite"}>{announcement}</LiveRegion>
     </>
   );
 }
 
-// Progress announcer for long-running operations
 interface ProgressAnnouncerProps {
   value: number;
   max?: number;
@@ -124,25 +116,21 @@ export function ProgressAnnouncer({
   useEffect(() => {
     const percentage = Math.round((value / max) * 100);
 
-    // Only announce at intervals to avoid overwhelming screen readers
     if (percentage - lastAnnounced >= announceInterval || percentage === 100) {
       const message = `${label}: ${percentage}% complete`;
       setAnnouncement(message);
       setLastAnnounced(percentage);
 
-      // Clear announcement after it's been read
       const timer = setTimeout(() => setAnnouncement(""), 1000);
       return () => clearTimeout(timer);
     }
 
-    // Return empty cleanup function for other code paths
     return () => {};
   }, [value, max, label, announceInterval, lastAnnounced]);
 
   return <LiveRegion className={className}>{announcement}</LiveRegion>;
 }
 
-// Loading announcer for async operations
 interface LoadingAnnouncerProps {
   isLoading: boolean;
   loadingMessage?: string;
@@ -168,10 +156,8 @@ export function LoadingAnnouncer({
     previousLoadingRef.current = isLoading;
 
     if (isLoading && !wasLoading) {
-      // Started loading
       setAnnouncement(loadingMessage);
     } else if (!isLoading && wasLoading) {
-      // Finished loading
       setAnnouncement(error ? errorMessage : completeMessage);
     }
 
@@ -180,7 +166,6 @@ export function LoadingAnnouncer({
       return () => clearTimeout(timer);
     }
 
-    // Return empty cleanup function for other code paths
     return () => {};
   }, [isLoading, error, loadingMessage, completeMessage, errorMessage, announcement]);
 
@@ -191,7 +176,6 @@ export function LoadingAnnouncer({
   );
 }
 
-// Form field description component
 interface FieldDescriptionProps {
   id: string;
   children: React.ReactNode;
@@ -206,7 +190,6 @@ export function FieldDescription({ id, children, className = "" }: FieldDescript
   );
 }
 
-// Error message component for forms
 interface ErrorMessageProps {
   id: string;
   children: React.ReactNode;
@@ -226,7 +209,6 @@ export function ErrorMessage({ id, children, className = "" }: ErrorMessageProps
   );
 }
 
-// Breadcrumb component with proper ARIA
 interface BreadcrumbProps {
   items: Array<{
     label: string;
@@ -268,7 +250,6 @@ export function Breadcrumb({ items, className = "" }: BreadcrumbProps) {
   );
 }
 
-// Hook for managing announcements
 export function useAnnouncement() {
   const announce = (message: string, priority: "polite" | "assertive" = "polite") => {
     ScreenReaderUtils.announce(message, priority.toUpperCase() as "POLITE" | "ASSERTIVE");
@@ -277,7 +258,6 @@ export function useAnnouncement() {
   return { announce };
 }
 
-// Hook for managing field descriptions
 export function useFieldDescription(fieldId: string, description?: string) {
   const descriptionId = `${fieldId}-description`;
 
@@ -285,7 +265,6 @@ export function useFieldDescription(fieldId: string, description?: string) {
     if (description) {
       ScreenReaderUtils.describedBy(fieldId, description);
     }
-    // No cleanup needed for this effect
   }, [fieldId, description]);
 
   return descriptionId;

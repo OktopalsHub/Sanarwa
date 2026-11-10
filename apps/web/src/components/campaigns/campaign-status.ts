@@ -1,4 +1,4 @@
-import type { BadgeProps } from "@/components/ui/badge";
+import type { BadgeProps } from "@sanarwa/ui/badge";
 import type { CampaignStatus, CommunicationChannel } from "@/lib/types/campaign";
 import {
   IconBrandWhatsapp,

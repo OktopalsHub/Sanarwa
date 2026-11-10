@@ -1,6 +1,6 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
+import { Button } from "@sanarwa/ui/button";
 import { GitHubIcon, GoogleIcon } from "@/components/auth/auth-oauth-icons";
 
 function oauthBaseUrl(): string {

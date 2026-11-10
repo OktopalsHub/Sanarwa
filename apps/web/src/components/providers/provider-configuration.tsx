@@ -2,13 +2,13 @@
 
 import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { providerApi } from "@/lib/api/provider";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
-import { Separator } from "@/components/ui/separator";
+import { providerApi } from "@sanarwa/api-client";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@sanarwa/ui/card";
+import { Button } from "@sanarwa/ui/button";
+import { Input } from "@sanarwa/ui/input";
+import { Label } from "@sanarwa/ui/label";
+import { Switch } from "@sanarwa/ui/switch";
+import { Separator } from "@sanarwa/ui/separator";
 import { useForm } from "react-hook-form";
 import { Provider, UpdateProviderRequest } from "@/lib/types/provider";
 import { toast } from "sonner";
@@ -144,7 +144,6 @@ export function ProviderConfiguration({ provider }: ProviderConfigurationProps) 
   return (
     <div className="space-y-6">
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-        {/* Basic Settings */}
         <Card>
           <CardHeader>
             <CardTitle>Basic Settings</CardTitle>
@@ -210,7 +209,6 @@ export function ProviderConfiguration({ provider }: ProviderConfigurationProps) 
           </CardContent>
         </Card>
 
-        {/* Provider Credentials */}
         <Card>
           <CardHeader>
             <CardTitle>Provider Credentials</CardTitle>
@@ -219,7 +217,6 @@ export function ProviderConfiguration({ provider }: ProviderConfigurationProps) 
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            {/* Required Fields */}
             {template.requiredFields.length > 0 && (
               <div className="space-y-4">
                 <h4 className="font-medium text-sm">Required Configuration</h4>
@@ -227,7 +224,6 @@ export function ProviderConfiguration({ provider }: ProviderConfigurationProps) 
               </div>
             )}
 
-            {/* Optional Fields */}
             {template.optionalFields.length > 0 && (
               <>
                 <Separator />
@@ -238,7 +234,6 @@ export function ProviderConfiguration({ provider }: ProviderConfigurationProps) 
               </>
             )}
 
-            {/* Configuration Example */}
             {template.example && (
               <>
                 <Separator />
@@ -268,7 +263,6 @@ export function ProviderConfiguration({ provider }: ProviderConfigurationProps) 
           </CardContent>
         </Card>
 
-        {/* Save Button */}
         <div className="flex justify-end">
           <Button type="submit" disabled={!isDirty || isSubmitting}>
             <BookmarkIcon className="h-4 w-4 mr-2" />
@@ -279,7 +273,6 @@ export function ProviderConfiguration({ provider }: ProviderConfigurationProps) 
 
       <Separator />
 
-      {/* Danger Zone */}
       <Card className="border-destructive">
         <CardHeader>
           <CardTitle className="text-destructive flex items-center gap-2">

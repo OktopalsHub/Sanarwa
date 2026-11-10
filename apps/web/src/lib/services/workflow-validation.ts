@@ -1,5 +1,3 @@
-// Workflow validation service
-
 import { Workflow, WorkflowNode } from "@/lib/types/workflow";
 
 export interface ValidationError {
@@ -21,7 +19,6 @@ export class WorkflowValidator {
     const errors: ValidationError[] = [];
     const warnings: ValidationError[] = [];
 
-    // Check for basic workflow structure
     if (workflow.nodes.length === 0) {
       errors.push({
         id: "no-nodes",
@@ -30,7 +27,6 @@ export class WorkflowValidator {
       });
     }
 
-    // Check for trigger nodes
     const triggerNodes = workflow.nodes.filter((node) => node.type === "trigger");
     if (triggerNodes.length === 0) {
       errors.push({
@@ -40,7 +36,6 @@ export class WorkflowValidator {
       });
     }
 
-    // Check for orphaned nodes (nodes with no connections)
     const connectedNodeIds = new Set<string>();
     workflow.connections.forEach((conn) => {
       connectedNodeIds.add(conn.sourceNodeId);
@@ -58,7 +53,6 @@ export class WorkflowValidator {
       }
     });
 
-    // Check for invalid connections
     workflow.connections.forEach((conn) => {
       const sourceNode = workflow.nodes.find((n) => n.id === conn.sourceNodeId);
       const targetNode = workflow.nodes.find((n) => n.id === conn.targetNodeId);
@@ -81,7 +75,6 @@ export class WorkflowValidator {
         });
       }
 
-      // Check for self-connections
       if (conn.sourceNodeId === conn.targetNodeId) {
         errors.push({
           id: `self-connection-${conn.id}`,
@@ -92,14 +85,12 @@ export class WorkflowValidator {
       }
     });
 
-    // Validate individual nodes
     workflow.nodes.forEach((node) => {
       const nodeErrors = this.validateNode(node);
       errors.push(...nodeErrors.filter((e) => e.type === "error"));
       warnings.push(...nodeErrors.filter((e) => e.type === "warning"));
     });
 
-    // Check for circular dependencies
     const circularDependencies = this.detectCircularDependencies(workflow);
     if (circularDependencies.length > 0) {
       errors.push({
@@ -119,7 +110,6 @@ export class WorkflowValidator {
   private static validateNode(node: WorkflowNode): ValidationError[] {
     const errors: ValidationError[] = [];
 
-    // Check for empty labels
     if (!node.data.label || node.data.label.trim() === "") {
       errors.push({
         id: `empty-label-${node.id}`,
@@ -129,7 +119,6 @@ export class WorkflowValidator {
       });
     }
 
-    // Validate node-specific configurations
     switch (node.type) {
       case "trigger":
         errors.push(...this.validateTriggerNode(node));
@@ -350,7 +339,6 @@ export class WorkflowValidator {
     const recursionStack = new Set<string>();
     const path: string[] = [];
 
-    // Build adjacency list
     const adjacencyList = new Map<string, string[]>();
     workflow.nodes.forEach((node) => {
       adjacencyList.set(node.id, []);
@@ -362,7 +350,6 @@ export class WorkflowValidator {
       adjacencyList.set(conn.sourceNodeId, sourceConnections);
     });
 
-    // DFS to detect cycles
     const dfs = (nodeId: string): boolean => {
       visited.add(nodeId);
       recursionStack.add(nodeId);
@@ -375,7 +362,6 @@ export class WorkflowValidator {
             return true;
           }
         } else if (recursionStack.has(neighbor)) {
-          // Found a cycle
           const cycleStart = path.indexOf(neighbor);
           return true;
         }
@@ -386,7 +372,6 @@ export class WorkflowValidator {
       return false;
     };
 
-    // Check all nodes for cycles
     for (const node of workflow.nodes) {
       if (!visited.has(node.id)) {
         if (dfs(node.id)) {

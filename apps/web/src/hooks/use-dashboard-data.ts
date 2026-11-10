@@ -1,8 +1,7 @@
 "use client";
 
-import { apiClient } from "@/lib/api/client";
-import { analyticsApi } from "@/lib/api/analytics";
-import { messagingApi } from "@/lib/api/messaging";
+import { analyticsApi } from "@sanarwa/api-client";
+import { messagingApi } from "@sanarwa/api-client";
 import { useTenant } from "@/contexts/tenant-context";
 import { useQuery } from "@tanstack/react-query";
 
@@ -34,7 +33,6 @@ export function useDashboardData() {
     queryKey: ["dashboard", selectedTenant?.id],
     queryFn: async (): Promise<DashboardData> => {
       if (selectedTenant?.id) {
-        apiClient.setTenant(selectedTenant.id);
       }
       const end = new Date();
       const start = new Date();

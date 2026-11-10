@@ -1,19 +1,13 @@
 "use client";
 
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Textarea } from "@/components/ui/textarea";
+import { Badge } from "@sanarwa/ui/badge";
+import { Button } from "@sanarwa/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@sanarwa/ui/card";
+import { Input } from "@sanarwa/ui/input";
+import { Label } from "@sanarwa/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@sanarwa/ui/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@sanarwa/ui/tabs";
+import { Textarea } from "@sanarwa/ui/textarea";
 import { toast } from "@/lib/utils/toast";
 import {
   ExclamationCircleIcon,
@@ -53,17 +47,17 @@ const defaultConfigs: Record<string, RunConfig> = {
   javascript: {
     environment: "sandbox",
     timeout: 10000,
-    baseUrl: "https://api-sandbox.notifi.com",
+    baseUrl: "https://api-sandbox.sanarwa.com",
   },
   python: {
     environment: "sandbox",
     timeout: 15000,
-    baseUrl: "https://api-sandbox.notifi.com",
+    baseUrl: "https://api-sandbox.sanarwa.com",
   },
   php: {
     environment: "sandbox",
     timeout: 15000,
-    baseUrl: "https://api-sandbox.notifi.com",
+    baseUrl: "https://api-sandbox.sanarwa.com",
   },
 };
 
@@ -75,7 +69,7 @@ export function CodeRunner({ language, initialCode, title, description, onRun }:
       defaultConfigs.javascript ?? {
         environment: "sandbox",
         timeout: 10000,
-        baseUrl: "https://api-sandbox.notifi.com",
+        baseUrl: "https://api-sandbox.sanarwa.com",
       }
     );
   });
@@ -97,7 +91,6 @@ export function CodeRunner({ language, initialCode, title, description, onRun }:
           executionTime: Date.now() - startTime,
         });
       } else {
-        // Simulate code execution for demo
         await new Promise((resolve) => setTimeout(resolve, 1000 + Math.random() * 2000));
 
         setResult({
@@ -288,7 +281,7 @@ export function CodeRunner({ language, initialCode, title, description, onRun }:
                 <Input
                   value={config.baseUrl || ""}
                   onChange={(e) => updateConfig("baseUrl", e.target.value)}
-                  placeholder="https://api.notifi.com"
+                  placeholder="https://api.sanarwa.com"
                 />
               </div>
             </div>

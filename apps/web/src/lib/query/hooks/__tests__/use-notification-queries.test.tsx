@@ -3,11 +3,10 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ReactNode } from "react";
 import { useNotifications, useInAppNotifications } from "../use-notification-queries";
 
-// Mock the notification API
-jest.mock("@/lib/api/notification", () => ({
+vi.mock("@sanarwa/api-client", () => ({
   notificationApi: {
-    getNotifications: jest.fn(),
-    getInAppNotifications: jest.fn(),
+    getNotifications: vi.fn(),
+    getInAppNotifications: vi.fn(),
   },
 }));
 

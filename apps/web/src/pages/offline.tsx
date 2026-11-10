@@ -1,10 +1,8 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@sanarwa/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@sanarwa/ui/card";
 import { HomeIcon, ArrowPathIcon, WifiIcon } from "@heroicons/react/24/outline";
-
-// Metadata is handled by layout.tsx for client components
 
 export default function OfflinePage() {
   const handleRetry = () => {

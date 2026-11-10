@@ -1,14 +1,8 @@
 "use client";
 
-import { Checkbox } from "@/components/ui/checkbox";
-import {
-  Empty,
-  EmptyDescription,
-  EmptyHeader,
-  EmptyMedia,
-  EmptyTitle,
-} from "@/components/ui/empty";
-import { Skeleton } from "@/components/ui/skeleton";
+import { Checkbox } from "@sanarwa/ui/checkbox";
+import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@sanarwa/ui/empty";
+import { Skeleton } from "@sanarwa/ui/skeleton";
 import type { Campaign } from "@/lib/types/campaign";
 import { IconMail } from "@tabler/icons-react";
 import { CampaignBulkBar } from "./campaign-bulk-bar";

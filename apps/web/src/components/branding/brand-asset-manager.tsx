@@ -1,9 +1,9 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { Label } from "@/components/ui/label";
-import { Separator } from "@/components/ui/separator";
+import { Button } from "@sanarwa/ui/button";
+import { Card } from "@sanarwa/ui/card";
+import { Label } from "@sanarwa/ui/label";
+import { Separator } from "@sanarwa/ui/separator";
 import { BrandingConfig } from "@/contexts/branding-context";
 import { cn } from "@/lib/utils";
 import { CubeIcon, SwatchIcon, PhotoIcon } from "@heroicons/react/24/outline";
@@ -25,14 +25,12 @@ export function BrandAssetManager({
   const handleExportAssets = useCallback(async () => {
     setIsExporting(true);
     try {
-      // Create a comprehensive brand package
       const brandPackage = {
         name: branding.name,
         version: "1.0.0",
         exportedAt: new Date().toISOString(),
         branding: {
           ...branding,
-          // Include asset URLs for reference
           assets: {
             logoLight: branding.logo.light,
             logoDark: branding.logo.dark,
@@ -51,13 +49,10 @@ export function BrandAssetManager({
         },
         typography: branding.typography,
         customCss: branding.customCss,
-        // CSS Variables for easy integration
         cssVariables: generateCSSVariables(branding),
-        // Tailwind config snippet
         tailwindConfig: generateTailwindConfig(branding),
       };
 
-      // Create and download the brand package
       const blob = new Blob([JSON.stringify(brandPackage, null, 2)], {
         type: "application/json",
       });
@@ -114,7 +109,6 @@ export function BrandAssetManager({
 
         <Separator />
 
-        {/* Asset Preview */}
         <div className="space-y-4">
           <h4 className="text-md font-medium">Asset Preview</h4>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -151,7 +145,6 @@ export function BrandAssetManager({
 
         <Separator />
 
-        {/* Color Palette Preview */}
         <div className="space-y-4">
           <h4 className="text-md font-medium">Color Palette</h4>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
@@ -174,7 +167,6 @@ export function BrandAssetManager({
 
         <Separator />
 
-        {/* Export Options */}
         <div className="space-y-4">
           <h4 className="text-md font-medium">Export Options</h4>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
@@ -219,7 +211,6 @@ export function BrandAssetManager({
 
         <Separator />
 
-        {/* Usage Instructions */}
         <div className="space-y-3">
           <h4 className="text-md font-medium">Usage Instructions</h4>
           <div className="text-sm text-muted-foreground space-y-2">
@@ -242,7 +233,6 @@ export function BrandAssetManager({
   );
 }
 
-// Helper functions
 function generateCSSVariables(branding: BrandingConfig): string {
   const variables = Object.entries(branding.colors)
     .map(([key, value]) => {
@@ -254,12 +244,10 @@ function generateCSSVariables(branding: BrandingConfig): string {
   return `:root {
 ${variables}
   
-  /* Typography */
   --font-family-primary: ${branding.typography.fontFamily};
   --font-family-heading: ${branding.typography.headingFont || branding.typography.fontFamily};
 }
 
-/* Custom CSS */
 ${branding.customCss || ""}`;
 }
 

@@ -8,7 +8,6 @@ type ThemeProviderProps = React.ComponentProps<typeof NextThemesProvider>;
 
 export function ThemeProvider({ children, ...props }: ThemeProviderProps) {
   useEffect(() => {
-    // Add CSS for theme transitions and enhanced styling
     const style = document.createElement("style");
     style.id = "theme-provider-styles";
     style.textContent = `
@@ -101,7 +100,6 @@ export function ThemeProvider({ children, ...props }: ThemeProviderProps) {
       }
     `;
 
-    // Check if style already exists to avoid duplicates
     const existingStyle = document.getElementById("theme-provider-styles");
     if (existingStyle) {
       existingStyle.remove();
@@ -109,16 +107,13 @@ export function ThemeProvider({ children, ...props }: ThemeProviderProps) {
 
     document.head.appendChild(style);
 
-    // Listen for theme changes to update color-scheme
     const handleThemeChange = () => {
       const isDark = document.documentElement.classList.contains("dark");
       document.documentElement.style.colorScheme = isDark ? "dark" : "light";
     };
 
-    // Initial check
     handleThemeChange();
 
-    // Set up observer for theme changes
     const observer = new MutationObserver((mutations) => {
       mutations.forEach((mutation) => {
         if (mutation.type === "attributes" && mutation.attributeName === "class") {
@@ -148,7 +143,7 @@ export function ThemeProvider({ children, ...props }: ThemeProviderProps) {
       defaultTheme="system"
       enableSystem={true}
       enableColorScheme={true}
-      storageKey="notifi-theme"
+      storageKey="sanarwa-theme"
       disableTransitionOnChange={false}
     >
       {children}

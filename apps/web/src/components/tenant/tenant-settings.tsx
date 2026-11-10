@@ -1,12 +1,12 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Separator } from "@/components/ui/separator";
-import { Switch } from "@/components/ui/switch";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Button } from "@sanarwa/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@sanarwa/ui/card";
+import { Input } from "@sanarwa/ui/input";
+import { Label } from "@sanarwa/ui/label";
+import { Separator } from "@sanarwa/ui/separator";
+import { Switch } from "@sanarwa/ui/switch";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@sanarwa/ui/tabs";
 import { useTenant } from "@/contexts/tenant-context";
 import { Tenant } from "@/lib/types/tenant";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -96,7 +96,6 @@ export function TenantSettings({ tenant }: TenantSettingsProps) {
   const handleExportData = async () => {
     setIsExporting(true);
     try {
-      // This would typically call an API endpoint to generate and download tenant data
       const response = await fetch(`/api/tenants/${tenant.id}/export`, {
         method: "POST",
         credentials: "include",
@@ -173,7 +172,7 @@ export function TenantSettings({ tenant }: TenantSettingsProps) {
                     </p>
                   )}
                   <p className="text-xs text-muted-foreground">
-                    This will be used in your organization's URL: app.notifi.com/
+                    This will be used in your organization's URL: app.sanarwa.com/
                     {profileForm.watch("slug")}
                   </p>
                 </div>

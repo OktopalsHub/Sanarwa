@@ -1,17 +1,11 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
-import {
-  Empty,
-  EmptyContent,
-  EmptyDescription,
-  EmptyHeader,
-  EmptyTitle,
-} from "@/components/ui/empty";
-import { Skeleton } from "@/components/ui/skeleton";
+import { Button } from "@sanarwa/ui/button";
+import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyTitle } from "@sanarwa/ui/empty";
+import { Skeleton } from "@sanarwa/ui/skeleton";
 import { useRouter } from "@/compat/next-navigation";
 import { useTenantBasePath } from "@/hooks/use-tenant-slug";
-import { campaignApi } from "@/lib/api/campaigns";
+import { campaignApi } from "@sanarwa/api-client";
 import type { Campaign } from "@/lib/types/campaign";
 import { IconArrowLeft } from "@tabler/icons-react";
 import { useQuery } from "@tanstack/react-query";

@@ -4,18 +4,12 @@ import { Filter } from "@/lib/icons";
 
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { projectApi } from "@/lib/api/project";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { projectApi } from "@sanarwa/api-client";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@sanarwa/ui/card";
+import { Badge } from "@sanarwa/ui/badge";
+import { Button } from "@sanarwa/ui/button";
+import { Input } from "@sanarwa/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@sanarwa/ui/select";
 import {
   EllipsisHorizontalIcon,
   MagnifyingGlassIcon,
@@ -30,7 +24,7 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+} from "@sanarwa/ui/dropdown-menu";
 import { ProjectStatus } from "@/lib/types/project";
 import Link from "@/compat/next-link";
 import { useTenant } from "@/contexts/tenant-context";
@@ -111,7 +105,6 @@ export function ProjectList() {
 
   return (
     <div className="space-y-6">
-      {/* Filters */}
       <div className="flex gap-4">
         <div className="relative flex-1 max-w-sm">
           <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -135,7 +128,6 @@ export function ProjectList() {
         </Select>
       </div>
 
-      {/* Project List */}
       {projects.length === 0 ? (
         <Card>
           <CardContent className="pt-6">

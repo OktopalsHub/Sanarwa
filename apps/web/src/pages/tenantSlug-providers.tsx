@@ -7,7 +7,7 @@ import { WhatsAppTemplateManager } from "@/components/whatsapp/whatsapp-template
 import { PushProviderSetup } from "@/components/push/push-provider-setup";
 import { SMSSenderSetup } from "@/components/sms/sms-sender-setup";
 import { AppShell } from "@/components/layout";
-import { Button } from "@/components/ui/button";
+import { Button } from "@sanarwa/ui/button";
 import { PlusIcon } from "@heroicons/react/24/outline";
 
 import { useState } from "react";
@@ -34,16 +34,13 @@ export default function ProvidersPage() {
 
           <ProviderList />
 
-          {/* WhatsApp Embedded Signup - managed WABA, dedicated 6k templates */}
           <div className="grid gap-6 lg:grid-cols-2">
             <WhatsAppEmbeddedSignup />
             <WhatsAppTemplateManager />
           </div>
 
-          {/* Push - managed SNS fallback + BYOK FCM v1 / APNS ES256 */}
           <PushProviderSetup />
 
-          {/* SMS - managed Africastalking+Telnyx routing + BYOK Termii/AT/Twilio */}
           <SMSSenderSetup />
 
           <CreateProviderDialog open={showCreateDialog} onOpenChange={setShowCreateDialog} />

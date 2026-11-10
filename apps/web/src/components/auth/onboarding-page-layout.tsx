@@ -4,8 +4,6 @@ import { AuthBackLink } from "@/components/auth/auth-back-link";
 import Link from "@/compat/next-link";
 import { SanarwaMark } from "@sanarwa/assets";
 
-/* Hallmark · macrostructure: Split Panel · tone: utilitarian · page: onboarding */
-
 const SETUP_STEPS = [
   "Name your workspace",
   "Pick a URL slug for /your-team/dashboard",

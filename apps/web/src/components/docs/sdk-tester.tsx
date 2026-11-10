@@ -2,20 +2,14 @@
 
 import { Phone, Send } from "@/lib/icons";
 
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Textarea } from "@/components/ui/textarea";
+import { Badge } from "@sanarwa/ui/badge";
+import { Button } from "@sanarwa/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@sanarwa/ui/card";
+import { Input } from "@sanarwa/ui/input";
+import { Label } from "@sanarwa/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@sanarwa/ui/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@sanarwa/ui/tabs";
+import { Textarea } from "@sanarwa/ui/textarea";
 import { toast } from "@/lib/utils/toast";
 import {
   ExclamationCircleIcon,
@@ -85,18 +79,18 @@ const defaultTests: SdkTest[] = [
         defaultValue: "Test Email from SDK",
       },
       {
-        name: "content",
+        name: "data",
         type: "text",
         required: true,
-        description: "Email content",
-        defaultValue: "Hello! This is a test email sent using the Notifi SDK.",
+        description: "Email body",
+        defaultValue: "Hello! This is a test email sent using the Sanarwa SDK.",
       },
     ],
     expectedResult: "Email sent successfully with message ID",
     codeTemplate: `const result = await client.email.send({
   to: "{{to}}",
   subject: "{{subject}}",
-  content: "{{content}}"
+  data: "{{data}}"
 });`,
   },
   {
@@ -155,13 +149,13 @@ const defaultTests: SdkTest[] = [
         type: "text",
         required: true,
         description: "SMS message content",
-        defaultValue: "Hello! This is a test SMS from Notifi.",
+        defaultValue: "Hello! This is a test SMS from Sanarwa.",
       },
     ],
     expectedResult: "SMS sent successfully",
     codeTemplate: `const result = await client.sms.send({
   to: "{{to}}",
-  message: "{{message}}"
+  data: "{{data}}"
 });`,
   },
   {
@@ -240,7 +234,6 @@ export function SdkTester({ tests = defaultTests, onRunTest }: SdkTesterProps) {
         const testResult = await onRunTest(selectedTest, parameters);
         setResult(testResult);
       } else {
-        // Simulate test execution
         const logs = [
           "Initializing SDK client...",
           `Environment: ${environment}`,
@@ -248,7 +241,6 @@ export function SdkTester({ tests = defaultTests, onRunTest }: SdkTesterProps) {
           "Executing test...",
         ];
 
-        // Simulate processing time
         await new Promise((resolve) => setTimeout(resolve, 1500 + Math.random() * 1000));
 
         const mockResult: TestResult = {
@@ -281,7 +273,6 @@ export function SdkTester({ tests = defaultTests, onRunTest }: SdkTesterProps) {
   const generateCode = () => {
     let code = selectedTest.codeTemplate;
 
-    // Replace template variables
     Object.entries(parameters).forEach(([key, value]) => {
       const placeholder = `{{${key}}}`;
       let replacement = value;
@@ -331,7 +322,6 @@ export function SdkTester({ tests = defaultTests, onRunTest }: SdkTesterProps) {
     URL.revokeObjectURL(url);
   };
 
-  // Initialize parameters when test changes
   useState(() => {
     const initialParams: Record<string, any> = {};
     selectedTest.parameters.forEach((param) => {
@@ -359,7 +349,6 @@ export function SdkTester({ tests = defaultTests, onRunTest }: SdkTesterProps) {
 
   return (
     <div className="space-y-6">
-      {/* Test Selection */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -368,7 +357,6 @@ export function SdkTester({ tests = defaultTests, onRunTest }: SdkTesterProps) {
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          {/* Environment Configuration */}
           <div className="grid gap-4 md:grid-cols-2">
             <div className="space-y-2">
               <Label>Environment</Label>
@@ -409,7 +397,6 @@ export function SdkTester({ tests = defaultTests, onRunTest }: SdkTesterProps) {
             </div>
           </div>
 
-          {/* Test Selection */}
           <div className="space-y-2">
             <Label>Select Test</Label>
             <div className="grid gap-2 md:grid-cols-2 lg:grid-cols-3">
@@ -444,7 +431,6 @@ export function SdkTester({ tests = defaultTests, onRunTest }: SdkTesterProps) {
         </CardContent>
       </Card>
 
-      {/* Test Configuration */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">

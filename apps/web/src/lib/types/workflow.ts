@@ -1,5 +1,3 @@
-// Workflow types for the drag-and-drop workflow builder
-
 export type WorkflowNodeType = "trigger" | "action" | "condition" | "delay" | "split";
 
 export type TriggerType = "event" | "time" | "api" | "webhook";
@@ -26,7 +24,7 @@ export interface WorkflowNode {
   type: WorkflowNodeType;
   position: WorkflowPosition;
   data: WorkflowNodeData;
-  connections: string[]; // IDs of connected nodes
+  connections: string[];
 }
 
 export interface WorkflowNodeData {
@@ -38,7 +36,7 @@ export interface WorkflowNodeData {
 export interface TriggerConfig {
   type: TriggerType;
   eventName?: string;
-  schedule?: string; // cron expression for time-based triggers
+  schedule?: string;
   apiEndpoint?: string;
   webhookUrl?: string;
 }
@@ -68,7 +66,7 @@ export interface DelayConfig {
 
 export interface SplitConfig {
   type: "ab_test" | "random";
-  percentage?: number; // for A/B testing
+  percentage?: number;
   branches: {
     id: string;
     label: string;

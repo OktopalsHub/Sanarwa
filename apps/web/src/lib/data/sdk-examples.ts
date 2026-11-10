@@ -1,891 +1,372 @@
-// Enhanced SDK examples with more comprehensive coverage
 export const sdkExamples = {
   javascript: [
     {
       id: "js-send-email",
-      title: "Send Email Notification",
-      description: "Send a simple email notification using the JavaScript SDK",
+      title: "Send an email notification",
+      description: "Send one email through the SDK and read back the tracking id.",
       language: "javascript",
-      code: `import { NotifiClient } from '@notifi/sdk';
+      code: `import { Sanarwa } from '@sanarwa/sdk';
 
-const client = new NotifiClient({
-  apiKey: process.env.NOTIFI_API_KEY,
-  baseUrl: 'https://api.notifi.com'
+const client = new Sanarwa(process.env.SANARWA_API_KEY!);
+
+const result = await client.email.send({
+  to: 'user@example.com',
+  channel: 'email',
+  subject: 'Welcome to Sanarwa',
+  message: 'Thanks for signing up.',
 });
 
-async function sendEmail() {
-  try {
-    const result = await client.email.send({
-      to: 'user@example.com',
-      subject: 'Welcome to Notifi!',
-      template: 'welcome-template',
-      variables: {
-        name: 'John Doe',
-        company: 'Acme Corp'
-      }
-    });
-    
-    console.log('Email sent:', result.id);
-    return result;
-  } catch (error) {
-    console.error('Failed to send email:', error);
-    throw error;
-  }
-}
-
-sendEmail();`,
-      parameters: [
-        {
-          name: "to",
-          type: "string",
-          required: true,
-          description: "Recipient email address",
-          defaultValue: "user@example.com",
-        },
-        {
-          name: "subject",
-          type: "string",
-          required: true,
-          description: "Email subject line",
-          defaultValue: "Welcome to Notifi!",
-        },
-        {
-          name: "template",
-          type: "string",
-          required: true,
-          description: "Template ID to use",
-          defaultValue: "welcome-template",
-        },
-      ],
-      expectedOutput: `{
-  "id": "msg_1234567890",
-  "status": "sent",
-  "to": "user@example.com",
-  "subject": "Welcome to Notifi!",
-  "sentAt": "2024-01-15T10:30:00Z"
-}`,
+console.log(result.trackingId);`,
     },
     {
       id: "js-send-sms",
-      title: "Send SMS Notification",
-      description: "Send an SMS message using the JavaScript SDK",
+      title: "Send an SMS notification",
+      description: "The channel component pins the channel, so the body stays flat.",
       language: "javascript",
-      code: `import { NotifiClient } from '@notifi/sdk';
+      code: `import { Sanarwa } from '@sanarwa/sdk';
 
-const client = new NotifiClient({
-  apiKey: process.env.NOTIFI_API_KEY
-});
+const client = new Sanarwa(process.env.SANARWA_API_KEY!);
 
-async function sendSMS() {
-  try {
-    const result = await client.sms.send({
-      to: '+1234567890',
-      message: 'Your verification code is: {{code}}',
-      variables: {
-        code: '123456'
-      }
-    });
-    
-    console.log('SMS sent:', result.id);
-    return result;
-  } catch (error) {
-    console.error('Failed to send SMS:', error);
-    throw error;
-  }
-}
-
-sendSMS();`,
-      parameters: [
-        {
-          name: "to",
-          type: "string",
-          required: true,
-          description: "Recipient phone number (E.164 format)",
-          defaultValue: "+1234567890",
-        },
-        {
-          name: "message",
-          type: "text",
-          required: true,
-          description: "SMS message content",
-          defaultValue: "Your verification code is: {{code}}",
-        },
-      ],
-      expectedOutput: `{
-  "id": "sms_1234567890",
-  "status": "sent",
-  "to": "+1234567890",
-  "message": "Your verification code is: 123456",
-  "sentAt": "2024-01-15T10:30:00Z"
-}`,
+await client.sms.send({
+  to: '+15551234567',
+  channel: 'sms',
+  message: 'Your code is 4821',
+});`,
     },
     {
-      id: "js-create-workflow",
-      title: "Create Workflow",
-      description: "Create a multi-step notification workflow",
+      id: "js-send-bulk",
+      title: "Send in bulk",
+      description: "Queue up to 1000 notifications in one batch and poll the batch id.",
       language: "javascript",
-      code: `import { NotifiClient } from '@notifi/sdk';
+      code: `import { Sanarwa } from '@sanarwa/sdk';
 
-const client = new NotifiClient({
-  apiKey: process.env.NOTIFI_API_KEY
-});
+const client = new Sanarwa(process.env.SANARWA_API_KEY!);
 
-async function createWorkflow() {
-  try {
-    const workflow = await client.workflows.create({
-      name: 'User Onboarding',
-      trigger: {
-        type: 'event',
-        event: 'user.registered'
-      },
-      steps: [
-        {
-          type: 'email',
-          delay: 0,
-          template: 'welcome-email',
-          conditions: []
-        },
-        {
-          type: 'email',
-          delay: 86400, // 24 hours
-          template: 'onboarding-tips',
-          conditions: [
-            {
-              field: 'user.email_verified',
-              operator: 'equals',
-              value: true
-            }
-          ]
-        }
-      ]
-    });
-    
-    console.log('Workflow created:', workflow.id);
-    return workflow;
-  } catch (error) {
-    console.error('Failed to create workflow:', error);
-    throw error;
-  }
-}
+const batch = await client.transport.sendBulk(
+  [
+    { to: 'a@example.com', channel: 'email', message: 'First' },
+    { to: 'b@example.com', channel: 'email', message: 'Second' },
+  ],
+  'batch_001',
+);
 
-createWorkflow();`,
-      parameters: [
-        {
-          name: "name",
-          type: "string",
-          required: true,
-          description: "Workflow name",
-          defaultValue: "User Onboarding",
-        },
-        {
-          name: "trigger_event",
-          type: "string",
-          required: true,
-          description: "Event that triggers the workflow",
-          defaultValue: "user.registered",
-        },
-      ],
-      expectedOutput: `{
-  "id": "wf_1234567890",
-  "name": "User Onboarding",
-  "status": "active",
-  "trigger": {
-    "type": "event",
-    "event": "user.registered"
+console.log(batch.batchId, batch.status);`,
+    },
+    {
+      id: "js-schedule",
+      title: "Schedule a send",
+      description: "Scheduling is a field on the request, not a separate endpoint.",
+      language: "javascript",
+      code: `import { Sanarwa } from '@sanarwa/sdk';
+
+const client = new Sanarwa(process.env.SANARWA_API_KEY!);
+
+await client.transport.send({
+  to: 'user@example.com',
+  channel: 'email',
+  message: 'Scheduled message',
+  scheduledAt: '2026-12-01T09:00:00Z',
+});`,
+    },
+    {
+      id: "js-status",
+      title: "Check delivery status",
+      description: "Poll the tracking id returned when the notification was queued.",
+      language: "javascript",
+      code: `import { Sanarwa } from '@sanarwa/sdk';
+
+const client = new Sanarwa(process.env.SANARWA_API_KEY!);
+
+const status = await client.getNotificationStatus('trk_abc123');
+
+console.log(status.status); // pending | sent | delivered | failed`,
+    },
+    {
+      id: "js-raw-http",
+      title: "Call the REST API directly",
+      description: "Any language can POST to /api/v1. Same endpoint, same payload.",
+      language: "javascript",
+      code: `const response = await fetch('https://api.sanarwa.com/api/v1/notifications/send', {
+  method: 'POST',
+  headers: {
+    'X-API-Key': process.env.SANARWA_API_KEY!,
+    'Content-Type': 'application/json',
   },
-  "steps": [
-    {
-      "id": "step_1",
-      "type": "email",
-      "delay": 0,
-      "template": "welcome-email"
-    },
-    {
-      "id": "step_2", 
-      "type": "email",
-      "delay": 86400,
-      "template": "onboarding-tips"
-    }
-  ],
-  "createdAt": "2024-01-15T10:30:00Z"
-}`,
-    },
-  ],
-  python: [
-    {
-      id: "py-send-email",
-      title: "Send Email Notification",
-      description: "Send an email notification using the Python SDK",
-      language: "python",
-      code: `from notifi import NotifiClient
-import os
-
-client = NotifiClient(
-    api_key=os.getenv('NOTIFI_API_KEY'),
-    base_url='https://api.notifi.com'
-)
-
-def send_email():
-    try:
-        result = client.email.send(
-            to='user@example.com',
-            subject='Welcome to Notifi!',
-            template='welcome-template',
-            variables={
-                'name': 'John Doe',
-                'company': 'Acme Corp'
-            }
-        )
-        
-        print(f'Email sent: {result.id}')
-        return result
-    except Exception as error:
-        print(f'Failed to send email: {error}')
-        raise error
-
-if __name__ == '__main__':
-    send_email()`,
-      parameters: [
-        {
-          name: "to",
-          type: "string",
-          required: true,
-          description: "Recipient email address",
-          defaultValue: "user@example.com",
-        },
-        {
-          name: "subject",
-          type: "string",
-          required: true,
-          description: "Email subject line",
-          defaultValue: "Welcome to Notifi!",
-        },
-      ],
-      expectedOutput: `{
-  "id": "msg_1234567890",
-  "status": "sent",
-  "to": "user@example.com",
-  "subject": "Welcome to Notifi!",
-  "sent_at": "2024-01-15T10:30:00Z"
-}`,
-    },
-  ],
-  php: [
-    {
-      id: "php-send-email",
-      title: "Send Email Notification",
-      description: "Send an email notification using the PHP SDK",
-      language: "php",
-      code: `<?php
-require_once 'vendor/autoload.php';
-
-use Notifi\\NotifiClient;
-
-$client = new NotifiClient([
-    'api_key' => $_ENV['NOTIFI_API_KEY'],
-    'base_url' => 'https://api.notifi.com'
-]);
-
-function sendEmail($client) {
-    try {
-        $result = $client->email->send([
-            'to' => 'user@example.com',
-            'subject' => 'Welcome to Notifi!',
-            'template' => 'welcome-template',
-            'variables' => [
-                'name' => 'John Doe',
-                'company' => 'Acme Corp'
-            ]
-        ]);
-        
-        echo "Email sent: " . $result->id . "\\n";
-        return $result;
-    } catch (Exception $error) {
-        echo "Failed to send email: " . $error->getMessage() . "\\n";
-        throw $error;
-    }
-}
-
-sendEmail($client);
-?>`,
-      parameters: [
-        {
-          name: "to",
-          type: "string",
-          required: true,
-          description: "Recipient email address",
-          defaultValue: "user@example.com",
-        },
-      ],
-      expectedOutput: `{
-  "id": "msg_1234567890",
-  "status": "sent",
-  "to": "user@example.com",
-  "subject": "Welcome to Notifi!",
-  "sent_at": "2024-01-15T10:30:00Z"
-}`,
-    },
-  ],
-  java: [
-    {
-      id: "java-send-email",
-      title: "Send Email Notification",
-      description: "Send an email notification using the Java SDK",
-      language: "java",
-      code: `import com.notifi.sdk.NotifiClient;
-import com.notifi.sdk.models.EmailRequest;
-import com.notifi.sdk.models.EmailResponse;
-import java.util.HashMap;
-import java.util.Map;
-
-public class NotifiExample {
-    public static void main(String[] args) {
-        NotifiClient client = new NotifiClient.Builder()
-            .apiKey(System.getenv("NOTIFI_API_KEY"))
-            .baseUrl("https://api.notifi.com")
-            .build();
-        
-        try {
-            Map<String, Object> variables = new HashMap<>();
-            variables.put("name", "John Doe");
-            variables.put("company", "Acme Corp");
-            
-            EmailRequest request = EmailRequest.builder()
-                .to("user@example.com")
-                .subject("Welcome to Notifi!")
-                .template("welcome-template")
-                .variables(variables)
-                .build();
-            
-            EmailResponse response = client.email().send(request);
-            System.out.println("Email sent: " + response.getId());
-        } catch (Exception e) {
-            System.err.println("Failed to send email: " + e.getMessage());
-        }
-    }
-}`,
-      parameters: [
-        {
-          name: "to",
-          type: "string",
-          required: true,
-          description: "Recipient email address",
-          defaultValue: "user@example.com",
-        },
-        {
-          name: "subject",
-          type: "string",
-          required: true,
-          description: "Email subject line",
-          defaultValue: "Welcome to Notifi!",
-        },
-      ],
-      expectedOutput: `{
-  "id": "msg_1234567890",
-  "status": "sent",
-  "to": "user@example.com",
-  "subject": "Welcome to Notifi!",
-  "sent_at": "2024-01-15T10:30:00Z"
-}`,
-    },
-  ],
-  go: [
-    {
-      id: "go-send-email",
-      title: "Send Email Notification",
-      description: "Send an email notification using the Go SDK",
-      language: "go",
-      code: `package main
-
-import (
-    "context"
-    "fmt"
-    "log"
-    "os"
-    
-    "github.com/notifi/go-sdk/notifi"
-)
-
-func main() {
-    client := notifi.NewClient(&notifi.Config{
-        APIKey:  os.Getenv("NOTIFI_API_KEY"),
-        BaseURL: "https://api.notifi.com",
-    })
-    
-    ctx := context.Background()
-    
-    req := &notifi.EmailRequest{
-        To:       "user@example.com",
-        Subject:  "Welcome to Notifi!",
-        Template: "welcome-template",
-        Variables: map[string]interface{}{
-            "name":    "John Doe",
-            "company": "Acme Corp",
-        },
-    }
-    
-    resp, err := client.Email.Send(ctx, req)
-    if err != nil {
-        log.Fatalf("Failed to send email: %v", err)
-    }
-    
-    fmt.Printf("Email sent: %s\\n", resp.ID)
-}`,
-      parameters: [
-        {
-          name: "to",
-          type: "string",
-          required: true,
-          description: "Recipient email address",
-          defaultValue: "user@example.com",
-        },
-      ],
-      expectedOutput: `{
-  "id": "msg_1234567890",
-  "status": "sent",
-  "to": "user@example.com",
-  "subject": "Welcome to Notifi!",
-  "sent_at": "2024-01-15T10:30:00Z"
-}`,
-    },
-  ],
-  dotnet: [
-    {
-      id: "dotnet-send-email",
-      title: "Send Email Notification",
-      description: "Send an email notification using the .NET SDK",
-      language: "csharp",
-      code: `using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
-using Notifi.SDK;
-using Notifi.SDK.Models;
-
-class Program
-{
-    static async Task Main(string[] args)
-    {
-        var client = new NotifiClient(new NotifiClientOptions
-        {
-            ApiKey = Environment.GetEnvironmentVariable("NOTIFI_API_KEY"),
-            BaseUrl = "https://api.notifi.com"
-        });
-        
-        try
-        {
-            var variables = new Dictionary<string, object>
-            {
-                ["name"] = "John Doe",
-                ["company"] = "Acme Corp"
-            };
-            
-            var request = new EmailRequest
-            {
-                To = "user@example.com",
-                Subject = "Welcome to Notifi!",
-                Template = "welcome-template",
-                Variables = variables
-            };
-            
-            var response = await client.Email.SendAsync(request);
-            Console.WriteLine($"Email sent: {response.Id}");
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Failed to send email: {ex.Message}");
-        }
-    }
-}`,
-      parameters: [
-        {
-          name: "to",
-          type: "string",
-          required: true,
-          description: "Recipient email address",
-          defaultValue: "user@example.com",
-        },
-      ],
-      expectedOutput: `{
-  "id": "msg_1234567890",
-  "status": "sent",
-  "to": "user@example.com",
-  "subject": "Welcome to Notifi!",
-  "sent_at": "2024-01-15T10:30:00Z"
-}`,
+  body: JSON.stringify({
+    to: 'user@example.com',
+    channel: 'email',
+    data: 'Thanks for signing up.',
+  }),
+});`,
     },
   ],
 };
 
 export const apiEndpoints = [
   {
-    id: "send-email",
+    id: "send-notification",
     method: "POST" as const,
-    path: "/v1/notifications/email",
-    description: "Send an email notification",
+    path: "/notifications/send",
+    description: "Send one notification on any channel (POST /api/v1/notifications/send)",
     parameters: [
       {
         name: "to",
         type: "string",
         in: "body" as const,
         required: true,
-        description: "Recipient email address",
+        description: "Recipient: email address, phone number, or device token",
         example: "user@example.com",
-      },
-      {
-        name: "subject",
-        type: "string",
-        in: "body" as const,
-        required: true,
-        description: "Email subject line",
-        example: "Welcome to Notifi!",
-      },
-      {
-        name: "template",
-        type: "string",
-        in: "body" as const,
-        required: false,
-        description: "Template ID to use",
-        example: "welcome-template",
-      },
-    ],
-    requestBody: {
-      contentType: "application/json",
-      schema: {
-        type: "object",
-        properties: {
-          to: { type: "string", format: "email" },
-          subject: { type: "string" },
-          template: { type: "string" },
-          variables: { type: "object" },
-        },
-      },
-      example: {
-        to: "user@example.com",
-        subject: "Welcome to Notifi!",
-        template: "welcome-template",
-        variables: {
-          name: "John Doe",
-          company: "Acme Corp",
-        },
-      },
-    },
-    responses: [
-      {
-        status: 200,
-        description: "Email sent successfully",
-        example: {
-          id: "msg_1234567890",
-          status: "sent",
-          to: "user@example.com",
-          subject: "Welcome to Notifi!",
-          sentAt: "2024-01-15T10:30:00Z",
-        },
-      },
-      {
-        status: 400,
-        description: "Invalid request parameters",
-        example: {
-          error: "validation_error",
-          message: "Invalid email address",
-          details: {
-            field: "to",
-            code: "invalid_email",
-          },
-        },
-      },
-      {
-        status: 401,
-        description: "Authentication failed",
-        example: {
-          error: "authentication_error",
-          message: "Invalid API key",
-        },
-      },
-    ],
-  },
-  {
-    id: "send-sms",
-    method: "POST" as const,
-    path: "/v1/notifications/sms",
-    description: "Send an SMS notification",
-    parameters: [
-      {
-        name: "to",
-        type: "string",
-        in: "body" as const,
-        required: true,
-        description: "Recipient phone number in E.164 format",
-        example: "+1234567890",
-      },
-      {
-        name: "message",
-        type: "string",
-        in: "body" as const,
-        required: true,
-        description: "SMS message content",
-        example: "Your verification code is: 123456",
-      },
-    ],
-    requestBody: {
-      contentType: "application/json",
-      schema: {
-        type: "object",
-        properties: {
-          to: { type: "string" },
-          message: { type: "string" },
-          variables: { type: "object" },
-        },
-      },
-      example: {
-        to: "+1234567890",
-        message: "Your verification code is: {{code}}",
-        variables: {
-          code: "123456",
-        },
-      },
-    },
-    responses: [
-      {
-        status: 200,
-        description: "SMS sent successfully",
-        example: {
-          id: "sms_1234567890",
-          status: "sent",
-          to: "+1234567890",
-          message: "Your verification code is: 123456",
-          sentAt: "2024-01-15T10:30:00Z",
-        },
-      },
-      {
-        status: 400,
-        description: "Invalid request parameters",
-        example: {
-          error: "validation_error",
-          message: "Invalid phone number format",
-          details: {
-            field: "to",
-            code: "invalid_phone",
-          },
-        },
-      },
-    ],
-  },
-  {
-    id: "send-push",
-    method: "POST" as const,
-    path: "/v1/notifications/push",
-    description: "Send a push notification",
-    parameters: [
-      {
-        name: "to",
-        type: "string",
-        in: "body" as const,
-        required: true,
-        description: "Device token or user ID",
-        example: "device_token_123",
-      },
-      {
-        name: "title",
-        type: "string",
-        in: "body" as const,
-        required: true,
-        description: "Notification title",
-        example: "New Message",
-      },
-      {
-        name: "body",
-        type: "string",
-        in: "body" as const,
-        required: true,
-        description: "Notification body text",
-        example: "You have a new message from John",
-      },
-    ],
-    requestBody: {
-      contentType: "application/json",
-      schema: {
-        type: "object",
-        properties: {
-          to: { type: "string" },
-          title: { type: "string" },
-          body: { type: "string" },
-          data: { type: "object" },
-        },
-      },
-      example: {
-        to: "device_token_123",
-        title: "New Message",
-        body: "You have a new message from John",
-        data: {
-          messageId: "msg_123",
-          userId: "user_456",
-        },
-      },
-    },
-    responses: [
-      {
-        status: 200,
-        description: "Push notification sent successfully",
-        example: {
-          id: "push_1234567890",
-          status: "sent",
-          to: "device_token_123",
-          title: "New Message",
-          sentAt: "2024-01-15T10:30:00Z",
-        },
-      },
-      {
-        status: 400,
-        description: "Invalid request parameters",
-        example: {
-          error: "validation_error",
-          message: "Invalid device token",
-          details: {
-            field: "to",
-            code: "invalid_token",
-          },
-        },
-      },
-    ],
-  },
-  {
-    id: "create-template",
-    method: "POST" as const,
-    path: "/v1/templates",
-    description: "Create a new notification template",
-    parameters: [
-      {
-        name: "name",
-        type: "string",
-        in: "body" as const,
-        required: true,
-        description: "Template name",
-        example: "welcome-email",
       },
       {
         name: "channel",
         type: "string",
         in: "body" as const,
         required: true,
-        description: "Communication channel",
+        description: "email, sms, push, whatsapp, webhook or in_app",
         example: "email",
       },
       {
-        name: "content",
+        name: "data",
+        type: "string",
+        in: "body" as const,
+        required: false,
+        description: "Plain-text body of the notification (or set templateId)",
+        example: "Thanks for signing up.",
+      },
+      {
+        name: "channels",
+        type: "array",
+        in: "body" as const,
+        required: false,
+        description: "Fan out to several channels with one request (omit channel)",
+        example: ["email", "push"],
+      },
+      {
+        name: "variables",
         type: "object",
         in: "body" as const,
         required: true,
-        description: "Template content",
-        example: {
-          subject: "Welcome {{name}}!",
-          html: "<h1>Welcome {{name}}!</h1><p>Thanks for joining {{company}}.</p>",
-        },
+        description: "Template variables / event payload (use {} if none)",
+        example: { name: "Amaka" },
+      },
+      {
+        name: "subject",
+        type: "string",
+        in: "body" as const,
+        required: false,
+        description: "Subject for email, title for push",
+        example: "Welcome",
+      },
+      {
+        name: "templateId",
+        type: "string",
+        in: "body" as const,
+        required: false,
+        description: "Render a stored template instead of a literal body",
+        example: "welcome-email",
+      },
+      {
+        name: "brandId",
+        type: "string",
+        in: "body" as const,
+        required: false,
+        description: "Apply a stored brand layout to the message",
+        example: "brand_12345",
+      },
+      {
+        name: "priority",
+        type: "string",
+        in: "body" as const,
+        required: false,
+        description: "low, normal or high",
+        example: "normal",
+      },
+      {
+        name: "scheduledAt",
+        type: "string",
+        in: "body" as const,
+        required: false,
+        description: "ISO 8601 time to deliver instead of immediately",
+        example: "2026-12-01T09:00:00Z",
       },
     ],
     requestBody: {
       contentType: "application/json",
       schema: {
         type: "object",
+        required: ["to", "channel", "variables"],
         properties: {
-          name: { type: "string" },
-          channel: { type: "string", enum: ["email", "sms", "push", "in-app"] },
-          content: { type: "object" },
-          variables: { type: "array" },
+          to: { type: "string" },
+          channel: {
+            type: "string",
+            enum: ["email", "sms", "push", "whatsapp", "webhook", "in_app", "voice", "chat"],
+          },
+          channels: { type: "array", items: { type: "string" } },
+          data: { type: "string" },
+          subject: { type: "string" },
+          templateId: { type: "string" },
+          variables: { type: "object" },
+          priority: { type: "string", enum: ["low", "normal", "high", "urgent"] },
+          scheduledAt: { type: "string" },
         },
       },
       example: {
-        name: "welcome-email",
+        to: "user@example.com",
         channel: "email",
-        content: {
-          subject: "Welcome {{name}}!",
-          html: "<h1>Welcome {{name}}!</h1><p>Thanks for joining {{company}}.</p>",
-          text: "Welcome {{name}}! Thanks for joining {{company}}.",
+        variables: {},
+        data: "Thanks for signing up.",
+      },
+    },
+    responses: [
+      {
+        status: 201,
+        description: "Notification queued for delivery",
+        example: {
+          messageId: "msg_9f1c2e8d",
+          status: "queued",
+          deliveries: [{ channel: "email", status: "queued" }],
         },
-        variables: [
-          { name: "name", type: "string", required: true },
-          { name: "company", type: "string", required: false },
+      },
+      {
+        status: 400,
+        description: "Bad request",
+        example: { error: "BadRequest", message: "channel is required" },
+      },
+    ],
+  },
+  {
+    id: "send-bulk",
+    method: "POST" as const,
+    path: "/notifications/send/bulk",
+    description:
+      "Queue up to 1000 notifications in one batch (POST /api/v1/notifications/send/bulk)",
+    parameters: [
+      {
+        name: "notifications",
+        type: "array",
+        in: "body" as const,
+        required: true,
+        description:
+          "Array of send objects, each with to/recipients, channel/channels, data(body), variables",
+        example: [{ to: "a@example.com", channel: "email", variables: {}, data: "First" }],
+      },
+      {
+        name: "batchId",
+        type: "string",
+        in: "body" as const,
+        required: false,
+        description: "Caller-supplied batch id so the batch can be polled later",
+        example: "batch_001",
+      },
+    ],
+    requestBody: {
+      contentType: "application/json",
+      schema: {
+        type: "object",
+        required: ["notifications"],
+        properties: {
+          notifications: { type: "array", items: { type: "object" } },
+          batchId: { type: "string" },
+        },
+      },
+      example: {
+        notifications: [
+          { to: "a@example.com", channel: "email", message: "First" },
+          { to: "b@example.com", channel: "sms", message: "Second" },
         ],
       },
     },
     responses: [
       {
         status: 201,
-        description: "Template created successfully",
-        example: {
-          id: "tpl_1234567890",
-          name: "welcome-email",
-          channel: "email",
-          status: "active",
-          createdAt: "2024-01-15T10:30:00Z",
-        },
+        description: "Batch queued for delivery",
+        example: { batchId: "batch_001", status: "queued", results: [] },
       },
       {
         status: 400,
-        description: "Invalid template data",
-        example: {
-          error: "validation_error",
-          message: "Template name already exists",
-          details: {
-            field: "name",
-            code: "duplicate_name",
-          },
-        },
+        description: "Bad request",
+        example: { error: "BadRequest", message: "notifications must not be empty" },
       },
     ],
   },
   {
-    id: "get-analytics",
+    id: "delivery-status",
     method: "GET" as const,
-    path: "/v1/analytics/delivery",
-    description: "Get delivery analytics and metrics",
+    path: "/notifications/status/{trackingId}",
+    description:
+      "Look up delivery status by tracking id (GET /api/v1/notifications/status/{trackingId})",
+    parameters: [
+      {
+        name: "trackingId",
+        type: "string",
+        in: "path" as const,
+        required: true,
+        description: "Tracking id returned when the notification was queued",
+        example: "trk_abc123",
+      },
+    ],
+    responses: [
+      {
+        status: 200,
+        description: "Delivery status",
+        example: { trackingId: "trk_abc123", channel: "email", status: "delivered" },
+      },
+      {
+        status: 404,
+        description: "Not found",
+        example: { error: "Not found", message: "Notification not found" },
+      },
+    ],
+  },
+  {
+    id: "transport-analytics",
+    method: "GET" as const,
+    path: "/notifications/analytics",
+    description: "Delivery metrics for a date range (GET /api/v1/notifications/analytics)",
     parameters: [
       {
         name: "startDate",
         type: "string",
         in: "query" as const,
-        required: true,
-        description: "Start date (ISO 8601)",
-        example: "2024-01-01T00:00:00Z",
+        required: false,
+        description: "Inclusive start of the range, ISO 8601",
+        example: "2026-01-01",
       },
       {
         name: "endDate",
         type: "string",
         in: "query" as const,
-        required: true,
-        description: "End date (ISO 8601)",
-        example: "2024-01-31T23:59:59Z",
+        required: false,
+        description: "Inclusive end of the range, ISO 8601",
+        example: "2026-12-31",
       },
       {
         name: "channel",
         type: "string",
         in: "query" as const,
         required: false,
-        description: "Filter by channel",
+        description: "Restrict metrics to one channel",
         example: "email",
       },
     ],
     responses: [
+      { status: 200, description: "Analytics", example: { sent: 128, delivered: 120, failed: 8 } },
+    ],
+  },
+  {
+    id: "transport-health",
+    method: "GET" as const,
+    path: "/notifications/health",
+    description: "Check API and per-transport service health (GET /api/v1/notifications/health)",
+    parameters: [],
+    responses: [
       {
         status: 200,
-        description: "Analytics data retrieved successfully",
+        description: "Service health",
         example: {
-          period: {
-            startDate: "2024-01-01T00:00:00Z",
-            endDate: "2024-01-31T23:59:59Z",
-          },
-          metrics: {
-            totalSent: 15420,
-            delivered: 14892,
-            bounced: 234,
-            failed: 294,
-            deliveryRate: 0.966,
-            bounceRate: 0.015,
-          },
-          channelBreakdown: {
-            email: { sent: 12000, delivered: 11580 },
-            sms: { sent: 2500, delivered: 2450 },
-            push: { sent: 920, delivered: 862 },
-          },
+          status: "healthy",
+          timestamp: "2026-01-01T00:00:00.000Z",
+          services: { email: "operational", sms: "operational", push: "operational" },
         },
       },
     ],

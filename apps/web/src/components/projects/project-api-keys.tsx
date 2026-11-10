@@ -2,10 +2,10 @@
 
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@sanarwa/ui/card";
+import { Button } from "@sanarwa/ui/button";
+import { Badge } from "@sanarwa/ui/badge";
+import { Input } from "@sanarwa/ui/input";
 import {
   PlusIcon,
   DocumentDuplicateIcon,
@@ -19,7 +19,7 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+} from "@sanarwa/ui/dropdown-menu";
 import { CreateApiKeyDialog } from "./create-api-key-dialog";
 import { toast } from "sonner";
 
@@ -27,7 +27,6 @@ interface ProjectApiKeysProps {
   projectId: string;
 }
 
-// Mock API key data - replace with actual API call
 const mockApiKeys = [
   {
     id: "1",
@@ -60,8 +59,6 @@ export function ProjectApiKeys({ projectId }: ProjectApiKeysProps) {
   } = useQuery({
     queryKey: ["project-api-keys", projectId],
     queryFn: async () => {
-      // TODO: Replace with actual API call when API key endpoints are implemented
-      // For now, return mock data
       return mockApiKeys;
     },
   });

@@ -29,13 +29,10 @@ export function usePermissions() {
   const userPermissions = useMemo(() => {
     if (!userRole) return [];
 
-    // Get base permissions from role
     const rolePermissions = ROLE_PERMISSIONS[userRole]?.permissions || [];
 
-    // Add any additional permissions from membership
     const additionalPermissions = currentMembership?.permissions || [];
 
-    // Combine and deduplicate
     return Array.from(new Set([...rolePermissions, ...additionalPermissions]));
   }, [userRole, currentMembership]);
 
@@ -56,12 +53,10 @@ export function usePermissions() {
       return { hasPermission: false, reason: "User membership is not active" };
     }
 
-    // Check if user has admin permission (grants all permissions)
     if (userPermissions.includes("admin")) {
       return { hasPermission: true };
     }
 
-    // Check specific permission
     if (userPermissions.includes(permission)) {
       return { hasPermission: true };
     }
@@ -86,12 +81,10 @@ export function usePermissions() {
       return { hasPermission: false, reason: "User membership is not active" };
     }
 
-    // Check if user has admin permission (grants all permissions)
     if (userPermissions.includes("admin")) {
       return { hasPermission: true };
     }
 
-    // Check if user has any of the specified permissions
     const hasAny = permissions.some((permission) => userPermissions.includes(permission));
 
     if (hasAny) {
@@ -121,12 +114,10 @@ export function usePermissions() {
       return { hasPermission: false, reason: "User membership is not active" };
     }
 
-    // Check if user has admin permission (grants all permissions)
     if (userPermissions.includes("admin")) {
       return { hasPermission: true };
     }
 
-    // Check if user has all specified permissions
     const missingPermissions = permissions.filter(
       (permission) => !userPermissions.includes(permission),
     );

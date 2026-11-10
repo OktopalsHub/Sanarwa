@@ -1,7 +1,6 @@
 import type { ComponentType, SVGProps } from "react";
 
 export type IconComponent = ComponentType<SVGProps<SVGSVGElement>>;
-/** @deprecated Use IconComponent — kept for legacy metric cards */
 export type LucideIcon = IconComponent;
 
 export {

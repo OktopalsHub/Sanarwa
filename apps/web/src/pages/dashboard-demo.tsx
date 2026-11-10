@@ -2,7 +2,7 @@
 
 import { Activity, Eye, MessageSquare, Send, TrendingUp } from "@/lib/icons";
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@sanarwa/ui/card";
 import {
   SignalIcon,
   EyeIcon,
@@ -26,7 +26,6 @@ import {
   YAxis,
 } from "recharts";
 
-// Simple demo data
 const demoMetrics = {
   totalCampaigns: 47,
   activeCampaigns: 12,
@@ -82,13 +81,11 @@ export default function DashboardDemo() {
   return (
     <div className="min-h-screen bg-background p-8">
       <div className="max-w-7xl mx-auto space-y-8">
-        {/* Header */}
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold mb-2">Sanarwa Demo</h1>
           <p className="text-muted-foreground">Demo data</p>
         </div>
 
-        {/* Metrics */}
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
           <MetricCard
             title="Total Campaigns"
@@ -116,7 +113,6 @@ export default function DashboardDemo() {
           />
         </div>
 
-        {/* Engagement Metrics */}
         <div className="grid gap-6 md:grid-cols-2">
           <MetricCard
             title="Open Rate"
@@ -132,9 +128,7 @@ export default function DashboardDemo() {
           />
         </div>
 
-        {/* Charts */}
         <div className="grid gap-6 lg:grid-cols-2">
-          {/* Campaign Performance */}
           <Card className="p-6">
             <CardHeader>
               <CardTitle>Campaign Performance</CardTitle>
@@ -155,7 +149,6 @@ export default function DashboardDemo() {
             </CardContent>
           </Card>
 
-          {/* Channel Distribution */}
           <Card className="p-6">
             <CardHeader>
               <CardTitle>Channel Distribution</CardTitle>
@@ -185,7 +178,6 @@ export default function DashboardDemo() {
           </Card>
         </div>
 
-        {/* Recent Activity */}
         <Card className="p-6">
           <CardHeader>
             <CardTitle>Recent Activity (24h)</CardTitle>
@@ -206,7 +198,6 @@ export default function DashboardDemo() {
           </CardContent>
         </Card>
 
-        {/* Quick Actions */}
         <Card className="p-6">
           <CardHeader>
             <CardTitle>Quick Actions</CardTitle>

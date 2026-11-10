@@ -4,18 +4,12 @@ import { Filter } from "@/lib/icons";
 
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { providerApi } from "@/lib/api/provider";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { providerApi } from "@sanarwa/api-client";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@sanarwa/ui/card";
+import { Badge } from "@sanarwa/ui/badge";
+import { Button } from "@sanarwa/ui/button";
+import { Input } from "@sanarwa/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@sanarwa/ui/select";
 import {
   EllipsisHorizontalIcon,
   MagnifyingGlassIcon,
@@ -31,7 +25,7 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+} from "@sanarwa/ui/dropdown-menu";
 import { ProviderType } from "@/lib/types/provider";
 import Link from "@/compat/next-link";
 import { useTenant } from "@/contexts/tenant-context";
@@ -72,29 +66,6 @@ export function ProviderList() {
         return "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300";
       default:
         return "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300";
-    }
-  };
-
-  const getHealthColor = (health: string) => {
-    switch (health) {
-      case "healthy":
-        return "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300";
-      case "degraded":
-        return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300";
-      case "unhealthy":
-        return "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300";
-      default:
-        return "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300";
-    }
-  };
-
-  const handleTestProvider = async (providerId: string, providerName: string) => {
-    try {
-      toast.loading(`Testing ${providerName}...`);
-      await providerApi.testProvider(providerId);
-      toast.success(`${providerName} test successful`);
-    } catch (error: any) {
-      toast.error(`${providerName} test failed: ${error.message}`);
     }
   };
 
@@ -156,7 +127,6 @@ export function ProviderList() {
 
   return (
     <div className="space-y-6">
-      {/* Filters */}
       <div className="flex gap-4">
         <div className="relative flex-1 max-w-sm">
           <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -182,7 +152,6 @@ export function ProviderList() {
         </Select>
       </div>
 
-      {/* Provider List */}
       {providers.length === 0 ? (
         <Card>
           <CardContent className="pt-6">
@@ -222,9 +191,6 @@ export function ProviderList() {
                   </div>
                   <div className="flex items-center gap-2">
                     <Badge className={getStatusColor(provider.status)}>{provider.status}</Badge>
-                    <Badge className={getHealthColor(provider.healthStatus)}>
-                      {provider.healthStatus}
-                    </Badge>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <Button variant="ghost" size="sm">
@@ -239,12 +205,6 @@ export function ProviderList() {
                             <Cog6ToothIcon className="h-4 w-4 mr-2" />
                             Configure
                           </Link>
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          onClick={() => handleTestProvider(provider.id, provider.name)}
-                        >
-                          <BeakerIcon className="h-4 w-4 mr-2" />
-                          Test
                         </DropdownMenuItem>
                         <DropdownMenuItem
                           onClick={() =>

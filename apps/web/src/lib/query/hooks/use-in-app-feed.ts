@@ -1,10 +1,8 @@
 "use client";
 
-import { apiClient } from "@/lib/api/client";
+import { apiClient } from "@sanarwa/api-client";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
-// World-class Novu-style feed hook - API feeding (poll) minimal for 1+1 @700M
-// Polls every 30s, socket realtime can be added via InAppGateway /in-app later
 export interface InAppFeedItem {
   id: string;
   title: string;
@@ -45,7 +43,7 @@ export function useInAppFeed(tenantId?: string, subscriberId?: string, feedId = 
     },
     enabled,
     staleTime: 15_000,
-    refetchInterval: 30_000, // API feeding fine for minimal 250 burst
+    refetchInterval: 30_000,
     refetchOnWindowFocus: true,
   });
 
@@ -109,7 +107,11 @@ export function useInAppActions(tenantId?: string, subscriberId?: string) {
 
   const markArchived = useMutation({
     mutationFn: async (ids: string[]) => {
-      return apiClient.patch(`/tenants/${tenantId}/in-app/archived`, { subscriberId, messageIds: ids, archived: true });
+      return apiClient.patch(`/tenants/${tenantId}/in-app/archived`, {
+        subscriberId,
+        messageIds: ids,
+        archived: true,
+      });
     },
     onSuccess: invalidate,
   });

@@ -1,7 +1,7 @@
 "use client";
 
 import { TeamManagement } from "@/components/tenant/team-management";
-import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardDescription, CardHeader, CardTitle } from "@sanarwa/ui/card";
 import { useTenant } from "@/contexts/tenant-context";
 import { ArrowPathIcon } from "@heroicons/react/24/outline";
 

@@ -2,26 +2,20 @@
 
 import { AlertCircle, Lightbulb, Star, ThumbsDown, ThumbsUp } from "@/lib/icons";
 
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@sanarwa/ui/badge";
+import { Button } from "@sanarwa/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@sanarwa/ui/card";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
+} from "@sanarwa/ui/dialog";
+import { Input } from "@sanarwa/ui/input";
+import { Label } from "@sanarwa/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@sanarwa/ui/select";
+import { Textarea } from "@sanarwa/ui/textarea";
 import { toast } from "@/lib/utils/toast";
 import {
   ExclamationCircleIcon,
@@ -74,7 +68,6 @@ export function FeedbackSystem({ page, category, onSubmit }: FeedbackSystemProps
       if (onSubmit) {
         await onSubmit(feedback);
       } else {
-        // Simulate API call
         await new Promise((resolve) => setTimeout(resolve, 500));
       }
 
@@ -107,10 +100,8 @@ export function FeedbackSystem({ page, category, onSubmit }: FeedbackSystemProps
       if (onSubmit) {
         await onSubmit(feedback);
       } else {
-        // Simulate API call with analytics tracking
         await new Promise((resolve) => setTimeout(resolve, 1000));
 
-        // Track feedback analytics (in real implementation)
         console.log("Feedback submitted:", {
           ...feedback,
           timestamp: new Date().toISOString(),
@@ -121,7 +112,6 @@ export function FeedbackSystem({ page, category, onSubmit }: FeedbackSystemProps
       setSubmitted(true);
       toast.success("Thank you for your detailed feedback!");
 
-      // Reset form after a delay
       setTimeout(() => {
         setIsOpen(false);
         setSubmitted(false);
@@ -154,7 +144,6 @@ export function FeedbackSystem({ page, category, onSubmit }: FeedbackSystemProps
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
-        {/* Quick Feedback Buttons */}
         <div className="flex gap-2">
           <Button
             variant="outline"
@@ -178,7 +167,6 @@ export function FeedbackSystem({ page, category, onSubmit }: FeedbackSystemProps
           </Button>
         </div>
 
-        {/* Detailed Feedback Dialog */}
         <Dialog open={isOpen} onOpenChange={setIsOpen}>
           <DialogTrigger asChild>
             <Button variant="ghost" size="sm" className="text-muted-foreground">
@@ -202,7 +190,6 @@ export function FeedbackSystem({ page, category, onSubmit }: FeedbackSystemProps
               </div>
             ) : (
               <div className="space-y-4">
-                {/* Feedback Type */}
                 <div className="space-y-2">
                   <Label>Feedback Type</Label>
                   <Select
@@ -228,7 +215,6 @@ export function FeedbackSystem({ page, category, onSubmit }: FeedbackSystemProps
                   </Select>
                 </div>
 
-                {/* Rating (for helpful/not-helpful feedback) */}
                 {(feedbackType === "helpful" || feedbackType === "not-helpful") && (
                   <div className="space-y-2">
                     <Label>Rating (optional)</Label>
@@ -254,7 +240,6 @@ export function FeedbackSystem({ page, category, onSubmit }: FeedbackSystemProps
                   </div>
                 )}
 
-                {/* Comment */}
                 <div className="space-y-2">
                   <Label htmlFor="comment">
                     {feedbackType === "bug-report"
@@ -282,7 +267,6 @@ export function FeedbackSystem({ page, category, onSubmit }: FeedbackSystemProps
                   />
                 </div>
 
-                {/* Email (optional) */}
                 <div className="space-y-2">
                   <Label htmlFor="email">Email (optional)</Label>
                   <Input
@@ -297,7 +281,6 @@ export function FeedbackSystem({ page, category, onSubmit }: FeedbackSystemProps
                   </p>
                 </div>
 
-                {/* Submit Button */}
                 <Button
                   onClick={handleDetailedFeedback}
                   disabled={isSubmitting || !comment.trim()}
@@ -317,7 +300,6 @@ export function FeedbackSystem({ page, category, onSubmit }: FeedbackSystemProps
           </DialogContent>
         </Dialog>
 
-        {/* Page Info */}
         <div className="text-xs text-muted-foreground space-y-1">
           <div className="flex gap-2">
             <Badge variant="outline" className="text-xs">

@@ -2,8 +2,8 @@
 
 import { Shield, ShieldCheck, User, UserX } from "@/lib/icons";
 
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { Badge } from "@sanarwa/ui/badge";
+import { Button } from "@sanarwa/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -11,17 +11,10 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+} from "@sanarwa/ui/dropdown-menu";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@sanarwa/ui/table";
 import { useTenant } from "@/contexts/tenant-context";
-import { tenantApi } from "@/lib/api/tenant";
+import { tenantApi } from "@sanarwa/api-client";
 import { Invitation, Tenant, TenantMemberRole } from "@/lib/types/tenant";
 import {
   ClockIcon,
@@ -81,7 +74,6 @@ export function MemberInvitations({ invitations, tenant }: MemberInvitationsProp
     setLoadingActions((prev) => ({ ...prev, [memberId]: true }));
 
     try {
-      // In a real app, this would call a resend invitation API
       await fetch(`/api/tenants/${tenant.id}/invitations/${memberId}/resend`, {
         method: "POST",
         credentials: "include",
@@ -104,7 +96,6 @@ export function MemberInvitations({ invitations, tenant }: MemberInvitationsProp
     setLoadingActions((prev) => ({ ...prev, [memberId]: true }));
 
     try {
-      // In a real app, this would call the revoke invitation API
       await tenantApi.cancelInvitation(memberId);
       await refreshTenants();
       toast.success(`Invitation revoked for ${email}`);
@@ -133,7 +124,7 @@ export function MemberInvitations({ invitations, tenant }: MemberInvitationsProp
 
   const isExpiringSoon = (dateString: string) => {
     const inviteDate = new Date(dateString);
-    const expiryDate = new Date(inviteDate.getTime() + 7 * 24 * 60 * 60 * 1000); // 7 days from invite
+    const expiryDate = new Date(inviteDate.getTime() + 7 * 24 * 60 * 60 * 1000);
     const now = new Date();
     const hoursUntilExpiry = Math.floor((expiryDate.getTime() - now.getTime()) / (1000 * 60 * 60));
 

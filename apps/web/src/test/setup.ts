@@ -2,12 +2,10 @@ import "@testing-library/jest-dom";
 import { cleanup } from "@testing-library/react";
 import { afterEach, beforeAll, vi } from "vitest";
 
-// Cleanup after each test case
 afterEach(() => {
   cleanup();
 });
 
-// Mock Next.js router
 vi.mock("next/navigation", () => ({
   useRouter: () => ({
     push: vi.fn(),
@@ -21,12 +19,10 @@ vi.mock("next/navigation", () => ({
   usePathname: () => "/",
 }));
 
-// Mock Next.js image component - simple string return to avoid JSX issues
 vi.mock("next/image", () => ({
   default: (props: any) => `Image: ${props.alt || props.src}`,
 }));
 
-// Mock js-cookie
 vi.mock("js-cookie", () => ({
   default: {
     get: vi.fn(),
@@ -35,7 +31,6 @@ vi.mock("js-cookie", () => ({
   },
 }));
 
-// Mock window.matchMedia (only in DOM environment)
 if (typeof window !== "undefined") {
   Object.defineProperty(window, "matchMedia", {
     writable: true,
@@ -52,7 +47,6 @@ if (typeof window !== "undefined") {
   });
 }
 
-// Mock ResizeObserver (only in DOM environment)
 if (typeof global !== "undefined") {
   global.ResizeObserver = vi.fn().mockImplementation(() => ({
     observe: vi.fn(),
@@ -60,7 +54,6 @@ if (typeof global !== "undefined") {
     disconnect: vi.fn(),
   }));
 
-  // Mock IntersectionObserver
   global.IntersectionObserver = vi.fn().mockImplementation(() => ({
     observe: vi.fn(),
     unobserve: vi.fn(),
@@ -68,7 +61,6 @@ if (typeof global !== "undefined") {
   }));
 }
 
-// Suppress console errors in tests unless explicitly needed
 beforeAll(() => {
   const originalError = console.error;
   console.error = (...args: any[]) => {

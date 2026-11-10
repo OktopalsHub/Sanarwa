@@ -2,7 +2,7 @@
 
 import { Shield, ShieldCheck, User, UserCheck, UserX } from "@/lib/icons";
 
-import { Button } from "@/components/ui/button";
+import { Button } from "@sanarwa/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -10,15 +10,9 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
-import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+} from "@sanarwa/ui/dialog";
+import { Label } from "@sanarwa/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@sanarwa/ui/select";
 import { Tenant, TenantMember, TenantRole } from "@/lib/types/tenant";
 import {
   BookmarkIcon,
@@ -42,7 +36,7 @@ const roleOptions = [
     label: "Owner",
     icon: ShieldCheck,
     description: "Full access to all features and settings",
-    disabled: true, // Can't assign owner role
+    disabled: true,
   },
   {
     value: "admin" as const,
@@ -91,7 +85,6 @@ export function EditMemberDialog({
       await onRoleChange(member.id, selectedRole);
       onOpenChange(false);
     } catch (error) {
-      // Error handling is done in the parent component
     } finally {
       setIsLoading(false);
     }

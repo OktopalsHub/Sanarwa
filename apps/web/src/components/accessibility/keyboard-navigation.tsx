@@ -59,7 +59,6 @@ export const KeyboardNavigation = forwardRef<HTMLDivElement, KeyboardNavigationP
 
 KeyboardNavigation.displayName = "KeyboardNavigation";
 
-// Roving tabindex implementation for complex navigation patterns
 interface RovingTabindexProps {
   children: React.ReactNode;
   orientation?: "horizontal" | "vertical";
@@ -82,7 +81,6 @@ export function RovingTabindex({
     let currentIndex = 0;
     const items = FocusManager.getFocusableElements(container);
 
-    // Set initial tabindex values
     items.forEach((item, index) => {
       item.setAttribute("tabindex", index === 0 ? "0" : "-1");
     });
@@ -177,7 +175,6 @@ export function RovingTabindex({
   );
 }
 
-// Focus trap component for modals and dialogs
 interface FocusTrapProps {
   children: React.ReactNode;
   active?: boolean;
@@ -200,10 +197,8 @@ export function FocusTrap({
     const container = containerRef.current;
     if (!container) return;
 
-    // Store the previously focused element
     previousFocusRef.current = document.activeElement as HTMLElement;
 
-    // Focus the first focusable element in the trap
     const focusableElements = FocusManager.getFocusableElements(container);
     if (focusableElements.length > 0) {
       focusableElements[0]?.focus();
@@ -220,7 +215,6 @@ export function FocusTrap({
     return () => {
       document.removeEventListener("keydown", handleKeyDown);
 
-      // Restore focus to the previously focused element
       if (restoreFocus && previousFocusRef.current) {
         previousFocusRef.current.focus();
       }
@@ -234,7 +228,6 @@ export function FocusTrap({
   );
 }
 
-// Announcement component for screen readers
 interface AnnouncementProps {
   message: string;
   priority?: "polite" | "assertive";

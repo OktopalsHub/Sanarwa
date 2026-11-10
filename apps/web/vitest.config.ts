@@ -10,12 +10,10 @@ export default defineConfig({
     globals: true,
     css: true,
     include: [
-      "src/lib/config/__tests__/validation.test.ts",
-      "src/lib/config/__tests__/config-provider.test.tsx",
-      "src/lib/config/__tests__/security-basic.test.ts",
-      "src/lib/config/__tests__/config-basic.test.ts",
-      "src/lib/hooks/__tests__/use-realtime-notifications.test.tsx",
-      "src/lib/store/slices/__tests__/notification-slice.test.ts",
+      "src/lib/__tests__/tenant-membership.test.ts",
+      "src/lib/utils/__tests__/color-contrast.test.ts",
+      "src/lib/query/hooks/__tests__/use-notification-queries.test.tsx",
+      "src/components/monitoring/__tests__/monitoring-system.test.tsx",
     ],
     coverage: {
       provider: "v8",

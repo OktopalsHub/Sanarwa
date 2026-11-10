@@ -1,15 +1,14 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
+import { Button } from "@sanarwa/ui/button";
+import { Card } from "@sanarwa/ui/card";
+import { Skeleton } from "@sanarwa/ui/skeleton";
 import { useDashboardData } from "@/hooks/use-dashboard-data";
 import { useTenantBasePath } from "@/hooks/use-tenant-slug";
 import { useTenant } from "@/contexts/tenant-context";
-import { apiClient } from "@/lib/api/client";
-import { providerApi } from "@/lib/api/provider";
-import { projectApi } from "@/lib/api/project";
-import { apiKeyApi } from "@/lib/api/api-key";
+import { providerApi } from "@sanarwa/api-client";
+import { projectApi } from "@sanarwa/api-client";
+import { apiKeyApi } from "@sanarwa/api-client";
 import { DashboardChart } from "./dashboard-chart";
 import { DashboardEmpty, DashboardSetup } from "./dashboard-states";
 import { MetricCard } from "./metric-card";
@@ -32,7 +31,6 @@ export function DashboardOverview() {
   const setup = useQuery({
     queryKey: ["dashboard-setup", selectedTenant?.id],
     queryFn: async () => {
-      if (selectedTenant?.id) apiClient.setTenant(selectedTenant.id);
       const [providers, projects] = await Promise.all([
         providerApi.getProviders({ limit: 1 }).catch(() => ({ data: [] })),
         projectApi.getProjects({ limit: 5 }).catch(() => ({ data: [] })),
@@ -107,29 +105,58 @@ export function DashboardOverview() {
             />
           </div>
 
-          {/* F-Shape: Left 2/3 Template Editors + Channel, Right 1/3 Quick actions sticky */}
           <div className="grid min-w-0 gap-4 lg:grid-cols-3">
             <div className="min-w-0 space-y-4 lg:col-span-2">
               <Card className="border-border bg-card p-6">
                 <h3 className="mb-1 text-base font-semibold">Template studio</h3>
-                <p className="mb-3 text-sm text-muted-foreground">Edit per channel - email/sms/whatsapp/push/in-app/voice with handlebars</p>
+                <p className="mb-3 text-sm text-muted-foreground">
+                  Edit per channel - email/sms/whatsapp/push/in-app/voice with handlebars
+                </p>
                 <div className="flex flex-wrap gap-2">
-                  <Button asChild size="sm"><Link href={`${basePath}/campaigns`}>Open campaign wizard</Link></Button>
-                  <Button asChild variant="outline" size="sm"><Link href={`${basePath}/providers`}>Providers</Link></Button>
+                  <Button asChild size="sm">
+                    <Link href={`${basePath}/campaigns`}>Open campaign wizard</Link>
+                  </Button>
+                  <Button asChild variant="outline" size="sm">
+                    <Link href={`${basePath}/providers`}>Providers</Link>
+                  </Button>
                 </div>
-                <p className="mt-3 text-xs text-muted-foreground">F-pattern: left editors scan first, right actions sticky.</p>
+                <p className="mt-3 text-xs text-muted-foreground">
+                  F-pattern: left editors scan first, right actions sticky.
+                </p>
               </Card>
-              <DashboardChart title="Channel Distribution" data={data?.channelDistribution ?? []} type="pie" height={300} />
+              <DashboardChart
+                title="Channel Distribution"
+                data={data?.channelDistribution ?? []}
+                type="pie"
+                height={300}
+              />
             </div>
             <div className="space-y-4">
               <Card className="border-border bg-card p-6 lg:sticky lg:top-20">
                 <h3 className="mb-1 text-base font-semibold">Quick actions</h3>
                 <p className="mb-4 text-sm text-muted-foreground">Common workspace tasks</p>
                 <div className="flex flex-col gap-2">
-                  <Button asChild variant="outline" className="w-full justify-start"><Link href={`${basePath}/messages`}><IconInbox data-icon="inline-start" />View messages</Link></Button>
-                  <Button asChild variant="outline" className="w-full justify-start"><Link href={`${basePath}/providers`}><IconBolt data-icon="inline-start" />Manage providers</Link></Button>
-                  <Button asChild variant="outline" className="w-full justify-start"><Link href={`${basePath}/api-keys`}><IconKey data-icon="inline-start" />API keys</Link></Button>
-                  <Button asChild variant="outline" className="w-full justify-start"><Link href={`${basePath}/analytics`}>View analytics</Link></Button>
+                  <Button asChild variant="outline" className="w-full justify-start">
+                    <Link href={`${basePath}/messages`}>
+                      <IconInbox data-icon="inline-start" />
+                      View messages
+                    </Link>
+                  </Button>
+                  <Button asChild variant="outline" className="w-full justify-start">
+                    <Link href={`${basePath}/providers`}>
+                      <IconBolt data-icon="inline-start" />
+                      Manage providers
+                    </Link>
+                  </Button>
+                  <Button asChild variant="outline" className="w-full justify-start">
+                    <Link href={`${basePath}/api-keys`}>
+                      <IconKey data-icon="inline-start" />
+                      API keys
+                    </Link>
+                  </Button>
+                  <Button asChild variant="outline" className="w-full justify-start">
+                    <Link href={`${basePath}/analytics`}>View analytics</Link>
+                  </Button>
                 </div>
               </Card>
             </div>

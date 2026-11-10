@@ -50,7 +50,6 @@ class AuditLogger {
         body: JSON.stringify(data),
       });
     } catch (error) {
-      // Don't throw audit logging errors to avoid breaking the main flow
       console.error("Failed to log audit entry:", error);
     }
   }
@@ -90,7 +89,6 @@ class AuditLogger {
     }>(`/tenants/${tenantId}/audit?${searchParams.toString()}`);
   }
 
-  // Convenience methods for common actions
   async logLogin(): Promise<void> {
     return this.log({
       action: "login",

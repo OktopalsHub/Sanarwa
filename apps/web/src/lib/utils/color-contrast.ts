@@ -1,13 +1,16 @@
-/**
- * Color contrast utilities for accessibility compliance
- * Implements WCAG 2.1 AA standards for color contrast ratios
- */
-
-/**
- * Convert hex color to RGB values
- */
 export function hexToRgb(hex: string): { r: number; g: number; b: number } | null {
-  const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+  const trimmed = hex.trim().replace(/^#/, "");
+
+  const short = /^([a-f\d])([a-f\d])([a-f\d])$/i.exec(trimmed);
+  if (short && short[1] && short[2] && short[3]) {
+    return {
+      r: parseInt(short[1] + short[1], 16),
+      g: parseInt(short[2] + short[2], 16),
+      b: parseInt(short[3] + short[3], 16),
+    };
+  }
+
+  const result = /^([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(trimmed);
   return result && result[1] && result[2] && result[3]
     ? {
         r: parseInt(result[1], 16),
@@ -17,11 +20,7 @@ export function hexToRgb(hex: string): { r: number; g: number; b: number } | nul
     : null;
 }
 
-/**
- * Convert OKLCH color to RGB (simplified approximation)
- */
 function oklchToRgb(oklch: string): { r: number; g: number; b: number } | null {
-  // Extract values from oklch(L C H) format
   const match = oklch.match(/oklch\(([^)]+)\)/);
   if (!match || !match[1]) return null;
 
@@ -30,16 +29,12 @@ function oklchToRgb(oklch: string): { r: number; g: number; b: number } | null {
 
   const [l, c, h] = values;
 
-  // Check if values are valid numbers
   if (l === undefined || c === undefined) return null;
 
-  // Simplified conversion (for demonstration - real implementation would be more complex)
-  // This is a basic approximation for common cases
   const lightness = l * 255;
   const chroma = c * 100;
   const hue = h || 0;
 
-  // Convert to RGB (simplified)
   const r = Math.max(0, Math.min(255, lightness + chroma * Math.cos((hue * Math.PI) / 180)));
   const g = Math.max(
     0,
@@ -53,21 +48,15 @@ function oklchToRgb(oklch: string): { r: number; g: number; b: number } | null {
   return { r: Math.round(r), g: Math.round(g), b: Math.round(b) };
 }
 
-/**
- * Parse color string to RGB values
- */
 function parseColor(color: string): { r: number; g: number; b: number } | null {
-  // Handle hex colors
   if (color.startsWith("#")) {
     return hexToRgb(color);
   }
 
-  // Handle OKLCH colors
   if (color.startsWith("oklch(")) {
     return oklchToRgb(color);
   }
 
-  // Handle RGB colors
   const rgbMatch = color.match(/rgb\((\d+),\s*(\d+),\s*(\d+)\)/);
   if (rgbMatch && rgbMatch[1] && rgbMatch[2] && rgbMatch[3]) {
     return {
@@ -80,16 +69,12 @@ function parseColor(color: string): { r: number; g: number; b: number } | null {
   return null;
 }
 
-/**
- * Calculate relative luminance of a color
- */
 export function getRelativeLuminance(r: number, g: number, b: number): number {
   const [rs, gs, bs] = [r, g, b].map((c) => {
     c = c / 255;
     return c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
   });
 
-  // Ensure all values are defined (they should be since we're mapping over numbers)
   if (rs === undefined || gs === undefined || bs === undefined) {
     return 0;
   }
@@ -97,16 +82,13 @@ export function getRelativeLuminance(r: number, g: number, b: number): number {
   return 0.2126 * rs + 0.7152 * gs + 0.0722 * bs;
 }
 
-/**
- * Calculate contrast ratio between two colors
- */
 export function getContrastRatio(color1: string, color2: string): number {
   const rgb1 = parseColor(color1);
   const rgb2 = parseColor(color2);
 
   if (!rgb1 || !rgb2) {
     console.warn("Unable to parse colors for contrast calculation:", { color1, color2 });
-    return 1; // Return minimum contrast if parsing fails
+    return 1;
   }
 
   const l1 = getRelativeLuminance(rgb1.r, rgb1.g, rgb1.b);
@@ -118,25 +100,16 @@ export function getContrastRatio(color1: string, color2: string): number {
   return (lighter + 0.05) / (darker + 0.05);
 }
 
-/**
- * Check if color combination meets WCAG AA standards
- */
 export function meetsWCAGAA(foreground: string, background: string, isLargeText = false): boolean {
   const ratio = getContrastRatio(foreground, background);
   return isLargeText ? ratio >= 3 : ratio >= 4.5;
 }
 
-/**
- * Check if color combination meets WCAG AAA standards
- */
 export function meetsWCAGAAA(foreground: string, background: string, isLargeText = false): boolean {
   const ratio = getContrastRatio(foreground, background);
   return isLargeText ? ratio >= 4.5 : ratio >= 7;
 }
 
-/**
- * Get accessibility level for color combination
- */
 export function getAccessibilityLevel(
   foreground: string,
   background: string,
@@ -147,9 +120,6 @@ export function getAccessibilityLevel(
   return "FAIL";
 }
 
-/**
- * Suggest accessible color alternatives
- */
 export function suggestAccessibleColor(
   baseColor: string,
   backgroundColor: string,
@@ -160,22 +130,20 @@ export function suggestAccessibleColor(
   const currentRatio = getContrastRatio(baseColor, backgroundColor);
 
   if (currentRatio >= targetRatio) {
-    return baseColor; // Already meets requirements
+    return baseColor;
   }
 
   const baseRgb = parseColor(baseColor);
   const bgRgb = parseColor(backgroundColor);
 
   if (!baseRgb || !bgRgb) {
-    return baseColor; // Return original if parsing fails
+    return baseColor;
   }
 
   const bgLuminance = getRelativeLuminance(bgRgb.r, bgRgb.g, bgRgb.b);
 
-  // Determine if we should make the color lighter or darker
   const shouldLighten = bgLuminance < 0.5;
 
-  // Adjust color iteratively
   let adjustedColor = baseColor;
   let iterations = 0;
   const maxIterations = 50;
@@ -199,9 +167,6 @@ export function suggestAccessibleColor(
   return adjustedColor;
 }
 
-/**
- * Validate color palette for accessibility
- */
 export interface ColorValidationResult {
   isValid: boolean;
   issues: Array<{
@@ -246,7 +211,6 @@ export function validateColorPalette(colors: {
   return { isValid, issues };
 }
 
-// Additional utility functions for tests
 export function rgbToHsl(r: number, g: number, b: number): { h: number; s: number; l: number } {
   r /= 255;
   g /= 255;
@@ -259,7 +223,7 @@ export function rgbToHsl(r: number, g: number, b: number): { h: number; s: numbe
   const l = (max + min) / 2;
 
   if (max === min) {
-    h = s = 0; // achromatic
+    h = s = 0;
   } else {
     const d = max - min;
     s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
@@ -303,5 +267,9 @@ export function generateAccessibleColor(
   backgroundColor: string,
   level: "AA" | "AAA" = "AA",
 ): string {
-  return suggestAccessibleColor("#000000", backgroundColor, level);
+  const bgRgb = parseColor(backgroundColor);
+  const bgLuminance = bgRgb ? getRelativeLuminance(bgRgb.r, bgRgb.g, bgRgb.b) : 0.5;
+  const baseColor = bgLuminance < 0.5 ? "#ffffff" : "#000000";
+
+  return suggestAccessibleColor(baseColor, backgroundColor, level);
 }

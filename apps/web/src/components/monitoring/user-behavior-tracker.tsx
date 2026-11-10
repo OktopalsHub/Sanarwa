@@ -9,7 +9,6 @@ interface UserBehaviorTrackerProps {
 }
 
 export default function UserBehaviorTracker({ children }: UserBehaviorTrackerProps) {
-  // Disable all tracking in development
   if (process.env.NODE_ENV === "development") {
     return <>{children}</>;
   }
@@ -22,9 +21,7 @@ export default function UserBehaviorTracker({ children }: UserBehaviorTrackerPro
   const scrollDepth = useRef<number>(0);
 
   useEffect(() => {
-    // Track page navigation
     if (previousPathname.current && previousPathname.current !== pathname) {
-      // Track navigation event
       analyticsTracker.trackEvent("page_navigation", {
         from: previousPathname.current,
         to: pathname,
@@ -33,7 +30,6 @@ export default function UserBehaviorTracker({ children }: UserBehaviorTrackerPro
         maxScrollDepthOnPreviousPage: scrollDepth.current,
       });
 
-      // Reset page-specific metrics
       pageStartTime.current = Date.now();
       interactionCount.current = 0;
       scrollDepth.current = 0;
@@ -43,7 +39,6 @@ export default function UserBehaviorTracker({ children }: UserBehaviorTrackerPro
   }, [pathname]);
 
   useEffect(() => {
-    // Track user interactions
     const trackInteraction = (event: Event) => {
       interactionCount.current++;
 
@@ -58,13 +53,11 @@ export default function UserBehaviorTracker({ children }: UserBehaviorTrackerPro
         pageUrl: window.location.href,
       });
 
-      // Track specific interaction types
       if (event.type === "click") {
         trackClickBehavior(event as MouseEvent, elementInfo);
       }
     };
 
-    // Track scroll behavior
     const trackScroll = () => {
       const scrollPercent = Math.round(
         (window.scrollY / (document.documentElement.scrollHeight - window.innerHeight)) * 100,
@@ -73,7 +66,6 @@ export default function UserBehaviorTracker({ children }: UserBehaviorTrackerPro
       if (scrollPercent > scrollDepth.current) {
         scrollDepth.current = scrollPercent;
 
-        // Track scroll milestones
         if (scrollPercent >= 25 && scrollDepth.current < 25) {
           analyticsTracker.trackEvent("scroll_milestone", { depth: 25 });
         } else if (scrollPercent >= 50 && scrollDepth.current < 50) {
@@ -86,7 +78,6 @@ export default function UserBehaviorTracker({ children }: UserBehaviorTrackerPro
       }
     };
 
-    // Track form interactions
     const trackFormInteraction = (event: Event) => {
       const target = event.target as HTMLFormElement | HTMLInputElement;
 
@@ -115,7 +106,6 @@ export default function UserBehaviorTracker({ children }: UserBehaviorTrackerPro
       }
     };
 
-    // Track keyboard shortcuts
     const trackKeyboardShortcut = (event: KeyboardEvent) => {
       if (event.ctrlKey || event.metaKey || event.altKey) {
         analyticsTracker.trackEvent("keyboard_shortcut", {
@@ -128,7 +118,6 @@ export default function UserBehaviorTracker({ children }: UserBehaviorTrackerPro
       }
     };
 
-    // Track page visibility changes
     const trackVisibilityChange = () => {
       analyticsTracker.trackEvent("page_visibility_change", {
         hidden: document.hidden,
@@ -136,7 +125,6 @@ export default function UserBehaviorTracker({ children }: UserBehaviorTrackerPro
       });
     };
 
-    // Track user idle/active states
     let idleTimer: NodeJS.Timeout;
     let isIdle = false;
 
@@ -156,10 +144,9 @@ export default function UserBehaviorTracker({ children }: UserBehaviorTrackerPro
         isIdle = true;
         idleStartTime = Date.now();
         analyticsTracker.trackEvent("user_idle");
-      }, 30000); // 30 seconds of inactivity
+      }, 30000);
     };
 
-    // Add event listeners
     document.addEventListener("click", trackInteraction);
     document.addEventListener("keydown", trackInteraction);
     document.addEventListener("keydown", trackKeyboardShortcut);
@@ -169,14 +156,12 @@ export default function UserBehaviorTracker({ children }: UserBehaviorTrackerPro
     document.addEventListener("visibilitychange", trackVisibilityChange);
     window.addEventListener("scroll", trackScroll, { passive: true });
 
-    // Idle tracking
     document.addEventListener("mousemove", resetIdleTimer);
     document.addEventListener("keydown", resetIdleTimer);
     document.addEventListener("click", resetIdleTimer);
     document.addEventListener("scroll", resetIdleTimer);
     resetIdleTimer();
 
-    // Track session start
     analyticsTracker.trackEvent("session_start", {
       userAgent: navigator.userAgent,
       screenResolution: `${screen.width}x${screen.height}`,
@@ -185,7 +170,6 @@ export default function UserBehaviorTracker({ children }: UserBehaviorTrackerPro
       language: navigator.language,
     });
 
-    // Cleanup
     return () => {
       document.removeEventListener("click", trackInteraction);
       document.removeEventListener("keydown", trackInteraction);
@@ -202,7 +186,6 @@ export default function UserBehaviorTracker({ children }: UserBehaviorTrackerPro
       document.removeEventListener("scroll", resetIdleTimer);
       clearTimeout(idleTimer);
 
-      // Track session end
       analyticsTracker.trackEvent("session_end", {
         sessionDuration: Date.now() - sessionStartTime.current,
         totalInteractions: interactionCount.current,
@@ -211,7 +194,6 @@ export default function UserBehaviorTracker({ children }: UserBehaviorTrackerPro
     };
   }, []);
 
-  // Track page load performance
   useEffect(() => {
     if (typeof window !== "undefined" && "performance" in window) {
       window.addEventListener("load", () => {
@@ -235,7 +217,21 @@ export default function UserBehaviorTracker({ children }: UserBehaviorTrackerPro
   return <>{children}</>;
 }
 
-function getElementInfo(element: HTMLElement) {
+function getElementInfo(element: HTMLElement | null | undefined) {
+  if (!element?.tagName) {
+    return {
+      tagName: "unknown",
+      id: "",
+      className: "",
+      textContent: undefined,
+      href: undefined,
+      type: undefined,
+      name: undefined,
+      role: null,
+      ariaLabel: null,
+    };
+  }
+
   return {
     tagName: element.tagName.toLowerCase(),
     id: element.id,
@@ -252,7 +248,6 @@ function getElementInfo(element: HTMLElement) {
 function trackClickBehavior(event: MouseEvent, elementInfo: any) {
   const target = event.target as HTMLElement;
 
-  // Track button clicks
   if (target.tagName === "BUTTON" || target.getAttribute("role") === "button") {
     analyticsTracker.trackEvent("button_click", {
       buttonText: target.textContent?.trim(),
@@ -261,7 +256,6 @@ function trackClickBehavior(event: MouseEvent, elementInfo: any) {
     });
   }
 
-  // Track link clicks
   if (target.tagName === "A") {
     const link = target as HTMLAnchorElement;
     analyticsTracker.trackEvent("link_click", {
@@ -272,7 +266,6 @@ function trackClickBehavior(event: MouseEvent, elementInfo: any) {
     });
   }
 
-  // Track menu/navigation clicks
   if (target.closest("nav") || target.getAttribute("role") === "menuitem") {
     analyticsTracker.trackEvent("navigation_click", {
       navigationItem: target.textContent?.trim(),
@@ -280,7 +273,6 @@ function trackClickBehavior(event: MouseEvent, elementInfo: any) {
     });
   }
 
-  // Track modal/dialog interactions
   if (target.closest('[role="dialog"]') || target.closest(".modal")) {
     analyticsTracker.trackEvent("modal_interaction", {
       action: "click",
@@ -289,7 +281,6 @@ function trackClickBehavior(event: MouseEvent, elementInfo: any) {
     });
   }
 
-  // Track feature usage
   const featureElement = target.closest("[data-feature]");
   if (featureElement) {
     const featureName = featureElement.getAttribute("data-feature");

@@ -1,5 +1,5 @@
-import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
+import { Button } from "@sanarwa/ui/button";
+import { Card } from "@sanarwa/ui/card";
 import { ShieldExclamationIcon } from "@heroicons/react/24/outline";
 
 import Link from "@/compat/next-link";
@@ -35,6 +35,6 @@ export default function UnauthorizedPage() {
 }
 
 export const metadata = {
-  title: "Unauthorized - Notifi",
+  title: "Unauthorized - Sanarwa",
   description: "You do not have permission to access this resource",
 };

@@ -1,12 +1,12 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
+import { Button } from "@sanarwa/ui/button";
+import { Card } from "@sanarwa/ui/card";
 import { useAuth } from "@/contexts/auth-context";
-import { authApi } from "@/lib/api/auth";
+import { authApi } from "@sanarwa/api-client";
 import Link from "@/compat/next-link";
 import { useRouter, useSearchParams } from "@/compat/next-navigation";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 export function VerifyEmail() {
   const router = useRouter();
@@ -14,38 +14,38 @@ export function VerifyEmail() {
   const { user, refreshUser } = useAuth();
   const token = searchParams.get("token");
 
-  const [status, setStatus] = useState<"verifying" | "success" | "error" | "resend">("verifying");
-  const [error, setError] = useState("");
+  const [status, setStatus] = useState<"verifying" | "success" | "error" | "resend">(
+    token ? "verifying" : "error",
+  );
+  const [error, setError] = useState(token ? "" : "Invalid verification link");
   const [isResending, setIsResending] = useState(false);
 
-  useEffect(() => {
-    if (token) {
-      verifyEmail(token);
-    } else {
-      setStatus("error");
-      setError("Invalid verification link");
-    }
-  }, [token]);
+  const verifyEmailToken = useCallback(
+    async (verificationToken: string) => {
+      try {
+        await authApi.verifyEmail({ token: verificationToken });
+        setStatus("success");
+        await refreshUser();
+      } catch (err) {
+        setStatus("error");
+        setError(err instanceof Error ? err.message : "Email verification failed");
+      }
+    },
+    [refreshUser],
+  );
 
-  const verifyEmail = async (verificationToken: string) => {
-    try {
-      await authApi.verifyEmail({ token: verificationToken });
-      setStatus("success");
-      // Refresh user data to update email verification status
-      await refreshUser();
-    } catch (error) {
-      setStatus("error");
-      setError(error instanceof Error ? error.message : "Email verification failed");
-    }
-  };
+  useEffect(() => {
+    if (!token) return;
+    void verifyEmailToken(token);
+  }, [token, verifyEmailToken]);
 
   const handleResendVerification = async () => {
     setIsResending(true);
     try {
       await authApi.resendVerificationEmail();
       setStatus("resend");
-    } catch (error) {
-      setError(error instanceof Error ? error.message : "Failed to resend verification email");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to resend verification email");
     } finally {
       setIsResending(false);
     }

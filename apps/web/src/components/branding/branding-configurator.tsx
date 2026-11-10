@@ -1,11 +1,11 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Separator } from "@/components/ui/separator";
-import { Textarea } from "@/components/ui/textarea";
+import { Button } from "@sanarwa/ui/button";
+import { Card } from "@sanarwa/ui/card";
+import { Input } from "@sanarwa/ui/input";
+import { Label } from "@sanarwa/ui/label";
+import { Separator } from "@sanarwa/ui/separator";
+import { Textarea } from "@sanarwa/ui/textarea";
 import { BrandingConfig, useBranding } from "@/contexts/branding-context";
 import { useBrandApplication } from "@/hooks/use-brand-application";
 import { useThemeCustomization } from "@/hooks/use-theme-customization";
@@ -39,7 +39,6 @@ import { ColorPicker } from "./color-picker";
 import { FontSelector } from "./font-selector";
 import { LogoUploader } from "./logo-uploader";
 
-// NectarHR Orange color presets
 const NECTAR_ORANGE_PRESETS = [
   { name: "Primary Orange", value: "oklch(0.65 0.18 45)", description: "Main brand color" },
   { name: "Light Orange", value: "oklch(0.75 0.15 45)", description: "Lighter variant" },
@@ -107,7 +106,6 @@ export function BrandingConfigurator({ className }: BrandingConfiguratorProps) {
     try {
       applyBranding(localBranding);
       setPreviewMode(false);
-      // In a real application, you would save to the backend here
     } catch (error) {
       console.error("Failed to save branding:", error);
     } finally {
@@ -124,7 +122,6 @@ export function BrandingConfigurator({ className }: BrandingConfiguratorProps) {
   }, [branding, applyBranding]);
 
   const handleReset = useCallback(() => {
-    // Reset to default branding
     const defaultBranding: BrandingConfig = {
       id: "default",
       name: "NectarHR Default",
@@ -193,7 +190,6 @@ export function BrandingConfigurator({ className }: BrandingConfiguratorProps) {
   return (
     <Card className={cn("p-6", className)}>
       <div className="space-y-6">
-        {/* Header */}
         <div className="flex items-center justify-between">
           <div>
             <h3 className="text-lg font-semibold">Brand Configuration</h3>
@@ -211,7 +207,6 @@ export function BrandingConfigurator({ className }: BrandingConfiguratorProps) {
           </div>
         </div>
 
-        {/* Accessibility Report */}
         {(!accessibilityReport.isValid || !brandAccessibilityReport.isValid) && (
           <div className="p-4 bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-800 rounded-lg">
             <div className="flex items-center gap-2 mb-2">
@@ -235,7 +230,6 @@ export function BrandingConfigurator({ className }: BrandingConfiguratorProps) {
           </div>
         )}
 
-        {/* Brand Name */}
         <div className="space-y-2">
           <Label htmlFor="brandName">Brand Name</Label>
           <Input
@@ -248,7 +242,6 @@ export function BrandingConfigurator({ className }: BrandingConfiguratorProps) {
 
         <Separator />
 
-        {/* Tabbed Configuration */}
         <Tabs defaultValue="logos" className="w-full">
           <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="logos" className="flex items-center gap-2">
@@ -412,7 +405,6 @@ export function BrandingConfigurator({ className }: BrandingConfiguratorProps) {
 
         <Separator />
 
-        {/* Actions */}
         <div className="flex flex-wrap items-center gap-2">
           {previewMode ? (
             <>

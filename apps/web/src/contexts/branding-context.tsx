@@ -41,7 +41,6 @@ interface BrandingContextType {
 
 const BrandingContext = createContext<BrandingContextType | undefined>(undefined);
 
-// Default NectarHR branding
 const defaultBranding: BrandingConfig = {
   id: "default",
   name: "NectarHR Default",
@@ -50,9 +49,9 @@ const defaultBranding: BrandingConfig = {
     dark: "/logo-dark.svg",
   },
   colors: {
-    primary: "oklch(0.65 0.18 45)", // NectarHR Orange
+    primary: "oklch(0.65 0.18 45)",
     secondary: "oklch(0.97 0 0)",
-    accent: "oklch(0.6 0.15 240)", // Complementary Blue
+    accent: "oklch(0.6 0.15 240)",
     background: "oklch(1 0 0)",
     foreground: "oklch(0.145 0 0)",
     muted: "oklch(0.97 0 0)",
@@ -77,17 +76,14 @@ export function BrandingProvider({ children }: BrandingProviderProps) {
   const [isLoading, setIsLoading] = useState(true);
   const { currentTenant } = useTenant();
 
-  // Apply CSS custom properties for branding
   const applyCSSVariables = (config: BrandingConfig) => {
     const root = document.documentElement;
 
-    // Apply color variables with proper CSS variable names
     Object.entries(config.colors).forEach(([key, value]) => {
       const cssVar = `--${key.replace(/([A-Z])/g, "-$1").toLowerCase()}`;
       root.style.setProperty(cssVar, value);
     });
 
-    // Apply additional derived colors for better theme integration
     root.style.setProperty("--primary-foreground", "oklch(1 0 0)");
     root.style.setProperty("--secondary-foreground", config.colors.foreground);
     root.style.setProperty("--accent-foreground", "oklch(1 0 0)");
@@ -98,14 +94,12 @@ export function BrandingProvider({ children }: BrandingProviderProps) {
     root.style.setProperty("--input", config.colors.border || "#e2e8f0");
     root.style.setProperty("--ring", config.colors.primary);
 
-    // Apply muted colors with fallbacks
     root.style.setProperty("--muted", config.colors.muted || "#f1f5f9");
     root.style.setProperty("--muted-foreground", config.colors.mutedForeground || "#64748b");
     root.style.setProperty("--border", config.colors.border || "#e2e8f0");
     root.style.setProperty("--destructive", config.colors.destructive || "#ef4444");
     root.style.setProperty("--destructive-foreground", "oklch(1 0 0)");
 
-    // Apply typography
     if (config.typography.fontFamily) {
       root.style.setProperty("--font-family-primary", config.typography.fontFamily);
       root.style.setProperty("--font-sans", config.typography.fontFamily);
@@ -114,7 +108,6 @@ export function BrandingProvider({ children }: BrandingProviderProps) {
       root.style.setProperty("--font-family-heading", config.typography.headingFont);
     }
 
-    // Apply custom CSS if provided
     if (config.customCss) {
       let styleElement = document.getElementById("custom-branding-styles");
       if (!styleElement) {
@@ -125,7 +118,6 @@ export function BrandingProvider({ children }: BrandingProviderProps) {
       styleElement.textContent = config.customCss;
     }
 
-    // Apply branding to document title and meta
     if (typeof document !== "undefined") {
       const title = document.querySelector("title");
       if (title && config.name !== "NectarHR Default") {
@@ -134,7 +126,6 @@ export function BrandingProvider({ children }: BrandingProviderProps) {
     }
   };
 
-  // Load tenant-specific branding
   useEffect(() => {
     const loadBranding = async () => {
       setIsLoading(true);

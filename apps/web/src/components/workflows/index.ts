@@ -1,5 +1,3 @@
-// Workflow components exports
-
 export { WorkflowCanvas } from "./workflow-canvas";
 export { WorkflowConnections } from "./workflow-connections";
 export { WorkflowNodeComponent } from "./workflow-node";

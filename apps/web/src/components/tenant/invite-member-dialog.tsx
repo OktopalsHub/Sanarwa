@@ -2,7 +2,7 @@
 
 import { Send, Shield, User, UserX } from "@/lib/icons";
 
-import { Button } from "@/components/ui/button";
+import { Button } from "@sanarwa/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -10,17 +10,11 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
+} from "@sanarwa/ui/dialog";
+import { Input } from "@sanarwa/ui/input";
+import { Label } from "@sanarwa/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@sanarwa/ui/select";
+import { Textarea } from "@sanarwa/ui/textarea";
 import { useTenant } from "@/contexts/tenant-context";
 import { InviteMemberRequest, Tenant, TenantMemberRole } from "@/lib/types/tenant";
 import { zodResolver } from "@hookform/resolvers/zod";

@@ -1,17 +1,17 @@
 "use client";
 
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@sanarwa/ui/badge";
+import { Button } from "@sanarwa/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@sanarwa/ui/card";
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+} from "@sanarwa/ui/dialog";
+import { ScrollArea } from "@sanarwa/ui/scroll-area";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@sanarwa/ui/tabs";
 import { WorkflowValidator } from "@/lib/services/workflow-validation";
 import { Workflow, WorkflowNode } from "@/lib/types/workflow";
 import {
@@ -49,17 +49,14 @@ export function WorkflowPreview({ workflow, isOpen, onClose, onTest }: WorkflowP
   const [simulationSteps, setSimulationSteps] = useState<SimulationStep[]>([]);
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
 
-  // Validate workflow
   const validationResult = useMemo(() => {
     return WorkflowValidator.validate(workflow);
   }, [workflow]);
 
-  // Generate execution order
   const executionOrder = useMemo(() => {
     const order: WorkflowNode[] = [];
     const visited = new Set<string>();
 
-    // Start with trigger nodes
     const triggerNodes = workflow.nodes.filter((node) => node.type === "trigger");
 
     const traverse = (nodeId: string) => {
@@ -71,7 +68,6 @@ export function WorkflowPreview({ workflow, isOpen, onClose, onTest }: WorkflowP
       visited.add(nodeId);
       order.push(node);
 
-      // Find connected nodes
       const connections = workflow.connections.filter((c) => c.sourceNodeId === nodeId);
       connections.forEach((conn) => traverse(conn.targetNodeId));
     };
@@ -95,7 +91,6 @@ export function WorkflowPreview({ workflow, isOpen, onClose, onTest }: WorkflowP
 
     setSimulationSteps(steps);
 
-    // Simulate execution
     simulateExecution(steps);
   };
 
@@ -103,17 +98,14 @@ export function WorkflowPreview({ workflow, isOpen, onClose, onTest }: WorkflowP
     for (let i = 0; i < steps.length; i++) {
       setCurrentStepIndex(i);
 
-      // Update step to running
       setSimulationSteps((prev) =>
         prev.map((step, index) =>
           index === i ? { ...step, status: "running", startTime: new Date() } : step,
         ),
       );
 
-      // Simulate processing time
       await new Promise((resolve) => setTimeout(resolve, 1000 + Math.random() * 2000));
 
-      // Simulate success/failure (90% success rate)
       const success = Math.random() > 0.1;
 
       setSimulationSteps((prev) =>

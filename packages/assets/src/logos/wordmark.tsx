@@ -7,7 +7,6 @@ type WordmarkProps = {
   className?: string;
 };
 
-/** Logo lockup: mark + wordmark. Use everywhere brand identity appears. */
 export function SanarwaWordmark({
   showMark = true,
   markClassName = "size-8 text-[var(--hm-accent)]",

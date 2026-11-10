@@ -10,7 +10,7 @@ import {
   TokenResponse,
   User,
 } from "./types/auth";
-import { ApiClient, createApiClient } from "./client";
+import { ApiClient, apiClient as sharedApiClient } from "./client";
 
 type RawAuthPayload = {
   accessToken?: string;
@@ -65,25 +65,13 @@ function toAuthResponse(raw: RawAuthPayload): AuthResponse {
   };
 }
 
-/**
- * Authentication API client for handling all auth-related operations
- * Implements login, register, logout, password reset, email verification, and OAuth flows
- */
 class AuthApiClient {
   private apiClient: ApiClient;
 
   constructor(apiClient?: ApiClient) {
-    // Use provided client or create a new one configured for auth (no tenant scoping)
-    this.apiClient = apiClient || createApiClient();
+    this.apiClient = apiClient ?? sharedApiClient;
   }
 
-  // Core Authentication Methods
-
-  /**
-   * Authenticate user with email and password
-   * @param credentials Login credentials (email, password, optional tenantId)
-   * @returns Authentication response with user data and tokens
-   */
   async login(credentials: LoginCredentials): Promise<AuthResponse> {
     const loginData = {
       email: credentials.email,
@@ -97,7 +85,6 @@ class AuthApiClient {
 
     const authResponse = toAuthResponse(response);
 
-    // Store tokens after successful login
     if (authResponse.accessToken) {
       this.apiClient.setAuthToken(authResponse.accessToken);
     }
@@ -108,11 +95,6 @@ class AuthApiClient {
     return authResponse;
   }
 
-  /**
-   * Register new user account
-   * @param userData Registration data (email, password, firstName, lastName, etc.)
-   * @returns Authentication response with user data and tokens
-   */
   async register(userData: RegisterData): Promise<AuthResponse> {
     const registerData = {
       email: userData.email,
@@ -130,7 +112,6 @@ class AuthApiClient {
 
     const authResponse = toAuthResponse(response);
 
-    // Store tokens after successful registration
     if (authResponse.accessToken) {
       this.apiClient.setAuthToken(authResponse.accessToken);
     }
@@ -141,23 +122,13 @@ class AuthApiClient {
     return authResponse;
   }
 
-  /**
-   * Logout current user and clear tokens
-   */
   async logout(): Promise<void> {
     try {
-      // Note: Backend doesn't have logout endpoint implemented yet
-      // await this.apiClient.post<void>('/auth/logout', {}, { tenantScoped: false });
     } finally {
-      // Always clear tokens, even if logout request fails
       this.apiClient.clearTokens();
     }
   }
 
-  /**
-   * Refresh authentication token
-   * @returns New token response
-   */
   async refreshToken(): Promise<TokenResponse> {
     const refreshToken = this.apiClient["tokenStorage"].getRefreshToken();
 
@@ -179,7 +150,6 @@ class AuthApiClient {
       tokenType: "Bearer",
     };
 
-    // Update stored tokens
     if (tokenResponse.accessToken) {
       this.apiClient.setAuthToken(tokenResponse.accessToken);
     }
@@ -190,10 +160,6 @@ class AuthApiClient {
     return tokenResponse;
   }
 
-  /**
-   * Get current authenticated user profile
-   * @returns Current user data
-   */
   async getCurrentUser(): Promise<User> {
     const profile = await this.apiClient.get<
       User & { name?: string; firstName?: string; lastName?: string }
@@ -211,20 +177,10 @@ class AuthApiClient {
     } as User;
   }
 
-  // Password Management Methods
-
-  /**
-   * Request password reset email
-   * @param data Password reset request data (email)
-   */
   async requestPasswordReset(data: PasswordResetRequest): Promise<void> {
     return this.apiClient.post<void>("/auth/forgot-password", data, { tenantScoped: false });
   }
 
-  /**
-   * Confirm password reset with token
-   * @param data Password reset confirmation data (token, new password)
-   */
   async confirmPasswordReset(data: PasswordResetConfirm): Promise<void> {
     return this.apiClient.post<void>(
       "/auth/reset-password",
@@ -236,52 +192,24 @@ class AuthApiClient {
     );
   }
 
-  /**
-   * Change current user's password
-   * @param data Change password request data
-   */
   async changePassword(data: ChangePasswordRequest): Promise<void> {
     return this.apiClient.put<void>("/auth/change-password", data, { tenantScoped: false });
   }
 
-  // Email Verification Methods
-
-  /**
-   * Verify email address with token
-   * @param data Email verification data (token)
-   */
   async verifyEmail(data: EmailVerificationRequest): Promise<void> {
-    // Note: Backend doesn't have verify-email endpoint implemented yet
     return this.apiClient.post<void>("/auth/verify-email", data, { tenantScoped: false });
   }
 
-  /**
-   * Resend email verification email
-   */
   async resendVerificationEmail(): Promise<void> {
-    // Note: Backend doesn't have resend verification endpoint implemented yet
     return this.apiClient.post<void>("/auth/verify-email/resend", {}, { tenantScoped: false });
   }
 
-  // OAuth Methods
-
-  /**
-   * Get OAuth authorization URL for provider
-   * @param provider OAuth provider name (google, github)
-   * @returns Authorization URL to redirect user to
-   */
   getOAuthUrl(provider: "google" | "github"): string {
     const baseUrl = this.apiClient["axiosInstance"].defaults.baseURL;
     return `${baseUrl}/auth/oauth/${provider}`;
   }
 
-  /**
-   * Handle OAuth callback and exchange code for tokens
-   * @param data OAuth login request data
-   * @returns Authentication response
-   */
   async handleOAuthCallback(data: OAuthLoginRequest): Promise<AuthResponse> {
-    // OAuth callback is handled by backend redirect, this is for manual handling if needed
     const response = await this.apiClient.post<{ access_token: string; user?: User }>(
       `/auth/oauth/${data.provider}/callback`,
       {
@@ -300,7 +228,6 @@ class AuthApiClient {
       tokenType: "Bearer",
     };
 
-    // Store tokens after successful OAuth login
     if (authResponse.accessToken) {
       this.apiClient.setAuthToken(authResponse.accessToken);
     }
@@ -308,54 +235,27 @@ class AuthApiClient {
     return authResponse;
   }
 
-  // Session Management Methods
-
-  /**
-   * Check if user is currently authenticated
-   * @returns True if user has valid token
-   */
   isAuthenticated(): boolean {
     const token = this.apiClient["tokenStorage"].getAccessToken();
     return !!token;
   }
 
-  /**
-   * Get current access token
-   * @returns Current access token or null
-   */
   getAccessToken(): string | null {
     return this.apiClient["tokenStorage"].getAccessToken();
   }
 
-  /**
-   * Get current refresh token
-   * @returns Current refresh token or null
-   */
   getRefreshToken(): string | null {
     return this.apiClient["tokenStorage"].getRefreshToken();
   }
 
-  /**
-   * Clear all stored authentication tokens
-   */
   clearTokens(): void {
     this.apiClient.clearTokens();
   }
 
-  // Utility Methods
-
-  /**
-   * Set authentication token manually
-   * @param token JWT access token
-   */
   setAuthToken(token: string): void {
     this.apiClient.setAuthToken(token);
   }
 
-  /**
-   * Set refresh token manually
-   * @param token JWT refresh token
-   */
   setRefreshToken(token: string): void {
     this.apiClient.setRefreshToken(token);
   }

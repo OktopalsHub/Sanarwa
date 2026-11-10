@@ -10,100 +10,85 @@ import {
   UpdateTenantMemberRequest,
   UpdateTenantRequest,
 } from "./types/tenant";
-import { ApiClient, createApiClient } from "./client";
+import { ApiClient, apiClient as sharedApiClient, createApiClient } from "./client";
 
-/**
- * Tenant Management API client for handling all tenant-related operations
- * Implements tenant CRUD operations, member management, invitation system, and tenant switching
- */
-class TenantApiClient {
+export interface TenantMembership {
+  membershipId?: string;
+  tenantId: string;
+  userId?: string;
+  role?: string;
+  status?: string;
+  tenant: Tenant;
+}
+
+export class TenantApiClient {
   private apiClient: ApiClient;
 
   constructor(apiClient?: ApiClient) {
-    // Use provided client or create a new one
-    this.apiClient = apiClient || createApiClient();
+    this.apiClient = apiClient ?? sharedApiClient;
   }
 
-  // Core Tenant Management Methods
-
-  /**
-   * Get tenants the current user belongs to
-   */
-  async getMyTenants(params?: { page?: number; limit?: number }): Promise<Tenant[]> {
+  async getMyMemberships(params?: { page?: number; limit?: number }): Promise<TenantMembership[]> {
     const response = await this.apiClient.get<
       | Tenant[]
-      | { records: Array<{ tenant?: Tenant; role?: string; id?: string; status?: string }> }
+      | {
+          records: Array<{
+            tenant?: Tenant;
+            role?: string;
+            id?: string;
+            status?: string;
+            user?: { id?: string };
+          }>;
+        }
     >("/tenants/me", params, { tenantScoped: false });
 
     if (Array.isArray(response)) {
-      return response;
+      return response
+        .filter((tenant) => Boolean(tenant?.id))
+        .map((tenant) => ({ tenantId: tenant.id, tenant }));
     }
 
-    const records = response.records ?? [];
-    return records
-      .map((record) => record.tenant)
-      .filter((tenant): tenant is Tenant => Boolean(tenant?.id));
+    return (response.records ?? [])
+      .filter((record) => Boolean(record.tenant?.id))
+      .map((record) => ({
+        membershipId: record.id,
+        tenantId: record.tenant!.id,
+        userId: record.user?.id,
+        role: record.role,
+        status: record.status,
+        tenant: record.tenant!,
+      }));
   }
 
-  /**
-   * Get all tenants with optional filtering and pagination
-   * @param params Query parameters for filtering and pagination
-   * @returns List of tenants
-   */
+  async getMyTenants(params?: { page?: number; limit?: number }): Promise<Tenant[]> {
+    const memberships = await this.getMyMemberships(params);
+    return memberships.map((membership) => membership.tenant);
+  }
+
   async getTenants(params?: TenantQueryParams): Promise<Tenant[]> {
     return this.apiClient.get<Tenant[]>("/tenants", params, { tenantScoped: false });
   }
 
-  /**
-   * Get a specific tenant by ID
-   * @param tenantId Tenant ID
-   * @returns Tenant details
-   */
   async getTenant(tenantId: string): Promise<Tenant> {
     return this.apiClient.get<Tenant>(`/tenants/${tenantId}`, {}, { tenantScoped: false });
   }
 
-  /**
-   * Create a new tenant
-   * @param data Tenant creation data
-   * @returns Created tenant
-   */
   async createTenant(data: CreateTenantRequest): Promise<Tenant> {
     return this.apiClient.post<Tenant>("/tenants", data, { tenantScoped: false });
   }
 
-  /**
-   * Update an existing tenant
-   * @param tenantId Tenant ID to update
-   * @param data Tenant update data
-   * @returns Updated tenant
-   */
   async updateTenant(tenantId: string, data: UpdateTenantRequest): Promise<Tenant> {
     return this.apiClient.patch<Tenant>(`/tenants/${tenantId}`, data, { tenantScoped: false });
   }
 
-  /**
-   * Delete a tenant
-   * @param tenantId Tenant ID to delete
-   */
   async deleteTenant(tenantId: string): Promise<void> {
     return this.apiClient.delete<void>(`/tenants/${tenantId}`, { tenantScoped: false });
   }
 
-  /**
-   * Suspend a tenant
-   * @param tenantId Tenant ID to suspend
-   * @returns Updated tenant
-   */
   async suspendTenant(tenantId: string): Promise<Tenant> {
     return this.apiClient.post<Tenant>(`/tenants/${tenantId}/suspend`, {}, { tenantScoped: false });
   }
 
-  /**
-   * Activate a suspended tenant
-   * @param tenantId Tenant ID to activate
-   * @returns Updated tenant
-   */
   async activateTenant(tenantId: string): Promise<Tenant> {
     return this.apiClient.post<Tenant>(
       `/tenants/${tenantId}/activate`,
@@ -112,20 +97,10 @@ class TenantApiClient {
     );
   }
 
-  /**
-   * Get current tenant profile (requires tenant context)
-   * @returns Current tenant profile
-   */
   async getCurrentTenantProfile(): Promise<Tenant> {
     return this.apiClient.get<Tenant>("/tenants/me/profile");
   }
 
-  // Tenant Member Management Methods
-
-  /**
-   * Get all members of the current tenant
-   * @returns List of tenant members
-   */
   async getTenantMembers(tenantId?: string): Promise<TenantMember[]> {
     if (tenantId) {
       return this.apiClient.get<TenantMember[]>(
@@ -137,30 +112,14 @@ class TenantApiClient {
     return this.apiClient.get<TenantMember[]>("/tenants/:tenantId/me/members");
   }
 
-  /**
-   * Get a specific tenant member
-   * @param memberId Member ID
-   * @returns Tenant member details
-   */
   async getTenantMember(memberId: string): Promise<TenantMember> {
     return this.apiClient.get<TenantMember>(`/tenants/:tenantId/me/members/${memberId}`);
   }
 
-  /**
-   * Add a new member to the current tenant
-   * @param data Member creation data
-   * @returns Created tenant member
-   */
   async addTenantMember(data: CreateTenantMemberRequest): Promise<TenantMember> {
     return this.apiClient.post<TenantMember>("/tenants/:tenantId/me/members", data);
   }
 
-  /**
-   * Update a tenant member's role and permissions
-   * @param memberId Member ID to update
-   * @param data Member update data
-   * @returns Updated tenant member
-   */
   async updateTenantMember(
     memberId: string,
     data: UpdateTenantMemberRequest,
@@ -168,141 +127,65 @@ class TenantApiClient {
     return this.apiClient.patch<TenantMember>(`/tenants/:tenantId/me/members/${memberId}`, data);
   }
 
-  /**
-   * Remove a member from the current tenant
-   * @param memberId Member ID to remove
-   */
   async removeTenantMember(memberId: string): Promise<void> {
     return this.apiClient.delete<void>(`/tenants/:tenantId/me/members/${memberId}`);
   }
 
-  // Invitation Management Methods
-
-  /**
-   * Invite a member to the current tenant
-   * @param tenantId Tenant ID
-   * @param data Invitation data (email, role, permissions, etc.)
-   * @returns Created invitation
-   */
   async inviteMember(tenantId: string, data: InviteMemberRequest): Promise<Invitation> {
     return this.apiClient.post<Invitation>(`/tenants/${tenantId}/invites`, data, {
       tenantScoped: false,
     });
   }
 
-  /**
-   * Create a new invitation for the current tenant
-   * @param data Invitation data (email, role, permissions, etc.)
-   * @returns Created invitation
-   */
   async createInvitation(data: InviteMemberRequest): Promise<Invitation> {
     return this.apiClient.post<Invitation>("/invites", data);
   }
 
-  /**
-   * Get all invitations for the current tenant
-   * @returns List of invitations
-   */
   async getTenantInvitations(): Promise<Invitation[]> {
     return this.apiClient.get<Invitation[]>("/invites");
   }
 
-  /**
-   * Get invitation details by token (public endpoint)
-   * @param token Invitation token
-   * @returns Invitation details
-   */
   async getInvitationByToken(token: string): Promise<Invitation> {
     return this.apiClient.get<Invitation>(`/invites/${token}`, {}, { tenantScoped: false });
   }
 
-  /**
-   * Accept an invitation (public endpoint)
-   * @param data Accept invitation data with token
-   * @returns Created tenant member
-   */
   async acceptInvitation(data: AcceptInviteRequest): Promise<TenantMember> {
     return this.apiClient.post<TenantMember>("/invites/accept", data, { tenantScoped: false });
   }
 
-  /**
-   * Decline an invitation (public endpoint)
-   * @param token Invitation token
-   */
   async declineInvitation(token: string): Promise<void> {
     return this.apiClient.post<void>(`/invites/${token}/decline`, {}, { tenantScoped: false });
   }
 
-  /**
-   * Cancel an invitation (requires tenant context)
-   * @param invitationId Invitation ID to cancel
-   */
   async cancelInvitation(invitationId: string): Promise<void> {
     return this.apiClient.delete<void>(`/invites/${invitationId}`);
   }
 
-  // Tenant Context Management Methods
-
-  /**
-   * Set the current tenant context for the API client
-   * This affects all subsequent API calls that require tenant scoping
-   * @param tenantId Tenant ID to set as current context
-   */
   async setCurrentTenant(tenantId: string | null): Promise<void> {
     this.apiClient.setTenant(tenantId);
   }
 
-  /**
-   * Get the current tenant
-   * @returns Current tenant
-   */
   async getCurrentTenant(): Promise<Tenant> {
     return this.apiClient.get<Tenant>("/tenants/current", {}, { tenantScoped: false });
   }
 
-  /**
-   * Get the current tenant ID from the API client context
-   * @returns Current tenant ID or undefined if not set
-   */
   getCurrentTenantId(): string | undefined {
     return this.apiClient.getTenant();
   }
 
-  /**
-   * Check if a tenant is currently selected
-   * @returns True if a tenant is selected
-   */
   hasTenantContext(): boolean {
     return !!this.apiClient.getTenant();
   }
 
-  /**
-   * Clear the current tenant context
-   */
   clearTenantContext(): void {
     this.apiClient.setTenant(null);
   }
 
-  // Utility Methods
-
-  /**
-   * Create a tenant-scoped API client for a specific tenant
-   * @param tenantId Tenant ID to scope the client to
-   * @returns New API client instance scoped to the tenant
-   */
   createTenantScopedClient(tenantId: string): TenantApiClient {
     const scopedApiClient = createApiClient({ tenantId });
     return new TenantApiClient(scopedApiClient);
   }
 
-  /**
-   * Check if user has permission to perform an action on a tenant member
-   * This is a client-side helper - server-side validation is still required
-   * @param currentUserRole Current user's role in the tenant
-   * @param targetMemberRole Target member's role
-   * @param action Action to perform
-   * @returns True if action is allowed
-   */
   canManageMember(
     currentUserRole: string,
     targetMemberRole: string,
@@ -312,15 +195,12 @@ class TenantApiClient {
     const currentRoleIndex = roleHierarchy.indexOf(currentUserRole);
     const targetRoleIndex = roleHierarchy.indexOf(targetMemberRole);
 
-    // Only admins and owners can manage members
     if (currentRoleIndex < 2) return false;
 
-    // Owners can manage anyone except other owners (for removal)
     if (currentUserRole === "owner") {
       return !(action === "remove" && targetMemberRole === "owner");
     }
 
-    // Admins can only manage members and viewers
     if (currentUserRole === "admin") {
       return targetRoleIndex < 2;
     }
@@ -328,11 +208,6 @@ class TenantApiClient {
     return false;
   }
 
-  /**
-   * Validate tenant data before sending to server
-   * @param data Tenant data to validate
-   * @returns Validation result with errors if any
-   */
   validateTenantData(data: CreateTenantRequest | UpdateTenantRequest): {
     isValid: boolean;
     errors: string[];
@@ -364,7 +239,6 @@ class TenantApiClient {
     };
   }
 
-  // Additional methods needed by queries
   async getCurrentUserMembership(tenantId: string): Promise<TenantMember> {
     return this.apiClient.get<TenantMember>(`/tenants/${tenantId}/membership`);
   }

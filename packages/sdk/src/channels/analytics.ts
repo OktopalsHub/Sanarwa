@@ -1,63 +1,59 @@
 import type { AxiosInstance, AxiosResponse } from "axios";
 
+export interface AnalyticsRange {
+  startDate?: string;
+  endDate?: string;
+}
+
 export class AnalyticsComponent {
-  constructor(private client: AxiosInstance) {}
+  constructor(private readonly client: AxiosInstance) {}
 
-  /**
-   * Get delivery metrics
-   */
-  async getDeliveryMetrics(params?: { startDate?: string; endDate?: string }): Promise<any> {
-    const response: AxiosResponse<any> = await this.client.get("/analytics/delivery-metrics", {
+  async getDeliveryMetrics(params?: AnalyticsRange): Promise<unknown> {
+    const response: AxiosResponse<unknown> = await this.client.get("/analytics/delivery-rates", {
       params,
     });
     return response.data;
   }
 
-  /**
-   * Get channel metrics
-   */
-  async getChannelMetrics(params?: { startDate?: string; endDate?: string }): Promise<any> {
-    const response: AxiosResponse<any> = await this.client.get("/analytics/channel-metrics", {
+  async getChannelMetrics(params?: AnalyticsRange): Promise<unknown> {
+    const response: AxiosResponse<unknown> = await this.client.get("/analytics/channels", {
       params,
     });
     return response.data;
   }
 
-  /**
-   * Get engagement metrics
-   */
-  async getEngagementMetrics(params?: { startDate?: string; endDate?: string }): Promise<any> {
-    const response: AxiosResponse<any> = await this.client.get("/analytics/engagement-metrics", {
+  async getDeliveryTrends(params?: AnalyticsRange): Promise<unknown> {
+    const response: AxiosResponse<unknown> = await this.client.get("/analytics/trends", {
       params,
     });
     return response.data;
   }
 
-  /**
-   * Get subscriber engagement scores
-   */
-  async getSubscriberEngagement(params?: { limit?: number }): Promise<any> {
-    const response: AxiosResponse<any> = await this.client.get("/analytics/subscriber-engagement", {
+  async getTimeSeries(params?: AnalyticsRange): Promise<unknown> {
+    const response: AxiosResponse<unknown> = await this.client.get("/analytics/time-series", {
       params,
     });
     return response.data;
   }
 
-  /**
-   * Get delivery trends
-   */
-  async getDeliveryTrends(params?: { days?: number }): Promise<any> {
-    const response: AxiosResponse<any> = await this.client.get("/analytics/delivery-trends", {
+  async getDashboard(params?: AnalyticsRange): Promise<unknown> {
+    const response: AxiosResponse<unknown> = await this.client.get("/analytics/dashboard", {
       params,
     });
     return response.data;
   }
 
-  /**
-   * Get A/B test results
-   */
-  async getABTestResults(testId: string): Promise<any> {
-    const response: AxiosResponse<any> = await this.client.get(`/analytics/ab-tests/${testId}`);
+  async getProviders(params?: AnalyticsRange): Promise<unknown> {
+    const response: AxiosResponse<unknown> = await this.client.get("/analytics/providers", {
+      params,
+    });
+    return response.data;
+  }
+
+  async getABTestResults(testId: string): Promise<unknown> {
+    const response: AxiosResponse<unknown> = await this.client.get(
+      `/routing-optimizer/ab-test/${testId}`,
+    );
     return response.data;
   }
 }

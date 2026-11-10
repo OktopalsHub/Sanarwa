@@ -1,100 +1,98 @@
 import type { AxiosInstance, AxiosResponse } from "axios";
 
+import type { Template, TemplateVersion } from "../types";
+
+/**
+ * Template routes are tenant-scoped: `/tenants/{tenantId}/templates/...`.
+ * Version comparison is project-scoped and lives under `/projects/{projectId}/templates/compare`.
+ */
 export class TemplateComponent {
-  constructor(private client: AxiosInstance) {}
+  constructor(private readonly client: AxiosInstance) {}
 
-  /**
-   * Create a new template version
-   */
-  async createVersion(params: {
-    templateId: string;
-    name: string;
-    content: string;
-    subject?: string;
-    htmlContent?: string;
-    variables?: Record<string, any>;
-    channels?: string[];
-    changeLog?: string;
-  }): Promise<any> {
-    const response: AxiosResponse<any> = await this.client.post("/templates/versions", params);
+  private base(tenantId: string): string {
+    return `/tenants/${tenantId}/templates`;
+  }
+
+  async list(
+    tenantId: string,
+    params?: { page?: number; limit?: number; channel?: string; status?: string },
+  ): Promise<unknown> {
+    const response: AxiosResponse<unknown> = await this.client.get(this.base(tenantId), { params });
     return response.data;
   }
 
-  /**
-   * Get template versions
-   */
-  async getVersions(templateId: string): Promise<any> {
-    const response: AxiosResponse<any> = await this.client.get(`/templates/${templateId}/versions`);
-    return response.data;
-  }
-
-  /**
-   * Get active version
-   */
-  async getActiveVersion(templateId: string): Promise<any> {
-    const response: AxiosResponse<any> = await this.client.get(
-      `/templates/${templateId}/versions/active`,
+  async get(tenantId: string, templateId: string): Promise<Template> {
+    const response: AxiosResponse<Template> = await this.client.get(
+      `${this.base(tenantId)}/${templateId}`,
     );
     return response.data;
   }
 
-  /**
-   * Activate a version
-   */
-  async activateVersion(versionId: string): Promise<any> {
-    const response: AxiosResponse<any> = await this.client.post(
-      `/templates/versions/${versionId}/activate`,
+  async createVersion(
+    tenantId: string,
+    templateId: string,
+    params: { name?: string; subject?: string; data?: string; description?: string },
+  ): Promise<TemplateVersion> {
+    const response: AxiosResponse<TemplateVersion> = await this.client.post(
+      `${this.base(tenantId)}/${templateId}/versions`,
+      params,
     );
     return response.data;
   }
 
-  /**
-   * Preview template with variables
-   */
-  async previewTemplate(versionId: string, variables: Record<string, any>): Promise<any> {
-    const response: AxiosResponse<any> = await this.client.post(
-      `/templates/versions/${versionId}/preview`,
+  async getVersions(tenantId: string, templateId: string): Promise<unknown> {
+    const response: AxiosResponse<unknown> = await this.client.get(
+      `${this.base(tenantId)}/${templateId}/versions`,
+    );
+    return response.data;
+  }
+
+  async getActiveVersion(tenantId: string, templateId: string): Promise<Template> {
+    return this.get(tenantId, templateId);
+  }
+
+  async activateVersion(tenantId: string, templateId: string): Promise<unknown> {
+    const response: AxiosResponse<unknown> = await this.client.post(
+      `${this.base(tenantId)}/${templateId}/activate`,
+    );
+    return response.data;
+  }
+
+  async archive(tenantId: string, templateId: string): Promise<unknown> {
+    const response: AxiosResponse<unknown> = await this.client.post(
+      `${this.base(tenantId)}/${templateId}/archive`,
+    );
+    return response.data;
+  }
+
+  async preview(
+    tenantId: string,
+    params: { templateId: string; variables: Record<string, unknown> },
+  ): Promise<unknown> {
+    const response: AxiosResponse<unknown> = await this.client.post(
+      `${this.base(tenantId)}/render`,
+      params,
+    );
+    return response.data;
+  }
+
+  async validateVariables(
+    tenantId: string,
+    templateId: string,
+    variables: Record<string, unknown>,
+  ): Promise<unknown> {
+    const response: AxiosResponse<unknown> = await this.client.post(
+      `${this.base(tenantId)}/${templateId}/validate-data`,
       { variables },
     );
     return response.data;
   }
 
-  /**
-   * Validate template variables
-   */
-  async validateVariables(versionId: string, variables: Record<string, any>): Promise<any> {
-    const response: AxiosResponse<any> = await this.client.post(
-      `/templates/versions/${versionId}/validate`,
-      { variables },
+  async compareVersions(projectId: string, firstTemplateId: string, secondTemplateId: string) {
+    const response: AxiosResponse<unknown> = await this.client.get(
+      `/projects/${projectId}/templates/compare`,
+      { params: { templateId1: firstTemplateId, templateId2: secondTemplateId } },
     );
-    return response.data;
-  }
-
-  /**
-   * Compare two versions
-   */
-  async compareVersions(versionId1: string, versionId2: string): Promise<any> {
-    const response: AxiosResponse<any> = await this.client.get(`/templates/versions/compare`, {
-      params: { v1: versionId1, v2: versionId2 },
-    });
-    return response.data;
-  }
-
-  /**
-   * Rollback to a previous version
-   */
-  async rollbackToVersion(versionId: string): Promise<any> {
-    const response: AxiosResponse<any> = await this.client.post(
-      `/templates/versions/${versionId}/rollback`,
-    );
-    return response.data;
-  }
-
-  /**
-   * Get version history
-   */
-  async getVersionHistory(templateId: string): Promise<any> {
-    const response: AxiosResponse<any> = await this.client.get(`/templates/${templateId}/history`);
     return response.data;
   }
 }

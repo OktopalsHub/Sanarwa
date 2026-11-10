@@ -13,14 +13,7 @@ import type {
 } from "./types/webrtc";
 import { apiClient } from "./client";
 
-/**
- * WebRTC API Client
- * Handles all WebRTC-related API calls including call management, signaling, and settings
- */
 export class WebRTCApiClient {
-  /**
-   * Initiate a new WebRTC call
-   */
   async initiateCall(data: InitiateCallRequest): Promise<CallSession> {
     const payload = {
       calleeId: data.calleeId,
@@ -33,43 +26,28 @@ export class WebRTCApiClient {
     return apiClient.post<CallSession>("/webrtc/call/initiate", payload);
   }
 
-  /**
-   * Accept an incoming call
-   */
   async acceptCall(data: AcceptCallRequest): Promise<CallSession> {
     return apiClient.post<CallSession>(`/webrtc/call/${data.sessionId}/accept`, {
       mediaSettings: data.mediaSettings,
     });
   }
 
-  /**
-   * Decline an incoming call
-   */
   async declineCall(data: DeclineCallRequest): Promise<void> {
     return apiClient.post<void>(`/webrtc/call/${data.sessionId}/decline`, {
       reason: data.reason,
     });
   }
 
-  /**
-   * End an active call
-   */
   async endCall(data: EndCallRequest): Promise<CallSession> {
     return apiClient.post<CallSession>(`/webrtc/call/${data.sessionId}/end`, {
       reason: data.reason,
     });
   }
 
-  /**
-   * Get call session details
-   */
   async getCallSession(sessionId: string): Promise<CallSession> {
     return apiClient.get<CallSession>(`/webrtc/call/${sessionId}`);
   }
 
-  /**
-   * Get call history with optional filtering
-   */
   async getCallHistory(params?: CallHistoryQueryParams): Promise<{
     calls: CallRecord[];
     total: number;
@@ -88,7 +66,6 @@ export class WebRTCApiClient {
       sortOrder: params?.sortOrder,
     };
 
-    // Remove undefined values
     Object.keys(queryParams).forEach((key) => {
       if (queryParams[key as keyof typeof queryParams] === undefined) {
         delete queryParams[key as keyof typeof queryParams];
@@ -103,9 +80,6 @@ export class WebRTCApiClient {
     }>("/webrtc/calls", queryParams);
   }
 
-  /**
-   * Update media settings for a call participant
-   */
   async updateMediaSettings(data: UpdateMediaSettingsRequest): Promise<void> {
     return apiClient.patch<void>(
       `/webrtc/call/${data.sessionId}/participant/${data.participantId}/media`,
@@ -113,9 +87,6 @@ export class WebRTCApiClient {
     );
   }
 
-  /**
-   * Send signaling message (offer, answer, ICE candidate)
-   */
   async sendSignalingMessage(data: SendSignalingMessageRequest): Promise<void> {
     return apiClient.post<void>(`/webrtc/call/${data.sessionId}/signal`, {
       toUserId: data.toUserId,
@@ -124,30 +95,18 @@ export class WebRTCApiClient {
     });
   }
 
-  /**
-   * Get current call settings for the user
-   */
   async getCallSettings(): Promise<CallSettings> {
     return apiClient.get<CallSettings>("/webrtc/settings");
   }
 
-  /**
-   * Update call settings
-   */
   async updateCallSettings(data: UpdateCallSettingsRequest): Promise<CallSettings> {
     return apiClient.patch<CallSettings>("/webrtc/settings", data);
   }
 
-  /**
-   * Get available media devices
-   */
   async getMediaDevices(): Promise<MediaDeviceInfo[]> {
     return apiClient.get<MediaDeviceInfo[]>("/webrtc/devices");
   }
 
-  /**
-   * Test media device functionality
-   */
   async testMediaDevice(
     deviceId: string,
     type: "audio" | "video",
@@ -161,62 +120,38 @@ export class WebRTCApiClient {
     });
   }
 
-  /**
-   * Get call quality metrics for a session
-   */
   async getCallQualityMetrics(sessionId: string): Promise<any> {
     return apiClient.get<any>(`/webrtc/call/${sessionId}/quality`);
   }
 
-  /**
-   * Report call quality metrics
-   */
   async reportCallQualityMetrics(sessionId: string, metrics: any): Promise<void> {
     return apiClient.post<void>(`/webrtc/call/${sessionId}/quality`, metrics);
   }
 
-  /**
-   * Get active call sessions for the current user
-   */
   async getActiveSessions(): Promise<CallSession[]> {
     return apiClient.get<CallSession[]>("/webrtc/sessions/active");
   }
 
-  /**
-   * Join an existing call session
-   */
   async joinSession(sessionId: string): Promise<CallSession> {
     return apiClient.post<CallSession>(`/webrtc/call/${sessionId}/join`);
   }
 
-  /**
-   * Leave a call session
-   */
   async leaveSession(sessionId: string): Promise<void> {
     return apiClient.post<void>(`/webrtc/call/${sessionId}/leave`);
   }
 
-  /**
-   * Mute/unmute audio for a participant
-   */
   async toggleAudio(sessionId: string, participantId: string, muted: boolean): Promise<void> {
     return apiClient.patch<void>(`/webrtc/call/${sessionId}/participant/${participantId}/audio`, {
       muted,
     });
   }
 
-  /**
-   * Enable/disable video for a participant
-   */
   async toggleVideo(sessionId: string, participantId: string, enabled: boolean): Promise<void> {
     return apiClient.patch<void>(`/webrtc/call/${sessionId}/participant/${participantId}/video`, {
       enabled,
     });
   }
 
-  /**
-   * Start/stop screen sharing
-   */
   async toggleScreenShare(
     sessionId: string,
     participantId: string,
@@ -227,25 +162,15 @@ export class WebRTCApiClient {
     });
   }
 
-  /**
-   * Get call logs for debugging
-   */
   async getCallLogs(sessionId: string): Promise<any[]> {
     return apiClient.get<any[]>(`/webrtc/call/${sessionId}/logs`);
   }
 
-  /**
-   * Create a WebSocket connection for real-time signaling
-   */
   createSignalingConnection(sessionId: string): WebSocket | null {
     return apiClient.connectWebSocket(`/webrtc?sessionId=${sessionId}`);
   }
 }
 
-/**
- * WebSocket Manager for WebRTC Signaling
- * Handles real-time communication for WebRTC calls
- */
 export class WebRTCSignalingManager {
   private ws: WebSocket | null = null;
   private eventHandlers: Map<string, Function[]> = new Map();
@@ -255,9 +180,6 @@ export class WebRTCSignalingManager {
 
   constructor(private sessionId?: string) {}
 
-  /**
-   * Connect to WebRTC signaling WebSocket
-   */
   connect(userId: string, token?: string): Promise<void> {
     return new Promise((resolve, reject) => {
       try {
@@ -267,7 +189,6 @@ export class WebRTCSignalingManager {
           return;
         }
 
-        // Create WebSocket connection with authentication
         const wsEndpoint = wsUrl.url.replace("/webrtc", `/webrtc?userId=${userId}&token=${token}`);
         this.ws = new WebSocket(wsEndpoint);
 
@@ -301,9 +222,6 @@ export class WebRTCSignalingManager {
     });
   }
 
-  /**
-   * Disconnect from WebRTC signaling
-   */
   disconnect(): void {
     if (this.ws) {
       this.ws.close();
@@ -312,9 +230,6 @@ export class WebRTCSignalingManager {
     this.eventHandlers.clear();
   }
 
-  /**
-   * Send signaling message
-   */
   sendMessage(type: string, data: any, targetUserId?: string): void {
     if (!this.ws || this.ws.readyState !== WebSocket.OPEN) {
       console.error("WebSocket not connected");
@@ -331,23 +246,14 @@ export class WebRTCSignalingManager {
     this.ws.send(JSON.stringify(message));
   }
 
-  /**
-   * Send WebRTC offer
-   */
   sendOffer(offer: RTCSessionDescriptionInit, targetUserId: string): void {
     this.sendMessage("offer", offer, targetUserId);
   }
 
-  /**
-   * Send WebRTC answer
-   */
   sendAnswer(answer: RTCSessionDescriptionInit, targetUserId: string): void {
     this.sendMessage("answer", answer, targetUserId);
   }
 
-  /**
-   * Send ICE candidate
-   */
   sendIceCandidate(candidate: RTCIceCandidate, targetUserId: string): void {
     this.sendMessage(
       "ice-candidate",
@@ -360,23 +266,14 @@ export class WebRTCSignalingManager {
     );
   }
 
-  /**
-   * Send call request
-   */
   sendCallRequest(targetUserId: string, callData: any): void {
     this.sendMessage("call-request", callData, targetUserId);
   }
 
-  /**
-   * Send call response (accept/decline)
-   */
   sendCallResponse(targetUserId: string, response: "accept" | "reject", data?: any): void {
     this.sendMessage("call-response", { response, ...data }, targetUserId);
   }
 
-  /**
-   * Subscribe to signaling events
-   */
   on(event: string, handler: Function): void {
     if (!this.eventHandlers.has(event)) {
       this.eventHandlers.set(event, []);
@@ -384,9 +281,6 @@ export class WebRTCSignalingManager {
     this.eventHandlers.get(event)!.push(handler);
   }
 
-  /**
-   * Unsubscribe from signaling events
-   */
   off(event: string, handler?: Function): void {
     if (!this.eventHandlers.has(event)) return;
 
@@ -401,13 +295,9 @@ export class WebRTCSignalingManager {
     }
   }
 
-  /**
-   * Handle incoming WebSocket messages
-   */
   private handleMessage(message: any): void {
     const { type, data } = message;
 
-    // Emit event to registered handlers
     if (this.eventHandlers.has(type)) {
       this.eventHandlers.get(type)!.forEach((handler) => {
         try {
@@ -418,7 +308,6 @@ export class WebRTCSignalingManager {
       });
     }
 
-    // Handle specific message types
     switch (type) {
       case "webrtc-signal":
         this.emit("signal", data);
@@ -440,9 +329,6 @@ export class WebRTCSignalingManager {
     }
   }
 
-  /**
-   * Emit event to handlers
-   */
   private emit(event: string, data: any): void {
     if (this.eventHandlers.has(event)) {
       this.eventHandlers.get(event)!.forEach((handler) => {
@@ -455,9 +341,6 @@ export class WebRTCSignalingManager {
     }
   }
 
-  /**
-   * Handle WebSocket reconnection
-   */
   private handleReconnect(): void {
     if (this.reconnectAttempts >= this.maxReconnectAttempts) {
       console.error("Max reconnection attempts reached");
@@ -471,13 +354,10 @@ export class WebRTCSignalingManager {
     console.log(`Attempting to reconnect in ${delay}ms (attempt ${this.reconnectAttempts})`);
 
     setTimeout(() => {
-      // Note: This would need the original connection parameters
-      // In a real implementation, you'd store these when connecting
       console.log("Reconnection logic would go here");
     }, delay);
   }
 }
 
-// Export singleton instance
 export const webrtcApi = new WebRTCApiClient();
 export const webrtcSignaling = new WebRTCSignalingManager();

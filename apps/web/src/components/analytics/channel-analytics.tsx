@@ -194,30 +194,18 @@ export function ChannelAnalytics({ channel = "email" }: ChannelAnalyticsProps) {
         <MetricCard
           title="Delivery Rate"
           value={`${data.metrics.deliveryRate}%`}
-          change={{
-            value: 0.5,
-            type: "increase",
-          }}
           icon={ArrowTrendingUpIcon}
           description={`${data.metrics.delivered.toLocaleString()} delivered`}
         />
         <MetricCard
           title="Open Rate"
           value={`${data.metrics.openRate}%`}
-          change={{
-            value: 2.1,
-            type: "increase",
-          }}
           icon={ArrowTrendingUpIcon}
           description={`${data.metrics.opened.toLocaleString()} opened`}
         />
         <MetricCard
           title="Click Rate"
           value={`${data.metrics.clickRate}%`}
-          change={{
-            value: 0.3,
-            type: "decrease",
-          }}
           icon={ArrowTrendingDownIcon}
           description={`${data.metrics.clicked.toLocaleString()} clicked`}
         />

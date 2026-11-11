@@ -1,164 +1,149 @@
 "use client";
 
-import { Button } from "@sanarwa/ui/button";
-import { Card } from "@sanarwa/ui/card";
 import { Skeleton } from "@sanarwa/ui/skeleton";
+import { DashboardChart } from "./dashboard-chart";
+import { DashboardEmpty, MilestoneChecklist } from "./dashboard-states";
+import { HeroPanel } from "./hero-panel";
+import { MetricCard } from "./metric-card";
+import { RecentDeliveries } from "./recent-deliveries";
+import { ChannelBreakdown } from "./channel-breakdown";
+import { TokenPeek } from "./token-peek";
+import { SectionError } from "./section-error";
 import { useDashboardData } from "@/hooks/use-dashboard-data";
 import { useTenantBasePath } from "@/hooks/use-tenant-slug";
 import { useTenant } from "@/contexts/tenant-context";
-import { providerApi } from "@sanarwa/api-client";
-import { projectApi } from "@sanarwa/api-client";
-import { apiKeyApi } from "@sanarwa/api-client";
-import { DashboardChart } from "./dashboard-chart";
-import { DashboardEmpty, DashboardSetup } from "./dashboard-states";
-import { MetricCard } from "./metric-card";
-import {
-  IconAlertCircle,
-  IconBolt,
-  IconInbox,
-  IconKey,
-  IconMessage,
-  IconTrendingUp,
-} from "@tabler/icons-react";
-import { useQuery } from "@tanstack/react-query";
-import Link from "@/compat/next-link";
+import { IconAlertCircle, IconListCheck, IconMessage, IconTrendingUp } from "@tabler/icons-react";
 
 export function DashboardOverview() {
-  const { data, isLoading } = useDashboardData();
-  const basePath = useTenantBasePath();
+  const { stats, allTimeStats, breakdown, recent, tokens, setup } = useDashboardData();
   const { selectedTenant } = useTenant();
+  const basePath = useTenantBasePath();
 
-  const setup = useQuery({
-    queryKey: ["dashboard-setup", selectedTenant?.id],
-    queryFn: async () => {
-      const [providers, projects] = await Promise.all([
-        providerApi.getProviders({ limit: 1 }).catch(() => ({ data: [] })),
-        projectApi.getProjects({ limit: 5 }).catch(() => ({ data: [] })),
-      ]);
-      let keyCount = 0;
-      for (const project of projects.data || []) {
-        const keys = await apiKeyApi.getApiKeysByProject(project.id).catch(() => ({ data: [] }));
-        keyCount += keys.data?.length || 0;
-        if (keyCount > 0) break;
-      }
-      return {
-        hasProvider: (providers.data?.length || 0) > 0,
-        hasApiKey: keyCount > 0,
-      };
+  const neverSent = allTimeStats.isSuccess && allTimeStats.data.total === 0;
+  const setupComplete =
+    setup.data !== undefined &&
+    allTimeStats.isSuccess &&
+    setup.data.hasProvider &&
+    setup.data.hasApiKey &&
+    allTimeStats.data.total > 0;
+
+  const steps = [
+    {
+      done: setup.data?.hasProvider ?? false,
+      href: `${basePath}/providers`,
+      label: "Add a provider",
+      detail: "Email domain, SMS number, WhatsApp or push.",
     },
-    enabled: !!selectedTenant?.id,
-  });
-
-  if (isLoading) {
-    return (
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-        <Skeleton className="h-28" />
-        <Skeleton className="h-28" />
-        <Skeleton className="h-28" />
-        <Skeleton className="h-28" />
-      </div>
-    );
-  }
-
-  const metrics = data?.metrics;
-  const needsSetup = setup.data && (!setup.data.hasProvider || !setup.data.hasApiKey);
-  const empty = !metrics || metrics.totalMessages === 0;
+    {
+      done: setup.data?.hasApiKey ?? false,
+      href: `${basePath}/api-keys`,
+      label: "Create an API key",
+      detail: "Authenticate POST /api/v1/messages from your app.",
+    },
+    {
+      done: (allTimeStats.data?.total ?? 0) > 0,
+      href: `${basePath}/messages`,
+      label: "Send your first message",
+      detail: "Any channel. The receipt lands in Messages.",
+    },
+  ];
 
   return (
     <div className="flex flex-col gap-6">
-      {needsSetup ? (
-        <DashboardSetup
-          hasProvider={Boolean(setup.data?.hasProvider)}
-          hasApiKey={Boolean(setup.data?.hasApiKey)}
-          basePath={basePath}
-        />
+      <HeroPanel
+        tenantName={selectedTenant?.name}
+        totalSent={stats.data?.sent ?? 0}
+        delivered={stats.data?.delivered ?? 0}
+        failed={stats.data?.failed ?? 0}
+        isLoading={stats.isLoading}
+      />
+
+      {!setupComplete && setup.isSuccess && allTimeStats.isSuccess ? (
+        <MilestoneChecklist steps={steps} />
       ) : null}
 
-      {empty ? (
+      {neverSent ? (
         <DashboardEmpty basePath={basePath} />
       ) : (
         <>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            <MetricCard
-              title="Messages Sent"
-              value={(metrics?.totalMessages ?? 0).toLocaleString()}
-              icon={IconMessage}
-              description="Last 30 days"
-            />
-            <MetricCard
-              title="Delivery Rate"
-              value={`${metrics?.deliveryRate ?? 0}%`}
-              icon={IconTrendingUp}
-              description="Last 30 days"
-            />
-            <MetricCard
-              title="Failed"
-              value={metrics?.failed ?? 0}
-              icon={IconAlertCircle}
-              description="Last 30 days"
-            />
-            <MetricCard
-              title="Active Campaigns"
-              value={metrics?.activeCampaigns ?? 0}
-              icon={IconBolt}
-              description="Currently running"
-            />
+            {stats.isLoading ? (
+              <>
+                <Skeleton className="h-28" />
+                <Skeleton className="h-28" />
+                <Skeleton className="h-28" />
+                <Skeleton className="h-28" />
+              </>
+            ) : stats.isError ? (
+              <div className="sm:col-span-2 lg:col-span-4">
+                <SectionError label="delivery stats" onRetry={() => void stats.refetch()} />
+              </div>
+            ) : (
+              <>
+                <MetricCard
+                  title="Messages sent"
+                  value={(stats.data?.sent ?? 0).toLocaleString()}
+                  icon={IconMessage}
+                  description="Last 30 days"
+                />
+                <MetricCard
+                  title="Delivery rate"
+                  value={`${(stats.data?.deliveryRate ?? 0).toFixed(1)}%`}
+                  icon={IconTrendingUp}
+                  description="Last 30 days"
+                />
+                <MetricCard
+                  title="Failed"
+                  value={(stats.data?.failed ?? 0).toLocaleString()}
+                  icon={IconAlertCircle}
+                  description="Last 30 days"
+                />
+                <MetricCard
+                  title="Queued"
+                  value={(stats.data?.queued ?? 0).toLocaleString()}
+                  icon={IconListCheck}
+                  description="Waiting to send"
+                />
+              </>
+            )}
           </div>
 
-          <div className="grid min-w-0 gap-4 lg:grid-cols-3">
-            <div className="min-w-0 space-y-4 lg:col-span-2">
-              <Card className="border-border bg-card p-6">
-                <h3 className="mb-1 text-base font-semibold">Template studio</h3>
-                <p className="mb-3 text-sm text-muted-foreground">
-                  Edit per channel - email/sms/whatsapp/push/in-app/voice with handlebars
-                </p>
-                <div className="flex flex-wrap gap-2">
-                  <Button asChild size="sm">
-                    <Link href={`${basePath}/campaigns`}>Open campaign wizard</Link>
-                  </Button>
-                  <Button asChild variant="outline" size="sm">
-                    <Link href={`${basePath}/providers`}>Providers</Link>
-                  </Button>
-                </div>
-                <p className="mt-3 text-xs text-muted-foreground">
-                  F-pattern: left editors scan first, right actions sticky.
-                </p>
-              </Card>
-              <DashboardChart
-                title="Channel Distribution"
-                data={data?.channelDistribution ?? []}
-                type="pie"
-                height={300}
+          <div className="grid min-w-0 gap-6 lg:grid-cols-3">
+            <div className="flex min-w-0 flex-col gap-6 lg:col-span-2">
+              {breakdown.isLoading ? (
+                <Skeleton className="h-64 w-full" />
+              ) : breakdown.isError ? (
+                <SectionError label="send volume" onRetry={() => void breakdown.refetch()} />
+              ) : (
+                <DashboardChart
+                  title="Send volume · last 30 days"
+                  data={breakdown.data?.days ?? []}
+                  type="bar"
+                  dataKey="sent"
+                  xAxisKey="name"
+                  height={256}
+                />
+              )}
+              <RecentDeliveries
+                records={recent.data?.records ?? []}
+                isLoading={recent.isLoading}
+                isError={recent.isError}
+                onRetry={() => void recent.refetch()}
               />
             </div>
-            <div className="space-y-4">
-              <Card className="border-border bg-card p-6 lg:sticky lg:top-20">
-                <h3 className="mb-1 text-base font-semibold">Quick actions</h3>
-                <p className="mb-4 text-sm text-muted-foreground">Common workspace tasks</p>
-                <div className="flex flex-col gap-2">
-                  <Button asChild variant="outline" className="w-full justify-start">
-                    <Link href={`${basePath}/messages`}>
-                      <IconInbox data-icon="inline-start" />
-                      View messages
-                    </Link>
-                  </Button>
-                  <Button asChild variant="outline" className="w-full justify-start">
-                    <Link href={`${basePath}/providers`}>
-                      <IconBolt data-icon="inline-start" />
-                      Manage providers
-                    </Link>
-                  </Button>
-                  <Button asChild variant="outline" className="w-full justify-start">
-                    <Link href={`${basePath}/api-keys`}>
-                      <IconKey data-icon="inline-start" />
-                      API keys
-                    </Link>
-                  </Button>
-                  <Button asChild variant="outline" className="w-full justify-start">
-                    <Link href={`${basePath}/analytics`}>View analytics</Link>
-                  </Button>
-                </div>
-              </Card>
+            <div className="flex min-w-0 flex-col gap-6">
+              <ChannelBreakdown
+                channels={breakdown.data?.channels}
+                isLoading={breakdown.isLoading}
+                isError={breakdown.isError}
+                onRetry={() => void breakdown.refetch()}
+              />
+              <TokenPeek
+                data={tokens.data}
+                isLoading={tokens.isLoading}
+                isError={tokens.isError}
+                onRetry={() => void tokens.refetch()}
+              />
             </div>
           </div>
         </>

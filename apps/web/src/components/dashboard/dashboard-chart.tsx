@@ -2,7 +2,6 @@
 
 import { Card } from "@sanarwa/ui/card";
 import { cn } from "@/lib/utils";
-import { useTheme } from "next-themes";
 import {
   Bar,
   BarChart,
@@ -16,6 +15,7 @@ import {
   Tooltip,
   XAxis,
   YAxis,
+  type PieLabelRenderProps,
 } from "recharts";
 
 interface ChartData {
@@ -36,12 +36,33 @@ interface DashboardChartProps {
 }
 
 const COLORS = [
-  "hsl(var(--primary))",
-  "hsl(var(--accent))",
-  "hsl(var(--chart-3))",
-  "hsl(var(--chart-4))",
-  "hsl(var(--chart-5))",
+  "var(--chart-1)",
+  "var(--chart-2)",
+  "var(--chart-3)",
+  "var(--chart-4)",
+  "var(--chart-5)",
 ];
+
+const axisProps = {
+  stroke: "var(--muted-foreground)",
+  fontSize: 12,
+  tickLine: false,
+  axisLine: false,
+} as const;
+
+const tooltipStyle = {
+  backgroundColor: "var(--popover)",
+  border: "1px solid var(--border)",
+  borderRadius: "8px",
+  color: "var(--popover-foreground)",
+  fontSize: "12px",
+  boxShadow: "var(--shadow-card)",
+} as const;
+
+function pieLabel({ name, percent }: PieLabelRenderProps) {
+  const share = typeof percent === "number" ? `${(percent * 100).toFixed(0)}%` : "";
+  return `${typeof name === "string" ? name : ""} ${share}`.trim();
+}
 
 export function DashboardChart({
   title,
@@ -53,14 +74,11 @@ export function DashboardChart({
   height = 300,
   colors,
 }: DashboardChartProps) {
-  const { theme } = useTheme();
-  const isDark = theme === "dark";
-
   const chartColors = colors && colors.length > 0 ? colors : COLORS;
 
   const chartProps = {
     data,
-    margin: { top: 5, right: 30, left: 20, bottom: 5 },
+    margin: { top: 5, right: 8, left: 0, bottom: 5 },
   };
 
   const renderChart = (): React.ReactElement | null => {
@@ -68,23 +86,17 @@ export function DashboardChart({
       case "line":
         return (
           <LineChart {...chartProps}>
-            <CartesianGrid strokeDasharray="3 3" stroke={isDark ? "#374151" : "#e5e7eb"} />
-            <XAxis dataKey={xAxisKey} stroke={isDark ? "#9ca3af" : "#6b7280"} fontSize={12} />
-            <YAxis stroke={isDark ? "#9ca3af" : "#6b7280"} fontSize={12} />
-            <Tooltip
-              contentStyle={{
-                backgroundColor: isDark ? "#1f2937" : "#ffffff",
-                border: `1px solid ${isDark ? "#374151" : "#e5e7eb"}`,
-                borderRadius: "6px",
-              }}
-            />
+            <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
+            <XAxis dataKey={xAxisKey} {...axisProps} />
+            <YAxis {...axisProps} width={40} />
+            <Tooltip contentStyle={tooltipStyle} />
             <Line
               type="monotone"
               dataKey={dataKey}
               stroke={chartColors[0]}
-              strokeWidth={3}
-              dot={{ fill: chartColors[0], r: 4 }}
-              activeDot={{ r: 6 }}
+              strokeWidth={2}
+              dot={false}
+              activeDot={{ r: 4 }}
             />
           </LineChart>
         );
@@ -92,17 +104,11 @@ export function DashboardChart({
       case "bar":
         return (
           <BarChart {...chartProps}>
-            <CartesianGrid strokeDasharray="3 3" stroke={isDark ? "#374151" : "#e5e7eb"} />
-            <XAxis dataKey={xAxisKey} stroke={isDark ? "#9ca3af" : "#6b7280"} fontSize={12} />
-            <YAxis stroke={isDark ? "#9ca3af" : "#6b7280"} fontSize={12} />
-            <Tooltip
-              contentStyle={{
-                backgroundColor: isDark ? "#1f2937" : "#ffffff",
-                border: `1px solid ${isDark ? "#374151" : "#e5e7eb"}`,
-                borderRadius: "6px",
-              }}
-            />
-            <Bar dataKey={dataKey} fill={chartColors[0]} radius={[8, 8, 0, 0]} />
+            <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
+            <XAxis dataKey={xAxisKey} {...axisProps} />
+            <YAxis {...axisProps} width={40} />
+            <Tooltip contentStyle={tooltipStyle} cursor={{ fill: "var(--muted)" }} />
+            <Bar dataKey={dataKey} fill={chartColors[0]} radius={[4, 4, 0, 0]} />
           </BarChart>
         );
 
@@ -114,16 +120,18 @@ export function DashboardChart({
               cx="50%"
               cy="50%"
               labelLine={false}
-              label={(entry: any) => `${entry.name} ${(entry.percent * 100).toFixed(0)}%`}
+              label={pieLabel}
               outerRadius={80}
-              fill="#8884d8"
               dataKey={dataKey}
             >
               {data.map((entry, index) => (
-                <Cell key={`cell-${index}`} fill={chartColors[index % chartColors.length]} />
+                <Cell
+                  key={typeof entry.name === "string" ? entry.name : index}
+                  fill={chartColors[index % chartColors.length]}
+                />
               ))}
             </Pie>
-            <Tooltip />
+            <Tooltip contentStyle={tooltipStyle} />
           </PieChart>
         );
 
@@ -135,10 +143,10 @@ export function DashboardChart({
   return (
     <Card className={cn("border-border bg-card", className)}>
       <div className="p-6">
-        <h3 className="mb-4 text-base font-semibold text-foreground">{title}</h3>
+        <h3 className="mb-4 text-sm font-semibold text-foreground">{title}</h3>
         <div style={{ height }}>
           <ResponsiveContainer width="100%" height="100%">
-            {renderChart() || <div>No chart available</div>}
+            {renderChart() ?? <div>No chart available</div>}
           </ResponsiveContainer>
         </div>
       </div>

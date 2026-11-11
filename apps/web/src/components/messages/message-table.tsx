@@ -3,15 +3,9 @@ import { Button } from "@sanarwa/ui/button";
 import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyTitle } from "@sanarwa/ui/empty";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@sanarwa/ui/table";
 import { SendSnippet } from "@/components/messages/send-snippet";
+import { statusVariant } from "@/lib/message-status";
 import type { MessageLogListItem } from "@sanarwa/api-client";
 import Link from "@/compat/next-link";
-
-function statusVariant(status: string) {
-  if (status === "delivered") return "default" as const;
-  if (status === "failed") return "destructive" as const;
-  if (status === "sent") return "secondary" as const;
-  return "outline" as const;
-}
 
 function formatTime(value?: string) {
   if (!value) return "—";

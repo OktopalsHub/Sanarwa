@@ -12,7 +12,8 @@ export function useTenantSlug(): string | undefined {
 
 export function useTenantBasePath(): string {
   const { selectedTenant } = useTenant();
-  const segment = selectedTenant ? getTenantPathSegment(selectedTenant) : useTenantSlug() || "";
+  const slug = useTenantSlug();
+  const segment = selectedTenant ? getTenantPathSegment(selectedTenant) : slug || "";
   return segment ? `/${segment}` : "";
 }
 

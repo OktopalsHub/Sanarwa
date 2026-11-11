@@ -177,7 +177,7 @@ export function TenantBillingSettings({ tenant }: TenantBillingSettingsProps) {
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `invoice-${tenant.slug || tenant.id}-${new Date().toISOString().split("T")[0]}.pdf`;
+      a.download = `invoice-${tenant.subdomain ?? tenant.slug ?? "tenant"}-${new Date().toISOString().split("T")[0]}.pdf`;
       document.body.appendChild(a);
       a.click();
       window.URL.revokeObjectURL(url);

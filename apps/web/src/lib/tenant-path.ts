@@ -1,18 +1,13 @@
 import type { Tenant } from "@/lib/types/tenant";
 
-export function getTenantPathSegment(tenant: Pick<Tenant, "subdomain" | "slug" | "id">): string {
-  return tenant.subdomain || tenant.slug || tenant.id;
-}
-
-function tenantBasePath(tenant: Pick<Tenant, "subdomain" | "slug" | "id">): string {
-  const segment = getTenantPathSegment(tenant);
-  return segment ? `/${segment}` : "";
+export function getTenantPathSegment(tenant: Pick<Tenant, "subdomain" | "slug">): string {
+  return tenant.subdomain || tenant.slug || "";
 }
 
 export function matchesTenantPathSegment(
-  tenant: Pick<Tenant, "subdomain" | "slug" | "id">,
+  tenant: Pick<Tenant, "subdomain" | "slug">,
   segment: string,
 ): boolean {
   if (!segment) return false;
-  return segment === tenant.subdomain || segment === tenant.slug || segment === tenant.id;
+  return segment === tenant.subdomain || segment === tenant.slug;
 }

@@ -12,13 +12,11 @@ import {
 export enum ConfigurationScope {
   GLOBAL = "global",
   TENANT = "tenant",
-  ENVIRONMENT = "environment",
 }
 
 export enum ConfigurationStatus {
   ACTIVE = "active",
   INACTIVE = "inactive",
-  DEPRECATED = "deprecated",
 }
 
 @Entity("configurations")

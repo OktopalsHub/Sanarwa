@@ -1,8 +1,8 @@
 import { Column, Entity, ManyToOne } from "typeorm";
 import { BaseEntity } from "../../../common/database/entities/base.entity";
 import { Project } from "../../project/entities/project.entity";
-import { TenantMember } from "../../tenant-member/entities/tenant-member.entity";
-import { Tenant } from "../../tenant/entities/tenant.entity";
+import type { TenantMember } from "../../tenant-member/entities/tenant-member.entity";
+import type { Tenant } from "../../tenant/entities/tenant.entity";
 
 export enum CertificateType {
   IOS = "ios",
@@ -12,8 +12,6 @@ export enum CertificateType {
 export enum CertificateStatus {
   ACTIVE = "active",
   INACTIVE = "inactive",
-  EXPIRED = "expired",
-  REVOKED = "revoked",
   PENDING_VALIDATION = "pending_validation",
 }
 
@@ -139,13 +137,13 @@ export class PushCertificate extends BaseEntity {
   @Column({ type: "json", nullable: true })
   metadata?: Record<string, any>;
 
-  @ManyToOne(() => Tenant, (tenant) => tenant.pushCertificates)
+  @ManyToOne("Tenant", (tenant: Tenant) => tenant.pushCertificates)
   tenant: Tenant;
 
   @Column({ type: "uuid", name: "tenant_id" })
   tenantId: string;
 
-  @ManyToOne(() => TenantMember, (tenantMember) => tenantMember.createdPushCertificates)
+  @ManyToOne("TenantMember", (tenantMember: TenantMember) => tenantMember.createdPushCertificates)
   createdBy: TenantMember;
 
   @Column({ type: "uuid", name: "created_by_id" })

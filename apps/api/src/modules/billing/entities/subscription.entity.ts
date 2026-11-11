@@ -9,11 +9,10 @@ import {
   OneToMany,
 } from "typeorm";
 import { Tenant } from "../../tenant/entities/tenant.entity";
-import { TokenPurchase } from "./token-purchase.entity";
-export { PaymentProvider } from "../enums/payment-provider.enum";
+import type { TokenPurchase } from "./token-purchase.entity";
 import { PaymentProvider } from "../enums/payment-provider.enum";
 
-export enum SubscriptionStatus {
+enum SubscriptionStatus {
   ACTIVE = "active",
   CANCELLED = "cancelled",
   PAST_DUE = "past_due",
@@ -21,7 +20,7 @@ export enum SubscriptionStatus {
   TRIALING = "trialing",
 }
 
-export enum SubscriptionPlan {
+enum SubscriptionPlan {
   STARTER = "starter",
   PROFESSIONAL = "professional",
   ENTERPRISE = "enterprise",
@@ -90,7 +89,7 @@ export class Subscription {
   @Column({ type: "timestamp", nullable: true })
   cancelAtPeriodEnd: boolean;
 
-  @OneToMany(() => TokenPurchase, (purchase) => purchase.subscription)
+  @OneToMany("TokenPurchase", (purchase: TokenPurchase) => purchase.subscription)
   tokenPurchases: TokenPurchase[];
 
   @CreateDateColumn({ name: "created_at" })

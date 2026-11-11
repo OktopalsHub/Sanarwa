@@ -8,20 +8,18 @@ import {
   JoinColumn,
 } from "typeorm";
 import { Tenant } from "../../tenant/entities/tenant.entity";
-import { Subscription } from "./subscription.entity";
+import type { Subscription } from "./subscription.entity";
 
 export enum TokenPurchaseStatus {
   PENDING = "pending",
   COMPLETED = "completed",
   FAILED = "failed",
-  REFUNDED = "refunded",
 }
 
 export enum TokenPurchaseType {
   MANUAL = "manual",
   AUTO_TOPUP = "auto_topup",
   SCHEDULED = "scheduled",
-  OVERAGE = "overage",
 }
 
 @Entity("token_purchases")
@@ -39,7 +37,7 @@ export class TokenPurchase {
   @Column({ type: "uuid", nullable: true, name: "subscription_id" })
   subscriptionId: string;
 
-  @ManyToOne(() => Subscription, { nullable: true })
+  @ManyToOne("Subscription", { nullable: true })
   @JoinColumn({ name: "subscription_id" })
   subscription: Subscription;
 

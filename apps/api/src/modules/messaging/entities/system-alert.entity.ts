@@ -8,27 +8,15 @@ import {
 } from "typeorm";
 
 export enum AlertSeverity {
-  LOW = "low",
-  MEDIUM = "medium",
-  HIGH = "high",
   CRITICAL = "critical",
 }
 
 export enum AlertStatus {
   ACTIVE = "active",
-  ACKNOWLEDGED = "acknowledged",
-  RESOLVED = "resolved",
-  IGNORED = "ignored",
 }
 
 export enum AlertType {
   DEAD_LETTER = "dead_letter",
-  PROVIDER_FAILURE = "provider_failure",
-  RATE_LIMIT_EXCEEDED = "rate_limit_exceeded",
-  QUOTA_EXCEEDED = "quota_exceeded",
-  SYSTEM_ERROR = "system_error",
-  SECURITY_BREACH = "security_breach",
-  PERFORMANCE_DEGRADATION = "performance_degradation",
 }
 
 @Entity("system_alerts")

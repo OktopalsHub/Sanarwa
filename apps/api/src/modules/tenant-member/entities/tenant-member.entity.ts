@@ -1,17 +1,17 @@
 import { Column, Entity, Index, ManyToOne, OneToMany } from "typeorm";
 import { TenantMemberRole, TenantMemberStatus } from "../../../common/enums";
 import { BaseEntity } from "../../../common/database/entities/base.entity";
-import { ApiKey } from "../../api-key/entities/api-key.entity";
-import { Brand } from "../../brand/entities/brand.entity";
-import { Configuration } from "../../configuration/entities/configuration.entity";
-import { Invite } from "../../invite/entities/invite.entity";
-import { Message } from "../../messaging/message.entity";
-import { Project } from "../../project/entities/project.entity";
-import { ProviderConfig } from "../../provider/provider-config.entity";
-import { Template } from "../../template/template.entity";
-import { Tenant } from "../../tenant/entities/tenant.entity";
-import { User } from "../../user/entities/user.entity";
-import { PushCertificate } from "../../push-certificates/entities/push-certificate.entity";
+import type { ApiKey } from "../../api-key/entities/api-key.entity";
+import type { Brand } from "../../brand/entities/brand.entity";
+import type { Configuration } from "../../configuration/entities/configuration.entity";
+import type { Invite } from "../../invite/entities/invite.entity";
+import type { Message } from "../../messaging/message.entity";
+import type { Project } from "../../project/entities/project.entity";
+import type { ProviderConfig } from "../../provider/provider-config.entity";
+import type { Template } from "../../template/template.entity";
+import type { Tenant } from "../../tenant/entities/tenant.entity";
+import type { User } from "../../user/entities/user.entity";
+import type { PushCertificate } from "../../push-certificates/entities/push-certificate.entity";
 
 @Entity("tenant_members")
 @Index(["tenantId", "userId"], { unique: true })
@@ -43,36 +43,36 @@ export class TenantMember extends BaseEntity {
   @Column({ type: "uuid" })
   userId: string;
 
-  @ManyToOne(() => Tenant, (tenant) => tenant.members)
+  @ManyToOne("Tenant", (tenant: Tenant) => tenant.members)
   tenant: Tenant;
 
-  @ManyToOne(() => User)
+  @ManyToOne("User")
   user: User;
 
-  @OneToMany(() => ApiKey, (apiKey) => apiKey.createdBy)
+  @OneToMany("ApiKey", (apiKey: ApiKey) => apiKey.createdBy)
   createdApiKeys: ApiKey[];
 
-  @OneToMany(() => Invite, (invite) => invite.invitedBy)
+  @OneToMany("Invite", (invite: Invite) => invite.invitedBy)
   sentInvites: Invite[];
 
-  @OneToMany(() => Brand, (brand) => brand.createdBy)
+  @OneToMany("Brand", (brand: Brand) => brand.createdBy)
   createdBrands: Brand[];
 
-  @OneToMany(() => Project, (project) => project.createdBy)
+  @OneToMany("Project", (project: Project) => project.createdBy)
   createdProjects: Project[];
 
-  @OneToMany(() => Template, (template) => template.createdBy)
+  @OneToMany("Template", (template: Template) => template.createdBy)
   createdTemplates: Template[];
 
-  @OneToMany(() => ProviderConfig, (providerConfig) => providerConfig.createdBy)
+  @OneToMany("ProviderConfig", (providerConfig: ProviderConfig) => providerConfig.createdBy)
   createdProviderConfigs: ProviderConfig[];
 
-  @OneToMany(() => Configuration, (configuration) => configuration.createdBy)
+  @OneToMany("Configuration", (configuration: Configuration) => configuration.createdBy)
   createdConfigurations: Configuration[];
 
-  @OneToMany(() => Message, (message) => message.createdBy)
+  @OneToMany("Message", (message: Message) => message.createdBy)
   createdMessages: Message[];
 
-  @OneToMany(() => PushCertificate, (certificate) => certificate.createdBy)
+  @OneToMany("PushCertificate", (certificate: PushCertificate) => certificate.createdBy)
   createdPushCertificates: PushCertificate[];
 }

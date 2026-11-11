@@ -1,7 +1,7 @@
 import { Column, Entity, Index, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
 import { TenantMemberRole } from "../../../common/enums";
 import { TenantMember } from "../../tenant-member/entities/tenant-member.entity";
-import { Tenant } from "../../tenant/entities/tenant.entity";
+import type { Tenant } from "../../tenant/entities/tenant.entity";
 
 export enum InviteStatus {
   PENDING = "pending",
@@ -45,7 +45,7 @@ export class Invite {
   @Column({ type: "uuid" })
   tenantId: string;
 
-  @ManyToOne(() => Tenant, (tenant) => tenant.invites, { onDelete: "CASCADE" })
+  @ManyToOne("Tenant", (tenant: Tenant) => tenant.invites, { onDelete: "CASCADE" })
   tenant: Tenant;
 
   @ManyToOne(() => TenantMember, (tenantMember) => tenantMember.sentInvites)

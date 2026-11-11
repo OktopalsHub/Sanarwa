@@ -8,7 +8,7 @@ import {
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from "typeorm";
-import { TenantMember } from "../tenant-member/entities/tenant-member.entity";
+import type { TenantMember } from "../tenant-member/entities/tenant-member.entity";
 import { MessageDelivery } from "./message-delivery.entity";
 import { NotificationChannel } from "../../common/enums/notification-channel.enum";
 
@@ -105,7 +105,9 @@ export class Message {
   @Column({ type: "timestamp", nullable: true, name: "delivered_at" })
   deliveredAt?: Date;
 
-  @ManyToOne(() => TenantMember, (tenantMember) => tenantMember.createdMessages, { nullable: true })
+  @ManyToOne("TenantMember", (tenantMember: TenantMember) => tenantMember.createdMessages, {
+    nullable: true,
+  })
   createdBy?: TenantMember;
 
   @OneToMany(() => MessageDelivery, (delivery) => delivery.message, {

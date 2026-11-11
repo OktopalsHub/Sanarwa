@@ -1,13 +1,13 @@
-import { Template } from "../../template/template.entity";
+import type { Template } from "../../template/template.entity";
 import { Column, Entity, Index, ManyToOne, OneToMany, OneToOne } from "typeorm";
 import { ProjectStatus } from "../../../common/enums";
 import { BaseEntity } from "../../../common/database/entities/base.entity";
-import { ApiKey } from "../../api-key/entities/api-key.entity";
-import { Brand } from "../../brand/entities/brand.entity";
-import { ProviderConfig } from "../../provider/provider-config.entity";
-import { TenantMember } from "../../tenant-member/entities/tenant-member.entity";
-import { Tenant } from "../../tenant/entities/tenant.entity";
-import { PushCertificate } from "../../push-certificates/entities/push-certificate.entity";
+import type { ApiKey } from "../../api-key/entities/api-key.entity";
+import type { Brand } from "../../brand/entities/brand.entity";
+import type { ProviderConfig } from "../../provider/provider-config.entity";
+import type { TenantMember } from "../../tenant-member/entities/tenant-member.entity";
+import type { Tenant } from "../../tenant/entities/tenant.entity";
+import type { PushCertificate } from "../../push-certificates/entities/push-certificate.entity";
 
 @Entity("projects")
 @Index(["tenantId"])
@@ -33,24 +33,24 @@ export class Project extends BaseEntity {
   @Column({ type: "uuid" })
   tenantId: string;
 
-  @ManyToOne(() => Tenant, (tenant) => tenant.projects)
+  @ManyToOne("Tenant", (tenant: Tenant) => tenant.projects)
   tenant: Tenant;
 
-  @ManyToOne(() => Brand, (brand) => brand.projects, { nullable: true })
+  @ManyToOne("Brand", (brand: Brand) => brand.projects, { nullable: true })
   brand?: Brand;
 
-  @ManyToOne(() => TenantMember, (tenantMember) => tenantMember.createdProjects)
+  @ManyToOne("TenantMember", (tenantMember: TenantMember) => tenantMember.createdProjects)
   createdBy: TenantMember;
 
-  @OneToMany(() => ApiKey, (apiKey) => apiKey.project)
+  @OneToMany("ApiKey", (apiKey: ApiKey) => apiKey.project)
   apiKeys: ApiKey[];
 
-  @OneToMany(() => ProviderConfig, (providerConfig) => providerConfig.project)
+  @OneToMany("ProviderConfig", (providerConfig: ProviderConfig) => providerConfig.project)
   providerConfigs: ProviderConfig[];
 
-  @OneToMany(() => Template, (template) => template.project)
+  @OneToMany("Template", (template: Template) => template.project)
   templates: Template[];
 
-  @OneToMany(() => PushCertificate, (certificate) => certificate.project)
+  @OneToMany("PushCertificate", (certificate: PushCertificate) => certificate.project)
   pushCertificates: PushCertificate[];
 }

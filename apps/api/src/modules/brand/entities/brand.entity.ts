@@ -4,7 +4,7 @@ import { WhiteLabelConfig } from "../../../common/interfaces";
 import { BaseEntity } from "../../../common/database/entities/base.entity";
 import { Project } from "../../project/entities/project.entity";
 import { TenantMember } from "../../tenant-member/entities/tenant-member.entity";
-import { Tenant } from "../../tenant/entities/tenant.entity";
+import type { Tenant } from "../../tenant/entities/tenant.entity";
 
 @Entity("brands")
 export class Brand extends BaseEntity {
@@ -80,7 +80,7 @@ export class Brand extends BaseEntity {
   @ManyToOne(() => TenantMember, (tenantMember) => tenantMember.createdBrands)
   createdBy: TenantMember;
 
-  @ManyToOne(() => Tenant, (tenant) => tenant.brands)
+  @ManyToOne("Tenant", (tenant: Tenant) => tenant.brands)
   tenant: Tenant;
 
   @OneToMany(() => Project, (project) => project.brand)

@@ -15,12 +15,12 @@ import { BaseEntity } from "../../../common/database/entities/base.entity";
 import { Brand } from "../../brand/entities/brand.entity";
 import { Invite } from "../../invite/entities/invite.entity";
 import { Project } from "../../project/entities/project.entity";
-import { Template } from "../../template/template.entity";
+import type { Template } from "../../template/template.entity";
 import { TenantMember } from "../../tenant-member/entities/tenant-member.entity";
-import { User } from "../../user/entities/user.entity";
+import type { User } from "../../user/entities/user.entity";
 import { PushCertificate } from "../../push-certificates/entities/push-certificate.entity";
-import { Webhook } from "../../webhook/entities/webhook.entity";
-import { TenantSettings } from "./tenant-settings.entity";
+import type { Webhook } from "../../webhook/entities/webhook.entity";
+import type { TenantSettings } from "./tenant-settings.entity";
 
 @Entity("tenants")
 @Unique(["subdomain"])
@@ -57,34 +57,34 @@ export class Tenant extends BaseEntity {
   @Column({ name: "owner_id" })
   ownerId: string;
 
-  @ManyToOne(() => User, (user) => user.tenants)
+  @ManyToOne("User", (user: User) => user.tenants)
   @JoinColumn({ name: "owner_id" })
   owner: User;
 
-  @OneToOne(() => TenantSettings, (settings) => settings.tenant, {
+  @OneToOne("TenantSettings", (settings: TenantSettings) => settings.tenant, {
     cascade: true,
     nullable: true,
   })
   settings?: TenantSettings;
 
-  @OneToMany(() => TenantMember, (member) => member.tenant)
+  @OneToMany(() => TenantMember, (member: TenantMember) => member.tenant)
   members: TenantMember[];
 
-  @OneToMany(() => Project, (project) => project.tenant)
+  @OneToMany(() => Project, (project: Project) => project.tenant)
   projects: Project[];
 
-  @OneToMany(() => Invite, (invite) => invite.tenant)
+  @OneToMany(() => Invite, (invite: Invite) => invite.tenant)
   invites: Invite[];
 
-  @OneToMany(() => Brand, (brand) => brand.tenant)
+  @OneToMany(() => Brand, (brand: Brand) => brand.tenant)
   brands: Brand[];
 
-  @OneToMany(() => Template, (template) => template.tenant)
+  @OneToMany("Template", (template: Template) => template.tenant)
   templates: Template[];
 
-  @OneToMany(() => PushCertificate, (certificate) => certificate.tenant)
+  @OneToMany(() => PushCertificate, (certificate: PushCertificate) => certificate.tenant)
   pushCertificates: PushCertificate[];
 
-  @OneToMany(() => Webhook, (webhook) => webhook.tenant)
+  @OneToMany("Webhook", (webhook: Webhook) => webhook.tenant)
   webhooks: Webhook[];
 }

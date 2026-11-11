@@ -42,14 +42,14 @@ function extractTemplateVars(source: string): string[] {
 function EmailPreview({ subject, lines }: { subject: string; lines: string[] }) {
   return (
     <div className="mx-auto w-full max-w-sm">
-      <p className="text-[0.8125rem] text-lp-muted">email</p>
+      <p className="lp-readout text-lp-muted">email</p>
       <p className="mt-2 text-[1.125rem] font-medium leading-snug text-lp-ink">{subject}</p>
       <div className="mt-3 space-y-2 text-[0.9375rem] leading-relaxed text-lp-ink-2">
         {lines.map((line, index) => (
           <p key={`${index}-${line}`}>{line}</p>
         ))}
       </div>
-      <span className="mt-5 inline-flex rounded-[var(--radius-lp-pill)] bg-lp-accent px-3 py-1.5 text-[12px] font-medium text-lp-accent-ink">
+      <span className="mt-5 inline-flex rounded-md bg-lp-accent px-3 py-1.5 text-[12px] font-medium text-lp-accent-ink">
         view order
       </span>
     </div>
@@ -61,7 +61,7 @@ function SmsPreview({ body }: { body: string }) {
 
   return (
     <div className="mx-auto w-full max-w-[22rem]">
-      <div className="flex items-baseline justify-between text-[0.8125rem] text-lp-muted">
+      <div className="flex items-baseline justify-between lp-readout text-lp-muted">
         <span>sms</span>
         <span>now</span>
       </div>
@@ -80,7 +80,7 @@ function PushPreview({ title, body }: { title: string; body: string }) {
     <div className="mx-auto flex w-full max-w-sm gap-3">
       <SanarwaMark className="size-8 shrink-0 text-lp-accent" />
       <div className="min-w-0">
-        <p className="text-[0.8125rem] text-lp-muted">Sanarwa, now</p>
+        <p className="lp-readout text-lp-muted">Sanarwa, now</p>
         <p className="mt-1.5 text-[0.9375rem] font-medium text-lp-ink">{title}</p>
         <p className="mt-1 line-clamp-3 text-[0.9375rem] leading-relaxed text-lp-ink-2">
           {body || "Your message will appear here."}
@@ -105,18 +105,23 @@ export function TemplateDemo() {
 
   return (
     <section className="border-t border-lp-rule">
-      <div className={`${SHELL} py-[var(--lp-section)]`}>
+      <div className={`${SHELL} py-[clamp(3.5rem,7vw,6rem)]`}>
         <div className="grid gap-6 md:grid-cols-12 md:items-end">
-          <h2 className="lp-section-head text-lp-ink md:col-span-6">2.0 write it once.</h2>
-          <p className="lp-lead max-w-[46ch] text-lp-ink-2 md:col-span-5 md:col-start-8">
-            One source and its variables, rendered for email, SMS and push.
+          <h2 className="lp-section-head text-[clamp(1.75rem,3.2vw,2.75rem)] text-lp-ink md:col-span-6">
+            write it once,
+            <br />
+            render six.
+          </h2>
+          <p className="lp-lead max-w-[46ch] text-lp-muted md:col-span-5 md:col-start-8">
+            One source and its variables, rendered for email, SMS and push. Edit the source — the
+            preview recomputes.
           </p>
         </div>
 
-        <div className="mt-12 grid gap-[var(--lp-bento-gap)] lg:grid-cols-2">
-          <div className="lp-well flex min-w-0 flex-col">
+        <div className="mt-12 grid gap-6 lg:grid-cols-2">
+          <div className="lp-panel flex min-w-0 flex-col">
             <div className="flex items-baseline justify-between gap-4 border-b border-lp-rule px-5 py-3.5">
-              <label htmlFor="template-source" className="text-[0.8125rem] text-lp-muted">
+              <label htmlFor="template-source" className="lp-readout text-lp-muted">
                 template source
               </label>
               <p className="lp-readout text-lp-muted">payment-receipt</p>
@@ -128,10 +133,10 @@ export function TemplateDemo() {
               onChange={(event) => setSource(event.target.value)}
               spellCheck={false}
               aria-label="Template source"
-              className="lp-scroll mx-4 my-4 min-h-[13rem] flex-1 resize-y rounded-[6px] border border-lp-field bg-lp-paper p-4 font-lp-mono text-base leading-[1.7] text-lp-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-lp-focus sm:text-[13px]"
+              className="mx-4 my-4 min-h-[13rem] flex-1 resize-y rounded-md border border-lp-rule bg-lp-ground p-4 font-lp-mono text-base leading-[1.7] text-lp-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-lp-focus sm:text-[13px]"
             />
             <div className="space-y-3 border-t border-lp-rule px-5 py-4">
-              <p className="text-[0.8125rem] text-lp-muted">variables</p>
+              <p className="lp-readout text-lp-muted">variables</p>
               <div className="grid gap-2.5 sm:grid-cols-3">
                 {varKeys.map((key) => (
                   <label key={key} className="flex flex-col gap-1.5">
@@ -145,24 +150,22 @@ export function TemplateDemo() {
                         setVars((previous) => ({ ...previous, [key]: event.target.value }))
                       }
                       placeholder={`{{${key}}}`}
-                      className="h-11 rounded-[6px] border border-lp-field bg-lp-paper px-2.5 font-lp-mono text-base text-lp-ink outline-none transition-colors placeholder:text-lp-muted focus-visible:border-lp-accent sm:text-[13px]"
+                      className="h-11 rounded-md border border-lp-rule bg-lp-ground px-2.5 font-lp-mono text-base text-lp-ink outline-none transition-colors placeholder:text-lp-field focus-visible:border-lp-accent sm:text-[13px]"
                     />
                   </label>
                 ))}
                 {varKeys.length === 0 ? (
-                  <p className="text-[0.8125rem] text-lp-muted">
-                    Add a {"{{variable}}"} to the source.
-                  </p>
+                  <p className="lp-readout text-lp-muted">Add a {"{{variable}}"} to the source.</p>
                 ) : null}
               </div>
             </div>
           </div>
 
-          <div className="lp-well flex min-w-0 flex-col overflow-hidden">
+          <div className="lp-panel flex min-w-0 flex-col overflow-hidden">
             <div className="flex flex-wrap items-center justify-between gap-3 border-b border-lp-rule px-4 py-3">
-              <p className="text-[0.8125rem] text-lp-muted">rendering</p>
+              <p className="lp-readout text-lp-muted">rendering</p>
               <div
-                className="flex items-center gap-1 rounded-[var(--radius-lp-pill)] border border-lp-rule bg-lp-paper p-1"
+                className="flex items-center gap-1 rounded-md border border-lp-rule bg-lp-ground p-1"
                 role="group"
                 aria-label="Preview channel"
               >
@@ -174,7 +177,7 @@ export function TemplateDemo() {
                       type="button"
                       aria-pressed={active}
                       onClick={() => setPreview(tab.id)}
-                      className="lp-tab"
+                      className="min-h-9 rounded-md px-3 font-lp-mono text-[11px] text-lp-muted transition-colors duration-150 aria-pressed:bg-lp-panel-raised aria-pressed:text-lp-ink"
                     >
                       {tab.label}
                     </button>

@@ -14,23 +14,22 @@ const FOOTER_LINKS = [
 export function SiteFooter() {
   return (
     <footer className="border-t border-lp-rule">
-      <div className={`${SHELL} py-16`}>
-        <div className="flex flex-col gap-10 lg:flex-row lg:items-end lg:justify-between">
-          <p className="lp-statement max-w-[16ch] text-lp-ink">
-            one request.
-            <br />
-            one receipt.
-          </p>
+      <div className={`${SHELL} py-12 sm:py-16`}>
+        <div className="flex flex-col gap-10 md:flex-row md:items-end md:justify-between">
+          <SanarwaWordmark
+            markClassName="size-6 text-lp-ink"
+            labelClassName="font-lp-display text-[1.0625rem] font-semibold tracking-[-0.02em] text-lp-ink"
+          />
 
           <nav
             aria-label="Footer"
-            className="grid grid-cols-2 gap-x-12 gap-y-3 text-[0.875rem] sm:flex sm:flex-wrap sm:gap-x-10"
+            className="flex flex-wrap items-center gap-x-8 gap-y-3 text-[0.875rem]"
           >
             {FOOTER_LINKS.map((link) => (
               <Link
                 key={link.href}
                 href={link.href}
-                className="text-lp-ink-2 transition-colors hover:text-lp-ink"
+                className="text-lp-muted transition-colors duration-150 hover:text-lp-ink"
               >
                 {link.label}
               </Link>
@@ -38,15 +37,9 @@ export function SiteFooter() {
           </nav>
         </div>
 
-        <div className="mt-12 flex flex-col gap-3 border-t border-lp-rule pt-6 text-[12px] text-lp-muted sm:flex-row sm:items-baseline sm:justify-between">
-          <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
-            <SanarwaWordmark
-              showMark={false}
-              labelClassName="font-lp-display text-[1.125rem] leading-none text-lp-ink"
-            />
-            <p>© {new Date().getFullYear()}</p>
-          </div>
-          <p>email, sms, whatsapp, push, in-app, voice</p>
+        <div className="mt-10 flex flex-col gap-3 border-t border-lp-rule pt-6 text-[12px] text-lp-muted sm:flex-row sm:items-baseline sm:justify-between">
+          <p>© {new Date().getFullYear()} Sanarwa</p>
+          <p className="lp-readout">email · sms · whatsapp · push · in-app · voice</p>
         </div>
       </div>
     </footer>

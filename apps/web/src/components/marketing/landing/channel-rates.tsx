@@ -48,19 +48,19 @@ const LABELS: Record<ChannelId, string> = {
 
 export function ChannelRates() {
   return (
-    <section className="border-y border-lp-rule bg-lp-paper-2">
-      <div className={`${SHELL} py-[var(--lp-section)]`}>
+    <section className="border-t border-lp-rule">
+      <div className={`${SHELL} py-[clamp(3.5rem,7vw,6rem)]`}>
         <div className="grid gap-6 md:grid-cols-12 md:items-end">
-          <h2 className="lp-section-head text-lp-ink md:col-span-6">
+          <h2 className="lp-section-head text-[clamp(1.75rem,3.2vw,2.75rem)] text-lp-ink md:col-span-6">
             the token rate behind each channel.
           </h2>
-          <p className="lp-lead max-w-[46ch] text-lp-ink-2 md:col-span-5 md:col-start-8">
+          <p className="lp-lead max-w-[46ch] text-lp-muted md:col-span-5 md:col-start-8">
             The request shape does not change between channels. The token rate does.
           </p>
         </div>
 
         <div className="mt-12">
-          <table className="lp-ledger">
+          <table className="lp-table">
             <caption className="sr-only">
               Managed and bring-your-own token rates for each delivery channel
             </caption>

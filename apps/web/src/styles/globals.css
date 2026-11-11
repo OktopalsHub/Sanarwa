@@ -1,13 +1,3 @@
-/* Hallmark · shape: Narrative Workflow (stages 1.0, 2.0, 3.0) · genre: atmospheric · theme: Lumen, night · draw: c056af · redesign: full
- * hero: Banner · nav: floating pill · footer: statement · imagery: none; the product's own dispatch console rebuilt in markup · signature: one send, six receipts, an sms 429 rerouted to termii
- * axes: violet-black paper / lowercase Instrument Serif over Geist / brass with one rose verb · posture: restrained · contrast: pass · fold: pass · v2.0.0 */
-/* Hallmark · pre-emit critique: P5 H4 E4 S5 R4 V5 · weakest: E, the console's six rows at 1280 and the stage wells' restack on a phone; rows became a ledger and every well keeps one containment layer */
-/* Hallmark · waive 38iii · Lumen names one rose verb as its signature and this page sets "reach" apart once, in the hero head · every other head is one colour */
-/* Hallmark · waive 47c · one blueprint grid inside the key well, drawn under a masked key readout and two facts, not under prose · the grid is Lumen's own drawing material, geometry that does not stand in for a picture */
-/* Hallmark · waive 44c · hero: Banner, the head on paper with the console immediately below · the headline, its sentence and both actions sit inside 800px at 1280, and the console carries the fold */
-/* Hallmark · answered F3 · display heads carry text-wrap: balance; the checklist treats a head without it as the finding, and balance keeps the stage heads off a one-word last line at 1280 and 375 */
-/* Hallmark · finish-review: subagent · 7 findings · 5 resolved 1 partial 1 answered · 44a gaps now 1.26–1.28×, the right half kept for Banner · gap: the hero stays type-led; the console opens at y 736 in the 1280 fold */
-
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "@sanarwa/ui/styles/tokens.css";

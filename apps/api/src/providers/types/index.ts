@@ -1,13 +1,8 @@
 import { NotificationChannel } from "../../common/enums/notification-channel.enum";
 
 export enum DeliveryStatus {
-  PENDING = "pending",
   SENT = "sent",
-  DELIVERED = "delivered",
   FAILED = "failed",
-  BOUNCED = "bounced",
-  OPENED = "opened",
-  CLICKED = "clicked",
 }
 
 export interface Recipient {

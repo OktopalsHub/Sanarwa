@@ -9,18 +9,17 @@ import { TelnyxWebhookController } from "../../controllers/telnyx-webhook.contro
 import { VoiceCallTrackingService } from "../../services/voice-call-tracking.service";
 import { VoiceCall } from "../../entities/voice-call.entity";
 
-import { BillingService } from "../../services/billing.service";
 import { WebhookValidatorService } from "../../services/webhook-validator.service";
 import { ApiKeyModule } from "../../../api-key/api-key.module";
+import { BillingModule } from "../../../billing/billing.module";
 
 @Module({
-  imports: [ConfigModule, ApiKeyModule, TypeOrmModule.forFeature([VoiceCall])],
+  imports: [ConfigModule, ApiKeyModule, BillingModule, TypeOrmModule.forFeature([VoiceCall])],
   providers: [
     TelnyxVoiceProvider,
     VoiceOrchestratorService,
     VoiceService,
     VoiceCallTrackingService,
-    BillingService,
     WebhookValidatorService,
   ],
   controllers: [VoiceController, TelnyxWebhookController],

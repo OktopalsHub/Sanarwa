@@ -60,7 +60,13 @@ import { NotificationSuppression } from "../../modules/preferences/entities/noti
 import { SubscriberQuietHours } from "../../modules/preferences/entities/subscriber-quiet-hours.entity";
 import { TemplateVersion } from "../../modules/template/entities/template-version.entity";
 
-import { InitialSchema1794349055401 } from "./migrations";
+import {
+  InitialSchema1794349055401,
+  ExplicitExecutionState1794349055402,
+  DeliveryStateSplit1794349055403,
+  WorkflowScheduleCursor1794349055404,
+  NotificationLogTrackingIdIndex1794349055405,
+} from "./migrations";
 
 config();
 
@@ -126,7 +132,13 @@ const AppDataSource: DataSourceOptions = {
     SubscriberQuietHours,
     TemplateVersion,
   ],
-  migrations: [InitialSchema1794349055401],
+  migrations: [
+    InitialSchema1794349055401,
+    ExplicitExecutionState1794349055402,
+    DeliveryStateSplit1794349055403,
+    WorkflowScheduleCursor1794349055404,
+    NotificationLogTrackingIdIndex1794349055405,
+  ],
   logging: isDev,
   migrationsRun: true,
   migrationsTransactionMode: "all",

@@ -49,15 +49,11 @@ interface ConditionalRenderProps {
   fallback?: React.ReactNode;
 }
 
-export function ConditionalRender({
-  children,
-  condition,
-  fallback = null,
-}: ConditionalRenderProps) {
+function ConditionalRender({ children, condition, fallback = null }: ConditionalRenderProps) {
   return condition ? <>{children}</> : <>{fallback}</>;
 }
 
-export function withPermissions<P extends object>(
+function withPermissions<P extends object>(
   Component: React.ComponentType<P>,
   requiredPermissions: Permission[],
   requireAll = false,

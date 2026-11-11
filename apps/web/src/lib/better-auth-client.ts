@@ -10,7 +10,7 @@ const statement = {
   invitation: ["create", "cancel"],
 } as const;
 
-export const ac = createAccessControl(statement);
+const ac = createAccessControl(statement);
 
 const roles = {
   owner: ac.newRole({
@@ -63,7 +63,7 @@ export const authClient = createAuthClient({
   ],
 });
 
-export function useBetterAuthClient() {
+function useBetterAuthClient() {
   return authClient;
 }
 

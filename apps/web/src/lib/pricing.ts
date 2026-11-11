@@ -14,7 +14,7 @@ export interface TokenPackage {
   savingsPercent: number;
 }
 
-export const BYO_ELIGIBLE_CHANNELS: ChannelId[] = ["email", "sms", "push", "whatsapp", "voice"];
+const BYO_ELIGIBLE_CHANNELS: ChannelId[] = ["email", "sms", "push", "whatsapp", "voice"];
 
 export const MANAGED_ONLY_CHANNELS: ChannelId[] = ["in_app"];
 
@@ -29,13 +29,13 @@ export const MANAGED_CHANNEL_TOKEN_COST: Record<ChannelId, number> = {
 
 export const BYO_EVENT_TOKEN_COST = 1;
 
-export const CHANNEL_TOKEN_COST = MANAGED_CHANNEL_TOKEN_COST;
+const CHANNEL_TOKEN_COST = MANAGED_CHANNEL_TOKEN_COST;
 
 export function isByoEligibleChannel(channel: ChannelId): boolean {
   return BYO_ELIGIBLE_CHANNELS.includes(channel);
 }
 
-export function channelTokenCost(channel: ChannelId, mode: BillingMode = "managed"): number {
+function channelTokenCost(channel: ChannelId, mode: BillingMode = "managed"): number {
   if (mode === "byo" && isByoEligibleChannel(channel)) {
     return BYO_EVENT_TOKEN_COST;
   }
@@ -69,24 +69,24 @@ export const CHANNEL_UNIT_LABEL: Record<ChannelId, string> = {
   voice: "minutes",
 };
 
-export const USD_TO_NGN = 1600;
+const USD_TO_NGN = 1600;
 
 export const WELCOME_SIGNUP_TOKENS = 3_000;
 
 export const MANAGED_LIST_TOKENS = 3_000;
-export const MANAGED_LIST_PRICE_USD = 1;
-export const MANAGED_LIST_PRICE_NGN = 1_000;
+const MANAGED_LIST_PRICE_USD = 1;
+const MANAGED_LIST_PRICE_NGN = 1_000;
 
-export const BYO_LIST_EVENTS = 12_500;
-export const BYO_LIST_PRICE_USD = 10;
-export const BYO_LIST_PRICE_NGN = 10_000;
+const BYO_LIST_EVENTS = 12_500;
+const BYO_LIST_PRICE_USD = 10;
+const BYO_LIST_PRICE_NGN = 10_000;
 export const BYO_EVENTS_PER_USD = BYO_LIST_EVENTS / BYO_LIST_PRICE_USD;
 export const BYO_EVENTS_PER_NGN = BYO_LIST_EVENTS / BYO_LIST_PRICE_NGN;
 
-export const BASE_TOKEN_PRICE_USD = MANAGED_LIST_PRICE_USD / MANAGED_LIST_TOKENS;
-export const BASE_TOKEN_PRICE_NGN = MANAGED_LIST_PRICE_NGN / MANAGED_LIST_TOKENS;
+const BASE_TOKEN_PRICE_USD = MANAGED_LIST_PRICE_USD / MANAGED_LIST_TOKENS;
+const BASE_TOKEN_PRICE_NGN = MANAGED_LIST_PRICE_NGN / MANAGED_LIST_TOKENS;
 
-export const TOKEN_PACKAGES_USD: TokenPackage[] = [
+const TOKEN_PACKAGES_USD: TokenPackage[] = [
   {
     id: "usd-3000",
     tokens: 3_000,
@@ -125,7 +125,7 @@ export const TOKEN_PACKAGES_USD: TokenPackage[] = [
   },
 ];
 
-export const TOKEN_PACKAGES_NGN: TokenPackage[] = [
+const TOKEN_PACKAGES_NGN: TokenPackage[] = [
   {
     id: "ngn-3000",
     tokens: 3_000,
@@ -164,7 +164,7 @@ export const TOKEN_PACKAGES_NGN: TokenPackage[] = [
   },
 ];
 
-export const BYO_EVENT_PACKAGES_USD: TokenPackage[] = [
+const BYO_EVENT_PACKAGES_USD: TokenPackage[] = [
   {
     id: "byo-usd-1250",
     tokens: 1_250,
@@ -203,7 +203,7 @@ export const BYO_EVENT_PACKAGES_USD: TokenPackage[] = [
   },
 ];
 
-export const BYO_EVENT_PACKAGES_NGN: TokenPackage[] = [
+const BYO_EVENT_PACKAGES_NGN: TokenPackage[] = [
   {
     id: "byo-ngn-1250",
     tokens: 1_250,
@@ -242,7 +242,7 @@ export const BYO_EVENT_PACKAGES_NGN: TokenPackage[] = [
   },
 ];
 
-export const TOKEN_PACKAGES = TOKEN_PACKAGES_USD;
+const TOKEN_PACKAGES = TOKEN_PACKAGES_USD;
 
 export function packagesForCurrency(
   currency: CurrencyCode,
@@ -254,19 +254,15 @@ export function packagesForCurrency(
   return currency === "NGN" ? TOKEN_PACKAGES_NGN : TOKEN_PACKAGES_USD;
 }
 
-export function usdToNgn(usd: number): number {
+function usdToNgn(usd: number): number {
   return usd * USD_TO_NGN;
 }
 
-export function ngnToUsd(ngn: number): number {
+function ngnToUsd(ngn: number): number {
   return ngn / USD_TO_NGN;
 }
 
-export function tokensForSends(
-  channel: ChannelId,
-  sends: number,
-  mode: BillingMode = "managed",
-): number {
+function tokensForSends(channel: ChannelId, sends: number, mode: BillingMode = "managed"): number {
   const cost = channelTokenCost(channel, mode);
   return Math.ceil(cost * Math.max(0, Math.floor(sends)));
 }
@@ -281,13 +277,13 @@ export function sendsFromTokens(
   return Math.floor(Math.max(0, tokens) / cost);
 }
 
-export function eventsFromSpend(spend: number, currency: CurrencyCode): number {
+function eventsFromSpend(spend: number, currency: CurrencyCode): number {
   if (spend <= 0) return 0;
   const rate = currency === "NGN" ? BYO_EVENTS_PER_NGN : BYO_EVENTS_PER_USD;
   return Math.floor(spend * rate);
 }
 
-export function getTokenUnitPrice(
+function getTokenUnitPrice(
   tokens: number,
   currency: CurrencyCode,
   mode: BillingMode = "managed",
@@ -303,7 +299,7 @@ export function getTokenUnitPrice(
   return currency === "NGN" ? fit.pricePerTokenNgn : fit.pricePerTokenUsd;
 }
 
-export function getTokenUnitPriceUsd(tokenAmount: number): number {
+function getTokenUnitPriceUsd(tokenAmount: number): number {
   return getTokenUnitPrice(tokenAmount, "USD");
 }
 
@@ -337,11 +333,11 @@ export function tokensFromSpend(
   return Math.max(0, tokens);
 }
 
-export function tokensFromSpendUsd(spendUsd: number): number {
+function tokensFromSpendUsd(spendUsd: number): number {
   return tokensFromSpend(spendUsd, "USD");
 }
 
-export function bestPackageForTokens(
+function bestPackageForTokens(
   tokensNeeded: number,
   currency: CurrencyCode,
   mode: BillingMode = "managed",
@@ -355,7 +351,7 @@ export function packPrice(pkg: TokenPackage, currency: CurrencyCode): number {
   return currency === "NGN" ? pkg.priceNgn : pkg.priceUsd;
 }
 
-export function packUnitPrice(pkg: TokenPackage, currency: CurrencyCode): number {
+function packUnitPrice(pkg: TokenPackage, currency: CurrencyCode): number {
   return currency === "NGN" ? pkg.pricePerTokenNgn : pkg.pricePerTokenUsd;
 }
 
@@ -379,6 +375,6 @@ export function formatTokens(n: number): string {
   return new Intl.NumberFormat("en-US").format(n);
 }
 
-export function formatUsd(amount: number): string {
+function formatUsd(amount: number): string {
   return formatMoney(amount, "USD");
 }

@@ -24,7 +24,7 @@ export default function LoginPage() {
   );
 }
 
-export const metadata = {
+const metadata = {
   title: "Sign In - Sanarwa",
   description: "Sign in to your Sanarwa account",
 };

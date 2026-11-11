@@ -216,7 +216,7 @@ ${branding.customCss || ""}
 `;
 }
 
-export function applyBrandingToInAppNotification(
+function applyBrandingToInAppNotification(
   title: string,
   message: string,
   branding: BrandingConfig,

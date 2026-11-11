@@ -9,7 +9,7 @@ import type {
 } from "@/lib/types/provider";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
-export function useProviders(params?: ProviderQueryParams) {
+function useProviders(params?: ProviderQueryParams) {
   return useQuery({
     queryKey: ["providers", params],
     queryFn: () => providerApi.getProviders(params),
@@ -17,7 +17,7 @@ export function useProviders(params?: ProviderQueryParams) {
   });
 }
 
-export function useProvidersByProject(projectId: string, params?: ProviderQueryParams) {
+function useProvidersByProject(projectId: string, params?: ProviderQueryParams) {
   return useQuery({
     queryKey: ["providers", "project", projectId, params],
     queryFn: () => providerApi.getProvidersByProject(projectId, params),
@@ -26,7 +26,7 @@ export function useProvidersByProject(projectId: string, params?: ProviderQueryP
   });
 }
 
-export function useProvider(providerId: string) {
+function useProvider(providerId: string) {
   return useQuery({
     queryKey: ["providers", providerId],
     queryFn: () => providerApi.getProvider(providerId),
@@ -35,7 +35,7 @@ export function useProvider(providerId: string) {
   });
 }
 
-export function useProviderMetrics(
+function useProviderMetrics(
   providerId: string,
   params?: {
     startDate?: Date;
@@ -51,7 +51,7 @@ export function useProviderMetrics(
   });
 }
 
-export function useAllProvidersMetrics(params?: {
+function useAllProvidersMetrics(params?: {
   type?: ProviderType;
   startDate?: Date;
   endDate?: Date;
@@ -64,7 +64,7 @@ export function useAllProvidersMetrics(params?: {
   });
 }
 
-export function useProviderComparison(
+function useProviderComparison(
   providerIds: string[],
   params?: {
     startDate?: Date;
@@ -80,7 +80,7 @@ export function useProviderComparison(
   });
 }
 
-export function useFailoverConfig(channel: ProviderType) {
+function useFailoverConfig(channel: ProviderType) {
   return useQuery({
     queryKey: ["providers", "failover", channel],
     queryFn: () => providerApi.getFailoverConfig(channel),
@@ -89,7 +89,7 @@ export function useFailoverConfig(channel: ProviderType) {
   });
 }
 
-export function useRecommendedProvider(channel: ProviderType) {
+function useRecommendedProvider(channel: ProviderType) {
   return useQuery({
     queryKey: ["providers", "recommendations", channel],
     queryFn: () => providerApi.getRecommendedProvider(channel),
@@ -98,7 +98,7 @@ export function useRecommendedProvider(channel: ProviderType) {
   });
 }
 
-export function useProviderFeatureSupport(providerId: string, feature: string) {
+function useProviderFeatureSupport(providerId: string, feature: string) {
   return useQuery({
     queryKey: ["providers", providerId, "features", feature],
     queryFn: () => providerApi.checkProviderFeatureSupport(providerId, feature),
@@ -107,7 +107,7 @@ export function useProviderFeatureSupport(providerId: string, feature: string) {
   });
 }
 
-export function useCreateProvider() {
+function useCreateProvider() {
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -121,7 +121,7 @@ export function useCreateProvider() {
   });
 }
 
-export function useUpdateProvider(providerId: string) {
+function useUpdateProvider(providerId: string) {
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -136,7 +136,7 @@ export function useUpdateProvider(providerId: string) {
   });
 }
 
-export function useDeleteProvider() {
+function useDeleteProvider() {
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -151,7 +151,7 @@ export function useDeleteProvider() {
   });
 }
 
-export function useActivateProvider() {
+function useActivateProvider() {
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -168,7 +168,7 @@ export function useActivateProvider() {
   });
 }
 
-export function useDeactivateProvider() {
+function useDeactivateProvider() {
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -185,7 +185,7 @@ export function useDeactivateProvider() {
   });
 }
 
-export function useSetDefaultProvider() {
+function useSetDefaultProvider() {
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -202,7 +202,7 @@ export function useSetDefaultProvider() {
   });
 }
 
-export function useUpdateFailoverConfig(channel: ProviderType) {
+function useUpdateFailoverConfig(channel: ProviderType) {
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -217,7 +217,7 @@ export function useUpdateFailoverConfig(channel: ProviderType) {
   });
 }
 
-export function useTriggerFailover() {
+function useTriggerFailover() {
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -240,7 +240,7 @@ export function useTriggerFailover() {
   });
 }
 
-export function useProviderValidation() {
+function useProviderValidation() {
   const validateProviderConfig = (data: CreateProviderRequest | UpdateProviderRequest) => {
     return providerApi.validateProviderConfig(data);
   };
@@ -260,7 +260,7 @@ export function useProviderValidation() {
   };
 }
 
-export function useProviderStats() {
+function useProviderStats() {
   const { data: providers } = useProviders();
 
   const stats = {
@@ -280,7 +280,7 @@ export function useProviderStats() {
   return stats;
 }
 
-export function useProviderInsights(timeRange: { startDate: Date; endDate: Date }) {
+function useProviderInsights(timeRange: { startDate: Date; endDate: Date }) {
   const { data: allMetrics } = useAllProvidersMetrics({
     startDate: timeRange.startDate,
     endDate: timeRange.endDate,

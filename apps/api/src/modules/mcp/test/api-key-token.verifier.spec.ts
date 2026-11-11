@@ -1,5 +1,5 @@
 import type { ConfigService } from "@nestjs/config";
-import type { ApiKeyService } from "../api-key/api-key.service";
+import type { ApiKeyService } from "../../api-key/api-key.service";
 import { ApiKeyTokenVerifier } from "../api-key-token.verifier";
 
 const configWith = (env: Record<string, string>) =>

@@ -180,8 +180,9 @@ export class WorkflowService implements OnModuleInit {
   }
 
   /**
-   * Cron: starts runs for trigger=schedule definitions whose
-   * metadata.schedule.nextRunAt is due, then recomputes the next fire time.
+   * Cron: starts runs for trigger=schedule definitions whose next fire time
+   * (the `next_run_at` column, with the legacy `metadata.schedule.nextRunAt`
+   * mirror as fallback) is due, then recomputes the next fire time.
    */
   @Cron(CronExpression.EVERY_MINUTE)
   async processDueSchedules(): Promise<void> {
@@ -195,7 +196,11 @@ export class WorkflowService implements OnModuleInit {
       try {
         const schedule = (workflow.metadata as any)?.schedule;
         const nextRunAt =
-          schedule && typeof schedule.nextRunAt === "string" ? new Date(schedule.nextRunAt) : null;
+          workflow.nextRunAt && !Number.isNaN(new Date(workflow.nextRunAt).getTime())
+            ? new Date(workflow.nextRunAt)
+            : schedule && typeof schedule.nextRunAt === "string"
+              ? new Date(schedule.nextRunAt)
+              : null;
         if (
           !nextRunAt ||
           Number.isNaN(nextRunAt.getTime()) ||
@@ -210,7 +215,7 @@ export class WorkflowService implements OnModuleInit {
         const followingRunAt = new Date(now.getTime() + intervalMs).toISOString();
         const claimed = await this.advanceScheduleDefinition(
           workflow.id,
-          schedule.nextRunAt as string,
+          nextRunAt,
           followingRunAt,
         );
         if (!claimed) {
@@ -251,6 +256,7 @@ export class WorkflowService implements OnModuleInit {
       status: "running",
       currentStep: typeof dto.step === "number" && dto.step >= 0 ? Math.floor(dto.step) : 0,
       context: { ...(dto.context ?? {}), workflowId: workflow.id },
+      execution: {},
       waitEvent: null,
       waitUntil: null,
       errorMessage: null,
@@ -312,12 +318,14 @@ export class WorkflowService implements OnModuleInit {
         ...(run.context ?? {}),
         event: dto.payload ?? {},
         lastEvent: dto.event,
-        ...(dto.idempotencyKey ? this.withSignalKey(run, dto.idempotencyKey) : {}),
       };
+      if (dto.idempotencyKey) {
+        this.withSignalKey(run, dto.idempotencyKey);
+      }
       run.status = "running";
       run.waitEvent = null;
       run.waitUntil = null;
-      const frames = this.framesOf(run.context);
+      const frames = this.framesOf(run);
       if (frames.length > 0) {
         const inner = this.innermost(frames);
         inner.park = null;
@@ -345,24 +353,37 @@ export class WorkflowService implements OnModuleInit {
           continue;
         }
         if (autoMarker) {
-          const already = await this.runs.findOne({
-            where: {
-              tenantId,
-              workflowId: wf.id,
-              status: In(["running", "waiting", "waiting_for_event"]),
-              context: { _signalKeys: [autoMarker] } as any,
-            },
-          });
+          const already = await this.runs
+            .createQueryBuilder("run")
+            .where("run.tenantId = :tenantId", { tenantId })
+            .andWhere("run.workflowId = :workflowId", { workflowId: wf.id })
+            .andWhere("run.status IN (:...statuses)", {
+              statuses: ["running", "waiting", "waiting_for_event"],
+            })
+            .andWhere("run.execution->'signalKeys' ? :marker", { marker: autoMarker })
+            .getOne();
           if (already) continue;
         }
         try {
-          await this.startRun(tenantId, wf.id, {
-            context: {
-              event: dto.payload ?? {},
-              lastEvent: dto.event,
-              ...(autoMarker ? { _signalKeys: [autoMarker] } : {}),
-            },
+          const context: Record<string, unknown> = {
+            event: dto.payload ?? {},
+            lastEvent: dto.event,
+          };
+          const run = this.runs.create({
+            tenantId,
+            workflowId: wf.id,
+            status: "running",
+            currentStep: 0,
+            context: { ...context, workflowId: wf.id },
+            execution: autoMarker ? { signalKeys: [autoMarker] } : {},
+            waitEvent: null,
+            waitUntil: null,
+            errorMessage: null,
+            startedAt: new Date(),
+            completedAt: null,
           });
+          const saved = await this.runs.save(run);
+          await this.advanceRun(saved.id);
           started++;
         } catch (error) {
           this.logger.warn(`Failed to start event workflow ${wf.id}: ${(error as Error).message}`);
@@ -373,17 +394,93 @@ export class WorkflowService implements OnModuleInit {
     return { resumed, started };
   }
 
-  private hasSignalKey(run: WorkflowRun, key: string): boolean {
-    const keys = (run.context as any)?._signalKeys;
-    return Array.isArray(keys) && keys.includes(key);
+  private executionOf(source: unknown): {
+    frames: NestFrame[];
+    retryStep?: number;
+    stepRetryCount?: number;
+    signalKeys: string[];
+  } {
+    const runLike = source as WorkflowRun | Record<string, any> | undefined;
+    const ctx = ((runLike as any)?.context ?? runLike ?? {}) as Record<string, any>;
+    const columnExec =
+      runLike && typeof (runLike as any).execution === "object" && (runLike as any).execution
+        ? ((runLike as any).execution as Record<string, any>)
+        : {};
+    const exec =
+      columnExec && Object.keys(columnExec).length > 0
+        ? columnExec
+        : ctx._execution && typeof ctx._execution === "object"
+          ? ctx._execution
+          : {};
+    const legacyFrames = Array.isArray(ctx._frames) ? ctx._frames : [];
+    const legacySignalKeys = Array.isArray(ctx._signalKeys) ? ctx._signalKeys : [];
+    return {
+      frames: Array.isArray(exec.frames) ? exec.frames : legacyFrames,
+      retryStep:
+        typeof exec.retryStep === "number"
+          ? exec.retryStep
+          : typeof ctx._retryStep === "number"
+            ? ctx._retryStep
+            : undefined,
+      stepRetryCount:
+        typeof exec.stepRetryCount === "number"
+          ? exec.stepRetryCount
+          : typeof ctx._stepRetryCount === "number"
+            ? ctx._stepRetryCount
+            : undefined,
+      signalKeys: Array.isArray(exec.signalKeys) ? exec.signalKeys : legacySignalKeys,
+    };
   }
 
-  private withSignalKey(run: WorkflowRun, key: string): { _signalKeys: string[] } {
-    const prev = Array.isArray((run.context as any)?._signalKeys)
-      ? ((run.context as any)._signalKeys as string[])
-      : [];
-    const next = [...prev.filter((k) => k !== key), key].slice(-MAX_SIGNAL_KEYS);
-    return { _signalKeys: next };
+  private writeExecution(
+    run: WorkflowRun,
+    patch: Partial<{
+      frames: NestFrame[];
+      retryStep: number | undefined;
+      stepRetryCount: number | undefined;
+      signalKeys: string[];
+    }>,
+  ): void {
+    const ctx = { ...((run.context ?? {}) as Record<string, any>) };
+    const current = this.executionOf(run);
+    const next = {
+      ...current,
+      ...patch,
+    };
+
+    delete ctx._frames;
+    delete ctx._retryStep;
+    delete ctx._stepRetryCount;
+    delete ctx._signalKeys;
+    delete ctx._execution;
+
+    const hasExecutionState =
+      (next.frames?.length ?? 0) > 0 ||
+      next.retryStep !== undefined ||
+      next.stepRetryCount !== undefined ||
+      (next.signalKeys?.length ?? 0) > 0;
+
+    const execution = hasExecutionState
+      ? {
+          ...(next.frames?.length ? { frames: next.frames } : {}),
+          ...(next.retryStep !== undefined ? { retryStep: next.retryStep } : {}),
+          ...(next.stepRetryCount !== undefined ? { stepRetryCount: next.stepRetryCount } : {}),
+          ...(next.signalKeys?.length ? { signalKeys: next.signalKeys } : {}),
+        }
+      : {};
+
+    run.execution = execution;
+    run.context = ctx;
+  }
+
+  private hasSignalKey(run: WorkflowRun, key: string): boolean {
+    return this.executionOf(run).signalKeys.includes(key);
+  }
+
+  private withSignalKey(run: WorkflowRun, key: string): void {
+    const prev = this.executionOf(run).signalKeys;
+    const signalKeys = [...prev.filter((k) => k !== key), key].slice(-MAX_SIGNAL_KEYS);
+    this.writeExecution(run, { signalKeys });
   }
 
   /**
@@ -405,7 +502,7 @@ export class WorkflowService implements OnModuleInit {
       try {
         const claimed = await this.claimRun(run.id, [run.status]);
         if (!claimed) continue;
-        const frames = this.framesOf(run.context);
+        const frames = this.framesOf(run);
         if (run.status === "waiting_for_event" && frames.length === 0) {
           run.status = "failed";
           run.errorMessage = `Timed out waiting for event '${run.waitEvent ?? ""}'`;
@@ -458,15 +555,14 @@ export class WorkflowService implements OnModuleInit {
           await this.advanceRun(run.id);
           continue;
         }
-        const retrySame = (run.context as any)?._retryStep === run.currentStep;
+        const exec = this.executionOf(run);
+        const retrySame = exec.retryStep === run.currentStep;
         run.status = "running";
         run.waitUntil = null;
         if (!retrySame) {
           run.currentStep += 1; // advance past delay/wait step
-        }
-        if (retrySame) {
-          const { _retryStep, ...rest } = (run.context ?? {}) as any;
-          run.context = rest;
+        } else {
+          this.writeExecution(run, { retryStep: undefined, stepRetryCount: undefined });
         }
         await this.runs.save(run);
         await this.advanceRun(run.id);
@@ -493,25 +589,21 @@ export class WorkflowService implements OnModuleInit {
   }
 
   /**
-   * Atomically advances a due definition's `metadata.schedule.nextRunAt`.
-   * Another tick (or node) loses the compare-and-swap and must skip starting
-   * a duplicate run.
+   * Atomically advances a due definition's `next_run_at` column. Another tick
+   * (or node) loses the compare-and-swap and must skip starting a duplicate
+   * run.
    */
   private async advanceScheduleDefinition(
     workflowId: string,
-    expectedNextRunAt: string,
+    expectedNextRunAt: Date,
     followingRunAt: string,
   ): Promise<boolean> {
     const result = await this.workflows
       .createQueryBuilder()
       .update()
-      .set({
-        metadata: () =>
-          `jsonb_set("workflows"."metadata", '{schedule,nextRunAt}', to_jsonb(:v::text))`,
-      })
+      .set({ nextRunAt: new Date(followingRunAt) })
       .where("id = :id", { id: workflowId })
-      .andWhere("metadata->'schedule'->>'nextRunAt' = :expected", { expected: expectedNextRunAt })
-      .setParameter("v", followingRunAt)
+      .andWhere("next_run_at = :expected", { expected: expectedNextRunAt })
       .execute();
     return (result.affected ?? 0) === 1;
   }
@@ -533,8 +625,8 @@ export class WorkflowService implements OnModuleInit {
     return count;
   }
 
-  private framesOf(context: unknown): NestFrame[] {
-    const raw = (context as any)?._frames;
+  private framesOf(source: WorkflowRun | Record<string, unknown>): NestFrame[] {
+    const raw = this.executionOf(source).frames;
     if (!Array.isArray(raw) || raw.length === 0) return [];
     const frames: NestFrame[] = [];
     for (const entry of raw) {
@@ -548,7 +640,7 @@ export class WorkflowService implements OnModuleInit {
         !Number.isInteger(entry.total)
       ) {
         this.logger.warn(
-          "workflow run has a corrupt _frames entry; refusing to resume nested state",
+          "workflow run has corrupt execution frames; refusing to resume nested state",
         );
         return [];
       }
@@ -562,13 +654,7 @@ export class WorkflowService implements OnModuleInit {
   }
 
   private setFrames(run: WorkflowRun, frames: NestFrame[]): void {
-    const ctx = (run.context ?? {}) as any;
-    if (frames.length === 0) {
-      const { _frames, ...rest } = ctx;
-      run.context = rest;
-      return;
-    }
-    run.context = { ...ctx, _frames: frames } as any;
+    this.writeExecution(run, { frames });
   }
 
   /** Descends `depth` frame levels into the topology and returns the sub-array at that level. */
@@ -602,7 +688,7 @@ export class WorkflowService implements OnModuleInit {
 
   /** Bundles the current cursor into one location object handlers read/write. */
   private async makeLocation(run: WorkflowRun, steps: WorkflowStep[]): Promise<StepLocation> {
-    const frames = this.framesOf(run.context);
+    const frames = this.framesOf(run);
     if (frames.length === 0) {
       return { array: steps, index: run.currentStep, frames: [], depth: 0 };
     }
@@ -660,8 +746,8 @@ export class WorkflowService implements OnModuleInit {
         ...((run.context ?? {}) as any),
         [inner.as]: item,
         [inner.indexAs]: inner.i,
-        _frames: frames,
       } as any;
+      this.setFrames(run, frames);
       return;
     }
     // Caller (completeLevelFrames) pops the construct; this binds the next item.
@@ -681,9 +767,7 @@ export class WorkflowService implements OnModuleInit {
     frames.pop();
     if (frames.length === 0) {
       run.currentStep += 1;
-      const rest = (run.context ?? {}) as any;
-      const { _frames, ...cleaned } = rest;
-      run.context = cleaned;
+      this.writeExecution(run, { frames: [] });
       return;
     }
     this.setFrames(run, frames);
@@ -819,13 +903,13 @@ export class WorkflowService implements OnModuleInit {
       run.status = "waiting";
       run.waitUntil = new Date();
       run.waitEvent = null;
-      const frames = this.framesOf(run.context);
+      const frames = this.framesOf(run);
       if (frames.length > 0) {
         const inner = this.innermost(frames);
         inner.park = "retry"; // re-enter the same sub-step on cron wake
         this.setFrames(run, frames);
       } else {
-        run.context = { ...(run.context ?? {}), _retryStep: run.currentStep } as any;
+        this.writeExecution(run, { retryStep: run.currentStep });
       }
       await this.runs.save(run);
     }
@@ -917,8 +1001,8 @@ export class WorkflowService implements OnModuleInit {
       ...context,
       [frame.as]: items[0],
       [frame.indexAs]: 0,
-      _frames: frames,
     } as any;
+    this.setFrames(run, frames);
     return "enter";
   }
 
@@ -950,7 +1034,7 @@ export class WorkflowService implements OnModuleInit {
     } as NestFrame;
     const frames = loc.frames;
     frames.push(frame);
-    run.context = { ...((run.context ?? {}) as any), _frames: frames } as any;
+    this.setFrames(run, frames);
     return "enter";
   }
 
@@ -1023,13 +1107,12 @@ export class WorkflowService implements OnModuleInit {
     run.status = "waiting";
     run.waitUntil = new Date(Date.now() + delay);
     run.waitEvent = null;
-    const frames = this.framesOf(run.context);
+    const frames = this.framesOf(run);
     if (frames.length > 0) {
       this.innermost(frames).park = "delay";
       this.setFrames(run, frames);
       return "parked";
     }
-    run.context = { ...(run.context ?? {}), _retryStep: undefined } as any;
     this.clearStepRetry(run);
     return "parked";
   }
@@ -1051,7 +1134,7 @@ export class WorkflowService implements OnModuleInit {
     run.waitEvent = event;
     run.waitUntil =
       Number.isFinite(timeoutMs) && timeoutMs > 0 ? new Date(Date.now() + timeoutMs) : null;
-    const frames = this.framesOf(run.context);
+    const frames = this.framesOf(run);
     if (frames.length > 0) {
       this.innermost(frames).park = "event";
       this.setFrames(run, frames);
@@ -1107,7 +1190,7 @@ export class WorkflowService implements OnModuleInit {
         },
         run.tenantId,
       );
-      const frames = this.framesOf(run.context);
+      const frames = this.framesOf(run);
       if (frames.length > 0) {
         this.innermost(frames).retryCount = 0;
         this.setFrames(run, frames);
@@ -1126,13 +1209,7 @@ export class WorkflowService implements OnModuleInit {
   }
 
   private clearStepRetry(run: WorkflowRun): void {
-    if (
-      (run.context as any)?._stepRetryCount !== undefined ||
-      (run.context as any)?._retryStep !== undefined
-    ) {
-      const { _stepRetryCount, _retryStep, ...rest } = (run.context ?? {}) as any;
-      run.context = rest;
-    }
+    this.writeExecution(run, { retryStep: undefined, stepRetryCount: undefined });
   }
 
   private maybeRetryStep(
@@ -1146,7 +1223,7 @@ export class WorkflowService implements OnModuleInit {
     const delayMs = Number(retry.delayMs ?? 5000);
     if (!Number.isFinite(attempts) || attempts <= 0) return "failed";
 
-    const frames = this.framesOf(run.context);
+    const frames = this.framesOf(run);
     if (frames.length > 0) {
       const inner = this.innermost(frames);
       const count = inner.retryCount ?? 0;
@@ -1162,13 +1239,10 @@ export class WorkflowService implements OnModuleInit {
       return "parked";
     }
 
-    const count = Number((run.context as any)?._stepRetryCount ?? 0);
+    const exec = this.executionOf(run);
+    const count = Number(exec.stepRetryCount ?? 0);
     if (count >= Math.floor(attempts)) return "failed";
-    run.context = {
-      ...(run.context ?? {}),
-      _stepRetryCount: count + 1,
-      _retryStep: run.currentStep,
-    } as any;
+    this.writeExecution(run, { stepRetryCount: count + 1, retryStep: run.currentStep });
     run.status = "waiting";
     run.waitUntil = new Date(
       Date.now() + (Number.isFinite(delayMs) && delayMs > 0 ? delayMs : 5000),

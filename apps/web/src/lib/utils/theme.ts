@@ -1,9 +1,6 @@
 import { BrandingColors } from "@/contexts/branding-context";
 
-export function generateCSSVariables(
-  colors: BrandingColors,
-  isDark = false,
-): Record<string, string> {
+function generateCSSVariables(colors: BrandingColors, isDark = false): Record<string, string> {
   const variables: Record<string, string> = {};
 
   Object.entries(colors).forEach(([key, value]) => {
@@ -30,7 +27,7 @@ export function generateCSSVariables(
   return variables;
 }
 
-export function applyCSSVariables(variables: Record<string, string>): void {
+function applyCSSVariables(variables: Record<string, string>): void {
   const root = document.documentElement;
 
   Object.entries(variables).forEach(([property, value]) => {
@@ -38,7 +35,7 @@ export function applyCSSVariables(variables: Record<string, string>): void {
   });
 }
 
-export function removeCSSVariables(variables: string[]): void {
+function removeCSSVariables(variables: string[]): void {
   const root = document.documentElement;
 
   variables.forEach((property) => {
@@ -46,7 +43,7 @@ export function removeCSSVariables(variables: string[]): void {
   });
 }
 
-export function generateColorVariations(baseColor: string): {
+function generateColorVariations(baseColor: string): {
   50: string;
   100: string;
   200: string;
@@ -84,7 +81,7 @@ export function createThemeTransition(duration = 300): void {
   }, duration);
 }
 
-export function getPreferredColorScheme(): "light" | "dark" {
+function getPreferredColorScheme(): "light" | "dark" {
   if (typeof window === "undefined") return "light";
 
   return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
@@ -96,7 +93,7 @@ export function prefersReducedMotion(): boolean {
   return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 }
 
-export function generateShadows(isDark = false): Record<string, string> {
+function generateShadows(isDark = false): Record<string, string> {
   if (isDark) {
     return {
       "--shadow-sm": "0 1px 2px 0 rgb(0 0 0 / 0.3)",
@@ -168,11 +165,11 @@ export function applyThemeConfig(config: ThemeConfig): void {
   applyCSSVariables(variables);
 }
 
-export function interpolateColor(color1: string, color2: string, factor: number): string {
+function interpolateColor(color1: string, color2: string, factor: number): string {
   return factor < 0.5 ? color1 : color2;
 }
 
-export function generateAccessiblePairs(baseColor: string): {
+function generateAccessiblePairs(baseColor: string): {
   light: { background: string; foreground: string };
   dark: { background: string; foreground: string };
 } {

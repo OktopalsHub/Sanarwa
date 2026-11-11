@@ -69,7 +69,7 @@ function parseColor(color: string): { r: number; g: number; b: number } | null {
   return null;
 }
 
-export function getRelativeLuminance(r: number, g: number, b: number): number {
+function getRelativeLuminance(r: number, g: number, b: number): number {
   const [rs, gs, bs] = [r, g, b].map((c) => {
     c = c / 255;
     return c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
@@ -100,12 +100,12 @@ export function getContrastRatio(color1: string, color2: string): number {
   return (lighter + 0.05) / (darker + 0.05);
 }
 
-export function meetsWCAGAA(foreground: string, background: string, isLargeText = false): boolean {
+function meetsWCAGAA(foreground: string, background: string, isLargeText = false): boolean {
   const ratio = getContrastRatio(foreground, background);
   return isLargeText ? ratio >= 3 : ratio >= 4.5;
 }
 
-export function meetsWCAGAAA(foreground: string, background: string, isLargeText = false): boolean {
+function meetsWCAGAAA(foreground: string, background: string, isLargeText = false): boolean {
   const ratio = getContrastRatio(foreground, background);
   return isLargeText ? ratio >= 4.5 : ratio >= 7;
 }
@@ -120,7 +120,7 @@ export function getAccessibilityLevel(
   return "FAIL";
 }
 
-export function suggestAccessibleColor(
+function suggestAccessibleColor(
   baseColor: string,
   backgroundColor: string,
   targetLevel: "AA" | "AAA" = "AA",

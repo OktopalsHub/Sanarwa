@@ -16,7 +16,7 @@ import {
 } from "class-validator";
 import { NotificationChannel } from "../../../common/enums/notification-channel.enum";
 
-export class ChannelPreferenceDto {
+class ChannelPreferenceDto {
   @ApiProperty({ enum: NotificationChannel, example: NotificationChannel.EMAIL })
   @IsEnum(NotificationChannel)
   channel: NotificationChannel;

@@ -9,6 +9,8 @@ import { IChatProvider, ChatPayload } from "./providers/chat/chat-provider.inter
 import { IPushProvider, PushPayload } from "./providers/push/push-provider.interface";
 import { ISMSProvider, SMSPayload, BulkSMSPayload } from "./providers/sms/sms-provider.interface";
 import { InAppPayload } from "./providers/in-app/in-app-provider.interface";
+import { InjectRedis } from "@nestjs-modules/ioredis";
+import type Redis from "ioredis";
 import { CircuitBreakerService } from "../../common/errors/services/circuit-breaker.service";
 import { CircuitBreakerException } from "../../common/errors/exceptions/base.exception";
 import { DeviceRegistrationService } from "./services/device-registration.service";
@@ -24,6 +26,7 @@ import { BillingMode, BillingChannel } from "../billing/constants/token-pricing"
 import { randomUUID } from "crypto";
 import { ProviderSendOutcome, toProviderSendOutcome } from "./provider-send-outcome";
 import { ProviderEncryptionService } from "./provider-encryption.service";
+import { parsePhoneNumberWithError } from "libphonenumber-js";
 
 type EmailProviderFactory = (config: EmailProviderConfig) => BaseEmailProvider;
 type PushProviderFactory = (config: Record<string, any>) => IPushProvider;
@@ -54,6 +57,20 @@ class ProviderOutcomeFailure extends Error {
  */
 function isRetryableFailure(outcome: ProviderSendOutcome): boolean {
   return outcome.status === "failed" && outcome.retryable !== false;
+}
+
+/**
+ * Externally-seeded routing rule served from Redis:
+ *   `optimizer:rule:{channel}:global` → { providers: { primary, fallback } }
+ * Rules are read on every send-path attempt; absent or malformed rules fall
+ * back to the default chain. Dynamic weights/metrics are intentionally not
+ * honored — the chain is `[primary, ...fallback]`.
+ */
+interface RoutingRule {
+  providers?: {
+    primary?: unknown;
+    fallback?: unknown;
+  };
 }
 
 @Injectable()
@@ -89,6 +106,7 @@ export class ProviderOrchestratorService {
     private readonly voiceService: VoiceService,
     private readonly providerEncryptionService: ProviderEncryptionService,
     private readonly circuitBreaker: CircuitBreakerService,
+    @InjectRedis() private readonly redis: Redis,
     private readonly deviceRegistrationService: DeviceRegistrationService,
   ) {}
 
@@ -98,16 +116,26 @@ export class ProviderOrchestratorService {
     }
   }
 
+  private smsRegion(to: string): string | undefined {
+    try {
+      return parsePhoneNumberWithError(to)?.country ?? undefined;
+    } catch {
+      return undefined;
+    }
+  }
+
   private async attemptManagedChain<T>(
     registry: Map<string, T>,
     chain: readonly string[],
     channel: "email" | "push" | "sms",
     tenantId: string,
     call: (provider: T) => Promise<unknown>,
+    region?: string,
   ): Promise<{ outcome: ProviderSendOutcome; provider: string } | null> {
+    const effectiveChain = await this.applyRoutingRule(chain, channel, region);
     const attempts: string[] = [];
 
-    for (const name of chain) {
+    for (const name of effectiveChain) {
       const provider = registry.get(name);
 
       if (!provider) {
@@ -151,6 +179,58 @@ export class ProviderOrchestratorService {
     this.logger.error(`All managed ${channel} providers failed (${attempts.join(", ")})`);
 
     return null;
+  }
+
+  /**
+   * Honors an externally-seeded routing rule for the channel:
+   * `optimizer:rule:{channel}:global` → `{ providers: { primary, fallback } }`.
+   * When present, the managed chain is reordered to the rule; providers not in
+   * the rule are dropped. Malformed or unreadable rules fall back to the
+   * default chain.
+   */
+  private async applyRoutingRule(
+    chain: readonly string[],
+    channel: "email" | "push" | "sms",
+    region?: string,
+  ): Promise<string[]> {
+    const base = [...chain];
+    try {
+      const candidates = region
+        ? [`optimizer:rule:${channel}:${region}`, `optimizer:rule:${channel}:global`]
+        : [`optimizer:rule:${channel}:global`];
+      let raw: string | null = null;
+      let matchedKey: string | undefined;
+      for (const candidate of candidates) {
+        raw = await this.redis.get(candidate);
+        if (raw) {
+          matchedKey = candidate;
+          break;
+        }
+      }
+      if (!raw) {
+        return base;
+      }
+      const rule = JSON.parse(raw) as RoutingRule | null;
+      const primary = rule?.providers?.primary;
+      const fallback = rule?.providers?.fallback;
+      if (typeof primary !== "string" || !Array.isArray(fallback)) {
+        this.logger.warn(
+          `Ignoring malformed routing rule for ${matchedKey ?? `${channel}:global`}`,
+        );
+        return base;
+      }
+
+      const ordered = [
+        primary,
+        ...fallback.filter((name): name is string => typeof name === "string"),
+      ];
+      const effective = [...new Set(ordered)];
+      this.logger.log(`Routing rule ${matchedKey} applied: ${effective.join(" → ")}`);
+      return effective;
+    } catch (error) {
+      this.logger.warn(`Failed to apply routing rule for ${channel}: ${(error as Error).message}`);
+      return base;
+    }
   }
 
   /**
@@ -482,6 +562,7 @@ export class ProviderOrchestratorService {
         "sms",
         tenantId,
         (provider) => provider.sendSMS(payload),
+        this.smsRegion(payload.to),
       );
 
       if (!managed) {
@@ -739,10 +820,6 @@ export class ProviderOrchestratorService {
         return call;
       });
 
-      await this.chargeForSend(tenantId, NotificationChannel.VOICE, "managed", {
-        durationMinutes: 1,
-        callControlId: result.callControlId,
-      });
       return { status: "sent", externalId: result.callControlId, providerId: "telnyx" };
     } catch (error) {
       this.logger.error(`Voice call failed: ${error.message}`, error.stack);

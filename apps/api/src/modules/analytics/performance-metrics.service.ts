@@ -4,6 +4,7 @@ import { Repository } from "typeorm";
 import {
   MessageDeliveryStatus as DeliveryStatus,
   MessageDelivery as NotificationDelivery,
+  resolveDeliveryStatus,
 } from "../messaging/message-delivery.entity";
 import { Message as Notification } from "../messaging/message.entity";
 import { NotificationChannel } from "../../common/enums/notification-channel.enum";
@@ -191,9 +192,11 @@ export class PerformanceMetricsService {
       .map((d) => d.deliveredAt!.getTime() - d.sentAt!.getTime());
 
     const successfulDeliveries = deliveries.filter(
-      (d) => d.status === DeliveryStatus.DELIVERED,
+      (d) => resolveDeliveryStatus(d) === DeliveryStatus.DELIVERED,
     ).length;
-    const failedDeliveries = deliveries.filter((d) => d.status === DeliveryStatus.FAILED).length;
+    const failedDeliveries = deliveries.filter(
+      (d) => resolveDeliveryStatus(d) === DeliveryStatus.FAILED,
+    ).length;
     const totalDeliveries = deliveries.length;
 
     const successRate = totalDeliveries > 0 ? (successfulDeliveries / totalDeliveries) * 100 : 0;
@@ -295,10 +298,12 @@ export class PerformanceMetricsService {
 
       const totalRequests = providerDeliveries.length;
       const successfulRequests = providerDeliveries.filter(
-        (d) => d.status === DeliveryStatus.DELIVERED || d.status === DeliveryStatus.SENT,
+        (d) =>
+          resolveDeliveryStatus(d) === DeliveryStatus.DELIVERED ||
+          resolveDeliveryStatus(d) === DeliveryStatus.SENT,
       ).length;
       const failedRequests = providerDeliveries.filter(
-        (d) => d.status === DeliveryStatus.FAILED,
+        (d) => resolveDeliveryStatus(d) === DeliveryStatus.FAILED,
       ).length;
 
       const successRate = totalRequests > 0 ? (successfulRequests / totalRequests) * 100 : 0;
@@ -351,9 +356,11 @@ export class PerformanceMetricsService {
 
     const totalNotifications = notifications.length;
     const successfulDeliveries = deliveries.filter(
-      (d) => d.status === DeliveryStatus.DELIVERED,
+      (d) => resolveDeliveryStatus(d) === DeliveryStatus.DELIVERED,
     ).length;
-    const failedDeliveries = deliveries.filter((d) => d.status === DeliveryStatus.FAILED).length;
+    const failedDeliveries = deliveries.filter(
+      (d) => resolveDeliveryStatus(d) === DeliveryStatus.FAILED,
+    ).length;
 
     const deliveryTimes = deliveries
       .filter((d) => d.sentAt && d.deliveredAt)

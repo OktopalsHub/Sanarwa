@@ -80,6 +80,33 @@ function editorToAssignments(
   });
 }
 
+function canProceedFrom(data: CampaignWizardData["data"], step: number): boolean {
+  switch (step) {
+    case 1:
+      return Boolean(data.basic?.name && data.basic?.type);
+    case 2:
+      return Boolean(data.channels?.selectedChannels?.length);
+    case 3:
+      return Boolean(data.audience?.type);
+    case 4:
+      return Boolean(data.templates || data.channels?.selectedChannels?.length);
+    case 5:
+      return Boolean(data.schedule?.type);
+    default:
+      return true;
+  }
+}
+
+function canCreateFrom(data: CampaignWizardData["data"]): boolean {
+  return Boolean(
+    data.basic?.name &&
+    data.basic?.type &&
+    data.channels?.selectedChannels?.length &&
+    data.audience?.type &&
+    data.schedule?.type,
+  );
+}
+
 export function CampaignWizard({ onClose, initialData }: CampaignWizardProps) {
   const router = useRouter();
   const basePath = useTenantBasePath();
@@ -107,25 +134,8 @@ export function CampaignWizard({ onClose, initialData }: CampaignWizardProps) {
 
   const goToStep = (step: number) => setWizardData((prev) => ({ ...prev, step }));
   const { data } = wizardData;
-  const canProceed =
-    wizardData.step === 1
-      ? Boolean(data.basic?.name && data.basic?.type)
-      : wizardData.step === 2
-        ? Boolean(data.channels?.selectedChannels?.length)
-        : wizardData.step === 3
-          ? Boolean(data.audience?.type)
-          : wizardData.step === 4
-            ? Boolean(data.templates || data.channels?.selectedChannels?.length)
-            : wizardData.step === 5
-              ? Boolean(data.schedule?.type)
-              : true;
-  const canCreate = Boolean(
-    data.basic?.name &&
-    data.basic?.type &&
-    data.channels?.selectedChannels?.length &&
-    data.audience?.type &&
-    data.schedule?.type,
-  );
+  const canProceed = canProceedFrom(data, wizardData.step);
+  const canCreate = canCreateFrom(data);
 
   const buildCampaignRequest = (_status: "draft" | "scheduled"): CreateCampaignRequest => ({
     name: data.basic!.name,

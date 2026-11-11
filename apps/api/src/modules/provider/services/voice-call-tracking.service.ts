@@ -1,7 +1,7 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
-import { BillingService } from "./billing.service";
+import { BillingIntegrationService } from "../../billing/services/billing-integration.service";
 import { VoiceCall } from "../entities/voice-call.entity";
 
 export interface CallStartData {
@@ -25,9 +25,9 @@ export class VoiceCallTrackingService {
   private readonly logger = new Logger(VoiceCallTrackingService.name);
 
   constructor(
-    private billingService: BillingService,
     @InjectRepository(VoiceCall)
     private readonly voiceCallRepo: Repository<VoiceCall>,
+    private readonly billingIntegrationService: BillingIntegrationService,
   ) {}
 
   async startCall(data: CallStartData): Promise<CallRecord> {
@@ -68,17 +68,44 @@ export class VoiceCallTrackingService {
         this.logger.warn(`Call not found for tracking: ${data.callControlId}`);
         return;
       }
-      const billableSeconds = Math.ceil(data.durationSeconds / 60) * 60;
+      if (String(callRecord.status) === "ended") {
+        this.logger.log(`Call ${data.callControlId} already ended; ignoring duplicate hangup`);
+        return;
+      }
+      // A call that never connected (or hung up in zero seconds) costs nothing.
+      const billableMinutes = Math.max(1, Math.ceil(Math.max(0, data.durationSeconds) / 60));
+      const shouldBill = data.durationSeconds > 0;
       await this.voiceCallRepo.update({ callControlId: data.callControlId }, {
         status: "ended",
         duration: data.durationSeconds,
         endedAt: new Date(),
         hangupCause: data.hangupCause,
       } as any);
-      const ttsCharacterCount = callRecord.ttsMessage?.length || 0;
-      await this.deductFromQuota(callRecord.tenantId, billableSeconds, ttsCharacterCount);
+      if (shouldBill) {
+        try {
+          await this.billingIntegrationService.processNotificationTokenUsage(
+            callRecord.tenantId,
+            "voice",
+            `voice:${data.callControlId}`,
+            "managed",
+            { durationMinutes: billableMinutes, callControlId: data.callControlId },
+            billableMinutes,
+          );
+          this.logger.log(
+            `Billed ${billableMinutes} minute(s) for voice call ${data.callControlId} (tenant ${callRecord.tenantId})`,
+          );
+        } catch (billingError) {
+          this.logger.error(
+            `Failed to bill voice usage for ${data.callControlId} (tenant ${callRecord.tenantId}): ${(billingError as Error).message}`,
+          );
+        }
+      } else {
+        this.logger.log(
+          `Voice call ${data.callControlId} (tenant ${callRecord.tenantId}) never connected — not billed`,
+        );
+      }
       this.logger.log(
-        `Call ended: ${data.callControlId}, Duration: ${data.durationSeconds}s, Billable: ${billableSeconds}s`,
+        `Call ended: ${data.callControlId}, Duration: ${data.durationSeconds}s, Billable: ${billableMinutes}min`,
       );
     } catch (error) {
       this.logger.error(`Failed to end call tracking: ${error.message}`, error.stack);
@@ -95,29 +122,6 @@ export class VoiceCallTrackingService {
       this.logger.log(`Call failed: ${callControlId}, Cause: ${hangupCause}`);
     } catch (error) {
       this.logger.error(`Failed to mark call as failed: ${error.message}`, error.stack);
-    }
-  }
-
-  private async deductFromQuota(
-    tenantId: string,
-    billableSeconds: number,
-    ttsCharacters: number,
-  ): Promise<void> {
-    try {
-      const billableMinutes = Math.ceil(billableSeconds / 60);
-
-      await this.billingService.deductVoiceUsage(tenantId, {
-        voiceMinutes: billableMinutes,
-        ttsCharacters,
-        provider: "telnyx",
-        timestamp: new Date(),
-      });
-
-      this.logger.log(
-        `Deducted from quota - Tenant: ${tenantId}, Minutes: ${billableMinutes}, TTS chars: ${ttsCharacters}`,
-      );
-    } catch (error) {
-      this.logger.error(`Failed to deduct from quota: ${error.message}`, error.stack);
     }
   }
 

@@ -5,9 +5,6 @@ export enum DeliveryStatus {
   SENT = "sent",
   DELIVERED = "delivered",
   FAILED = "failed",
-  BOUNCED = "bounced",
-  OPENED = "opened",
-  CLICKED = "clicked",
 }
 
 export class NotificationResponseDto {

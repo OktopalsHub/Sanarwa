@@ -16,7 +16,7 @@ export type { BillingChannel, DeliverableSendChannel } from "@sanarwa/shared-typ
 import { NotificationChannel, CoreNotificationChannels } from "@sanarwa/shared-types";
 
 /** All known channel names (kept for back-compat with older config/validation). */
-export const AllNotificationChannels = [
+const AllNotificationChannels = [
   NotificationChannel.EMAIL,
   NotificationChannel.SMS,
   NotificationChannel.PUSH,
@@ -28,4 +28,4 @@ export const AllNotificationChannels = [
 ] as const;
 
 /** Channels that make sense on the public send endpoint. */
-export const PUBLIC_SEND_CHANNELS = CoreNotificationChannels;
+const PUBLIC_SEND_CHANNELS = CoreNotificationChannels;

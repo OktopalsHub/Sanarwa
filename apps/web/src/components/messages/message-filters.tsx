@@ -1,23 +1,8 @@
 import { Input } from "@sanarwa/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@sanarwa/ui/select";
 
-export const MESSAGE_CHANNELS = [
-  "all",
-  "email",
-  "sms",
-  "whatsapp",
-  "push",
-  "in_app",
-  "voice",
-] as const;
-export const MESSAGE_STATUSES = [
-  "all",
-  "queued",
-  "sent",
-  "delivered",
-  "failed",
-  "cancelled",
-] as const;
+const MESSAGE_CHANNELS = ["all", "email", "sms", "whatsapp", "push", "in_app", "voice"] as const;
+const MESSAGE_STATUSES = ["all", "queued", "sent", "delivered", "failed", "cancelled"] as const;
 
 interface MessageFiltersProps {
   q: string;

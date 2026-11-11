@@ -102,7 +102,7 @@ export function SkipLinks({ links = defaultSkipLinks, className }: SkipLinksProp
   );
 }
 
-export function useSkipLinkTarget(id: string, label?: string) {
+function useSkipLinkTarget(id: string, label?: string) {
   useEffect(() => {
     const element = document.getElementById(id);
     if (element && label) {

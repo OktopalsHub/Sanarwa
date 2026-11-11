@@ -1,4 +1,4 @@
-export const CHAT_PROVIDERS = ["slack", "discord", "telegram", "whatsapp", "mattermost"] as const;
+const CHAT_PROVIDERS = ["slack", "discord", "telegram", "whatsapp", "mattermost"] as const;
 
 export type ChatProvider = (typeof CHAT_PROVIDERS)[number];
 

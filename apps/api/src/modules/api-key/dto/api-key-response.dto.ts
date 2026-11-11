@@ -1,7 +1,7 @@
 import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
 import { ApiKeyEnvironment, ApiKeyStatus } from "../entities/api-key.entity";
 
-export class ProjectSummary {
+class ProjectSummary {
   @ApiProperty({
     type: String,
     description: "ID of the project this API key belongs to",

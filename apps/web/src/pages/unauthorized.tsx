@@ -34,7 +34,7 @@ export default function UnauthorizedPage() {
   );
 }
 
-export const metadata = {
+const metadata = {
   title: "Unauthorized - Sanarwa",
   description: "You do not have permission to access this resource",
 };

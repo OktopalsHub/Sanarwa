@@ -13,8 +13,8 @@ import {
   sendWhatsAppTemplateInput,
 } from "./tools/whatsapp.js";
 
-export const SERVER_NAME = "sanarwa";
-export const SERVER_VERSION = "0.1.0";
+const SERVER_NAME = "sanarwa";
+const SERVER_VERSION = "0.1.0";
 
 export interface SanarwaServerOptions {
   apiKey: string;

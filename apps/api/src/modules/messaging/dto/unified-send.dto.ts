@@ -23,7 +23,7 @@ import { MessagePriority } from "../message.entity";
 import { MessageRecipientDto } from "./send-message.dto";
 
 @ValidatorConstraint({ name: "unifiedSendShape", async: false })
-export class UnifiedSendShapeConstraint implements ValidatorConstraintInterface {
+class UnifiedSendShapeConstraint implements ValidatorConstraintInterface {
   validate(_: unknown, args?: ValidationArguments): boolean {
     const dto = args?.object as SendUnifiedDto | undefined;
     if (!dto) {

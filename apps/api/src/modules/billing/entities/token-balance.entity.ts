@@ -13,9 +13,7 @@ import { Tenant } from "../../tenant/entities/tenant.entity";
 export enum TokenTransactionType {
   PURCHASE = "purchase",
   USAGE = "usage",
-  REFUND = "refund",
   BONUS = "bonus",
-  EXPIRY = "expiry",
 }
 
 @Entity("token_balances")

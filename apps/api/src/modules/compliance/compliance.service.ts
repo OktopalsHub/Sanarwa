@@ -180,6 +180,8 @@ export class ComplianceService {
           id: delivery.id,
           channel: delivery.channel,
           status: delivery.status,
+          transportStatus: delivery.transportStatus,
+          engagementStatus: delivery.engagementStatus,
           sentAt: delivery.sentAt,
           deliveredAt: delivery.deliveredAt,
           createdAt: delivery.createdAt,

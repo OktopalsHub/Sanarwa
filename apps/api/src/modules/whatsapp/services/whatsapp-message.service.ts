@@ -5,7 +5,12 @@ import { EventEmitter2 } from "@nestjs/event-emitter";
 import { WhatsAppBusinessAPIService } from "./whatsapp-business-api.service";
 import { Message, MessageStatus } from "../../messaging/message.entity";
 import { NotificationChannel } from "../../../common/enums/notification-channel.enum";
-import { MessageDelivery, MessageDeliveryStatus } from "../../messaging/message-delivery.entity";
+import {
+  MessageDelivery,
+  MessageDeliveryStatus,
+  deriveDeliveryEngagementStatus,
+  deriveDeliveryTransportStatus,
+} from "../../messaging/message-delivery.entity";
 
 export interface WhatsAppSendOptions {
   templateName: string;
@@ -192,15 +197,20 @@ export class WhatsAppMessageService {
 
       const deliveryStatus = this.mapWhatsAppStatus(status.status);
 
-      await this.deliveryRepository.update({ externalId: status.id } as any, {
-        status: deliveryStatus,
-        updatedAt: new Date(),
-        metadata: {
-          whatsappStatus: status.status,
-          timestamp: status.timestamp,
-          errors: status.errors,
-        },
-      });
+      await this.deliveryRepository.update(
+        { externalId: status.id } as any,
+        {
+          status: deliveryStatus,
+          transportStatus: deriveDeliveryTransportStatus(deliveryStatus),
+          engagementStatus: deriveDeliveryEngagementStatus(deliveryStatus),
+          stateUpdatedAt: new Date(),
+          metadata: {
+            whatsappStatus: status.status,
+            timestamp: status.timestamp,
+            errors: status.errors,
+          },
+        } as any,
+      );
 
       this.eventEmitter.emit("whatsapp.status.updated", {
         externalId: status.id,
@@ -242,6 +252,9 @@ export class WhatsAppMessageService {
         channel: NotificationChannel.WHATSAPP,
         externalId,
         status,
+        transportStatus: deriveDeliveryTransportStatus(status),
+        engagementStatus: deriveDeliveryEngagementStatus(status),
+        stateUpdatedAt: new Date(),
         error,
         metadata: {
           provider: "meta_whatsapp",
@@ -284,7 +297,7 @@ export class WhatsAppMessageService {
         throw new Error("Delivery record not found");
       }
 
-      const retryCount = (delivery.metadata?.retryCount || 0) + 1;
+      const retryCount = (delivery.retryCount || 0) + 1;
       if (retryCount > (options.retryCount || 3)) {
         throw new Error("Max retries exceeded");
       }
@@ -297,8 +310,8 @@ export class WhatsAppMessageService {
           {
             metadata: {
               ...delivery.metadata,
-              retryCount,
             },
+            retryCount,
           },
         );
       }

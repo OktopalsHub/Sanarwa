@@ -9,6 +9,7 @@ import {
 import { ConsentService } from "../../../preferences/consent.service";
 import { DeliveryEventType } from "../../enums/delivery-event-type.enum";
 import { NotificationChannel } from "../../../../common/enums/notification-channel.enum";
+import { NotificationLog } from "../../../notifications/entities/notification-log.entity";
 
 function makeRepo() {
   return {
@@ -17,6 +18,11 @@ function makeRepo() {
     save: vi.fn().mockResolvedValue({ id: "evt-1" }),
     create: vi.fn().mockImplementation((value) => value),
     update: vi.fn().mockResolvedValue({ affected: 1 }),
+    createQueryBuilder: vi.fn().mockReturnValue({
+      where: vi.fn().mockReturnThis(),
+      andWhere: vi.fn().mockReturnThis(),
+      getOne: vi.fn().mockResolvedValue(null),
+    }),
   };
 }
 
@@ -35,11 +41,13 @@ describe("DeliveryEventService", () => {
   let service: DeliveryEventService;
   let eventsRepo: ReturnType<typeof makeRepo>;
   let deliveriesRepo: ReturnType<typeof makeRepo>;
+  let logsRepo: ReturnType<typeof makeRepo>;
   let consentService: { suppress: ReturnType<typeof vi.fn> };
 
   beforeEach(async () => {
     eventsRepo = makeRepo();
     deliveriesRepo = makeRepo();
+    logsRepo = makeRepo();
     deliveriesRepo.findOne.mockResolvedValue(DELIVERY);
     consentService = { suppress: vi.fn().mockResolvedValue(undefined) };
 
@@ -48,6 +56,7 @@ describe("DeliveryEventService", () => {
         DeliveryEventService,
         { provide: getRepositoryToken(DeliveryEvent), useValue: eventsRepo },
         { provide: getRepositoryToken(MessageDelivery), useValue: deliveriesRepo },
+        { provide: getRepositoryToken(NotificationLog), useValue: logsRepo },
         { provide: ConsentService, useValue: consentService },
       ],
     }).compile();
@@ -93,6 +102,32 @@ describe("DeliveryEventService", () => {
     expect(deliveriesRepo.update).toHaveBeenCalledWith(
       { id: "delivery-1" },
       expect.objectContaining({ status: DeliveryStatus.BOUNCED }),
+    );
+  });
+
+  it("fails the queued tracking log when the provider reports a bounce", async () => {
+    const qb = {
+      where: vi.fn().mockReturnThis(),
+      andWhere: vi.fn().mockReturnThis(),
+      getOne: vi.fn().mockResolvedValue({ id: "log-1", status: "delivered" }),
+    };
+    logsRepo.createQueryBuilder.mockReturnValue(qb);
+
+    await service.ingestProviderFeedback({
+      provider: "sendgrid",
+      providerMessageId: "sg_msg_1",
+      providerEventId: "evt-bounce-log",
+      type: DeliveryEventType.BOUNCED,
+      bounceType: "hard",
+      reasonCode: "5.1.1",
+    });
+
+    expect(qb.where).toHaveBeenCalledWith("log.metadata->>'deliveryId' = :deliveryId", {
+      deliveryId: "delivery-1",
+    });
+    expect(logsRepo.update).toHaveBeenCalledWith(
+      "log-1",
+      expect.objectContaining({ status: "failed", error: "5.1.1" }),
     );
   });
 

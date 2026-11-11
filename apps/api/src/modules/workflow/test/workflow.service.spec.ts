@@ -54,6 +54,7 @@ function build() {
     andWhere: vi.fn().mockReturnThis(),
     setParameter: vi.fn().mockReturnThis(),
     execute: vi.fn().mockResolvedValue({ affected: 1 }),
+    getOne: vi.fn().mockResolvedValue(null),
   });
 
   const workflows = {
@@ -173,9 +174,10 @@ describe("WorkflowService (engine semantics)", () => {
     });
     expect(sent.variables._signalKeys).toBeUndefined();
     expect(sent.variables._retryStep).toBeUndefined();
+    expect(sent.variables._execution).toBeUndefined();
   });
 
-  it("does not leak the engine's _retryStep state into provider variables", async () => {
+  it("does not leak the engine's execution state into provider variables", async () => {
     const { service, runs, workflowRows, runRows, unifiedSendService, workflows } = build();
     const sendStep = {
       type: "send",
@@ -186,7 +188,7 @@ describe("WorkflowService (engine semantics)", () => {
     };
     const wf = makeWorkflow({ steps: [sendStep] });
     const run = makeRun({
-      context: { name: "Ada", _retryStep: 0, _stepRetryCount: 0 },
+      context: { name: "Ada", _execution: { retryStep: 0, stepRetryCount: 0 } },
     });
     workflowRows.push(wf);
     runRows.push(run);
@@ -205,6 +207,7 @@ describe("WorkflowService (engine semantics)", () => {
     expect(providerCall.variables).toMatchObject({ name: "Ada" });
     expect(providerCall.variables._retryStep).toBeUndefined();
     expect(providerCall.variables._stepRetryCount).toBeUndefined();
+    expect(providerCall.variables._execution).toBeUndefined();
   });
 
   it("resolves condition jumps by step id, not only by index", async () => {
@@ -318,7 +321,9 @@ describe("WorkflowService (engine semantics)", () => {
 
   it("strips engine-internal keys from run contexts exposed to the API", async () => {
     const { service, runs, workflowRows, runRows, workflows } = build();
-    const run = makeRun({ context: { name: "Ada", _signalKeys: ["s"], _stepRetryCount: 2 } });
+    const run = makeRun({
+      context: { name: "Ada", _execution: { signalKeys: ["s"], stepRetryCount: 2 } },
+    });
     runRows.push(run);
     runs.findOne.mockResolvedValue(run);
     workflows.findOne.mockResolvedValue(makeWorkflow());
@@ -346,12 +351,12 @@ describe("WorkflowService (cap yield)", () => {
     await service.startRun(TENANT, "wf-1", { context: {} });
 
     expect(run.status).toBe("waiting");
-    expect((run.context as any)._retryStep).toBe(0);
+    expect((run as any).execution?.retryStep).toBe(0);
     expect(run.waitUntil).toBeInstanceOf(Date);
     // Now resume: processDueWaits re-enters the same step, does NOT skip ahead
     await service.processDueWaits();
     expect(run.status).toBe("waiting");
-    expect((run.context as any)._retryStep).toBe(0);
+    expect((run as any).execution?.retryStep).toBe(0);
   });
 });
 
@@ -962,6 +967,13 @@ describe("WorkflowService (signal auto-start idempotency)", () => {
     runs.find.mockResolvedValue([]);
     runs.findOne.mockResolvedValue(null);
     const created: any[] = [];
+    const qb: any = {
+      where: vi.fn().mockReturnThis(),
+      andWhere: vi.fn().mockReturnThis(),
+      getOne: vi.fn(),
+    };
+    qb.getOne.mockResolvedValueOnce(null).mockImplementation(async () => created[0] ?? null);
+    runs.createQueryBuilder.mockReturnValue(qb);
     runs.create.mockImplementation((v: any) => {
       const row = { id: `run-${created.length + 1}`, ...v };
       created.push(row);
@@ -976,9 +988,10 @@ describe("WorkflowService (signal auto-start idempotency)", () => {
     });
 
     expect(created).toHaveLength(1);
-    expect(created[0].context._signalKeys).toEqual(["auto:evt-abc-123"]);
+    expect(created[0].execution?.signalKeys).toEqual(["auto:evt-abc-123"]);
 
     runs.findOne.mockResolvedValue(created[0]); // second signal: marker hit
+    qb.getOne.mockReset().mockResolvedValue(created[0]);
     await service.signal(TENANT, {
       event: "user.created",
       payload: { userId: "u-1" },

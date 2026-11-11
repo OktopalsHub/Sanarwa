@@ -5,11 +5,15 @@ import { QueryDeepPartialEntity } from "typeorm/query-builder/QueryPartialEntity
 import {
   MessageDeliveryStatus as DeliveryStatus,
   MessageDelivery,
+  DeliveryEngagementStatus,
+  DeliveryTransportStatus,
+  headlineStatusFromDeliveryState,
 } from "../message-delivery.entity";
 import { NotificationChannel } from "../../../common/enums/notification-channel.enum";
 import { DeliveryEvent } from "../entities/delivery-event.entity";
 import { BounceType, DeliveryEventType } from "../enums/delivery-event-type.enum";
 import { ConsentService } from "../../preferences/consent.service";
+import { NotificationLog } from "../../notifications/entities/notification-log.entity";
 
 export interface RecordDeliveryEventInput {
   tenantId: string;
@@ -60,6 +64,8 @@ export class DeliveryEventService {
     private readonly events: Repository<DeliveryEvent>,
     @InjectRepository(MessageDelivery)
     private readonly deliveries: Repository<MessageDelivery>,
+    @InjectRepository(NotificationLog)
+    private readonly logs: Repository<NotificationLog>,
     private readonly consentService: ConsentService,
   ) {}
 
@@ -154,7 +160,44 @@ export class DeliveryEventService {
 
     await this.applyProjection(delivery, input.type, occurredAt, input);
 
+    if (input.type === DeliveryEventType.DROPPED || input.type === DeliveryEventType.BOUNCED) {
+      await this.finalizeDeliveryLogFailure(
+        delivery.id,
+        delivery.tenantId,
+        input.reasonCode ?? input.diagnostic?.slice(0, 500),
+        occurredAt,
+      );
+    }
+
     return { recorded: true, deliveryId: delivery.id };
+  }
+
+  /**
+   * A provider-reported negative event must not leave the queued tracking log
+   * claiming success — log-centric readers (`/messaging/messages`, transport
+   * status) are finalized here to mirror the delivery projection.
+   */
+  private async finalizeDeliveryLogFailure(
+    deliveryId: string,
+    tenantId: string,
+    reason: string | undefined,
+    occurredAt: Date,
+  ): Promise<void> {
+    const log = await this.logs
+      .createQueryBuilder("log")
+      .where("log.metadata->>'deliveryId' = :deliveryId", { deliveryId })
+      .andWhere("log.tenantId = :tenantId", { tenantId })
+      .getOne();
+
+    if (!log) {
+      return;
+    }
+
+    await this.logs.update(log.id, {
+      status: "failed",
+      error: reason,
+      failedAt: occurredAt,
+    });
   }
 
   async findByDelivery(
@@ -189,51 +232,69 @@ export class DeliveryEventService {
     occurredAt: Date,
     input: ProviderFeedbackInput,
   ): Promise<void> {
-    const terminalStatuses = new Set<string>([DeliveryStatus.BOUNCED, DeliveryStatus.UNSUBSCRIBED]);
+    const terminalEngagement = new Set<string>([
+      DeliveryEngagementStatus.BOUNCED,
+      DeliveryEngagementStatus.UNSUBSCRIBED,
+    ]);
     const progressionTypes = new Set<string>([
       DeliveryEventType.DELIVERED,
       DeliveryEventType.OPENED,
       DeliveryEventType.CLICKED,
     ]);
 
-    if (terminalStatuses.has(delivery.status) && progressionTypes.has(type)) {
+    const currentEngagement = delivery.engagementStatus ?? DeliveryEngagementStatus.UNKNOWN;
+    if (terminalEngagement.has(currentEngagement) && progressionTypes.has(type)) {
       this.logger.debug(
-        `Ignoring ${type} projection for ${delivery.id} — status ${delivery.status} is terminal`,
+        `Ignoring ${type} projection for ${delivery.id} — engagement ${currentEngagement} is terminal`,
       );
       return;
     }
 
-    const projection: QueryDeepPartialEntity<MessageDelivery> = {};
+    const projection: QueryDeepPartialEntity<MessageDelivery> = {
+      transportStatus: DeliveryTransportStatus.SENT,
+      stateUpdatedAt: new Date(),
+    };
+    let engagementStatus = currentEngagement;
 
     switch (type) {
       case DeliveryEventType.DELIVERED:
-        projection.status = DeliveryStatus.DELIVERED;
+        engagementStatus = DeliveryEngagementStatus.DELIVERED;
         projection.deliveredAt = occurredAt;
         break;
       case DeliveryEventType.OPENED:
-        projection.status = DeliveryStatus.OPENED;
+        engagementStatus = DeliveryEngagementStatus.OPENED;
         projection.openedAt = occurredAt;
         break;
       case DeliveryEventType.CLICKED:
-        projection.status = DeliveryStatus.CLICKED;
+        engagementStatus = DeliveryEngagementStatus.CLICKED;
         projection.openedAt = delivery.openedAt ?? occurredAt;
         projection.clickedAt = occurredAt;
         break;
       case DeliveryEventType.BOUNCED:
-        projection.status = DeliveryStatus.BOUNCED;
+        engagementStatus = DeliveryEngagementStatus.BOUNCED;
         projection.errorMessage = input.reasonCode ?? input.diagnostic?.slice(0, 500) ?? "Bounced";
         break;
       case DeliveryEventType.UNSUBSCRIBED:
-        projection.status = DeliveryStatus.UNSUBSCRIBED;
+        engagementStatus = DeliveryEngagementStatus.UNSUBSCRIBED;
         break;
       case DeliveryEventType.DROPPED:
-        projection.status = DeliveryStatus.FAILED;
+        engagementStatus = DeliveryEngagementStatus.FAILED;
+        projection.transportStatus = DeliveryTransportStatus.FAILED;
         projection.errorMessage =
           input.reasonCode ?? input.diagnostic?.slice(0, 500) ?? "Dropped by provider";
+        break;
+      case DeliveryEventType.COMPLAINED:
+        engagementStatus = DeliveryEngagementStatus.COMPLAINED;
         break;
       default:
         return;
     }
+
+    projection.engagementStatus = engagementStatus;
+    projection.status = headlineStatusFromDeliveryState(
+      (projection.transportStatus as DeliveryTransportStatus) ?? DeliveryTransportStatus.SENT,
+      engagementStatus,
+    );
 
     await this.deliveries.update({ id: delivery.id }, projection);
   }

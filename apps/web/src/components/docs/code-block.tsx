@@ -86,7 +86,7 @@ export function CodeBlock({
   );
 }
 
-export function JavaScriptCode({ children, title }: { children: string; title?: string }) {
+function JavaScriptCode({ children, title }: { children: string; title?: string }) {
   return (
     <CodeBlock language="javascript" title={title}>
       {children}
@@ -94,7 +94,7 @@ export function JavaScriptCode({ children, title }: { children: string; title?: 
   );
 }
 
-export function PythonCode({ children, title }: { children: string; title?: string }) {
+function PythonCode({ children, title }: { children: string; title?: string }) {
   return (
     <CodeBlock language="python" title={title}>
       {children}
@@ -102,7 +102,7 @@ export function PythonCode({ children, title }: { children: string; title?: stri
   );
 }
 
-export function PHPCode({ children, title }: { children: string; title?: string }) {
+function PHPCode({ children, title }: { children: string; title?: string }) {
   return (
     <CodeBlock language="php" title={title}>
       {children}
@@ -110,7 +110,7 @@ export function PHPCode({ children, title }: { children: string; title?: string 
   );
 }
 
-export function JavaCode({ children, title }: { children: string; title?: string }) {
+function JavaCode({ children, title }: { children: string; title?: string }) {
   return (
     <CodeBlock language="java" title={title}>
       {children}
@@ -118,7 +118,7 @@ export function JavaCode({ children, title }: { children: string; title?: string
   );
 }
 
-export function GoCode({ children, title }: { children: string; title?: string }) {
+function GoCode({ children, title }: { children: string; title?: string }) {
   return (
     <CodeBlock language="go" title={title}>
       {children}
@@ -126,7 +126,7 @@ export function GoCode({ children, title }: { children: string; title?: string }
   );
 }
 
-export function CSharpCode({ children, title }: { children: string; title?: string }) {
+function CSharpCode({ children, title }: { children: string; title?: string }) {
   return (
     <CodeBlock language="csharp" title={title}>
       {children}

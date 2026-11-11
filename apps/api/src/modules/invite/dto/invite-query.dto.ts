@@ -2,7 +2,7 @@ import { ApiPropertyOptional } from "@nestjs/swagger";
 import { IsEnum, IsOptional, IsString } from "class-validator";
 import { PaginationDto } from "../../../common/dto/pagination.dto";
 
-export enum InviteStatus {
+enum InviteStatus {
   PENDING = "pending",
   ACCEPTED = "accepted",
   EXPIRED = "expired",

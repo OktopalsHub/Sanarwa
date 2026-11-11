@@ -14,19 +14,13 @@ import { TenantMember } from "../tenant-member/entities/tenant-member.entity";
 
 export enum ProviderType {
   AWS_SES = "aws_ses",
-  AWS_SNS = "aws_sns",
-  AWS_PINPOINT = "aws_pinpoint",
   TERMII = "termii",
   TWILIO = "twilio",
-  SENDGRID = "sendgrid",
-  SMTP = "smtp",
-  FIREBASE = "firebase",
   WHATSAPP = "whatsapp",
   WHATSAPP_BUSINESS = "whatsapp_business",
   SLACK = "slack",
   DISCORD = "discord",
   TELEGRAM = "telegram",
-  CUSTOM = "custom",
 }
 
 @Entity("provider_configs")

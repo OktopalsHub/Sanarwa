@@ -3,7 +3,7 @@ import type { AnalyticsFilters, ExportFormat } from "@/lib/types/analytics";
 import type { NotificationChannel } from "@/lib/types/notification";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
-export function useDeliveryAnalytics(params?: {
+function useDeliveryAnalytics(params?: {
   startDate?: Date;
   endDate?: Date;
   channel?: NotificationChannel;
@@ -17,7 +17,7 @@ export function useDeliveryAnalytics(params?: {
   });
 }
 
-export function useChannelAnalytics(params?: { startDate?: Date; endDate?: Date }) {
+function useChannelAnalytics(params?: { startDate?: Date; endDate?: Date }) {
   return useQuery({
     queryKey: ["analytics", "channels", params],
     queryFn: () => analyticsApi.getChannelAnalytics(params),
@@ -25,7 +25,7 @@ export function useChannelAnalytics(params?: { startDate?: Date; endDate?: Date 
   });
 }
 
-export function useProviderAnalytics(params?: {
+function useProviderAnalytics(params?: {
   startDate?: Date;
   endDate?: Date;
   channel?: NotificationChannel;
@@ -37,7 +37,7 @@ export function useProviderAnalytics(params?: {
   });
 }
 
-export function useTimeSeriesData(params?: {
+function useTimeSeriesData(params?: {
   startDate?: Date;
   endDate?: Date;
   channel?: NotificationChannel;
@@ -50,7 +50,7 @@ export function useTimeSeriesData(params?: {
   });
 }
 
-export function useTenantAnalytics(startDate?: Date, endDate?: Date) {
+function useTenantAnalytics(startDate?: Date, endDate?: Date) {
   return useQuery({
     queryKey: ["analytics", "tenant", startDate?.toISOString(), endDate?.toISOString()],
     queryFn: () => analyticsApi.getTenantAnalytics(startDate, endDate),
@@ -58,7 +58,7 @@ export function useTenantAnalytics(startDate?: Date, endDate?: Date) {
   });
 }
 
-export function useTopProviders(params?: { limit?: number; startDate?: Date; endDate?: Date }) {
+function useTopProviders(params?: { limit?: number; startDate?: Date; endDate?: Date }) {
   return useQuery({
     queryKey: ["analytics", "providers", "top", params],
     queryFn: () => analyticsApi.getTopProviders(params),
@@ -66,7 +66,7 @@ export function useTopProviders(params?: { limit?: number; startDate?: Date; end
   });
 }
 
-export function useDeliveryTrends(
+function useDeliveryTrends(
   currentPeriodStart: Date,
   currentPeriodEnd: Date,
   previousPeriodStart: Date,
@@ -92,7 +92,7 @@ export function useDeliveryTrends(
   });
 }
 
-export function useDeliveryStats(params?: {
+function useDeliveryStats(params?: {
   channel?: NotificationChannel;
   startDate?: Date;
   endDate?: Date;
@@ -104,7 +104,7 @@ export function useDeliveryStats(params?: {
   });
 }
 
-export function useDeliveryHistory(notificationId: string) {
+function useDeliveryHistory(notificationId: string) {
   return useQuery({
     queryKey: ["analytics", "delivery-history", notificationId],
     queryFn: () => analyticsApi.getDeliveryHistory(notificationId),
@@ -113,7 +113,7 @@ export function useDeliveryHistory(notificationId: string) {
   });
 }
 
-export function useMultipleDeliveryStatus(notificationIds: string[]) {
+function useMultipleDeliveryStatus(notificationIds: string[]) {
   return useQuery({
     queryKey: ["analytics", "delivery-status", "batch", notificationIds],
     queryFn: () => analyticsApi.getMultipleDeliveryStatus(notificationIds),
@@ -122,7 +122,7 @@ export function useMultipleDeliveryStatus(notificationIds: string[]) {
   });
 }
 
-export function useWebhookConfig() {
+function useWebhookConfig() {
   return useQuery({
     queryKey: ["analytics", "webhook", "config"],
     queryFn: () => analyticsApi.getWebhookConfig(),
@@ -130,7 +130,7 @@ export function useWebhookConfig() {
   });
 }
 
-export function useAuditLogs(params?: {
+function useAuditLogs(params?: {
   eventType?: string;
   resourceType?: string;
   resourceId?: string;
@@ -147,7 +147,7 @@ export function useAuditLogs(params?: {
   });
 }
 
-export function useNotificationAuditTrail(notificationId: string) {
+function useNotificationAuditTrail(notificationId: string) {
   return useQuery({
     queryKey: ["analytics", "audit-logs", "notification", notificationId],
     queryFn: () => analyticsApi.getNotificationAuditTrail(notificationId),
@@ -156,7 +156,7 @@ export function useNotificationAuditTrail(notificationId: string) {
   });
 }
 
-export function useAuditStatistics(startDate?: Date, endDate?: Date) {
+function useAuditStatistics(startDate?: Date, endDate?: Date) {
   return useQuery({
     queryKey: [
       "analytics",
@@ -170,7 +170,7 @@ export function useAuditStatistics(startDate?: Date, endDate?: Date) {
   });
 }
 
-export function useSystemPerformanceMetrics(startDate?: Date, endDate?: Date) {
+function useSystemPerformanceMetrics(startDate?: Date, endDate?: Date) {
   return useQuery({
     queryKey: [
       "analytics",
@@ -184,7 +184,7 @@ export function useSystemPerformanceMetrics(startDate?: Date, endDate?: Date) {
   });
 }
 
-export function useProviderPerformanceMetrics(params?: {
+function useProviderPerformanceMetrics(params?: {
   providerId?: string;
   channel?: NotificationChannel;
   startDate?: Date;
@@ -197,7 +197,7 @@ export function useProviderPerformanceMetrics(params?: {
   });
 }
 
-export function useTenantPerformanceMetrics(startDate?: Date, endDate?: Date) {
+function useTenantPerformanceMetrics(startDate?: Date, endDate?: Date) {
   return useQuery({
     queryKey: [
       "analytics",
@@ -211,7 +211,7 @@ export function useTenantPerformanceMetrics(startDate?: Date, endDate?: Date) {
   });
 }
 
-export function usePerformanceTrends(
+function usePerformanceTrends(
   metricName: string,
   startDate: Date,
   endDate: Date,
@@ -233,7 +233,7 @@ export function usePerformanceTrends(
   });
 }
 
-export function useRealTimeMetrics() {
+function useRealTimeMetrics() {
   return useQuery({
     queryKey: ["analytics", "performance", "realtime"],
     queryFn: () => analyticsApi.getRealTimeMetrics(),
@@ -242,7 +242,7 @@ export function useRealTimeMetrics() {
   });
 }
 
-export function useProjectAnalytics(projectId: string, startDate?: Date, endDate?: Date) {
+function useProjectAnalytics(projectId: string, startDate?: Date, endDate?: Date) {
   return useQuery({
     queryKey: ["analytics", "project", projectId, startDate?.toISOString(), endDate?.toISOString()],
     queryFn: () => analyticsApi.getProjectAnalytics(projectId, startDate, endDate),
@@ -251,7 +251,7 @@ export function useProjectAnalytics(projectId: string, startDate?: Date, endDate
   });
 }
 
-export function useBrandAnalytics(brandId: string, startDate?: Date, endDate?: Date) {
+function useBrandAnalytics(brandId: string, startDate?: Date, endDate?: Date) {
   return useQuery({
     queryKey: ["analytics", "brand", brandId, startDate?.toISOString(), endDate?.toISOString()],
     queryFn: () => analyticsApi.getBrandAnalytics(brandId, startDate, endDate),
@@ -260,7 +260,7 @@ export function useBrandAnalytics(brandId: string, startDate?: Date, endDate?: D
   });
 }
 
-export function useProjectComparison(projectIds: string[], startDate?: Date, endDate?: Date) {
+function useProjectComparison(projectIds: string[], startDate?: Date, endDate?: Date) {
   return useQuery({
     queryKey: [
       "analytics",
@@ -276,7 +276,7 @@ export function useProjectComparison(projectIds: string[], startDate?: Date, end
   });
 }
 
-export function useBrandComparison(brandIds: string[], startDate?: Date, endDate?: Date) {
+function useBrandComparison(brandIds: string[], startDate?: Date, endDate?: Date) {
   return useQuery({
     queryKey: [
       "analytics",
@@ -292,7 +292,7 @@ export function useBrandComparison(brandIds: string[], startDate?: Date, endDate
   });
 }
 
-export function useRegisterWebhook() {
+function useRegisterWebhook() {
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -312,7 +312,7 @@ export function useRegisterWebhook() {
   });
 }
 
-export function useRemoveWebhook() {
+function useRemoveWebhook() {
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -326,7 +326,7 @@ export function useRemoveWebhook() {
   });
 }
 
-export function useTestWebhook() {
+function useTestWebhook() {
   return useMutation({
     mutationFn: () => analyticsApi.testWebhook(),
     onError: (error) => {
@@ -335,7 +335,7 @@ export function useTestWebhook() {
   });
 }
 
-export function useExportAuditLogs() {
+function useExportAuditLogs() {
   return useMutation({
     mutationFn: (params: {
       format: ExportFormat;
@@ -354,7 +354,7 @@ export function useExportAuditLogs() {
   });
 }
 
-export function useAnalyticsUtils() {
+function useAnalyticsUtils() {
   const validateFilters = (filters: AnalyticsFilters) => {
     return analyticsApi.validateAnalyticsFilters(filters);
   };
@@ -382,7 +382,7 @@ export function useAnalyticsUtils() {
   };
 }
 
-export function useAnalyticsDashboard(timeRange: { startDate: Date; endDate: Date }) {
+function useAnalyticsDashboard(timeRange: { startDate: Date; endDate: Date }) {
   const { data: deliveryAnalytics } = useDeliveryAnalytics({
     startDate: timeRange.startDate,
     endDate: timeRange.endDate,
@@ -412,7 +412,7 @@ export function useAnalyticsDashboard(timeRange: { startDate: Date; endDate: Dat
   };
 }
 
-export function useEngagementMetrics(params?: {
+function useEngagementMetrics(params?: {
   startDate?: Date;
   endDate?: Date;
   channel?: NotificationChannel;
@@ -426,7 +426,7 @@ export function useEngagementMetrics(params?: {
   };
 }
 
-export function useDeliveryMetrics(params?: {
+function useDeliveryMetrics(params?: {
   startDate?: Date;
   endDate?: Date;
   channel?: NotificationChannel;
@@ -440,7 +440,7 @@ export function useDeliveryMetrics(params?: {
   };
 }
 
-export function useAnalyticsInsights(timeRange: { startDate: Date; endDate: Date }) {
+function useAnalyticsInsights(timeRange: { startDate: Date; endDate: Date }) {
   const { data: deliveryAnalytics } = useDeliveryAnalytics({
     startDate: timeRange.startDate,
     endDate: timeRange.endDate,

@@ -22,7 +22,7 @@ function getMode(): string {
   return process.env.NODE_ENV ?? "development";
 }
 
-export function getApiRuntimeConfig(): ApiRuntimeConfig {
+function getApiRuntimeConfig(): ApiRuntimeConfig {
   const mode = getMode();
   const isDev = mode === "development";
 

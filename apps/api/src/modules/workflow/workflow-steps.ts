@@ -1,17 +1,17 @@
 import { NotificationChannel } from "../../common/enums/notification-channel.enum";
 import type { WorkflowStep } from "./entities/workflow.entity";
 
-export const MAX_STEPS = 200;
+const MAX_STEPS = 200;
 /** How many foreach/parallel frames may nest below the top level. */
-export const MAX_NEST_DEPTH = 3;
-export const MAX_BRANCHES = 8;
+const MAX_NEST_DEPTH = 3;
+const MAX_BRANCHES = 8;
 const MAX_RETRY_ATTEMPTS = 10;
 const MAX_RETRY_DELAY_MS = 24 * 60 * 60 * 1000;
 const MAX_TIMEOUT_MS = 30 * 24 * 60 * 60 * 1000;
 const MAX_DELAY_MS = 30 * 24 * 60 * 60 * 1000;
 
 const CHANNELS = new Set<string>(Object.values(NotificationChannel));
-export const STEP_TYPES = [
+const STEP_TYPES = [
   "set",
   "condition",
   "branch",
@@ -416,7 +416,7 @@ export function dotGet(context: Record<string, unknown>, path: string): unknown 
  * shape changes in a way that is not purely additive; a future visual builder
  * reads this to know whether a row needs migration before rendering.
  */
-export const CURRENT_STEP_SCHEMA_VERSION = 1;
+const CURRENT_STEP_SCHEMA_VERSION = 1;
 
 /** Stamps schemaVersion=1 on write; tolerates missing it on existing rows. */
 export function withSchemaVersion(metadata: Record<string, unknown>): Record<string, unknown> {
@@ -432,16 +432,11 @@ export function withSchemaVersion(metadata: Record<string, unknown>): Record<str
 /** Schedule interval fields, same vocabulary as campaign `schedule`. */
 import { BadRequestException } from "@nestjs/common";
 
-export const SCHEDULE_INTERVAL_KEYS = [
-  "everyMs",
-  "intervalMs",
-  "everyMinutes",
-  "everyHours",
-] as const;
+const SCHEDULE_INTERVAL_KEYS = ["everyMs", "intervalMs", "everyMinutes", "everyHours"] as const;
 const MIN_INTERVAL_MS = 60_000;
 const MAX_INTERVAL_MS = 30 * 24 * 60 * 60 * 1000;
 
-export function resolveScheduleIntervalMs(schedule: Record<string, unknown>): number | undefined {
+function resolveScheduleIntervalMs(schedule: Record<string, unknown>): number | undefined {
   const everyMs = Number(schedule.everyMs ?? schedule.intervalMs);
   if (Number.isFinite(everyMs) && everyMs > 0) {
     return Math.min(Math.max(Math.floor(everyMs), MIN_INTERVAL_MS), MAX_INTERVAL_MS);

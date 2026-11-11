@@ -5,6 +5,10 @@ import { TemplateService } from "../../template/template.service";
 import {
   MessageDeliveryStatus as DeliveryStatus,
   MessageDelivery,
+  DeliveryEngagementStatus,
+  DeliveryTransportStatus,
+  applyDeliveryState,
+  resolveDeliveryStatus,
 } from "../message-delivery.entity";
 import { Message, MessageStatus, MessagePriority as Priority } from "../message.entity";
 import {
@@ -238,7 +242,14 @@ export class NotificationProcessor extends WorkerHost {
         throw new Error(`Delivery ${deliveryId} not found`);
       }
 
-      if (delivery.status === DeliveryStatus.DELIVERED || delivery.status === DeliveryStatus.SENT) {
+      const deliveryTransport = delivery.transportStatus ?? DeliveryTransportStatus.PENDING;
+      const deliveryEngagement = delivery.engagementStatus ?? DeliveryEngagementStatus.UNKNOWN;
+      if (
+        delivery.status === DeliveryStatus.DELIVERED ||
+        delivery.status === DeliveryStatus.SENT ||
+        deliveryTransport === DeliveryTransportStatus.SENT ||
+        deliveryEngagement !== DeliveryEngagementStatus.UNKNOWN
+      ) {
         // At-least-once: a stalled job the queue re-runs may already be done.
         // Acknowledge it instead of sending a duplicate to the provider.
         this.logger.log(
@@ -272,6 +283,9 @@ export class NotificationProcessor extends WorkerHost {
 
         await this.deliveryRepository.update(deliveryId, {
           status: DeliveryStatus.SKIPPED,
+          transportStatus: DeliveryTransportStatus.SKIPPED,
+          engagementStatus: DeliveryEngagementStatus.UNKNOWN,
+          stateUpdatedAt: new Date(),
           errorMessage: `Skipped: ${verdict.reason}`,
         });
         await this.updateNotificationStatusFromDeliveries(notificationId);
@@ -296,6 +310,9 @@ export class NotificationProcessor extends WorkerHost {
         this.logger.log(`Skipping delivery ${deliveryId}: project_quota`);
         await this.deliveryRepository.update(deliveryId, {
           status: DeliveryStatus.SKIPPED,
+          transportStatus: DeliveryTransportStatus.SKIPPED,
+          engagementStatus: DeliveryEngagementStatus.UNKNOWN,
+          stateUpdatedAt: new Date(),
           errorMessage: "Skipped: project_quota",
         });
         await this.updateNotificationStatusFromDeliveries(notificationId);
@@ -353,9 +370,12 @@ export class NotificationProcessor extends WorkerHost {
 
       delivery.providerId = outcome.providerId ?? "unknown";
       delivery.providerMessageId = outcome.externalId;
-      delivery.status = DeliveryStatus.DELIVERED;
-      delivery.sentAt = new Date();
-      delivery.deliveredAt = new Date();
+      applyDeliveryState(delivery, {
+        transportStatus: DeliveryTransportStatus.SENT,
+        engagementStatus: DeliveryEngagementStatus.DELIVERED,
+      });
+      delivery.sentAt = delivery.sentAt ?? new Date();
+      delivery.deliveredAt = delivery.deliveredAt ?? new Date();
 
       await this.deliveryRepository.save(delivery);
       await this.finalizeLog(deliveryId, "delivered", {
@@ -371,6 +391,9 @@ export class NotificationProcessor extends WorkerHost {
 
       await this.deliveryRepository.update(deliveryId, {
         status: DeliveryStatus.FAILED,
+        transportStatus: DeliveryTransportStatus.FAILED,
+        engagementStatus: DeliveryEngagementStatus.FAILED,
+        stateUpdatedAt: new Date(),
         errorMessage: error.message,
         retryCount: retryCount + 1,
       });
@@ -458,6 +481,9 @@ export class NotificationProcessor extends WorkerHost {
           providerId: "pending",
           recipient: address,
           status: DeliveryStatus.PENDING,
+          transportStatus: DeliveryTransportStatus.PENDING,
+          engagementStatus: DeliveryEngagementStatus.UNKNOWN,
+          stateUpdatedAt: new Date(),
           metadata: {
             ...delivery.metadata,
             fallbackChain: remaining.length > 0 ? remaining : undefined,
@@ -573,6 +599,9 @@ export class NotificationProcessor extends WorkerHost {
 
       await this.deliveryRepository.update(deliveryId, {
         status: DeliveryStatus.FAILED,
+        transportStatus: DeliveryTransportStatus.FAILED,
+        engagementStatus: DeliveryEngagementStatus.FAILED,
+        stateUpdatedAt: new Date(),
         errorMessage: "Failed after all retry attempts",
         retryCount: retryCount + 1,
       });
@@ -646,6 +675,9 @@ export class NotificationProcessor extends WorkerHost {
             providerId: "pending",
             recipient: recipientAddress,
             status: DeliveryStatus.PENDING,
+            transportStatus: DeliveryTransportStatus.PENDING,
+            engagementStatus: DeliveryEngagementStatus.UNKNOWN,
+            stateUpdatedAt: new Date(),
             metadata: {
               subscriberId: recipient.userId ?? recipient.id,
               priority: message.priority,
@@ -688,7 +720,7 @@ export class NotificationProcessor extends WorkerHost {
       return;
     }
 
-    const deliveryStatuses = deliveries.map((d) => d.status);
+    const deliveryStatuses = deliveries.map((d) => resolveDeliveryStatus(d));
     let notificationStatus: MessageStatus;
 
     if (deliveryStatuses.every((status) => status === DeliveryStatus.DELIVERED)) {
@@ -700,10 +732,12 @@ export class NotificationProcessor extends WorkerHost {
     ) {
       notificationStatus = MessageStatus.SENT;
     } else if (
-      deliveryStatuses.every((status) =>
-        [DeliveryStatus.FAILED, DeliveryStatus.SKIPPED, DeliveryStatus.UNSUBSCRIBED].includes(
-          status,
-        ),
+      deliveryStatuses.every(
+        (status) =>
+          status === DeliveryStatus.FAILED ||
+          status === DeliveryStatus.BOUNCED ||
+          status === DeliveryStatus.SKIPPED ||
+          status === DeliveryStatus.UNSUBSCRIBED,
       )
     ) {
       notificationStatus = MessageStatus.FAILED;

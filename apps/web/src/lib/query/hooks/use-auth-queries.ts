@@ -14,7 +14,7 @@ export function useCurrentUser() {
   });
 }
 
-export function useLogin() {
+function useLogin() {
   const queryClient = useQueryClient();
   const { login } = useAuth();
 
@@ -29,7 +29,7 @@ export function useLogin() {
   });
 }
 
-export function useRegister() {
+function useRegister() {
   const queryClient = useQueryClient();
   const { register } = useAuth();
 
@@ -50,7 +50,7 @@ export function useRegister() {
   });
 }
 
-export function useLogout() {
+function useLogout() {
   const queryClient = useQueryClient();
   const { logout } = useAuth();
 
@@ -65,7 +65,7 @@ export function useLogout() {
   });
 }
 
-export function usePasswordResetRequest() {
+function usePasswordResetRequest() {
   return useMutation({
     mutationFn: async () => {
       return Promise.resolve();
@@ -73,7 +73,7 @@ export function usePasswordResetRequest() {
   });
 }
 
-export function usePasswordResetConfirm() {
+function usePasswordResetConfirm() {
   return useMutation({
     mutationFn: async () => {
       return Promise.resolve();
@@ -81,7 +81,7 @@ export function usePasswordResetConfirm() {
   });
 }
 
-export function useEmailVerification() {
+function useEmailVerification() {
   const queryClient = useQueryClient();
   const { refreshUser } = useAuth();
 
@@ -93,7 +93,7 @@ export function useEmailVerification() {
   });
 }
 
-export function useResendVerificationEmail() {
+function useResendVerificationEmail() {
   const queryClient = useQueryClient();
   const { refreshUser } = useAuth();
 
@@ -105,7 +105,7 @@ export function useResendVerificationEmail() {
   });
 }
 
-export function useIsAuthenticated() {
+function useIsAuthenticated() {
   const { user, isLoading } = useAuth();
 
   return {
@@ -115,7 +115,7 @@ export function useIsAuthenticated() {
   };
 }
 
-export function usePermissions(tenantId?: string) {
+function usePermissions(tenantId?: string) {
   return useQuery({
     queryKey: queryKeys.auth.permissions(tenantId),
     queryFn: async () => {
@@ -127,7 +127,7 @@ export function usePermissions(tenantId?: string) {
   });
 }
 
-export function useRoleBasedAccess(tenantId?: string) {
+function useRoleBasedAccess(tenantId?: string) {
   const { user } = useAuth();
   const { data: permissions = [] } = usePermissions(tenantId);
 
@@ -182,7 +182,7 @@ export function useRoleBasedAccess(tenantId?: string) {
   };
 }
 
-export function useSession() {
+function useSession() {
   const { user, refreshUser, isAuthenticated } = useAuth();
 
   const getTokenInfo = (): { token: string | null; isExpired: boolean } => {
@@ -202,7 +202,7 @@ export function useSession() {
   };
 }
 
-export function useAutoTokenRefresh() {
+function useAutoTokenRefresh() {
   const { refreshSession, isTokenExpired } = useSession();
   const { data: user } = useCurrentUser();
 

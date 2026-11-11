@@ -33,11 +33,11 @@ export const BYO_EVENT_TOKEN_COST = 1;
 
 export const WELCOME_SIGNUP_TOKENS = 3_000;
 
-export function isByoEligibleChannel(channel: BillingChannel): boolean {
+function isByoEligibleChannel(channel: BillingChannel): boolean {
   return BYO_ELIGIBLE_CHANNELS.includes(channel);
 }
 
-export function channelTokenCosts(mode: BillingMode): Record<BillingChannel, number> {
+function channelTokenCosts(mode: BillingMode): Record<BillingChannel, number> {
   if (mode === "managed") {
     return { ...MANAGED_CHANNEL_TOKEN_COST };
   }
@@ -75,7 +75,7 @@ export function resolveBillingChannel(eventType: string): BillingChannelResoluti
   return { kind: "unrecognized", eventType };
 }
 
-export function normalizeBillingChannel(eventType: string): BillingChannel {
+function normalizeBillingChannel(eventType: string): BillingChannel {
   const resolution = resolveBillingChannel(eventType);
   return resolution.kind === "channel" ? resolution.channel : NotificationChannel.EMAIL;
 }

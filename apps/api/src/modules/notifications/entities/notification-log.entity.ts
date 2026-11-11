@@ -9,7 +9,7 @@ export class NotificationLog {
   @PrimaryGeneratedColumn("uuid")
   id: string;
 
-  @Column({ name: "tracking_id", unique: true })
+  @Column({ name: "tracking_id" })
   trackingId: string;
 
   @Column({ type: "varchar", length: 32 })

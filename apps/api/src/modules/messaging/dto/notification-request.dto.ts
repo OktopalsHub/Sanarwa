@@ -12,7 +12,7 @@ import { Type } from "class-transformer";
 import { NotificationChannel } from "../../../common/enums/notification-channel.enum";
 import { CHAT_CHANNEL_PROVIDERS, ChatProvider } from "../../../common/enums/chat-provider.enum";
 
-export enum Priority {
+enum Priority {
   LOW = "low",
   NORMAL = "normal",
   HIGH = "high",

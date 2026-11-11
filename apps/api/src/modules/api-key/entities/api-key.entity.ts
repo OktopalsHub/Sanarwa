@@ -12,7 +12,6 @@ export enum ApiKeyStatus {
 
 export enum ApiKeyEnvironment {
   PRODUCTION = "production",
-  DEVELOPMENT = "development",
 }
 
 @Entity("api_keys")

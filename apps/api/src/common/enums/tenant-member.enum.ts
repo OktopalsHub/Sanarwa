@@ -8,5 +8,4 @@ export enum TenantMemberRole {
 export enum TenantMemberStatus {
   ACTIVE = "active",
   INACTIVE = "inactive",
-  PENDING = "pending",
 }

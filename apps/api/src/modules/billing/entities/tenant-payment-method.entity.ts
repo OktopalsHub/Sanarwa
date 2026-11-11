@@ -13,7 +13,6 @@ import { BillingCurrency } from "../constants/token-packages";
 
 export enum TenantPaymentMethodStatus {
   ACTIVE = "active",
-  EXPIRED = "expired",
   REVOKED = "revoked",
 }
 

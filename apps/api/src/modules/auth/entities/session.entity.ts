@@ -1,5 +1,5 @@
 import { Entity, Column, ManyToOne, JoinColumn, Index } from "typeorm";
-import { User } from "../../user/entities/user.entity";
+import type { User } from "../../user/entities/user.entity";
 import { BaseEntity } from "../../../common/database/entities/base.entity";
 
 @Entity("session")
@@ -25,7 +25,7 @@ export class Session extends BaseEntity {
   @Column({ name: "user_agent", type: "text", nullable: true })
   userAgent?: string | null;
 
-  @ManyToOne(() => User, (user) => user.sessions, { onDelete: "CASCADE" })
+  @ManyToOne("User", (user: User) => user.sessions, { onDelete: "CASCADE" })
   @JoinColumn({ name: "user_id" })
   user: User;
 }

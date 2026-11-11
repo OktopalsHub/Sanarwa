@@ -7,7 +7,7 @@ interface AuthPageShellProps {
   children: React.ReactNode;
 }
 
-export function AuthPageShell({ children }: AuthPageShellProps) {
+function AuthPageShell({ children }: AuthPageShellProps) {
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-[var(--color-paper)] px-6 py-8 text-[var(--color-ink-2)]">
       <div className="flex w-full max-w-[400px] flex-col items-center gap-6">
@@ -42,7 +42,7 @@ export function AuthPageShell({ children }: AuthPageShellProps) {
   );
 }
 
-export function AuthCard({ children }: { children: React.ReactNode }) {
+function AuthCard({ children }: { children: React.ReactNode }) {
   return (
     <div className="w-full rounded-[var(--radius-card)] border border-[var(--color-rule)] bg-[var(--color-paper-2)] p-8 shadow-sm">
       {children}

@@ -5,7 +5,13 @@ import { Repository } from "typeorm";
 import { NotificationLog } from "../entities/notification-log.entity";
 import { TenantSettings } from "../../tenant/entities/tenant-settings.entity";
 import { Message, MessagePriority, MessageStatus } from "../../messaging/message.entity";
-import { MessageDelivery, MessageDeliveryStatus } from "../../messaging/message-delivery.entity";
+import {
+  MessageDelivery,
+  MessageDeliveryStatus,
+  DeliveryEngagementStatus,
+  DeliveryTransportStatus,
+  applyDeliveryState,
+} from "../../messaging/message-delivery.entity";
 import { NotificationStoragePolicy } from "../enums/notification-storage-policy.enum";
 
 export interface PersistSendContextInput {
@@ -162,6 +168,9 @@ export class NotificationStorageService {
           providerId: "pending",
           recipient: input.to,
           status: MessageDeliveryStatus.PENDING,
+          transportStatus: DeliveryTransportStatus.PENDING,
+          engagementStatus: DeliveryEngagementStatus.UNKNOWN,
+          stateUpdatedAt: new Date(),
           metadata: {
             trackingId: input.trackingId,
             projectId: input.projectId,
@@ -225,23 +234,37 @@ export class NotificationStorageService {
       }
     }
     if (deliveryId) {
-      const deliveryUpdate: Partial<MessageDelivery> = {
-        status:
-          outcome.status === "failed"
-            ? MessageDeliveryStatus.FAILED
-            : outcome.status === "delivered"
-              ? MessageDeliveryStatus.DELIVERED
-              : MessageDeliveryStatus.SENT,
+      const deliveryStatus: MessageDeliveryStatus =
+        outcome.status === "failed"
+          ? MessageDeliveryStatus.FAILED
+          : outcome.status === "delivered"
+            ? MessageDeliveryStatus.DELIVERED
+            : MessageDeliveryStatus.SENT;
+
+      const delivery: Partial<MessageDelivery> = { status: deliveryStatus };
+      if (deliveryStatus !== MessageDeliveryStatus.FAILED) {
+        delivery.sentAt = new Date();
+      }
+      if (deliveryStatus === MessageDeliveryStatus.DELIVERED) {
+        delivery.deliveredAt = new Date();
+      }
+
+      applyDeliveryState(delivery, { status: deliveryStatus });
+
+      const deliveryUpdate: Record<string, any> = {
+        status: delivery.status,
+        transportStatus: delivery.transportStatus,
+        engagementStatus: delivery.engagementStatus,
+        stateUpdatedAt: delivery.stateUpdatedAt,
         providerMessageId: outcome.externalId,
         errorMessage: outcome.error,
         providerId: outcome.providerId ?? "auto-select",
       };
-
-      if (outcome.status === "sent" || outcome.status === "delivered") {
-        deliveryUpdate.sentAt = new Date();
+      if (delivery.sentAt) {
+        deliveryUpdate.sentAt = delivery.sentAt;
       }
-      if (outcome.status === "delivered") {
-        deliveryUpdate.deliveredAt = new Date();
+      if (delivery.deliveredAt) {
+        deliveryUpdate.deliveredAt = delivery.deliveredAt;
       }
 
       await this.deliveryRepository.update(

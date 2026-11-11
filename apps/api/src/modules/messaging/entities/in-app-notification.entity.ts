@@ -14,21 +14,12 @@ import { User } from "../../user/entities/user.entity";
 
 export enum InAppNotificationType {
   INFO = "info",
-  WARNING = "warning",
-  ERROR = "error",
-  SUCCESS = "success",
-  SYSTEM = "system",
-  USER_ACTION = "user_action",
-  MARKETING = "marketing",
 }
 
 export enum InAppNotificationStatus {
   PENDING = "pending",
-  SENT = "sent",
   DELIVERED = "delivered",
   READ = "read",
-  FAILED = "failed",
-  CANCELLED = "cancelled",
 }
 
 @Entity("in_app_notifications")

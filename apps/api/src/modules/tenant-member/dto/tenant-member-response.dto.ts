@@ -1,7 +1,7 @@
 import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
 import { TenantMemberRole, TenantMemberStatus } from "../../../common/enums";
 
-export class TenantMemberUserDto {
+class TenantMemberUserDto {
   @ApiProperty({
     description: "User unique identifier",
     example: "123e4567-e89b-12d3-a456-426614174000",
@@ -31,7 +31,7 @@ export class TenantMemberUserDto {
   image?: string;
 }
 
-export class TenantMemberTenantDto {
+class TenantMemberTenantDto {
   @ApiProperty({
     description: "Tenant unique identifier",
     example: "123e4567-e89b-12d3-a456-426614174000",

@@ -198,4 +198,3 @@ class BillingApiClient {
 }
 
 export const billingApi = new BillingApiClient();
-export { BillingApiClient };

@@ -1,17 +1,17 @@
-export enum UserRole {
+enum UserRole {
   SUPER_ADMIN = "super_admin",
   ADMIN = "admin",
   DEVELOPER = "developer",
   BASIC = "basic",
 }
 
-export enum UserStatus {
+enum UserStatus {
   ACTIVE = "active",
   INACTIVE = "inactive",
   SUSPENDED = "suspended",
 }
 
-export enum AuthProvider {
+enum AuthProvider {
   LOCAL = "local",
   GOOGLE = "google",
   GITHUB = "github",
@@ -243,7 +243,7 @@ export interface SecurityEvent {
   timestamp: Date;
 }
 
-export enum SecurityEventType {
+enum SecurityEventType {
   LOGIN_SUCCESS = "login_success",
   LOGIN_FAILURE = "login_failure",
   LOGOUT = "logout",

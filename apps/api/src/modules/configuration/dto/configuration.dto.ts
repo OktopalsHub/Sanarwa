@@ -301,7 +301,7 @@ export class BulkConfigurationDto {
   validateAll?: boolean = true;
 }
 
-export class ConfigurationResponseDto {
+class ConfigurationResponseDto {
   @ApiProperty({
     description: "Configuration ID",
     format: "uuid",

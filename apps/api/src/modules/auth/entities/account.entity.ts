@@ -1,5 +1,5 @@
 import { Entity, Column, ManyToOne, JoinColumn, Index } from "typeorm";
-import { User } from "../../user/entities/user.entity";
+import type { User } from "../../user/entities/user.entity";
 import { BaseEntity } from "../../../common/database/entities/base.entity";
 
 @Entity("account")
@@ -39,7 +39,7 @@ export class Account extends BaseEntity {
   @Column({ type: "text", nullable: true })
   password?: string | null;
 
-  @ManyToOne(() => User, (user) => user.accounts, { onDelete: "CASCADE" })
+  @ManyToOne("User", (user: User) => user.accounts, { onDelete: "CASCADE" })
   @JoinColumn({ name: "user_id" })
   user: User;
 }

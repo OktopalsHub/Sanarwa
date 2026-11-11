@@ -202,6 +202,16 @@ export class CampaignService {
     });
 
     campaign.status = scheduledAt ? "scheduled" : "active";
+    if (!scheduledAt) {
+      campaign.nextRunAt = null;
+      if ((campaign.schedule as any)?.nextRunAt) {
+        const schedule = { ...(campaign.schedule ?? {}) } as Record<string, unknown>;
+        delete schedule.nextRunAt;
+        campaign.schedule = schedule;
+      }
+    } else {
+      campaign.nextRunAt = scheduledAt;
+    }
     await this.campaignRepository.save(campaign);
 
     const CHUNK = 50;
@@ -227,17 +237,10 @@ export class CampaignService {
     }
 
     const followUp = this.resolveFollowUp(campaign, step, scheduledAt);
-    campaign.status = followUp.status;
-    campaign.schedule = { ...(campaign.schedule ?? {}), ...followUp.schedulePatch };
-    campaign.analytics = {
-      ...(campaign.analytics ?? {}),
-      totalSent: Number((campaign.analytics as any)?.totalSent ?? 0) + queued,
-      targeted: subscriberIds.length,
-      failed,
-      lastDispatchedAt: new Date().toISOString(),
-      ...(campaign.type === "drip" ? { dripStep: followUp.nextStep ?? step } : {}),
-      lastUpdated: new Date(),
-    };
+    Object.assign(
+      campaign,
+      this.withExecutionCursor(campaign, followUp, queued, failed, subscriberIds.length, step),
+    );
     await this.campaignRepository.save(campaign);
 
     this.logger.log(
@@ -474,6 +477,10 @@ export class CampaignService {
     if (campaign.type !== "drip") {
       return 0;
     }
+    const columnValue = Number((campaign as any).dripStep ?? 0);
+    if (Number.isFinite(columnValue) && columnValue >= 0) {
+      return Math.floor(columnValue);
+    }
     const n = Number((campaign.analytics as any)?.dripStep ?? 0);
     return Number.isFinite(n) && n >= 0 ? Math.floor(n) : 0;
   }
@@ -509,12 +516,67 @@ export class CampaignService {
   }
 
   private getNextRunAt(campaign: Campaign): Date | undefined {
+    if (campaign.nextRunAt instanceof Date && Number.isFinite(campaign.nextRunAt.getTime())) {
+      return campaign.nextRunAt;
+    }
     const raw = (campaign.schedule ?? {}).nextRunAt;
     if (typeof raw !== "string") {
       return undefined;
     }
     const date = new Date(raw);
     return Number.isFinite(date.getTime()) ? date : undefined;
+  }
+
+  private withExecutionCursor(
+    campaign: Campaign,
+    followUp: {
+      status: Campaign["status"];
+      schedulePatch: Record<string, unknown>;
+      nextStep?: number;
+    },
+    queued: number,
+    failed: number,
+    targeted: number,
+    step: number,
+  ): Pick<
+    Campaign,
+    "status" | "schedule" | "analytics" | "nextRunAt" | "lastDispatchedAt" | "dripStep"
+  > {
+    const nextSchedule = { ...(campaign.schedule ?? {}), ...followUp.schedulePatch };
+    const nextRunAtRaw = nextSchedule.nextRunAt;
+    const nextRunAt =
+      typeof nextRunAtRaw === "string" && Number.isFinite(new Date(nextRunAtRaw).getTime())
+        ? new Date(nextRunAtRaw)
+        : null;
+
+    if (followUp.status === "completed") {
+      delete (nextSchedule as Record<string, unknown>).nextRunAt;
+    }
+
+    const nextAnalytics: Record<string, unknown> = {
+      ...(campaign.analytics ?? {}),
+      totalSent: Number((campaign.analytics as any)?.totalSent ?? 0) + queued,
+      targeted,
+      failed,
+      lastDispatchedAt: new Date().toISOString(),
+      lastUpdated: new Date(),
+    };
+
+    const dripStep = campaign.type === "drip" ? (followUp.nextStep ?? step) : 0;
+    if (campaign.type === "drip") {
+      nextAnalytics.dripStep = dripStep;
+    } else {
+      delete nextAnalytics.dripStep;
+    }
+
+    return {
+      status: followUp.status,
+      schedule: nextSchedule,
+      analytics: nextAnalytics,
+      nextRunAt: followUp.status === "completed" ? null : nextRunAt,
+      lastDispatchedAt: new Date(),
+      dripStep,
+    };
   }
 
   /**
@@ -575,9 +637,18 @@ export class CampaignService {
       status: campaign.status,
       channels: campaign.channels,
       audience: campaign.audience,
-      schedule: campaign.schedule,
+      schedule: {
+        ...(campaign.schedule ?? {}),
+        ...(campaign.nextRunAt ? { nextRunAt: campaign.nextRunAt.toISOString() } : {}),
+      },
       templates: campaign.templates,
-      analytics: campaign.analytics,
+      analytics: {
+        ...(campaign.analytics ?? {}),
+        ...(campaign.lastDispatchedAt
+          ? { lastDispatchedAt: campaign.lastDispatchedAt.toISOString() }
+          : {}),
+        ...(campaign.type === "drip" ? { dripStep: campaign.dripStep ?? 0 } : {}),
+      },
       createdAt: campaign.createdAt,
       updatedAt: campaign.updatedAt,
       createdBy: campaign.createdById || "",

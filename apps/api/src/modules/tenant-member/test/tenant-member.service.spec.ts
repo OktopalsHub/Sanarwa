@@ -2,7 +2,7 @@ import { Test, TestingModule } from "@nestjs/testing";
 import { EventEmitter2 } from "@nestjs/event-emitter";
 import { NotFoundException } from "@nestjs/common";
 import { TenantMemberService } from "../tenant-member.service";
-import { TenantMember } from "../tenant-member.entity";
+import { TenantMember } from "../entities/tenant-member.entity";
 import { TENANT_MEMBER_REPO } from "../tenant-member.tokens";
 import type { Mocked } from "vitest";
 

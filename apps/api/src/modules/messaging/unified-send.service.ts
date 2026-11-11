@@ -11,7 +11,12 @@ import {
   UnifiedSendResponse,
 } from "./dto/unified-send.dto";
 import { Message, MessagePriority, MessageStatus } from "./message.entity";
-import { MessageDelivery, MessageDeliveryStatus } from "./message-delivery.entity";
+import {
+  MessageDelivery,
+  MessageDeliveryStatus,
+  DeliveryEngagementStatus,
+  DeliveryTransportStatus,
+} from "./message-delivery.entity";
 import { NotificationQueueService } from "./queue/notification-queue.service";
 import { NotificationStorageService } from "../notifications/storage/notification-storage.service";
 import { NotificationLog } from "../notifications/entities/notification-log.entity";
@@ -220,6 +225,9 @@ export class UnifiedSendService {
           providerId: "pending",
           recipient: delivery.recipient,
           status: MessageDeliveryStatus.PENDING,
+          transportStatus: DeliveryTransportStatus.PENDING,
+          engagementStatus: DeliveryEngagementStatus.UNKNOWN,
+          stateUpdatedAt: new Date(),
           metadata: {
             projectId,
             templateId: dto.templateId,

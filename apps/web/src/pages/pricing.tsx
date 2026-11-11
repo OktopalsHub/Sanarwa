@@ -7,7 +7,6 @@ import { Button } from "@sanarwa/ui/button";
 import { useCheckoutCurrency } from "@/hooks/use-checkout-currency";
 import { SanarwaMark, SanarwaWordmark } from "@sanarwa/assets";
 import {
-  BYO_ELIGIBLE_CHANNELS,
   BYO_EVENTS_PER_NGN,
   BYO_EVENTS_PER_USD,
   MANAGED_LIST_TOKENS,

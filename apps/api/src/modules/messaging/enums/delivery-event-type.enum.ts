@@ -1,5 +1,4 @@
 export enum DeliveryEventType {
-  QUEUED = "queued",
   SENT = "sent",
   DELIVERED = "delivered",
   DEFERRED = "deferred",
@@ -11,6 +10,6 @@ export enum DeliveryEventType {
   DROPPED = "dropped",
 }
 
-export const BOUNCE_TYPES = ["hard", "soft"] as const;
+const BOUNCE_TYPES = ["hard", "soft"] as const;
 
 export type BounceType = (typeof BOUNCE_TYPES)[number];

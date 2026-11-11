@@ -261,5 +261,4 @@ class AuthApiClient {
   }
 }
 
-export { AuthApiClient };
 export const authApi = new AuthApiClient();

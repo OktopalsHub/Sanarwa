@@ -1,4 +1,4 @@
-export enum TenantStatus {
+enum TenantStatus {
   ACTIVE = "active",
   SUSPENDED = "suspended",
   INACTIVE = "inactive",
@@ -11,13 +11,13 @@ export enum TenantMemberRole {
   VIEWER = "viewer",
 }
 
-export enum TenantMemberStatus {
+enum TenantMemberStatus {
   ACTIVE = "active",
   INACTIVE = "inactive",
   PENDING = "pending",
 }
 
-export enum InviteStatus {
+enum InviteStatus {
   PENDING = "pending",
   ACCEPTED = "accepted",
   DECLINED = "declined",

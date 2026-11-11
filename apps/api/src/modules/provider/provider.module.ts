@@ -5,7 +5,6 @@ import { ProviderFactory } from "../../providers/factory/provider-factory";
 import { ProviderConfigValidator } from "./provider-config-validator";
 import { ProviderConfig } from "./provider-config.entity";
 import { ProviderEncryptionService } from "./provider-encryption.service";
-import { ProviderPerformanceTracker } from "./provider-performance-tracker";
 import { ProviderService } from "./provider.service";
 
 import { ProviderOrchestratorService } from "./provider-orchestrator.service";
@@ -23,7 +22,6 @@ import { DeviceRegistrationController } from "./controllers/device-registration.
 import { TelnyxWebhookController } from "./controllers/telnyx-webhook.controller";
 import { WhatsAppWebhookController } from "./controllers/whatsapp-webhook.controller";
 import { EmailWebhookController } from "./controllers/email-webhook.controller";
-import { RoutingOptimizerController } from "./controllers/routing-optimizer.controller";
 
 import { EmailModule } from "./providers/email/email.module";
 import { ErrorsModule } from "../../common/errors";
@@ -49,7 +47,6 @@ import { BYOPController } from "./controllers/byop.controller";
 import { ProviderUsageLog } from "./entities/provider-usage-log.entity";
 import { ProviderCostTrackerService } from "./services/provider-cost-tracker.service";
 import { ProviderTemplateService } from "./services/provider-template.service";
-import { RoutingOptimizerService } from "./services/routing-optimizer.service";
 import { NotificationLog } from "../notifications/entities/notification-log.entity";
 
 import {
@@ -127,17 +124,14 @@ function pick(config: Record<string, any>, ...keys: string[]): string | undefine
     TelnyxWebhookController,
     WhatsAppWebhookController,
     EmailWebhookController,
-    RoutingOptimizerController,
   ],
   providers: [
     ProviderService,
-    ProviderPerformanceTracker,
     ProviderConfigValidator,
     ProviderEncryptionService,
     ProviderFactory,
     ProviderTemplateService,
     ProviderCostTrackerService,
-    RoutingOptimizerService,
     ProviderOrchestratorService,
     ProviderConfigRepository,
     BrandedPushService,
@@ -404,13 +398,11 @@ function pick(config: Record<string, any>, ...keys: string[]): string | undefine
   ],
   exports: [
     ProviderService,
-    ProviderPerformanceTracker,
     ProviderConfigValidator,
     ProviderEncryptionService,
     ProviderFactory,
     ProviderTemplateService,
     ProviderCostTrackerService,
-    RoutingOptimizerService,
     ProviderOrchestratorService,
     ProviderConfigRepository,
     BrandedPushService,

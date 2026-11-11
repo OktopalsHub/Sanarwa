@@ -48,6 +48,15 @@ export class Campaign extends BaseEntity {
   @Column({ type: "jsonb", default: {} })
   analytics: Record<string, unknown>;
 
+  @Column({ type: "timestamp", nullable: true, name: "next_run_at" })
+  nextRunAt?: Date | null;
+
+  @Column({ type: "timestamp", nullable: true, name: "last_dispatched_at" })
+  lastDispatchedAt?: Date | null;
+
+  @Column({ type: "int", default: 0, name: "drip_step" })
+  dripStep: number;
+
   @Column({ name: "created_by", nullable: true })
   createdById?: string;
 

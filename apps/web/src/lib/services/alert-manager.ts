@@ -430,7 +430,7 @@ class AlertManager {
 export const alertManager = new AlertManager();
 
 // Utility functions for common alert scenarios
-export function alertCriticalError(error: Error, context?: Record<string, any>) {
+function alertCriticalError(error: Error, context?: Record<string, any>) {
   alertManager.createCustomAlert("error", "critical", `Critical error: ${error.message}`, {
     error: error.message,
     stack: error.stack,
@@ -438,7 +438,7 @@ export function alertCriticalError(error: Error, context?: Record<string, any>) 
   });
 }
 
-export function alertPerformanceIssue(metric: string, value: number, threshold: number) {
+function alertPerformanceIssue(metric: string, value: number, threshold: number) {
   alertManager.createCustomAlert(
     "performance",
     "high",
@@ -447,7 +447,7 @@ export function alertPerformanceIssue(metric: string, value: number, threshold: 
   );
 }
 
-export function alertSecurityViolation(violation: string, context?: Record<string, any>) {
+function alertSecurityViolation(violation: string, context?: Record<string, any>) {
   alertManager.createCustomAlert("security", "critical", `Security violation: ${violation}`, {
     violation,
     ...context,

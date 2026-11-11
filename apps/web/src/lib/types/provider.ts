@@ -7,7 +7,7 @@ export enum ProviderType {
   VOICE = "voice",
 }
 
-export enum ProviderStatus {
+enum ProviderStatus {
   ACTIVE = "active",
   INACTIVE = "inactive",
   TESTING = "testing",
@@ -15,14 +15,14 @@ export enum ProviderStatus {
   MAINTENANCE = "maintenance",
 }
 
-export enum ProviderHealthStatus {
+enum ProviderHealthStatus {
   HEALTHY = "healthy",
   DEGRADED = "degraded",
   UNHEALTHY = "unhealthy",
   UNKNOWN = "unknown",
 }
 
-export enum EmailProviderType {
+enum EmailProviderType {
   AWS_SES = "aws_ses",
   SENDGRID = "sendgrid",
   MAILGUN = "mailgun",
@@ -30,7 +30,7 @@ export enum EmailProviderType {
   SMTP = "smtp",
 }
 
-export enum SmsProviderType {
+enum SmsProviderType {
   TWILIO = "twilio",
   AWS_SNS = "aws_sns",
   TERMII = "termii",
@@ -38,7 +38,7 @@ export enum SmsProviderType {
   MESSAGEBIRD = "messagebird",
 }
 
-export enum PushProviderType {
+enum PushProviderType {
   FIREBASE = "firebase",
   AWS_PINPOINT = "aws_pinpoint",
   APNS = "apns",
@@ -46,7 +46,7 @@ export enum PushProviderType {
   ONESIGNAL = "onesignal",
 }
 
-export enum WhatsAppProviderType {
+enum WhatsAppProviderType {
   WHATSAPP_BUSINESS = "whatsapp_business",
   TWILIO_WHATSAPP = "twilio_whatsapp",
   MESSAGEBIRD_WHATSAPP = "messagebird_whatsapp",

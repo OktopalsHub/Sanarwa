@@ -48,8 +48,7 @@
   },
   "dependencies": {
     "@sanarwa/shared-types": "workspace:*",
-    "axios": "^1.21.1",
-    "tslib": "^2.9.1"
+    "axios": "^1.21.1"
   },
   "devDependencies": {
     "@rollup/plugin-node-resolve": "^16.0.3",

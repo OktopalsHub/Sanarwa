@@ -6,7 +6,7 @@ import {
   UpdateDateColumn,
   OneToMany,
 } from "typeorm";
-import { TenantWABAConfig } from "./tenant-waba-config.entity";
+import type { TenantWABAConfig } from "./tenant-waba-config.entity";
 
 @Entity("waba_configs")
 export class WABAConfig {
@@ -55,7 +55,7 @@ export class WABAConfig {
     businessProfile?: any;
   };
 
-  @OneToMany(() => TenantWABAConfig, (config) => config.waba)
+  @OneToMany("TenantWABAConfig", (config: TenantWABAConfig) => config.waba)
   tenantConfigs: TenantWABAConfig[];
 
   @CreateDateColumn()

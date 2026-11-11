@@ -14,6 +14,7 @@ import { DeviceRegistrationService } from "../services/device-registration.servi
 import { InAppOrchestratorService } from "../providers/in-app/in-app-orchestrator.service";
 import { SMSPayload } from "../providers/sms/sms-provider.interface";
 import { PushPayload } from "../providers/push/push-provider.interface";
+import { getRedisConnectionToken } from "@nestjs-modules/ioredis";
 
 const TENANT = "tenant-1";
 
@@ -32,6 +33,7 @@ describe("ProviderOrchestratorService BYOP factories", () => {
       providers: [
         ProviderOrchestratorService,
         { provide: ConfigService, useValue: { get: vi.fn().mockReturnValue("tests") } },
+        { provide: getRedisConnectionToken(), useValue: { get: vi.fn().mockResolvedValue(null) } },
         { provide: DeviceRegistrationService, useValue: { pruneInvalidTokens: vi.fn() } },
         { provide: InAppOrchestratorService, useValue: {} },
         {

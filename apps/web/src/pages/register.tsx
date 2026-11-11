@@ -24,7 +24,7 @@ export default function RegisterPage() {
   );
 }
 
-export const metadata = {
+const metadata = {
   title: "Sign Up - Sanarwa",
   description: "Create your Sanarwa account",
 };

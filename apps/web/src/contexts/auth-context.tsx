@@ -149,5 +149,3 @@ export function useAuth() {
   }
   return context;
 }
-
-export { authClient };

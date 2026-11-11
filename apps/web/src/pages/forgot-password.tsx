@@ -10,7 +10,7 @@ export default function ForgotPasswordPage() {
   );
 }
 
-export const metadata = {
+const metadata = {
   title: "Forgot Password - Sanarwa",
   description: "Reset your Sanarwa account password",
 };

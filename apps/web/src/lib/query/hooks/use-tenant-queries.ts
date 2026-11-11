@@ -8,7 +8,7 @@ import type {
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { invalidateQueries, queryKeys } from "../query-client";
 
-export function useUserTenants() {
+function useUserTenants() {
   return useQuery({
     queryKey: queryKeys.tenants.all(),
     queryFn: () => apiClient.get<Tenant[]>("/tenants", { tenantScoped: false }),
@@ -16,7 +16,7 @@ export function useUserTenants() {
   });
 }
 
-export function useTenant(tenantId: string) {
+function useTenant(tenantId: string) {
   return useQuery({
     queryKey: queryKeys.tenants.detail(tenantId),
     queryFn: () => apiClient.get<Tenant>(`/tenants/${tenantId}`, { tenantScoped: false }),
@@ -25,7 +25,7 @@ export function useTenant(tenantId: string) {
   });
 }
 
-export function useTenantMembers(tenantId: string) {
+function useTenantMembers(tenantId: string) {
   return useQuery({
     queryKey: queryKeys.tenants.members(tenantId),
     queryFn: () => {
@@ -36,7 +36,7 @@ export function useTenantMembers(tenantId: string) {
   });
 }
 
-export function useTenantSettings(tenantId: string) {
+function useTenantSettings(tenantId: string) {
   return useQuery({
     queryKey: queryKeys.tenants.settings(tenantId),
     queryFn: () => {
@@ -47,7 +47,7 @@ export function useTenantSettings(tenantId: string) {
   });
 }
 
-export function useTenantBranding(tenantId: string) {
+function useTenantBranding(tenantId: string) {
   return useQuery({
     queryKey: queryKeys.tenants.branding(tenantId),
     queryFn: () => {
@@ -58,7 +58,7 @@ export function useTenantBranding(tenantId: string) {
   });
 }
 
-export function useCreateTenant() {
+function useCreateTenant() {
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -73,7 +73,7 @@ export function useCreateTenant() {
   });
 }
 
-export function useUpdateTenant(tenantId: string) {
+function useUpdateTenant(tenantId: string) {
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -90,7 +90,7 @@ export function useUpdateTenant(tenantId: string) {
   });
 }
 
-export function useDeleteTenant() {
+function useDeleteTenant() {
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -105,7 +105,7 @@ export function useDeleteTenant() {
   });
 }
 
-export function useInviteMember(tenantId: string) {
+function useInviteMember(tenantId: string) {
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -121,7 +121,7 @@ export function useInviteMember(tenantId: string) {
   });
 }
 
-export function useUpdateMemberRole(tenantId: string) {
+function useUpdateMemberRole(tenantId: string) {
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -137,7 +137,7 @@ export function useUpdateMemberRole(tenantId: string) {
   });
 }
 
-export function useRemoveMember(tenantId: string) {
+function useRemoveMember(tenantId: string) {
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -153,7 +153,7 @@ export function useRemoveMember(tenantId: string) {
   });
 }
 
-export function useUpdateTenantBranding(tenantId: string) {
+function useUpdateTenantBranding(tenantId: string) {
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -184,7 +184,7 @@ export function useUpdateTenantBranding(tenantId: string) {
   });
 }
 
-export function useTenantInvitations(tenantId: string) {
+function useTenantInvitations(tenantId: string) {
   return useQuery({
     queryKey: ["tenants", tenantId, "invitations"],
     queryFn: () => {
@@ -195,7 +195,7 @@ export function useTenantInvitations(tenantId: string) {
   });
 }
 
-export function useInvitationByToken(token: string) {
+function useInvitationByToken(token: string) {
   return useQuery({
     queryKey: ["invitations", "token", token],
     queryFn: () => Promise.resolve(null),
@@ -204,7 +204,7 @@ export function useInvitationByToken(token: string) {
   });
 }
 
-export function useCreateInvitation(tenantId: string) {
+function useCreateInvitation(tenantId: string) {
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -221,7 +221,7 @@ export function useCreateInvitation(tenantId: string) {
   });
 }
 
-export function useAcceptInvitation() {
+function useAcceptInvitation() {
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -236,7 +236,7 @@ export function useAcceptInvitation() {
   });
 }
 
-export function useDeclineInvitation() {
+function useDeclineInvitation() {
   return useMutation({
     mutationFn: (token: string) => Promise.resolve({ declined: true }),
     onError: (error) => {
@@ -245,7 +245,7 @@ export function useDeclineInvitation() {
   });
 }
 
-export function useCancelInvitation(tenantId: string) {
+function useCancelInvitation(tenantId: string) {
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -261,7 +261,7 @@ export function useCancelInvitation(tenantId: string) {
   });
 }
 
-export function useUpdateTenantSettings(tenantId: string) {
+function useUpdateTenantSettings(tenantId: string) {
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -277,7 +277,7 @@ export function useUpdateTenantSettings(tenantId: string) {
   });
 }
 
-export function useUpdateTenantBilling(tenantId: string) {
+function useUpdateTenantBilling(tenantId: string) {
   const queryClient = useQueryClient();
 
   return useMutation({

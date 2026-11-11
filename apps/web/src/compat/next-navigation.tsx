@@ -45,5 +45,3 @@ export function useParams<T extends Record<string, string> = Record<string, stri
 ): T {
   return useTanStackParams(options as never) as T;
 }
-
-export { redirect } from "@tanstack/react-router";

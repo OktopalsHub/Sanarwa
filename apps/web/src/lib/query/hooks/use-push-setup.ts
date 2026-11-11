@@ -42,7 +42,7 @@ export function useTestPush(tenantId?: string) {
   });
 }
 
-export function useDeviceRegistrations(tenantId?: string) {
+function useDeviceRegistrations(tenantId?: string) {
   return useQuery({
     queryKey: ["push", "devices", tenantId],
     queryFn: async () => {

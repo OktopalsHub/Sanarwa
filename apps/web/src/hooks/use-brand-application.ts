@@ -133,7 +133,7 @@ export function useBrandApplication() {
   };
 }
 
-export function useBrandedComponent(componentType: "button" | "card" | "input" | "badge") {
+function useBrandedComponent(componentType: "button" | "card" | "input" | "badge") {
   const { getComponentStyles, branding } = useBrandApplication();
 
   const styles = useMemo(() => {

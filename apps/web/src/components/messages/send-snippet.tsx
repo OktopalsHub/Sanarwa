@@ -3,7 +3,7 @@
 import { Button } from "@sanarwa/ui/button";
 import { useState } from "react";
 
-export const SEND_SNIPPET = `curl -X POST https://api.sanarwa.com/api/v1/messages \\
+const SEND_SNIPPET = `curl -X POST https://api.sanarwa.com/api/v1/messages \\
   -H "Authorization: Bearer $SANARWA_KEY" \\
   -H "Content-Type: application/json" \\
   -d '{

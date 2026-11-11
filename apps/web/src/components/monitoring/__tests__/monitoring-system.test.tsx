@@ -12,10 +12,6 @@ vi.mock("@/lib/services/monitoring");
 vi.mock("@/lib/services/analytics-tracker");
 vi.mock("@/lib/services/alert-manager");
 
-vi.mock("next/navigation", () => ({
-  usePathname: () => "/test",
-}));
-
 vi.mock("@/compat/next-navigation", () => ({
   usePathname: () => "/test",
   useRouter: () => ({ push: vi.fn(), replace: vi.fn() }),

@@ -366,7 +366,7 @@ class PerformanceMonitor {
 export const performanceMonitor = new PerformanceMonitor();
 
 // Utility functions for manual timing
-export function measurePerformance<T>(name: string, fn: () => T | Promise<T>): T | Promise<T> {
+function measurePerformance<T>(name: string, fn: () => T | Promise<T>): T | Promise<T> {
   const endTiming = performanceMonitor.startTiming(name);
 
   try {
@@ -386,7 +386,7 @@ export function measurePerformance<T>(name: string, fn: () => T | Promise<T>): T
   }
 }
 
-export function withPerformanceTracking<T extends (...args: any[]) => any>(name: string, fn: T): T {
+function withPerformanceTracking<T extends (...args: any[]) => any>(name: string, fn: T): T {
   return ((...args: any[]) => {
     return measurePerformance(name, () => fn(...args));
   }) as T;

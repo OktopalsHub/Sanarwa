@@ -105,4 +105,4 @@ export function TokenPacks() {
   );
 }
 
-export const SubscriptionPlans = TokenPacks;
+const SubscriptionPlans = TokenPacks;

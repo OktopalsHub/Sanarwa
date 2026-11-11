@@ -438,21 +438,21 @@ class AnalyticsTracker {
 export const analyticsTracker = new AnalyticsTracker();
 
 // Utility functions for common tracking scenarios
-export function trackButtonClick(buttonName: string, context?: Record<string, any>) {
+function trackButtonClick(buttonName: string, context?: Record<string, any>) {
   analyticsTracker.trackEvent("button_click", {
     buttonName,
     ...context,
   });
 }
 
-export function trackNavigation(from: string, to: string) {
+function trackNavigation(from: string, to: string) {
   analyticsTracker.trackEvent("navigation", {
     from,
     to,
   });
 }
 
-export function trackSearch(query: string, results: number, context?: Record<string, any>) {
+function trackSearch(query: string, results: number, context?: Record<string, any>) {
   analyticsTracker.trackEvent("search", {
     query,
     results,
@@ -460,14 +460,14 @@ export function trackSearch(query: string, results: number, context?: Record<str
   });
 }
 
-export function trackModalOpen(modalName: string, context?: Record<string, any>) {
+function trackModalOpen(modalName: string, context?: Record<string, any>) {
   analyticsTracker.trackEvent("modal_open", {
     modalName,
     ...context,
   });
 }
 
-export function trackModalClose(modalName: string, context?: Record<string, any>) {
+function trackModalClose(modalName: string, context?: Record<string, any>) {
   analyticsTracker.trackEvent("modal_close", {
     modalName,
     ...context,

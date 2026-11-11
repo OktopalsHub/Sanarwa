@@ -4,7 +4,7 @@ import { Label } from "@sanarwa/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@sanarwa/ui/select";
 import { LanguageIcon } from "@heroicons/react/24/outline";
 
-export const FONT_OPTIONS = [
+const FONT_OPTIONS = [
   { name: "Geist Sans", value: "var(--font-geist-sans)", category: "Sans Serif" },
   { name: "Inter", value: "Inter, sans-serif", category: "Sans Serif" },
   { name: "Roboto", value: "Roboto, sans-serif", category: "Sans Serif" },

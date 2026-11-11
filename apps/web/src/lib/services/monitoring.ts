@@ -283,22 +283,20 @@ export class MonitoringService {
 
 export const monitoringService = new MonitoringService();
 
-export { alertManager, analyticsTracker, performanceMonitor };
-
-export function withMonitoring<T extends (...args: any[]) => any>(name: string, fn: T): T {
+function withMonitoring<T extends (...args: any[]) => any>(name: string, fn: T): T {
   return ((...args: any[]) => {
     return monitoringService.measurePerformance(name, () => fn(...args));
   }) as T;
 }
 
-export function trackUserAction(action: string, context?: Record<string, any>) {
+function trackUserAction(action: string, context?: Record<string, any>) {
   monitoringService.trackEvent("user_action", {
     action,
     ...context,
   });
 }
 
-export function trackFeatureUsage(feature: string, action: string, context?: Record<string, any>) {
+function trackFeatureUsage(feature: string, action: string, context?: Record<string, any>) {
   monitoringService.trackEvent("feature_usage", {
     feature,
     action,
@@ -306,7 +304,7 @@ export function trackFeatureUsage(feature: string, action: string, context?: Rec
   });
 }
 
-export function reportCriticalError(error: Error, context?: Record<string, any>) {
+function reportCriticalError(error: Error, context?: Record<string, any>) {
   monitoringService.reportError(error, context);
   monitoringService.createAlert("error", "critical", `Critical error: ${error.message}`, {
     error: error.message,

@@ -13,7 +13,7 @@ function oauthBaseUrl(): string {
   return "http://localhost:9000/api/v1";
 }
 
-export function redirectToOAuth(provider: "google" | "github") {
+function redirectToOAuth(provider: "google" | "github") {
   window.location.href = `${oauthBaseUrl()}/auth/oauth/${provider}`;
 }
 

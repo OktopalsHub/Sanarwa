@@ -6,23 +6,6 @@ afterEach(() => {
   cleanup();
 });
 
-vi.mock("next/navigation", () => ({
-  useRouter: () => ({
-    push: vi.fn(),
-    replace: vi.fn(),
-    prefetch: vi.fn(),
-    back: vi.fn(),
-    forward: vi.fn(),
-    refresh: vi.fn(),
-  }),
-  useSearchParams: () => new URLSearchParams(),
-  usePathname: () => "/",
-}));
-
-vi.mock("next/image", () => ({
-  default: (props: any) => `Image: ${props.alt || props.src}`,
-}));
-
 vi.mock("js-cookie", () => ({
   default: {
     get: vi.fn(),

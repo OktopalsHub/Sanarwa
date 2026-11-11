@@ -35,7 +35,7 @@ export function useInAppNotifications(params?: {
   });
 }
 
-export function useNotificationStatus(notificationId: string) {
+function useNotificationStatus(notificationId: string) {
   return useQuery({
     queryKey: ["notifications", notificationId, "status"],
     queryFn: () => notificationApi.getNotificationStatus(notificationId),
@@ -45,7 +45,7 @@ export function useNotificationStatus(notificationId: string) {
   });
 }
 
-export function useNotificationStats(startDate?: Date, endDate?: Date) {
+function useNotificationStats(startDate?: Date, endDate?: Date) {
   return useQuery({
     queryKey: ["notifications", "stats", startDate?.toISOString(), endDate?.toISOString()],
     queryFn: () => notificationApi.getNotificationStats(startDate, endDate),
@@ -53,7 +53,7 @@ export function useNotificationStats(startDate?: Date, endDate?: Date) {
   });
 }
 
-export function useDeliveryMetrics(params?: {
+function useDeliveryMetrics(params?: {
   channel?: string;
   startDate?: Date;
   endDate?: Date;
@@ -66,7 +66,7 @@ export function useDeliveryMetrics(params?: {
   });
 }
 
-export function useEngagementMetrics(params?: {
+function useEngagementMetrics(params?: {
   channel?: string;
   startDate?: Date;
   endDate?: Date;
@@ -79,7 +79,7 @@ export function useEngagementMetrics(params?: {
   });
 }
 
-export function useQueueStatus() {
+function useQueueStatus() {
   return useQuery({
     queryKey: ["notifications", "queue", "status"],
     queryFn: () => notificationApi.getQueueStatus(),
@@ -88,7 +88,7 @@ export function useQueueStatus() {
   });
 }
 
-export function useQueueStats() {
+function useQueueStats() {
   return useQuery({
     queryKey: ["notifications", "queue", "stats"],
     queryFn: () => notificationApi.getQueueStats(),
@@ -97,7 +97,7 @@ export function useQueueStats() {
   });
 }
 
-export function useSendNotification() {
+function useSendNotification() {
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -113,7 +113,7 @@ export function useSendNotification() {
   });
 }
 
-export function useSendBulkNotifications() {
+function useSendBulkNotifications() {
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -129,7 +129,7 @@ export function useSendBulkNotifications() {
   });
 }
 
-export function useCreateInAppNotification() {
+function useCreateInAppNotification() {
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -144,7 +144,7 @@ export function useCreateInAppNotification() {
   });
 }
 
-export function useCreateBulkInAppNotifications() {
+function useCreateBulkInAppNotifications() {
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -159,7 +159,7 @@ export function useCreateBulkInAppNotifications() {
   });
 }
 
-export function useRetryNotification() {
+function useRetryNotification() {
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -175,7 +175,7 @@ export function useRetryNotification() {
   });
 }
 
-export function useMarkNotificationAsRead() {
+function useMarkNotificationAsRead() {
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -212,7 +212,7 @@ export function useMarkNotificationAsRead() {
   });
 }
 
-export function useMarkAllNotificationsAsRead() {
+function useMarkAllNotificationsAsRead() {
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -249,7 +249,7 @@ export function useMarkAllNotificationsAsRead() {
   });
 }
 
-export function useDeleteInAppNotification() {
+function useDeleteInAppNotification() {
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -284,7 +284,7 @@ export function useDeleteInAppNotification() {
   });
 }
 
-export function usePauseQueue() {
+function usePauseQueue() {
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -298,7 +298,7 @@ export function usePauseQueue() {
   });
 }
 
-export function useResumeQueue() {
+function useResumeQueue() {
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -312,7 +312,7 @@ export function useResumeQueue() {
   });
 }
 
-export function useClearFailedJobs() {
+function useClearFailedJobs() {
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -326,7 +326,7 @@ export function useClearFailedJobs() {
   });
 }
 
-export function useRealtimeNotifications() {
+function useRealtimeNotifications() {
   const queryClient = useQueryClient();
 
   const handleNotificationUpdate = (update: NotificationStatusUpdate) => {
@@ -361,7 +361,7 @@ export function useRealtimeNotifications() {
   };
 }
 
-export function useNotificationValidation() {
+function useNotificationValidation() {
   const validateNotification = (data: CreateNotificationRequest) => {
     return notificationApi.validateNotificationData(data);
   };
@@ -381,7 +381,7 @@ export function useNotificationValidation() {
   };
 }
 
-export function useUnreadNotificationCount() {
+function useUnreadNotificationCount() {
   const { data: notifications } = useInAppNotifications({ unreadOnly: true });
 
   return {

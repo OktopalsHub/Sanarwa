@@ -15,7 +15,6 @@ import { Route as AnalyticsRouteImport } from './routes/analytics'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as CampaignsRouteImport } from './routes/campaigns'
 import { Route as DashboardRouteImport } from './routes/dashboard'
-import { Route as DashboardDemoRouteImport } from './routes/dashboard-demo'
 import { Route as DocsRouteImport } from './routes/docs'
 import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
 import { Route as LoginRouteImport } from './routes/login'
@@ -89,11 +88,6 @@ const CampaignsRoute = CampaignsRouteImport.update({
 const DashboardRoute = DashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const DashboardDemoRoute = DashboardDemoRouteImport.update({
-  id: '/dashboard-demo',
-  path: '/dashboard-demo',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DocsRoute = DocsRouteImport.update({
@@ -327,7 +321,6 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRoute
   '/campaigns': typeof CampaignsRouteWithChildren
   '/dashboard': typeof DashboardRoute
-  '/dashboard-demo': typeof DashboardDemoRoute
   '/docs': typeof DocsRouteWithChildren
   '/forgot-password': typeof ForgotPasswordRoute
   '/login': typeof LoginRoute
@@ -380,7 +373,6 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/campaigns': typeof CampaignsRouteWithChildren
   '/dashboard': typeof DashboardRoute
-  '/dashboard-demo': typeof DashboardDemoRoute
   '/docs': typeof DocsRouteWithChildren
   '/forgot-password': typeof ForgotPasswordRoute
   '/login': typeof LoginRoute
@@ -434,7 +426,6 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/campaigns': typeof CampaignsRouteWithChildren
   '/dashboard': typeof DashboardRoute
-  '/dashboard-demo': typeof DashboardDemoRoute
   '/docs': typeof DocsRouteWithChildren
   '/forgot-password': typeof ForgotPasswordRoute
   '/login': typeof LoginRoute
@@ -489,7 +480,6 @@ export interface FileRouteTypes {
     | '/auth'
     | '/campaigns'
     | '/dashboard'
-    | '/dashboard-demo'
     | '/docs'
     | '/forgot-password'
     | '/login'
@@ -542,7 +532,6 @@ export interface FileRouteTypes {
     | '/auth'
     | '/campaigns'
     | '/dashboard'
-    | '/dashboard-demo'
     | '/docs'
     | '/forgot-password'
     | '/login'
@@ -595,7 +584,6 @@ export interface FileRouteTypes {
     | '/auth'
     | '/campaigns'
     | '/dashboard'
-    | '/dashboard-demo'
     | '/docs'
     | '/forgot-password'
     | '/login'
@@ -649,7 +637,6 @@ export interface RootRouteChildren {
   AuthRoute: typeof AuthRoute
   CampaignsRoute: typeof CampaignsRouteWithChildren
   DashboardRoute: typeof DashboardRoute
-  DashboardDemoRoute: typeof DashboardDemoRoute
   DocsRoute: typeof DocsRouteWithChildren
   ForgotPasswordRoute: typeof ForgotPasswordRoute
   LoginRoute: typeof LoginRoute
@@ -713,13 +700,6 @@ declare module '@tanstack/react-router' {
       path: '/dashboard'
       fullPath: '/dashboard'
       preLoaderRoute: typeof DashboardRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/dashboard-demo': {
-      id: '/dashboard-demo'
-      path: '/dashboard-demo'
-      fullPath: '/dashboard-demo'
-      preLoaderRoute: typeof DashboardDemoRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/docs': {
@@ -1174,7 +1154,6 @@ const rootRouteChildren: RootRouteChildren = {
   AuthRoute: AuthRoute,
   CampaignsRoute: CampaignsRouteWithChildren,
   DashboardRoute: DashboardRoute,
-  DashboardDemoRoute: DashboardDemoRoute,
   DocsRoute: DocsRouteWithChildren,
   ForgotPasswordRoute: ForgotPasswordRoute,
   LoginRoute: LoginRoute,
@@ -1198,10 +1177,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-declare module '@tanstack/react-router' {
-  interface Register {
-    router: Awaited<ReturnType<typeof getRouter>>
-  }
-}

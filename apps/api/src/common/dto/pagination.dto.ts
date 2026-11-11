@@ -62,7 +62,7 @@ export interface PaginationMeta {
   hasPreviousPage: boolean;
 }
 
-export class PaginatedResponse<T> {
+class PaginatedResponse<T> {
   data: T[];
   meta: PaginationMeta;
 
@@ -103,7 +103,7 @@ export async function getPaginationSummary(
   };
 }
 
-export class PaginatedDataResponse<T> {
+class PaginatedDataResponse<T> {
   name: string;
   size: number;
   pageCount: number;

@@ -15,7 +15,7 @@ import {
 import { CHAT_CHANNEL_PROVIDERS, ChatProvider } from "../../../common/enums/chat-provider.enum";
 
 /** Public send surface: every channel the engine can deliver, voice excluded. */
-export const PUBLIC_SEND_CHANNELS = DELIVERABLE_CHANNELS_LIST;
+const PUBLIC_SEND_CHANNELS = DELIVERABLE_CHANNELS_LIST;
 
 export type PublicSendChannel = (typeof PUBLIC_SEND_CHANNELS)[number];
 

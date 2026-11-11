@@ -17,7 +17,7 @@ enum NodeEnvironment {
 }
 
 @ValidatorConstraint({ name: "isDatabaseUrl", async: false })
-export class IsDatabaseUrlConstraint implements ValidatorConstraintInterface {
+class IsDatabaseUrlConstraint implements ValidatorConstraintInterface {
   validate(value: string): boolean {
     if (!value) return true;
 
@@ -49,7 +49,7 @@ export class IsDatabaseUrlConstraint implements ValidatorConstraintInterface {
 }
 
 @ValidatorConstraint({ name: "isRedisUrl", async: false })
-export class IsRedisUrlConstraint implements ValidatorConstraintInterface {
+class IsRedisUrlConstraint implements ValidatorConstraintInterface {
   validate(value: string): boolean {
     if (!value) return true;
 
@@ -68,7 +68,7 @@ export class IsRedisUrlConstraint implements ValidatorConstraintInterface {
   }
 }
 
-export class EnvironmentVariables {
+class EnvironmentVariables {
   @IsEnum(NodeEnvironment)
   NODE_ENV: NodeEnvironment = NodeEnvironment.DEVELOPMENT;
 

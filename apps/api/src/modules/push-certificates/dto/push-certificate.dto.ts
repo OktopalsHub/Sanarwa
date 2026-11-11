@@ -16,7 +16,7 @@ import {
   CertificateEnvironment,
 } from "../entities/push-certificate.entity";
 
-export class IOSCertificateDataDto {
+class IOSCertificateDataDto {
   @ApiProperty({
     description: "Base64 encoded certificate data (.p12 or .pem)",
     example: "MIIFXjCCA0agAwIBAgIUK7...",
@@ -63,7 +63,7 @@ export class IOSCertificateDataDto {
   privateKey?: string;
 }
 
-export class AndroidCertificateDataDto {
+class AndroidCertificateDataDto {
   @ApiProperty({
     description: "Firebase service account key JSON content",
     example: '{"type":"service_account","project_id":"my-project",...}',
@@ -309,7 +309,7 @@ export class TestCertificateDto {
   testDeviceToken: string;
 }
 
-export class TestCertificateResponseDto {
+class TestCertificateResponseDto {
   @ApiProperty({
     description: "Test result status",
     enum: ["success", "failed"],
@@ -350,7 +350,7 @@ export class RotateCertificateDto {
   newCertificateData: IOSCertificateDataDto | AndroidCertificateDataDto;
 }
 
-export class RotateCertificateResponseDto {
+class RotateCertificateResponseDto {
   @ApiProperty({
     description: "Certificate ID",
     example: "cert-id-123",
@@ -383,7 +383,7 @@ export class RotateCertificateResponseDto {
   rollbackAvailableUntil?: Date;
 }
 
-export class PushCertificateResponseDto {
+class PushCertificateResponseDto {
   @ApiProperty({
     description: "Certificate ID",
     example: "cert-id-123",

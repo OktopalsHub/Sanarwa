@@ -1,7 +1,7 @@
 import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
 import { ProjectStatus } from "../../../common/enums";
 
-export class ProjectTenantDto {
+class ProjectTenantDto {
   @ApiProperty({
     description: "Tenant unique identifier",
     example: "123e4567-e89b-12d3-a456-426614174000",
@@ -24,7 +24,7 @@ export class ProjectTenantDto {
   subdomain: string;
 }
 
-export class ProjectCreatedByDto {
+class ProjectCreatedByDto {
   @ApiProperty({
     description: "Tenant member unique identifier",
     example: "123e4567-e89b-12d3-a456-426614174000",
@@ -130,7 +130,7 @@ export class ProjectResponseDto {
   updatedAt: Date;
 }
 
-export class ProjectListResponseDto {
+class ProjectListResponseDto {
   @ApiProperty({
     description: "Project unique identifier",
     example: "123e4567-e89b-12d3-a456-426614174000",

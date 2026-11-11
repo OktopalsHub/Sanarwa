@@ -376,6 +376,58 @@ export class MessagingService {
     };
   }
 
+  async getDeliveryBreakdown(query: any, tenantId?: string) {
+    const dayQuery = this.logRepository.createQueryBuilder("log");
+    applyMessageLogFilters(dayQuery, query, tenantId);
+
+    const dayRows = await dayQuery
+      .select("DATE(log.created_at)", "date")
+      .addSelect("SUM(CASE WHEN log.status IN ('sent', 'delivered') THEN 1 ELSE 0 END)", "sent")
+      .addSelect("SUM(CASE WHEN log.status = 'delivered' THEN 1 ELSE 0 END)", "delivered")
+      .addSelect("SUM(CASE WHEN log.status = 'failed' THEN 1 ELSE 0 END)", "failed")
+      .groupBy("DATE(log.created_at)")
+      .orderBy("DATE(log.created_at)", "ASC")
+      .getRawMany<{
+        date: string;
+        sent: string | null;
+        delivered: string | null;
+        failed: string | null;
+      }>();
+
+    const channelQuery = this.logRepository.createQueryBuilder("log");
+    applyMessageLogFilters(channelQuery, query, tenantId);
+
+    const channelRows = await channelQuery
+      .select("log.channel", "channel")
+      .addSelect("SUM(CASE WHEN log.status IN ('sent', 'delivered') THEN 1 ELSE 0 END)", "sent")
+      .addSelect("SUM(CASE WHEN log.status = 'delivered' THEN 1 ELSE 0 END)", "delivered")
+      .addSelect("SUM(CASE WHEN log.status = 'failed' THEN 1 ELSE 0 END)", "failed")
+      .groupBy("log.channel")
+      .getRawMany<{
+        channel: string;
+        sent: string | null;
+        delivered: string | null;
+        failed: string | null;
+      }>();
+
+    return {
+      days: dayRows.map((row) => ({
+        date: row.date,
+        sent: Number(row.sent ?? 0) || 0,
+        delivered: Number(row.delivered ?? 0) || 0,
+        failed: Number(row.failed ?? 0) || 0,
+      })),
+      channels: channelRows
+        .map((row) => ({
+          channel: row.channel,
+          sent: Number(row.sent ?? 0) || 0,
+          delivered: Number(row.delivered ?? 0) || 0,
+          failed: Number(row.failed ?? 0) || 0,
+        }))
+        .sort((a, b) => b.sent - a.sent),
+    };
+  }
+
   async processMessage(messageId: string) {
     const message = await this.messageRepository.findById(messageId);
     if (!message) {

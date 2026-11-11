@@ -167,6 +167,22 @@ export class MessagingController {
     return this.messagingService.getDeliveryStats(query, tenantId);
   }
 
+  @Get("stats/breakdown")
+  @UseGuards(AuthGuard, TenantMemberGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: "Get daily and per-channel delivery breakdown for a window" })
+  @ApiResponse({
+    status: 200,
+    description: "Delivery breakdown retrieved",
+  })
+  @ApiResponse({
+    status: 401,
+    description: "Unauthorized",
+  })
+  async getDeliveryBreakdown(@Query() query: any, @CurrentTenantId() tenantId?: string) {
+    return this.messagingService.getDeliveryBreakdown(query, tenantId);
+  }
+
   @Get(":id/status")
   @UseGuards(AuthGuard, TenantMemberGuard)
   @ApiBearerAuth()

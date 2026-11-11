@@ -28,6 +28,9 @@ export class WorkflowRun extends BaseEntity {
   @Column({ type: "jsonb", default: () => "'{}'" })
   context: Record<string, unknown>;
 
+  @Column({ type: "jsonb", default: () => "'{}'" })
+  execution: Record<string, unknown>;
+
   @Column({ type: "varchar", length: 255, nullable: true, name: "wait_event" })
   waitEvent?: string | null;
 

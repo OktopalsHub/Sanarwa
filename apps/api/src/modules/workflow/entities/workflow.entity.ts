@@ -136,4 +136,12 @@ export class Workflow extends BaseEntity {
 
   @Column({ type: "jsonb", default: () => "'{}'" })
   metadata: Record<string, unknown>;
+
+  /**
+   * Engine scheduling cursor for `trigger = "schedule"` definitions. The cron
+   * owns this column; `metadata.schedule.nextRunAt` is the legacy mirror kept
+   * for rows written before the split.
+   */
+  @Column({ type: "timestamp", name: "next_run_at", nullable: true })
+  nextRunAt?: Date | null;
 }

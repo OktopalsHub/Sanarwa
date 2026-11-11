@@ -49,11 +49,4 @@ export class AnalyticsComponent {
     });
     return response.data;
   }
-
-  async getABTestResults(testId: string): Promise<unknown> {
-    const response: AxiosResponse<unknown> = await this.client.get(
-      `/routing-optimizer/ab-test/${testId}`,
-    );
-    return response.data;
-  }
 }

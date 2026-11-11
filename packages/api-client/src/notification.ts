@@ -371,5 +371,4 @@ class NotificationApiClient {
   }
 }
 
-export { NotificationApiClient };
 export const notificationApi = new NotificationApiClient();

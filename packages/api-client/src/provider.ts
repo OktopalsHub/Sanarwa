@@ -435,5 +435,4 @@ class ProviderApiClient {
   }
 }
 
-export { ProviderApiClient };
 export const providerApi = new ProviderApiClient();

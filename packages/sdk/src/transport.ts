@@ -5,7 +5,7 @@ import type { AxiosInstance, AxiosResponse } from "axios";
  * workspace (@sanarwa/shared-types). `TRANSPORT_CHANNELS` is kept as a
  * readable alias list for callers that want the full enumeration.
  */
-export const TRANSPORT_CHANNELS = [
+const TRANSPORT_CHANNELS = [
   "email",
   "sms",
   "push",
@@ -16,7 +16,6 @@ export const TRANSPORT_CHANNELS = [
   "chat",
 ] as const;
 
-export { NotificationChannel } from "@sanarwa/shared-types";
 import { NotificationChannel } from "@sanarwa/shared-types";
 export type TransportChannel = NotificationChannel;
 

@@ -1,4 +1,4 @@
-export enum CallStatus {
+enum CallStatus {
   INITIATING = "initiating",
   RINGING = "ringing",
   CONNECTING = "connecting",
@@ -12,13 +12,13 @@ export enum CallStatus {
   NO_ANSWER = "no_answer",
 }
 
-export enum CallType {
+enum CallType {
   AUDIO = "audio",
   VIDEO = "video",
   SCREEN_SHARE = "screen_share",
 }
 
-export enum ConnectionState {
+enum ConnectionState {
   NEW = "new",
   CONNECTING = "connecting",
   CONNECTED = "connected",
@@ -27,7 +27,7 @@ export enum ConnectionState {
   CLOSED = "closed",
 }
 
-export enum IceConnectionState {
+enum IceConnectionState {
   NEW = "new",
   CHECKING = "checking",
   CONNECTED = "connected",
@@ -37,7 +37,7 @@ export enum IceConnectionState {
   CLOSED = "closed",
 }
 
-export enum SignalingState {
+enum SignalingState {
   STABLE = "stable",
   HAVE_LOCAL_OFFER = "have-local-offer",
   HAVE_REMOTE_OFFER = "have-remote-offer",
@@ -46,14 +46,14 @@ export enum SignalingState {
   CLOSED = "closed",
 }
 
-export enum MediaType {
+enum MediaType {
   AUDIO = "audio",
   VIDEO = "video",
   SCREEN = "screen",
   DATA = "data",
 }
 
-export enum CallEndReason {
+enum CallEndReason {
   USER_HANGUP = "user_hangup",
   REMOTE_HANGUP = "remote_hangup",
   CONNECTION_FAILED = "connection_failed",
@@ -337,7 +337,7 @@ export interface SignalingMessage {
   timestamp: Date;
 }
 
-export enum SignalingMessageType {
+enum SignalingMessageType {
   CALL_INVITE = "call_invite",
   CALL_ACCEPT = "call_accept",
   CALL_DECLINE = "call_decline",
@@ -386,7 +386,7 @@ export interface RealTimeEvent {
   timestamp: Date;
 }
 
-export enum RealTimeEventType {
+enum RealTimeEventType {
   CALL_INVITE = "call_invite",
   CALL_STATUS_CHANGE = "call_status_change",
   PARTICIPANT_UPDATE = "participant_update",

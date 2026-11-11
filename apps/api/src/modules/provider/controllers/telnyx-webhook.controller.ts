@@ -16,6 +16,7 @@ import { SkipThrottle } from "@nestjs/throttler";
 import type { Request } from "express";
 import { Public } from "../../auth/decorators/public.decorator";
 import { VoiceService } from "../services/voice.service";
+import { VoiceCallTrackingService } from "../services/voice-call-tracking.service";
 import { WebhookValidatorService } from "../services/webhook-validator.service";
 
 interface TelnyxWebhookEvent {
@@ -47,6 +48,7 @@ export class TelnyxWebhookController {
 
   constructor(
     private readonly voiceService: VoiceService,
+    private readonly voiceCallTracking: VoiceCallTrackingService,
     private readonly webhookValidator: WebhookValidatorService,
     private readonly configService: ConfigService,
   ) {}
@@ -148,9 +150,20 @@ export class TelnyxWebhookController {
   }
 
   private async handleCallHangup(payload: any) {
-    this.logger.log(
-      `Call ended: ${payload.call_control_id} - ${payload.hangup_cause || "unknown cause"}`,
-    );
+    const callControlId = payload.call_control_id;
+    this.logger.log(`Call ended: ${callControlId} - ${payload.hangup_cause || "unknown cause"}`);
+
+    const record = await this.voiceCallTracking.getCallByControlId(callControlId);
+    const startedAt = record?.startedAt ? new Date(record.startedAt) : null;
+    const durationSeconds = startedAt
+      ? Math.max(0, Math.round((Date.now() - startedAt.getTime()) / 1000))
+      : 0;
+
+    await this.voiceCallTracking.endCall({
+      callControlId,
+      durationSeconds,
+      hangupCause: payload.hangup_cause,
+    });
   }
 
   private getRawBody(req: Request & { rawBody?: Buffer | string }): string | undefined {

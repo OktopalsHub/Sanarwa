@@ -5,7 +5,6 @@ import { TenantContextGuard } from "../../common/guards";
 import { AuthModule } from "../auth/auth.module";
 import { TenantMemberModule } from "../tenant-member/tenant-member.module";
 import { BillingController } from "./controllers/billing.controller";
-import { BillingService } from "./services/billing.service";
 import { TokenPurchaseService } from "./services/token-purchase.service";
 import { CheckoutProviderService } from "./services/checkout-provider.service";
 import { AutoTopupService } from "./services/auto-topup.service";
@@ -42,7 +41,6 @@ import { Tenant } from "../tenant/entities/tenant.entity";
   ],
   controllers: [BillingController],
   providers: [
-    BillingService,
     TokenPurchaseService,
     CheckoutProviderService,
     AutoTopupService,
@@ -56,7 +54,6 @@ import { Tenant } from "../tenant/entities/tenant.entity";
     TenantContextGuard,
   ],
   exports: [
-    BillingService,
     TokenPurchaseService,
     CheckoutProviderService,
     AutoTopupService,

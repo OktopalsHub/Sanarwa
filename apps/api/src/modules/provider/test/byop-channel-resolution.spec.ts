@@ -17,6 +17,7 @@ import { ProviderEncryptionService } from "../provider-encryption.service";
 import { ProviderOrchestratorService } from "../provider-orchestrator.service";
 import { DeviceRegistrationService } from "../services/device-registration.service";
 import { CircuitBreakerService } from "../../../common/errors/services/circuit-breaker.service";
+import { getRedisConnectionToken } from "@nestjs-modules/ioredis";
 
 const TENANT_ID = "tenant-1";
 
@@ -43,6 +44,7 @@ describe("ProviderOrchestratorService BYOP resolution", () => {
       providers: [
         ProviderOrchestratorService,
         { provide: ConfigService, useValue: { get: vi.fn() } },
+        { provide: getRedisConnectionToken(), useValue: { get: vi.fn().mockResolvedValue(null) } },
         {
           provide: SMSRoutingService,
           useValue: {

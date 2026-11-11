@@ -166,7 +166,7 @@ const ngnByo: TokenPackageCatalogItem[] = [
   },
 ];
 
-export const TOKEN_PACKAGE_CATALOG: TokenPackageCatalogItem[] = [
+const TOKEN_PACKAGE_CATALOG: TokenPackageCatalogItem[] = [
   ...usdManaged,
   ...ngnManaged,
   ...usdByo,

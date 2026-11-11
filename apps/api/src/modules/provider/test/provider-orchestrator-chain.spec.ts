@@ -1,5 +1,6 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
 import { ConfigService } from "@nestjs/config";
+import { getRedisConnectionToken } from "@nestjs-modules/ioredis";
 import { Test, TestingModule } from "@nestjs/testing";
 import { ProviderOrchestratorService } from "../provider-orchestrator.service";
 import { BillingIntegrationService } from "../../billing/services/billing-integration.service";
@@ -23,17 +24,20 @@ describe("ProviderOrchestratorService managed chain", () => {
   let service: ProviderOrchestratorService;
   let circuitBreaker: { execute: ReturnType<typeof vi.fn> };
   let getPreferredProviders: ReturnType<typeof vi.fn>;
+  let redisGet: ReturnType<typeof vi.fn>;
 
   beforeEach(async () => {
     circuitBreaker = {
       execute: vi.fn(async (_name: string, fn: () => Promise<unknown>) => fn()),
     };
     getPreferredProviders = vi.fn();
+    redisGet = vi.fn().mockResolvedValue(null);
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         ProviderOrchestratorService,
         { provide: ConfigService, useValue: { get: vi.fn() } },
+        { provide: getRedisConnectionToken(), useValue: { get: redisGet } },
         { provide: DeviceRegistrationService, useValue: {} },
         { provide: InAppOrchestratorService, useValue: {} },
         {
@@ -142,12 +146,57 @@ describe("ProviderOrchestratorService managed chain", () => {
       1,
     );
   });
+
+  it("honors an externally-seeded optimizer rule: reorders the managed chain", async () => {
+    const first = registerEmailSpy("zeptomail", { success: true, messageId: "zepto-1" });
+    const second = registerEmailSpy("mailgun", { success: true, messageId: "mg-rule" });
+    redisGet.mockResolvedValueOnce(
+      JSON.stringify({
+        channel: "email",
+        providers: { primary: "mailgun", fallback: ["zeptomail"], weights: { mailgun: 1 } },
+      }),
+    );
+
+    const outcome = await service.sendEmail({ to: "a@b.c" } as EmailMessage, TENANT);
+
+    expect(second).toHaveBeenCalledOnce();
+    expect(first).not.toHaveBeenCalled();
+    expect(outcome.providerId).toBe("mailgun");
+  });
+
+  it("drops providers outside an optimizer rule from the chain", async () => {
+    const first = registerEmailSpy("zeptomail", { success: true, messageId: "zepto-1" });
+    const second = registerEmailSpy("sendgrid", { success: true, messageId: "sg-rule" });
+    redisGet.mockResolvedValueOnce(
+      JSON.stringify({
+        channel: "email",
+        providers: { primary: "sendgrid", fallback: [] },
+      }),
+    );
+
+    const outcome = await service.sendEmail({ to: "a@b.c" } as EmailMessage, TENANT);
+
+    expect(second).toHaveBeenCalledOnce();
+    expect(first).not.toHaveBeenCalled();
+    expect(outcome.providerId).toBe("sendgrid");
+  });
+
+  it("ignores a malformed optimizer rule and uses the default chain", async () => {
+    const first = registerEmailSpy("zeptomail", { success: true, messageId: "zepto-1" });
+    redisGet.mockResolvedValueOnce("{not json");
+
+    const outcome = await service.sendEmail({ to: "a@b.c" } as EmailMessage, TENANT);
+
+    expect(first).toHaveBeenCalledOnce();
+    expect(outcome.providerId).toBe("zeptomail");
+  });
 });
 
 describe("ProviderOrchestratorService managed SMS chain", () => {
   let service: ProviderOrchestratorService;
   let circuitBreaker: { execute: ReturnType<typeof vi.fn> };
   let getPreferredProviders: ReturnType<typeof vi.fn>;
+  let redisGet: ReturnType<typeof vi.fn>;
 
   const termiiSend = vi.fn();
   const telnyxSend = vi.fn();
@@ -161,6 +210,7 @@ describe("ProviderOrchestratorService managed SMS chain", () => {
       execute: vi.fn(async (_name: string, fn: () => Promise<unknown>) => fn()),
     };
     getPreferredProviders = vi.fn();
+    redisGet = vi.fn().mockResolvedValue(null);
 
     termiiSend.mockResolvedValue({ success: false, error: "termii 429 rate limited" });
     telnyxSend.mockResolvedValue({ success: true, messageId: "telnyx-1" });
@@ -180,6 +230,7 @@ describe("ProviderOrchestratorService managed SMS chain", () => {
       providers: [
         ProviderOrchestratorService,
         { provide: ConfigService, useValue: { get: vi.fn() } },
+        { provide: getRedisConnectionToken(), useValue: { get: redisGet } },
         { provide: DeviceRegistrationService, useValue: {} },
         { provide: InAppOrchestratorService, useValue: {} },
         {
@@ -236,6 +287,44 @@ describe("ProviderOrchestratorService managed SMS chain", () => {
     expect(circuitBreaker.execute).toHaveBeenCalledWith("managed-sms:telnyx", expect.any(Function));
   });
 
+  it("applies a regional optimizer rule ahead of the default SMS route", async () => {
+    redisGet.mockResolvedValueOnce(
+      JSON.stringify({
+        channel: "sms",
+        providers: { primary: "telnyx", fallback: [] },
+      }),
+    );
+
+    const outcome = await service.sendSMS(
+      { to: "+14155552671", message: "hi" } as SMSPayload,
+      TENANT,
+    );
+
+    expect(telnyxSend).toHaveBeenCalledOnce();
+    expect(termiiSend).not.toHaveBeenCalled();
+    expect(outcome).toEqual({ status: "sent", externalId: "telnyx-1", providerId: "telnyx" });
+  });
+
+  it("applies a global optimizer rule when no regional rule exists", async () => {
+    redisGet.mockImplementation(async (key: string) =>
+      key === "optimizer:rule:sms:global"
+        ? JSON.stringify({
+            channel: "sms",
+            providers: { primary: "telnyx", fallback: [] },
+          })
+        : null,
+    );
+
+    const outcome = await service.sendSMS(
+      { to: "+14155552671", message: "hi" } as SMSPayload,
+      TENANT,
+    );
+
+    expect(termiiSend).not.toHaveBeenCalled();
+    expect(telnyxSend).toHaveBeenCalledOnce();
+    expect(outcome).toEqual({ status: "sent", externalId: "telnyx-1", providerId: "telnyx" });
+  });
+
   it("skips a provider whose circuit is open", async () => {
     circuitBreaker.execute.mockImplementation(async (name: string, fn: () => Promise<unknown>) => {
       if (name === "managed-sms:termii") {
@@ -273,17 +362,20 @@ describe("ProviderOrchestratorService BYOP circuit outcomes", () => {
   let service: ProviderOrchestratorService;
   let circuitBreaker: { execute: ReturnType<typeof vi.fn> };
   let findActiveByTenantAndChannel: ReturnType<typeof vi.fn>;
+  let redisGet: ReturnType<typeof vi.fn>;
 
   beforeEach(async () => {
     circuitBreaker = {
       execute: vi.fn(async (_name: string, fn: () => Promise<unknown>) => fn()),
     };
     findActiveByTenantAndChannel = vi.fn();
+    redisGet = vi.fn().mockResolvedValue(null);
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         ProviderOrchestratorService,
         { provide: ConfigService, useValue: { get: vi.fn() } },
+        { provide: getRedisConnectionToken(), useValue: { get: redisGet } },
         { provide: DeviceRegistrationService, useValue: {} },
         { provide: InAppOrchestratorService, useValue: {} },
         {

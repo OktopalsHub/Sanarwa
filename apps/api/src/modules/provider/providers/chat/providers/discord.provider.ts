@@ -157,7 +157,7 @@ export class DiscordProvider implements IChatProvider {
   }
 }
 
-export function isValidDiscordWebhookUrl(url: URL): boolean {
+function isValidDiscordWebhookUrl(url: URL): boolean {
   return (
     url.protocol === "https:" &&
     ALLOWED_DISCORD_HOSTS.has(url.hostname.toLowerCase()) &&

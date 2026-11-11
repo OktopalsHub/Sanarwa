@@ -4,6 +4,6 @@ export { SNSProvider } from "./sns.provider";
 export { ApplePushProvider } from "./apple-push.provider";
 export { WebPushProvider } from "./web-push.provider";
 
-export const PUSH_PROVIDERS = ["fcm", "expo-push", "sns", "apple-push"] as const;
+const PUSH_PROVIDERS = ["fcm", "expo-push", "sns", "apple-push"] as const;
 
 export type PushProviderType = (typeof PUSH_PROVIDERS)[number];

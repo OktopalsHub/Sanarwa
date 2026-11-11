@@ -75,17 +75,6 @@ export class BillingIntegrationService {
     );
   }
 
-  async checkSufficientTokens(
-    tenantId: string,
-    eventType: string,
-    billingMode: BillingMode,
-    metadata?: Record<string, unknown>,
-    eventCount = 1,
-  ): Promise<boolean> {
-    const billing = this.calculateEventBilling(eventType, billingMode, metadata, eventCount);
-    return this.tokenManagementService.checkSufficientTokens(tenantId, billing.amount);
-  }
-
   async reserveTokensForNotification(
     tenantId: string,
     eventType: string,

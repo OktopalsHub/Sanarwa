@@ -1,12 +1,49 @@
 import { LoginForm } from "@/components/auth/login-form";
-import { LoginPageLayout } from "@/components/auth/login-page-layout";
+import { AuthSplitShell, SplitPanel, StickerCard } from "@/components/auth/auth-split-shell";
+import { IconBrandWhatsapp, IconMail, IconMessage } from "@tabler/icons-react";
+import Link from "@/compat/next-link";
 import { Suspense } from "react";
 
 function LoginPageContent() {
   return (
-    <LoginPageLayout>
+    <AuthSplitShell
+      panel={
+        <SplitPanel
+          eyebrow="Sanarwa · notifications"
+          headline={
+            <>
+              WELCOME
+              <br />
+              <span className="text-[var(--hm-accent)]">BACK.</span>
+            </>
+          }
+          sub="Your workspace, keys and receipts — right where you left them."
+          sticker={
+            <StickerCard
+              label="msg_7f3c91a0"
+              primary="6/6 delivered"
+              secondary="one message id · six receipts"
+            />
+          }
+          chips={[
+            { icon: IconMail, label: "Email" },
+            { icon: IconMessage, label: "SMS" },
+            { icon: IconBrandWhatsapp, label: "WhatsApp" },
+          ]}
+          footnote="One API · every channel"
+          switchTo={
+            <Link
+              href="/register"
+              className="text-[var(--hm-accent)] underline-offset-2 hover:underline"
+            >
+              Create account
+            </Link>
+          }
+        />
+      }
+    >
       <LoginForm />
-    </LoginPageLayout>
+    </AuthSplitShell>
   );
 }
 

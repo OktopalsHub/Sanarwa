@@ -1,7 +1,7 @@
 import { NotificationChannel, NotificationStatus } from "./notification";
 import { ProviderType } from "./provider";
 
-export enum MetricType {
+enum MetricType {
   DELIVERY = "delivery",
   ENGAGEMENT = "engagement",
   PERFORMANCE = "performance",
@@ -9,7 +9,7 @@ export enum MetricType {
   ERROR = "error",
 }
 
-export enum TimeRange {
+enum TimeRange {
   LAST_HOUR = "last_hour",
   LAST_24_HOURS = "last_24_hours",
   LAST_7_DAYS = "last_7_days",
@@ -18,7 +18,7 @@ export enum TimeRange {
   CUSTOM = "custom",
 }
 
-export enum AggregationType {
+enum AggregationType {
   SUM = "sum",
   AVERAGE = "average",
   COUNT = "count",
@@ -249,7 +249,7 @@ export interface AnalyticsReport {
   tenantId: string;
 }
 
-export enum ReportType {
+enum ReportType {
   DELIVERY = "delivery",
   ENGAGEMENT = "engagement",
   USAGE = "usage",
@@ -308,7 +308,7 @@ export interface DashboardWidget {
   isVisible: boolean;
 }
 
-export enum WidgetType {
+enum WidgetType {
   METRIC_CARD = "metric_card",
   LINE_CHART = "line_chart",
   BAR_CHART = "bar_chart",

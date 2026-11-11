@@ -1,14 +1,6 @@
-export enum NotificationStatus {
-  PENDING = "pending",
-  PROCESSING = "processing",
-  SENT = "sent",
-  DELIVERED = "delivered",
-  FAILED = "failed",
-  CANCELLED = "cancelled",
-  READ = "read",
-}
+export enum NotificationStatus {}
 
-export enum NotificationType {
+enum NotificationType {
   INFO = "info",
   WARNING = "warning",
   ERROR = "error",
@@ -28,14 +20,14 @@ export type CommunicationChannel = `${Exclude<
   NotificationChannel.WEBHOOK | NotificationChannel.CHAT
 >}`;
 
-export enum NotificationPriority {
+enum NotificationPriority {
   LOW = "low",
   NORMAL = "normal",
   HIGH = "high",
   URGENT = "urgent",
 }
 
-export enum Priority {
+enum Priority {
   LOW = "low",
   NORMAL = "normal",
   HIGH = "high",

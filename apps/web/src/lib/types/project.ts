@@ -101,14 +101,14 @@ export interface ProjectMember {
   addedBy: string;
 }
 
-export enum ProjectRole {
+enum ProjectRole {
   OWNER = "owner",
   ADMIN = "admin",
   DEVELOPER = "developer",
   VIEWER = "viewer",
 }
 
-export enum ProjectPermission {
+enum ProjectPermission {
   READ = "read",
   WRITE = "write",
   DELETE = "delete",

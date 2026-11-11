@@ -21,8 +21,11 @@ export interface NavigationItem {
   permissions?: Permission[];
 }
 
-export const sendingSegments: NavigationItem[] = [
+export const overviewSegments: NavigationItem[] = [
   { name: "Dashboard", segment: "dashboard", icon: IconHome },
+];
+
+export const sendingSegments: NavigationItem[] = [
   { name: "Messages", segment: "messages", icon: IconInbox },
   { name: "Campaigns", segment: "campaigns", icon: IconBriefcase, permissions: ["campaigns:read"] },
   { name: "Analytics", segment: "analytics", icon: IconChartBar, permissions: ["analytics:read"] },

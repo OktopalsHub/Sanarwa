@@ -108,7 +108,7 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - run: pnpm --filter @sanarwa/api build
+      - run: pnpm turbo run build --filter=@sanarwa/api...
       - run: pnpm --filter @sanarwa/api migration:run
       - run: pnpm --filter @sanarwa/api migration:revert
       - run: pnpm --filter @sanarwa/api migration:run

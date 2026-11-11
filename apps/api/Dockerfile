@@ -4,13 +4,12 @@ WORKDIR /app
 
 FROM base AS deps
 COPY . .
-RUN pnpm install --frozen-lockfile --filter @sanarwa/api...
+RUN pnpm install --frozen-lockfile
 
 FROM base AS builder
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
-RUN pnpm --filter @sanarwa/sdk build
-RUN pnpm --filter @sanarwa/api build
+RUN pnpm turbo run build --filter=@sanarwa/api...
 
 FROM node:22-alpine AS runner
 WORKDIR /app

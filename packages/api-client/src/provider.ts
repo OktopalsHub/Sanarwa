@@ -11,6 +11,7 @@ import {
   UpdateProviderRequest,
 } from "./types/provider";
 import { ApiClient, apiClient as sharedApiClient } from "./client";
+import { paginated } from "./paginated";
 
 class ProviderApiClient {
   private apiClient: ApiClient;
@@ -34,7 +35,8 @@ class ProviderApiClient {
       hasPrev: boolean;
     };
   }> {
-    return this.apiClient.get("/provider-configs", params);
+    const response = await this.apiClient.get<unknown>("/provider-configs", params);
+    return paginated<Provider>(response, "configs");
   }
 
   async getProvidersByProject(
@@ -51,7 +53,11 @@ class ProviderApiClient {
       hasPrev: boolean;
     };
   }> {
-    return this.apiClient.get(`/provider-configs/project/${projectId}`, params);
+    const response = await this.apiClient.get<unknown>(
+      `/tenants/:tenantId/projects/${projectId}/provider-configs`,
+      params,
+    );
+    return paginated<Provider>(response, "configs");
   }
 
   async getProvider(providerId: string): Promise<Provider> {
@@ -436,3 +442,5 @@ class ProviderApiClient {
 }
 
 export const providerApi = new ProviderApiClient();
+
+export { ProviderApiClient };

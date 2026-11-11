@@ -72,6 +72,21 @@ export interface DeliveryStats {
   deliveryRate: number;
 }
 
+export interface DeliveryBreakdown {
+  days: Array<{
+    date: string;
+    sent: number;
+    delivered: number;
+    failed: number;
+  }>;
+  channels: Array<{
+    channel: string;
+    sent: number;
+    delivered: number;
+    failed: number;
+  }>;
+}
+
 export const messagingApi = {
   async list(params: MessageLogListParams = {}): Promise<MessageLogListResponse> {
     return apiClient.get<MessageLogListResponse>("/messaging", params);
@@ -83,5 +98,12 @@ export const messagingApi = {
 
   async stats(params?: { startDate?: string; endDate?: string }): Promise<DeliveryStats> {
     return apiClient.get<DeliveryStats>("/messaging/stats/delivery", params);
+  },
+
+  async getDeliveryBreakdown(params?: {
+    startDate?: string;
+    endDate?: string;
+  }): Promise<DeliveryBreakdown> {
+    return apiClient.get<DeliveryBreakdown>("/messaging/stats/breakdown", params);
   },
 };

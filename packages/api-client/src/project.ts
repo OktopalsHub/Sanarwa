@@ -14,6 +14,7 @@ import {
   UpdateProjectRequest,
 } from "./types/project";
 import { ApiClient, apiClient as sharedApiClient } from "./client";
+import { paginated } from "./paginated";
 
 class ProjectApiClient {
   private apiClient: ApiClient;
@@ -37,7 +38,8 @@ class ProjectApiClient {
       hasPrev: boolean;
     };
   }> {
-    return this.apiClient.get("/tenants/:tenantId/projects", params);
+    const response = await this.apiClient.get<unknown>("/tenants/:tenantId/projects", params);
+    return paginated<Project>(response, "records");
   }
 
   async getProject(projectId: string): Promise<Project> {

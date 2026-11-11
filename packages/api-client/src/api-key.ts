@@ -20,6 +20,7 @@ import {
   UpdateApiKeyRequest,
 } from "./types/api-key";
 import { ApiClient, apiClient as sharedApiClient } from "./client";
+import { paginated } from "./paginated";
 
 class ApiKeyApiClient {
   private apiClient: ApiClient;
@@ -71,9 +72,14 @@ class ApiKeyApiClient {
       hasPrev: boolean;
     };
   }> {
-    return this.apiClient.get("/tenants/:tenantId/projects/:projectId/api-keys", params, {
-      projectId,
-    });
+    const response = await this.apiClient.get<unknown>(
+      "/tenants/:tenantId/projects/:projectId/api-keys",
+      params,
+      {
+        projectId,
+      },
+    );
+    return paginated<ApiKey>(response);
   }
 
   async getApiKey(projectId: string, apiKeyId: string): Promise<ApiKey> {

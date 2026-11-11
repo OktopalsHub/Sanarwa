@@ -1,7 +1,7 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
-import { MessageDelivery, MessageDeliveryStatus } from "../messaging/message-delivery.entity";
+import { MessageDelivery, DeliveryTransportStatus } from "../messaging/message-delivery.entity";
 import { ProjectSendQuota } from "./entities/project-send-quota.entity";
 
 export type ProjectQuotaVerdict =
@@ -27,11 +27,7 @@ export interface ProjectQuotaStatus {
   resetAt: Date | null;
 }
 
-const COUNTED_STATUSES = [
-  MessageDeliveryStatus.PENDING,
-  MessageDeliveryStatus.SENT,
-  MessageDeliveryStatus.DELIVERED,
-];
+const COUNTED_TRANSPORT_STATUSES = [DeliveryTransportStatus.PENDING, DeliveryTransportStatus.SENT];
 
 /**
  * Burst protection keyed by project. Usage is the count of dispatched
@@ -170,7 +166,9 @@ export class ProjectQuotaService {
     const builder = this.deliveries
       .createQueryBuilder("delivery")
       .where("delivery.tenantId = :tenantId", { tenantId })
-      .andWhere("delivery.status IN (:...statuses)", { statuses: COUNTED_STATUSES })
+      .andWhere("delivery.transportStatus IN (:...statuses)", {
+        statuses: COUNTED_TRANSPORT_STATUSES,
+      })
       .andWhere("delivery.createdAt >= :since", { since })
       .andWhere("delivery.metadata->>'projectId' = :projectId", { projectId });
 

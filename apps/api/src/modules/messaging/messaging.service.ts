@@ -6,6 +6,12 @@ import { IPaginatedData } from "../../common/interfaces";
 import { BulkMessageDto, SendMessageDto } from "./dto/send-message.dto";
 import { MessagePriority, MessageRecipient, MessageStatus } from "./message.entity";
 import { MessageDeliveryRepository, MessageRepository } from "./repositories";
+import {
+  DeliveryEngagementStatus,
+  DeliveryTransportStatus,
+  MessageDeliveryStatus,
+} from "./message-delivery.entity";
+import { resolveDeliveryStatus } from "./message-delivery.entity";
 import { DigestService, DigestNotification } from "./services/digest.service";
 import { SchedulingService, ScheduleConfig } from "./services/scheduling.service";
 import { NotificationEngineService } from "../notifications/engine/notification-engine.service";
@@ -202,7 +208,7 @@ export class MessagingService {
         id: delivery.id,
         channel: delivery.channel,
         recipient: delivery.recipient,
-        status: delivery.status,
+        status: resolveDeliveryStatus(delivery),
         providerId: delivery.providerId,
         providerMessageId: delivery.providerMessageId,
         providerResponse: delivery.providerResponse,
@@ -293,6 +299,17 @@ export class MessagingService {
     await this.messageRepository.update(messageId, {
       status: MessageStatus.CANCELLED,
     });
+
+    const deliveries = await this.messageDeliveryRepository.findByMessageId(messageId);
+    for (const delivery of deliveries) {
+      await this.messageDeliveryRepository.update(delivery.id, {
+        status: MessageDeliveryStatus.SKIPPED,
+        transportStatus: DeliveryTransportStatus.SKIPPED,
+        engagementStatus: DeliveryEngagementStatus.UNKNOWN,
+        stateUpdatedAt: new Date(),
+        errorMessage: "cancelled",
+      });
+    }
   }
 
   /**

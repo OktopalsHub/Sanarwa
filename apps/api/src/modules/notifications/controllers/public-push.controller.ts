@@ -35,7 +35,11 @@ import { Public } from "../../auth/decorators/public.decorator";
 import type { MachineApiKey } from "../../auth/decorators/current-api-key.decorator";
 import { NotificationEngineService } from "../engine/notification-engine.service";
 import { NotificationChannel } from "../../../common/enums/notification-channel.enum";
-import { MessageDelivery, MessageDeliveryStatus } from "../../messaging/message-delivery.entity";
+import {
+  MessageDelivery,
+  MessageDeliveryStatus,
+  applyDeliveryState,
+} from "../../messaging/message-delivery.entity";
 import { NotificationLog } from "../entities/notification-log.entity";
 import { WebPushSubscriptionService } from "../../provider/services/web-push-subscription.service";
 
@@ -483,24 +487,47 @@ export class PublicPushController {
     }
 
     const now = new Date();
-    const update: Record<string, unknown> = {
-      status: dto.status,
-    };
+    const deliveryState: Partial<MessageDelivery> = { status: dto.status };
     if (
       dto.status === MessageDeliveryStatus.DELIVERED ||
       dto.status === MessageDeliveryStatus.OPENED ||
       dto.status === MessageDeliveryStatus.CLICKED
     ) {
-      update.deliveredAt = delivery.deliveredAt ?? now;
+      deliveryState.deliveredAt = delivery.deliveredAt ?? now;
     }
     if (
       dto.status === MessageDeliveryStatus.OPENED ||
       dto.status === MessageDeliveryStatus.CLICKED
     ) {
-      update.openedAt = delivery.openedAt ?? now;
+      deliveryState.openedAt = delivery.openedAt ?? now;
     }
     if (dto.status === MessageDeliveryStatus.CLICKED) {
-      update.clickedAt = now;
+      deliveryState.clickedAt = now;
+    }
+
+    applyDeliveryState(deliveryState, { status: dto.status });
+
+    const update: Record<string, unknown> = {
+      status: deliveryState.status,
+      transportStatus: deliveryState.transportStatus,
+      engagementStatus: deliveryState.engagementStatus,
+      stateUpdatedAt: deliveryState.stateUpdatedAt,
+    };
+    if (
+      deliveryState.status === MessageDeliveryStatus.DELIVERED ||
+      deliveryState.status === MessageDeliveryStatus.OPENED ||
+      deliveryState.status === MessageDeliveryStatus.CLICKED
+    ) {
+      update.deliveredAt = deliveryState.deliveredAt;
+    }
+    if (
+      deliveryState.status === MessageDeliveryStatus.OPENED ||
+      deliveryState.status === MessageDeliveryStatus.CLICKED
+    ) {
+      update.openedAt = deliveryState.openedAt;
+    }
+    if (deliveryState.status === MessageDeliveryStatus.CLICKED) {
+      update.clickedAt = deliveryState.clickedAt;
     }
 
     await this.deliveryRepository.update(delivery.id, update as any);

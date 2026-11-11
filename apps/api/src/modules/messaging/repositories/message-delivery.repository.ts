@@ -2,7 +2,13 @@ import { Injectable } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { BaseRepository } from "../../../common/database/repositories/base.repository";
 import { Repository } from "typeorm";
-import { MessageDelivery, MessageDeliveryStatus } from "../message-delivery.entity";
+import {
+  MessageDelivery,
+  MessageDeliveryStatus,
+  DeliveryEngagementStatus,
+  DeliveryTransportStatus,
+  applyDeliveryState,
+} from "../message-delivery.entity";
 import { NotificationChannel } from "../../../common/enums/notification-channel.enum";
 
 @Injectable()
@@ -60,7 +66,8 @@ export class MessageDeliveryRepository extends BaseRepository<MessageDelivery> {
     status: MessageDeliveryStatus,
     metadata?: Record<string, any>,
   ): Promise<MessageDelivery | null> {
-    const updateData: any = { status };
+    const updateData: any = {};
+    applyDeliveryState(updateData, { status });
 
     if (status === MessageDeliveryStatus.SENT) {
       updateData.sentAt = new Date();

@@ -4,7 +4,14 @@ import { InjectRepository } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
 import { Message, MessageStatus, MessagePriority } from "../../messaging/message.entity";
 import { NotificationChannel } from "../../../common/enums/notification-channel.enum";
-import { MessageDelivery, MessageDeliveryStatus } from "../../messaging/message-delivery.entity";
+import {
+  MessageDelivery,
+  MessageDeliveryStatus,
+  DeliveryEngagementStatus,
+  DeliveryTransportStatus,
+  applyDeliveryState,
+  resolveDeliveryStatus,
+} from "../../messaging/message-delivery.entity";
 import { SmartSMSRouterService } from "./smart-sms-router.service";
 import { TwilioProvider } from "../providers/sms/providers/twilio.provider";
 import { TermiiProvider } from "../providers/sms/providers/termii.provider";
@@ -243,7 +250,7 @@ export class SMSService {
       }
 
       for (const delivery of message.deliveries) {
-        if (delivery.status === MessageDeliveryStatus.DELIVERED) {
+        if (resolveDeliveryStatus(delivery) === MessageDeliveryStatus.DELIVERED) {
           totalDelivered++;
         }
       }
@@ -314,6 +321,9 @@ export class SMSService {
       providerId: routing.providerId,
       recipient: request.to,
       status: MessageDeliveryStatus.SENT,
+      transportStatus: DeliveryTransportStatus.SENT,
+      engagementStatus: DeliveryEngagementStatus.UNKNOWN,
+      stateUpdatedAt: new Date(),
       providerMessageId: result.messageId,
       providerResponse: result,
       sentAt: new Date(),
@@ -368,6 +378,9 @@ export class SMSService {
       providerId: payload.provider,
       recipient: payload.from,
       status: MessageDeliveryStatus.DELIVERED,
+      transportStatus: DeliveryTransportStatus.SENT,
+      engagementStatus: DeliveryEngagementStatus.DELIVERED,
+      stateUpdatedAt: new Date(),
       providerMessageId: payload.messageId,
       providerResponse: payload.metadata,
       sentAt: payload.timestamp,
@@ -392,7 +405,7 @@ export class SMSService {
     if (delivery) {
       const mappedStatus = this.mapStatusToDeliveryStatus(payload.status);
 
-      delivery.status = mappedStatus;
+      applyDeliveryState(delivery, { status: mappedStatus });
       delivery.errorMessage = payload.errorMessage;
 
       if (payload.status === "delivered" && !delivery.deliveredAt) {
@@ -527,9 +540,11 @@ export class SMSService {
     const deliveries = message.deliveries;
     const totalDeliveries = deliveries.length;
     const deliveredCount = deliveries.filter(
-      (d) => d.status === MessageDeliveryStatus.DELIVERED,
+      (d) => resolveDeliveryStatus(d) === MessageDeliveryStatus.DELIVERED,
     ).length;
-    const failedCount = deliveries.filter((d) => d.status === MessageDeliveryStatus.FAILED).length;
+    const failedCount = deliveries.filter(
+      (d) => resolveDeliveryStatus(d) === MessageDeliveryStatus.FAILED,
+    ).length;
 
     let newStatus: MessageStatus;
     if (deliveredCount === totalDeliveries) {

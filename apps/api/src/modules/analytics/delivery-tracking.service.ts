@@ -5,6 +5,8 @@ import { QueryDeepPartialEntity } from "typeorm/query-builder/QueryPartialEntity
 import {
   MessageDeliveryStatus as DeliveryStatus,
   MessageDelivery as NotificationDelivery,
+  applyDeliveryState,
+  resolveDeliveryStatus,
 } from "../messaging/message-delivery.entity";
 import {
   Message as Notification,
@@ -62,8 +64,25 @@ export class DeliveryTrackingService {
       return;
     }
 
+    const now = new Date();
+    const deliveryState: Partial<NotificationDelivery> = { status };
+    if (status === DeliveryStatus.SENT) {
+      deliveryState.sentAt = now;
+    } else if (status === DeliveryStatus.DELIVERED) {
+      deliveryState.deliveredAt = now;
+    } else if (status === DeliveryStatus.OPENED) {
+      deliveryState.openedAt = now;
+    } else if (status === DeliveryStatus.CLICKED) {
+      deliveryState.clickedAt = now;
+    }
+
+    applyDeliveryState(deliveryState, { status });
+
     const updateData: Partial<NotificationDelivery> = {
-      status,
+      status: deliveryState.status,
+      transportStatus: deliveryState.transportStatus,
+      engagementStatus: deliveryState.engagementStatus,
+      stateUpdatedAt: deliveryState.stateUpdatedAt,
       updatedAt: new Date(),
     };
 
@@ -83,20 +102,17 @@ export class DeliveryTrackingService {
       updateData.metadata = { ...delivery.metadata, ...metadata };
     }
 
-    const now = new Date();
-    switch (status) {
-      case DeliveryStatus.SENT:
-        updateData.sentAt = now;
-        break;
-      case DeliveryStatus.DELIVERED:
-        updateData.deliveredAt = now;
-        break;
-      case DeliveryStatus.OPENED:
-        updateData.openedAt = now;
-        break;
-      case DeliveryStatus.CLICKED:
-        updateData.clickedAt = now;
-        break;
+    if (deliveryState.sentAt) {
+      updateData.sentAt = deliveryState.sentAt;
+    }
+    if (deliveryState.deliveredAt) {
+      updateData.deliveredAt = deliveryState.deliveredAt;
+    }
+    if (deliveryState.openedAt) {
+      updateData.openedAt = deliveryState.openedAt;
+    }
+    if (deliveryState.clickedAt) {
+      updateData.clickedAt = deliveryState.clickedAt;
     }
 
     await this.deliveryRepository.update(
@@ -148,28 +164,44 @@ export class DeliveryTrackingService {
     }
 
     const now = new Date();
-    const updateData: Partial<NotificationDelivery> = {
-      updatedAt: now,
-      metadata: { ...delivery.metadata, ...metadata },
-    };
-
     let newStatus: DeliveryStatus;
+    const deliveryState: Partial<NotificationDelivery> = {};
 
     switch (eventType) {
       case "opened":
-        updateData.openedAt = now;
         newStatus = DeliveryStatus.OPENED;
+        deliveryState.openedAt = now;
         break;
       case "clicked":
-        updateData.clickedAt = now;
         newStatus = DeliveryStatus.CLICKED;
+        deliveryState.openedAt = delivery.openedAt ?? now;
+        deliveryState.clickedAt = now;
         break;
       case "unsubscribed":
         newStatus = DeliveryStatus.UNSUBSCRIBED;
         break;
     }
 
-    updateData.status = newStatus;
+    applyDeliveryState(deliveryState, { status: newStatus });
+
+    const updateData: Partial<NotificationDelivery> = {
+      status: deliveryState.status,
+      transportStatus: deliveryState.transportStatus,
+      engagementStatus: deliveryState.engagementStatus,
+      stateUpdatedAt: deliveryState.stateUpdatedAt,
+      updatedAt: now,
+    };
+
+    if (deliveryState.openedAt) {
+      updateData.openedAt = deliveryState.openedAt;
+    }
+    if (deliveryState.clickedAt) {
+      updateData.clickedAt = deliveryState.clickedAt;
+    }
+
+    if (metadata) {
+      updateData.metadata = { ...delivery.metadata, ...metadata };
+    }
 
     await this.deliveryRepository.update(
       deliveryId,
@@ -222,17 +254,23 @@ export class DeliveryTrackingService {
     const deliveries = await queryBuilder.getMany();
 
     const totalDeliveries = deliveries.length;
-    const deliveredCount = deliveries.filter((d) => d.status === DeliveryStatus.DELIVERED).length;
-    const failedCount = deliveries.filter(
-      (d) => d.status === DeliveryStatus.FAILED || d.status === DeliveryStatus.BOUNCED,
+    const deliveredCount = deliveries.filter(
+      (d) => resolveDeliveryStatus(d) === DeliveryStatus.DELIVERED,
     ).length;
-    const pendingCount = deliveries.filter((d) => d.status === DeliveryStatus.PENDING).length;
+    const failedCount = deliveries.filter(
+      (d) =>
+        resolveDeliveryStatus(d) === DeliveryStatus.FAILED ||
+        resolveDeliveryStatus(d) === DeliveryStatus.BOUNCED,
+    ).length;
+    const pendingCount = deliveries.filter(
+      (d) => resolveDeliveryStatus(d) === DeliveryStatus.PENDING,
+    ).length;
 
     const deliveryRate = totalDeliveries > 0 ? (deliveredCount / totalDeliveries) * 100 : 0;
     const failureRate = totalDeliveries > 0 ? (failedCount / totalDeliveries) * 100 : 0;
 
     const deliveredMessages = deliveries.filter(
-      (d) => d.status === DeliveryStatus.DELIVERED && d.sentAt && d.deliveredAt,
+      (d) => resolveDeliveryStatus(d) === DeliveryStatus.DELIVERED && d.sentAt && d.deliveredAt,
     );
 
     let averageDeliveryTime: number | undefined;
@@ -311,7 +349,7 @@ export class DeliveryTrackingService {
       return;
     }
 
-    const deliveryStatuses = deliveries.map((d) => d.status);
+    const deliveryStatuses = deliveries.map((d) => resolveDeliveryStatus(d));
     let notificationStatus: NotificationStatus;
 
     if (deliveryStatuses.every((status) => status === DeliveryStatus.DELIVERED)) {
@@ -324,7 +362,11 @@ export class DeliveryTrackingService {
       notificationStatus = NotificationStatus.SENT;
     } else if (
       deliveryStatuses.every(
-        (status) => status === DeliveryStatus.FAILED || status === DeliveryStatus.BOUNCED,
+        (status) =>
+          status === DeliveryStatus.FAILED ||
+          status === DeliveryStatus.BOUNCED ||
+          status === DeliveryStatus.SKIPPED ||
+          status === DeliveryStatus.UNSUBSCRIBED,
       )
     ) {
       notificationStatus = NotificationStatus.FAILED;

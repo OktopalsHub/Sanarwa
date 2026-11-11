@@ -1,7 +1,7 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { Repository } from "typeorm";
 import { InjectRepository } from "@nestjs/typeorm";
-import { MessageDelivery } from "../../messaging/message-delivery.entity";
+import { DeliveryEngagementStatus, MessageDelivery } from "../../messaging/message-delivery.entity";
 import { Message } from "../../messaging/message.entity";
 
 export interface DeliveryMetrics {
@@ -180,9 +180,15 @@ export class DeliveryAnalyticsService {
 
     const deliveries = await query.getMany();
 
-    const opens = deliveries.filter((d) => d.metadata?.opened).length;
-    const clicks = deliveries.filter((d) => d.metadata?.clicked).length;
-    const unsubscribes = deliveries.filter((d) => d.metadata?.unsubscribed).length;
+    const opens = deliveries.filter(
+      (d) => d.engagementStatus === DeliveryEngagementStatus.OPENED,
+    ).length;
+    const clicks = deliveries.filter(
+      (d) => d.engagementStatus === DeliveryEngagementStatus.CLICKED,
+    ).length;
+    const unsubscribes = deliveries.filter(
+      (d) => d.engagementStatus === DeliveryEngagementStatus.UNSUBSCRIBED,
+    ).length;
 
     const totalDeliveries = deliveries.length;
     const openRate = totalDeliveries > 0 ? (opens / totalDeliveries) * 100 : 0;
@@ -209,8 +215,11 @@ export class DeliveryAnalyticsService {
       .where("message.tenantId = :tenantId", { tenantId })
       .select("delivery.subscriberId", "subscriberId")
       .addSelect("COUNT(delivery.id)", "totalNotifications")
-      .addSelect("SUM(CASE WHEN delivery.metadata->'opened' = 'true' THEN 1 ELSE 0 END)", "opens")
-      .addSelect("SUM(CASE WHEN delivery.metadata->'clicked' = 'true' THEN 1 ELSE 0 END)", "clicks")
+      .addSelect("SUM(CASE WHEN delivery.engagement_status = 'opened' THEN 1 ELSE 0 END)", "opens")
+      .addSelect(
+        "SUM(CASE WHEN delivery.engagement_status = 'clicked' THEN 1 ELSE 0 END)",
+        "clicks",
+      )
       .addSelect("MAX(delivery.createdAt)", "lastEngagementDate")
       .groupBy("delivery.subscriberId")
       .orderBy("opens", "DESC")
@@ -301,9 +310,15 @@ export class DeliveryAnalyticsService {
   }
 
   private calculateEngagementMetrics(deliveries: MessageDelivery[]): EngagementMetrics {
-    const opens = deliveries.filter((d) => d.metadata?.opened).length;
-    const clicks = deliveries.filter((d) => d.metadata?.clicked).length;
-    const unsubscribes = deliveries.filter((d) => d.metadata?.unsubscribed).length;
+    const opens = deliveries.filter(
+      (d) => d.engagementStatus === DeliveryEngagementStatus.OPENED,
+    ).length;
+    const clicks = deliveries.filter(
+      (d) => d.engagementStatus === DeliveryEngagementStatus.CLICKED,
+    ).length;
+    const unsubscribes = deliveries.filter(
+      (d) => d.engagementStatus === DeliveryEngagementStatus.UNSUBSCRIBED,
+    ).length;
 
     const total = deliveries.length;
     const openRate = total > 0 ? (opens / total) * 100 : 0;

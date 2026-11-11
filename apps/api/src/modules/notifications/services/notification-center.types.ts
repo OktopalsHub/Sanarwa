@@ -4,11 +4,6 @@ export enum NotificationCenterStatus {
   ARCHIVED = "archived",
 }
 
-export enum NotificationCenterChannel {
-  IN_APP = "in_app",
-  EMAIL = "email",
-}
-
 export interface NotificationCenterItem {
   id: string;
   tenantId: string;

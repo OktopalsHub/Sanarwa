@@ -135,12 +135,16 @@ explicit ids/topics.
   array — targets cannot reference across a nested construct boundary. Unknown ids fail
   the run with an explicit `errorMessage` rather than silently falling through.
   Empty `foreach` arrays are a no-op; a non-array `itemsKey` fails the run.
-  Per-construct progress is durable in `context._frames` (cursor, results, retry, park);
-  `_`-prefixed keys never reach the provider or the API.
+  Per-construct progress is durable in `execution.frames` (jsonb on `workflow_runs`;
+  legacy rows backfilled from `context._frames`), the `_`-prefixed context keys never
+  reach the provider or the API.
 - **`{{dot.path}}` interpolation.** `resolveString` walks nested paths (`{{user.address.city}}`)
   with prototype-pollution guards (`dotGet`); single-level lookup is not enough for a visual
   builder that lets you reference a nested variable from an earlier `set` step.
-- **Context hygiene.** Internal engine keys are `_`-prefixed (`_retryStep`, `_stepRetryCount`,
+- **Context hygiene.** Internal engine state lives in the `workflow_runs.execution`
+  jsonb column (`frames`, `retryStep`, `stepRetryCount`, `signalKeys`); rows written
+  before that column existed fall back to the legacy `context._execution` shape.
+  Internal engine keys are `_`-prefixed (`_retryStep`, `_stepRetryCount`,
   `_signalKeys`). They never reach the provider: `variables` sent to `UnifiedSendService` is
   `publicContext(run.context)` merged with the step's `variables` then `workflowRunId`.
   They also never leave the API: `listRuns`/`getRun`/`startRun`/`cancelRun` return a sanitized
@@ -148,15 +152,16 @@ explicit ids/topics.
 - **Execution:** `advanceRun` loops steps while `running` (bounded per tick,
   `MAX_STEPS_PER_TICK=50`), persisting after each step. A run that exhausts the cap is not
   left as an orphaned `running` row — it is re-parked as `waiting` with `waitUntil=now` and
-  `_retryStep` marking the current step, so `processDueWaits` re-enters it within a minute
-  without skipping ahead. Outcomes: `next` (increment), `jump` (engine set `currentStep`),
+  `execution.retryStep` marking the current step, so `processDueWaits` re-enters it within a
+  minute without skipping ahead. Outcomes: `next` (increment), `jump` (engine set `currentStep`),
   `parked` (wait persisted, stop), `failed`. `processDueWaits` (cron, every minute) resumes
-  elapsed waits (re-runs same step for `_retryStep`, else advances past delay) and fails
+  elapsed waits (re-runs same step for `retryStep`, else advances past delay) and fails
   timed-out event waits. `signal` resumes matching `waiting_for_event` runs (idempotent via
-  `idempotencyKey` → `context._signalKeys`), advances past the wait step, and can auto-start
+  `idempotencyKey` → `execution.signalKeys`), advances past the wait step, and can auto-start
   `trigger:"event"` definitions matching `metadata.event`.
 - **Run state:** cursor = `currentStep`; accumulated data in `context` (internal keys prefixed
-  `_`); parked waits use `status`/`waitUntil`/`waitEvent`.
+  `_`); parked waits use `status`/`waitUntil`/`waitEvent`. Engine execution state =
+  `execution` (jsonb).
 
 ### Adding a new step type (general recipe)
 
@@ -182,15 +187,16 @@ designed here; compensation remains future work.
 
 - **IR:** `foreach`: `{ type: "foreach", itemsKey, as?, indexAs?, onError?, steps: [<steps>] }`;
   `parallel`: `{ type: "parallel", branches: [[<steps>], [<steps>]], mode: "all"|"any", onError? }`.
-- **Progress lives in `context._frames`** (jsonb, `_`-prefixed): one frame per construct
+- **Progress lives in `execution.frames`** (jsonb on `workflow_runs`; legacy rows
+  backfilled from `context._frames`): one frame per construct
   (kind, parent index, item/branch cursor, sub-step cursor, total, per-unit results, retry
   count, park kind). The engine is sequential-emulated — branch 0 runs to completion
   before branch 1; nested constructs nest up to 3 levels.
 - **Waits inside constructs** park exactly like top-level waits; `processDueWaits`/`signal`
   resume them frame-aware. A `wait_for_event` timeout with `onError: "skip"` skips the
   current unit; `"fail"` fails the run.
-- **Send retries inside constructs** use frame-local counters; `_retryStep`/`_stepRetryCount`
-  stay top-level.
+- **Send retries inside constructs** use frame-local counters; `retryStep`/`stepRetryCount`
+  stay top-level in `execution`.
 - **`onError: "skip"`** records `results[i] = { status: "failed", error }` and continues.
 
 Current shape (kept for reference, matches implementation):
@@ -210,9 +216,10 @@ Future:
   is normalized to `intervalMs` and `nextRunAt` is computed (honoring a caller-provided
   future `nextRunAt`).
 - `processDueSchedules` (`@Cron(EVERY_MINUTE)`) finds active schedule definitions whose
-  `nextRunAt <= now`, starts a run, and recomputes `nextRunAt` (+interval). Mirrors the
-  campaign `processDueCampaigns` pattern. For cron expressions, add a cron-parser
-  dependency later and swap `resolveScheduleIntervalMs`.
+  `nextRunAt <= now`, starts a run, and recomputes `nextRunAt` (+interval). The cursor lives
+  in the `workflows.next_run_at` column (with the pre-split `metadata.schedule.nextRunAt` JSON
+  mirror as fallback). Mirrors the campaign `processDueCampaigns` pattern. For cron expressions,
+  add a cron-parser dependency later and swap `resolveScheduleIntervalMs`.
 - `signal`/event auto-start stays additive (it already starts `trigger:"event"` defs whose
   `metadata.event` matches).
 

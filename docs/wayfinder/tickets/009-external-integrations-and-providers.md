@@ -32,7 +32,7 @@ What external integrations and provider surfaces does Sanarwa implement or depen
 
 - `apps/api/src/modules/provider/provider.module.ts`
 - Imports channel submodules `EmailModule`, `ChatModule`, `PushModule`, `SMSModule`, `InAppModule`, `VoiceModule`, plus `BillingModule`, `ApiKeyModule`, `TokenManagementModule`, `BrandModule`, `DeliveryEventsModule`, `ErrorsModule`, security/auth/tenant modules; persists `ProviderConfig`, `ProviderUsageLog`, `DeviceRegistration`, `NotificationLog`.
-- Controllers: `ProviderConfigController`, `BYOPController`, `DeviceRegistrationController`, `TelnyxWebhookController`, `WhatsAppWebhookController`, `EmailWebhookController`, `RoutingOptimizerController` (note: `SMSWebhookController` exists in tree but is **not listed in this module’s controllers array**).
+- Controllers: `ProviderConfigController`, `BYOPController`, `DeviceRegistrationController`, `TelnyxWebhookController`, `WhatsAppWebhookController`, `EmailWebhookController` (note: `SMSWebhookController` exists in tree but is **not listed in this module’s controllers array**).
 - `PROVIDER_REGISTRATIONS` factory registers:
 - **Factory-based (/provider-factory):** `aws_ses`→EMAIL/`SESEmailProvider`, `aws_sns`→SMS/`SNSSMSProvider`, `termii`→SMS/`TermiiSMSProvider`, `asia_sms`→SMS/`AsiaSMSProvider`, `aws_pinpoint`→PUSH/`PinpointPushProvider`, `whatsapp_business`→WHATSAPP/`MetaWhatsAppProvider`.
 - **Orchestrator email:** `zeptomail`, `mailgun`, `sendgrid`, `ses` (comment: “SES is BYOP only. Register it but never as the managed fallback.”), `smtp` — each with singleton + BYOP factory.

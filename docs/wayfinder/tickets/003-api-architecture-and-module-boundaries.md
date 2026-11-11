@@ -133,8 +133,8 @@ Key observed pieces:
 
 - **`ProviderModule`** (`modules/provider`) is the external delivery/provider boundary and one of the largest modules.
 - Imports: provider config/usage/device/notification-log entities, config, security, event emitter, auth/tenant-member, channel submodules (`EmailModule`, `ChatModule`, `PushModule`, `SMSModule`, `InAppModule`, `VoiceModule`), API key/billing/brand/delivery-events/errors modules.
-- Controllers: `ProviderConfigController`, `BYOPController`, `DeviceRegistrationController`, `TelnyxWebhookController`, `WhatsAppWebhookController`, `EmailWebhookController`, `RoutingOptimizerController`.
-- Core providers/services: `ProviderService`, `ProviderConfigRepository`, `ProviderConfigValidator`, `ProviderEncryptionService`, `ProviderFactory`, `ProviderPerformanceTracker`, `ProviderTemplateService`, `ProviderCostTrackerService`, `RoutingOptimizerService`, `ProviderOrchestratorService`, device/webhook/smart-routing/branded-push/SNS verification services.
+- Controllers: `ProviderConfigController`, `BYOPController`, `DeviceRegistrationController`, `TelnyxWebhookController`, `WhatsAppWebhookController`, `EmailWebhookController`.
+- Core providers/services: `ProviderService`, `ProviderConfigRepository`, `ProviderConfigValidator`, `ProviderEncryptionService`, `ProviderFactory`, `ProviderTemplateService`, `ProviderCostTrackerService`, `ProviderOrchestratorService`, device/webhook/smart-routing/branded-push/SNS verification services.
 - **Registration/orchestration**: `PROVIDER_REGISTRATIONS` factory wires concrete adapters into `ProviderFactory` and managed/BYOP registries in `ProviderOrchestratorService` for email/chat/push/SMS (and /factory registrations like SES/SNS/Pinpoint/Meta WhatsApp/Termii/Asia SMS). Distinguishes managed chains vs BYOP-only providers (e.g. SES/SNS BYOP-only comments; chat/WhatsApp treated as BYOP-only in orchestrator logic).
 - **ProviderOrchestratorService** (`provider/provider-orchestrator.service.ts`) responsibilities:
 - Resolve BYOP vs managed provider per channel/tenant, decrypt BYOP configs, validate configs, create per-send provider instances via factories when needed.

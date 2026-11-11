@@ -4,7 +4,7 @@ export function getTenantPathSegment(tenant: Pick<Tenant, "subdomain" | "slug" |
   return tenant.subdomain || tenant.slug || tenant.id;
 }
 
-export function tenantBasePath(tenant: Pick<Tenant, "subdomain" | "slug" | "id">): string {
+function tenantBasePath(tenant: Pick<Tenant, "subdomain" | "slug" | "id">): string {
   const segment = getTenantPathSegment(tenant);
   return segment ? `/${segment}` : "";
 }

@@ -6,7 +6,6 @@ export type LucideIcon = IconComponent;
 export {
   IconRepeat as Repeat,
   IconExternalLink as ExternalLink,
-  IconTrendingDown as TrendingDown,
   IconTrendingUp as TrendingUp,
   IconDroplet as Droplets,
   IconBell as Bell,
@@ -15,7 +14,6 @@ export {
   IconCalendar as Calendar,
   IconChartBar as Activity,
   IconMessage as MessageSquare,
-  IconMessageCircle as MessageCircle,
   IconCircleCheck as CheckCircle,
   IconClock as Clock,
   IconGitBranch as GitBranch,
@@ -36,7 +34,6 @@ export {
   IconPhone as Phone,
   IconShield as Shield,
   IconShieldCheck as ShieldCheck,
-  IconVolume as Volume2,
   IconStar as Star,
   IconUser as User,
   IconUserMinus as UserX,

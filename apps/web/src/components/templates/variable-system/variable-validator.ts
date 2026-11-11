@@ -6,7 +6,7 @@ export interface ValidationResult {
   warnings: string[];
 }
 
-export class VariableValidator {
+class VariableValidator {
   static validateVariable(variable: TemplateVariable): ValidationResult {
     const errors: string[] = [];
     const warnings: string[] = [];

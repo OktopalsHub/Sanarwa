@@ -150,7 +150,7 @@ async function sendMetricToEndpoint(metric: any, endpoint: string) {
   }
 }
 
-export function useComponentPerformance(componentName: string) {
+function useComponentPerformance(componentName: string) {
   useEffect(() => {
     PerformanceMonitor.startMeasure(`component-${componentName}`);
 
@@ -160,7 +160,7 @@ export function useComponentPerformance(componentName: string) {
   }, [componentName]);
 }
 
-export function useAsyncPerformance() {
+function useAsyncPerformance() {
   const measureAsync = async function <T>(
     operationName: string,
     asyncOperation: () => Promise<T>,

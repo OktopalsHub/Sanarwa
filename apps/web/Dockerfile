@@ -9,8 +9,7 @@ RUN pnpm install --frozen-lockfile --filter @sanarwa/web...
 FROM base AS builder
 ARG VITE_API_URL=http://localhost:9010
 ENV VITE_API_URL=$VITE_API_URL
-COPY --from=deps /app/node_modules ./node_modules
-COPY . .
+COPY --from=deps /app /app
 WORKDIR /app/apps/web
 RUN pnpm build
 

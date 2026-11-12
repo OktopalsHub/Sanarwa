@@ -2,7 +2,7 @@ import { describe, it, expect, beforeAll } from "vitest";
 import axios, { AxiosInstance } from "axios";
 
 describe("Subscription Module Integration Tests", () => {
-  const baseURL = "http://localhost:9000/api/v1";
+  const baseURL = "http://localhost:8000/api/v1";
   let api: AxiosInstance;
   let authToken: string;
 

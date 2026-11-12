@@ -16,7 +16,6 @@ export class PerformanceMonitor {
       const measure = performance.getEntriesByName(name, "measure")[0];
       if (measure) {
         this.metrics.set(name, measure.duration);
-        console.log(`Performance: ${name} took ${measure.duration.toFixed(2)}ms`);
       }
     }
   }

@@ -10,7 +10,7 @@ function oauthBaseUrl(): string {
   if (typeof process !== "undefined" && process.env?.NEXT_PUBLIC_API_URL) {
     return String(process.env.NEXT_PUBLIC_API_URL);
   }
-  return "http://localhost:9000/api/v1";
+  return "http://localhost:8000/api/v1";
 }
 
 function redirectToOAuth(provider: "google" | "github") {

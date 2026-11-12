@@ -45,7 +45,7 @@ describe("ApiKeyTokenVerifier", () => {
       extra: { tenantId: "tenant-1", projectId: "project-1" },
     });
     expect(authInfo?.expiresAt).toBeGreaterThan(Math.floor(Date.now() / 1000));
-    expect(authInfo?.resource.toString()).toBe("http://localhost:3000/mcp");
+    expect(authInfo?.resource.toString()).toBe("http://localhost:8000/mcp");
   });
 
   it("passes no projectId through when the key carries none", async () => {

@@ -2,7 +2,7 @@
 
 > **Status:** curated contributor entrypoint.  
 > **Last verified:** 2026-11-10 (based on Wayfinder [MAP-001] tickets [001]–[011], repo config/code spot checks, and targeted verification in this session).  
-> **Precedence:** if this conflicts with code, CI config, migrations, or measured command output, trust the evidence and update this file. Wayfinder remains the research/evidence ledger; this file is the maintained summary.
+> **Precedence:** if this conflicts with code, CI config, migrations, or measured command output, trust the evidence and update this file. This file is the maintained summary; the raw Wayfinder evidence was removed from the repo.
 
 ## 1. Start here
 
@@ -12,35 +12,34 @@
 
 1. This file (`docs/ONBOARDING.md`)
 2. [`CONTEXT.md`](CONTEXT.md) — domain vocabulary (**note:** its “no Better Auth” claim is stale; see [008], [011])
-3. [`ARCHITECTURE.md`](ARCHITECTURE.md) — stack/seams (**note:** auth/tooling/known-state drift exists; reconcile with Wayfinder)
-4. [`docs/wayfinder/MAP-001-whole-repo-understanding.md`](docs/wayfinder/MAP-001-whole-repo-understanding.md) — deep subsystem map and evidence
-5. Before changing code: [`AGENTS.md`](AGENTS.md), [`CODING_STANDARDS.md`](CODING_STANDARDS.md), [`SENIOR-DEV-RULES.md`](SENIOR-DEV-RULES.md), [`DESLOP.md`](DESLOP.md) (treat availability/claims as verify-first; `.agents/rules` and `.cursor/rules` are absent in this checkout)
+3. [`ARCHITECTURE.md`](ARCHITECTURE.md) — stack/seams (**note:** auth/tooling/known-state drift exists; reconcile with code)
+4. Before changing code: [`AGENTS.md`](AGENTS.md), [`CODING_STANDARDS.md`](CODING_STANDARDS.md), [`SENIOR-DEV-RULES.md`](SENIOR-DEV-RULES.md), [`DESLOP.md`](DESLOP.md) (treat availability/claims as verify-first; `.agents/rules` and `.cursor/rules` are absent in this checkout)
 
 **Do not trust blindly:** README endpoint/env examples, comparison/task snapshots (`ntfy-sanarwa.md`, `NTFY-SARAWA-SUMMARY.md`, `notifkit-sanarwa.md`, task notes), and unmeasured gate/baseline claims.
 
 ## 2. Source-of-truth index
 
-| Topic                              | Canonical now                                                                                                        | Supporting                                       | Trust notes                                                                   |
-| ---------------------------------- | -------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------ | ----------------------------------------------------------------------------- |
-| Domain vocabulary                  | `CONTEXT.md`, channel/token enums/entities, [Wayfinder 002]                                                          | `PRODUCT.md`, `README.md`                        | Auth portion of `CONTEXT.md` is stale.                                        |
-| Repo topology/build/CI/infra       | `package.json`, `pnpm-workspace.yaml`, `turbo.json`, `.github/workflows/ci.yml`, `docker-compose*.yml`, [001], [010] | `AGENTS.md`, `ARCHITECTURE.md`                   | CI runs lint + fmt:check, type-check, test, build, containers, migrations.    |
-| API architecture/modules           | `apps/api/src/main.ts`, `app.module.ts`, modules, [003]                                                              | `ARCHITECTURE.md`                                | Overlapping seams exist.                                                      |
-| Packages/contracts                 | `packages/*` manifests/exports/READMEs, [004]                                                                        | app imports                                      | `api-client` (session/tenant, source) vs `sdk`/`mcp` (API-key/dist).          |
-| Web app                            | `apps/web` routes/lib/contexts, [005]                                                                                | `README.md`                                      | Mixed query/direct API patterns and known stability issues.                   |
-| Messaging pipeline                 | [006], messaging/notifications/provider/queue code                                                                   | snapshots                                        | Multiple send/dispatch paths and delivery-executor drift.                     |
-| Data model/persistence             | [007], `apps/api/src/common/database/data-source.ts`, entities/migrations                                            | `ARCHITECTURE.md`                                | Fresh `migration:run` validated; retention/erasure/idempotency still open.    |
-| Authn/authz/identity               | [008], `apps/api/src/main.ts`, `modules/auth/better-auth.ts`, guards/api-key modules                                 | `CONTEXT.md`/`ARCHITECTURE.md` (stale in places) | Better Auth mounted at `/api/auth`; hybrid flows and guard duplication exist. |
-| Integrations/providers/billing/MCP | [009], provider/billing/webhook/mcp modules, `apps/api/src/modules/billing/PROVIDER-AUDIT.md`                        | `env.md`, `.env.example`                         | BYOP/managed rules and webhook security vary by surface.                      |
-| Inbound email ops                  | `docs/INBOUND-EMAIL-PRODUCTION.md`                                                                                   | inbound controller/script                        | Requires `INBOUND_EMAIL_SECRET`, signed relay, deploy/migrations.             |
-| Campaign/workflow extension        | `docs/EXTENSIBILITY-CAMPAIGNS-WORKFLOWS.md`                                                                          | [006]                                            | Seams documented; some features deferred.                                     |
+| Topic                              | Canonical now                                                                                                        | Supporting                                       | Trust notes                                                                      |
+| ---------------------------------- | -------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------ | -------------------------------------------------------------------------------- |
+| Domain vocabulary                  | `CONTEXT.md`, channel/token enums/entities, [Wayfinder 002]                                                          | `PRODUCT.md`, `README.md`                        | Auth portion of `CONTEXT.md` is stale.                                           |
+| Repo topology/build/CI/infra       | `package.json`, `pnpm-workspace.yaml`, `turbo.json`, `.github/workflows/ci.yml`, `docker-compose*.yml`, [001], [010] | `AGENTS.md`, `ARCHITECTURE.md`                   | CI runs lint + fmt:check, type-check, test, build, containers, migrations.       |
+| API architecture/modules           | `apps/api/src/main.ts`, `app.module.ts`, modules, [003]                                                              | `ARCHITECTURE.md`                                | Overlapping seams exist.                                                         |
+| Packages/contracts                 | `packages/*` manifests/exports/READMEs, [004]                                                                        | app imports                                      | `api-client` (session/tenant, source) vs `sdk`/`mcp` (API-key/dist).             |
+| Web app                            | `apps/web` routes/lib/contexts, [005]                                                                                | `README.md`                                      | Mixed query/direct API patterns and known stability issues.                      |
+| Messaging pipeline                 | [006], messaging/notifications/provider/queue code                                                                   | snapshots                                        | Multiple send/dispatch paths and delivery-executor drift.                        |
+| Data model/persistence             | [007], `apps/api/src/common/database/data-source.ts`, entities/migrations                                            | `ARCHITECTURE.md`                                | Fresh `migration:run` validated; retention/erasure/idempotency still open.       |
+| Authn/authz/identity               | [008], `apps/api/src/main.ts`, `modules/auth/better-auth.ts`, guards/api-key modules                                 | `CONTEXT.md`/`ARCHITECTURE.md` (stale in places) | Better Auth mounted at `/api/v1/auth`; hybrid flows and guard duplication exist. |
+| Integrations/providers/billing/MCP | [009], provider/billing/webhook/mcp modules, `apps/api/src/modules/billing/PROVIDER-AUDIT.md`                        | `env.md`, `.env.example`                         | BYOP/managed rules and webhook security vary by surface.                         |
+| Inbound email ops                  | `docs/INBOUND-EMAIL-PRODUCTION.md`                                                                                   | inbound controller/script                        | Requires `INBOUND_EMAIL_SECRET`, signed relay, deploy/migrations.                |
+| Campaign/workflow extension        | `docs/EXTENSIBILITY-CAMPAIGNS-WORKFLOWS.md`                                                                          | [006]                                            | Seams documented; some features deferred.                                        |
 
-**Wayfinder tickets:** [001](docs/wayfinder/tickets/001-repo-topology-and-build-release-model.md)–[011](docs/wayfinder/tickets/011-documentation-landscape-and-durable-artifact.md) (all resolved). Treat as evidence; promote stable conclusions here/intents docs deliberately.
+**Wayfinder tickets:** [001]–[011] (all resolved). The tickets and the MAP-001 deep-dive were removed from the repo; treat the findings folded into this file as the summary.
 
 ## 3. Repository shape
 
 - **Package manager:** pnpm (`packageManager: pnpm@10.25.0`), monorepo via `pnpm-workspace.yaml` (`apps/*`, `packages/*`), tasks via Turbo (`turbo.json`).
 - **Apps**
-  - `apps/api` (`@sanarwa/api`): NestJS 11, TypeORM 0.3, BullMQ 6, Postgres/Redis; HTTP under `/api/v1` (with unversioned exclusions), Better Auth mounted at `/api/auth`.
+  - `apps/api` (`@sanarwa/api`): NestJS 11, TypeORM 0.3, BullMQ 6, Postgres/Redis; HTTP under `/api/v1` (with unversioned exclusions), Better Auth mounted at `/api/v1/auth`.
   - `apps/web` (`@sanarwa/web`): plain Vite + React 19 SPA (TanStack Router in file-based routes; no TanStack Start/Nitro/SSR), served statically with SPA fallback (`dist/`), React Query, consumes `@sanarwa/api-client`, `@sanarwa/ui`, `@sanarwa/assets`, `@sanarwa/shared-types`.
 - **Packages:** `api-client` (internal web/session-tenant client), `sdk` (public API-key client, dist), `mcp` (MCP server, dist/bin), `ui`, `assets`, `config` (tsconfig presets), `shared-types` (source-exported contracts).
 
@@ -57,7 +56,7 @@
 
 ### 5.1 API (`apps/api`)
 
-- **Bootstrap (`src/main.ts`):** Nest app with `bodyParser: false`; env validation; security/CORS/compression; mounts Better Auth handler at `/api/auth` **before** body parsing; JSON/urlencoded (1MB, raw body capture for billing/webhook paths) + cookies; global `ValidationPipe` (whitelist/forbid/transform); global prefix `api/v1` excluding unversioned routes (`/`, `/metrics`, `/docs`, `/mcp`); Swagger in non-prod.
+- **Bootstrap (`src/main.ts`):** Nest app with `bodyParser: false`; env validation; security/CORS/compression; mounts Better Auth handler at `/api/v1/auth` **before** body parsing; JSON/urlencoded (1MB, raw body capture for billing/webhook paths) + cookies; global `ValidationPipe` (whitelist/forbid/transform); global prefix `api/v1` excluding unversioned routes (`/`, `/metrics`, `/docs`, `/mcp`); Swagger in non-prod.
 - **Cross-cutting (`app.module.ts`):** global `ThrottlerGuard` + session `AuthGuard`, interceptors (metrics/logging/audit/error/error-alerting), correlation middleware, TypeORM/Postgres, BullMQ, Redis, config modules.
 - **Identity/auth ([008]):** Better Auth session/org plugin and tenant/member mirroring; global session guard resolves Better Auth session; machine API-key flows (Better Auth-backed key service, duplicate guard implementations with differing behavior); tenant/member guards/context. Custom JWT/credential auth paths also exist — treat auth as hybrid and verify per route.
 - **Messaging/delivery ([006]):** multiple ingress paths (unified queued send/idempotency/fallback, engine direct, transport controllers, inbound ingest) feed engine/queue/provider seams; BullMQ queues/processors, delivery execution, provider orchestrator (BYOP/managed, circuit/billing), webhooks/feedback, campaigns/workflows automation, preferences/topics/inboxes.
@@ -82,7 +81,7 @@
 
 | Mode              | How                                                                                                                         | API                                                                         | Web                                                                           | Postgres                            | Redis                               | Notes                                                                                                                                                    |
 | ----------------- | --------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------- | ----------------------------------------------------------------------------- | ----------------------------------- | ----------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Full Docker stack | `pnpm deploy:local` or `docker compose up --build` (`docker-compose.yml`)                                                   | host `http://localhost:9010` (container 9000), API base typically `/api/v1` | `http://localhost:3000` (`VITE_API_URL` build arg/runtime points to host API) | `5432` (container), db `sanarwa_db` | `6379`                              | Compose sets dev-ish API env and local secrets; web depends on API started (not health-checked).                                                         |
+| Full Docker stack | `pnpm deploy:local` or `docker compose up --build` (`docker-compose.yml`)                                                   | host `http://localhost:8000` (container 8000), API base typically `/api/v1` | `http://localhost:3000` (`VITE_API_URL` build arg/runtime points to host API) | `5432` (container), db `sanarwa_db` | `6379`                              | Compose sets dev-ish API env and local secrets; web depends on API started (not health-checked).                                                         |
 | Dev infra only    | `pnpm infra:up` / `pnpm infra:down` (`docker-compose.dev.yml`) or `docker compose up postgres redis` (`docker-compose.yml`) | run API locally                                                             | run web locally                                                               | `5441` via dev compose, else `5432` | `6391` via dev compose, else `6379` | `AGENTS.md` notes `docker-compose.dev.yml` tracking confusion; file exists in this checkout. Align `DATABASE_URL`/`REDIS_URL` and app ports accordingly. |
 | Bare dev          | `pnpm dev` (web + api via Turbo)                                                                                            | default `3000` unless env overrides                                         | Vite dev (commonly `3000`/configured)                                         | external/local                      | external/local                      | Ensure `VITE_API_URL`, CORS/origins, auth callback/base URLs, and `TRUSTED_ORIGINS` match.                                                               |
 
@@ -145,15 +144,13 @@ pnpm dev
 ## 10. Maintenance protocol
 
 - **Update this file in the same change** when altering: auth/bootstrap/routing, env/compose/ports, scripts/CI, channels/providers/billing semantics, schema/migrations, or key send/identity/pipeline flows.
-- **Precedence:** prefer code/CI/migrations/measured output over docs; link to Wayfinder tickets for depth instead of duplicating large analyses.
+- **Precedence:** prefer code/CI/migrations/measured output over docs; ground deep dives in code paths instead of duplicating large analyses.
 - **Freshness:** keep `Last verified` current; date and scope any baseline/gate claims.
 - **PR checklist prompt:** “What docs become stale because of this diff?” (especially auth, tenancy, delivery, billing, migrations, env, CI).
 - **Instruction docs:** `AGENTS.md` and other root docs are untracked in this checkout and easy to lose; consider committing them deliberately.
 
 ## 11. Deep-dive index
 
-- Map: [`docs/wayfinder/MAP-001-whole-repo-understanding.md`](docs/wayfinder/MAP-001-whole-repo-understanding.md)
-- Tickets: [001](docs/wayfinder/tickets/001-repo-topology-and-build-release-model.md), [002](docs/wayfinder/tickets/002-domain-vocabulary-and-tenancy-model.md), [003](docs/wayfinder/tickets/003-api-architecture-and-module-boundaries.md), [004](docs/wayfinder/tickets/004-packages-and-cross-workspace-contracts.md), [005](docs/wayfinder/tickets/005-web-app-architecture-and-flows.md), [006](docs/wayfinder/tickets/006-messaging-notification-pipeline.md), [007](docs/wayfinder/tickets/007-data-model-and-persistence.md), [008](docs/wayfinder/tickets/008-authn-authz-and-identity.md), [009](docs/wayfinder/tickets/009-external-integrations-and-providers.md), [010](docs/wayfinder/tickets/010-infrastructure-deployment-and-environments.md), [011](docs/wayfinder/tickets/011-documentation-landscape-and-durable-artifact.md)
 - Runbooks/guides: [`env.md`](env.md), [`docs/INBOUND-EMAIL-PRODUCTION.md`](docs/INBOUND-EMAIL-PRODUCTION.md), [`docs/SMS-VOICE-WEBHOOKS-PRODUCTION.md`](docs/SMS-VOICE-WEBHOOKS-PRODUCTION.md), [`docs/EXTENSIBILITY-CAMPAIGNS-WORKFLOWS.md`](docs/EXTENSIBILITY-CAMPAIGNS-WORKFLOWS.md)
 - Integration audits: [`apps/api/src/modules/billing/PROVIDER-AUDIT.md`](apps/api/src/modules/billing/PROVIDER-AUDIT.md)
 - Package docs: [`packages/sdk/README.md`](packages/sdk/README.md), [`packages/sdk/ENDPOINT-DRIFT.md`](packages/sdk/ENDPOINT-DRIFT.md), [`packages/mcp/README.md`](packages/mcp/README.md)

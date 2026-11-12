@@ -10,7 +10,7 @@ module.exports = {
       node_args: "--max-old-space-size=650",
       env: {
         NODE_ENV: "production",
-        PORT: 9000,
+        PORT: 8000,
         BATCH_MAX_SIZE: "250",
         BATCH_MAX_CONCURRENCY: "5",
         PROVIDER_BULK_BATCH_SIZE: "250",
@@ -19,7 +19,7 @@ module.exports = {
       },
       env_production: {
         NODE_ENV: "production",
-        PORT: 9000,
+        PORT: 8000,
         BATCH_MAX_SIZE: "250",
         BATCH_MAX_CONCURRENCY: "5",
         PROVIDER_BULK_BATCH_SIZE: "250",

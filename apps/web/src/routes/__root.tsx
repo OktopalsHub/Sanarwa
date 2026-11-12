@@ -3,11 +3,7 @@ import type { ReactNode } from "react";
 import { Outlet, createRootRoute } from "@tanstack/react-router";
 import { SkipLinks } from "@/components/accessibility";
 import { MonitoringProvider, UserBehaviorTracker } from "@/components/monitoring";
-import {
-  PerformanceDebugger,
-  PerformanceMonitorComponent,
-  ServiceWorkerRegistration,
-} from "@/components/performance";
+import { PerformanceMonitorComponent, ServiceWorkerRegistration } from "@/components/performance";
 import { ThemeProvider } from "@/components/theme-provider";
 import { AuthProvider } from "@/contexts/auth-context";
 import { BrandingProvider } from "@/contexts/branding-context";
@@ -41,7 +37,6 @@ function RootComponent() {
                   </UserBehaviorTracker>
                 </MonitoringProvider>
                 <Toaster richColors position="top-right" />
-                <PerformanceDebugger />
               </BrandingProvider>
             </TenantProvider>
           </AuthProvider>

@@ -1,7 +1,7 @@
 import axios, { AxiosInstance } from "axios";
 
 describe("Tenant Module HTTP Tests", () => {
-  const baseURL = "http://localhost:9000/api/v1";
+  const baseURL = "http://localhost:8000/api/v1";
   let api: AxiosInstance;
 
   const testUser = {

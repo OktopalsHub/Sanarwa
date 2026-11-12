@@ -91,7 +91,7 @@ Track open rates, click rates, bounce rates, and overall delivery health across 
 To send a multi-channel notification using the API, you can submit a payload with the desired channels and recipient details as shown below:
 
 ```bash
-curl -X POST http://localhost:3000/api/v1/messaging/send \
+curl -X POST http://localhost:8000/api/v1/messaging/send \
   -H "Content-Type: application/json" \
   -H "X-API-Key: your-api-key" \
   -d '{
@@ -133,7 +133,7 @@ Before running the API, you'll need these environment variables configured:
 ```env
 # Server
 NODE_ENV=development
-PORT=3000
+PORT=8000
 FRONTEND_URL=http://localhost:3001
 
 # Databases

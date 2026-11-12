@@ -1,7 +1,7 @@
 import axios from "axios";
 
 describe("Auth & Tenant HTTP Tests", () => {
-  const baseURL = "http://localhost:9000/api/v1";
+  const baseURL = "http://localhost:8000/api/v1";
   const api = axios.create({ baseURL });
 
   const testUser = {

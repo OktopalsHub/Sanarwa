@@ -17,9 +17,12 @@ function getEnv(key: string, fallback = ""): string {
 
 function getMode(): string {
   if (typeof import.meta !== "undefined" && import.meta.env?.MODE) {
-    return import.meta.env.MODE;
+    return String(import.meta.env.MODE);
   }
-  return process.env.NODE_ENV ?? "development";
+  if (typeof process !== "undefined" && process.env?.NODE_ENV) {
+    return String(process.env.NODE_ENV);
+  }
+  return "development";
 }
 
 function getApiRuntimeConfig(): ApiRuntimeConfig {
@@ -29,7 +32,7 @@ function getApiRuntimeConfig(): ApiRuntimeConfig {
   const baseUrl =
     getEnv("VITE_API_URL") ||
     getEnv("NEXT_PUBLIC_API_URL") ||
-    (isDev ? "http://localhost:9000/api/v1" : "https://api.sanarwa.com/api/v1");
+    (isDev ? "http://localhost:8000/api/v1" : "https://api.sanarwa.com/api/v1");
 
   const wsUrl =
     getEnv("VITE_WS_URL") || getEnv("NEXT_PUBLIC_WS_URL") || baseUrl.replace(/^http/, "ws");

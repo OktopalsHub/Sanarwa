@@ -17,9 +17,12 @@ function getEnv(key: string, fallback = ""): string {
 
 function getMode(): string {
   if (typeof import.meta !== "undefined" && import.meta.env?.MODE) {
-    return import.meta.env.MODE;
+    return String(import.meta.env.MODE);
   }
-  return process.env.NODE_ENV ?? "development";
+  if (typeof process !== "undefined" && process.env?.NODE_ENV) {
+    return String(process.env.NODE_ENV);
+  }
+  return "development";
 }
 
 function getApiRuntimeConfig(): ApiRuntimeConfig {

@@ -502,12 +502,22 @@ export function useTenantApiClient(tenantId?: string): ApiClient {
 }
 
 export const getEnvironmentConfig = () => {
-  const isDevelopment = process.env.NODE_ENV === "development";
-  const isProduction = process.env.NODE_ENV === "production";
+  const mode =
+    (typeof import.meta !== "undefined" &&
+      (import.meta as unknown as { env?: Record<string, string> }).env?.MODE) ||
+    (typeof process !== "undefined" ? process.env.NODE_ENV : undefined) ||
+    "development";
+  const isDevelopment = mode === "development";
+  const isProduction = mode === "production";
+  const wsUrl =
+    (typeof import.meta !== "undefined" &&
+      (import.meta as unknown as { env?: Record<string, string> }).env?.VITE_WS_URL) ||
+    (typeof process !== "undefined" ? process.env.NEXT_PUBLIC_WS_URL : undefined) ||
+    getApiBaseUrl().replace(/^http/, "ws");
 
   return {
     apiUrl: getApiBaseUrl(),
-    wsUrl: process.env.NEXT_PUBLIC_WS_URL || getApiBaseUrl().replace(/^http/, "ws"),
+    wsUrl,
     isDevelopment,
     isProduction,
     timeout: isDevelopment ? 30000 : 10000,

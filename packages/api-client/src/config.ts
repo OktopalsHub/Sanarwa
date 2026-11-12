@@ -14,6 +14,28 @@ export interface EnvironmentConfig {
   production: Partial<ApiConfig>;
 }
 
+function readEnv(key: string): string | undefined {
+  const meta = import.meta as unknown as { env?: Record<string, string | undefined> };
+  if (typeof import.meta !== "undefined" && meta.env?.[key]) {
+    return String(meta.env[key]);
+  }
+  if (typeof process !== "undefined" && process.env?.[key]) {
+    return String(process.env[key]);
+  }
+  return undefined;
+}
+
+function readMode(): string {
+  const meta = import.meta as unknown as { env?: Record<string, string | undefined> };
+  if (typeof import.meta !== "undefined" && meta.env?.MODE) {
+    return String(meta.env.MODE);
+  }
+  if (typeof process !== "undefined" && process.env?.NODE_ENV) {
+    return String(process.env.NODE_ENV);
+  }
+  return "development";
+}
+
 const defaultEnvironmentConfig: EnvironmentConfig = {
   development: {
     baseUrl: "http://localhost:8000",
@@ -25,8 +47,14 @@ const defaultEnvironmentConfig: EnvironmentConfig = {
     enableLogging: true,
   },
   staging: {
-    baseUrl: process.env.NEXT_PUBLIC_STAGING_API_URL || "https://staging-api.sanarwa.com",
-    wsUrl: process.env.NEXT_PUBLIC_STAGING_WS_URL || "wss://staging-api.sanarwa.com",
+    baseUrl:
+      readEnv("VITE_API_URL") ||
+      readEnv("NEXT_PUBLIC_STAGING_API_URL") ||
+      "https://staging-api.sanarwa.com",
+    wsUrl:
+      readEnv("VITE_WS_URL") ||
+      readEnv("NEXT_PUBLIC_STAGING_WS_URL") ||
+      "wss://staging-api.sanarwa.com",
     timeout: 15000,
     retryAttempts: 2,
     retryDelay: 2000,
@@ -34,8 +62,8 @@ const defaultEnvironmentConfig: EnvironmentConfig = {
     enableLogging: true,
   },
   production: {
-    baseUrl: process.env.NEXT_PUBLIC_API_URL || "https://api.sanarwa.com",
-    wsUrl: process.env.NEXT_PUBLIC_WS_URL || "wss://api.sanarwa.com",
+    baseUrl: readEnv("VITE_API_URL") || readEnv("NEXT_PUBLIC_API_URL") || "https://api.sanarwa.com",
+    wsUrl: readEnv("VITE_WS_URL") || readEnv("NEXT_PUBLIC_WS_URL") || "wss://api.sanarwa.com",
     timeout: 10000,
     retryAttempts: 3,
     retryDelay: 1000,
@@ -56,7 +84,7 @@ const baseConfig: ApiConfig = {
 
 export const getCurrentEnvironment = (): keyof EnvironmentConfig => {
   if (typeof window === "undefined") {
-    return (process.env.NODE_ENV as keyof EnvironmentConfig) || "development";
+    return (readMode() as keyof EnvironmentConfig) || "development";
   }
 
   const hostname = window.location.hostname;
@@ -81,20 +109,25 @@ export const getApiConfig = (): ApiConfig => {
     ...envConfig,
   };
 
-  if (process.env.NEXT_PUBLIC_API_URL) {
-    config.baseUrl = process.env.NEXT_PUBLIC_API_URL;
+  const apiUrl = readEnv("VITE_API_URL") || readEnv("NEXT_PUBLIC_API_URL");
+  if (apiUrl) {
+    config.baseUrl = apiUrl;
   }
 
-  if (process.env.NEXT_PUBLIC_WS_URL) {
-    config.wsUrl = process.env.NEXT_PUBLIC_WS_URL;
+  const wsUrl = readEnv("VITE_WS_URL") || readEnv("NEXT_PUBLIC_WS_URL");
+  if (wsUrl) {
+    config.wsUrl = wsUrl;
   }
 
-  if (process.env.NEXT_PUBLIC_API_TIMEOUT) {
-    config.timeout = parseInt(process.env.NEXT_PUBLIC_API_TIMEOUT, 10);
+  const timeout = readEnv("VITE_API_TIMEOUT") || readEnv("NEXT_PUBLIC_API_TIMEOUT");
+  if (timeout) {
+    config.timeout = parseInt(timeout, 10);
   }
 
-  if (process.env.NEXT_PUBLIC_API_RETRY_ATTEMPTS) {
-    config.retryAttempts = parseInt(process.env.NEXT_PUBLIC_API_RETRY_ATTEMPTS, 10);
+  const retryAttempts =
+    readEnv("VITE_API_RETRY_ATTEMPTS") || readEnv("NEXT_PUBLIC_API_RETRY_ATTEMPTS");
+  if (retryAttempts) {
+    config.retryAttempts = parseInt(retryAttempts, 10);
   }
 
   return config;
@@ -109,11 +142,17 @@ export const getCorsConfig = () => {
       credentials: true,
     },
     staging: {
-      origin: [process.env.NEXT_PUBLIC_STAGING_URL || "https://staging.sanarwa.com"],
+      origin: [
+        readEnv("VITE_STAGING_URL") ||
+          readEnv("NEXT_PUBLIC_STAGING_URL") ||
+          "https://staging.sanarwa.com",
+      ],
       credentials: true,
     },
     production: {
-      origin: [process.env.NEXT_PUBLIC_APP_URL || "https://app.sanarwa.com"],
+      origin: [
+        readEnv("VITE_APP_URL") || readEnv("NEXT_PUBLIC_APP_URL") || "https://app.sanarwa.com",
+      ],
       credentials: true,
     },
   };
@@ -123,11 +162,18 @@ export const getCorsConfig = () => {
 
 export const getFeatureFlags = () => {
   return {
-    enableAnalytics: process.env.NEXT_PUBLIC_ENABLE_ANALYTICS === "true",
-    enableErrorReporting: process.env.NEXT_PUBLIC_ENABLE_ERROR_REPORTING === "true",
-    enablePerformanceMonitoring: process.env.NEXT_PUBLIC_ENABLE_PERFORMANCE_MONITORING === "true",
-    enableWebRTC: process.env.NEXT_PUBLIC_ENABLE_WEBRTC !== "false",
-    enableRealTimeUpdates: process.env.NEXT_PUBLIC_ENABLE_REALTIME !== "false",
+    enableAnalytics:
+      (readEnv("VITE_ENABLE_ANALYTICS") || readEnv("NEXT_PUBLIC_ENABLE_ANALYTICS")) === "true",
+    enableErrorReporting:
+      (readEnv("VITE_ENABLE_ERROR_REPORTING") || readEnv("NEXT_PUBLIC_ENABLE_ERROR_REPORTING")) ===
+      "true",
+    enablePerformanceMonitoring:
+      (readEnv("VITE_ENABLE_PERFORMANCE_MONITORING") ||
+        readEnv("NEXT_PUBLIC_ENABLE_PERFORMANCE_MONITORING")) === "true",
+    enableWebRTC:
+      (readEnv("VITE_ENABLE_WEBRTC") || readEnv("NEXT_PUBLIC_ENABLE_WEBRTC")) !== "false",
+    enableRealTimeUpdates:
+      (readEnv("VITE_ENABLE_REALTIME") || readEnv("NEXT_PUBLIC_ENABLE_REALTIME")) !== "false",
   };
 };
 
@@ -161,8 +207,8 @@ export const getPerformanceConfig = () => {
     enableCaching: true,
     cacheTimeout: 5 * 60 * 1000,
     enableCompression: true,
-    enableBundleAnalysis: process.env.ANALYZE === "true",
-    enableServiceWorker: process.env.NODE_ENV === "production",
+    enableBundleAnalysis: readEnv("ANALYZE") === "true",
+    enableServiceWorker: readMode() === "production",
   };
 };
 

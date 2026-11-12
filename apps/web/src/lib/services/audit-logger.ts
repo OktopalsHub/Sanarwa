@@ -1,6 +1,10 @@
 import { AuditLogEntry } from "@/lib/types/permissions";
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
+const env = (import.meta as unknown as { env?: Record<string, string> }).env;
+const API_BASE_URL =
+  env?.VITE_API_URL ||
+  (typeof process !== "undefined" ? process.env?.NEXT_PUBLIC_API_URL : undefined) ||
+  "http://localhost:8000/api/v1";
 
 export interface AuditLogData {
   action: string;

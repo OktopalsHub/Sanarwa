@@ -7,7 +7,7 @@ import { useInAppActions, useInAppFeed } from "@/lib/query/hooks/use-in-app-feed
 import { useCurrentUser } from "@/lib/query/hooks/use-auth-queries";
 import { BellIcon } from "@heroicons/react/24/outline";
 import { useEffect, useState } from "react";
-import { useParams } from "@tanstack/react-router";
+import { useTenant } from "@/contexts/tenant-context";
 
 function timeAgo(iso: string) {
   const d = new Date(iso);
@@ -21,14 +21,10 @@ function timeAgo(iso: string) {
 }
 
 export function NotificationBell() {
-  const params = useParams({ strict: false }) as { tenantSlug?: string };
-  const tenantSlug = params?.tenantSlug;
   const { data: user } = useCurrentUser();
+  const { selectedTenant } = useTenant();
   const subscriberId = (user as any)?.id || (user as any)?.user?.id;
-  const tenantId =
-    typeof window !== "undefined"
-      ? localStorage.getItem(`tenantId:${tenantSlug}`) || tenantSlug
-      : tenantSlug;
+  const tenantId = selectedTenant?.id;
 
   const [open, setOpen] = useState(false);
   const { feedItems, unseenCount, isLoading, refetch } = useInAppFeed(tenantId, subscriberId);

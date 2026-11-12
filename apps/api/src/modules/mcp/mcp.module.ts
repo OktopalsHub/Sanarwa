@@ -23,7 +23,7 @@ import { SanarwaMcpTools } from "./mcp.tools";
       imports: [ConfigModule, ApiKeyModule],
       inject: [ConfigService, ApiKeyService],
       useFactory: (config: ConfigService, apiKeyService: ApiKeyService) => {
-        const resource = config.get<string>("MCP_RESOURCE") ?? "http://localhost:3000/mcp";
+        const resource = config.get<string>("MCP_RESOURCE") ?? "http://localhost:8000/mcp";
         return {
           name: "sanarwa",
           version: "0.0.1",
@@ -33,7 +33,7 @@ import { SanarwaMcpTools } from "./mcp.tools";
             verifier: new ApiKeyTokenVerifier(apiKeyService, config),
             resource,
             authorizationServers: [
-              config.get<string>("MCP_AUTHORIZATION_SERVER") ?? "http://localhost:3000",
+              config.get<string>("MCP_AUTHORIZATION_SERVER") ?? "http://localhost:8000",
             ],
             scopesSupported: [...MCP_SCOPES],
             resourceName: "Sanarwa",

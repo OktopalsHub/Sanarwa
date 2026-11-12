@@ -31,6 +31,6 @@ export class ApiKeyTokenVerifier implements McpTokenVerifier {
   }
 
   private mcpResource(): string {
-    return this.configService.get<string>("MCP_RESOURCE") ?? "http://localhost:3000/mcp";
+    return this.configService.get<string>("MCP_RESOURCE") ?? "http://localhost:8000/mcp";
   }
 }

@@ -78,7 +78,7 @@ const getTenantAnalytics = vi.fn(async () => ({
       imports: [ConfigModule],
       inject: [ConfigService],
       useFactory: (config: ConfigService) => {
-        const resource = config.get<string>("MCP_RESOURCE") ?? "http://localhost:3000/mcp";
+        const resource = config.get<string>("MCP_RESOURCE") ?? "http://localhost:8000/mcp";
         return {
           name: "sanarwa",
           version: "0.0.1",
@@ -88,7 +88,7 @@ const getTenantAnalytics = vi.fn(async () => ({
             verifier: new ApiKeyTokenVerifier(fakeApiKeyService, config),
             resource,
             authorizationServers: [
-              config.get<string>("MCP_AUTHORIZATION_SERVER") ?? "http://localhost:3000",
+              config.get<string>("MCP_AUTHORIZATION_SERVER") ?? "http://localhost:8000",
             ],
             resourceName: "Sanarwa",
             scopesSupported: [...MCP_SCOPES],

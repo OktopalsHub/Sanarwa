@@ -16,8 +16,8 @@ export interface EnvironmentConfig {
 
 const defaultEnvironmentConfig: EnvironmentConfig = {
   development: {
-    baseUrl: "http://localhost:9000",
-    wsUrl: "ws://localhost:9000",
+    baseUrl: "http://localhost:8000",
+    wsUrl: "ws://localhost:8000",
     timeout: 30000,
     retryAttempts: 1,
     retryDelay: 1000,
@@ -45,8 +45,8 @@ const defaultEnvironmentConfig: EnvironmentConfig = {
 };
 
 const baseConfig: ApiConfig = {
-  baseUrl: "http://localhost:9000",
-  wsUrl: "ws://localhost:9000",
+  baseUrl: "http://localhost:8000",
+  wsUrl: "ws://localhost:8000",
   timeout: 10000,
   retryAttempts: 3,
   retryDelay: 1000,

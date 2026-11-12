@@ -29,7 +29,7 @@ function getApiRuntimeConfig(): ApiRuntimeConfig {
   const baseUrl =
     getEnv("VITE_API_URL") ||
     getEnv("NEXT_PUBLIC_API_URL") ||
-    (isDev ? "http://localhost:9000/api/v1" : "https://api.sanarwa.com/api/v1");
+    (isDev ? "http://localhost:8000/api/v1" : "https://api.sanarwa.com/api/v1");
 
   const wsUrl =
     getEnv("VITE_WS_URL") || getEnv("NEXT_PUBLIC_WS_URL") || baseUrl.replace(/^http/, "ws");

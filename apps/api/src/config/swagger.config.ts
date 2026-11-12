@@ -7,7 +7,7 @@ export function createSwaggerConfig() {
     .setTitle("Sanarwa API")
     .setDescription("API for Sanarwa notification platform")
     .setVersion("1.0")
-    .addServer(`http://localhost:3000/${API_PREFIX}`, "Development")
+    .addServer(`http://localhost:8000/${API_PREFIX}`, "Development")
     .addServer(`https://staging-api.sanarwa.com/${API_PREFIX}`, "Staging")
     .addServer(`https://api.sanarwa.com/${API_PREFIX}`, "Production")
     .addTag("Auth", "Authentication endpoints")

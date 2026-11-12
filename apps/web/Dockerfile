@@ -7,7 +7,7 @@ COPY . .
 RUN pnpm install --frozen-lockfile --filter @sanarwa/web...
 
 FROM base AS builder
-ARG VITE_API_URL=http://localhost:9010
+ARG VITE_API_URL=http://localhost:8000/api/v1
 ENV VITE_API_URL=$VITE_API_URL
 COPY --from=deps /app /app
 WORKDIR /app/apps/web

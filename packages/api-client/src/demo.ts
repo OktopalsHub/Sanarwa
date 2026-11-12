@@ -108,7 +108,7 @@ export const exampleUsage = {
 
 export const environmentExamples = {
   development: {
-    baseUrl: "http://localhost:9000",
+    baseUrl: "http://localhost:8000",
     timeout: 30000,
     retryAttempts: 1,
     enableLogging: true,

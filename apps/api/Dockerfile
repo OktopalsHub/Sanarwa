@@ -16,6 +16,6 @@ ENV NODE_ENV=production
 COPY --from=deps /app /app
 COPY --from=builder /app/apps/api/dist ./apps/api/dist
 COPY --from=builder /app/apps/api/package.json ./apps/api/package.json
-EXPOSE 9000
+EXPOSE 8000
 USER node
 CMD ["node", "apps/api/dist/main.js"]

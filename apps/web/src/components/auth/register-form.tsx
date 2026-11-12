@@ -13,6 +13,7 @@ import { formatTokens, WELCOME_SIGNUP_TOKENS } from "@/lib/pricing";
 import Link from "@/compat/next-link";
 import { useRouter } from "@/compat/next-navigation";
 import { useState } from "react";
+import { IconArrowUpRight } from "@tabler/icons-react";
 
 function FieldLabel({ htmlFor, children }: { htmlFor: string; children: React.ReactNode }) {
   return (
@@ -52,8 +53,6 @@ export function RegisterForm({ variant = "standalone" }: { variant?: "standalone
       errors.password = "Password is required";
     } else if (formData.password.length < 8) {
       errors.password = "Use at least 8 characters";
-    } else if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(formData.password)) {
-      errors.password = "Include uppercase, lowercase, and a number";
     }
 
     setFormErrors(errors);
@@ -161,7 +160,7 @@ export function RegisterForm({ variant = "standalone" }: { variant?: "standalone
               className={inputClass}
             />
             <p id="password-hint" className="text-[11px] text-[var(--color-muted)]">
-              Uppercase, lowercase, and a number
+              Use at least 8 characters
             </p>
             {formErrors.password && (
               <p className="text-sm text-[var(--color-danger)]" role="alert">
@@ -175,9 +174,10 @@ export function RegisterForm({ variant = "standalone" }: { variant?: "standalone
           type="submit"
           size="lg"
           disabled={isLoading}
-          className="h-11 w-full rounded-[var(--radius-input)] bg-[var(--hm-accent)] font-semibold text-[var(--color-accent-ink)] shadow-[var(--shadow-card)] transition-opacity duration-[var(--dur-micro)] ease-[var(--ease-out)] hover:opacity-90 focus-visible:ring-2 focus-visible:ring-[var(--color-focus)] focus-visible:ring-offset-2 active:translate-y-px disabled:opacity-50"
+          className="h-12 w-full rounded-full bg-[var(--hm-accent)] font-mono text-[12px] font-bold uppercase tracking-[0.14em] text-[var(--color-accent-ink)] transition-opacity duration-[var(--dur-micro)] ease-[var(--ease-out)] hover:opacity-90 focus-visible:ring-2 focus-visible:ring-[var(--color-focus)] focus-visible:ring-offset-2 active:translate-y-px disabled:opacity-50"
         >
           {isLoading ? "Creating account…" : "Create account"}
+          {!isLoading && <IconArrowUpRight className="size-5" />}
         </Button>
       </form>
 

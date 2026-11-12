@@ -25,7 +25,14 @@ import { VoiceService } from "./services/voice.service";
 import { BillingMode, BillingChannel } from "../billing/constants/token-pricing";
 import { randomUUID } from "crypto";
 import { ProviderSendOutcome, toProviderSendOutcome } from "./provider-send-outcome";
-import { chatTransport, emailTransport, pushTransport, smsTransport } from "./provider-transport";
+import {
+  chatTransport,
+  emailTransport,
+  inAppTransport,
+  pushTransport,
+  smsTransport,
+  voiceTransport,
+} from "./provider-transport";
 import { ProviderEncryptionService } from "./provider-encryption.service";
 import { parsePhoneNumberWithError } from "libphonenumber-js";
 
@@ -800,24 +807,22 @@ export class ProviderOrchestratorService {
       if (!phoneNumber) throw new Error("Voice call requires 'to' phone number");
       this.logger.log(`Voice call via Telnyx to ${phoneNumber} tenant:${tenantId}`);
 
-      const result = await this.circuitBreaker.execute(`voice:${tenantId}:telnyx`, async () => {
-        const call = await this.voiceService.createOutboundCall(
-          {
-            phoneNumber,
-            message: payload.message || "Sanarwa voice notification",
-            voice: { voice: "Telnyx.Natural.abbie", language: "en-US" },
-          },
+      const outcome = await this.circuitBreaker.execute(`voice:${tenantId}:telnyx`, async () => {
+        const sent = await voiceTransport(this.voiceService).send({
           tenantId,
-        );
+          phoneNumber,
+          message: payload.message || "Sanarwa voice notification",
+          voice: { voice: "Telnyx.Natural.abbie", language: "en-US" },
+        });
 
-        if (!call.success) {
-          throw new Error(call.error || "Telnyx voice call failed");
+        if (sent.status === "failed") {
+          throw new Error(sent.reason);
         }
 
-        return call;
+        return sent;
       });
 
-      return { status: "sent", externalId: result.callControlId, providerId: "telnyx" };
+      return { ...outcome, providerId: "telnyx" };
     } catch (error) {
       this.logger.error(`Voice call failed: ${error.message}`, error.stack);
       throw error;
@@ -834,37 +839,11 @@ export class ProviderOrchestratorService {
   ): Promise<ProviderSendOutcome> {
     this.assertTenantId(tenantId);
     try {
-      const result = await this.inAppOrchestrator.sendInAppNotification({ ...payload, tenantId });
+      const outcome = await inAppTransport(this.inAppOrchestrator).send({ ...payload, tenantId });
       await this.chargeForSend(tenantId, NotificationChannel.IN_APP, "managed");
-      return { ...toProviderSendOutcome(result), providerId: "in-app" };
+      return { ...outcome, providerId: "in-app" };
     } catch (error) {
       this.logger.error(`In-app notification failed: ${error.message}`, error.stack);
-      throw error;
-    }
-  }
-
-  async sendToRoom(roomId: string, payload: InAppPayload): Promise<ProviderSendOutcome> {
-    try {
-      return {
-        ...toProviderSendOutcome(await this.inAppOrchestrator.sendToRoom(roomId, payload)),
-        providerId: "in-app",
-      };
-    } catch (error) {
-      this.logger.error(`Room notification failed: ${error.message}`, error.stack);
-      throw error;
-    }
-  }
-
-  async sendCallNotification(
-    payload: InAppPayload & { callData: NonNullable<InAppPayload["callData"]> },
-  ): Promise<ProviderSendOutcome> {
-    try {
-      return {
-        ...toProviderSendOutcome(await this.inAppOrchestrator.sendCallNotification(payload)),
-        providerId: "in-app",
-      };
-    } catch (error) {
-      this.logger.error(`Call notification failed: ${error.message}`, error.stack);
       throw error;
     }
   }

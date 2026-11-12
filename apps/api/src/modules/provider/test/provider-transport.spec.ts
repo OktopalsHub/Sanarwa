@@ -1,5 +1,12 @@
 import { describe, expect, it, vi } from "vitest";
-import { chatTransport, emailTransport, pushTransport, smsTransport } from "../provider-transport";
+import {
+  chatTransport,
+  emailTransport,
+  inAppTransport,
+  pushTransport,
+  smsTransport,
+  voiceTransport,
+} from "../provider-transport";
 
 describe("provider transports", () => {
   it("normalises an email failure and keeps its reason", async () => {
@@ -42,5 +49,47 @@ describe("provider transports", () => {
     const outcome = await chatTransport(provider as never).send({} as never);
 
     expect(outcome.status).toBe("failed");
+  });
+
+  it("maps a created voice call to its call control id and passes the tenant", async () => {
+    const voiceService = {
+      createOutboundCall: vi.fn().mockResolvedValue({ success: true, callControlId: "cc-1" }),
+    };
+
+    const outcome = await voiceTransport(voiceService as never).send({
+      tenantId: "t1",
+      phoneNumber: "+15551234567",
+      message: "hi",
+    });
+
+    expect(outcome).toEqual({ status: "sent", externalId: "cc-1" });
+    expect(voiceService.createOutboundCall).toHaveBeenCalledWith(
+      { phoneNumber: "+15551234567", message: "hi" },
+      "t1",
+    );
+  });
+
+  it("reports a voice failure with the provider's reason", async () => {
+    const voiceService = {
+      createOutboundCall: vi.fn().mockResolvedValue({ success: false, error: "no route" }),
+    };
+
+    const outcome = await voiceTransport(voiceService as never).send({
+      tenantId: "t1",
+      phoneNumber: "+1",
+      message: "hi",
+    });
+
+    expect(outcome).toEqual({ status: "failed", reason: "no route" });
+  });
+
+  it("normalises an in-app delivery result", async () => {
+    const inApp = {
+      sendInAppNotification: vi.fn().mockResolvedValue({ success: true, messageId: "n1" }),
+    };
+
+    const outcome = await inAppTransport(inApp as never).send({ tenantId: "t1" } as never);
+
+    expect(outcome).toEqual({ status: "sent", externalId: "n1" });
   });
 });

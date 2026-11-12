@@ -60,6 +60,9 @@ export class TokenBalance {
   unique: true,
   where: `"type" = 'purchase' AND "reference_id" IS NOT NULL`,
 })
+@Index("IDX_token_usage_reference", ["tenantId", "referenceId"], {
+  where: `"type" = 'usage' AND "reference_id" IS NOT NULL`,
+})
 export class TokenTransaction {
   @PrimaryGeneratedColumn("uuid")
   id: string;

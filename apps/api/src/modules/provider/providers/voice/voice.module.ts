@@ -7,6 +7,7 @@ import { VoiceService } from "../../services/voice.service";
 import { VoiceController } from "../../controllers/voice.controller";
 import { TelnyxWebhookController } from "../../controllers/telnyx-webhook.controller";
 import { VoiceCallTrackingService } from "../../services/voice-call-tracking.service";
+import { VoiceBillingReconcilerService } from "../../services/voice-billing-reconciler.service";
 import { VoiceCall } from "../../entities/voice-call.entity";
 
 import { WebhookValidatorService } from "../../services/webhook-validator.service";
@@ -20,6 +21,7 @@ import { BillingModule } from "../../../billing/billing.module";
     VoiceOrchestratorService,
     VoiceService,
     VoiceCallTrackingService,
+    VoiceBillingReconcilerService,
     WebhookValidatorService,
   ],
   controllers: [VoiceController, TelnyxWebhookController],

@@ -13,6 +13,7 @@ export type VoiceCallStatus = "initiated" | "connected" | "ended" | "failed";
 @Index(["tenantId", "createdAt"])
 @Index(["callControlId"], { unique: true })
 @Index(["tenantId", "status"])
+@Index("IDX_voice_calls_unbilled", ["status", "billedAt"])
 export class VoiceCall {
   @PrimaryGeneratedColumn("uuid")
   id: string;
@@ -41,8 +42,14 @@ export class VoiceCall {
   @Column({ type: "timestamp", name: "started_at" })
   startedAt: Date;
 
+  @Column({ type: "timestamp", name: "answered_at", nullable: true })
+  answeredAt?: Date;
+
   @Column({ type: "timestamp", name: "ended_at", nullable: true })
   endedAt?: Date;
+
+  @Column({ type: "timestamp", name: "billed_at", nullable: true })
+  billedAt?: Date;
 
   @Column({ type: "jsonb", nullable: true })
   metadata?: Record<string, any>;

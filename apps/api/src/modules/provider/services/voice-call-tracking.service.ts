@@ -1,6 +1,6 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
-import { Repository } from "typeorm";
+import { IsNull, LessThan, Repository } from "typeorm";
 import { BillingIntegrationService } from "../../billing/services/billing-integration.service";
 import { VoiceCall } from "../entities/voice-call.entity";
 
@@ -14,11 +14,18 @@ export interface CallStartData {
 
 export interface CallEndData {
   callControlId: string;
-  durationSeconds: number;
   hangupCause?: string;
 }
 
 type CallRecord = VoiceCall;
+
+const SECONDS_PER_MINUTE = 60;
+const MINUTE_MS = SECONDS_PER_MINUTE * 1000;
+const NO_HANGUP_RECEIVED = "no_hangup_received";
+const RECONCILE_BATCH_SIZE = 100;
+const UNBILLED_RETRY_DELAY_MS = 2 * MINUTE_MS;
+const STALE_RINGING_MS = 60 * MINUTE_MS;
+const STALE_CONNECTED_MS = 120 * MINUTE_MS;
 
 @Injectable()
 export class VoiceCallTrackingService {
@@ -52,7 +59,10 @@ export class VoiceCallTrackingService {
 
   async markCallAnswered(callControlId: string): Promise<void> {
     try {
-      await this.voiceCallRepo.update({ callControlId }, { status: "connected" as any });
+      await this.voiceCallRepo.update(
+        { callControlId, answeredAt: IsNull() },
+        { status: "connected", answeredAt: new Date() },
+      );
       this.logger.log(`Call answered: ${callControlId}`);
     } catch (error) {
       this.logger.error(`Failed to mark call as answered: ${error.message}`, error.stack);
@@ -72,43 +82,116 @@ export class VoiceCallTrackingService {
         this.logger.log(`Call ${data.callControlId} already ended; ignoring duplicate hangup`);
         return;
       }
-      // A call that never connected (or hung up in zero seconds) costs nothing.
-      const billableMinutes = Math.max(1, Math.ceil(Math.max(0, data.durationSeconds) / 60));
-      const shouldBill = data.durationSeconds > 0;
+
+      const endedAt = new Date();
+      const durationSeconds = callRecord.answeredAt
+        ? Math.max(0, Math.round((endedAt.getTime() - callRecord.answeredAt.getTime()) / 1000))
+        : 0;
+
       await this.voiceCallRepo.update({ callControlId: data.callControlId }, {
         status: "ended",
-        duration: data.durationSeconds,
-        endedAt: new Date(),
+        duration: durationSeconds,
+        endedAt,
         hangupCause: data.hangupCause,
       } as any);
-      if (shouldBill) {
-        try {
-          await this.billingIntegrationService.processNotificationTokenUsage(
-            callRecord.tenantId,
-            "voice",
-            `voice:${data.callControlId}`,
-            "managed",
-            { durationMinutes: billableMinutes, callControlId: data.callControlId },
-            billableMinutes,
-          );
-          this.logger.log(
-            `Billed ${billableMinutes} minute(s) for voice call ${data.callControlId} (tenant ${callRecord.tenantId})`,
-          );
-        } catch (billingError) {
-          this.logger.error(
-            `Failed to bill voice usage for ${data.callControlId} (tenant ${callRecord.tenantId}): ${(billingError as Error).message}`,
-          );
-        }
+
+      if (durationSeconds > 0) {
+        await this.billCall({ ...callRecord, duration: durationSeconds });
       } else {
         this.logger.log(
           `Voice call ${data.callControlId} (tenant ${callRecord.tenantId}) never connected — not billed`,
         );
       }
-      this.logger.log(
-        `Call ended: ${data.callControlId}, Duration: ${data.durationSeconds}s, Billable: ${billableMinutes}min`,
-      );
     } catch (error) {
       this.logger.error(`Failed to end call tracking: ${error.message}`, error.stack);
+    }
+  }
+
+  /**
+   * Retries billing for ended calls whose charge failed, then closes calls that
+   * never received a hangup webhook. Safe to run on several instances: the
+   * ledger charges each call at most once.
+   */
+  async reconcile(now: Date = new Date()): Promise<void> {
+    await this.retryUnbilledCalls(now);
+    await this.closeStaleCalls(now);
+  }
+
+  private async retryUnbilledCalls(now: Date): Promise<void> {
+    const cutoff = new Date(now.getTime() - UNBILLED_RETRY_DELAY_MS);
+    const calls = await this.voiceCallRepo.find({
+      where: { status: "ended", billedAt: IsNull(), endedAt: LessThan(cutoff) },
+      take: RECONCILE_BATCH_SIZE,
+    });
+
+    for (const call of calls) {
+      if ((call.duration ?? 0) > 0) {
+        await this.billCall(call);
+      }
+    }
+  }
+
+  private async closeStaleCalls(now: Date): Promise<void> {
+    const staleRinging = await this.voiceCallRepo.update(
+      {
+        status: "initiated",
+        startedAt: LessThan(new Date(now.getTime() - STALE_RINGING_MS)),
+      },
+      { status: "failed", endedAt: now, hangupCause: NO_HANGUP_RECEIVED },
+    );
+    if (staleRinging.affected) {
+      this.logger.warn(`Closed ${staleRinging.affected} voice call(s) that never connected`);
+    }
+
+    const staleConnected = await this.voiceCallRepo.find({
+      where: {
+        status: "connected",
+        answeredAt: LessThan(new Date(now.getTime() - STALE_CONNECTED_MS)),
+      },
+      take: RECONCILE_BATCH_SIZE,
+    });
+
+    for (const call of staleConnected) {
+      const claimed = await this.voiceCallRepo.update(
+        { id: call.id, status: "connected" },
+        {
+          status: "ended",
+          duration: SECONDS_PER_MINUTE,
+          endedAt: now,
+          hangupCause: NO_HANGUP_RECEIVED,
+        },
+      );
+      if (!claimed.affected) {
+        continue;
+      }
+      this.logger.error(
+        `Voice call ${call.callControlId} (tenant ${call.tenantId}) never sent a hangup; billing the 1-minute minimum`,
+      );
+      await this.billCall({ ...call, duration: SECONDS_PER_MINUTE });
+    }
+  }
+
+  private async billCall(call: CallRecord): Promise<void> {
+    const billableMinutes = Math.max(1, Math.ceil((call.duration ?? 0) / SECONDS_PER_MINUTE));
+
+    try {
+      await this.billingIntegrationService.processNotificationTokenUsage(
+        call.tenantId,
+        "voice",
+        `voice:${call.callControlId}`,
+        "managed",
+        { durationMinutes: billableMinutes, callControlId: call.callControlId },
+        billableMinutes,
+        { dedupeByReference: true },
+      );
+      await this.voiceCallRepo.update({ id: call.id }, { billedAt: new Date() });
+      this.logger.log(
+        `Billed ${billableMinutes} minute(s) for voice call ${call.callControlId} (tenant ${call.tenantId})`,
+      );
+    } catch (error) {
+      this.logger.error(
+        `Failed to bill voice usage for ${call.callControlId} (tenant ${call.tenantId}); will retry: ${(error as Error).message}`,
+      );
     }
   }
 

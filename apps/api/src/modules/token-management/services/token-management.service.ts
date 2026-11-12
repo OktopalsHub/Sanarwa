@@ -13,6 +13,8 @@ export interface TokenUsageDto {
   description?: string;
   metadata?: any;
   referenceId?: string;
+  /** Charge at most once per `tenantId` + `referenceId`; a repeat call is a no-op. */
+  dedupeByReference?: boolean;
 }
 
 export interface TokenBalanceInfo {
@@ -187,6 +189,28 @@ export class TokenManagementService {
 
       if (!balance) {
         throw new BadRequestException("No token balance found for tenant");
+      }
+
+      if (dto.dedupeByReference && dto.referenceId) {
+        const alreadyCharged = await queryRunner.manager.findOne(TokenTransaction, {
+          where: {
+            tenantId: dto.tenantId,
+            type: TokenTransactionType.USAGE,
+            referenceId: dto.referenceId,
+          },
+        });
+
+        if (alreadyCharged) {
+          await queryRunner.rollbackTransaction();
+          return {
+            totalTokens: Number(balance.totalTokens),
+            usedTokens: Number(balance.usedTokens),
+            availableTokens: Number(balance.availableTokens),
+            reservedTokens: Number(balance.reservedTokens),
+            lastUsage: balance.lastUsage,
+            lastPurchase: balance.lastPurchase,
+          };
+        }
       }
 
       const availableTokens = Number(balance.availableTokens);

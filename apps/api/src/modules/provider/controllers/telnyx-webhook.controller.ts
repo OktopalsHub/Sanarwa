@@ -130,6 +130,7 @@ export class TelnyxWebhookController {
 
   private async handleCallAnswered(payload: any) {
     this.logger.log(`Call answered: ${payload.call_control_id}`);
+    await this.voiceCallTracking.markCallAnswered(payload.call_control_id);
 
     const customHeaders = payload.custom_headers || [];
     const ttsHeader = customHeaders.find((h: any) => h.name === "X-TTS-Message");
@@ -153,15 +154,8 @@ export class TelnyxWebhookController {
     const callControlId = payload.call_control_id;
     this.logger.log(`Call ended: ${callControlId} - ${payload.hangup_cause || "unknown cause"}`);
 
-    const record = await this.voiceCallTracking.getCallByControlId(callControlId);
-    const startedAt = record?.startedAt ? new Date(record.startedAt) : null;
-    const durationSeconds = startedAt
-      ? Math.max(0, Math.round((Date.now() - startedAt.getTime()) / 1000))
-      : 0;
-
     await this.voiceCallTracking.endCall({
       callControlId,
-      durationSeconds,
       hangupCause: payload.hangup_cause,
     });
   }

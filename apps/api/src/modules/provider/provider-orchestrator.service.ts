@@ -25,6 +25,7 @@ import { VoiceService } from "./services/voice.service";
 import { BillingMode, BillingChannel } from "../billing/constants/token-pricing";
 import { randomUUID } from "crypto";
 import { ProviderSendOutcome, toProviderSendOutcome } from "./provider-send-outcome";
+import { chatTransport, emailTransport, pushTransport, smsTransport } from "./provider-transport";
 import { ProviderEncryptionService } from "./provider-encryption.service";
 import { parsePhoneNumberWithError } from "libphonenumber-js";
 
@@ -129,7 +130,7 @@ export class ProviderOrchestratorService {
     chain: readonly string[],
     channel: "email" | "push" | "sms",
     tenantId: string,
-    call: (provider: T) => Promise<unknown>,
+    call: (provider: T) => Promise<ProviderSendOutcome>,
     region?: string,
   ): Promise<{ outcome: ProviderSendOutcome; provider: string } | null> {
     const effectiveChain = await this.applyRoutingRule(chain, channel, region);
@@ -148,8 +149,7 @@ export class ProviderOrchestratorService {
         const outcome = await this.circuitBreaker.execute(
           `managed-${channel}:${name}`,
           async () => {
-            const raw = await call(provider);
-            const mapped = toProviderSendOutcome(raw);
+            const mapped = await call(provider);
 
             if (mapped.failedTokens && mapped.failedTokens.length > 0) {
               await this.deviceRegistrationService.pruneInvalidTokens(mapped.failedTokens);
@@ -240,15 +240,13 @@ export class ProviderOrchestratorService {
    */
   private async attemptByopSend(
     key: string,
-    call: () => Promise<unknown>,
+    call: () => Promise<ProviderSendOutcome>,
     providerName?: string,
   ): Promise<ProviderSendOutcome> {
     try {
       return await this.circuitBreaker.execute(key, async () => {
-        const raw = await call();
-        const mapped = providerName
-          ? { ...toProviderSendOutcome(raw), providerId: providerName }
-          : toProviderSendOutcome(raw);
+        const outcome = await call();
+        const mapped = providerName ? { ...outcome, providerId: providerName } : outcome;
         if (isRetryableFailure(mapped)) {
           throw new ProviderOutcomeFailure(mapped);
         }
@@ -323,7 +321,7 @@ export class ProviderOrchestratorService {
         const provider = await this.createByopEmailProvider(resolved);
         const outcome = await this.attemptByopSend(
           `byo-email:${tenantId}:${resolved.providerName}`,
-          () => provider.sendEmail(payload),
+          () => emailTransport(provider).send(payload),
           resolved.providerName,
         );
         if (outcome.status === "sent") {
@@ -360,7 +358,7 @@ export class ProviderOrchestratorService {
         ProviderOrchestratorService.EMAIL_MANAGED_CHAIN,
         "email",
         tenantId,
-        (provider) => provider.sendEmail(enhancedPayload),
+        (provider) => emailTransport(provider).send(enhancedPayload),
       );
 
       if (!managed) {
@@ -412,7 +410,7 @@ export class ProviderOrchestratorService {
       const provider = this.createByopChatProvider(resolved);
       const outcome = await this.attemptByopSend(
         `byo-${breakerChannel}:${tenantId}:${resolvedName}`,
-        () => provider.sendMessage(payload),
+        () => chatTransport(provider).send(payload),
         resolvedName,
       );
       if (outcome.status === "sent") {
@@ -468,8 +466,7 @@ export class ProviderOrchestratorService {
       }
     }
 
-    const result = await provider.sendMessage(payload);
-    return toProviderSendOutcome(result);
+    return chatTransport(provider).send(payload);
   }
 
   async sendPushNotification(
@@ -487,7 +484,7 @@ export class ProviderOrchestratorService {
       if (resolved?.mode === "byo") {
         const outcome = await this.attemptByopSend(
           `byo-push:${tenantId}:${resolved.providerName}`,
-          () => this.createByopPushProvider(resolved).sendPushNotification(payload),
+          () => pushTransport(this.createByopPushProvider(resolved)).send(payload),
           resolved.providerName,
         );
         if (outcome.status === "sent") {
@@ -515,7 +512,7 @@ export class ProviderOrchestratorService {
         ProviderOrchestratorService.PUSH_MANAGED_CHAIN,
         "push",
         tenantId,
-        (provider) => provider.sendPushNotification(enhancedPayload),
+        (provider) => pushTransport(provider).send(enhancedPayload),
       );
 
       if (!managed) {
@@ -541,7 +538,7 @@ export class ProviderOrchestratorService {
       if (resolved?.mode === "byo") {
         const outcome = await this.attemptByopSend(
           `byo-sms:${tenantId}:${resolved.providerName}`,
-          () => this.createByopSmsProvider(resolved).sendSMS(payload),
+          () => smsTransport(this.createByopSmsProvider(resolved)).send(payload),
           resolved.providerName,
         );
         if (outcome.status === "sent") {
@@ -561,7 +558,7 @@ export class ProviderOrchestratorService {
         chain,
         "sms",
         tenantId,
-        (provider) => provider.sendSMS(payload),
+        (provider) => smsTransport(provider).send(payload),
         this.smsRegion(payload.to),
       );
 
@@ -588,7 +585,7 @@ export class ProviderOrchestratorService {
       if (resolved?.mode === "byo") {
         const outcome = await this.attemptByopSend(
           `byo-sms:${tenantId}:${resolved.providerName}`,
-          () => this.createByopSmsProvider(resolved).sendBulkSMS(payload),
+          () => smsTransport(this.createByopSmsProvider(resolved)).sendBulk(payload),
           resolved.providerName,
         );
         if (outcome.status === "sent") {
@@ -618,7 +615,7 @@ export class ProviderOrchestratorService {
         chain,
         "sms",
         tenantId,
-        (provider) => provider.sendBulkSMS(payload),
+        (provider) => smsTransport(provider).sendBulk(payload),
       );
 
       if (!managed) {

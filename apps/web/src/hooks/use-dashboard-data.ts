@@ -1,87 +1,118 @@
 "use client";
 
-import { analyticsApi } from "@sanarwa/api-client";
-import { messagingApi } from "@sanarwa/api-client";
+import { apiKeyApi, billingApi, messagingApi, projectApi, providerApi } from "@sanarwa/api-client";
 import { useTenant } from "@/contexts/tenant-context";
 import { useQuery } from "@tanstack/react-query";
 
-export interface DashboardMetrics {
-  totalCampaigns: number;
-  activeCampaigns: number;
-  totalMessages: number;
-  deliveryRate: number;
-  failed: number;
-  openRate: number;
-  clickRate: number;
-}
+const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
+const STALE_TIME = 5 * 60 * 1000;
 
-export interface ChartData {
-  name: string;
-  value: number;
-  [key: string]: string | number;
-}
-
-export interface DashboardData {
-  metrics: DashboardMetrics;
-  channelDistribution: ChartData[];
+function thirtyDayWindow() {
+  const end = new Date();
+  const start = new Date(end.getTime() - THIRTY_DAYS_MS);
+  return { start, end };
 }
 
 export function useDashboardData() {
   const { selectedTenant } = useTenant();
+  const tenantId = selectedTenant?.id;
+  const enabled = Boolean(tenantId);
 
-  const { data, isLoading, error, refetch } = useQuery({
-    queryKey: ["dashboard", selectedTenant?.id],
-    queryFn: async (): Promise<DashboardData> => {
-      if (selectedTenant?.id) {
-      }
-      const end = new Date();
-      const start = new Date();
-      start.setDate(start.getDate() - 30);
-      const [raw, stats] = await Promise.all([
-        analyticsApi.getTenantAnalytics(start, end).catch(() => ({})),
-        messagingApi
-          .stats({
-            startDate: start.toISOString(),
-            endDate: end.toISOString(),
-          })
-          .catch(() => ({
-            total: 0,
-            sent: 0,
-            delivered: 0,
-            failed: 0,
-            queued: 0,
-            deliveryRate: 0,
-          })),
-      ]);
-      const summary = ((raw as Record<string, unknown>).summary || raw) as Record<string, number>;
-      return {
-        metrics: {
-          totalCampaigns: summary.totalCampaigns ?? 0,
-          activeCampaigns: summary.activeCampaigns ?? 0,
-          totalMessages: stats.total || summary.totalSent || 0,
-          deliveryRate: stats.deliveryRate || summary.deliveryRate || 0,
-          failed: stats.failed || 0,
-          openRate: summary.openRate ?? 0,
-          clickRate: summary.clickRate ?? 0,
-        },
-        channelDistribution: Array.isArray((raw as Record<string, unknown>).channels)
-          ? (
-              (raw as Record<string, unknown>).channels as Array<{ channel: string; sent: number }>
-            ).map((c) => ({
-              name: c.channel,
-              value: c.sent,
-            }))
-          : [],
-      };
+  const stats = useQuery({
+    queryKey: ["dashboard-stats", tenantId],
+    queryFn: () => {
+      const { start, end } = thirtyDayWindow();
+      return messagingApi.stats({
+        startDate: start.toISOString(),
+        endDate: end.toISOString(),
+      });
     },
-    enabled: !!selectedTenant?.id,
-    staleTime: 5 * 60 * 1000,
+    enabled,
+    staleTime: STALE_TIME,
   });
 
-  return {
-    data,
-    isLoading,
-    error,
-    refetch,
-  };
+  const allTimeStats = useQuery({
+    queryKey: ["dashboard-stats-all-time", tenantId],
+    queryFn: () => messagingApi.stats(),
+    enabled,
+    staleTime: STALE_TIME,
+  });
+
+  const breakdown = useQuery({
+    queryKey: ["dashboard-breakdown", tenantId],
+    queryFn: async () => {
+      const { start, end } = thirtyDayWindow();
+      const result = await messagingApi.getDeliveryBreakdown({
+        startDate: start.toISOString(),
+        endDate: end.toISOString(),
+      });
+      const dayFormat = new Intl.DateTimeFormat(undefined, {
+        month: "short",
+        day: "numeric",
+      });
+      return {
+        days: result.days.map((day) => ({
+          name: dayFormat.format(new Date(`${day.date}T00:00:00`)),
+          sent: day.sent,
+          delivered: day.delivered,
+          failed: day.failed,
+        })),
+        channels: result.channels.map((channel) => ({
+          ...channel,
+          deliveryRate:
+            channel.sent > 0 ? Math.round((channel.delivered / channel.sent) * 1000) / 10 : 0,
+        })),
+      };
+    },
+    enabled,
+    staleTime: STALE_TIME,
+  });
+
+  const recent = useQuery({
+    queryKey: ["dashboard-recent", tenantId],
+    queryFn: () => messagingApi.list({ limit: 6 }),
+    enabled,
+    staleTime: STALE_TIME,
+  });
+
+  const tokens = useQuery({
+    queryKey: ["dashboard-tokens", tenantId],
+    queryFn: async () => {
+      const { start, end } = thirtyDayWindow();
+      const [balance, usage] = await Promise.all([
+        billingApi.getTokenBalance(),
+        billingApi.getUsageStats(start.toISOString(), end.toISOString()),
+      ]);
+      return { balance, usage };
+    },
+    enabled,
+    staleTime: STALE_TIME,
+  });
+
+  const setup = useQuery({
+    queryKey: ["dashboard-setup", tenantId],
+    queryFn: async () => {
+      const projects = await projectApi.getProjects({ limit: 10 });
+      const perProject = await Promise.all(
+        projects.data.map(async (project) => {
+          const [providers, keys] = await Promise.all([
+            providerApi.getProvidersByProject(project.id, { limit: 1 }),
+            apiKeyApi.getApiKeysByProject(project.id),
+          ]);
+          return {
+            hasProvider: providers.data.length > 0,
+            hasApiKey: keys.data.length > 0,
+          };
+        }),
+      );
+      return {
+        hasProvider: perProject.some((result) => result.hasProvider),
+        hasApiKey: perProject.some((result) => result.hasApiKey),
+      };
+    },
+    enabled,
+    staleTime: STALE_TIME,
+  });
+
+  return { stats, allTimeStats, breakdown, recent, tokens, setup };
 }

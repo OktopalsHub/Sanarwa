@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "@/compat/next-link";
 import { LINK, SHELL } from "./shared";
+import { cn } from "@/lib/utils";
 
 type SnippetId = "curl" | "typescript" | "response";
 
@@ -83,16 +84,26 @@ function CodePanel() {
   };
 
   return (
-    <div className="lp-well min-w-0 overflow-hidden">
+    <div className="lp-panel min-w-0 overflow-hidden">
       <div className="flex items-center gap-2 border-b border-lp-rule px-2 py-2">
-        <div className="flex min-w-0 flex-1 gap-1 overflow-x-auto">
+        <div
+          className="flex min-w-0 flex-1 gap-1 overflow-x-auto"
+          role="tablist"
+          aria-label="Snippet language"
+        >
           {TABS.map((item) => (
             <button
               key={item.id}
               type="button"
-              aria-pressed={tab === item.id}
+              role="tab"
+              aria-selected={tab === item.id}
               onClick={() => setTab(item.id)}
-              className="lp-tab shrink-0 font-lp-mono"
+              className={cn(
+                "min-h-9 shrink-0 rounded-md px-3 font-lp-mono text-[12px] transition-colors duration-150",
+                tab === item.id
+                  ? "bg-lp-panel-raised text-lp-ink"
+                  : "text-lp-muted hover:text-lp-ink",
+              )}
             >
               {item.label}
             </button>
@@ -101,18 +112,18 @@ function CodePanel() {
         <button
           type="button"
           onClick={copy}
-          className="inline-flex min-h-11 shrink-0 items-center rounded-[var(--radius-lp-pill)] border border-lp-rule-2 px-3 text-[12px] text-lp-ink transition-colors hover:bg-lp-paper-3"
+          className="min-h-9 shrink-0 rounded-md border border-lp-rule px-3 text-[12px] text-lp-ink-2 transition-colors duration-150 hover:border-lp-field hover:text-lp-ink"
         >
           {copied ? "copied" : "copy"}
         </button>
       </div>
 
-      <pre className="lp-scroll max-h-[25rem] overflow-auto p-5 font-lp-mono text-[13px] leading-[1.7] text-lp-ink">
+      <pre className="max-h-[25rem] overflow-auto whitespace-pre-wrap break-words p-4 font-lp-mono text-[11px] leading-[1.6] text-lp-ink-2 sm:p-5 sm:text-[13px] sm:leading-[1.7]">
         <code>{SNIPPETS[tab]}</code>
       </pre>
 
       <div className="flex flex-wrap items-center gap-x-5 gap-y-1.5 border-t border-lp-rule px-5 py-3 text-[12px] text-lp-muted">
-        <span className="text-lp-live">
+        <span className="text-lp-ok">
           <span className="font-lp-mono">201</span> created
         </span>
         <span>
@@ -130,9 +141,13 @@ function CodePanel() {
 export function Quickstart() {
   return (
     <section className="border-t border-lp-rule">
-      <div className={`${SHELL} grid gap-10 py-[var(--lp-section)] lg:grid-cols-12 lg:items-start`}>
+      <div
+        className={`${SHELL} grid gap-10 py-[clamp(3.5rem,7vw,6rem)] lg:grid-cols-12 lg:items-start`}
+      >
         <div className="lg:col-span-4 lg:col-start-9">
-          <h2 className="lp-section-head text-lp-ink">3.0 send, then read the receipt.</h2>
+          <h2 className="lp-section-head text-[clamp(1.75rem,3.2vw,2.75rem)] text-lp-ink">
+            send, then read the receipt.
+          </h2>
           <p className="lp-lead mt-5 max-w-[34ch] text-lp-ink-2">
             Post the payload once. Keep the message id; every delivery event lands on your webhook.
           </p>

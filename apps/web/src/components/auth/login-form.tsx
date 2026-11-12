@@ -11,6 +11,7 @@ import { toastApiError } from "@/lib/utils/api-error-message";
 import Link from "@/compat/next-link";
 import { useRouter } from "@/compat/next-navigation";
 import { useState } from "react";
+import { IconArrowUpRight } from "@tabler/icons-react";
 
 function FieldLabel({ htmlFor, children }: { htmlFor: string; children: React.ReactNode }) {
   return (
@@ -159,9 +160,10 @@ export function LoginForm({ variant = "standalone" }: { variant?: "standalone" |
           type="submit"
           size="lg"
           disabled={isLoading}
-          className="h-11 w-full rounded-[var(--radius-input)] bg-[var(--hm-accent)] font-semibold text-[var(--color-accent-ink)] shadow-[var(--shadow-card)] transition-opacity duration-[var(--dur-micro)] ease-[var(--ease-out)] hover:opacity-90 focus-visible:ring-2 focus-visible:ring-[var(--color-focus)] focus-visible:ring-offset-2 active:translate-y-px disabled:opacity-50"
+          className="h-12 w-full rounded-full bg-[var(--hm-accent)] font-mono text-[12px] font-bold uppercase tracking-[0.14em] text-[var(--color-accent-ink)] transition-opacity duration-[var(--dur-micro)] ease-[var(--ease-out)] hover:opacity-90 focus-visible:ring-2 focus-visible:ring-[var(--color-focus)] focus-visible:ring-offset-2 active:translate-y-px disabled:opacity-50"
         >
           {isLoading ? "Signing in…" : "Sign in"}
+          {!isLoading && <IconArrowUpRight className="size-5" />}
         </Button>
       </form>
 

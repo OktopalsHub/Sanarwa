@@ -210,6 +210,7 @@ export class TenantMemberService {
         "user.email",
         "tenant.id",
         "tenant.name",
+        "tenant.subdomain",
       ])
       .where("member.user.id = :userId", { userId });
 

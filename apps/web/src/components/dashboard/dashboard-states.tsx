@@ -8,62 +8,72 @@ import {
   EmptyMedia,
   EmptyTitle,
 } from "@sanarwa/ui/empty";
+import { cn } from "@/lib/utils";
 import { SendSnippet } from "@/components/messages/send-snippet";
 import Link from "@/compat/next-link";
-import { IconInbox } from "@tabler/icons-react";
+import { IconCheck, IconChevronDown, IconInbox } from "@tabler/icons-react";
 
-export function DashboardSetup({
-  hasProvider,
-  hasApiKey,
-  basePath,
-}: {
-  hasProvider: boolean;
-  hasApiKey: boolean;
-  basePath: string;
-}) {
-  return (
-    <Card className="border-dashed p-6">
-      <h3 className="mb-4 text-lg font-semibold">Finish setup to send</h3>
-      <div className="grid gap-3 md:grid-cols-2">
-        <SetupStep
-          done={hasProvider}
-          href={`${basePath}/providers`}
-          label="Add a provider"
-          detail="Email domain, SMS number, WhatsApp, or push."
-        />
-        <SetupStep
-          done={hasApiKey}
-          href={`${basePath}/api-keys`}
-          label="Create an API key"
-          detail="Authenticate POST /v1/messages from your app."
-        />
-      </div>
-    </Card>
-  );
-}
-
-function SetupStep({
-  done,
-  href,
-  label,
-  detail,
-}: {
+interface SetupStep {
   done: boolean;
   href: string;
   label: string;
   detail: string;
-}) {
+}
+
+export function MilestoneChecklist({ steps }: { steps: SetupStep[] }) {
+  const done = steps.filter((step) => step.done).length;
+
   return (
-    <Link
-      href={href}
-      className="flex items-start justify-between rounded-md border p-4 hover:bg-muted/40"
-    >
-      <div>
-        <p className="font-medium">{label}</p>
-        <p className="text-sm text-muted-foreground">{detail}</p>
-      </div>
-      <span className="text-sm text-muted-foreground">{done ? "Done" : "Set up"}</span>
-    </Link>
+    <details className="group overflow-hidden rounded-2xl border border-border bg-card" open>
+      <summary
+        className="flex min-h-14 cursor-pointer list-none items-center justify-between gap-4 px-5 py-4 transition-colors hover:bg-muted/30 focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-[var(--color-focus)] sm:px-6"
+        aria-label={`Get your workspace live — ${done} of ${steps.length} milestones complete`}
+      >
+        <span className="flex min-w-0 items-center gap-3">
+          <span className="text-sm font-semibold text-foreground">Get your first message out</span>
+          <span className="rounded-full border border-border px-2.5 py-0.5 font-mono text-[10px] font-medium uppercase tracking-[0.14em] text-muted-foreground tabular-nums">
+            {done}/{steps.length} complete
+          </span>
+        </span>
+        <IconChevronDown
+          className="size-5 shrink-0 text-muted-foreground transition-transform duration-200 group-open:rotate-180"
+          aria-hidden
+        />
+      </summary>
+
+      <ol className="flex flex-col border-t border-border">
+        {steps.map((step, index) => (
+          <li key={step.label} className="border-b border-border last:border-b-0">
+            <Link
+              href={step.href}
+              className="flex min-h-14 items-center gap-4 px-5 py-3 transition-colors hover:bg-muted/30 focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-[var(--color-focus)] sm:px-6"
+            >
+              <span
+                aria-hidden
+                className={cn(
+                  "flex size-7 shrink-0 items-center justify-center rounded-full font-mono text-[12px] font-semibold tabular-nums",
+                  step.done
+                    ? "bg-primary text-primary-foreground"
+                    : "border border-border text-muted-foreground",
+                )}
+              >
+                {step.done ? <IconCheck className="size-4" /> : index + 1}
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="block text-sm font-medium text-foreground">
+                  {step.label}
+                  <span className="sr-only">{step.done ? " — done" : " — not done yet"}</span>
+                </span>
+                <span className="mt-0.5 block text-xs text-muted-foreground">{step.detail}</span>
+              </span>
+              <span className="shrink-0 font-mono text-[10px] font-medium uppercase tracking-[0.14em] text-muted-foreground">
+                {step.done ? "done" : "set up"}
+              </span>
+            </Link>
+          </li>
+        ))}
+      </ol>
+    </details>
   );
 }
 

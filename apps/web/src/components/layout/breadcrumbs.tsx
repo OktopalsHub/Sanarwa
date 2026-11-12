@@ -1,6 +1,8 @@
 "use client";
 
-import { ChevronRightIcon, HomeIcon } from "@heroicons/react/24/outline";
+import { ChevronRightIcon } from "@heroicons/react/24/outline";
+import { useTenant } from "@/contexts/tenant-context";
+import { getTenantPathSegment } from "@/lib/tenant-path";
 import Link from "@/compat/next-link";
 import { usePathname } from "@/compat/next-navigation";
 
@@ -19,6 +21,7 @@ const routeLabels: Record<string, string> = {
   projects: "Projects",
   analytics: "Analytics",
   audience: "Audience",
+  channels: "Channels",
   settings: "Settings",
   integrations: "Integrations",
   notifications: "Notifications",
@@ -31,50 +34,49 @@ const routeLabels: Record<string, string> = {
 
 export function Breadcrumbs() {
   const pathname = usePathname();
+  const { selectedTenant } = useTenant();
 
-  const generateBreadcrumbs = (): BreadcrumbItem[] => {
-    const segments = pathname.split("/").filter(Boolean);
-    const breadcrumbs: BreadcrumbItem[] = [];
+  const tenantSegment = selectedTenant ? getTenantPathSegment(selectedTenant) : undefined;
+  const segments = pathname.split("/").filter(Boolean);
+  const tenantScoped = Boolean(selectedTenant && tenantSegment && segments[0] === tenantSegment);
 
-    if (segments[0] !== "dashboard") {
-      breadcrumbs.push({
-        label: "Dashboard",
-        href: "/dashboard",
-      });
-    }
+  const breadcrumbs: BreadcrumbItem[] = [];
+  let rest = segments;
 
-    let currentPath = "";
-    segments.forEach((segment, index) => {
-      currentPath += `/${segment}`;
-      const label = routeLabels[segment] || segment.charAt(0).toUpperCase() + segment.slice(1);
+  if (tenantScoped && selectedTenant && tenantSegment) {
+    breadcrumbs.push({ label: selectedTenant.name, href: `/${tenantSegment}/dashboard` });
+    rest = segments.slice(1);
+  } else if (segments[0] !== "dashboard") {
+    breadcrumbs.push({ label: "Dashboard", href: "/dashboard" });
+  }
 
-      breadcrumbs.push({
-        label,
-        href: index === segments.length - 1 ? undefined : currentPath,
-      });
+  let currentPath = tenantScoped && tenantSegment ? `/${tenantSegment}` : "";
+  rest.forEach((segment, index) => {
+    currentPath += `/${segment}`;
+    const label = routeLabels[segment] || segment.charAt(0).toUpperCase() + segment.slice(1);
+    breadcrumbs.push({
+      label,
+      href: index === rest.length - 1 ? undefined : currentPath,
     });
-
-    return breadcrumbs;
-  };
-
-  const breadcrumbs = generateBreadcrumbs();
+  });
 
   if (breadcrumbs.length <= 1) {
     return null;
   }
 
   return (
-    <nav className="flex items-center space-x-1 text-sm text-muted-foreground">
-      <HomeIcon className="h-4 w-4" />
+    <nav className="flex items-center gap-1 text-sm text-muted-foreground" aria-label="Breadcrumb">
       {breadcrumbs.map((item, index) => (
-        <div key={item.label} className="flex items-center space-x-1">
-          {index > 0 && <ChevronRightIcon className="h-4 w-4" />}
+        <div key={`${item.label}-${index}`} className="flex items-center gap-1">
+          {index > 0 && <ChevronRightIcon className="h-4 w-4" aria-hidden />}
           {item.href ? (
-            <Link href={item.href} className="hover:text-foreground transition-colors">
+            <Link href={item.href} className="transition-colors hover:text-foreground">
               {item.label}
             </Link>
           ) : (
-            <span className="text-foreground font-medium">{item.label}</span>
+            <span aria-current="page" className="font-medium text-foreground">
+              {item.label}
+            </span>
           )}
         </div>
       ))}

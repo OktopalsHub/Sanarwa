@@ -5,12 +5,13 @@ import { Button } from "@sanarwa/ui/button";
 import { Separator } from "@sanarwa/ui/separator";
 import { useTenantBasePath } from "@/hooks/use-tenant-slug";
 import { cn } from "@/lib/utils";
-import { IconBolt } from "@tabler/icons-react";
+import { IconBolt, IconBook } from "@tabler/icons-react";
 import Link from "@/compat/next-link";
 import { usePathname } from "@/compat/next-navigation";
 import { useMemo } from "react";
 import {
   buildNav,
+  overviewSegments,
   sendingSegments,
   setupSegments,
   workspaceSegments,
@@ -26,6 +27,7 @@ export function AppSidebar({ onNavigate }: AppSidebarProps) {
   const basePath = useTenantBasePath();
   const base = basePath || "/dashboard";
 
+  const overview = useMemo(() => buildNav(base, overviewSegments), [base]);
   const sending = useMemo(() => buildNav(base, sendingSegments), [base]);
   const setup = useMemo(() => buildNav(base, setupSegments), [base]);
   const workspace = useMemo(() => buildNav(base, workspaceSegments), [base]);
@@ -43,16 +45,41 @@ export function AppSidebar({ onNavigate }: AppSidebarProps) {
         </Link>
       </div>
 
-      <nav className="flex flex-1 flex-col gap-1 overflow-y-auto p-4">
+      <nav className="flex flex-1 flex-col gap-4 overflow-y-auto p-4" aria-label="Main navigation">
+        <div className="flex flex-col gap-1">
+          {overview.map((item) => (
+            <NavigationLink
+              key={item.name}
+              item={item}
+              isActive={pathname === item.href || pathname.startsWith(`${item.href}/`)}
+              onClick={onNavigate}
+            />
+          ))}
+        </div>
+
+        <Separator />
         <NavSection title="Sending" items={sending} pathname={pathname} onClick={onNavigate} />
-        <Separator className="my-4" />
+        <Separator />
         <NavSection title="Setup" items={setup} pathname={pathname} onClick={onNavigate} />
-        <Separator className="my-4" />
+        <Separator />
         <NavSection title="Workspace" items={workspace} pathname={pathname} onClick={onNavigate} />
       </nav>
 
       <div className="border-t p-4">
-        <p className="text-xs text-muted-foreground">© {new Date().getFullYear()} Sanarwa</p>
+        <Button
+          asChild
+          variant="ghost"
+          size="sm"
+          className="w-full justify-start gap-3 text-muted-foreground hover:text-foreground"
+        >
+          <Link href="/docs" onClick={onNavigate}>
+            <IconBook data-icon="inline-start" />
+            Documentation
+          </Link>
+        </Button>
+        <p className="mt-2 px-3 text-xs text-muted-foreground">
+          © {new Date().getFullYear()} Sanarwa
+        </p>
       </div>
     </div>
   );
@@ -71,7 +98,7 @@ function NavSection({
 }) {
   return (
     <div className="flex flex-col gap-1">
-      <div className="px-3 py-2">
+      <div className="px-3 py-1.5">
         <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
           {title}
         </h3>
@@ -105,11 +132,11 @@ function NavigationLink({
       asChild
       variant={isActive ? "secondary" : "ghost"}
       className={cn(
-        "h-10 w-full justify-start gap-3",
+        "h-9 w-full justify-start gap-3",
         isActive && "bg-secondary text-secondary-foreground",
       )}
     >
-      <Link href={item.href} onClick={onClick}>
+      <Link href={item.href} onClick={onClick} aria-current={isActive ? "page" : undefined}>
         <item.icon data-icon="inline-start" />
         <span className="flex-1 text-left">{item.name}</span>
       </Link>

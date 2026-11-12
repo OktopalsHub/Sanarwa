@@ -1,8 +1,6 @@
 "use client";
 
-import { Button } from "@sanarwa/ui/button";
-import { Sheet, SheetContent, SheetTrigger } from "@sanarwa/ui/sheet";
-import { Bars3Icon } from "@heroicons/react/24/outline";
+import { Sheet, SheetContent } from "@sanarwa/ui/sheet";
 import { useState } from "react";
 import { AppHeader } from "./app-header";
 import { AppSidebar } from "./app-sidebar";
@@ -18,24 +16,18 @@ export function AppShell({ children }: AppShellProps) {
   return (
     <div className="min-h-screen bg-background">
       <Sheet open={sidebarOpen} onOpenChange={setSidebarOpen}>
-        <SheetTrigger asChild>
-          <Button variant="ghost" size="icon" className="fixed top-4 left-4 z-50 md:hidden">
-            <Bars3Icon className="h-5 w-5" />
-            <span className="sr-only">Toggle navigation menu</span>
-          </Button>
-        </SheetTrigger>
-        <SheetContent side="left" className="w-72 p-0">
+        <SheetContent side="left" className="w-72 p-0" aria-label="Navigation menu">
           <AppSidebar onNavigate={() => setSidebarOpen(false)} />
         </SheetContent>
       </Sheet>
 
       <div className="flex">
-        <div className="hidden md:flex md:w-72 md:flex-col md:fixed md:inset-y-0">
+        <div className="hidden md:fixed md:inset-y-0 md:flex md:w-72 md:flex-col">
           <AppSidebar />
         </div>
 
         <div className="flex-1 md:pl-72">
-          <AppHeader />
+          <AppHeader onToggleSidebar={() => setSidebarOpen(true)} />
 
           <div className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
             <div className="px-4 py-3">

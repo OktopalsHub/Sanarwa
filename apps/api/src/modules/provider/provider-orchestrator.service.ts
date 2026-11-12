@@ -275,6 +275,21 @@ export class ProviderOrchestratorService {
     }
   }
 
+  managedProviderNames(channel: "email" | "push" | "sms"): string[] {
+    switch (channel) {
+      case "email":
+        return ProviderOrchestratorService.EMAIL_MANAGED_CHAIN.filter((name) =>
+          this.emailProviders.has(name),
+        );
+      case "push":
+        return ProviderOrchestratorService.PUSH_MANAGED_CHAIN.filter((name) =>
+          this.pushProviders.has(name),
+        );
+      case "sms":
+        return [...this.smsProviders.keys()];
+    }
+  }
+
   registerEmailProvider(
     name: string,
     provider: BaseEmailProvider,

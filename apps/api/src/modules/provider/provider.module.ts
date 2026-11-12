@@ -91,6 +91,9 @@ function pick(config: Record<string, any>, ...keys: string[]): string | undefine
   return undefined;
 }
 
+import { RoutingRulesController } from "./routing-rules/routing-rules.controller";
+import { RoutingRulesService } from "./routing-rules/routing-rules.service";
+
 @Module({
   imports: [
     TypeOrmModule.forFeature([
@@ -118,6 +121,7 @@ function pick(config: Record<string, any>, ...keys: string[]): string | undefine
     DeliveryEventsModule,
   ],
   controllers: [
+    RoutingRulesController,
     ProviderConfigController,
     BYOPController,
     DeviceRegistrationController,
@@ -126,6 +130,7 @@ function pick(config: Record<string, any>, ...keys: string[]): string | undefine
     EmailWebhookController,
   ],
   providers: [
+    RoutingRulesService,
     ProviderService,
     ProviderConfigValidator,
     ProviderEncryptionService,

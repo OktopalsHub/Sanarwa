@@ -4,7 +4,6 @@ import {
   Query,
   Param,
   UseGuards,
-  Request,
   ParseIntPipe,
   DefaultValuePipe,
 } from "@nestjs/common";
@@ -14,6 +13,7 @@ import { AuthGuard } from "../../../modules/auth/guards/jwt-auth.guard";
 import { AuditLogService, AuditLogQuery } from "../services/audit-log.service";
 import { AuditAction, AuditResourceType } from "../entities/audit-log.entity";
 import { Roles } from "../../../modules/auth/decorators/roles.decorator";
+import { requireTenantId } from "../require-tenant-id";
 
 @ApiTags("Audit Logs")
 @Controller("audit-logs")
@@ -24,6 +24,7 @@ export class AuditLogController {
   @Get()
   @Roles("admin", "audit_viewer")
   @ApiOperation({ summary: "Get audit logs with filtering and pagination" })
+  @ApiQuery({ name: "tenantId", required: true, type: String })
   @ApiQuery({ name: "page", required: false, type: Number })
   @ApiQuery({ name: "limit", required: false, type: Number })
   @ApiQuery({ name: "action", required: false, type: String })
@@ -37,7 +38,7 @@ export class AuditLogController {
   @ApiQuery({ name: "sortOrder", required: false, enum: ["ASC", "DESC"] })
   @ApiResponse({ status: 200, description: "Audit logs retrieved successfully" })
   async getAuditLogs(
-    @Request() req: any,
+    @Query("tenantId") tenantId: string,
     @Query("page", new DefaultValuePipe(1), ParseIntPipe) page: number,
     @Query("limit", new DefaultValuePipe(50), ParseIntPipe) limit: number,
     @Query("action") action?: string,
@@ -51,7 +52,7 @@ export class AuditLogController {
     @Query("sortOrder") sortOrder?: "ASC" | "DESC",
   ) {
     const query: AuditLogQuery = {
-      tenantId: req.user.tenantId,
+      tenantId: requireTenantId(tenantId),
       action: action as AuditAction,
       resourceType: resourceType as AuditResourceType,
       resourceId,
@@ -73,13 +74,13 @@ export class AuditLogController {
   @ApiOperation({ summary: "Get audit logs for a specific resource" })
   @ApiResponse({ status: 200, description: "Resource audit logs retrieved successfully" })
   async getResourceAuditLogs(
-    @Request() req: any,
+    @Query("tenantId") tenantId: string,
     @Param("resourceType") resourceType: AuditResourceType,
     @Param("resourceId") resourceId: string,
     @Query("limit", new DefaultValuePipe(100), ParseIntPipe) limit: number,
   ) {
     return await this.auditLogService.getResourceAuditLogs(
-      req.user.tenantId,
+      requireTenantId(tenantId),
       resourceType,
       resourceId,
       limit,
@@ -91,11 +92,11 @@ export class AuditLogController {
   @ApiOperation({ summary: "Get audit logs for a specific user" })
   @ApiResponse({ status: 200, description: "User audit logs retrieved successfully" })
   async getUserAuditLogs(
-    @Request() req: any,
+    @Query("tenantId") tenantId: string,
     @Param("userId") userId: string,
     @Query("limit", new DefaultValuePipe(100), ParseIntPipe) limit: number,
   ) {
-    return await this.auditLogService.getUserAuditLogs(req.user.tenantId, userId, limit);
+    return await this.auditLogService.getUserAuditLogs(requireTenantId(tenantId), userId, limit);
   }
 
   @Get("stats")
@@ -105,12 +106,12 @@ export class AuditLogController {
   @ApiQuery({ name: "endDate", required: false, type: String })
   @ApiResponse({ status: 200, description: "Audit log statistics retrieved successfully" })
   async getAuditLogStats(
-    @Request() req: any,
+    @Query("tenantId") tenantId: string,
     @Query("startDate") startDate?: string,
     @Query("endDate") endDate?: string,
   ) {
     return await this.auditLogService.getAuditLogStats(
-      req.user.tenantId,
+      requireTenantId(tenantId),
       startDate ? new Date(startDate) : undefined,
       endDate ? new Date(endDate) : undefined,
     );

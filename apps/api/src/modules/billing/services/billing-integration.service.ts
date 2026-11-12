@@ -54,6 +54,7 @@ export class BillingIntegrationService {
     billingMode: BillingMode,
     metadata?: Record<string, unknown>,
     eventCount = 1,
+    options: { dedupeByReference?: boolean } = {},
   ): Promise<void> {
     const billing = this.calculateEventBilling(eventType, billingMode, metadata, eventCount);
 
@@ -62,6 +63,7 @@ export class BillingIntegrationService {
       amount: billing.amount,
       description: `${billingMode} ${eventType} notification`,
       referenceId: notificationId,
+      dedupeByReference: options.dedupeByReference,
       metadata: {
         eventType,
         notificationId,

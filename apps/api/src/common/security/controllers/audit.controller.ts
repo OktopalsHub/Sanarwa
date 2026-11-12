@@ -10,23 +10,74 @@ import {
 } from "@nestjs/common";
 import { ApiOperation, ApiResponse, ApiTags } from "@nestjs/swagger";
 import { Response } from "express";
-import { CurrentUser } from "../../../modules/auth/decorators/current-user.decorator";
+import { Transform, Type } from "class-transformer";
+import {
+  IsBoolean,
+  IsDateString,
+  IsIn,
+  IsInt,
+  IsOptional,
+  IsString,
+  IsUUID,
+  Max,
+  Min,
+} from "class-validator";
 import { RequireRoles } from "../../../modules/auth/decorators/roles.decorator";
 import { AuthGuard } from "../../../modules/auth/guards/jwt-auth.guard";
 import { AuditLog } from "../decorators/audit-log.decorator";
+import { requireTenantId } from "../require-tenant-id";
 import { AuditLogService } from "../services/audit-log.service";
 import { AuditAction, AuditResourceType } from "../entities/audit-log.entity";
 
 export class AuditLogQueryDto {
+  @IsUUID()
+  tenantId!: string;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
   page: number = 1;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  @Max(10000)
   limit: number = 50;
+
+  @IsOptional()
+  @IsString()
   action?: AuditAction;
+
+  @IsOptional()
+  @IsString()
   resourceType?: AuditResourceType;
+
+  @IsOptional()
+  @IsString()
   resourceId?: string;
+
+  @IsOptional()
+  @IsString()
   tenantMemberId?: string;
+
+  @IsOptional()
+  @IsDateString()
   startDate?: string;
+
+  @IsOptional()
+  @IsDateString()
   endDate?: string;
+
+  @IsOptional()
+  @Transform(({ value }) => value === true || value === "true")
+  @IsBoolean()
   success?: boolean;
+
+  @IsOptional()
+  @IsIn(["json", "csv"])
+  format?: "json" | "csv";
 }
 
 @ApiTags("Audit")
@@ -47,10 +98,9 @@ export class AuditController {
     resourceType: "ANALYTICS" as AuditResourceType,
     description: "Retrieved audit logs",
   })
-  async getAuditLogs(@Query() query: AuditLogQueryDto, @CurrentUser() user: any) {
+  async getAuditLogs(@Query() query: AuditLogQueryDto) {
     return this.auditLogService.queryAuditLogs({
       ...query,
-      tenantId: user.tenantId,
       offset: (query.page - 1) * query.limit,
       startDate: query.startDate ? new Date(query.startDate) : undefined,
       endDate: query.endDate ? new Date(query.endDate) : undefined,
@@ -66,16 +116,11 @@ export class AuditController {
     resourceType: "ANALYTICS" as AuditResourceType,
     description: "Exported audit logs",
   })
-  async exportAuditLogs(
-    @Query() query: AuditLogQueryDto,
-    @Query("format") format: "json" | "csv" = "json",
-    @CurrentUser() user: any,
-    @Res() res: Response,
-  ) {
+  async exportAuditLogs(@Query() query: AuditLogQueryDto, @Res() res: Response) {
+    const format = query.format ?? "json";
     const exportData = await this.auditLogService.exportAuditLogs(
       {
         ...query,
-        tenantId: user.tenantId,
         startDate: query.startDate ? new Date(query.startDate) : undefined,
         endDate: query.endDate ? new Date(query.endDate) : undefined,
       },
@@ -103,12 +148,12 @@ export class AuditController {
     description: "Audit log statistics retrieved successfully",
   })
   async getAuditLogStats(
+    @Query("tenantId") tenantId: string,
     @Query("startDate") startDate?: string,
     @Query("endDate") endDate?: string,
-    @CurrentUser() user?: any,
   ) {
     return this.auditLogService.getAuditLogStats(
-      user.tenantId,
+      requireTenantId(tenantId),
       startDate ? new Date(startDate) : undefined,
       endDate ? new Date(endDate) : undefined,
     );
@@ -129,9 +174,13 @@ export class AuditController {
   async getResourceAuditTrail(
     @Param("resourceType") resourceType: AuditResourceType,
     @Param("resourceId") resourceId: string,
-    @CurrentUser() user: any,
+    @Query("tenantId") tenantId: string,
   ) {
-    return this.auditLogService.getResourceAuditLogs(user.tenantId, resourceType, resourceId);
+    return this.auditLogService.getResourceAuditLogs(
+      requireTenantId(tenantId),
+      resourceType,
+      resourceId,
+    );
   }
 
   @Get("users/:userId/activity")
@@ -144,12 +193,17 @@ export class AuditController {
   async getUserActivitySummary(
     @Param("userId") userId: string,
     @Query("days", new DefaultValuePipe(30), ParseIntPipe) days: number,
-    @CurrentUser() user: any,
+    @Query("tenantId") tenantId: string,
   ) {
     const endDate = new Date();
     const startDate = new Date();
     startDate.setDate(startDate.getDate() - days);
 
-    return this.auditLogService.getUserActivitySummary(userId, startDate, endDate);
+    return this.auditLogService.getUserActivitySummary(
+      requireTenantId(tenantId),
+      userId,
+      startDate,
+      endDate,
+    );
   }
 }

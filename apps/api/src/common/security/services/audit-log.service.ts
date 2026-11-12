@@ -1,4 +1,4 @@
-import { Injectable, Logger } from "@nestjs/common";
+import { BadRequestException, Injectable, Logger } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Repository, Between, In, LessThan } from "typeorm";
 import { AuditLog, AuditAction, AuditResourceType } from "../entities/audit-log.entity";
@@ -48,6 +48,12 @@ export interface AuditLogQuery {
   offset?: number;
   sortBy?: string;
   sortOrder?: "ASC" | "DESC";
+}
+
+function assertTenantScope(tenantId: string | undefined): asserts tenantId is string {
+  if (!tenantId) {
+    throw new BadRequestException("Audit log queries require a tenantId");
+  }
 }
 
 @Injectable()
@@ -140,13 +146,14 @@ export class AuditLogService {
     limit: number;
   }> {
     try {
+      assertTenantScope(query.tenantId);
       const limit = query.limit || 50;
       const offset = query.offset || 0;
       const page = Math.floor(offset / limit) + 1;
 
       const qb = this.auditLogRepository.createQueryBuilder("audit");
 
-      if (query.tenantId) qb.andWhere("audit.tenantId = :tenantId", { tenantId: query.tenantId });
+      qb.andWhere("audit.tenantId = :tenantId", { tenantId: query.tenantId });
       if (query.tenantMemberId)
         qb.andWhere("audit.tenantMemberId = :tenantMemberId", {
           tenantMemberId: query.tenantMemberId,
@@ -209,6 +216,7 @@ export class AuditLogService {
     resourceId: string,
     limit = 100,
   ): Promise<AuditLog[]> {
+    assertTenantScope(tenantId);
     try {
       return await this.auditLogRepository.find({
         where: {
@@ -230,6 +238,7 @@ export class AuditLogService {
     tenantMemberId: string,
     limit = 100,
   ): Promise<AuditLog[]> {
+    assertTenantScope(tenantId);
     try {
       return await this.auditLogRepository.find({
         where: {
@@ -257,6 +266,7 @@ export class AuditLogService {
     resourceBreakdown: Record<string, number>;
     userBreakdown: Record<string, number>;
   }> {
+    assertTenantScope(tenantId);
     try {
       const qb = this.auditLogRepository
         .createQueryBuilder("audit")
@@ -448,6 +458,7 @@ export class AuditLogService {
   }
 
   async getUserAuditLogs(tenantId: string, userId: string, limit = 100): Promise<AuditLog[]> {
+    assertTenantScope(tenantId);
     try {
       return await this.auditLogRepository.find({
         where: {
@@ -463,11 +474,18 @@ export class AuditLogService {
     }
   }
 
-  async getUserActivitySummary(userId: string, startDate?: Date, endDate?: Date): Promise<any> {
+  async getUserActivitySummary(
+    tenantId: string,
+    userId: string,
+    startDate?: Date,
+    endDate?: Date,
+  ): Promise<any> {
+    assertTenantScope(tenantId);
     try {
       const qb = this.auditLogRepository
         .createQueryBuilder("audit")
-        .where("audit.tenantMemberId = :userId", { userId });
+        .where("audit.tenantId = :tenantId", { tenantId })
+        .andWhere("audit.tenantMemberId = :userId", { userId });
 
       if (startDate && endDate) {
         qb.andWhere("audit.createdAt BETWEEN :startDate AND :endDate", { startDate, endDate });

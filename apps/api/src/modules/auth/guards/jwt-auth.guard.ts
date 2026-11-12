@@ -34,7 +34,7 @@ export class AuthGuard implements CanActivate {
       throw new UnauthorizedException("Not authenticated");
     }
 
-    const user = session.user as { id: string; email?: string | null };
+    const user = session.user as { id: string; email?: string | null; emailVerified?: boolean };
     request.auth = {
       principalId: user.id,
       tokenType: "session",
@@ -50,6 +50,7 @@ export class AuthGuard implements CanActivate {
       id: user.id,
       sub: user.id,
       email: user.email,
+      emailVerified: user.emailVerified === true,
       provider: "session",
     };
     return true;

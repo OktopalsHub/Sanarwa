@@ -36,6 +36,7 @@ import { WorkflowModule } from "./modules/workflow/workflow.module";
 import { ApiKeyModule } from "./modules/api-key/api-key.module";
 import { AuthModule } from "./modules/auth/auth.module";
 import { AuthGuard } from "./modules/auth/guards/jwt-auth.guard";
+import { RolesGuard } from "./modules/auth/guards/roles.guard";
 import { BillingModule } from "./modules/billing/billing.module";
 import { BrandModule } from "./modules/brand/brand.module";
 import { ComplianceModule } from "./modules/compliance/compliance.module";
@@ -171,6 +172,10 @@ import { QuotasModule } from "./modules/quotas/quotas.module";
     {
       provide: APP_GUARD,
       useClass: AuthGuard,
+    },
+    {
+      provide: APP_GUARD,
+      useClass: RolesGuard,
     },
     {
       provide: APP_INTERCEPTOR,

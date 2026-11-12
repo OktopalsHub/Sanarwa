@@ -1,3 +1,4 @@
+import "dotenv/config";
 import * as argon2 from "argon2";
 import { betterAuth, type BetterAuthOptions } from "better-auth";
 import { toNodeHandler } from "better-auth/node";
@@ -131,7 +132,7 @@ async function mirrorMemberUpsert(member: {
 export const auth = betterAuth({
   secret: process.env.BETTER_AUTH_SECRET ?? process.env.JWT_AUTH_SECRET,
   baseURL: process.env.BETTER_AUTH_URL,
-  basePath: "/api/auth",
+  basePath: "/api/v1/auth",
   appName: "Sanarwa",
   database: typeormAdapter(betterAuthDataSource),
   advanced: {

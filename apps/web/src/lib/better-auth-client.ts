@@ -1,6 +1,6 @@
 "use client";
 
-import { createAuthClient } from "better-auth/client";
+import { createAuthClient } from "better-auth/react";
 import { organizationClient } from "better-auth/client/plugins";
 import { createAccessControl } from "better-auth/plugins/access";
 
@@ -35,13 +35,16 @@ const roles = {
   }),
 };
 
-const BASE_PATH = "/api/auth";
+const BASE_PATH = "/api/v1/auth";
 
 function baseURL(): string {
   const env = (import.meta as unknown as { env?: Record<string, string> }).env;
   const api = env?.VITE_API_URL;
-  if (api) return `${api.replace(/\/$/, "")}${BASE_PATH}`;
-  return `http://localhost:3000${BASE_PATH}`;
+  if (api) {
+    const origin = api.replace(/\/api\/v[0-9]+\/?$/, "").replace(/\/+$/, "");
+    return `${origin}${BASE_PATH}`;
+  }
+  return `http://localhost:8000${BASE_PATH}`;
 }
 
 export const authClient = createAuthClient({

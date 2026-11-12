@@ -59,9 +59,9 @@ async function bootstrap() {
 
     app.use(compression());
 
-    // better-auth owns /api/auth (unversioned) and parses its own request
+    // better-auth owns /api/v1/auth and parses its own request
     // bodies, so it must be mounted before the express.json body parser.
-    app.use("/api/auth", betterAuthHandler);
+    app.use(`/${API_PREFIX}/auth`, betterAuthHandler);
 
     app.use(
       express.json({

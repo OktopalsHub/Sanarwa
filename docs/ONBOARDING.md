@@ -2,7 +2,7 @@
 
 > **Status:** curated contributor entrypoint.  
 > **Last verified:** 2026-11-10 (based on Wayfinder [MAP-001] tickets [001]–[011], repo config/code spot checks, and targeted verification in this session).  
-> **Precedence:** if this conflicts with code, CI config, migrations, or measured command output, trust the evidence and update this file. Wayfinder remains the research/evidence ledger; this file is the maintained summary.
+> **Precedence:** if this conflicts with code, CI config, migrations, or measured command output, trust the evidence and update this file. This file is the maintained summary; the raw Wayfinder evidence was removed from the repo.
 
 ## 1. Start here
 
@@ -12,9 +12,8 @@
 
 1. This file (`docs/ONBOARDING.md`)
 2. [`CONTEXT.md`](CONTEXT.md) — domain vocabulary (**note:** its “no Better Auth” claim is stale; see [008], [011])
-3. [`ARCHITECTURE.md`](ARCHITECTURE.md) — stack/seams (**note:** auth/tooling/known-state drift exists; reconcile with Wayfinder)
-4. [`docs/wayfinder/MAP-001-whole-repo-understanding.md`](docs/wayfinder/MAP-001-whole-repo-understanding.md) — deep subsystem map and evidence
-5. Before changing code: [`AGENTS.md`](AGENTS.md), [`CODING_STANDARDS.md`](CODING_STANDARDS.md), [`SENIOR-DEV-RULES.md`](SENIOR-DEV-RULES.md), [`DESLOP.md`](DESLOP.md) (treat availability/claims as verify-first; `.agents/rules` and `.cursor/rules` are absent in this checkout)
+3. [`ARCHITECTURE.md`](ARCHITECTURE.md) — stack/seams (**note:** auth/tooling/known-state drift exists; reconcile with code)
+4. Before changing code: [`AGENTS.md`](AGENTS.md), [`CODING_STANDARDS.md`](CODING_STANDARDS.md), [`SENIOR-DEV-RULES.md`](SENIOR-DEV-RULES.md), [`DESLOP.md`](DESLOP.md) (treat availability/claims as verify-first; `.agents/rules` and `.cursor/rules` are absent in this checkout)
 
 **Do not trust blindly:** README endpoint/env examples, comparison/task snapshots (`ntfy-sanarwa.md`, `NTFY-SARAWA-SUMMARY.md`, `notifkit-sanarwa.md`, task notes), and unmeasured gate/baseline claims.
 
@@ -34,7 +33,7 @@
 | Inbound email ops                  | `docs/INBOUND-EMAIL-PRODUCTION.md`                                                                                   | inbound controller/script                        | Requires `INBOUND_EMAIL_SECRET`, signed relay, deploy/migrations.                |
 | Campaign/workflow extension        | `docs/EXTENSIBILITY-CAMPAIGNS-WORKFLOWS.md`                                                                          | [006]                                            | Seams documented; some features deferred.                                        |
 
-**Wayfinder tickets:** [001](docs/wayfinder/tickets/001-repo-topology-and-build-release-model.md)–[011](docs/wayfinder/tickets/011-documentation-landscape-and-durable-artifact.md) (all resolved). Treat as evidence; promote stable conclusions here/intents docs deliberately.
+**Wayfinder tickets:** [001]–[011] (all resolved). The tickets and the MAP-001 deep-dive were removed from the repo; treat the findings folded into this file as the summary.
 
 ## 3. Repository shape
 
@@ -145,15 +144,13 @@ pnpm dev
 ## 10. Maintenance protocol
 
 - **Update this file in the same change** when altering: auth/bootstrap/routing, env/compose/ports, scripts/CI, channels/providers/billing semantics, schema/migrations, or key send/identity/pipeline flows.
-- **Precedence:** prefer code/CI/migrations/measured output over docs; link to Wayfinder tickets for depth instead of duplicating large analyses.
+- **Precedence:** prefer code/CI/migrations/measured output over docs; ground deep dives in code paths instead of duplicating large analyses.
 - **Freshness:** keep `Last verified` current; date and scope any baseline/gate claims.
 - **PR checklist prompt:** “What docs become stale because of this diff?” (especially auth, tenancy, delivery, billing, migrations, env, CI).
 - **Instruction docs:** `AGENTS.md` and other root docs are untracked in this checkout and easy to lose; consider committing them deliberately.
 
 ## 11. Deep-dive index
 
-- Map: [`docs/wayfinder/MAP-001-whole-repo-understanding.md`](docs/wayfinder/MAP-001-whole-repo-understanding.md)
-- Tickets: [001](docs/wayfinder/tickets/001-repo-topology-and-build-release-model.md), [002](docs/wayfinder/tickets/002-domain-vocabulary-and-tenancy-model.md), [003](docs/wayfinder/tickets/003-api-architecture-and-module-boundaries.md), [004](docs/wayfinder/tickets/004-packages-and-cross-workspace-contracts.md), [005](docs/wayfinder/tickets/005-web-app-architecture-and-flows.md), [006](docs/wayfinder/tickets/006-messaging-notification-pipeline.md), [007](docs/wayfinder/tickets/007-data-model-and-persistence.md), [008](docs/wayfinder/tickets/008-authn-authz-and-identity.md), [009](docs/wayfinder/tickets/009-external-integrations-and-providers.md), [010](docs/wayfinder/tickets/010-infrastructure-deployment-and-environments.md), [011](docs/wayfinder/tickets/011-documentation-landscape-and-durable-artifact.md)
 - Runbooks/guides: [`env.md`](env.md), [`docs/INBOUND-EMAIL-PRODUCTION.md`](docs/INBOUND-EMAIL-PRODUCTION.md), [`docs/SMS-VOICE-WEBHOOKS-PRODUCTION.md`](docs/SMS-VOICE-WEBHOOKS-PRODUCTION.md), [`docs/EXTENSIBILITY-CAMPAIGNS-WORKFLOWS.md`](docs/EXTENSIBILITY-CAMPAIGNS-WORKFLOWS.md)
 - Integration audits: [`apps/api/src/modules/billing/PROVIDER-AUDIT.md`](apps/api/src/modules/billing/PROVIDER-AUDIT.md)
 - Package docs: [`packages/sdk/README.md`](packages/sdk/README.md), [`packages/sdk/ENDPOINT-DRIFT.md`](packages/sdk/ENDPOINT-DRIFT.md), [`packages/mcp/README.md`](packages/mcp/README.md)

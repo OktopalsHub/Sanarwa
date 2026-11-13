@@ -4,6 +4,7 @@ import { EventEmitterModule } from "@nestjs/event-emitter";
 import { ScheduleModule } from "@nestjs/schedule";
 import { ThrottlerGuard, ThrottlerModule } from "@nestjs/throttler";
 import { AppController } from "./app.controller";
+import { HealthController } from "./common/health/health.controller";
 import { AppService } from "./app.service";
 
 import Redis from "ioredis";
@@ -160,7 +161,7 @@ import { QuotasModule } from "./modules/quotas/quotas.module";
       inject: [ConfigService],
     }),
   ],
-  controllers: [AppController],
+  controllers: [AppController, HealthController],
   providers: [
     AppService,
     EnvironmentValidationService,

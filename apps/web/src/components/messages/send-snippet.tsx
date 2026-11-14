@@ -24,8 +24,8 @@ export function SendSnippet() {
   };
 
   return (
-    <div className="relative">
-      <pre className="overflow-x-auto rounded-md border bg-muted/40 p-4 text-xs leading-relaxed">
+    <div className="relative w-full text-left">
+      <pre className="overflow-x-auto rounded-lg border bg-muted/50 p-4 pr-20 font-mono text-xs leading-relaxed">
         <code>{SEND_SNIPPET}</code>
       </pre>
       <Button

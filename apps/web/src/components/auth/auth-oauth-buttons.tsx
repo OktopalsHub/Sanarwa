@@ -17,9 +17,6 @@ function redirectToOAuth(provider: "google" | "github") {
   window.location.href = `${oauthBaseUrl()}/auth/oauth/${provider}`;
 }
 
-const oauthBtnClass =
-  "h-11 w-full rounded-[var(--radius-input)] border-[var(--color-rule)] bg-[var(--color-paper-2)] font-medium text-[var(--color-ink)] shadow-[var(--shadow-card)] transition-[background-color,border-color,transform] duration-[var(--dur-micro)] ease-[var(--ease-out)] hover:border-[var(--color-rule-2)] hover:bg-[var(--color-paper-3)] focus-visible:border-[var(--color-focus)] focus-visible:ring-2 focus-visible:ring-[var(--color-focus)]/25 active:translate-y-px disabled:opacity-50";
-
 interface AuthOAuthButtonsProps {
   disabled?: boolean;
   actionLabel?: "Login" | "Sign up";
@@ -27,12 +24,11 @@ interface AuthOAuthButtonsProps {
 
 export function AuthOAuthButtons({ disabled, actionLabel = "Login" }: AuthOAuthButtonsProps) {
   return (
-    <div className="flex flex-col gap-3">
+    <div className="flex flex-col gap-2">
       <Button
         type="button"
         variant="outline"
-        size="lg"
-        className={oauthBtnClass}
+        className="w-full"
         onClick={() => redirectToOAuth("google")}
         disabled={disabled}
       >
@@ -42,8 +38,7 @@ export function AuthOAuthButtons({ disabled, actionLabel = "Login" }: AuthOAuthB
       <Button
         type="button"
         variant="outline"
-        size="lg"
-        className={oauthBtnClass}
+        className="w-full"
         onClick={() => redirectToOAuth("github")}
         disabled={disabled}
       >

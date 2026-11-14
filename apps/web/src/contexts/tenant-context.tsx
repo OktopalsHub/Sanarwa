@@ -6,6 +6,7 @@ import { toast } from "@/lib/utils/toast";
 import {
   CreateTenantRequest,
   InviteMemberRequest,
+  MyMembership,
   Tenant,
   TenantMember,
   TenantState,
@@ -32,7 +33,10 @@ const TenantContext = createContext<TenantContextType | undefined>(undefined);
 
 type TenantAction =
   | { type: "TENANT_LOADING" }
-  | { type: "TENANTS_LOADED"; payload: { tenants: Tenant[]; memberships: TenantMember[] } }
+  | {
+      type: "TENANTS_LOADED";
+      payload: { tenants: Tenant[]; memberships: TenantMember[]; myMemberships: MyMembership[] };
+    }
   | { type: "CURRENT_TENANT_SET"; payload: Tenant }
   | { type: "TENANT_CREATED"; payload: Tenant }
   | { type: "TENANT_UPDATED"; payload: Tenant }
@@ -47,6 +51,7 @@ const initialState: TenantState = {
   currentTenant: null,
   tenants: [],
   memberships: [],
+  myMemberships: [],
   invitations: [],
   isLoading: false,
   error: null,
@@ -65,6 +70,7 @@ function tenantReducer(state: TenantState, action: TenantAction): TenantState {
         ...state,
         tenants: action.payload.tenants,
         memberships: action.payload.memberships,
+        myMemberships: action.payload.myMemberships,
         isLoading: false,
         error: null,
       };
@@ -131,16 +137,18 @@ export function TenantProvider({ children }: TenantProviderProps) {
     try {
       dispatch({ type: "TENANT_LOADING" });
 
-      const [membershipsResponse, currentTenant] = await Promise.all([
-        tenantApi.getMyTenants({ limit: 50 }),
+      const [myMemberships, currentTenant] = await Promise.all([
+        tenantApi.getMyMemberships({ limit: 50 }),
         tenantApi.getCurrentTenant().catch(() => null),
       ]);
 
-      const tenants = membershipsResponse;
-
       dispatch({
         type: "TENANTS_LOADED",
-        payload: { tenants, memberships: [] },
+        payload: {
+          tenants: myMemberships.map((membership) => membership.tenant),
+          memberships: [],
+          myMemberships,
+        },
       });
 
       if (currentTenant) {

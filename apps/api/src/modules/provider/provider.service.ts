@@ -1,4 +1,4 @@
-import { Injectable, Logger } from "@nestjs/common";
+import { ConflictException, Injectable, Logger } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
 import { ProviderConfigValidator } from "./provider-config-validator";
@@ -26,6 +26,19 @@ export class ProviderService {
   }
 
   async createConfig(createDto: any): Promise<ProviderConfig> {
+    const existing = await this.providerConfigRepository.findOne({
+      where: {
+        projectId: createDto.projectId,
+        providerId: createDto.providerId,
+        channel: createDto.channel,
+      },
+    });
+    if (existing) {
+      throw new ConflictException(
+        `${createDto.providerName ?? createDto.providerId} is already connected to this project`,
+      );
+    }
+
     const encryptedConfig = await this.encryptionService.encrypt(createDto.config);
 
     const providerConfig = this.providerConfigRepository.create({

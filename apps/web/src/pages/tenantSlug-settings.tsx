@@ -31,7 +31,7 @@ export default function TenantSettingsPage() {
     <AppShell>
       <div className="mx-auto max-w-5xl space-y-6 p-6">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Settings</h1>
+          <h1 className="text-xl font-semibold tracking-tight">Settings</h1>
           <p className="text-muted-foreground">Workspace, team, and brand for {tenant?.name}</p>
         </div>
 

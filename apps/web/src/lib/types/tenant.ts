@@ -284,10 +284,19 @@ export type SubscriptionPlan = "free" | "pro" | "enterprise";
 export type InvitationStatus = InviteStatus;
 export interface TenantInvitation extends Invitation {}
 
+export interface MyMembership {
+  tenantId: string;
+  userId?: string;
+  role?: string;
+  status?: string;
+}
+
 export interface TenantState {
   currentTenant: Tenant | null;
   tenants: Tenant[];
   memberships: TenantMember[];
+  /** The signed-in user's own membership in each workspace they belong to. */
+  myMemberships: MyMembership[];
   invitations: Invitation[];
   isLoading: boolean;
   error: string | null;

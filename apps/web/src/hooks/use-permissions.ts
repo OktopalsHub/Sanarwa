@@ -4,37 +4,39 @@ import { User } from "@/lib/icons";
 
 import { useAuth } from "@/contexts/auth-context";
 import { useTenant } from "@/contexts/tenant-context";
-import { Permission, PermissionCheck, ROLE_PERMISSIONS } from "@/lib/types/permissions";
+import {
+  Permission,
+  PermissionCheck,
+  ROLE_PERMISSIONS,
+  type TenantRole,
+} from "@/lib/types/permissions";
 import { useMemo } from "react";
 
 export function usePermissions() {
   const { user } = useAuth();
-  const { currentTenant, memberships } = useTenant();
+  const { currentTenant, myMemberships } = useTenant();
 
   const currentMembership = useMemo(() => {
     if (!user || !currentTenant) return null;
 
-    return memberships.find(
+    return myMemberships.find(
       (membership) =>
         membership.userId === user.id &&
         membership.tenantId === currentTenant.id &&
-        membership.status === "active",
+        (membership.status ?? "active") === "active",
     );
-  }, [user, currentTenant, memberships]);
+  }, [user, currentTenant, myMemberships]);
 
   const userRole = useMemo(() => {
-    return currentMembership?.role || null;
+    const role = currentMembership?.role;
+    return role && role in ROLE_PERMISSIONS ? (role as TenantRole) : null;
   }, [currentMembership]);
 
   const userPermissions = useMemo(() => {
     if (!userRole) return [];
 
-    const rolePermissions = ROLE_PERMISSIONS[userRole]?.permissions || [];
-
-    const additionalPermissions = currentMembership?.permissions || [];
-
-    return Array.from(new Set([...rolePermissions, ...additionalPermissions]));
-  }, [userRole, currentMembership]);
+    return Array.from(new Set(ROLE_PERMISSIONS[userRole].permissions));
+  }, [userRole]);
 
   const hasPermission = (permission: Permission): PermissionCheck => {
     if (!user) {

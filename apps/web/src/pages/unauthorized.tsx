@@ -11,7 +11,7 @@ export default function UnauthorizedPage() {
         <div className="text-center space-y-4">
           <ShieldExclamationIcon className="w-12 h-12 mx-auto text-destructive" />
 
-          <h1 className="text-2xl font-bold">Access Denied</h1>
+          <h1 className="text-xl font-semibold tracking-tight">Access Denied</h1>
           <p className="text-muted-foreground">
             You don't have permission to access this resource or you're not a member of the selected
             organization.

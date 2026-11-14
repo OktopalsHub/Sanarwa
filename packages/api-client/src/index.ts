@@ -36,6 +36,15 @@ export {
 export { apiKeyApi } from "./api-key";
 export { projectApi } from "./project";
 export { providerApi } from "./provider";
+export type { Project } from "./types/project";
+export type {
+  CreateProviderConfigRequest,
+  ProviderChannel,
+  ProviderConfigRecord,
+  ProviderSchema,
+  ProviderTemplate,
+  UpdateProviderConfigRequest,
+} from "./types/provider";
 export { notificationApi } from "./notification";
 export { templateApi, TemplateApiClient } from "./template";
 export { analyticsApi } from "./analytics";

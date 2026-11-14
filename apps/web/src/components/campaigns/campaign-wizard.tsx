@@ -201,7 +201,7 @@ export function CampaignWizard({ onClose, initialData }: CampaignWizardProps) {
     <div className="mx-auto flex max-w-4xl flex-col gap-6 p-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold">Create New Campaign</h1>
+          <h1 className="text-xl font-semibold tracking-tight">Create New Campaign</h1>
           <p className="text-muted-foreground">
             Step {wizardData.step} of {WIZARD_STEPS.length}: {currentStep.title}
           </p>

@@ -4,6 +4,7 @@ import {
   Delete,
   Get,
   HttpCode,
+  BadRequestException,
   HttpStatus,
   Param,
   Patch,
@@ -18,6 +19,8 @@ import { AuthGuard } from "../../modules/auth/guards/jwt-auth.guard";
 import { CreateProviderConfigDto } from "./dto/create-provider-config.dto";
 import { ProviderConfigQueryDto } from "./dto/provider-config-query.dto";
 import { UpdateProviderConfigDto } from "./dto/update-provider-config.dto";
+import { presentConfig } from "./mask-provider-config";
+import { ProviderConfigValidator } from "./provider-config-validator";
 import { ProviderService } from "./provider.service";
 
 @ApiTags("provider-configs")
@@ -25,7 +28,10 @@ import { ProviderService } from "./provider.service";
 @Controller("tenants/:tenantId/projects/:projectId/provider-configs")
 @UseGuards(AuthGuard, TenantMemberGuard)
 export class ProviderConfigController {
-  constructor(private readonly providerService: ProviderService) {}
+  constructor(
+    private readonly providerService: ProviderService,
+    private readonly validator: ProviderConfigValidator,
+  ) {}
 
   @Post()
   @ApiOperation({ summary: "Create a new provider configuration" })
@@ -49,12 +55,30 @@ export class ProviderConfigController {
   async create(
     @CurrentTenantId() tenantId: string,
     @Param("projectId") projectId: string,
-    @Body() createDto: Omit<CreateProviderConfigDto, "projectId">,
+    @Body() createDto: CreateProviderConfigDto,
   ) {
-    return this.providerService.createConfig({
+    const validation = await this.validator.validateDetailed({
+      ...createDto,
+      priority: createDto.priority ?? 1,
+    } as never);
+    if (!validation.isValid) {
+      throw new BadRequestException({
+        message: "Invalid provider configuration",
+        errors: validation.errors,
+      });
+    }
+
+    const created = await this.providerService.createConfig({
       ...createDto,
       projectId,
     });
+    return presentConfig(created);
+  }
+
+  @Get("schemas")
+  @ApiOperation({ summary: "Describe the credential fields each provider needs" })
+  schemas() {
+    return { schemas: this.validator.describeSchemas() };
   }
 
   @Get()
@@ -66,8 +90,13 @@ export class ProviderConfigController {
     description: "Tenant unique identifier",
     example: "123e4567-e89b-12d3-a456-426614174000",
   })
-  async findAll(@CurrentTenantId() tenantId: string, @Query() query: ProviderConfigQueryDto) {
-    return this.providerService.findAllConfigs(tenantId, query);
+  async findAll(
+    @CurrentTenantId() tenantId: string,
+    @Param("projectId") projectId: string,
+    @Query() query: ProviderConfigQueryDto,
+  ) {
+    const result = await this.providerService.findConfigsByProject(tenantId, projectId, query);
+    return { ...result, configs: result.configs.map(presentConfig) };
   }
 
   @Get("project/:projectId")
@@ -92,7 +121,8 @@ export class ProviderConfigController {
     @Param("projectId") projectId: string,
     @Query() query: ProviderConfigQueryDto,
   ) {
-    return this.providerService.findConfigsByProject(tenantId, projectId, query);
+    const result = await this.providerService.findConfigsByProject(tenantId, projectId, query);
+    return { ...result, configs: result.configs.map(presentConfig) };
   }
 
   @Get(":id")
@@ -111,7 +141,7 @@ export class ProviderConfigController {
     example: "123e4567-e89b-12d3-a456-426614174000",
   })
   async findOne(@CurrentTenantId() tenantId: string, @Param("id") id: string) {
-    return this.providerService.findConfigById(tenantId, id);
+    return presentConfig(await this.providerService.findConfigById(tenantId, id));
   }
 
   @Patch(":id")
@@ -135,7 +165,7 @@ export class ProviderConfigController {
     @Param("id") id: string,
     @Body() updateDto: UpdateProviderConfigDto,
   ) {
-    return this.providerService.updateConfig(tenantId, id, updateDto);
+    return presentConfig(await this.providerService.updateConfig(tenantId, id, updateDto));
   }
 
   @Delete(":id")
@@ -174,7 +204,7 @@ export class ProviderConfigController {
     example: "123e4567-e89b-12d3-a456-426614174000",
   })
   async activate(@CurrentTenantId() tenantId: string, @Param("id") id: string) {
-    return this.providerService.activateConfig(tenantId, id);
+    return presentConfig(await this.providerService.activateConfig(tenantId, id));
   }
 
   @Post(":id/deactivate")
@@ -193,6 +223,6 @@ export class ProviderConfigController {
     example: "123e4567-e89b-12d3-a456-426614174000",
   })
   async deactivate(@CurrentTenantId() tenantId: string, @Param("id") id: string) {
-    return this.providerService.deactivateConfig(tenantId, id);
+    return presentConfig(await this.providerService.deactivateConfig(tenantId, id));
   }
 }

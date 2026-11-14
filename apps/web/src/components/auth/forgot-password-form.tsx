@@ -62,7 +62,7 @@ export function ForgotPasswordForm() {
             </svg>
           </div>
 
-          <h1 className="text-2xl font-bold">Check your email</h1>
+          <h1 className="text-xl font-semibold tracking-tight">Check your email</h1>
           <p className="text-muted-foreground">
             We've sent a password reset link to <strong>{email}</strong>
           </p>
@@ -87,7 +87,7 @@ export function ForgotPasswordForm() {
     <Card className="w-full max-w-md mx-auto p-6">
       <div className="space-y-6">
         <div className="text-center">
-          <h1 className="text-2xl font-bold">Forgot your password?</h1>
+          <h1 className="text-xl font-semibold tracking-tight">Forgot your password?</h1>
           <p className="text-muted-foreground">
             Enter your email address and we'll send you a link to reset your password
           </p>

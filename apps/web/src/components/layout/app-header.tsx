@@ -13,32 +13,30 @@ interface AppHeaderProps {
 
 export function AppHeader({ onToggleSidebar }: AppHeaderProps) {
   return (
-    <header className="sticky top-0 z-40 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="flex h-16 items-center gap-2 px-3 sm:gap-4 sm:px-4">
+    <header className="sticky top-0 z-40 border-b bg-background">
+      <div className="flex h-14 items-center gap-2 px-4 md:px-6">
         {onToggleSidebar ? (
           <Button
             type="button"
             variant="ghost"
             size="icon"
-            className="shrink-0 md:hidden"
+            className="-ml-2 shrink-0 md:hidden"
             onClick={onToggleSidebar}
-            aria-label="Toggle navigation menu"
+            aria-label="Open navigation menu"
           >
             <Bars3Icon className="h-5 w-5" aria-hidden />
           </Button>
         ) : null}
 
+        <div className="w-44 min-w-0 sm:w-56">
+          <TenantSwitcher />
+        </div>
+
         <div className="min-w-0 flex-1" />
 
-        <div className="flex shrink-0 items-center gap-2">
+        <div className="flex shrink-0 items-center gap-1">
           <NotificationBell />
-
           <ThemeToggle />
-
-          <div className="w-28 min-w-0 sm:w-48">
-            <TenantSwitcher />
-          </div>
-
           <UserProfileDropdown />
         </div>
       </div>

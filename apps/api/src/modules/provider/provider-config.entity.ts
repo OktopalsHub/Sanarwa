@@ -41,12 +41,8 @@ export class ProviderConfig {
   @Column({ type: "varchar", length: 100, name: "provider_name" })
   providerName: string;
 
-  @Column({
-    type: "enum",
-    enum: ProviderType,
-    name: "provider_type",
-  })
-  providerType: ProviderType;
+  @Column({ type: "varchar", length: 50, name: "provider_type" })
+  providerType: string;
 
   @Column({ type: "varchar", length: 20 })
   channel: NotificationChannel;

@@ -2,43 +2,26 @@
 
 import { Button } from "@sanarwa/ui/button";
 import { Input } from "@sanarwa/ui/input";
-import { AuthSplitShell, SplitPanel } from "@/components/auth/auth-split-shell";
-import { MemberCardPreview } from "@/components/auth/member-card-preview";
+import { AuthLayout, AuthLink } from "@/components/auth/auth-layout";
+import { FormField } from "@/components/auth/form-field";
 import { useAuth } from "@/contexts/auth-context";
 import { useTenant } from "@/contexts/tenant-context";
 import { getTenantPathSegment } from "@/lib/tenant-path";
 import { authClient } from "@/lib/better-auth-client";
 import { CreateTenantRequest } from "@/lib/types/tenant";
 import { toastApiError } from "@/lib/utils/api-error-message";
-import { IconArrowRight, IconBuilding, IconCheck } from "@tabler/icons-react";
+import { IconArrowRight, IconBuilding } from "@tabler/icons-react";
 import { useRouter } from "@/compat/next-navigation";
-import Link from "@/compat/next-link";
 import { useState } from "react";
-
-function FieldLabel({ htmlFor, children }: { htmlFor: string; children: React.ReactNode }) {
-  return (
-    <label
-      htmlFor={htmlFor}
-      className="font-mono text-[11px] font-medium uppercase tracking-[var(--tracking-label)] text-[var(--color-muted)]"
-    >
-      {children}
-    </label>
-  );
-}
 
 interface TenantOnboardingProps {
   onComplete?: () => void;
 }
 
-const inputClass =
-  "h-11 rounded-[var(--radius-input)] border-[var(--color-rule)] bg-[var(--color-paper-2)] text-[var(--color-ink)] shadow-[var(--shadow-card)] transition-[border-color,box-shadow] duration-[var(--dur-micro)] ease-[var(--ease-out)] placeholder:text-[var(--color-muted)] focus-visible:border-[var(--color-focus)] focus-visible:ring-2 focus-visible:ring-[var(--color-focus)]/25";
-
-const ctaClass =
-  "h-12 w-full rounded-full bg-[var(--hm-accent)] font-mono text-[12px] font-bold uppercase tracking-[0.14em] text-[var(--color-accent-ink)] transition-opacity duration-[var(--dur-micro)] ease-[var(--ease-out)] hover:opacity-90 focus-visible:ring-2 focus-visible:ring-[var(--color-focus)] focus-visible:ring-offset-2 active:translate-y-px disabled:opacity-50";
-
 export function TenantOnboarding({ onComplete }: TenantOnboardingProps) {
   const router = useRouter();
-  const { tenants, createTenant, switchTenant, isLoading } = useTenant();
+  const { tenants, createTenant, switchTenant } = useTenant();
+  const [submitting, setSubmitting] = useState(false);
   const { user } = useAuth();
   const [step, setStep] = useState<"select" | 1 | 2>(tenants.length > 0 ? "select" : 1);
   const [orgName, setOrgName] = useState("");
@@ -86,6 +69,7 @@ export function TenantOnboarding({ onComplete }: TenantOnboardingProps) {
     e.preventDefault();
     if (!validateOrgForm()) return;
 
+    setSubmitting(true);
     try {
       const tenant = await createTenant({
         name: formData.name.trim(),
@@ -97,6 +81,8 @@ export function TenantOnboarding({ onComplete }: TenantOnboardingProps) {
       setStep(2);
     } catch (error) {
       toastApiError(error, "Could not create workspace");
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -139,239 +125,119 @@ export function TenantOnboarding({ onComplete }: TenantOnboardingProps) {
 
   if (step === "select" && tenants.length > 0) {
     return (
-      <div className="flex flex-col gap-6">
-        <header className="space-y-1.5">
-          <h2
-            className="font-[family-name:var(--font-display)] text-[length:var(--text-2xl)] font-bold leading-tight tracking-[var(--tracking-display)] text-[var(--color-ink)]"
-            style={{ fontStyle: "normal" }}
-          >
-            Choose a workspace
-          </h2>
-          <p className="text-sm leading-relaxed text-[var(--color-muted)]">
-            Open an existing team or create a new workspace.
-          </p>
-        </header>
-
+      <AuthLayout
+        title="Choose a workspace"
+        description="Open an existing workspace or create a new one."
+      >
         <ul className="flex flex-col gap-2">
           {tenants.map((tenant) => (
             <li key={tenant.id}>
               <button
                 type="button"
                 onClick={() => handleSelectExisting(tenant.id)}
-                disabled={isLoading}
-                className="flex w-full min-h-11 items-center justify-between gap-3 rounded-[var(--radius-input)] border border-[var(--color-rule)] bg-[var(--color-paper-2)] px-4 py-3 text-left shadow-[var(--shadow-card)] transition-colors duration-[var(--dur-micro)] ease-[var(--ease-out)] hover:border-[var(--color-rule-2)] hover:bg-[var(--color-paper-3)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-focus)] disabled:opacity-50"
+                disabled={submitting}
+                className="flex w-full items-center justify-between gap-3 rounded-lg border bg-background px-4 py-3 text-left transition-colors hover:bg-accent disabled:opacity-50"
               >
                 <span className="flex min-w-0 items-center gap-3">
-                  <IconBuilding className="size-5 shrink-0 text-[var(--color-muted)]" aria-hidden />
+                  <IconBuilding className="size-5 shrink-0 text-muted-foreground" aria-hidden />
                   <span className="flex min-w-0 flex-col">
-                    <span className="truncate font-medium text-[var(--color-ink)]">
-                      {tenant.name}
-                    </span>
-                    <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-[var(--color-muted)]">
+                    <span className="truncate text-sm font-medium">{tenant.name}</span>
+                    <span className="truncate text-xs text-muted-foreground">
                       {getTenantPathSegment(tenant)}
                     </span>
                   </span>
                 </span>
-                <IconArrowRight className="size-4 shrink-0 text-[var(--color-muted)]" aria-hidden />
+                <IconArrowRight className="size-4 shrink-0 text-muted-foreground" aria-hidden />
               </button>
             </li>
           ))}
         </ul>
-
-        <button
+        <Button
           type="button"
+          variant="outline"
+          className="mt-4 w-full"
           onClick={() => setStep(1)}
-          disabled={isLoading}
-          className="group flex min-h-11 w-full items-center justify-between gap-3 rounded-[var(--radius-input)] border border-dashed border-[var(--color-rule-2)] px-4 py-3 text-left transition-colors duration-[var(--dur-micro)] ease-[var(--ease-out)] hover:border-[var(--color-ink)] disabled:opacity-50"
+          disabled={submitting}
         >
-          <span className="text-sm font-medium text-[var(--color-ink)]">
-            Create a new workspace
-          </span>
-          <IconArrowRight
-            className="size-4 text-[var(--color-muted)] transition-transform duration-[var(--dur-micro)] ease-[var(--ease-out)] group-hover:translate-x-0.5"
-            aria-hidden
-          />
-        </button>
-      </div>
+          Create a new workspace
+        </Button>
+      </AuthLayout>
     );
   }
 
-  const panel = (
-    <AuthSplitShell
-      panel={
-        <SplitPanel
-          eyebrow="Sanarwa · Set up"
-          headline={
-            step === 1 ? (
-              <>
-                NAME THE
-                <br />
-                <span className="text-[var(--hm-accent)]">WORKSPACE.</span>
-              </>
-            ) : (
-              <>
-                MAKE YOUR
-                <br />
-                <span className="text-[var(--hm-accent)]">PROFILE.</span>
-              </>
-            )
-          }
-          sub="One workspace per team. Your URL becomes the home for campaigns, messages and billing."
-          sticker={<MemberCardPreview name={displayName} orgName={orgName} />}
-          chips={[]}
-          footnote="You can change this later in settings"
-          switchTo={
-            <Link
-              href="/login"
-              className="text-[var(--hm-accent)] underline-offset-2 hover:underline"
-            >
-              Sign in
-            </Link>
-          }
-        />
-      }
-    >
-      {step === 1 ? (
-        <form onSubmit={handleCreateOrg} className="flex w-full flex-col gap-6">
-          <ProgressSteps step={1} />
-          <header className="space-y-1.5">
-            <h1
-              className="font-[family-name:var(--font-display)] text-[length:var(--text-2xl)] font-bold leading-tight tracking-[var(--tracking-display)] text-[var(--color-ink)]"
-              style={{ fontStyle: "normal" }}
-            >
-              Name the workspace<span className="text-[var(--hm-accent)]">.</span>
-            </h1>
-            <p className="text-sm leading-relaxed text-[var(--color-muted)]">
-              You can rename it later. The URL slug can&apos;t change once set.
-            </p>
-          </header>
-
-          <div className="flex flex-col gap-4">
-            <div className="flex flex-col gap-1.5">
-              <FieldLabel htmlFor="name">Workspace name</FieldLabel>
-              <Input
-                id="name"
-                name="name"
-                autoComplete="organization"
-                value={formData.name}
-                onChange={handleInputChange}
-                placeholder="Payload Lab"
-                disabled={isLoading}
-                aria-invalid={!!formErrors.name}
-                className={inputClass}
-              />
-              {formErrors.name && (
-                <p className="text-sm text-[var(--color-danger)]" role="alert">
-                  {formErrors.name}
-                </p>
-              )}
-            </div>
-
-            <div className="flex flex-col gap-1.5">
-              <FieldLabel htmlFor="subdomain">Workspace URL</FieldLabel>
-              <Input
-                id="subdomain"
-                name="subdomain"
-                autoComplete="off"
-                value={formData.subdomain}
-                onChange={handleInputChange}
-                placeholder="payload-lab"
-                disabled={isLoading}
-                aria-invalid={!!formErrors.subdomain}
-                className={inputClass}
-              />
-              {formErrors.subdomain ? (
-                <p className="text-sm text-[var(--color-danger)]" role="alert">
-                  {formErrors.subdomain}
-                </p>
-              ) : (
-                <p className="text-xs text-[var(--color-muted)]">
-                  Opens at /{formData.subdomain || "your-workspace"}/dashboard
-                </p>
-              )}
-            </div>
-          </div>
-
-          <Button type="submit" size="lg" disabled={isLoading} className={ctaClass}>
-            {isLoading ? "Creating…" : "Continue to profile"}
-            {!isLoading && <IconArrowRight className="size-5" aria-hidden />}
-          </Button>
-        </form>
-      ) : (
-        <form onSubmit={handleEnterDashboard} className="flex w-full flex-col gap-6">
-          <ProgressSteps step={2} />
-          <header className="space-y-1.5">
-            <h1
-              className="font-[family-name:var(--font-display)] text-[length:var(--text-2xl)] font-bold leading-tight tracking-[var(--tracking-display)] text-[var(--color-ink)]"
-              style={{ fontStyle: "normal" }}
-            >
-              Make your profile<span className="text-[var(--hm-accent)]">.</span>
-            </h1>
-            <p className="text-sm leading-relaxed text-[var(--color-muted)]">
-              This is how teammates see you inside {orgName || "this workspace"}: on the member list
-              and in the org switcher.
-            </p>
-          </header>
-
-          <div className="flex flex-col gap-1.5">
-            <FieldLabel htmlFor="displayName">Display name</FieldLabel>
+  if (step === 2) {
+    return (
+      <AuthLayout
+        title="What should we call you?"
+        description={`Teammates will see this name in ${orgName || "your workspace"}.`}
+        footer="Step 2 of 2"
+      >
+        <form onSubmit={handleEnterDashboard} className="flex flex-col gap-4">
+          <FormField label="Your name" htmlFor="displayName">
             <Input
               id="displayName"
               name="displayName"
               autoComplete="name"
               value={displayName}
               onChange={(e) => setDisplayName(e.target.value)}
-              placeholder="Daniel Agbey"
-              disabled={isLoading}
-              className={inputClass}
+              placeholder="Amaka Obi"
+              disabled={submitting}
             />
-          </div>
-
-          <Button type="submit" size="lg" disabled={isLoading} className={ctaClass}>
-            {isLoading ? "Saving…" : "Enter dashboard"}
-            {!isLoading && <IconArrowRight className="size-5" aria-hidden />}
+          </FormField>
+          <Button type="submit" disabled={submitting} className="w-full">
+            {submitting ? "Saving…" : "Open my workspace"}
           </Button>
         </form>
-      )}
-    </AuthSplitShell>
-  );
-
-  return panel;
-}
-
-function ProgressSteps({ step }: { step: 1 | 2 }) {
-  const steps = [
-    { number: "01", label: "Organization" },
-    { number: "02", label: "Your profile" },
-  ] as const;
+      </AuthLayout>
+    );
+  }
 
   return (
-    <ol className="flex items-center gap-2" aria-label="Onboarding progress">
-      {steps.map((item, index) => {
-        const n = (index + 1) as 1 | 2;
-        const active = n === step;
-        const done = n < step;
-        return (
-          <li key={item.number} className="flex items-center gap-2">
-            <span
-              aria-current={active ? "step" : undefined}
-              className="flex items-center gap-2 rounded-full px-3 py-1.5 font-mono text-[11px] font-medium uppercase tracking-[0.18em]"
-              style={
-                done
-                  ? { background: "var(--color-ink)", color: "var(--color-paper)" }
-                  : active
-                    ? { background: "var(--color-ink)", color: "var(--color-paper)" }
-                    : { border: "1px solid var(--color-rule-2)", color: "var(--color-muted)" }
-              }
-            >
-              {done ? <IconCheck className="size-3.5" aria-hidden /> : item.number} {item.label}
-            </span>
-            {index < steps.length - 1 ? (
-              <span className="h-px w-6 bg-[var(--color-rule-2)]" aria-hidden />
-            ) : null}
-          </li>
-        );
-      })}
-    </ol>
+    <AuthLayout
+      title="Create your workspace"
+      description="A workspace is where your team manages messages, API keys and billing."
+      footer={
+        <>
+          Step 1 of 2 · Wrong account? <AuthLink href="/login">Sign in</AuthLink>
+        </>
+      }
+    >
+      <form onSubmit={handleCreateOrg} className="flex flex-col gap-4">
+        <FormField label="Workspace name" htmlFor="name" error={formErrors.name}>
+          <Input
+            id="name"
+            name="name"
+            autoComplete="organization"
+            value={formData.name}
+            onChange={handleInputChange}
+            placeholder="Payload Lab"
+            disabled={submitting}
+            aria-invalid={!!formErrors.name}
+          />
+        </FormField>
+
+        <FormField
+          label="Workspace URL"
+          htmlFor="subdomain"
+          error={formErrors.subdomain}
+          hint={`Opens at /${formData.subdomain || "your-workspace"}/dashboard`}
+        >
+          <Input
+            id="subdomain"
+            name="subdomain"
+            autoComplete="off"
+            value={formData.subdomain}
+            onChange={handleInputChange}
+            placeholder="payload-lab"
+            disabled={submitting}
+            aria-invalid={!!formErrors.subdomain}
+          />
+        </FormField>
+
+        <Button type="submit" disabled={submitting} className="w-full">
+          {submitting ? "Creating…" : "Continue"}
+        </Button>
+      </form>
+    </AuthLayout>
   );
 }

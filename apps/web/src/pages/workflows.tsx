@@ -142,7 +142,7 @@ export default function WorkflowsPage() {
       <AppShell>
         <div className="h-[calc(100vh-8rem)] flex flex-col">
           <div className="flex items-center justify-between p-4 border-b">
-            <h1 className="text-2xl font-bold">Workflow Builder</h1>
+            <h1 className="text-xl font-semibold tracking-tight">Workflow Builder</h1>
             <Button variant="outline" onClick={() => setShowCanvas(false)}>
               Back to List
             </Button>
@@ -160,7 +160,7 @@ export default function WorkflowsPage() {
       <div className="container mx-auto p-6">
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h1 className="text-3xl font-bold">Workflows</h1>
+            <h1 className="text-xl font-semibold tracking-tight">Workflows</h1>
             <p className="text-muted-foreground">Create and manage your communication workflows</p>
           </div>
           <Button onClick={handleCreateNew} className="flex items-center gap-2">

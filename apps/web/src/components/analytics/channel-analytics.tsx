@@ -1,7 +1,5 @@
 "use client";
 
-import { Activity } from "@/lib/icons";
-
 import { DashboardChart } from "@/components/dashboard/dashboard-chart";
 import { MetricCard } from "@/components/dashboard/metric-card";
 import { Button } from "@sanarwa/ui/button";
@@ -15,8 +13,6 @@ import {
   ChatBubbleLeftRightIcon,
   PhoneIcon,
   DevicePhoneMobileIcon,
-  ArrowTrendingDownIcon,
-  ArrowTrendingUpIcon,
 } from "@heroicons/react/24/outline";
 import { useState } from "react";
 
@@ -143,7 +139,9 @@ export function ChannelAnalytics({ channel = "email" }: ChannelAnalyticsProps) {
         <div className="flex items-center space-x-3">
           <Icon className="h-8 w-8 text-primary" />
           <div>
-            <h1 className="text-2xl font-bold capitalize">{selectedChannel} Analytics</h1>
+            <h1 className="text-xl font-semibold tracking-tight capitalize">
+              {selectedChannel} Analytics
+            </h1>
             <p className="text-muted-foreground">
               Detailed performance metrics for {selectedChannel} communications
             </p>
@@ -188,25 +186,21 @@ export function ChannelAnalytics({ channel = "email" }: ChannelAnalyticsProps) {
         <MetricCard
           title="Messages Sent"
           value={data.metrics.sent.toLocaleString()}
-          icon={Icon}
           description="Total messages sent"
         />
         <MetricCard
           title="Delivery Rate"
           value={`${data.metrics.deliveryRate}%`}
-          icon={ArrowTrendingUpIcon}
           description={`${data.metrics.delivered.toLocaleString()} delivered`}
         />
         <MetricCard
           title="Open Rate"
           value={`${data.metrics.openRate}%`}
-          icon={ArrowTrendingUpIcon}
           description={`${data.metrics.opened.toLocaleString()} opened`}
         />
         <MetricCard
           title="Click Rate"
           value={`${data.metrics.clickRate}%`}
-          icon={ArrowTrendingDownIcon}
           description={`${data.metrics.clicked.toLocaleString()} clicked`}
         />
       </div>

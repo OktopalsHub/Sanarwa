@@ -174,7 +174,7 @@ export default function MonitoringDashboard() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">System Monitoring</h1>
+          <h1 className="text-xl font-semibold tracking-tight">System Monitoring</h1>
           <p className="text-muted-foreground">Real-time monitoring and alerting dashboard</p>
         </div>
         <div className="text-right">

@@ -1,16 +1,16 @@
 import { Permission } from "@/lib/types/permissions";
 import {
-  IconBolt,
-  IconBriefcase,
+  IconBrandSlack,
   IconChartBar,
   IconCreditCard,
   IconCube,
-  IconHash,
   IconHome,
-  IconInbox,
   IconKey,
   IconLink,
+  IconMail,
+  IconSend,
   IconSettings,
+  IconSpeakerphone,
   type Icon,
 } from "@tabler/icons-react";
 
@@ -21,27 +21,60 @@ export interface NavigationItem {
   permissions?: Permission[];
 }
 
-export const overviewSegments: NavigationItem[] = [
-  { name: "Dashboard", segment: "dashboard", icon: IconHome },
-];
+export interface NavigationGroup {
+  title?: string;
+  items: NavigationItem[];
+}
 
-export const sendingSegments: NavigationItem[] = [
-  { name: "Messages", segment: "messages", icon: IconInbox },
-  { name: "Campaigns", segment: "campaigns", icon: IconBriefcase, permissions: ["campaigns:read"] },
-  { name: "Analytics", segment: "analytics", icon: IconChartBar, permissions: ["analytics:read"] },
-];
-
-export const setupSegments: NavigationItem[] = [
-  { name: "Projects", segment: "projects", icon: IconCube },
-  { name: "Channels", segment: "channels", icon: IconHash },
-  { name: "Providers", segment: "providers", icon: IconBolt },
-  { name: "API Keys", segment: "api-keys", icon: IconKey },
-  { name: "Webhooks", segment: "webhooks", icon: IconLink },
-];
-
-export const workspaceSegments: NavigationItem[] = [
-  { name: "Billing", segment: "billing", icon: IconCreditCard },
-  { name: "Settings", segment: "settings", icon: IconSettings, permissions: ["settings:read"] },
+export const navigationGroups: NavigationGroup[] = [
+  {
+    items: [{ name: "Overview", segment: "dashboard", icon: IconHome }],
+  },
+  {
+    title: "Send",
+    items: [
+      { name: "Messages", segment: "messages", icon: IconSend },
+      {
+        name: "Campaigns",
+        segment: "campaigns",
+        icon: IconSpeakerphone,
+        permissions: ["campaigns:read"],
+      },
+      {
+        name: "Analytics",
+        segment: "analytics",
+        icon: IconChartBar,
+        permissions: ["analytics:read"],
+      },
+    ],
+  },
+  {
+    title: "Connect",
+    items: [
+      { name: "Email, SMS & push", segment: "providers", icon: IconMail },
+      { name: "Chat apps", segment: "channels", icon: IconBrandSlack },
+    ],
+  },
+  {
+    title: "Developers",
+    items: [
+      { name: "Projects", segment: "projects", icon: IconCube },
+      { name: "API keys", segment: "api-keys", icon: IconKey },
+      { name: "Webhooks", segment: "webhooks", icon: IconLink },
+    ],
+  },
+  {
+    title: "Account",
+    items: [
+      { name: "Billing", segment: "billing", icon: IconCreditCard },
+      {
+        name: "Settings",
+        segment: "settings",
+        icon: IconSettings,
+        permissions: ["settings:read"],
+      },
+    ],
+  },
 ];
 
 export function buildNav(base: string, items: NavigationItem[]) {

@@ -1,6 +1,6 @@
 "use client";
 
-import { apiClient } from "@sanarwa/api-client";
+import { apiClient, projectApi, providerApi } from "@sanarwa/api-client";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 export function useBrands(tenantId?: string) {
@@ -18,12 +18,14 @@ export function useIsBYOK(tenantId?: string) {
   return useQuery({
     queryKey: ["email", "isBYOK", tenantId],
     queryFn: async () => {
-      const res: any = await apiClient.get(`/provider-configs`, {
-        channel: "EMAIL",
-        limit: 1,
-      } as any);
-      const data = res?.data || res || [];
-      return { isBYOK: Array.isArray(data) ? data.length > 0 : !!res?.data?.length, raw: res };
+      const projects = await projectApi.getProjects({ limit: 100 });
+      for (const project of projects.data) {
+        const configs = await providerApi.listProviders(project.id, { channel: "email", limit: 1 });
+        if (configs.data.length > 0) {
+          return { isBYOK: true, raw: configs };
+        }
+      }
+      return { isBYOK: false, raw: null };
     },
     enabled: !!tenantId,
     staleTime: 30_000,

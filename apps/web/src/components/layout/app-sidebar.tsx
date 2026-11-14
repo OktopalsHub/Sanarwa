@@ -1,145 +1,110 @@
 "use client";
 
 import { PermissionGate } from "@/components/auth/permission-gate";
-import { Button } from "@sanarwa/ui/button";
-import { Separator } from "@sanarwa/ui/separator";
 import { useTenantBasePath } from "@/hooks/use-tenant-slug";
 import { cn } from "@/lib/utils";
-import { IconBolt, IconBook } from "@tabler/icons-react";
+import { IconBook } from "@tabler/icons-react";
 import Link from "@/compat/next-link";
 import { usePathname } from "@/compat/next-navigation";
 import { useMemo } from "react";
-import {
-  buildNav,
-  overviewSegments,
-  sendingSegments,
-  setupSegments,
-  workspaceSegments,
-  type NavigationItem,
-} from "./nav-config";
+import { BrandMark } from "@/components/brand-mark";
+import { buildNav, navigationGroups, type NavigationItem } from "./nav-config";
 
 interface AppSidebarProps {
   onNavigate?: () => void;
 }
 
+type LinkItem = NavigationItem & { href: string };
+
 export function AppSidebar({ onNavigate }: AppSidebarProps) {
   const pathname = usePathname();
   const basePath = useTenantBasePath();
   const base = basePath || "/dashboard";
-
-  const overview = useMemo(() => buildNav(base, overviewSegments), [base]);
-  const sending = useMemo(() => buildNav(base, sendingSegments), [base]);
-  const setup = useMemo(() => buildNav(base, setupSegments), [base]);
-  const workspace = useMemo(() => buildNav(base, workspaceSegments), [base]);
-
   const homeHref = basePath ? `${basePath}/dashboard` : "/dashboard";
 
+  const groups = useMemo(
+    () => navigationGroups.map((group) => ({ ...group, items: buildNav(base, group.items) })),
+    [base],
+  );
+
   return (
-    <div className="flex h-full flex-col border-r bg-background">
-      <div className="flex h-16 items-center border-b px-6">
+    <div className="flex h-full flex-col border-r bg-sidebar text-sidebar-foreground">
+      <div className="flex h-14 items-center px-4">
         <Link href={homeHref} className="flex items-center gap-2" onClick={onNavigate}>
-          <div className="flex size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-            <IconBolt className="size-4" />
-          </div>
-          <span className="text-lg font-semibold">Sanarwa</span>
+          <BrandMark />
+          <span className="text-[15px] font-semibold tracking-tight">Sanarwa</span>
         </Link>
       </div>
 
-      <nav className="flex flex-1 flex-col gap-4 overflow-y-auto p-4" aria-label="Main navigation">
-        <div className="flex flex-col gap-1">
-          {overview.map((item) => (
-            <NavigationLink
-              key={item.name}
-              item={item}
-              isActive={pathname === item.href || pathname.startsWith(`${item.href}/`)}
-              onClick={onNavigate}
-            />
-          ))}
-        </div>
-
-        <Separator />
-        <NavSection title="Sending" items={sending} pathname={pathname} onClick={onNavigate} />
-        <Separator />
-        <NavSection title="Setup" items={setup} pathname={pathname} onClick={onNavigate} />
-        <Separator />
-        <NavSection title="Workspace" items={workspace} pathname={pathname} onClick={onNavigate} />
+      <nav className="flex flex-1 flex-col gap-5 overflow-y-auto px-3 py-2" aria-label="Main">
+        {groups.map((group, index) => (
+          <div key={group.title ?? index} className="flex flex-col gap-0.5">
+            {group.title ? (
+              <p className="px-2.5 pb-1 text-xs font-medium text-muted-foreground">{group.title}</p>
+            ) : null}
+            {group.items.map((item) => (
+              <GatedLink key={item.segment} item={item} pathname={pathname} onClick={onNavigate} />
+            ))}
+          </div>
+        ))}
       </nav>
 
-      <div className="border-t p-4">
-        <Button
-          asChild
-          variant="ghost"
-          size="sm"
-          className="w-full justify-start gap-3 text-muted-foreground hover:text-foreground"
+      <div className="border-t p-3">
+        <Link
+          href="/docs"
+          onClick={onNavigate}
+          className="flex items-center gap-2.5 rounded-md px-2.5 py-1.5 text-sm text-muted-foreground transition-colors hover:bg-sidebar-accent hover:text-foreground"
         >
-          <Link href="/docs" onClick={onNavigate}>
-            <IconBook data-icon="inline-start" />
-            Documentation
-          </Link>
-        </Button>
-        <p className="mt-2 px-3 text-xs text-muted-foreground">
-          © {new Date().getFullYear()} Sanarwa
-        </p>
+          <IconBook className="size-4" aria-hidden />
+          Documentation
+        </Link>
       </div>
     </div>
   );
 }
 
-function NavSection({
-  title,
-  items,
+function GatedLink({
+  item,
   pathname,
   onClick,
 }: {
-  title: string;
-  items: Array<NavigationItem & { href: string }>;
+  item: LinkItem;
   pathname: string;
   onClick?: () => void;
 }) {
-  return (
-    <div className="flex flex-col gap-1">
-      <div className="px-3 py-1.5">
-        <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-          {title}
-        </h3>
-      </div>
-      {items.map((item) => {
-        const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`);
-        if (item.permissions) {
-          return (
-            <PermissionGate key={item.name} permissions={item.permissions}>
-              <NavigationLink item={item} isActive={isActive} onClick={onClick} />
-            </PermissionGate>
-          );
-        }
-        return <NavigationLink key={item.name} item={item} isActive={isActive} onClick={onClick} />;
-      })}
-    </div>
+  const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`);
+  const link = <NavLink item={item} isActive={isActive} onClick={onClick} />;
+
+  return item.permissions ? (
+    <PermissionGate permissions={item.permissions}>{link}</PermissionGate>
+  ) : (
+    link
   );
 }
 
-function NavigationLink({
+function NavLink({
   item,
   isActive,
   onClick,
 }: {
-  item: NavigationItem & { href: string };
+  item: LinkItem;
   isActive: boolean;
   onClick?: () => void;
 }) {
   return (
-    <Button
-      asChild
-      variant={isActive ? "secondary" : "ghost"}
+    <Link
+      href={item.href}
+      onClick={onClick}
+      aria-current={isActive ? "page" : undefined}
       className={cn(
-        "h-9 w-full justify-start gap-3",
-        isActive && "bg-secondary text-secondary-foreground",
+        "flex items-center gap-2.5 rounded-md px-2.5 py-1.5 text-sm transition-colors",
+        isActive
+          ? "bg-sidebar-accent font-medium text-sidebar-accent-foreground"
+          : "text-muted-foreground hover:bg-sidebar-accent hover:text-foreground",
       )}
     >
-      <Link href={item.href} onClick={onClick} aria-current={isActive ? "page" : undefined}>
-        <item.icon data-icon="inline-start" />
-        <span className="flex-1 text-left">{item.name}</span>
-      </Link>
-    </Button>
+      <item.icon className="size-4 shrink-0" aria-hidden />
+      <span className="truncate">{item.name}</span>
+    </Link>
   );
 }

@@ -74,7 +74,7 @@ export default function WebhooksPage() {
       <div className="p-6">
         <div className="mx-auto max-w-4xl space-y-6">
           <div>
-            <h1 className="text-3xl font-bold tracking-tight">Webhooks</h1>
+            <h1 className="text-xl font-semibold tracking-tight">Webhooks</h1>
             <p className="text-muted-foreground">
               Receive delivery events on your server as they happen.
             </p>

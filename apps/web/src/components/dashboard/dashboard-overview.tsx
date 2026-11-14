@@ -3,7 +3,6 @@
 import { Skeleton } from "@sanarwa/ui/skeleton";
 import { DashboardChart } from "./dashboard-chart";
 import { DashboardEmpty, MilestoneChecklist } from "./dashboard-states";
-import { HeroPanel } from "./hero-panel";
 import { MetricCard } from "./metric-card";
 import { RecentDeliveries } from "./recent-deliveries";
 import { ChannelBreakdown } from "./channel-breakdown";
@@ -11,12 +10,9 @@ import { TokenPeek } from "./token-peek";
 import { SectionError } from "./section-error";
 import { useDashboardData } from "@/hooks/use-dashboard-data";
 import { useTenantBasePath } from "@/hooks/use-tenant-slug";
-import { useTenant } from "@/contexts/tenant-context";
-import { IconAlertCircle, IconListCheck, IconMessage, IconTrendingUp } from "@tabler/icons-react";
 
 export function DashboardOverview() {
   const { stats, allTimeStats, breakdown, recent, tokens, setup } = useDashboardData();
-  const { selectedTenant } = useTenant();
   const basePath = useTenantBasePath();
 
   const neverSent = allTimeStats.isSuccess && allTimeStats.data.total === 0;
@@ -50,14 +46,6 @@ export function DashboardOverview() {
 
   return (
     <div className="flex flex-col gap-6">
-      <HeroPanel
-        tenantName={selectedTenant?.name}
-        totalSent={stats.data?.sent ?? 0}
-        delivered={stats.data?.delivered ?? 0}
-        failed={stats.data?.failed ?? 0}
-        isLoading={stats.isLoading}
-      />
-
       {!setupComplete && setup.isSuccess && allTimeStats.isSuccess ? (
         <MilestoneChecklist steps={steps} />
       ) : null}
@@ -83,25 +71,21 @@ export function DashboardOverview() {
                 <MetricCard
                   title="Messages sent"
                   value={(stats.data?.sent ?? 0).toLocaleString()}
-                  icon={IconMessage}
                   description="Last 30 days"
                 />
                 <MetricCard
                   title="Delivery rate"
                   value={`${(stats.data?.deliveryRate ?? 0).toFixed(1)}%`}
-                  icon={IconTrendingUp}
                   description="Last 30 days"
                 />
                 <MetricCard
                   title="Failed"
                   value={(stats.data?.failed ?? 0).toLocaleString()}
-                  icon={IconAlertCircle}
                   description="Last 30 days"
                 />
                 <MetricCard
                   title="Queued"
                   value={(stats.data?.queued ?? 0).toLocaleString()}
-                  icon={IconListCheck}
                   description="Waiting to send"
                 />
               </>

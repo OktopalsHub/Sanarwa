@@ -41,7 +41,7 @@ export default function ChannelsPage() {
       <div className="p-6">
         <div className="max-w-7xl mx-auto space-y-6">
           <div className="space-y-2">
-            <h1 className="text-3xl font-bold tracking-tight">Channels</h1>
+            <h1 className="text-xl font-semibold tracking-tight">Channels</h1>
             <p className="text-muted-foreground">
               Connect your own Slack, Discord, Telegram and WhatsApp Business accounts. Credentials
               are stored encrypted per workspace — Sanarwa never shares a platform account.

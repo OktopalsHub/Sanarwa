@@ -1,6 +1,7 @@
 "use client";
 
-import { AuthDivider } from "@/components/auth/auth-page-shell";
+import { AuthDivider } from "@/components/auth/auth-layout";
+import { FormField } from "@/components/auth/form-field";
 import { AuthOAuthButtons } from "@/components/auth/auth-oauth-buttons";
 import { Button } from "@sanarwa/ui/button";
 import { Input } from "@sanarwa/ui/input";
@@ -11,20 +12,8 @@ import { toastApiError } from "@/lib/utils/api-error-message";
 import Link from "@/compat/next-link";
 import { useRouter } from "@/compat/next-navigation";
 import { useState } from "react";
-import { IconArrowUpRight } from "@tabler/icons-react";
 
-function FieldLabel({ htmlFor, children }: { htmlFor: string; children: React.ReactNode }) {
-  return (
-    <label
-      htmlFor={htmlFor}
-      className="font-mono text-[11px] font-medium uppercase tracking-[var(--tracking-label)] text-[var(--color-muted)]"
-    >
-      {children}
-    </label>
-  );
-}
-
-export function LoginForm({ variant = "standalone" }: { variant?: "standalone" | "dual" }) {
+export function LoginForm() {
   const router = useRouter();
   const { login, isLoading } = useAuth();
 
@@ -82,102 +71,56 @@ export function LoginForm({ variant = "standalone" }: { variant?: "standalone" |
     }
   };
 
-  const inputClass =
-    "h-11 rounded-[var(--radius-input)] border-[var(--color-rule)] bg-[var(--color-paper-2)] text-[var(--color-ink)] shadow-[var(--shadow-card)] transition-[border-color,box-shadow] duration-[var(--dur-micro)] ease-[var(--ease-out)] placeholder:text-[var(--color-muted)] focus-visible:border-[var(--color-focus)] focus-visible:ring-2 focus-visible:ring-[var(--color-focus)]/25";
-
   return (
-    <div className="flex flex-col gap-6">
-      <header className="space-y-1.5">
-        <h2
-          className="font-[family-name:var(--font-display)] text-[length:var(--text-2xl)] font-bold leading-tight tracking-[var(--tracking-display)] text-[var(--color-ink)]"
-          style={{ fontStyle: "normal" }}
-        >
-          Sign in
-        </h2>
-        <p className="text-sm leading-relaxed text-[var(--color-muted)]">
-          Use your work email to open your workspace dashboard.
-        </p>
-      </header>
-
+    <div className="flex flex-col gap-5">
       <AuthOAuthButtons disabled={isLoading} actionLabel="Login" />
 
-      <AuthDivider label="Or use email" />
+      <AuthDivider label="or" />
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-4" noValidate>
-        <div className="flex flex-col gap-4">
-          <div className="flex flex-col gap-1.5">
-            <FieldLabel htmlFor="email">Email</FieldLabel>
-            <Input
-              id="email"
-              name="email"
-              type="email"
-              autoComplete="email"
-              value={formData.email}
-              onChange={handleInputChange}
-              placeholder="you@company.com"
-              disabled={isLoading}
-              aria-invalid={!!formErrors.email}
-              className={inputClass}
-            />
-            {formErrors.email && (
-              <p className="text-sm text-[var(--color-danger)]" role="alert">
-                {formErrors.email}
-              </p>
-            )}
-          </div>
+        <FormField label="Email" htmlFor="email" error={formErrors.email}>
+          <Input
+            id="email"
+            name="email"
+            type="email"
+            autoComplete="email"
+            value={formData.email}
+            onChange={handleInputChange}
+            placeholder="you@company.com"
+            disabled={isLoading}
+            aria-invalid={!!formErrors.email}
+          />
+        </FormField>
 
-          <div className="flex flex-col gap-1.5">
-            <div className="flex items-center justify-between gap-2">
-              <FieldLabel htmlFor="password">Password</FieldLabel>
-              <Link
-                href="/forgot-password"
-                className="text-[11px] text-[var(--color-muted)] underline-offset-2 hover:text-[var(--hm-accent)] hover:underline"
-              >
-                Forgot password?
-              </Link>
-            </div>
-            <Input
-              id="password"
-              name="password"
-              type="password"
-              autoComplete="current-password"
-              value={formData.password}
-              onChange={handleInputChange}
-              placeholder="Your password"
-              disabled={isLoading}
-              aria-invalid={!!formErrors.password}
-              className={inputClass}
-            />
-            {formErrors.password && (
-              <p className="text-sm text-[var(--color-danger)]" role="alert">
-                {formErrors.password}
-              </p>
-            )}
-          </div>
-        </div>
-
-        <Button
-          type="submit"
-          size="lg"
-          disabled={isLoading}
-          className="h-12 w-full rounded-full bg-[var(--hm-accent)] font-mono text-[12px] font-bold uppercase tracking-[0.14em] text-[var(--color-accent-ink)] transition-opacity duration-[var(--dur-micro)] ease-[var(--ease-out)] hover:opacity-90 focus-visible:ring-2 focus-visible:ring-[var(--color-focus)] focus-visible:ring-offset-2 active:translate-y-px disabled:opacity-50"
+        <FormField
+          label="Password"
+          htmlFor="password"
+          error={formErrors.password}
+          action={
+            <Link
+              href="/forgot-password"
+              className="text-sm text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
+            >
+              Forgot password?
+            </Link>
+          }
         >
+          <Input
+            id="password"
+            name="password"
+            type="password"
+            autoComplete="current-password"
+            value={formData.password}
+            onChange={handleInputChange}
+            disabled={isLoading}
+            aria-invalid={!!formErrors.password}
+          />
+        </FormField>
+
+        <Button type="submit" disabled={isLoading} className="w-full">
           {isLoading ? "Signing in…" : "Sign in"}
-          {!isLoading && <IconArrowUpRight className="size-5" />}
         </Button>
       </form>
-
-      {variant === "standalone" && (
-        <p className="hidden text-center text-sm text-[var(--color-muted)] lg:block">
-          No account?{" "}
-          <Link
-            href="/register"
-            className="font-medium text-[var(--color-ink)] underline-offset-2 hover:text-[var(--hm-accent)] hover:underline"
-          >
-            Create one
-          </Link>
-        </p>
-      )}
     </div>
   );
 }

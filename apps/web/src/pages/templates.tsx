@@ -87,7 +87,7 @@ export default function TemplatesPage() {
                   Back to Library
                 </Button>
                 <div>
-                  <h1 className="text-2xl font-bold">{selectedTemplate.name}</h1>
+                  <h1 className="text-xl font-semibold tracking-tight">{selectedTemplate.name}</h1>
                   <p className="text-muted-foreground">
                     {selectedTemplate.description || "No description provided"}
                   </p>

@@ -30,7 +30,7 @@ export default function TenantSettingsPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">Tenant Settings</h1>
+        <h1 className="text-xl font-semibold tracking-tight">Tenant Settings</h1>
         <p className="text-muted-foreground">
           Manage your organization settings, billing, and configuration.
         </p>

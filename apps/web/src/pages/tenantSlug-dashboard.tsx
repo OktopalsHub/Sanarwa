@@ -1,7 +1,7 @@
 "use client";
 
 import { DashboardOverview } from "@/components/dashboard";
-import { AppShell } from "@/components/layout";
+import { AppShell, PageContainer, PageHeader } from "@/components/layout";
 import { Button } from "@sanarwa/ui/button";
 import { useEnsureTenantFromSlug, useTenantBasePath } from "@/hooks/use-tenant-slug";
 import { useTenant } from "@/contexts/tenant-context";
@@ -50,29 +50,19 @@ export default function TenantDashboardPage() {
 
   return (
     <AppShell>
-      <div className="mx-auto max-w-7xl px-4 py-6 md:px-6 md:py-8">
-        <header className="mb-8 flex flex-col gap-4 border-b border-border pb-6 sm:flex-row sm:items-end sm:justify-between">
-          <div className="min-w-0 space-y-1">
-            <p className="text-sm font-medium text-muted-foreground">{tenant?.name}</p>
-            <h1 className="text-2xl font-semibold tracking-tight text-foreground md:text-3xl">
-              Dashboard
-            </h1>
-            <p className="text-sm text-muted-foreground">
-              Delivery and sending activity · last 30 days
-            </p>
-          </div>
-          <div className="flex shrink-0 flex-wrap gap-2">
+      <PageContainer>
+        <PageHeader
+          title="Overview"
+          description={`Delivery activity for ${tenant?.name ?? "your workspace"} over the last 30 days.`}
+          actions={
             <Button asChild variant="outline" size="sm">
-              <Link href={`${basePath}/messages`}>Messages</Link>
+              <Link href={`${basePath}/messages`}>View messages</Link>
             </Button>
-            <Button asChild size="sm">
-              <Link href={`${basePath}/analytics`}>Analytics</Link>
-            </Button>
-          </div>
-        </header>
+          }
+        />
 
         <DashboardOverview />
-      </div>
+      </PageContainer>
     </AppShell>
   );
 }

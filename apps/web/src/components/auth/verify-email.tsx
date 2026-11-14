@@ -60,7 +60,7 @@ export function VerifyEmail() {
       <Card className="w-full max-w-md mx-auto p-6">
         <div className="text-center space-y-4">
           <div className="w-12 h-12 mx-auto border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
-          <h1 className="text-2xl font-bold">Verifying your email</h1>
+          <h1 className="text-xl font-semibold tracking-tight">Verifying your email</h1>
           <p className="text-muted-foreground">Please wait while we verify your email address...</p>
         </div>
       </Card>
@@ -87,7 +87,7 @@ export function VerifyEmail() {
             </svg>
           </div>
 
-          <h1 className="text-2xl font-bold">Email verified!</h1>
+          <h1 className="text-xl font-semibold tracking-tight">Email verified!</h1>
           <p className="text-muted-foreground">
             Your email address has been successfully verified. You can now access all features of
             your account.
@@ -121,7 +121,7 @@ export function VerifyEmail() {
             </svg>
           </div>
 
-          <h1 className="text-2xl font-bold">Verification email sent</h1>
+          <h1 className="text-xl font-semibold tracking-tight">Verification email sent</h1>
           <p className="text-muted-foreground">
             We've sent a new verification email to your address. Please check your inbox and click
             the verification link.
@@ -156,7 +156,7 @@ export function VerifyEmail() {
           </svg>
         </div>
 
-        <h1 className="text-2xl font-bold">Verification failed</h1>
+        <h1 className="text-xl font-semibold tracking-tight">Verification failed</h1>
         <p className="text-muted-foreground">
           {error || "We couldn't verify your email address. The link may be invalid or expired."}
         </p>

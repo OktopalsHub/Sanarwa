@@ -447,3 +447,60 @@ export interface ProviderFailoverEvent {
   reason: string;
   timestamp: Date;
 }
+
+export type ProviderChannel = "email" | "sms" | "push" | "chat" | "whatsapp" | "voice" | "in_app";
+
+/** A provider connection as the API stores it, scoped to one project. */
+export interface ProviderConfigRecord {
+  id: string;
+  projectId: string;
+  providerId: string;
+  providerName: string;
+  providerType: string;
+  channel: ProviderChannel;
+  config: Record<string, unknown>;
+  priority: number;
+  isActive: boolean;
+  isDefault: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateProviderConfigRequest {
+  providerId: string;
+  providerName: string;
+  providerType: string;
+  channel: ProviderChannel;
+  config: Record<string, unknown>;
+  priority?: number;
+  isActive?: boolean;
+  isDefault?: boolean;
+}
+
+export type UpdateProviderConfigRequest = Partial<
+  Pick<
+    CreateProviderConfigRequest,
+    "providerName" | "config" | "priority" | "isActive" | "isDefault"
+  >
+>;
+
+/** A provider Sanarwa offers, as listed by the templates endpoint. */
+export interface ProviderTemplate {
+  id: string;
+  name: string;
+  providerId: string;
+  channel: ProviderChannel;
+  isPopular?: boolean;
+  difficulty?: "easy" | "medium" | "hard";
+}
+
+/** The credential fields one provider's config is validated against. */
+export interface ProviderSchema {
+  channel: string;
+  providerId: string;
+  required: string[];
+  optional: string[];
+  requiredAny: string[];
+  description: Record<string, string>;
+  secretFields: string[];
+}

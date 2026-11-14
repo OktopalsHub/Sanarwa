@@ -1,5 +1,6 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { NotificationChannel } from "../../common/enums/notification-channel.enum";
+import { isSecretField } from "./mask-provider-config";
 import { ProviderConfig } from "./provider-config.entity";
 
 export interface ValidationResult {
@@ -14,6 +15,16 @@ export interface ProviderConfigSchema {
   requiredAny?: string[];
   validation: Record<string, (value: any) => boolean>;
   description: Record<string, string>;
+}
+
+export interface ProviderSchemaDescription {
+  channel: string;
+  providerId: string;
+  required: string[];
+  optional: string[];
+  requiredAny: string[];
+  description: Record<string, string>;
+  secretFields: string[];
 }
 
 @Injectable()
@@ -200,6 +211,32 @@ export class ProviderConfigValidator {
     }
 
     return { isValid: errors.length === 0, errors, warnings };
+  }
+
+  describeSchemas(): ProviderSchemaDescription[] {
+    const described: ProviderSchemaDescription[] = [];
+
+    for (const [key, schema] of this.schemas) {
+      const [channel, providerId] = key.split(":");
+      if (!channel || !providerId) {
+        continue;
+      }
+      described.push({
+        channel,
+        providerId,
+        required: schema.required,
+        optional: schema.optional,
+        requiredAny: schema.requiredAny ?? [],
+        description: schema.description,
+        secretFields: [
+          ...schema.required,
+          ...schema.optional,
+          ...(schema.requiredAny ?? []),
+        ].filter(isSecretField),
+      });
+    }
+
+    return described;
   }
 
   private initializeSchemas(): void {

@@ -67,6 +67,7 @@ import {
   WorkflowScheduleCursor1794349055404,
   NotificationLogTrackingIdIndex1794349055405,
   VoiceCallBillingState1794349055406,
+  ProviderTypeAsText1794349055407,
 } from "./migrations";
 
 config();
@@ -140,6 +141,7 @@ const AppDataSource: DataSourceOptions = {
     WorkflowScheduleCursor1794349055404,
     NotificationLogTrackingIdIndex1794349055405,
     VoiceCallBillingState1794349055406,
+    ProviderTypeAsText1794349055407,
   ],
   logging: isDev,
   migrationsRun: true,

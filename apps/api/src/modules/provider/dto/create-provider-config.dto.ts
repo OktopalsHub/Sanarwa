@@ -10,7 +10,6 @@ import {
   Min,
 } from "class-validator";
 import { NotificationChannel } from "../../../common/enums/notification-channel.enum";
-import { ProviderType } from "../provider-config.entity";
 
 export class CreateProviderConfigDto {
   @ApiProperty({
@@ -28,12 +27,11 @@ export class CreateProviderConfigDto {
   providerName: string;
 
   @ApiProperty({
-    description: "Type of provider",
-    enum: ProviderType,
-    example: ProviderType.TWILIO,
+    description: "Provider type, normally the same as the provider identifier",
+    example: "twilio",
   })
-  @IsEnum(ProviderType)
-  providerType: ProviderType;
+  @IsString()
+  providerType: string;
 
   @ApiProperty({
     description: "Notification channel this provider supports",

@@ -5,6 +5,7 @@ import { Project } from "./entities/project.entity";
 import { ProjectController } from "./project.controller";
 import { ProjectApiController } from "./project-api.controller";
 import { ProjectRepository } from "./project.repository";
+import { DefaultProjectListener } from "./default-project.listener";
 import { ProjectService } from "./project.service";
 import { TenantMemberModule } from "../tenant-member/tenant-member.module";
 import { TenantModule } from "../tenant/tenant.module";
@@ -21,7 +22,7 @@ import { TokenManagementModule } from "../token-management/token-management.modu
     TokenManagementModule,
   ],
   controllers: [ProjectController, ProjectApiController],
-  providers: [ProjectService, ProjectRepository],
+  providers: [ProjectService, ProjectRepository, DefaultProjectListener],
   exports: [ProjectService, ProjectRepository],
 })
 export class ProjectModule {}

@@ -96,7 +96,7 @@ export function useDashboardData() {
       const perProject = await Promise.all(
         projects.data.map(async (project) => {
           const [providers, keys] = await Promise.all([
-            providerApi.getProvidersByProject(project.id, { limit: 1 }),
+            providerApi.listProviders(project.id, { limit: 1 }),
             apiKeyApi.getApiKeysByProject(project.id),
           ]);
           return {

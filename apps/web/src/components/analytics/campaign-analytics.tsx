@@ -1,21 +1,12 @@
 "use client";
 
-import { Eye, MousePointer, Send, TrendingUp } from "@/lib/icons";
-
 import { DashboardChart } from "@/components/dashboard/dashboard-chart";
 import { MetricCard } from "@/components/dashboard/metric-card";
 import { Button } from "@sanarwa/ui/button";
 import { Card } from "@sanarwa/ui/card";
 import { DateRange, DateRangePicker } from "@sanarwa/ui/date-range-picker";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@sanarwa/ui/select";
-import {
-  ArrowDownTrayIcon,
-  EyeIcon,
-  FunnelIcon,
-  PaperAirplaneIcon,
-  ArrowTrendingUpIcon,
-  CursorArrowRaysIcon,
-} from "@heroicons/react/24/outline";
+import { ArrowDownTrayIcon, FunnelIcon } from "@heroicons/react/24/outline";
 import { useState } from "react";
 
 interface CampaignAnalyticsProps {
@@ -130,25 +121,21 @@ export function CampaignAnalytics({ campaignId }: CampaignAnalyticsProps) {
         <MetricCard
           title="Messages Sent"
           value={data.overview.totalSent.toLocaleString()}
-          icon={Send}
           description="Total messages sent"
         />
         <MetricCard
           title="Delivery Rate"
           value={`${data.overview.deliveryRate}%`}
-          icon={TrendingUp}
           description={`${data.overview.delivered.toLocaleString()} delivered`}
         />
         <MetricCard
           title="Open Rate"
           value={`${data.overview.openRate}%`}
-          icon={Eye}
           description={`${data.overview.opened.toLocaleString()} opened`}
         />
         <MetricCard
           title="Click Rate"
           value={`${data.overview.clickRate}%`}
-          icon={MousePointer}
           description={`${data.overview.clicked.toLocaleString()} clicked`}
         />
       </div>

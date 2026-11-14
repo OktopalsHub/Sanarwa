@@ -1,51 +1,75 @@
 "use client";
 
+import { AddProviderDialog } from "@/components/providers/add-provider-dialog";
 import { ProviderList } from "@/components/providers/provider-list";
-import { CreateProviderDialog } from "@/components/providers/create-provider-dialog";
-import { WhatsAppEmbeddedSignup } from "@/components/whatsapp/whatsapp-embedded-signup";
-import { WhatsAppTemplateManager } from "@/components/whatsapp/whatsapp-template-manager";
-import { PushProviderSetup } from "@/components/push/push-provider-setup";
-import { SMSSenderSetup } from "@/components/sms/sms-sender-setup";
-import { AppShell } from "@/components/layout";
+import { AppShell, PageContainer, PageHeader } from "@/components/layout";
+import { ProjectScopeProvider, useProjectScope } from "@/contexts/project-scope-context";
+import { useTenantBasePath } from "@/hooks/use-tenant-slug";
+import Link from "@/compat/next-link";
 import { Button } from "@sanarwa/ui/button";
-import { PlusIcon } from "@heroicons/react/24/outline";
-
+import { Card } from "@sanarwa/ui/card";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@sanarwa/ui/select";
 import { useState } from "react";
 
-export default function ProvidersPage() {
-  const [showCreateDialog, setShowCreateDialog] = useState(false);
+function ProvidersContent() {
+  const { projects, projectId, selectProject, isLoading } = useProjectScope();
+  const basePath = useTenantBasePath();
+  const [adding, setAdding] = useState(false);
 
   return (
-    <AppShell>
-      <div className="p-6">
-        <div className="max-w-7xl mx-auto space-y-6">
-          <div className="flex items-center justify-between">
-            <div className="space-y-2">
-              <h1 className="text-3xl font-bold tracking-tight">Providers</h1>
-              <p className="text-muted-foreground">
-                Configure and manage your notification service providers
-              </p>
-            </div>
-            <Button onClick={() => setShowCreateDialog(true)}>
-              <PlusIcon className="h-4 w-4 mr-2" />
-              Add Provider
+    <PageContainer>
+      <PageHeader
+        title="Email, SMS & push"
+        description="Connect your own provider accounts. Sanarwa sends through them and fails over if one is down."
+        actions={
+          <>
+            {projects.length > 1 ? (
+              <Select value={projectId} onValueChange={selectProject}>
+                <SelectTrigger className="w-44" aria-label="Project">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {projects.map((item) => (
+                    <SelectItem key={item.id} value={item.id}>
+                      {item.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            ) : null}
+            <Button onClick={() => setAdding(true)} disabled={!projectId}>
+              Connect provider
             </Button>
-          </div>
+          </>
+        }
+      />
 
-          <ProviderList />
+      {projectId ? (
+        <>
+          <ProviderList projectId={projectId} />
+          <AddProviderDialog projectId={projectId} open={adding} onOpenChange={setAdding} />
+        </>
+      ) : isLoading ? null : (
+        <Card className="items-center gap-3 p-10 text-center">
+          <p className="font-medium">Create a project first</p>
+          <p className="max-w-md text-sm text-muted-foreground">
+            Providers and API keys live inside a project.
+          </p>
+          <Button asChild>
+            <Link href={`${basePath}/projects`}>Go to projects</Link>
+          </Button>
+        </Card>
+      )}
+    </PageContainer>
+  );
+}
 
-          <div className="grid gap-6 lg:grid-cols-2">
-            <WhatsAppEmbeddedSignup />
-            <WhatsAppTemplateManager />
-          </div>
-
-          <PushProviderSetup />
-
-          <SMSSenderSetup />
-
-          <CreateProviderDialog open={showCreateDialog} onOpenChange={setShowCreateDialog} />
-        </div>
-      </div>
+export default function ProvidersPage() {
+  return (
+    <AppShell>
+      <ProjectScopeProvider>
+        <ProvidersContent />
+      </ProjectScopeProvider>
     </AppShell>
   );
 }

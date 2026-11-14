@@ -92,7 +92,7 @@ export function ResetPasswordForm() {
     return (
       <Card className="w-full max-w-md mx-auto p-6">
         <div className="text-center space-y-4">
-          <h1 className="text-2xl font-bold">Invalid Reset Link</h1>
+          <h1 className="text-xl font-semibold tracking-tight">Invalid Reset Link</h1>
           <p className="text-muted-foreground">
             This password reset link is invalid or has expired.
           </p>
@@ -108,7 +108,7 @@ export function ResetPasswordForm() {
     <Card className="w-full max-w-md mx-auto p-6">
       <div className="space-y-6">
         <div className="text-center">
-          <h1 className="text-2xl font-bold">Reset your password</h1>
+          <h1 className="text-xl font-semibold tracking-tight">Reset your password</h1>
           <p className="text-muted-foreground">Enter your new password below</p>
         </div>
 

@@ -1,50 +1,21 @@
+import { AuthLayout, AuthLink } from "@/components/auth/auth-layout";
 import { RegisterForm } from "@/components/auth/register-form";
-import { AuthSplitShell, SplitPanel, StickerCard } from "@/components/auth/auth-split-shell";
-import { IconKey, IconReceipt, IconWebhook } from "@tabler/icons-react";
-import Link from "@/compat/next-link";
 import { formatTokens, WELCOME_SIGNUP_TOKENS } from "@/lib/pricing";
 import { Suspense } from "react";
 
 function RegisterPageContent() {
   return (
-    <AuthSplitShell
-      panel={
-        <SplitPanel
-          eyebrow="Sanarwa · notifications"
-          headline={
-            <>
-              START
-              <br />
-              <span className="text-[var(--hm-accent)]">SENDING.</span>
-            </>
-          }
-          sub="One account for every channel you send through — email, SMS, WhatsApp, push, in-app and voice."
-          sticker={
-            <StickerCard
-              label="POST /api/v1/messaging/send"
-              primary="201 created"
-              secondary="X-API-Key · msg_7f3c91a0"
-            />
-          }
-          chips={[
-            { icon: IconKey, label: "Keys" },
-            { icon: IconReceipt, label: "Receipts" },
-            { icon: IconWebhook, label: "Webhooks" },
-          ]}
-          footnote={`${formatTokens(WELCOME_SIGNUP_TOKENS)} tokens on signup`}
-          switchTo={
-            <Link
-              href="/login"
-              className="text-[var(--hm-accent)] underline-offset-2 hover:underline"
-            >
-              Sign in
-            </Link>
-          }
-        />
+    <AuthLayout
+      title="Create your account"
+      description={`Includes ${formatTokens(WELCOME_SIGNUP_TOKENS)} free tokens. No credit card required.`}
+      footer={
+        <>
+          Already have an account? <AuthLink href="/login">Sign in</AuthLink>
+        </>
       }
     >
       <RegisterForm />
-    </AuthSplitShell>
+    </AuthLayout>
   );
 }
 
@@ -52,8 +23,8 @@ export default function RegisterPage() {
   return (
     <Suspense
       fallback={
-        <div className="flex min-h-screen items-center justify-center bg-[var(--color-paper)]">
-          <div className="size-8 animate-spin rounded-full border-2 border-[var(--color-rule)] border-t-[var(--hm-accent)]" />
+        <div className="flex min-h-screen items-center justify-center bg-background">
+          <div className="size-6 animate-spin rounded-full border-2 border-muted border-t-foreground" />
         </div>
       }
     >
@@ -63,6 +34,6 @@ export default function RegisterPage() {
 }
 
 const metadata = {
-  title: "Sign Up - Sanarwa",
+  title: "Create Account - Sanarwa",
   description: "Create your Sanarwa account",
 };

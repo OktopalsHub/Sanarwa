@@ -17,8 +17,8 @@ export default function CampaignsPage() {
   const [editingCampaign, setEditingCampaign] = useState<Campaign | null>(null);
 
   const { data: campaignsData } = useQuery({
-    queryKey: ["campaigns", { limit: 1000 }],
-    queryFn: () => campaignApi.getCampaigns({ limit: 1000 }),
+    queryKey: ["campaigns", { limit: 100 }],
+    queryFn: () => campaignApi.getCampaigns({ limit: 100 }),
   });
 
   const campaigns = campaignsData?.campaigns || [];
@@ -81,7 +81,7 @@ export default function CampaignsPage() {
       <div className="container mx-auto p-6 space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold">Campaigns</h1>
+            <h1 className="text-xl font-semibold tracking-tight">Campaigns</h1>
             <p className="text-muted-foreground">
               Create and manage your multi-channel communication campaigns
             </p>

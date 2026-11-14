@@ -43,7 +43,7 @@ const BrandingContext = createContext<BrandingContextType | undefined>(undefined
 
 const defaultBranding: BrandingConfig = {
   id: "default",
-  name: "NectarHR Default",
+  name: "Sanarwa Default",
   logo: {
     light: "/logo-light.svg",
     dark: "/logo-dark.svg",
@@ -67,6 +67,31 @@ const defaultBranding: BrandingConfig = {
   isActive: true,
 };
 
+const BRANDING_CSS_VARIABLES = [
+  "--primary",
+  "--secondary",
+  "--accent",
+  "--background",
+  "--foreground",
+  "--muted",
+  "--muted-foreground",
+  "--border",
+  "--destructive",
+  "--primary-foreground",
+  "--secondary-foreground",
+  "--accent-foreground",
+  "--card",
+  "--card-foreground",
+  "--popover",
+  "--popover-foreground",
+  "--input",
+  "--ring",
+  "--destructive-foreground",
+  "--font-family-primary",
+  "--font-sans",
+  "--font-family-heading",
+];
+
 interface BrandingProviderProps {
   children: ReactNode;
 }
@@ -75,6 +100,12 @@ export function BrandingProvider({ children }: BrandingProviderProps) {
   const [branding, setBranding] = useState<BrandingConfig | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const { currentTenant } = useTenant();
+
+  const clearCSSVariables = () => {
+    const root = document.documentElement;
+    BRANDING_CSS_VARIABLES.forEach((name) => root.style.removeProperty(name));
+    document.getElementById("custom-branding-styles")?.remove();
+  };
 
   const applyCSSVariables = (config: BrandingConfig) => {
     const root = document.documentElement;
@@ -120,7 +151,7 @@ export function BrandingProvider({ children }: BrandingProviderProps) {
 
     if (typeof document !== "undefined") {
       const title = document.querySelector("title");
-      if (title && config.name !== "NectarHR Default") {
+      if (title && config.name !== "Sanarwa Default") {
         title.textContent = `${config.name} - Multi-Channel Communication Platform`;
       }
     }
@@ -143,15 +174,12 @@ export function BrandingProvider({ children }: BrandingProviderProps) {
             },
           };
           setBranding(brandingWithDefaults);
-          applyCSSVariables(brandingWithDefaults);
         } else {
           setBranding(defaultBranding);
-          applyCSSVariables(defaultBranding);
         }
       } catch (error) {
         console.error("Failed to load branding:", error);
         setBranding(defaultBranding);
-        applyCSSVariables(defaultBranding);
       } finally {
         setIsLoading(false);
       }
@@ -167,7 +195,7 @@ export function BrandingProvider({ children }: BrandingProviderProps) {
 
   const resetBranding = () => {
     setBranding(defaultBranding);
-    applyCSSVariables(defaultBranding);
+    clearCSSVariables();
   };
 
   const updateColors = (colors: Partial<BrandingColors>) => {

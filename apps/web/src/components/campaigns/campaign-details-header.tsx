@@ -56,7 +56,7 @@ export function CampaignDetailsHeader({
           Back to Campaigns
         </Button>
         <div className="mt-2 flex items-center gap-3">
-          <h1 className="text-3xl font-bold">{campaign.name}</h1>
+          <h1 className="text-xl font-semibold tracking-tight">{campaign.name}</h1>
           <Badge variant={campaignStatusVariant(campaign.status)}>{campaign.status}</Badge>
         </div>
         {campaign.description ? (

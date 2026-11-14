@@ -43,7 +43,7 @@ export default function BrandingSettingsPage() {
   return (
     <div className="container mx-auto py-8 space-y-8">
       <div>
-        <h1 className="text-3xl font-bold">Brand Settings</h1>
+        <h1 className="text-xl font-semibold tracking-tight">Brand Settings</h1>
         <p className="text-muted-foreground mt-2">
           Customize your brand identity and manage brand assets
         </p>

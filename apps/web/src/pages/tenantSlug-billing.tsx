@@ -85,7 +85,7 @@ export default function BillingPage() {
       <div className="p-6">
         <div className="max-w-7xl mx-auto space-y-6">
           <div className="space-y-2">
-            <h1 className="text-3xl font-bold tracking-tight">Billing & Usage</h1>
+            <h1 className="text-xl font-semibold tracking-tight">Billing & Usage</h1>
             <p className="text-muted-foreground">
               Pay as you go — buy tokens, track usage, and view history
             </p>
